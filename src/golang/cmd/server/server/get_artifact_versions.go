@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/internal/server/queries"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
@@ -39,6 +40,13 @@ type artifactVersion struct {
 	Timestamp int64                  `json:"timestamp"`
 	Status    shared.ExecutionStatus `json:"status"`
 	Error     string                 `json:"error"`
+	Checks    []CheckResult          `json:"checks"`
+}
+
+type CheckResult struct {
+	Name     string                   `json:"name"`
+	Status   shared.ExecutionStatus   `json:"status"`
+	Metadata operator_result.Metadata `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
@@ -196,6 +204,31 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	failedArtifactIds := make([]uuid.UUID, len(failedArtifactIdsMap))
 	for failedArtifactId := range failedArtifactIdsMap {
 		failedArtifactIds = append(failedArtifactIds, failedArtifactId)
+	}
+
+	checkResults, err := h.CustomReader.GetValidationOperatorResultsByArtifactIds(ctx, allArtifactIds, h.Database)
+	if err != nil {
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
+	}
+
+	// We now fill in the validation test result. We can join the validation test result with the correct
+	// artifact version by the workflow dag result id.
+	for _, checkResult := range checkResults {
+		checkResultObject := CheckResult{
+			Name:     checkResult.Name,
+			Status:   checkResult.Status,
+			Metadata: checkResult.Metadata,
+		}
+
+		if _, ok := latestVersions[checkResult.ArtifactId]; ok {
+			artifactVersionObject := latestVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId]
+			artifactVersionObject.Checks = append(artifactVersionObject.Checks, checkResultObject)
+			latestVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId] = artifactVersionObject
+		} else {
+			artifactVersionObject := historicalVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId]
+			artifactVersionObject.Checks = append(artifactVersionObject.Checks, checkResultObject)
+			historicalVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId] = artifactVersionObject
+		}
 	}
 
 	// Issue query to fetch error message only when there is at least one failed artifact version.
