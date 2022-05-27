@@ -18,10 +18,11 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test --passWithNoTests",
-    "lint": "tsdx lint",
     "prepare": "tsdx build",
     "size": "size-limit",
-    "analyze": "size-limit --why"
+    "analyze": "size-limit --why",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
+    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
   "peerDependencies": {
     "@emotion/react": "^11.9.0",
@@ -86,6 +87,9 @@
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
-    "eslint-plugin-unused-imports": "^1.1.5"
+    "eslint-plugin-unused-imports": "^1.1.5",
+    "prettier": "^2.2.1",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0"
   }
 }
