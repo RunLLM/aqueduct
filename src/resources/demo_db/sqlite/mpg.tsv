@@ -1,0 +1,398 @@
+0	18	8	307	130	3504	12	70	usa	chevrolet chevelle malibu
+1	15	8	350	165	3693	11.5	70	usa	buick skylark 320
+2	18	8	318	150	3436	11	70	usa	plymouth satellite
+3	16	8	304	150	3433	12	70	usa	amc rebel sst
+4	17	8	302	140	3449	10.5	70	usa	ford torino
+5	15	8	429	198	4341	10	70	usa	ford galaxie 500
+6	14	8	454	220	4354	9	70	usa	chevrolet impala
+7	14	8	440	215	4312	8.5	70	usa	plymouth fury iii
+8	14	8	455	225	4425	10	70	usa	pontiac catalina
+9	15	8	390	190	3850	8.5	70	usa	amc ambassador dpl
+10	15	8	383	170	3563	10	70	usa	dodge challenger se
+11	14	8	340	160	3609	8	70	usa	plymouth 'cuda 340
+12	15	8	400	150	3761	9.5	70	usa	chevrolet monte carlo
+13	14	8	455	225	3086	10	70	usa	buick estate wagon (sw)
+14	24	4	113	95	2372	15	70	japan	toyota corona mark ii
+15	22	6	198	95	2833	15.5	70	usa	plymouth duster
+16	18	6	199	97	2774	15.5	70	usa	amc hornet
+17	21	6	200	85	2587	16	70	usa	ford maverick
+18	27	4	97	88	2130	14.5	70	japan	datsun pl510
+19	26	4	97	46	1835	20.5	70	europe	volkswagen 1131 deluxe sedan
+20	25	4	110	87	2672	17.5	70	europe	peugeot 504
+21	24	4	107	90	2430	14.5	70	europe	audi 100 ls
+22	25	4	104	95	2375	17.5	70	europe	saab 99e
+23	26	4	121	113	2234	12.5	70	europe	bmw 2002
+24	21	6	199	90	2648	15	70	usa	amc gremlin
+25	10	8	360	215	4615	14	70	usa	ford f250
+26	10	8	307	200	4376	15	70	usa	chevy c20
+27	11	8	318	210	4382	13.5	70	usa	dodge d200
+28	9	8	304	193	4732	18.5	70	usa	hi 1200d
+29	27	4	97	88	2130	14.5	71	japan	datsun pl510
+30	28	4	140	90	2264	15.5	71	usa	chevrolet vega 2300
+31	25	4	113	95	2228	14	71	japan	toyota corona
+32	25	4	98	\N	2046	19	71	usa	ford pinto
+33	19	6	232	100	2634	13	71	usa	amc gremlin
+34	16	6	225	105	3439	15.5	71	usa	plymouth satellite custom
+35	17	6	250	100	3329	15.5	71	usa	chevrolet chevelle malibu
+36	19	6	250	88	3302	15.5	71	usa	ford torino 500
+37	18	6	232	100	3288	15.5	71	usa	amc matador
+38	14	8	350	165	4209	12	71	usa	chevrolet impala
+39	14	8	400	175	4464	11.5	71	usa	pontiac catalina brougham
+40	14	8	351	153	4154	13.5	71	usa	ford galaxie 500
+41	14	8	318	150	4096	13	71	usa	plymouth fury iii
+42	12	8	383	180	4955	11.5	71	usa	dodge monaco (sw)
+43	13	8	400	170	4746	12	71	usa	ford country squire (sw)
+44	13	8	400	175	5140	12	71	usa	pontiac safari (sw)
+45	18	6	258	110	2962	13.5	71	usa	amc hornet sportabout (sw)
+46	22	4	140	72	2408	19	71	usa	chevrolet vega (sw)
+47	19	6	250	100	3282	15	71	usa	pontiac firebird
+48	18	6	250	88	3139	14.5	71	usa	ford mustang
+49	23	4	122	86	2220	14	71	usa	mercury capri 2000
+50	28	4	116	90	2123	14	71	europe	opel 1900
+51	30	4	79	70	2074	19.5	71	europe	peugeot 304
+52	30	4	88	76	2065	14.5	71	europe	fiat 124b
+53	31	4	71	65	1773	19	71	japan	toyota corolla 1200
+54	35	4	72	69	1613	18	71	japan	datsun 1200
+55	27	4	97	60	1834	19	71	europe	volkswagen model 111
+56	26	4	91	70	1955	20.5	71	usa	plymouth cricket
+57	24	4	113	95	2278	15.5	72	japan	toyota corona hardtop
+58	25	4	97.5	80	2126	17	72	usa	dodge colt hardtop
+59	23	4	97	54	2254	23.5	72	europe	volkswagen type 3
+60	20	4	140	90	2408	19.5	72	usa	chevrolet vega
+61	21	4	122	86	2226	16.5	72	usa	ford pinto runabout
+62	13	8	350	165	4274	12	72	usa	chevrolet impala
+63	14	8	400	175	4385	12	72	usa	pontiac catalina
+64	15	8	318	150	4135	13.5	72	usa	plymouth fury iii
+65	14	8	351	153	4129	13	72	usa	ford galaxie 500
+66	17	8	304	150	3672	11.5	72	usa	amc ambassador sst
+67	11	8	429	208	4633	11	72	usa	mercury marquis
+68	13	8	350	155	4502	13.5	72	usa	buick lesabre custom
+69	12	8	350	160	4456	13.5	72	usa	oldsmobile delta 88 royale
+70	13	8	400	190	4422	12.5	72	usa	chrysler newport royal
+71	19	3	70	97	2330	13.5	72	japan	mazda rx2 coupe
+72	15	8	304	150	3892	12.5	72	usa	amc matador (sw)
+73	13	8	307	130	4098	14	72	usa	chevrolet chevelle concours (sw)
+74	13	8	302	140	4294	16	72	usa	ford gran torino (sw)
+75	14	8	318	150	4077	14	72	usa	plymouth satellite custom (sw)
+76	18	4	121	112	2933	14.5	72	europe	volvo 145e (sw)
+77	22	4	121	76	2511	18	72	europe	volkswagen 411 (sw)
+78	21	4	120	87	2979	19.5	72	europe	peugeot 504 (sw)
+79	26	4	96	69	2189	18	72	europe	renault 12 (sw)
+80	22	4	122	86	2395	16	72	usa	ford pinto (sw)
+81	28	4	97	92	2288	17	72	japan	datsun 510 (sw)
+82	23	4	120	97	2506	14.5	72	japan	toyouta corona mark ii (sw)
+83	28	4	98	80	2164	15	72	usa	dodge colt (sw)
+84	27	4	97	88	2100	16.5	72	japan	toyota corolla 1600 (sw)
+85	13	8	350	175	4100	13	73	usa	buick century 350
+86	14	8	304	150	3672	11.5	73	usa	amc matador
+87	13	8	350	145	3988	13	73	usa	chevrolet malibu
+88	14	8	302	137	4042	14.5	73	usa	ford gran torino
+89	15	8	318	150	3777	12.5	73	usa	dodge coronet custom
+90	12	8	429	198	4952	11.5	73	usa	mercury marquis brougham
+91	13	8	400	150	4464	12	73	usa	chevrolet caprice classic
+92	13	8	351	158	4363	13	73	usa	ford ltd
+93	14	8	318	150	4237	14.5	73	usa	plymouth fury gran sedan
+94	13	8	440	215	4735	11	73	usa	chrysler new yorker brougham
+95	12	8	455	225	4951	11	73	usa	buick electra 225 custom
+96	13	8	360	175	3821	11	73	usa	amc ambassador brougham
+97	18	6	225	105	3121	16.5	73	usa	plymouth valiant
+98	16	6	250	100	3278	18	73	usa	chevrolet nova custom
+99	18	6	232	100	2945	16	73	usa	amc hornet
+100	18	6	250	88	3021	16.5	73	usa	ford maverick
+101	23	6	198	95	2904	16	73	usa	plymouth duster
+102	26	4	97	46	1950	21	73	europe	volkswagen super beetle
+103	11	8	400	150	4997	14	73	usa	chevrolet impala
+104	12	8	400	167	4906	12.5	73	usa	ford country
+105	13	8	360	170	4654	13	73	usa	plymouth custom suburb
+106	12	8	350	180	4499	12.5	73	usa	oldsmobile vista cruiser
+107	18	6	232	100	2789	15	73	usa	amc gremlin
+108	20	4	97	88	2279	19	73	japan	toyota carina
+109	21	4	140	72	2401	19.5	73	usa	chevrolet vega
+110	22	4	108	94	2379	16.5	73	japan	datsun 610
+111	18	3	70	90	2124	13.5	73	japan	maxda rx3
+112	19	4	122	85	2310	18.5	73	usa	ford pinto
+113	21	6	155	107	2472	14	73	usa	mercury capri v6
+114	26	4	98	90	2265	15.5	73	europe	fiat 124 sport coupe
+115	15	8	350	145	4082	13	73	usa	chevrolet monte carlo s
+116	16	8	400	230	4278	9.5	73	usa	pontiac grand prix
+117	29	4	68	49	1867	19.5	73	europe	fiat 128
+118	24	4	116	75	2158	15.5	73	europe	opel manta
+119	20	4	114	91	2582	14	73	europe	audi 100ls
+120	19	4	121	112	2868	15.5	73	europe	volvo 144ea
+121	15	8	318	150	3399	11	73	usa	dodge dart custom
+122	24	4	121	110	2660	14	73	europe	saab 99le
+123	20	6	156	122	2807	13.5	73	japan	toyota mark ii
+124	11	8	350	180	3664	11	73	usa	oldsmobile omega
+125	20	6	198	95	3102	16.5	74	usa	plymouth duster
+126	21	6	200	\N	2875	17	74	usa	ford maverick
+127	19	6	232	100	2901	16	74	usa	amc hornet
+128	15	6	250	100	3336	17	74	usa	chevrolet nova
+129	31	4	79	67	1950	19	74	japan	datsun b210
+130	26	4	122	80	2451	16.5	74	usa	ford pinto
+131	32	4	71	65	1836	21	74	japan	toyota corolla 1200
+132	25	4	140	75	2542	17	74	usa	chevrolet vega
+133	16	6	250	100	3781	17	74	usa	chevrolet chevelle malibu classic
+134	16	6	258	110	3632	18	74	usa	amc matador
+135	18	6	225	105	3613	16.5	74	usa	plymouth satellite sebring
+136	16	8	302	140	4141	14	74	usa	ford gran torino
+137	13	8	350	150	4699	14.5	74	usa	buick century luxus (sw)
+138	14	8	318	150	4457	13.5	74	usa	dodge coronet custom (sw)
+139	14	8	302	140	4638	16	74	usa	ford gran torino (sw)
+140	14	8	304	150	4257	15.5	74	usa	amc matador (sw)
+141	29	4	98	83	2219	16.5	74	europe	audi fox
+142	26	4	79	67	1963	15.5	74	europe	volkswagen dasher
+143	26	4	97	78	2300	14.5	74	europe	opel manta
+144	31	4	76	52	1649	16.5	74	japan	toyota corona
+145	32	4	83	61	2003	19	74	japan	datsun 710
+146	28	4	90	75	2125	14.5	74	usa	dodge colt
+147	24	4	90	75	2108	15.5	74	europe	fiat 128
+148	26	4	116	75	2246	14	74	europe	fiat 124 tc
+149	24	4	120	97	2489	15	74	japan	honda civic
+150	26	4	108	93	2391	15.5	74	japan	subaru
+151	31	4	79	67	2000	16	74	europe	fiat x1.9
+152	19	6	225	95	3264	16	75	usa	plymouth valiant custom
+153	18	6	250	105	3459	16	75	usa	chevrolet nova
+154	15	6	250	72	3432	21	75	usa	mercury monarch
+155	15	6	250	72	3158	19.5	75	usa	ford maverick
+156	16	8	400	170	4668	11.5	75	usa	pontiac catalina
+157	15	8	350	145	4440	14	75	usa	chevrolet bel air
+158	16	8	318	150	4498	14.5	75	usa	plymouth grand fury
+159	14	8	351	148	4657	13.5	75	usa	ford ltd
+160	17	6	231	110	3907	21	75	usa	buick century
+161	16	6	250	105	3897	18.5	75	usa	chevroelt chevelle malibu
+162	15	6	258	110	3730	19	75	usa	amc matador
+163	18	6	225	95	3785	19	75	usa	plymouth fury
+164	21	6	231	110	3039	15	75	usa	buick skyhawk
+165	20	8	262	110	3221	13.5	75	usa	chevrolet monza 2+2
+166	13	8	302	129	3169	12	75	usa	ford mustang ii
+167	29	4	97	75	2171	16	75	japan	toyota corolla
+168	23	4	140	83	2639	17	75	usa	ford pinto
+169	20	6	232	100	2914	16	75	usa	amc gremlin
+170	23	4	140	78	2592	18.5	75	usa	pontiac astro
+171	24	4	134	96	2702	13.5	75	japan	toyota corona
+172	25	4	90	71	2223	16.5	75	europe	volkswagen dasher
+173	24	4	119	97	2545	17	75	japan	datsun 710
+174	18	6	171	97	2984	14.5	75	usa	ford pinto
+175	29	4	90	70	1937	14	75	europe	volkswagen rabbit
+176	19	6	232	90	3211	17	75	usa	amc pacer
+177	23	4	115	95	2694	15	75	europe	audi 100ls
+178	23	4	120	88	2957	17	75	europe	peugeot 504
+179	22	4	121	98	2945	14.5	75	europe	volvo 244dl
+180	25	4	121	115	2671	13.5	75	europe	saab 99le
+181	33	4	91	53	1795	17.5	75	japan	honda civic cvcc
+182	28	4	107	86	2464	15.5	76	europe	fiat 131
+183	25	4	116	81	2220	16.9	76	europe	opel 1900
+184	25	4	140	92	2572	14.9	76	usa	capri ii
+185	26	4	98	79	2255	17.7	76	usa	dodge colt
+186	27	4	101	83	2202	15.3	76	europe	renault 12tl
+187	17.5	8	305	140	4215	13	76	usa	chevrolet chevelle malibu classic
+188	16	8	318	150	4190	13	76	usa	dodge coronet brougham
+189	15.5	8	304	120	3962	13.9	76	usa	amc matador
+190	14.5	8	351	152	4215	12.8	76	usa	ford gran torino
+191	22	6	225	100	3233	15.4	76	usa	plymouth valiant
+192	22	6	250	105	3353	14.5	76	usa	chevrolet nova
+193	24	6	200	81	3012	17.6	76	usa	ford maverick
+194	22.5	6	232	90	3085	17.6	76	usa	amc hornet
+195	29	4	85	52	2035	22.2	76	usa	chevrolet chevette
+196	24.5	4	98	60	2164	22.1	76	usa	chevrolet woody
+197	29	4	90	70	1937	14.2	76	europe	vw rabbit
+198	33	4	91	53	1795	17.4	76	japan	honda civic
+199	20	6	225	100	3651	17.7	76	usa	dodge aspen se
+200	18	6	250	78	3574	21	76	usa	ford granada ghia
+201	18.5	6	250	110	3645	16.2	76	usa	pontiac ventura sj
+202	17.5	6	258	95	3193	17.8	76	usa	amc pacer d/l
+203	29.5	4	97	71	1825	12.2	76	europe	volkswagen rabbit
+204	32	4	85	70	1990	17	76	japan	datsun b-210
+205	28	4	97	75	2155	16.4	76	japan	toyota corolla
+206	26.5	4	140	72	2565	13.6	76	usa	ford pinto
+207	20	4	130	102	3150	15.7	76	europe	volvo 245
+208	13	8	318	150	3940	13.2	76	usa	plymouth volare premier v8
+209	19	4	120	88	3270	21.9	76	europe	peugeot 504
+210	19	6	156	108	2930	15.5	76	japan	toyota mark ii
+211	16.5	6	168	120	3820	16.7	76	europe	mercedes-benz 280s
+212	16.5	8	350	180	4380	12.1	76	usa	cadillac seville
+213	13	8	350	145	4055	12	76	usa	chevy c10
+214	13	8	302	130	3870	15	76	usa	ford f108
+215	13	8	318	150	3755	14	76	usa	dodge d100
+216	31.5	4	98	68	2045	18.5	77	japan	honda accord cvcc
+217	30	4	111	80	2155	14.8	77	usa	buick opel isuzu deluxe
+218	36	4	79	58	1825	18.6	77	europe	renault 5 gtl
+219	25.5	4	122	96	2300	15.5	77	usa	plymouth arrow gs
+220	33.5	4	85	70	1945	16.8	77	japan	datsun f-10 hatchback
+221	17.5	8	305	145	3880	12.5	77	usa	chevrolet caprice classic
+222	17	8	260	110	4060	19	77	usa	oldsmobile cutlass supreme
+223	15.5	8	318	145	4140	13.7	77	usa	dodge monaco brougham
+224	15	8	302	130	4295	14.9	77	usa	mercury cougar brougham
+225	17.5	6	250	110	3520	16.4	77	usa	chevrolet concours
+226	20.5	6	231	105	3425	16.9	77	usa	buick skylark
+227	19	6	225	100	3630	17.7	77	usa	plymouth volare custom
+228	18.5	6	250	98	3525	19	77	usa	ford granada
+229	16	8	400	180	4220	11.1	77	usa	pontiac grand prix lj
+230	15.5	8	350	170	4165	11.4	77	usa	chevrolet monte carlo landau
+231	15.5	8	400	190	4325	12.2	77	usa	chrysler cordoba
+232	16	8	351	149	4335	14.5	77	usa	ford thunderbird
+233	29	4	97	78	1940	14.5	77	europe	volkswagen rabbit custom
+234	24.5	4	151	88	2740	16	77	usa	pontiac sunbird coupe
+235	26	4	97	75	2265	18.2	77	japan	toyota corolla liftback
+236	25.5	4	140	89	2755	15.8	77	usa	ford mustang ii 2+2
+237	30.5	4	98	63	2051	17	77	usa	chevrolet chevette
+238	33.5	4	98	83	2075	15.9	77	usa	dodge colt m/m
+239	30	4	97	67	1985	16.4	77	japan	subaru dl
+240	30.5	4	97	78	2190	14.1	77	europe	volkswagen dasher
+241	22	6	146	97	2815	14.5	77	japan	datsun 810
+242	21.5	4	121	110	2600	12.8	77	europe	bmw 320i
+243	21.5	3	80	110	2720	13.5	77	japan	mazda rx-4
+244	43.1	4	90	48	1985	21.5	78	europe	volkswagen rabbit custom diesel
+245	36.1	4	98	66	1800	14.4	78	usa	ford fiesta
+246	32.8	4	78	52	1985	19.4	78	japan	mazda glc deluxe
+247	39.4	4	85	70	2070	18.6	78	japan	datsun b210 gx
+248	36.1	4	91	60	1800	16.4	78	japan	honda civic cvcc
+249	19.9	8	260	110	3365	15.5	78	usa	oldsmobile cutlass salon brougham
+250	19.4	8	318	140	3735	13.2	78	usa	dodge diplomat
+251	20.2	8	302	139	3570	12.8	78	usa	mercury monarch ghia
+252	19.2	6	231	105	3535	19.2	78	usa	pontiac phoenix lj
+253	20.5	6	200	95	3155	18.2	78	usa	chevrolet malibu
+254	20.2	6	200	85	2965	15.8	78	usa	ford fairmont (auto)
+255	25.1	4	140	88	2720	15.4	78	usa	ford fairmont (man)
+256	20.5	6	225	100	3430	17.2	78	usa	plymouth volare
+257	19.4	6	232	90	3210	17.2	78	usa	amc concord
+258	20.6	6	231	105	3380	15.8	78	usa	buick century special
+259	20.8	6	200	85	3070	16.7	78	usa	mercury zephyr
+260	18.6	6	225	110	3620	18.7	78	usa	dodge aspen
+261	18.1	6	258	120	3410	15.1	78	usa	amc concord d/l
+262	19.2	8	305	145	3425	13.2	78	usa	chevrolet monte carlo landau
+263	17.7	6	231	165	3445	13.4	78	usa	buick regal sport coupe (turbo)
+264	18.1	8	302	139	3205	11.2	78	usa	ford futura
+265	17.5	8	318	140	4080	13.7	78	usa	dodge magnum xe
+266	30	4	98	68	2155	16.5	78	usa	chevrolet chevette
+267	27.5	4	134	95	2560	14.2	78	japan	toyota corona
+268	27.2	4	119	97	2300	14.7	78	japan	datsun 510
+269	30.9	4	105	75	2230	14.5	78	usa	dodge omni
+270	21.1	4	134	95	2515	14.8	78	japan	toyota celica gt liftback
+271	23.2	4	156	105	2745	16.7	78	usa	plymouth sapporo
+272	23.8	4	151	85	2855	17.6	78	usa	oldsmobile starfire sx
+273	23.9	4	119	97	2405	14.9	78	japan	datsun 200-sx
+274	20.3	5	131	103	2830	15.9	78	europe	audi 5000
+275	17	6	163	125	3140	13.6	78	europe	volvo 264gl
+276	21.6	4	121	115	2795	15.7	78	europe	saab 99gle
+277	16.2	6	163	133	3410	15.8	78	europe	peugeot 604sl
+278	31.5	4	89	71	1990	14.9	78	europe	volkswagen scirocco
+279	29.5	4	98	68	2135	16.6	78	japan	honda accord lx
+280	21.5	6	231	115	3245	15.4	79	usa	pontiac lemans v6
+281	19.8	6	200	85	2990	18.2	79	usa	mercury zephyr 6
+282	22.3	4	140	88	2890	17.3	79	usa	ford fairmont 4
+283	20.2	6	232	90	3265	18.2	79	usa	amc concord dl 6
+284	20.6	6	225	110	3360	16.6	79	usa	dodge aspen 6
+285	17	8	305	130	3840	15.4	79	usa	chevrolet caprice classic
+286	17.6	8	302	129	3725	13.4	79	usa	ford ltd landau
+287	16.5	8	351	138	3955	13.2	79	usa	mercury grand marquis
+288	18.2	8	318	135	3830	15.2	79	usa	dodge st. regis
+289	16.9	8	350	155	4360	14.9	79	usa	buick estate wagon (sw)
+290	15.5	8	351	142	4054	14.3	79	usa	ford country squire (sw)
+291	19.2	8	267	125	3605	15	79	usa	chevrolet malibu classic (sw)
+292	18.5	8	360	150	3940	13	79	usa	chrysler lebaron town @ country (sw)
+293	31.9	4	89	71	1925	14	79	europe	vw rabbit custom
+294	34.1	4	86	65	1975	15.2	79	japan	maxda glc deluxe
+295	35.7	4	98	80	1915	14.4	79	usa	dodge colt hatchback custom
+296	27.4	4	121	80	2670	15	79	usa	amc spirit dl
+297	25.4	5	183	77	3530	20.1	79	europe	mercedes benz 300d
+298	23	8	350	125	3900	17.4	79	usa	cadillac eldorado
+299	27.2	4	141	71	3190	24.8	79	europe	peugeot 504
+300	23.9	8	260	90	3420	22.2	79	usa	oldsmobile cutlass salon brougham
+301	34.2	4	105	70	2200	13.2	79	usa	plymouth horizon
+302	34.5	4	105	70	2150	14.9	79	usa	plymouth horizon tc3
+303	31.8	4	85	65	2020	19.2	79	japan	datsun 210
+304	37.3	4	91	69	2130	14.7	79	europe	fiat strada custom
+305	28.4	4	151	90	2670	16	79	usa	buick skylark limited
+306	28.8	6	173	115	2595	11.3	79	usa	chevrolet citation
+307	26.8	6	173	115	2700	12.9	79	usa	oldsmobile omega brougham
+308	33.5	4	151	90	2556	13.2	79	usa	pontiac phoenix
+309	41.5	4	98	76	2144	14.7	80	europe	vw rabbit
+310	38.1	4	89	60	1968	18.8	80	japan	toyota corolla tercel
+311	32.1	4	98	70	2120	15.5	80	usa	chevrolet chevette
+312	37.2	4	86	65	2019	16.4	80	japan	datsun 310
+313	28	4	151	90	2678	16.5	80	usa	chevrolet citation
+314	26.4	4	140	88	2870	18.1	80	usa	ford fairmont
+315	24.3	4	151	90	3003	20.1	80	usa	amc concord
+316	19.1	6	225	90	3381	18.7	80	usa	dodge aspen
+317	34.3	4	97	78	2188	15.8	80	europe	audi 4000
+318	29.8	4	134	90	2711	15.5	80	japan	toyota corona liftback
+319	31.3	4	120	75	2542	17.5	80	japan	mazda 626
+320	37	4	119	92	2434	15	80	japan	datsun 510 hatchback
+321	32.2	4	108	75	2265	15.2	80	japan	toyota corolla
+322	46.6	4	86	65	2110	17.9	80	japan	mazda glc
+323	27.9	4	156	105	2800	14.4	80	usa	dodge colt
+324	40.8	4	85	65	2110	19.2	80	japan	datsun 210
+325	44.3	4	90	48	2085	21.7	80	europe	vw rabbit c (diesel)
+326	43.4	4	90	48	2335	23.7	80	europe	vw dasher (diesel)
+327	36.4	5	121	67	2950	19.9	80	europe	audi 5000s (diesel)
+328	30	4	146	67	3250	21.8	80	europe	mercedes-benz 240d
+329	44.6	4	91	67	1850	13.8	80	japan	honda civic 1500 gl
+330	40.9	4	85	\N	1835	17.3	80	europe	renault lecar deluxe
+331	33.8	4	97	67	2145	18	80	japan	subaru dl
+332	29.8	4	89	62	1845	15.3	80	europe	vokswagen rabbit
+333	32.7	6	168	132	2910	11.4	80	japan	datsun 280-zx
+334	23.7	3	70	100	2420	12.5	80	japan	mazda rx-7 gs
+335	35	4	122	88	2500	15.1	80	europe	triumph tr7 coupe
+336	23.6	4	140	\N	2905	14.3	80	usa	ford mustang cobra
+337	32.4	4	107	72	2290	17	80	japan	honda accord
+338	27.2	4	135	84	2490	15.7	81	usa	plymouth reliant
+339	26.6	4	151	84	2635	16.4	81	usa	buick skylark
+340	25.8	4	156	92	2620	14.4	81	usa	dodge aries wagon (sw)
+341	23.5	6	173	110	2725	12.6	81	usa	chevrolet citation
+342	30	4	135	84	2385	12.9	81	usa	plymouth reliant
+343	39.1	4	79	58	1755	16.9	81	japan	toyota starlet
+344	39	4	86	64	1875	16.4	81	usa	plymouth champ
+345	35.1	4	81	60	1760	16.1	81	japan	honda civic 1300
+346	32.3	4	97	67	2065	17.8	81	japan	subaru
+347	37	4	85	65	1975	19.4	81	japan	datsun 210 mpg
+348	37.7	4	89	62	2050	17.3	81	japan	toyota tercel
+349	34.1	4	91	68	1985	16	81	japan	mazda glc 4
+350	34.7	4	105	63	2215	14.9	81	usa	plymouth horizon 4
+351	34.4	4	98	65	2045	16.2	81	usa	ford escort 4w
+352	29.9	4	98	65	2380	20.7	81	usa	ford escort 2h
+353	33	4	105	74	2190	14.2	81	europe	volkswagen jetta
+354	34.5	4	100	\N	2320	15.8	81	europe	renault 18i
+355	33.7	4	107	75	2210	14.4	81	japan	honda prelude
+356	32.4	4	108	75	2350	16.8	81	japan	toyota corolla
+357	32.9	4	119	100	2615	14.8	81	japan	datsun 200sx
+358	31.6	4	120	74	2635	18.3	81	japan	mazda 626
+359	28.1	4	141	80	3230	20.4	81	europe	peugeot 505s turbo diesel
+360	30.7	6	145	76	3160	19.6	81	europe	volvo diesel
+361	25.4	6	168	116	2900	12.6	81	japan	toyota cressida
+362	24.2	6	146	120	2930	13.8	81	japan	datsun 810 maxima
+363	22.4	6	231	110	3415	15.8	81	usa	buick century
+364	26.6	8	350	105	3725	19	81	usa	oldsmobile cutlass ls
+365	20.2	6	200	88	3060	17.1	81	usa	ford granada gl
+366	17.6	6	225	85	3465	16.6	81	usa	chrysler lebaron salon
+367	28	4	112	88	2605	19.6	82	usa	chevrolet cavalier
+368	27	4	112	88	2640	18.6	82	usa	chevrolet cavalier wagon
+369	34	4	112	88	2395	18	82	usa	chevrolet cavalier 2-door
+370	31	4	112	85	2575	16.2	82	usa	pontiac j2000 se hatchback
+371	29	4	135	84	2525	16	82	usa	dodge aries se
+372	27	4	151	90	2735	18	82	usa	pontiac phoenix
+373	24	4	140	92	2865	16.4	82	usa	ford fairmont futura
+374	23	4	151	\N	3035	20.5	82	usa	amc concord dl
+375	36	4	105	74	1980	15.3	82	europe	volkswagen rabbit l
+376	37	4	91	68	2025	18.2	82	japan	mazda glc custom l
+377	31	4	91	68	1970	17.6	82	japan	mazda glc custom
+378	38	4	105	63	2125	14.7	82	usa	plymouth horizon miser
+379	36	4	98	70	2125	17.3	82	usa	mercury lynx l
+380	36	4	120	88	2160	14.5	82	japan	nissan stanza xe
+381	36	4	107	75	2205	14.5	82	japan	honda accord
+382	34	4	108	70	2245	16.9	82	japan	toyota corolla
+383	38	4	91	67	1965	15	82	japan	honda civic
+384	32	4	91	67	1965	15.7	82	japan	honda civic (auto)
+385	38	4	91	67	1995	16.2	82	japan	datsun 310 gx
+386	25	6	181	110	2945	16.4	82	usa	buick century limited
+387	38	6	262	85	3015	17	82	usa	oldsmobile cutlass ciera (diesel)
+388	26	4	156	92	2585	14.5	82	usa	chrysler lebaron medallion
+389	22	6	232	112	2835	14.7	82	usa	ford granada l
+390	32	4	144	96	2665	13.9	82	japan	toyota celica gt
+391	36	4	135	84	2370	13	82	usa	dodge charger 2.2
+392	27	4	151	90	2950	17.3	82	usa	chevrolet camaro
+393	27	4	140	86	2790	15.6	82	usa	ford mustang gl
+394	44	4	97	52	2130	24.6	82	europe	vw pickup
+395	32	4	135	84	2295	11.6	82	usa	dodge rampage
+396	28	4	120	79	2625	18.6	82	usa	ford ranger
+397	31	4	119	82	2720	19.4	82	usa	chevy s-10

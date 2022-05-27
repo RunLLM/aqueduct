@@ -1,0 +1,1 @@
+Run `bash init_db.sh` to generate the SQLite version of the demo database.

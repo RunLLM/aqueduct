@@ -1,0 +1,2 @@
+LATENCY = "latency"
+THROUGHPUT = "throughput"

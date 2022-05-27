@@ -1,0 +1,85 @@
+### SRC ###
+# Ignore the build directory, which has compile Golang executables.
+src/build/
+
+# Ignore any IDE configuration files
+*.idea/
+*.vscode/
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# OS generated files
+*.DS_Store
+
+# Python notebooks
+**/.ipynb_checkpoints/
+
+### UI ###
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+**/node_modules
+
+# next.js
+**/.next
+
+# misc
+*.pem
+
+# debug
+ui/*npm-debug.log*
+ui/*yarn-debug.log*
+ui/*yarn-error.log*
+
+# local env files
+**/.env.local
+
+# vercel
+ui/.vercel
+
+### SDK ###
+sdk/__pycache__
+
+sdk/.ipynb_checkpoints/*
+**/dist
+*.egg-info/
+*.mypy_cache
+*.eggs
+
+**/*zip
+
+sdk/ensemble_predictions_aqueduct/
+sdk/join_churn_scores_aqueduct/
+sdk/log_featurize_aqueduct/
+sdk/models/
+sdk/not_too_much_churn_aqueduct_validation_test/
+sdk/predict_decision_tree_model_aqueduct/
+sdk/predict_linear_model_aqueduct/
+sdk/predict_svm_model_aqueduct/
+
+### SDK Docs ###
+sdk/docs/build/
+
+### INTEGRATION TEST ###
+# Files created by running the SDK integration tests
+
+**/__pycache__/
+**/*_aqueduct/
+**/*_aqueduct_validation_test/
+**/*_aqueduct_metric/
+**/*_aqueduct_check/
+**/*_internal_aqueduct_bound_check/
