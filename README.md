@@ -7,13 +7,24 @@ The core abstraction in Aqueduct is a [Workflow](https://docs.aqueducthq.com/wor
 The input Artifact(s) for a Workflow is typically loaded from a database, and the output Artifact(s) are typically persisted back to a database. 
 Each Workflow can either be run on a fixed schedule or triggered on-demand. 
 
-To get started with Aqueduct, simply run the following commands from your terminal:
-
-```bash
-pip3 install aqueduct-ml
-aqueduct server &
-aqueduct ui &
-```
+To get started with Aqueduct:
+1. Ensure that you meet the [basic requirements](https://docs.aqueducthq.com/installation-and-deployment/installing-aqueduct).
+2. Install the aqueduct server and UI by running: 
+    ```bash
+    pip3 install aqueduct-ml
+    ```
+3. Launch the server by running 
+    ```bash
+    aqueduct server &
+    ```
+4. Launch the web-ui by running
+    ```bash
+    aqueduct ui &
+    ```
+5. Get your API Key by running
+    ```bash
+    aqueduct apikey
+    ```
 
 Once you have the Aqueduct server running, this 25-line code snippet is all you need to create your first prediction pipeline:
 
@@ -23,15 +34,15 @@ from aqueduct import op, metric
 from transformers import pipeline
 import torch
 
-@op()
-def sentiment_prediction(reviews):
-    model = pipeline("sentiment-analysis")
-    return reviews.join(pd.DataFrame(model(list(reviews['review']))))
-
 client = aq.AqueductClient("YOUR_API_KEY", "localhost:8080")
 
 demo_db = client.integration("aqueduct_demo/")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
+
+@op()
+def sentiment_prediction(reviews):
+    model = pipeline("sentiment-analysis")
+    return reviews.join(pd.DataFrame(model(list(reviews['review']))))
 
 sentiment_table = sentiment_prediction(reviews_table)
 sentiment_table.save(demo_db.config(table='sentiment_pred', update_mode='replace'))
