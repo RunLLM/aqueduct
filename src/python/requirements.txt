@@ -6,4 +6,5 @@ pydantic
 SQLAlchemy
 distro
 pyyaml
+typing_extensions
 aqueduct-sdk
