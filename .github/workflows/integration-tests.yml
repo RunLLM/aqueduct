@@ -1,0 +1,49 @@
+name: Integration Tests
+
+on:
+  pull_request: # TODO: trigger on approval only
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20 # TODO: bring this down
+    strategy:
+      matrix:
+        # These are all the Python versions that we support.
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+
+    name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Aqueduct
+        run: pip3 install aqueduct-ml
+
+      - name: Install Packages needed for testing
+        run: pip3 install pytest-xdist
+#        run: pip3 install nltk matplotlib pytest-xdist # TODO: do I need?
+
+      - name: Start Aqueduct Server
+        run: aqueduct server
+
+      - name: Run the Integration Tests
+        timeout-minutes: 10 # TODO: is this accurate
+        working-directory: integration_tests/sdk
+        env:
+          API_KEY: spiral
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP -n 5
+
+    # TODO: is publish that much slower
