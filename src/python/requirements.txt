@@ -1,0 +1,9 @@
+boto3
+cloudpickle
+numpy
+pandas
+pydantic
+SQLAlchemy
+distro
+pyyaml
+aqueduct-sdk
