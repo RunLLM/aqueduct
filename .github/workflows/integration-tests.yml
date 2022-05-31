@@ -2,11 +2,11 @@ name: Integration Tests
 
 on:
   pull_request: # TODO: trigger on approval only
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
+#    paths:
+#      - 'src/golang/**'
+#      - 'src/python/**'
+#      - 'integration_tests/**'
+#      - 'sdk/aqueduct/**'
   workflow_dispatch:
 
 jobs:
