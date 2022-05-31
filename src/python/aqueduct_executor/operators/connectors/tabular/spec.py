@@ -3,7 +3,7 @@ from typing import Union
 try:
     from typing import Literal
 except ImportError:
-    # Python 3.7 does not support Literal
+    # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
 
 from pydantic import validator
