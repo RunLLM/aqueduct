@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -27,6 +27,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+#      - name: Install Aqueduct SDK
+#        working-directory: sdk/
+#        run: pip3 install .
+#
+#      - name: Install Aqueduct Backend
+#        working-directory: # TODO: finish this
+
+      # TODO: don't do this
       - name: Install Aqueduct
         run: pip3 install aqueduct-ml
 
@@ -46,4 +54,4 @@ jobs:
           INTEGRATION: aqueduct_demo
         run: pytest . -rP -n 5
 
-    # TODO: is publish that much slower
+    # TODO: is publish that much slower?
