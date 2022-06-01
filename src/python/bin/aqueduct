@@ -16,6 +16,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
+package_version = "0.0.1"
 
 def update_config_yaml(file):
     s=string.ascii_uppercase+string.digits
@@ -206,6 +207,9 @@ def apiKey():
 def clear():
     execute_command(["rm", "-rf", base_directory])
 
+def version():
+    print(package_version)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='The Aqueduct CLI')
     subparsers = parser.add_subparsers(dest="command")
@@ -233,6 +237,7 @@ if __name__ == "__main__":
 
     apikey_args = subparsers.add_parser('apikey', help="Display your Aqueduct API key.")
     clear_args = subparsers.add_parser('clear', help="Erase your Aqueduct installation.")
+    version_args = subparsers.add_parser('version', help="Retrieve the package version number.")
 
     args = parser.parse_args()
 
@@ -249,6 +254,8 @@ if __name__ == "__main__":
         apiKey()
     elif args.command == "clear":
         clear()
+    elif args.command == "version":
+        version()
     else:
         print("Unsupported command:", command)
         sys.exit(1)
