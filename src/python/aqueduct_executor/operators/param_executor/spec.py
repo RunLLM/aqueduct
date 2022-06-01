@@ -1,7 +1,11 @@
 import json
 from pydantic import BaseModel, parse_obj_as
 
-from typing import List, Literal
+try:
+    from typing import Literal
+except ImportError:
+    # Python 3.7 does not support typing.Literal
+    from typing_extensions import Literal
 
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
