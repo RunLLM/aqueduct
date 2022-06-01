@@ -1,5 +1,7 @@
 """
-Installs aqueduct from the local repo. No aqueduct server can be running.
+Installs aqueduct from the local repo. Run with `python3 scripts/install_loca.py`.
+
+Requires no aqueduct server to be running.
 
 After this script completes, running `aqueduct server` will start the backend with the local changes.
 The sdk will also be updated with any local changes.
