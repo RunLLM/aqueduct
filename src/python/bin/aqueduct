@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import random
+import shutil
 import string
 import subprocess
 import sys
@@ -37,7 +38,7 @@ def update_config_yaml(file):
 
 def generate_env_local(ip):
     if os.path.isfile(os.path.join(ui_directory, "app", ".env.local")):
-        execute_command(["rm", os.path.join(ui_directory, "app", ".rnv.local")])
+        execute_command(["rm", os.path.join(ui_directory, "app", ".env.local")])
 
     execute_command(["touch", os.path.join(ui_directory, "app", ".env.local")])
 
@@ -51,12 +52,10 @@ def execute_command(args, cwd=None):
         if proc.returncode != 0:
             raise Exception("Error executing command: %s" % args)
 
-
 def update_executable_permissions():
     execute_command(["chmod", "755", os.path.join(server_directory, "bin", "server")])
     execute_command(["chmod", "755", os.path.join(server_directory, "bin", "executor")])
     execute_command(["chmod", "755", os.path.join(server_directory, "bin", "migrator")])
-
 
 def server():
     if not os.path.isdir(server_directory):
@@ -93,7 +92,7 @@ def server():
                 execute_command(["curl", "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/bin/darwin_arm64/migrator", "--output", os.path.join(server_directory, "bin", "migrator")])
             else:
                 raise Exception("Unsupported operating system and architecture combination: %s, %s" % (system, arch))
-
+            
             update_executable_permissions()
 
             execute_command(["curl", "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/bin/start-function-executor.sh", "--output", os.path.join(server_directory, "bin", "start-function-executor.sh")])
@@ -258,5 +257,5 @@ if __name__ == "__main__":
     elif args.command == "version":
         version()
     else:
-        print("Unsupported command:", args.command)
+        print("Unsupported command:", command)
         sys.exit(1)
