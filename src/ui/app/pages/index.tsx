@@ -17,8 +17,6 @@ const Home: React.FC = () => {
         return null;
     }
 
-    //return <GettingStartedTutorial user={user} />;
-
     return <HomePage user={user} />;
 };
 
