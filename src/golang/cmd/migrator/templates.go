@@ -1,4 +1,4 @@
-package migration
+package main
 
 const (
 	sqlScriptHeader = `package _{{.Dir}}

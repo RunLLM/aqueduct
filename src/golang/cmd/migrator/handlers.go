@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aqueducthq/aqueduct/cmd/migrator/migration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	log "github.com/sirupsen/logrus"
 )
 
 func handleCreate(args []string) {
-	name, language := args[0], migration.ScriptLanguage(args[1])
-	if language != migration.SqlScriptLanguage && language != migration.GoScriptLanguage {
+	name, language := args[0], ScriptLanguage(args[1])
+	if language != SqlScriptLanguage && language != GoScriptLanguage {
 		log.Fatalf("Unknown script language specified. %s", createErrMsg)
 	}
 
-	if err := migration.Create(name, language); err != nil {
+	if err := Create(name, language); err != nil {
 		log.Fatalf("Unexpected error running create: %v", err)
 	}
 }
@@ -31,7 +30,7 @@ func handleGoTo(args []string, conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
-	if err := migration.GoTo(context.Background(), version, db); err != nil {
+	if err := GoTo(context.Background(), version, db); err != nil {
 		log.Errorf("Unexpected error running goto: %v", err)
 	}
 
@@ -43,7 +42,7 @@ func handleUp(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
-	if err := migration.Up(context.Background(), db); err != nil {
+	if err := Up(context.Background(), db); err != nil {
 		log.Errorf("Unexpected error running up: %v", err)
 	}
 
@@ -55,7 +54,7 @@ func handleDown(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
-	if err := migration.Down(context.Background(), db); err != nil {
+	if err := Down(context.Background(), db); err != nil {
 		log.Errorf("Unexpected error running down: %v", err)
 	}
 
@@ -67,7 +66,7 @@ func handleVersion(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
-	version, dirty, err := migration.Version(context.Background(), db)
+	version, dirty, err := Version(context.Background(), db)
 	if err != nil {
 		log.Fatalf("Unexpected error running version: %v", err)
 	}

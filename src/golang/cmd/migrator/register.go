@@ -1,16 +1,16 @@
-package migration
+package main
 
 import (
 	"context"
 
-	_000001 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000001_base"
-	_000002 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000002_add_user_id_to_integration"
-	_000003 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000003_add_storage_column"
-	_000004 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000004_storage_interface_backfill"
-	_000005 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000005_storage_interface_not_null"
-	_000006 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000006_add_retention_policy_column"
-	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000007_workflow_dag_edge_pk"
-	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/migration/000008_delete_s3_config"
+	_000001 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000001_base"
+	_000002 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000002_add_user_id_to_integration"
+	_000003 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000003_add_storage_column"
+	_000004 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000004_storage_interface_backfill"
+	_000005 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000005_storage_interface_not_null"
+	_000006 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000006_add_retention_policy_column"
+	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000007_workflow_dag_edge_pk"
+	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000008_delete_s3_config"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
