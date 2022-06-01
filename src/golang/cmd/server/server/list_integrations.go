@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -19,7 +20,7 @@ type ListIntegrationsHandler struct {
 }
 
 type listIntegrationsArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 }
 
 type listIntegrationsResponse []integrationResponse
@@ -38,13 +39,13 @@ func (*ListIntegrationsHandler) Name() string {
 }
 
 func (*ListIntegrationsHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
 	return &listIntegrationsArgs{
-		CommonArgs: common,
+		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 

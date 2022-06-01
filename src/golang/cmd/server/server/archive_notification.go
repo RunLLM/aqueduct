@@ -4,8 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -39,18 +40,18 @@ func (*ArchiveNotificationHandler) Name() string {
 }
 
 func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statuscode, err := ParseCommonArgs(r)
+	aqContext, statuscode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}
 
-	notificationIdStr := chi.URLParam(r, utils.NotificationIdUrlParam)
+	notificationIdStr := chi.URLParam(r, routes.NotificationIdUrlParam)
 	notificationId, err := uuid.Parse(notificationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed notification ID.")
 	}
 
-	ok, err := h.NotificationReader.ValidateNotificationOwnership(r.Context(), notificationId, common.Id, h.Database)
+	ok, err := h.NotificationReader.ValidateNotificationOwnership(r.Context(), notificationId, aqContext.Id, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during notification ownership validation.")
 	}
@@ -61,7 +62,7 @@ func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int,
 
 	return &archiveNotificationArgs{
 		notificationId: notificationId,
-		userId:         common.Id,
+		userId:         aqContext.Id,
 	}, http.StatusOK, nil
 }
 

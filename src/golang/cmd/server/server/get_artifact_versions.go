@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/dropbox/godropbox/errors"
@@ -53,16 +54,16 @@ func (*GetArtifactVersionsHandler) Name() string {
 }
 
 func (*GetArtifactVersionsHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	return common, http.StatusOK, nil
+	return aqContext, http.StatusOK, nil
 }
 
 func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*CommonArgs)
+	args := interfaceArgs.(*context_parsing.AqContext)
 
 	emptyResponse := getArtifactVersionsResponse{}
 

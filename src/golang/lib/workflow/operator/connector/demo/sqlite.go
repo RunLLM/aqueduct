@@ -1,4 +1,4 @@
-package builtin
+package demo
 
 import (
 	"os"

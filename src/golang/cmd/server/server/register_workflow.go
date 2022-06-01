@@ -4,10 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/dag_validation"
-	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
-	"github.com/aqueducthq/aqueduct/cmd/server/storage"
-	server_utils "github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -16,10 +13,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -61,7 +61,7 @@ type RegisterWorkflowHandler struct {
 }
 
 type registerWorkflowArgs struct {
-	common                   *CommonArgs
+	*context_parsing.AqContext
 	workflowDag              *workflow_dag.WorkflowDag
 	operatorIdToFileContents map[uuid.UUID][]byte
 
@@ -79,14 +79,14 @@ func (*RegisterWorkflowHandler) Name() string {
 }
 
 func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	dagSummary, statusCode, err := request_parser.ParseDagSummaryFromRequest(
+	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		common.Id,
+		aqContext.Id,
 		h.GithubManager,
 		h.StorageConfig,
 	)
@@ -94,10 +94,10 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, statusCode, errors.Wrap(err, "Unable to register workflow.")
 	}
 
-	ok, err := server_utils.ValidateDagOperatorIntegrationOwnership(
+	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		common.getOrganizationId(),
+		aqContext.OrganizationId,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -125,10 +125,10 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		dagSummary.Dag.WorkflowId = collidingWorkflow.Id
 	}
 
-	if err := dag_validation.Validate(
+	if err := dag_utils.Validate(
 		dagSummary.Dag,
 	); err != nil {
-		if _, ok := dag_validation.ValidationErrors[err]; !ok {
+		if _, ok := dag_utils.ValidationErrors[err]; !ok {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occured while validating the DAG.")
 		} else {
 			return nil, http.StatusBadRequest, err
@@ -136,7 +136,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	}
 
 	return &registerWorkflowArgs{
-		common:                   common,
+		AqContext:                aqContext,
 		workflowDag:              dagSummary.Dag,
 		operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
 		isUpdate:                 isUpdate,
@@ -148,7 +148,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	emptyResp := registerWorkflowResponse{}
 
-	if _, err := storage.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
+	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -237,7 +237,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		// If this workflow is newly created, automatically add the user to the workflow's
 		// watchers list.
 		watchWorkflowArgs := &watchWorkflowArgs{
-			CommonArgs: args.common,
+			AqContext:  args.AqContext,
 			workflowId: workflowId,
 		}
 

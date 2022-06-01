@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 )
 
 type Server interface {
@@ -30,7 +30,7 @@ func GetAllHeaders(server Server) []string {
 		"Authorization",
 		"Content-Type",
 		"X-CSRF-Token",
-		utils.ApiKeyHeader,
+		routes.ApiKeyHeader,
 	}
 
 	headersSet := map[string]bool{}

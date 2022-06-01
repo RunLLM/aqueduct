@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -227,7 +226,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 		"Referer",
 	})
 
-	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, utils.Server, s.Name, err)
+	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, "Server", s.Name, err)
 }
 
 func (s *AqServer) Run() {

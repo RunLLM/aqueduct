@@ -1,9 +1,8 @@
-package dag_validation_test
+package dag
 
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/dag_validation"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -196,38 +195,38 @@ func generateUndefinedArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 
 func TestValidate(t *testing.T) {
 	basicDag := generateBasicDag(t)
-	err := dag_validation.Validate(
+	err := Validate(
 		basicDag,
 	)
 	require.Nil(t, err)
 
 	cyclicDag := generateCyclicDag(t)
-	err = dag_validation.Validate(
+	err = Validate(
 		cyclicDag,
 	)
-	require.Equal(t, err, dag_validation.ErrUnexecutableOperator)
+	require.Equal(t, err, ErrUnexecutableOperator)
 
 	unExecutableOperatorDag := generateUnexecutableOperatorDag(t)
-	err = dag_validation.Validate(
+	err = Validate(
 		unExecutableOperatorDag,
 	)
-	require.Equal(t, err, dag_validation.ErrUnexecutableOperator)
+	require.Equal(t, err, ErrUnexecutableOperator)
 
 	emptyDag := generateEmptyDag(t)
-	err = dag_validation.Validate(
+	err = Validate(
 		emptyDag,
 	)
-	require.Equal(t, err, dag_validation.ErrNoOperator)
+	require.Equal(t, err, ErrNoOperator)
 
 	unreachableArtifactDag := generateUnreachableArtifactDag(t)
-	err = dag_validation.Validate(
+	err = Validate(
 		unreachableArtifactDag,
 	)
-	require.Equal(t, err, dag_validation.ErrUnreachableArtifact)
+	require.Equal(t, err, ErrUnreachableArtifact)
 
 	undefinedArtifactDag := generateUndefinedArtifactDag(t)
-	err = dag_validation.Validate(
+	err = Validate(
 		undefinedArtifactDag,
 	)
-	require.Equal(t, err, dag_validation.ErrUnDefinedArtifact)
+	require.Equal(t, err, ErrUnDefinedArtifact)
 }

@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/builtin"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -77,12 +78,12 @@ func ConnectBuiltinIntegration(
 	vaultObject vault.Vault,
 ) error {
 	serviceType := integration.Sqlite
-	builtinConfig := builtin.GetSqliteIntegrationConfig()
+	builtinConfig := demo.GetSqliteIntegrationConfig()
 
 	if _, err := ConnectIntegration(
 		ctx,
 		&ConnectIntegrationArgs{
-			CommonArgs: &CommonArgs{
+			AqContext: &context_parsing.AqContext{
 				User:      *userObject,
 				RequestId: uuid.New().String(),
 			},

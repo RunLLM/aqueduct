@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
+
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 )
 
 type GetUserProfileHandler struct {
@@ -14,10 +16,10 @@ func (*GetUserProfileHandler) Name() string {
 }
 
 func (*GetUserProfileHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	return ParseCommonArgs(r)
+	return context_parsing.ParseAqContext(r.Context())
 }
 
 func (*GetUserProfileHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*CommonArgs)
+	args := interfaceArgs.(*context_parsing.AqContext)
 	return args.User, http.StatusOK, nil
 }

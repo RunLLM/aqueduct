@@ -5,19 +5,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/dag_validation"
-	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
-	server_storage "github.com/aqueducthq/aqueduct/cmd/server/storage"
-	server_utils "github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -42,8 +43,8 @@ import (
 const previewPollIntervalMillisec = 100
 
 type previewArgs struct {
-	*CommonArgs
-	DagSummary *request_parser.DagSummary
+	*context_parsing.AqContext
+	DagSummary *request.DagSummary
 	// Add list of IDs
 }
 
@@ -99,14 +100,14 @@ func (*PreviewHandler) Name() string {
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	dagSummary, statusCode, err := request_parser.ParseDagSummaryFromRequest(
+	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		common.Id,
+		aqContext.Id,
 		h.GithubManager,
 		h.StorageConfig,
 	)
@@ -114,10 +115,10 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	ok, err := server_utils.ValidateDagOperatorIntegrationOwnership(
+	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -130,10 +131,10 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 	removeLoadOperators(dagSummary)
 
-	if err := dag_validation.Validate(
+	if err := dag.Validate(
 		dagSummary.Dag,
 	); err != nil {
-		if _, ok := dag_validation.ValidationErrors[err]; !ok {
+		if _, ok := dag.ValidationErrors[err]; !ok {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occured while validating the DAG.")
 		} else {
 			return nil, http.StatusBadRequest, err
@@ -141,7 +142,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	}
 
 	return &previewArgs{
-		CommonArgs: common,
+		AqContext:  aqContext,
 		DagSummary: dagSummary,
 	}, http.StatusOK, nil
 }
@@ -151,7 +152,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	errorRespPtr := &previewResponse{Status: shared.FailedExecutionStatus}
 	dagSummary := args.DagSummary
 
-	operatorStoragePaths, err := server_storage.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
+	operatorStoragePaths, err := operator.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
@@ -294,7 +295,7 @@ func deserializeArtifactResponses(
 	return responses, nil
 }
 
-func removeLoadOperators(dagSummary *request_parser.DagSummary) {
+func removeLoadOperators(dagSummary *request.DagSummary) {
 	removeList := make([]uuid.UUID, 0, len(dagSummary.Dag.Operators))
 
 	for id, op := range dagSummary.Dag.Operators {

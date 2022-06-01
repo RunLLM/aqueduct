@@ -4,7 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -27,8 +28,8 @@ type GetNodePositionsHandler struct {
 }
 
 type getNodePositionsHandlerArgs struct {
-	common                  *CommonArgs
-	operatorIdToInputOutput map[uuid.UUID]request_parser.OperatorMapping
+	*context_parsing.AqContext
+	operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping
 }
 
 // (x, y) positions for the nodes. First node is at (NodeBaseX=100, NodeBaseY=200) and expands right and down from there.
@@ -48,18 +49,18 @@ func (*GetNodePositionsHandler) Name() string {
 }
 
 func (*GetNodePositionsHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	operatorIdToInputOutput, statusCode, err := request_parser.ParseOperatorMappingFromRequest(r)
+	operatorIdToInputOutput, statusCode, err := request.ParseOperatorMappingFromRequest(r)
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to parse operator mapping.")
 	}
 
 	return &getNodePositionsHandlerArgs{
-		common:                  common,
+		AqContext:               aqContext,
 		operatorIdToInputOutput: operatorIdToInputOutput,
 	}, http.StatusOK, nil
 }
@@ -74,7 +75,7 @@ func (*GetNodePositionsHandler) Prepare(r *http.Request) (interface{}, int, erro
 // 	need to save for rendering edges.
 // The canvas is assumed to be infinite and spacing between nodes are at an arbitrary constant.
 // The positions may need to be resized or shifted if the canvas view does not automatically adjust to contain everything.
-func orderNodes(operatorIdToInputOutput map[uuid.UUID]request_parser.OperatorMapping) ([][]uuid.UUID, []int) {
+func orderNodes(operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping) ([][]uuid.UUID, []int) {
 	artifactToDownstream := make(map[uuid.UUID][]uuid.UUID)
 	upstreamCount := make(map[uuid.UUID]int)
 	layers := [][]uuid.UUID{}
@@ -122,7 +123,7 @@ func orderNodes(operatorIdToInputOutput map[uuid.UUID]request_parser.OperatorMap
 	return layers, activeLayerEdges
 }
 
-func positionNodes(operators map[uuid.UUID]request_parser.OperatorMapping) (map[uuid.UUID]nodePositions, map[uuid.UUID]nodePositions) {
+func positionNodes(operators map[uuid.UUID]request.OperatorMapping) (map[uuid.UUID]nodePositions, map[uuid.UUID]nodePositions) {
 	NodeBaseX := 100
 	NodeBaseY := 200
 	IndentX := 325

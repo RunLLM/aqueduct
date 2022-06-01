@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -27,7 +28,7 @@ import (
 //		serialized `getOperatorResultResponse`,
 //		metadata and content of the result of `operatorId` on the given workflow_dag_result object.
 type getOperatorResultArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	workflowDagResultId uuid.UUID
 	operatorId          uuid.UUID
 }
@@ -51,18 +52,18 @@ func (*GetOperatorResultHandler) Name() string {
 }
 
 func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, utils.WorkflowDagResultIdUrlParam)
+	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
 	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	operatorIdStr := chi.URLParam(r, utils.OperatorIdUrlParam)
+	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
 	operatorId, err := uuid.Parse(operatorIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed operator ID.")
@@ -70,7 +71,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	ok, err := h.OperatorReader.ValidateOperatorOwnership(
 		r.Context(),
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		operatorId,
 		h.Database,
 	)
@@ -82,7 +83,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &getOperatorResultArgs{
-		CommonArgs:          common,
+		AqContext:           aqContext,
 		workflowDagResultId: workflowDagResultId,
 		operatorId:          operatorId,
 	}, http.StatusOK, nil

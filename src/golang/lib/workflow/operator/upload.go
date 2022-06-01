@@ -1,4 +1,4 @@
-package storage
+package operator
 
 import (
 	"context"

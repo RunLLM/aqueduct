@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -15,6 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -27,7 +28,7 @@ import (
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output tables in the user's data warehouse.
 type deleteWorkflowArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	workflowId uuid.UUID
 }
 
@@ -62,12 +63,12 @@ func (*DeleteWorkflowHandler) Name() string {
 }
 
 func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statuscode, err := ParseCommonArgs(r)
+	aqContext, statuscode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, utils.WorkflowIdUrlParam)
+	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
 	workflowId, err := uuid.Parse(workflowIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
@@ -76,7 +77,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.Database,
 	)
 	if err != nil {
@@ -87,7 +88,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}
 
 	return &deleteWorkflowArgs{
-		CommonArgs: common,
+		AqContext:  aqContext,
 		workflowId: workflowId,
 	}, http.StatusOK, nil
 }

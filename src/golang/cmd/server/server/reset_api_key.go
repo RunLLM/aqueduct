@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 )
 
 type resetApiKeyArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 }
 
 type resetApiKeyResponse struct {
@@ -29,13 +30,13 @@ func (*ResetApiKeyHandler) Name() string {
 }
 
 func (*ResetApiKeyHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to reset API key.")
 	}
 
 	return &resetApiKeyArgs{
-		CommonArgs: common,
+		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 

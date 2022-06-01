@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
-	server_utils "github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -39,14 +40,14 @@ type ConnectIntegrationHandler struct {
 
 func (*ConnectIntegrationHandler) Headers() []string {
 	return []string{
-		server_utils.IntegrationNameHeader,
-		server_utils.IntegrationServiceHeader,
-		server_utils.IntegrationConfigHeader,
+		routes.IntegrationNameHeader,
+		routes.IntegrationServiceHeader,
+		routes.IntegrationConfigHeader,
 	}
 }
 
 type ConnectIntegrationArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	Name     string              // User specified name for the integration
 	Service  integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
 	Config   auth.Config         // Integration config
@@ -60,12 +61,12 @@ func (*ConnectIntegrationHandler) Name() string {
 }
 
 func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	service, name, configMap, userOnly, err := request_parser.ParseIntegrationConfigFromRequest(r)
+	service, name, configMap, userOnly, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -77,11 +78,11 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	config := auth.NewStaticConfig(configMap)
 
 	return &ConnectIntegrationArgs{
-		CommonArgs: common,
-		Service:    service,
-		Name:       name,
-		Config:     config,
-		UserOnly:   userOnly,
+		AqContext: aqContext,
+		Service:   service,
+		Name:      name,
+		Config:    config,
+		UserOnly:  userOnly,
 	}, http.StatusOK, nil
 }
 

@@ -1,7 +1,12 @@
-package dag_validation
+package dag
 
 import (
+	"context"
+
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -75,6 +80,40 @@ func Validate(
 	}
 
 	return checkUnexecutableOperator(dag)
+}
+
+func ValidateDagOperatorIntegrationOwnership(
+	ctx context.Context,
+	operators map[uuid.UUID]operator.Operator,
+	organizationId string,
+	integrationReader integration.Reader,
+	db database.Database,
+) (bool, error) {
+	for _, operator := range operators {
+		var integrationId uuid.UUID
+		if operator.Spec.IsExtract() {
+			integrationId = operator.Spec.Extract().IntegrationId
+		} else if operator.Spec.IsLoad() {
+			integrationId = operator.Spec.Load().IntegrationId
+		} else {
+			continue
+		}
+
+		ok, err := integrationReader.ValidateIntegrationOwnership(
+			ctx,
+			integrationId,
+			organizationId,
+			db,
+		)
+		if err != nil {
+			return false, err
+		}
+		if !ok {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func checkUnexecutableOperator(dag *workflow_dag.WorkflowDag) error {

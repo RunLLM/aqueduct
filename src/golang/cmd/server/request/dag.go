@@ -1,11 +1,11 @@
-package request_parser
+package request
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -14,6 +14,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
+
+const dagKey = "dag"
 
 type DagSummary struct {
 	Dag *workflow_dag.WorkflowDag
@@ -28,8 +30,8 @@ func ParseDagSummaryFromRequest(
 	githubManager github.Manager,
 	storageConfig *shared.StorageConfig,
 ) (*DagSummary, int, error) {
-	serializedDAGBytes, err := utils.ExtractHttpPayload(
-		r.Header.Get(utils.ContentTypeHeader),
+	serializedDAGBytes, err := ExtractHttpPayload(
+		r.Header.Get(routes.ContentTypeHeader),
 		dagKey,
 		false, // not a file
 		r,
@@ -101,8 +103,8 @@ func extractOperatorContentsFromRequest(
 	fn := op.Spec.Function()
 
 	if fn.Type == function.FileFunctionType {
-		program, err := utils.ExtractHttpPayload(
-			r.Header.Get(utils.ContentTypeHeader),
+		program, err := ExtractHttpPayload(
+			r.Header.Get(routes.ContentTypeHeader),
 			op.Id.String(), // File name should match operator ID
 			true,
 			r,

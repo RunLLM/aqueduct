@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -40,7 +41,7 @@ const (
 //		serialized `previewTableResponse`, the json serialized table content
 
 type previewTableArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	integrationId uuid.UUID
 	tableName     string
 }
@@ -64,22 +65,22 @@ func (*PreviewTableHandler) Name() string {
 }
 
 func (*PreviewTableHandler) Headers() []string {
-	return []string{utils.TableNameHeader}
+	return []string{routes.TableNameHeader}
 }
 
 func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, utils.IntegrationIdUrlParam)
+	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	tableName := r.Header.Get(utils.TableNameHeader)
+	tableName := r.Header.Get(routes.TableNameHeader)
 	if tableName == "" {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No table name specified.")
 	}
@@ -87,7 +88,7 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.Database,
 	)
 	if err != nil {
@@ -98,7 +99,7 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 	}
 
 	return &previewTableArgs{
-		CommonArgs:    common,
+		AqContext:     aqContext,
 		integrationId: integrationId,
 		tableName:     tableName,
 	}, http.StatusOK, nil

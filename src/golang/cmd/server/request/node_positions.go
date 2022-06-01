@@ -1,4 +1,4 @@
-package request_parser
+package request
 
 import (
 	"encoding/json"

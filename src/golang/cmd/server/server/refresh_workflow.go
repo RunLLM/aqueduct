@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -37,12 +38,12 @@ func (*RefreshWorkflowHandler) Name() string {
 }
 
 func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, utils.WorkflowIdUrlParam)
+	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
 	if workflowIdStr == "" {
 		return nil, http.StatusBadRequest, errors.New("no workflow id was specified")
 	}
@@ -55,7 +56,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.Database,
 	)
 	if err != nil {

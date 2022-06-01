@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -45,16 +46,16 @@ func (*ListNotificationsHandler) Name() string {
 }
 
 func (*ListNotificationsHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	return common, http.StatusOK, nil
+	return aqContext, http.StatusOK, nil
 }
 
 func (h *ListNotificationsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*CommonArgs)
+	args := interfaceArgs.(*context_parsing.AqContext)
 
 	emptyResponse := listNotificationsResponse{}
 

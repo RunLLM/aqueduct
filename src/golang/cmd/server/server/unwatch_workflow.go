@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/response"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -14,7 +16,7 @@ import (
 )
 
 type unwatchWorkflowArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	workflowId uuid.UUID
 }
 
@@ -31,12 +33,12 @@ func (*UnwatchWorkflowHandler) Name() string {
 }
 
 func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, utils.WorkflowIdUrlParam)
+	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
 	workflowId, err := uuid.Parse(workflowIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
@@ -45,7 +47,7 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.Database,
 	)
 	if err != nil {
@@ -56,7 +58,7 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	return &unwatchWorkflowArgs{
-		CommonArgs: common,
+		AqContext:  aqContext,
 		workflowId: workflowId,
 	}, http.StatusOK, nil
 }
@@ -64,7 +66,7 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 func (h *UnwatchWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*unwatchWorkflowArgs)
 
-	response := utils.EmptyResponse{}
+	response := response.EmptyResponse{}
 
 	err := h.WorkflowWatcherWriter.DeleteWorkflowWatcher(ctx, args.workflowId, args.Id, h.Database)
 	if err != nil {

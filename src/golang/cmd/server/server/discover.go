@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -37,7 +38,7 @@ const (
 //		serialized `discoverResponse`, a list of table names
 
 type discoverArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	integrationId uuid.UUID
 }
 
@@ -60,12 +61,12 @@ func (*DiscoverHandler) Name() string {
 }
 
 func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, utils.IntegrationIdUrlParam)
+	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
@@ -74,7 +75,7 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		h.Database,
 	)
 	if err != nil {
@@ -85,7 +86,7 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	}
 
 	return &discoverArgs{
-		CommonArgs:    common,
+		AqContext:     aqContext,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }

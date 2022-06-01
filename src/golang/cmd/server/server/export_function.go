@@ -5,9 +5,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/response"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -16,7 +18,7 @@ import (
 )
 
 type exportFunctionArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	operatorId uuid.UUID
 }
 
@@ -38,12 +40,12 @@ func (*ExportFunctionHandler) Name() string {
 }
 
 func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Error when parsing common args.")
 	}
 
-	operatorIdStr := chi.URLParam(r, utils.OperatorIdUrlParam)
+	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
 	operatorId, err := uuid.Parse(operatorIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIdStr)
@@ -51,7 +53,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	ok, err := h.OperatorReader.ValidateOperatorOwnership(
 		r.Context(),
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		operatorId,
 		h.Database,
 	)
@@ -63,7 +65,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}
 
 	return &exportFunctionArgs{
-		CommonArgs: common,
+		AqContext:  aqContext,
 		operatorId: operatorId,
 	}, http.StatusOK, nil
 }
@@ -122,5 +124,5 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 
 func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
 	resp := interfaceResp.(*exportFunctionResponse)
-	utils.SendSmallFileResponse(w, resp.fileName, resp.program)
+	response.SendSmallFileResponse(w, resp.fileName, resp.program)
 }

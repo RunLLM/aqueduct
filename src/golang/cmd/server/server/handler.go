@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,7 +47,7 @@ func HandleError(
 	} else {
 		externalMsg = err.Error()
 	}
-	utils.SendErrorResponse(w, externalMsg, statusCode)
+	response.SendErrorResponse(w, externalMsg, statusCode)
 }
 
 func HandleSuccess(
@@ -112,7 +112,7 @@ func (*GetHandler) Headers() []string {
 }
 
 func (*GetHandler) SendResponse(w http.ResponseWriter, resp interface{}) {
-	utils.SendJsonResponse(w, resp, http.StatusOK)
+	response.SendJsonResponse(w, resp, http.StatusOK)
 }
 
 type PostHandler struct{}
@@ -130,5 +130,5 @@ func (*PostHandler) Headers() []string {
 }
 
 func (*PostHandler) SendResponse(w http.ResponseWriter, resp interface{}) {
-	utils.SendJsonResponse(w, resp, http.StatusOK)
+	response.SendJsonResponse(w, resp, http.StatusOK)
 }

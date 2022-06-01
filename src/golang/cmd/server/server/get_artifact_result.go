@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/context_parsing"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -29,7 +30,7 @@ import (
 //		serialized `getArtifactResultResponse`,
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
 type getArtifactResultArgs struct {
-	*CommonArgs
+	*context_parsing.AqContext
 	workflowDagResultId uuid.UUID
 	artifactId          uuid.UUID
 }
@@ -54,18 +55,18 @@ func (*GetArtifactResultHandler) Name() string {
 }
 
 func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	common, statusCode, err := ParseCommonArgs(r)
+	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, utils.WorkflowDagResultIdUrlParam)
+	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
 	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	artifactIdStr := chi.URLParam(r, utils.ArtifactIdUrlParam)
+	artifactIdStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
 	artifactId, err := uuid.Parse(artifactIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed artifact ID.")
@@ -73,7 +74,7 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	ok, err := h.ArtifactReader.ValidateArtifactOwnership(
 		r.Context(),
-		common.OrganizationId,
+		aqContext.OrganizationId,
 		artifactId,
 		h.Database,
 	)
@@ -85,7 +86,7 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &getArtifactResultArgs{
-		CommonArgs:          common,
+		AqContext:           aqContext,
 		workflowDagResultId: workflowDagResultId,
 		artifactId:          artifactId,
 	}, http.StatusOK, nil
