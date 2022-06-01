@@ -1,5 +1,7 @@
-export async function getServerSideProps(context) {
-    return {
-        props: {},
-    };
-}
+import { GetServerSideProps } from 'next';
+
+export const getServerSideProps: GetServerSideProps = (context) => {
+  return {
+    props: {},
+  };
+};
