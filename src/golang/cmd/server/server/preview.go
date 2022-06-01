@@ -16,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -131,10 +130,10 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 	removeLoadOperators(dagSummary)
 
-	if err := dag.Validate(
+	if err := dag_utils.Validate(
 		dagSummary.Dag,
 	); err != nil {
-		if _, ok := dag.ValidationErrors[err]; !ok {
+		if _, ok := dag_utils.ValidationErrors[err]; !ok {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occured while validating the DAG.")
 		} else {
 			return nil, http.StatusBadRequest, err
