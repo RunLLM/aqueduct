@@ -37,7 +37,7 @@ import torch
 
 client = aq.Client("YOUR_API_KEY", "localhost:8080")
 
-demo_db = client.integration("aqueduct_demo/")
+demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
 
 @op()
