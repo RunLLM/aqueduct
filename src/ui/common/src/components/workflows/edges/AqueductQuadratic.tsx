@@ -1,7 +1,7 @@
 import React from 'react';
-
 import { EdgeProps } from 'react-flow-renderer';
-import {theme} from '../../../styles/theme/theme';
+
+import { theme } from '../../../styles/theme/theme';
 
 const AqueductQuadratic: React.FC<EdgeProps> = ({
   id,
