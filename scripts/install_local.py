@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
+"""
+Installs aqueduct from the local repo. No aqueduct server can be running.
 
-# Installs aqueduct from the local repo. No aqueduct server can be running.
-#
-# After this script runs, `aqueduct server` will start the backend with the local changes.
-# The sdk will also be updated with any local changes.
+After this script runs, `aqueduct server` will start the backend with the local changes.
+The sdk will also be updated with any local changes.
+"""
 
 import os
 import platform
