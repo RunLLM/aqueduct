@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/verification"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/stretchr/testify/require"
 )
 

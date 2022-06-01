@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aqueducthq/aqueduct/internal/migration"
+	"github.com/aqueducthq/aqueduct/cmd/migrator/migration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	log "github.com/sirupsen/logrus"
 )

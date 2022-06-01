@@ -3,7 +3,7 @@ package verification
 import (
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 )
 
 // Verification middleware for requests coming to server.

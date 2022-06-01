@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/internal/server/builtin"
+	"github.com/aqueducthq/aqueduct/cmd/server/builtin"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/database"

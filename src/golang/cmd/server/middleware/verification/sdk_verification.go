@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 )
 
 // Verifies whether a request coming from the SDK client is valid

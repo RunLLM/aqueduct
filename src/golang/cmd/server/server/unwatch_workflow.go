@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"

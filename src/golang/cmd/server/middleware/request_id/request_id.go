@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 	"github.com/google/uuid"
 )
 

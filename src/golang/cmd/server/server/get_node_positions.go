@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/internal/server/request_parser"
+	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )

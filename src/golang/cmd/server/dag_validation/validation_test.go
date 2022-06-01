@@ -3,7 +3,7 @@ package dag_validation_test
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/internal/server/dag_validation"
+	"github.com/aqueducthq/aqueduct/cmd/server/dag_validation"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"

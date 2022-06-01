@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 	log "github.com/sirupsen/logrus"
 )
 

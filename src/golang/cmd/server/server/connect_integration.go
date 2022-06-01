@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/internal/server/request_parser"
-	server_utils "github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/request_parser"
+	server_utils "github.com/aqueducthq/aqueduct/cmd/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"

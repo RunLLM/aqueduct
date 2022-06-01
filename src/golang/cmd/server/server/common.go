@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
+	"github.com/aqueducthq/aqueduct/cmd/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"

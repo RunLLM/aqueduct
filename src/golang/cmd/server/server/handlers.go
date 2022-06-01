@@ -1,6 +1,6 @@
 package server
 
-import "github.com/aqueducthq/aqueduct/internal/server/routes"
+import "github.com/aqueducthq/aqueduct/cmd/server/routes"
 
 func (s *AqServer) Handlers() map[string]Handler {
 	return map[string]Handler{
