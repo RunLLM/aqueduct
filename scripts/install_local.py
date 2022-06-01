@@ -1,7 +1,7 @@
 """
 Installs aqueduct from the local repo. No aqueduct server can be running.
 
-After this script runs, `aqueduct server` will start the backend with the local changes.
+After this script completes, running `aqueduct server` will start the backend with the local changes.
 The sdk will also be updated with any local changes.
 """
 
@@ -14,6 +14,7 @@ import sys
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+
 
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
@@ -119,4 +120,4 @@ if __name__ == "__main__":
     # Install the local SDK.
     execute_command(["pip", "install", ".", "--user"], cwd=os.path.join(cwd, "sdk"))
 
-
+    print("Successfully installed aqueduct from local repo!")
