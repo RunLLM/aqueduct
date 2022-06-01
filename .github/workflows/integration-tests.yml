@@ -1,7 +1,7 @@
 name: Integration Tests
 
 on:
-  pull_request: # TODO: trigger on approval only
+  pull_request: # TODO: trigger on pushes only
 #    paths:
 #      - 'src/golang/**'
 #      - 'src/python/**'
