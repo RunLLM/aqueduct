@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+# Installs aqueduct-ml, but with all the changes present in the local repo. This should be used to try out any
+# local changes to the SDK or backend.
+
+import os
+
+base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
+server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
+
+
