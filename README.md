@@ -31,12 +31,13 @@ Once you have the Aqueduct server running, this 25-line code snippet is all you 
 ```python
 import aqueduct as aq
 from aqueduct import op, metric
+import pandas as pd
 from transformers import pipeline
 import torch
 
-client = aq.AqueductClient("YOUR_API_KEY", "localhost:8080")
+client = aq.Client("YOUR_API_KEY", "localhost:8080")
 
-demo_db = client.integration("aqueduct_demo/")
+demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
 
 @op()
