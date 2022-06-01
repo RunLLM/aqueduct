@@ -158,7 +158,6 @@ def op(
 
         >>> recommendations.get()
     """
-
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
@@ -166,7 +165,6 @@ def op(
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
-
         def wrapped(*sql_artifacts: TableArtifact) -> TableArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -192,14 +190,12 @@ def op(
             assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
-
+        wrapped.local = lambda *sql_artifacts : func(*sql_artifacts)
         return wrapped
-
     if callable(name):
         return inner_decorator(name)
     else:
         return inner_decorator
-
 
 def metric(
     name: Optional[Union[str, MetricFunction]] = None,
@@ -280,7 +276,7 @@ def metric(
             assert isinstance(new_metric_artifact, MetricArtifact)
 
             return new_metric_artifact
-
+        wrapped.local = lambda *artifacts : func(*artifacts)
         return wrapped
 
     if callable(name):
@@ -373,7 +369,7 @@ def check(
             assert isinstance(new_check_artifact, CheckArtifact)
 
             return new_check_artifact
-
+        wrapped.local = lambda *artifacts : func(*artifacts)
         return wrapped
 
     if callable(name):
