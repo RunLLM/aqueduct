@@ -61,13 +61,14 @@ def generate_version_file(file_path):
     with open(file_path, 'w') as f:
         f.write(package_version)
 
+# Returns a bool indicating whether we need to perform a version upgrade.
 def require_update(file_path):
     if not os.path.isfile(file_path):
         return True
     with open(file_path, 'r') as f:
         current_version = f.read()
         if package_version < current_version:
-            raise Exception("Attempting to install an older version %s but found existing installation %s" % (package_version, current_version))
+            raise Exception("Attempting to install an older version %s but found existing newer version %s" % (package_version, current_version))
         elif package_version == current_version:
             return False
         else:
