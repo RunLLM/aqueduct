@@ -48,6 +48,12 @@ def update_config_yaml(file):
 
 
 if __name__ == "__main__":
+    print("Current directory should be the root directory of the aqueduct repo.")
+    cwd = os.getcwd()
+    if not cwd.endswith("aqueduct"):
+        print("Your working directory is %s" % cwd)
+        exit(1)
+
     # Create the ~/.aqueduct directory is it does not already exist. Copied from `/src/python/bin/aqueduct`.
     if not os.path.isdir(server_directory):
         try:
@@ -102,15 +108,15 @@ if __name__ == "__main__":
             exit(1)
 
     # Build the local backend binaries.
-    execute_command(["(cd ./src && make server)"])
+    execute_command(["make", "server"], cwd=os.path.join(cwd, "src"))
     execute_command(["cp", "./src/build/server", os.path.join(server_directory, "bin", "server")])
-    execute_command(["(cd ./src && make executor)"])
+    execute_command(["make", "executor"], cwd=os.path.join(cwd, "src"))
     execute_command(["cp", "./src/build/executor", os.path.join(server_directory, "bin", "executor")])
 
     # Install the local python operators.
-    execute_command(["(cd ./src/python && pip install . --user)"])
+    execute_command(["pip", "install", ".", "--user"], cwd=os.path.join(cwd, "src", "python"))
 
     # Install the local SDK.
-    execute_command("(cd ./sdk && pip install . --user)")
+    execute_command(["pip", "install", ".", "--user"], cwd=os.path.join(cwd, "sdk"))
 
 

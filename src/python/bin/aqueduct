@@ -37,7 +37,7 @@ def update_config_yaml(file):
 
 def generate_env_local(ip):
     if os.path.isfile(os.path.join(ui_directory, "app", ".env.local")):
-        execute_command(["rm", os.path.join(ui_directory, "app", ".env.local")])
+        execute_command(["rm", os.path.join(ui_directory, "app", ".rnv.local")])
 
     execute_command(["touch", os.path.join(ui_directory, "app", ".env.local")])
 
