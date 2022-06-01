@@ -1,24 +1,9 @@
 import React from 'react';
 
-import { theme } from '../../../styles/theme/theme';
+import { EdgeProps } from 'react-flow-renderer';
+import {theme} from '../../../styles/theme/theme';
 
-type AqueductStraightProps = {
-  id: string;
-  sourceX: number;
-  sourceY: number;
-  targetX: number;
-  targetY: number;
-  sourcePosition: string;
-  targetPosition: string;
-  arrowHeadType: string;
-  markerEndId: string;
-  // These are types that we're required to have here because ReactFlow
-  // passes them in, but we don't use them (currently).
-  style: Record<string, string>;
-  data: Record<string, string>;
-};
-
-const AqueductStraight: React.FC<AqueductStraightProps> = ({
+const AqueductStraight: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,

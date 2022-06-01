@@ -12,14 +12,12 @@ import { RootState } from '../../../stores/store';
 import style from '../../../styles/markdown.module.css';
 import UserProfile from '../../../utils/auth';
 import {
-  ExportFunctionStatus,
-  GoogleSheetsExtractParams,
-  GoogleSheetsLoadParams,
-  handleExportFunction,
-  OperatorType,
-  RelationalDBExtractParams,
-  RelationalDBLoadParams,
-} from '../../../utils/operators';
+    ExportFunctionStatus, GoogleSheetsExtractParams,
+    GoogleSheetsLoadParams,
+    handleExportFunction, OperatorType,
+    RelationalDBExtractParams,
+    RelationalDBLoadParams
+} from "../../../utils/operators";
 import DataPreviewer from '../../layouts/data_previewer';
 import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../primitives/Button.styles';

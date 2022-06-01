@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "alias": {
@@ -15,6 +15,7 @@
     "node": ">=10"
   },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test --passWithNoTests",
@@ -23,6 +24,9 @@
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
+  },
+  "resolutions": {
+    "@types/react": "^18.0.8"
   },
   "peerDependencies": {
     "@emotion/react": "^11.9.0",
@@ -38,9 +42,9 @@
     "cron-parser": "^4.0.0",
     "query-string": "^7.1.1",
     "random-word-slugs": "^0.1.6",
-    "react": "^17.0.2",
+    "react": "^18.1.0",
     "react-cookies": "^0.1.1",
-    "react-dom": "^17.0.2",
+    "react-dom": "^18.1.0",
     "react-flow-renderer": "^10.1.0",
     "react-markdown": "^6.0.3",
     "react-redux": "^8.0.0",
@@ -72,7 +76,7 @@
   "devDependencies": {
     "@babel/preset-react": "^7.17.12",
     "@size-limit/preset-small-lib": "^7.0.8",
-    "@types/react": "^18.0.9",
+    "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.5",
     "husky": "^8.0.1",
     "react": "^18.1.0",
