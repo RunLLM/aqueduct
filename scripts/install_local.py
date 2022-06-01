@@ -11,6 +11,7 @@ import random
 import string
 import subprocess
 import sys
+import traceback as tb
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
@@ -59,6 +60,7 @@ if __name__ == "__main__":
     if not os.path.isdir(server_directory):
         try:
             directories = [
+                base_directory,
                 server_directory,
                 os.path.join(server_directory, "db"),
                 os.path.join(server_directory, "storage"),
@@ -69,7 +71,8 @@ if __name__ == "__main__":
             ]
 
             for directory in directories:
-                os.mkdir(directory)
+                if not os.path.isdir(directory):
+                    os.mkdir(directory)
 
             system = platform.system()
             arch = platform.machine()
@@ -105,6 +108,7 @@ if __name__ == "__main__":
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
             print(e)
+            tb.print_tb(e.__traceback__)
             execute_command(["rm", "-rf", server_directory])
             exit(1)
 
