@@ -1,24 +1,9 @@
 import React from 'react';
+import { EdgeProps } from 'react-flow-renderer';
 
 import { theme } from '../../../styles/theme/theme';
 
-type AqueductQuadraticProps = {
-  id: string;
-  sourceX: number;
-  sourceY: number;
-  targetX: number;
-  targetY: number;
-  sourcePosition: string;
-  targetPosition: string;
-  arrowHeadType: string;
-  markerEndId: string;
-  // These are types that we're required to have here because ReactFlow
-  // passes them in, but we don't use them (currently).
-  style?: Record<string, string>;
-  data: Record<string, string>;
-};
-
-const AqueductQuadratic: React.FC<AqueductQuadraticProps> = ({
+const AqueductQuadratic: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,
