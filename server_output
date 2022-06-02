@@ -1,0 +1,19 @@
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: SELECT version,dirty,name FROM schema_version ORDER BY version DESC LIMIT 1;
+time=2022-06-02T15:31:01-07:00 level=info msg=Creating a user account and a builtin SQLite integration.
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: SELECT id,email,organization_id,role,api_key,auth0_id FROM app_user WHERE api_key = $1; with args: [0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT]
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: SELECT id,organization_id,user_id,service,name,config,created_at,validated FROM integration WHERE organization_id = $1 AND user_id IS NULL; with args: [aqueduct]
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: SELECT id,user_id,name,description,schedule,created_at,retention_policy FROM workflow;
+time=2022-06-02T15:31:01-07:00 level=info msg=Successfully created cron jobs for existing workflows
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: 
+		SELECT workflow.id AS workflow_id, workflow.schedule, workflow_dag_result.created_at AS last_run_at 
+		FROM workflow, workflow_dag, workflow_dag_result, 
+		(SELECT workflow.id, MAX(workflow_dag_result.created_at) AS created_at 
+		FROM workflow, workflow_dag, workflow_dag_result 
+		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		GROUP BY workflow.id) AS workflow_latest_run 
+		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		AND workflow.id = workflow_latest_run.id AND workflow_dag_result.created_at = workflow_latest_run.created_at;
+time=2022-06-02T15:31:01-07:00 level=info msg=Executing query: SELECT id,user_id,name,description,schedule,created_at,retention_policy FROM workflow;
+time=2022-06-02T15:31:01-07:00 level=info msg=You can use api key 0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT to connect to the server
+time=2022-06-02T15:31:01-07:00 level=info msg=2022-06-02 03:31:01 PM Starting HTTP server on port 8080
+

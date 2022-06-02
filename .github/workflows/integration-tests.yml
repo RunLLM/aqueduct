@@ -58,6 +58,18 @@ jobs:
         with:
           go-version: 1.16.3
 
+      - name: Install aqueduct-ml
+        working-directory: src/python
+        run: pip3 install .
+
+      - name: Startup the server and wait for it to initialize
+        run: aqueduct server > server_output 2>&1 & && sleep 3
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py
 
@@ -65,10 +77,7 @@ jobs:
         run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Start aqueduct server
-        run: aqueduct server > server_output 2>&1 &
-
-      - name: Briefly wait for server to start
-        run: sleep 2
+        run: aqueduct server > server_output 2>&1 & && sleep 3
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
