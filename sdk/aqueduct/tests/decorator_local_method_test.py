@@ -6,15 +6,15 @@ inp = default_table_artifact()
 
 @op
 def op_fn_with_parentheses(df):
-    print(1)
-print(op_fn_with_parentheses.local)
+    pass
+print(op_fn_with_parentheses.local.__name__)
 
 @check()
 def check_fn_with_parentheses(df):
-    print(2)
+    pass
 print(check_fn_with_parentheses.local)
 
 @metric()
 def metric_fn_with_parentheses(df):
-    print(3)
-print(metric_fn_with_parentheses.local)
+    pass
+print(metric_fn_with_parentheses.local())
