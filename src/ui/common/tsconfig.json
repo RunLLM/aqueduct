@@ -26,7 +26,6 @@
     // use Node's module resolution algorithm, instead of the legacy TS one
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": true,
     // transpile JSX to React.createElement
     //"jsx": "react",
     "jsx": "preserve",
