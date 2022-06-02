@@ -226,7 +226,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 		"Referer",
 	})
 
-	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, "Server", s.Name, err)
+	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
 func (s *AqServer) Run() {
