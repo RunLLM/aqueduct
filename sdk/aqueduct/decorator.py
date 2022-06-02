@@ -190,7 +190,9 @@ def op(
             assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
-        wrapped.local = lambda *sql_artifacts : func(*sql_artifacts)
+        
+        #enable .local(*args) which calls on the original function with dataframes as inputs
+        wrapped.local = lambda *sql_artifacts : func(*tuple([sql_artifact.get() for sql_artifact in sql_artifacts]))
         return wrapped
     if callable(name):
         return inner_decorator(name)
@@ -276,7 +278,9 @@ def metric(
             assert isinstance(new_metric_artifact, MetricArtifact)
 
             return new_metric_artifact
-        wrapped.local = lambda *artifacts : func(*artifacts)
+
+        #enable .local(*args) which calls on the original function with dataframes as inputs
+        wrapped.local = lambda *artifacts : func(*tuple([artifact.get() for artifact in artifacts]))
         return wrapped
 
     if callable(name):
@@ -369,7 +373,9 @@ def check(
             assert isinstance(new_check_artifact, CheckArtifact)
 
             return new_check_artifact
-        wrapped.local = lambda *artifacts : func(*artifacts)
+
+        #enable .local(*args) which calls on the original function with dataframes as inputs
+        wrapped.local = lambda *artifacts : func(*tuple([artifact.get() for artifact in artifacts]))
         return wrapped
 
     if callable(name):

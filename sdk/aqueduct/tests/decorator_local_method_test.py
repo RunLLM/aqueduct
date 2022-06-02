@@ -7,14 +7,14 @@ inp = default_table_artifact()
 @op
 def op_fn_with_parentheses(df):
     print(1)
-print(op_fn_with_parentheses.local(inp))
+print(op_fn_with_parentheses.local)
 
 @check()
 def check_fn_with_parentheses(df):
     print(2)
-print(check_fn_with_parentheses.local(inp))
+print(check_fn_with_parentheses.local)
 
 @metric()
 def metric_fn_with_parentheses(df):
     print(3)
-print(metric_fn_with_parentheses.local(inp))
+print(metric_fn_with_parentheses.local)
