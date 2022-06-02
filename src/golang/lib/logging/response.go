@@ -20,7 +20,7 @@ func LogRoute(
 	r *http.Request,
 	excludedHeaderFields map[string]bool,
 	statusCode int,
-	component string,
+	component Component,
 	serviceName string,
 	err error,
 ) {
@@ -54,7 +54,7 @@ func LogRoute(
 
 func LogAsyncEvent(
 	ctx context.Context,
-	component string,
+	component Component,
 	serviceName string,
 	err error,
 ) {
