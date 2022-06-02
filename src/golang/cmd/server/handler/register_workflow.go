@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"context"
@@ -199,7 +199,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	} else {
 		// We should create cron jobs for newly created, non-manually triggered workflows.
 		if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
-			err = createWorkflowCronJob(
+			err = CreateWorkflowCronJob(
 				ctx,
 				args.workflowDag.Metadata,
 				h.Database.Config(),
@@ -225,8 +225,8 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		WorkflowReader: h.WorkflowReader,
 	}).Perform(
 		ctx,
-		&refreshWorkflowArgs{
-			workflowId: workflowId,
+		&RefreshWorkflowArgs{
+			WorkflowId: workflowId,
 		},
 	)
 	if err != nil {
@@ -254,9 +254,9 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
 }
 
-// createWorkflowCronJob creates a k8s cron job
+// CreateWorkflowCronJob creates a k8s cron job
 // that will run the workflow on the specified schedule.
-func createWorkflowCronJob(
+func CreateWorkflowCronJob(
 	ctx context.Context,
 	workflow *workflow.Workflow,
 	dbConfig *database.DatabaseConfig,

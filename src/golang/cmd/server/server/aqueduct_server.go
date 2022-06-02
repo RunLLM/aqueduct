@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
@@ -186,22 +187,22 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	return nil
 }
 
-func (s *AqServer) AddHandler(route string, handler Handler) {
+func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	var middleware alice.Chain
-	if handler.AuthMethod() == ApiKeyAuthMethod {
+	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
 		middleware = alice.New(
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 			verification.VerifyRequest(),
 		)
 	} else {
-		panic(ErrUnsupportedAuthMethod)
+		panic(handler.ErrUnsupportedAuthMethod)
 	}
 
 	s.Router.Method(
-		string(handler.Method()),
+		string(handlerObj.Method()),
 		route,
-		middleware.ThenFunc(ExecuteHandler(s, handler)),
+		middleware.ThenFunc(ExecuteHandler(s, handlerObj)),
 	)
 }
 

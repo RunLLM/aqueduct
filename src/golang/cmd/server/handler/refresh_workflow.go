@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"context"
@@ -17,8 +17,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type refreshWorkflowArgs struct {
-	workflowId uuid.UUID
+type RefreshWorkflowArgs struct {
+	WorkflowId uuid.UUID
 }
 
 // Refresh workflow creates a new workflow version by
@@ -66,8 +66,8 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	return &refreshWorkflowArgs{
-		workflowId: workflowId,
+	return &RefreshWorkflowArgs{
+		WorkflowId: workflowId,
 	}, http.StatusOK, nil
 }
 
@@ -76,11 +76,11 @@ func generateWorkflowJobName() string {
 }
 
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*refreshWorkflowArgs)
+	args := interfaceArgs.(*RefreshWorkflowArgs)
 
 	workflowObject, err := h.WorkflowReader.GetWorkflow(
 		ctx,
-		args.workflowId,
+		args.WorkflowId,
 		h.Database,
 	)
 	if err != nil {

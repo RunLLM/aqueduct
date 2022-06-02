@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -80,9 +81,9 @@ func ConnectBuiltinIntegration(
 	serviceType := integration.Sqlite
 	builtinConfig := demo.GetSqliteIntegrationConfig()
 
-	if _, err := ConnectIntegration(
+	if _, err := handler.ConnectIntegration(
 		ctx,
-		&ConnectIntegrationArgs{
+		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *userObject,
 				RequestId: uuid.New().String(),
