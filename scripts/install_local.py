@@ -32,7 +32,6 @@ if __name__ == "__main__":
         print("Your working directory is %s" % cwd)
         exit(1)
 
-    # Create the ~/.aqueduct directory is it does not already exist. Copied from `/src/python/bin/aqueduct`.
     if not os.path.isdir(server_directory):
         print("~/.aqueduct/server must exist.")
         exit(1)
