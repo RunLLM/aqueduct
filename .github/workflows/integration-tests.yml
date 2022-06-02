@@ -40,8 +40,7 @@ jobs:
         run: python3 scripts/install_local.py
 
       - name: Install packages needed for testing
-        run: pip3 install pytest-xdist
-#        run: pip3 install nltk matplotlib pytest-xdist # TODO: do I need?
+        run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Start aqueduct server
         run: aqueduct server > server_output 2>&1 &
