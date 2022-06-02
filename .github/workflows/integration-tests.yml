@@ -25,6 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: echo
+        run: echo $HOME
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
