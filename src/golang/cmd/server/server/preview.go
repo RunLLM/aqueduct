@@ -11,7 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -42,7 +42,7 @@ import (
 const previewPollIntervalMillisec = 100
 
 type previewArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	DagSummary *request.DagSummary
 	// Add list of IDs
 }
@@ -99,7 +99,7 @@ func (*PreviewHandler) Name() string {
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

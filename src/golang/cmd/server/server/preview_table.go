@@ -10,7 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -41,7 +41,7 @@ const (
 //		serialized `previewTableResponse`, the json serialized table content
 
 type previewTableArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	integrationId uuid.UUID
 	tableName     string
 }
@@ -69,7 +69,7 @@ func (*PreviewTableHandler) Headers() []string {
 }
 
 func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

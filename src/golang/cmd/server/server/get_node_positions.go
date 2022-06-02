@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -28,7 +28,7 @@ type GetNodePositionsHandler struct {
 }
 
 type getNodePositionsHandlerArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping
 }
 
@@ -49,7 +49,7 @@ func (*GetNodePositionsHandler) Name() string {
 }
 
 func (*GetNodePositionsHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

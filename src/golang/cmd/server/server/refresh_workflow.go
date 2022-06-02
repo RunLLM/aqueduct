@@ -7,7 +7,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -38,7 +38,7 @@ func (*RefreshWorkflowHandler) Name() string {
 }
 
 func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

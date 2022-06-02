@@ -8,7 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -28,7 +28,7 @@ import (
 //		serialized `getOperatorResultResponse`,
 //		metadata and content of the result of `operatorId` on the given workflow_dag_result object.
 type getOperatorResultArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	workflowDagResultId uuid.UUID
 	operatorId          uuid.UUID
 }
@@ -52,7 +52,7 @@ func (*GetOperatorResultHandler) Name() string {
 }
 
 func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

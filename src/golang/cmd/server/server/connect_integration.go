@@ -12,7 +12,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -47,7 +47,7 @@ func (*ConnectIntegrationHandler) Headers() []string {
 }
 
 type ConnectIntegrationArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	Name     string              // User specified name for the integration
 	Service  integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
 	Config   auth.Config         // Integration config
@@ -61,7 +61,7 @@ func (*ConnectIntegrationHandler) Name() string {
 }
 
 func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}

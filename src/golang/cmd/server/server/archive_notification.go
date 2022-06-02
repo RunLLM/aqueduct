@@ -6,7 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -40,7 +40,7 @@ func (*ArchiveNotificationHandler) Name() string {
 }
 
 func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statuscode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}

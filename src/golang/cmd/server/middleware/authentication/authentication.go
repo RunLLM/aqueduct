@@ -7,7 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -28,9 +28,9 @@ func RequireApiKey(userReader user.Reader, db database.Database) func(http.Handl
 				response.SendErrorResponse(w, "Unable to validate API key credentials.", http.StatusForbidden)
 			} else {
 				// Create a new context with userId and organizationId.
-				contextWithUserId := context.WithValue(r.Context(), context_parsing.UserIdKey, userObject.Id.String())
-				contextWithOrganizationId := context.WithValue(contextWithUserId, context_parsing.OrganizationIdKey, userObject.OrganizationId)
-				contextWithUserAuth0Id := context.WithValue(contextWithOrganizationId, context_parsing.UserAuth0IdKey, userObject.Auth0Id)
+				contextWithUserId := context.WithValue(r.Context(), aq_context.UserIdKey, userObject.Id.String())
+				contextWithOrganizationId := context.WithValue(contextWithUserId, aq_context.OrganizationIdKey, userObject.OrganizationId)
+				contextWithUserAuth0Id := context.WithValue(contextWithOrganizationId, aq_context.UserAuth0IdKey, userObject.Auth0Id)
 				h.ServeHTTP(w, r.WithContext(contextWithUserAuth0Id))
 			}
 		})

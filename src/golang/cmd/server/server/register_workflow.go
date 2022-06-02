@@ -13,7 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -61,7 +61,7 @@ type RegisterWorkflowHandler struct {
 }
 
 type registerWorkflowArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	workflowDag              *workflow_dag.WorkflowDag
 	operatorIdToFileContents map[uuid.UUID][]byte
 
@@ -79,7 +79,7 @@ func (*RegisterWorkflowHandler) Name() string {
 }
 
 func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
