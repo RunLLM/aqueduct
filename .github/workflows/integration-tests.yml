@@ -63,7 +63,7 @@ jobs:
         run: pip3 install .
 
       - name: Startup the server and wait for it to initialize
-        run: (aqueduct server > server_output 2>&1 &) && sleep 5
+        run: (aqueduct server > server_output 2>&1 &) && sleep 10
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
@@ -77,7 +77,7 @@ jobs:
         run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Start aqueduct server
-        run: (aqueduct server > server_output 2>&1 &) && sleep 5
+        run: (aqueduct server > server_output 2>&1 &) && sleep 10
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
