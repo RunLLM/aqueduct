@@ -48,11 +48,13 @@ jobs:
       - name: Briefly wait for server to start
         run: sleep 2
 
+      - name: Fetch the API key
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
       - name: Run the Integration Tests
         timeout-minutes: 10 # TODO: is this accurate
         working-directory: integration_tests/sdk
         env:
-          API_KEY: spiral
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
         run: pytest . -rP -n 5
