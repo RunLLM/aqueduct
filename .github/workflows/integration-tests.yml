@@ -1,7 +1,6 @@
 name: Integration Tests
 
 on:
-  pull_request: # TODO: remove before request
   push:
     paths:
       - 'src/golang/**'
@@ -38,7 +37,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        # TODO(ENG-1174): Get OSS working with Python 3.10
+        # TODO(ENG-1174, ENG-1182): Get OSS working with Python 3.10 and 3.7
         python-version: ['3.8', '3.9']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
