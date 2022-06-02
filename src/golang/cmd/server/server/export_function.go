@@ -9,7 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -18,7 +18,7 @@ import (
 )
 
 type exportFunctionArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	operatorId uuid.UUID
 }
 
@@ -40,7 +40,7 @@ func (*ExportFunctionHandler) Name() string {
 }
 
 func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Error when parsing common args.")
 	}

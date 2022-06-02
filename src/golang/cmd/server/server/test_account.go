@@ -5,7 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
@@ -83,7 +83,7 @@ func ConnectBuiltinIntegration(
 	if _, err := ConnectIntegration(
 		ctx,
 		&ConnectIntegrationArgs{
-			AqContext: &context_parsing.AqContext{
+			AqContext: &aq_context.AqContext{
 				User:      *userObject,
 				RequestId: uuid.New().String(),
 			},

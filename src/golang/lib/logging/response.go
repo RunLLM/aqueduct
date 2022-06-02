@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,8 +46,8 @@ func LogRoute(
 		"Code":          statusCode,
 		"Component":     component,
 		"Route":         routeName,
-		"UserId":        ctx.Value(context_parsing.UserIdKey),
-		"UserRequestId": ctx.Value(context_parsing.UserRequestIdKey),
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
 	}).Info()
 }
@@ -69,8 +69,8 @@ func LogAsyncEvent(
 		"ServiceName":   serviceName,
 		"Status":        status,
 		"Component":     component,
-		"UserId":        ctx.Value(context_parsing.UserIdKey),
-		"UserRequestId": ctx.Value(context_parsing.UserRequestIdKey),
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
 	}).Info()
 }

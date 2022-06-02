@@ -9,7 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -30,7 +30,7 @@ import (
 //		serialized `getArtifactResultResponse`,
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
 type getArtifactResultArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	workflowDagResultId uuid.UUID
 	artifactId          uuid.UUID
 }
@@ -55,7 +55,7 @@ func (*GetArtifactResultHandler) Name() string {
 }
 
 func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

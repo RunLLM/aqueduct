@@ -13,7 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -34,7 +34,7 @@ import (
 //		all metadata and results information for the given `workflowId`
 
 type getWorkflowArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	workflowId uuid.UUID
 }
 
@@ -72,7 +72,7 @@ func (*GetWorkflowHandler) Name() string {
 }
 
 func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}

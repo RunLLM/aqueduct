@@ -15,7 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
-	"github.com/aqueducthq/aqueduct/lib/context_parsing"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -28,7 +28,7 @@ import (
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output tables in the user's data warehouse.
 type deleteWorkflowArgs struct {
-	*context_parsing.AqContext
+	*aq_context.AqContext
 	workflowId uuid.UUID
 }
 
@@ -63,7 +63,7 @@ func (*DeleteWorkflowHandler) Name() string {
 }
 
 func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statuscode, err := context_parsing.ParseAqContext(r.Context())
+	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}
