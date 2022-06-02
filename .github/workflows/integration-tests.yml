@@ -1,23 +1,45 @@
 name: Integration Tests
 
 on:
-  pull_request: # TODO: trigger on pushes and ci-comment
-#    paths:
-#      - 'src/golang/**'
-#      - 'src/python/**'
-#      - 'integration_tests/**'
-#      - 'sdk/aqueduct/**'
+  pull_request: # TODO: remove before request
+  push:
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+  issue_comment:
+    types: [ created ]
   workflow_dispatch:
 
 jobs:
+  check-comment-trigger:
+    name: Check Comment Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
+    timeout-minutes: 5
+    steps:
+      - name: Check for Comment triggers
+        uses: khan/pull-request-comment-trigger@master
+        id: check_comment
+        with:
+          trigger: 'ci'
+          prefix_only: 'true'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: check-comment-trigger
+    if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        python-version: ['3.8']
-#        python-version: ['3.7', '3.8', '3.9'] TODO
+        # TODO(ENG-1174): Get OSS working with Python 3.10
+        python-version: ['3.7', '3.8', '3.9']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -58,7 +80,6 @@ jobs:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
         run: pytest . -rP -n 5 --publish
-      # TODO: is publish that much slower
 
       - uses: actions/upload-artifact@v3
         with:
