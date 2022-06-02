@@ -43,9 +43,9 @@ if __name__ == "__main__":
     execute_command(["cp", "./src/build/executor", os.path.join(server_directory, "bin", "executor")])
 
     # Install the local python operators.
-    execute_command(["pip", "install", ".", "--user"], cwd=os.path.join(cwd, "src", "python"))
+    execute_command(["pip", "install", "."], cwd=os.path.join(cwd, "src", "python"))
 
     # Install the local SDK.
-    execute_command(["pip", "install", ".", "--user"], cwd=os.path.join(cwd, "sdk"))
+    execute_command(["pip", "install", "."], cwd=os.path.join(cwd, "sdk"))
 
     print("Successfully installed aqueduct from local repo!")
