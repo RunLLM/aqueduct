@@ -1,0 +1,30 @@
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: SELECT version,dirty,name FROM schema_version ORDER BY version DESC LIMIT 1;
+time=2022-06-01T17:09:15-07:00 level=info msg=Creating a user account and a builtin SQLite integration.
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: SELECT id,email,organization_id,role,api_key,auth0_id FROM app_user WHERE api_key = $1; with args: [0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT]
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: SELECT id,organization_id,user_id,service,name,config,created_at,validated FROM integration WHERE organization_id = $1 AND user_id IS NULL; with args: [aqueduct]
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: SELECT id,user_id,name,description,schedule,created_at,retention_policy FROM workflow;
+time=2022-06-01T17:09:15-07:00 level=info msg=Successfully created cron jobs for existing workflows
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: 
+		SELECT workflow.id AS workflow_id, workflow.schedule, workflow_dag_result.created_at AS last_run_at 
+		FROM workflow, workflow_dag, workflow_dag_result, 
+		(SELECT workflow.id, MAX(workflow_dag_result.created_at) AS created_at 
+		FROM workflow, workflow_dag, workflow_dag_result 
+		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		GROUP BY workflow.id) AS workflow_latest_run 
+		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		AND workflow.id = workflow_latest_run.id AND workflow_dag_result.created_at = workflow_latest_run.created_at;
+time=2022-06-01T17:09:15-07:00 level=info msg=Executing query: SELECT id,user_id,name,description,schedule,created_at,retention_policy FROM workflow;
+time=2022-06-01T17:09:15-07:00 level=info msg=You can use api key 0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT to connect to the server
+time=2022-06-01T17:09:15-07:00 level=info msg=2022-06-01 05:09:15 PM Starting HTTP server on port 8080
+
+time=2022-06-01T17:13:28-07:00 level=info msg=Executing query: SELECT id,email,organization_id,role,api_key,auth0_id FROM app_user WHERE api_key = $1; with args: [0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT]
+time=2022-06-01T17:13:28-07:00 level=info Code=200 Component=Server Error= Headers=map[Sec-Ch-Ua:[" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"] Sec-Ch-Ua-Mobile:[?0] Sec-Ch-Ua-Platform:["macOS"] Sec-Fetch-Dest:[empty] Sec-Fetch-Mode:[cors] Sec-Fetch-Site:[same-site]] Route=GetUserProfile ServiceName= Status=SUCCEEDED URL=/user UserId=28e7c88f-7095-4218-a8c4-3b1e36448854 UserRequestId=d3cb500a-e208-11ec-8224-7a08383b8b31
+time=2022-06-01T17:13:28-07:00 level=info msg=Executing query: SELECT id,email,organization_id,role,api_key,auth0_id FROM app_user WHERE api_key = $1; with args: [0BU1G9DAQF4YVIZ6CS8KJWOX27RLH5PT]
+time=2022-06-01T17:13:28-07:00 level=info msg=Executing query: SELECT id,receiver_id,content,status,level,association,created_at FROM notification WHERE receiver_id = $1 AND status = $2; with args: [28e7c88f-7095-4218-a8c4-3b1e36448854 unread]
+time=2022-06-01T17:13:28-07:00 level=info msg=Executing query: 
+		SELECT workflow.id, workflow.name, workflow_dag_result.id AS dag_result_id
+		FROM workflow, workflow_dag, workflow_dag_result 
+		WHERE workflow_dag_result.workflow_dag_id = workflow_dag.id 
+		AND workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag_result.id IN ($1); with args: [67107329-b01e-4f9a-a45e-ccaa8b32e3bf]
+time=2022-06-01T17:13:28-07:00 level=info Code=200 Component=Server Error= Headers=map[Sec-Ch-Ua:[" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"] Sec-Ch-Ua-Mobile:[?0] Sec-Ch-Ua-Platform:["macOS"] Sec-Fetch-Dest:[empty] Sec-Fetch-Mode:[cors] Sec-Fetch-Site:[same-site]] Route=ListNotifications ServiceName= Status=SUCCEEDED URL=/notifications UserId=28e7c88f-7095-4218-a8c4-3b1e36448854 UserRequestId=d3d1a306-e208-11ec-8224-7a08383b8b31
