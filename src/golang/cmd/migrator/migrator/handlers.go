@@ -1,4 +1,4 @@
-package main
+package migrator
 
 import (
 	"context"
@@ -9,10 +9,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func handleCreate(args []string) {
+func HandleCreate(args []string) {
 	name, language := args[0], ScriptLanguage(args[1])
 	if language != SqlScriptLanguage && language != GoScriptLanguage {
-		log.Fatalf("Unknown script language specified. %s", createErrMsg)
+		log.Fatalf("Unknown script language specified. Create must be of form: migrate create NAME [sql|go]")
 	}
 
 	if err := Create(name, language); err != nil {
@@ -20,7 +20,7 @@ func handleCreate(args []string) {
 	}
 }
 
-func handleGoTo(args []string, conf *database.DatabaseConfig) {
+func HandleGoTo(args []string, conf *database.DatabaseConfig) {
 	versionStr := args[0]
 	version, err := strconv.ParseInt(versionStr, 0, 64)
 	if err != nil {
@@ -35,10 +35,10 @@ func handleGoTo(args []string, conf *database.DatabaseConfig) {
 	}
 
 	log.Info("Checking current schema version...")
-	handleVersion(conf)
+	HandleVersion(conf)
 }
 
-func handleUp(conf *database.DatabaseConfig) {
+func HandleUp(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
@@ -47,10 +47,10 @@ func handleUp(conf *database.DatabaseConfig) {
 	}
 
 	log.Info("Checking current schema version...")
-	handleVersion(conf)
+	HandleVersion(conf)
 }
 
-func handleDown(conf *database.DatabaseConfig) {
+func HandleDown(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
@@ -59,10 +59,10 @@ func handleDown(conf *database.DatabaseConfig) {
 	}
 
 	log.Info("Checking current schema version...")
-	handleVersion(conf)
+	HandleVersion(conf)
 }
 
-func handleVersion(conf *database.DatabaseConfig) {
+func HandleVersion(conf *database.DatabaseConfig) {
 	db := createDatabaseClient(conf)
 	defer db.Close()
 
