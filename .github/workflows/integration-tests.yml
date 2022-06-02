@@ -67,31 +67,31 @@ jobs:
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
-        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+        run: echo $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
 
       # install_local.py requires ~/.aqueduct/server scaffolding to exist.
-      - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py
-
-      - name: Install packages needed for testing
-        run: pip3 install nltk matplotlib pytest-xdist
-
-      - name: Start aqueduct server
-        run: (aqueduct server > server_output 2>&1 &) && sleep 3
-
-      - name: Fetch the API key
-        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
-
-      - name: Run the Integration Tests
-        timeout-minutes: 10
-        working-directory: integration_tests/sdk
-        env:
-          SERVER_ADDRESS: localhost:8080
-          INTEGRATION: aqueduct_demo
-        run: pytest . -rP -n 5 --publish
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: Server Logs
-          path: server_output
-
+#      - name: Update aqueduct with latest code
+#        run: python3 scripts/install_local.py
+#
+#      - name: Install packages needed for testing
+#        run: pip3 install nltk matplotlib pytest-xdist
+#
+#      - name: Start aqueduct server
+#        run: (aqueduct server > server_output 2>&1 &) && sleep 3
+#
+#      - name: Fetch the API key
+#        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+#
+#      - name: Run the Integration Tests
+#        timeout-minutes: 10
+#        working-directory: integration_tests/sdk
+#        env:
+#          SERVER_ADDRESS: localhost:8080
+#          INTEGRATION: aqueduct_demo
+#        run: pytest . -rP -n 5 --publish
+#
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Server Logs
+#          path: server_output
+#
