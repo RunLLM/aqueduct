@@ -158,6 +158,7 @@ def op(
 
         >>> recommendations.get()
     """
+
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
@@ -165,6 +166,7 @@ def op(
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
+
         def wrapped(*sql_artifacts: TableArtifact) -> TableArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -194,10 +196,12 @@ def op(
         #enable .local(*args) which calls on the original function with dataframes as inputs
         wrapped.local = lambda *sql_artifacts : func(*tuple([sql_artifact.get() for sql_artifact in sql_artifacts]))
         return wrapped
+
     if callable(name):
         return inner_decorator(name)
     else:
         return inner_decorator
+
 
 def metric(
     name: Optional[Union[str, MetricFunction]] = None,
