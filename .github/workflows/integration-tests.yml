@@ -67,7 +67,13 @@ jobs:
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
-        run: echo $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+        run: echo "PID=$(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')" >> $GITHUB_ENV
+
+      - name: echo
+        run: echo $PID
+
+      - name: Actually kill
+        run: kill -9 $PID
 
       # install_local.py requires ~/.aqueduct/server scaffolding to exist.
 #      - name: Update aqueduct with latest code
