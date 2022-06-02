@@ -2,8 +2,14 @@
   "author": "Aqueduct Inc <hello@aqueducthq.com>",
   "name": "@aqueducthq/ui",
   "version": "0.0.1",
+  "bin": "server.js",
+  "pkg": {
+    "assets": [".next/**/*", "node_modules/**/*"],
+    "scripts":[".next/**/*.js"]
+  },
   "scripts": {
     "preinstall": "npx force-resolutions",
+    "serve": "node server.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
