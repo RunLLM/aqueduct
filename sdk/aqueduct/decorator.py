@@ -18,6 +18,7 @@ from aqueduct.utils import (
     artifact_name_from_op_name,
 )
 from aqueduct.error import AqueductError
+from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
@@ -194,7 +195,10 @@ def op(
             return new_function_artifact
         
         #enable .local(*args) which calls on the original function with dataframes as inputs
-        wrapped.local = lambda *sql_artifacts : func(*tuple([sql_artifact.get() for sql_artifact in sql_artifacts]))
+        local_func : Callable[[Union[InputArtifact,DataFrame]], DataFrame] = lambda *inputs : func(
+            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
@@ -284,7 +288,10 @@ def metric(
             return new_metric_artifact
 
         #enable .local(*args) which calls on the original function with dataframes as inputs
-        wrapped.local = lambda *artifacts : func(*tuple([artifact.get() for artifact in artifacts]))
+        local_func : Callable[[Union[InputArtifact,DataFrame]], DataFrame] = lambda *inputs : func(
+            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
@@ -379,7 +386,10 @@ def check(
             return new_check_artifact
 
         #enable .local(*args) which calls on the original function with dataframes as inputs
-        wrapped.local = lambda *artifacts : func(*tuple([artifact.get() for artifact in artifacts]))
+        local_func : Callable[[Union[InputArtifact,DataFrame]], DataFrame] = lambda *inputs : func(
+            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
