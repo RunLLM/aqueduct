@@ -153,6 +153,7 @@ def op(
                     A function that once called will be executed locally that conduct
                     the same operations as the decorated function. The function takes in
                     either TableArtifact or Dataframe, and return a Dataframe.
+                    
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
