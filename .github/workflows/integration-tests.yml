@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  pull_request: # TODO: double check
   push:
     paths:
       - 'src/golang/**'
@@ -44,6 +45,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Construct name of the server output logs
+        run: echo "SERVER_LOGS_FILE=server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -62,7 +66,7 @@ jobs:
         run: pip3 install .
 
       - name: Startup the server and wait for it to initialize
-        run: (aqueduct server > server_output 2>&1 &) && sleep 10
+        run: (aqueduct server > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
@@ -76,7 +80,7 @@ jobs:
         run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Start aqueduct server
-        run: (aqueduct server > server_output 2>&1 &) && sleep 10
+        run: (aqueduct server > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
@@ -87,10 +91,10 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP -n 5 --publish
+        run: pytest . -rP -n 5 --publish -k test_basic_flow # TODO: remove the test_basic_flow
 
       - uses: actions/upload-artifact@v3
         with:
           name: Server Logs
-          path: server_output
+          path: $SERVER_LOGS_FILE
 
