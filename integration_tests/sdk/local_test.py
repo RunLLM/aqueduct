@@ -10,6 +10,9 @@ from constants import SENTIMENT_SQL_QUERY
 from utils import (
     get_integration_name,
     run_sentiment_model,
+    run_sentiment_model_local,
+    run_sentiment_model_local_multiple_input,
+    run_sentiment_model_multiple_input,
     should_run_complex_models
 )
 
@@ -18,9 +21,9 @@ def test_local_operator(sp_client):
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = run_sentiment_model(sql_artifact)
     output_cloud = output_artifact.get()
-    output_local = sentiment_model.local(sql_artifact) if should_run_complex_models() else dummy_sentiment_model.local(sql_artifact)
+    output_local = run_sentiment_model_local(sql_artifact)
     assert output_cloud.count()[0] == output_local.count()[0]
-    assert (output_cloud["positivity"] == output_local["positivity"]).all()
+    assert output_cloud.equals(output_local)
 
 def test_local_metric(sp_client):
     db = sp_client.integration(name=get_integration_name())
@@ -40,12 +43,16 @@ def test_local_check(sp_client):
 def test_local_dataframe_input(sp_client):
     db = sp_client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_cloud = dummy_sentiment_model(sql_artifact).get()
     output_local = dummy_sentiment_model.local(sql_artifact.get())
     assert type(output_local) is DataFrame
+    assert output_cloud.equals(output_local)
 
 def test_local_on_multiple_inputs(sp_client):
     db = sp_client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_local = dummy_sentiment_model_multiple_input.local(sql_artifact,sql_artifact2)
+    output_cloud = run_sentiment_model_multiple_input(sql_artifact,sql_artifact2).get()
+    output_local = run_sentiment_model_local_multiple_input(sql_artifact,sql_artifact2)
     assert type(output_local) is DataFrame
+    assert output_cloud.equals(output_local)

@@ -143,7 +143,16 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
+    
+    Returns:
+        A decorated function that once called with artifact input(s) will be
+        executed in the cloud and returns a TableArtifact
 
+            Attributes:
+                local:
+                    A function that once called will be executed locally that conduct
+                    the same operations as the decorated function. The function takes in
+                    either TableArtifact or Dataframe, and return a Dataframe
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -224,6 +233,16 @@ def metric(
             Operator name.
         description:
             A description for the metric.
+
+    Returns:
+        A decorated function that once called with artifact input(s) will be
+        executed in the cloud and returns a MetricArtifact
+
+            Attributes:
+                local:
+                    A function that once called will be executed locally that conduct
+                    the same operations as the decorated function. The function takes in
+                    either Artifacts or Dataframes, and return a float
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -323,6 +342,16 @@ def check(
             A description for the check.
         severity:
             The severity level of the check if it fails.
+
+    Returns:
+        A decorated function that once called with artifact input(s) will be
+        executed in the cloud and returns a CheckArtifact
+
+            Attributes:
+                local:
+                    A function that once called will be executed locally that conduct
+                    the same operations as the decorated function. The function takes in
+                    either Artifacts or Dataframes, and return a boolean value
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
