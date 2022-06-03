@@ -159,6 +159,7 @@ def server(expose_ip):
                 os.path.join(server_directory, "vault"),
                 os.path.join(server_directory, "bin"),
                 os.path.join(server_directory, "config"),
+                os.path.join(server_directory, "logs"),
             ]
 
             for directory in directories:

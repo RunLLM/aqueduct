@@ -57,10 +57,12 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 
-	jobManager, err := job.NewProcessJobManager(&job.ProcessConfig{
-		BinaryDir:          path.Join(aqPath, job.BinaryDir),
-		OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
-	})
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		},
+	)
 	if err != nil {
 		db.Close()
 		log.Fatal("Unable to create job manager: ", err)
