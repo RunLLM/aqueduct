@@ -1,6 +1,11 @@
-# Aqueduct: Prediction Infrastructure for Data Scientists
+[<img src="https://uploads-ssl.webflow.com/62336685e5efee770a9c69b6/624b700d8164e226ea67f495_aqueduct%20logo-p-500.jpeg" width="35%"/>](https://www.aqueducthq.com)
 
-Aqueduct is open-source prediction infrastructure built for data scientists, by data scientists. 
+## Aqueduct: Prediction Infrastructure for Data Scientists
+
+[![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
+[![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/aqueducthq/aqueduct/blob/master/LICENSE)
+[![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
+
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into the performance of their prediction pipelines -- all from the comfort of a Python notebook. 
 
 The core abstraction in Aqueduct is a [Workflow](https://docs.aqueducthq.com/workflows), which is a sequence of [Artifacts](https://docs.aqueducthq.com/artifacts) (data) that are transformed by [Operators](https://docs.aqueducthq.com/operators) (compute). 
