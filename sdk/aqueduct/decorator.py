@@ -196,7 +196,7 @@ def op(
         
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
         local_func : Callable[[Union[InputArtifact,DataFrame]], DataFrame] = lambda *inputs : func(
-            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+            *tuple([input.get() if type(input) is InputArtifact else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
@@ -289,7 +289,7 @@ def metric(
 
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
         local_func : Callable[[Union[InputArtifact,DataFrame]], float] = lambda *inputs : func(
-            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+            *tuple([input.get() if type(input) is InputArtifact else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
@@ -387,7 +387,7 @@ def check(
 
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
         local_func : Callable[[Union[InputArtifact,DataFrame]], bool] = lambda *inputs : func(
-            *tuple([input.get() if type(input) is TableArtifact else input for input in inputs ])
+            *tuple([input.get() if type(input) is InputArtifact else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
