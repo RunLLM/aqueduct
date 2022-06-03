@@ -1,8 +1,8 @@
 name: Integration Tests
 
 on:
-  pull_request: # TODO: double check
   push:
+    branches: [ main ]
     paths:
       - 'src/golang/**'
       - 'src/python/**'
@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Construct name of the server output logs
+      - name: Set the filename for the server's output logs
         run: echo "SERVER_LOGS_FILE=server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
 
       - name: Set up Python
@@ -91,7 +91,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP -n 5 --publish -k test_basic_flow # TODO: remove the test_basic_flow
+        run: pytest . -rP --publish -n 5
 
       - uses: actions/upload-artifact@v3
         with:

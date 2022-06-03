@@ -232,5 +232,5 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 
 func (s *AqServer) Run() {
 	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", connection.ServerInternalPort), s.Router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%d", connection.ServerInternalPort), s.Router))
 }
