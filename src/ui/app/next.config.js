@@ -10,7 +10,6 @@ module.exports = withTM({
         apiAddress: process.env.SERVER_ADDRESS,
         httpProtocol: process.env.NEXT_PUBLIC_PROTOCOL,
     },
-    productionBrowserSourceMaps: true,
     webpack: (config, options) => {
         config.module.rules.push({
             test: /..\/common\/.*.ts$|..\/common\/.*.tsx$/,

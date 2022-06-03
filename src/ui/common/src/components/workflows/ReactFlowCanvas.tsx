@@ -42,7 +42,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
 
-  // useEffect(() => {fitView();}, []);
   useEffect(fitView, []);
   return (
     <ReactFlow
