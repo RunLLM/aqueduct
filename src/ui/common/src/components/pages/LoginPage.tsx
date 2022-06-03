@@ -26,7 +26,7 @@ export const LoginPage: React.FC = () => {
       setErrorMsg('');
     } else {
       setValidationError(true);
-      setErrorMsg('Api key should not be empty.');
+      setErrorMsg('Please provide an API key.');
     }
     setApiKey(input);
   };
@@ -36,11 +36,11 @@ export const LoginPage: React.FC = () => {
     const { success } = await fetchUser(apiKey);
     if (!apiKey || apiKey.length === 0) {
       setValidationError(true);
-      setErrorMsg('Api key should not be empty.');
+      setErrorMsg('Please provide an API key..');
     } else if (!success) {
       setValidationError(true);
       setErrorMsg(
-        "Invalid key, please copy the key from 'aqueduct apikey' outputs."
+        "Invalid API key. If you've forgotten your API key, you can use the `aqueduct apikey` command."
       );
     } else {
       setValidationError(false);
@@ -82,7 +82,7 @@ export const LoginPage: React.FC = () => {
             fullWidth={true}
             size="small"
             id="outlined-basic"
-            label={'Please enter an API Key'}
+            label={'Please enter an API key'}
             helperText={errorMsg}
             variant="outlined"
             onChange={onApiKeyTextFieldChanged}

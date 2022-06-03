@@ -9,15 +9,13 @@ module.exports = withTM({
     publicRuntimeConfig: {
         apiAddress: process.env.SERVER_ADDRESS,
         httpProtocol: process.env.NEXT_PUBLIC_PROTOCOL,
-        awsAccountId: process.env.AWS_ACCOUNT_ID,
     },
+    productionBrowserSourceMaps: true,
     webpack: (config, options) => {
-
         config.module.rules.push({
             test: /..\/common\/.*.ts$|..\/common\/.*.tsx$/,
             use: [options.defaultLoaders.babel],
         });
-
 
         // we want to ensure that the server project's version of react is used in all cases
         config.resolve.alias['react'] = path.join(__dirname, 'node_modules', 'react');

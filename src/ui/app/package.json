@@ -4,12 +4,23 @@
   "version": "0.0.1",
   "scripts": {
     "preinstall": "npx force-resolutions",
-    "dev": "next dev",
+    "preinstall": "npx npm-force-resolutions",
+    "dev": "NODE_ENV=dev node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
+  "pkg": {
+    "assets": [
+      ".next/**/*",
+      "node_modules/@mui/material/styles/*"
+    ],
+    "scripts": [
+      ".next/**/*.js"
+    ]
+  },
+  "bin": "server.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/aqueducthq/aqueduct.git",
@@ -25,6 +36,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@mui/material": "^5.6.2",
     "@reduxjs/toolkit": "^1.8.1",
+    "dotenv": "^16.0.1",
     "next": "12.1.5",
     "next-transpile-modules": "^9.0.0",
     "react": "^18.1.0",
