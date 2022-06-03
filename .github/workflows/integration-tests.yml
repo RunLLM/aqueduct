@@ -2,37 +2,37 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ eng-1157-add-oss-related-github-actions-to-the-public-repo-tests ] # TODO: remove
-#    paths:
-#      - 'src/golang/**'
-#      - 'src/python/**'
-#      - 'integration_tests/**'
-#      - 'sdk/aqueduct/**'
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
   issue_comment:
     types: [ created ]
   workflow_dispatch:
 
 jobs:
-#  check-comment-trigger:
-#    name: Check Comment Trigger
-#    runs-on: ubuntu-latest
-#    outputs:
-#      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
-#    timeout-minutes: 5
-#    steps:
-#      - name: Check for Comment triggers
-#        uses: khan/pull-request-comment-trigger@master
-#        id: check_comment
-#        with:
-#          trigger: 'ci'
-#          prefix_only: 'true'
-#          reaction: rocket
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+  check-comment-trigger:
+    name: Check Comment Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
+    timeout-minutes: 5
+    steps:
+      - name: Check for Comment triggers
+        uses: khan/pull-request-comment-trigger@master
+        id: check_comment
+        with:
+          trigger: 'ci'
+          prefix_only: 'true'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-#    needs: check-comment-trigger TODO:
+    needs: check-comment-trigger
     if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
     strategy:
       matrix:
@@ -93,8 +93,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 5 -k test_basic_flow
-        # TODO: FIX
+        run: pytest . -rP --publish -n 5
 
       - uses: actions/upload-artifact@v3
         if: ${{ always() }}
