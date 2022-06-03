@@ -19,12 +19,8 @@ def test_local_operator(sp_client):
     output_artifact = run_sentiment_model(sql_artifact)
     output_cloud = output_artifact.get()
     output_local = sentiment_model.local(sql_artifact) if should_run_complex_models() else dummy_sentiment_model.local(sql_artifact)
-    if should_run_complex_models():
-        assert output_cloud.count()[0] == output_local.count()[0]
-        assert (output_cloud["positivity"] == output_local["positivity"]).all()
-    else:
-        assert output_cloud.count()[0] == output_local.count()[0]
-        assert (output_cloud["positivity"] == output_local["positivity"]).all()
+    assert output_cloud.count()[0] == output_local.count()[0]
+    assert (output_cloud["positivity"] == output_local["positivity"]).all()
 
 def test_local_metric(sp_client):
     db = sp_client.integration(name=get_integration_name())
