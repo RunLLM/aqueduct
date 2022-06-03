@@ -152,10 +152,7 @@ func (j *ProcessJobManager) generateCronFunction(name string, jobSpec Spec) func
 		err := j.Launch(context.Background(), jobName, jobSpec)
 		if err != nil {
 			log.Errorf("Error running cron job %s: %v", jobName, err)
-		}
-
-		j.Poll(context.Background(), jobName)
-		else {
+		} else {
 			log.Infof("Successfully ran cron job %s", jobName)
 		}
 	}
