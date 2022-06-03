@@ -6,13 +6,13 @@ import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
 
 const Data: React.FC = () => {
+    const router = useRouter();
     const { user, loading, success } = useUser();
     if (loading) {
         return null;
     }
 
-    const router = useRouter();
-    if (!success) {
+    if (!user || !success) {
         router.push('/login');
         return null;
     }
