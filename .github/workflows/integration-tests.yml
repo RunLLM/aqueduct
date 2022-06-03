@@ -13,27 +13,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-comment-trigger:
-    name: Check Comment Trigger
-    runs-on: ubuntu-latest
-    outputs:
-      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
-    timeout-minutes: 5
-    steps:
-      - name: Check for Comment triggers
-        uses: khan/pull-request-comment-trigger@master
-        id: check_comment
-        with:
-          trigger: 'ci'
-          prefix_only: 'true'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-
+#  check-comment-trigger:
+#    name: Check Comment Trigger
+#    runs-on: ubuntu-latest
+#    outputs:
+#      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
+#    timeout-minutes: 5
+#    steps:
+#      - name: Check for Comment triggers
+#        uses: khan/pull-request-comment-trigger@master
+#        id: check_comment
+#        with:
+#          trigger: 'ci'
+#          prefix_only: 'true'
+#          reaction: rocket
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: check-comment-trigger
+#    needs: check-comment-trigger TODO:
     if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
     strategy:
       matrix:
