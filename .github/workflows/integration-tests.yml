@@ -94,6 +94,7 @@ jobs:
         run: pytest . -rP --publish -n 5
 
       - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
         with:
           name: Server Logs
           path: $SERVER_LOGS_FILE
