@@ -165,7 +165,6 @@ def server(expose):
                 execute_command(["rm", os.path.join(server_directory, "__version__")])
             exit(1)
 
-    print("expose flag is %s" % expose)
     if expose:
         execute_command([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"])
     else:
