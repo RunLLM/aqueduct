@@ -2,7 +2,7 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ eng-1157-add-oss-related-github-actions-to-the-public-repo-tests ] # TODO: remove
     paths:
       - 'src/golang/**'
       - 'src/python/**'
@@ -65,6 +65,9 @@ jobs:
         working-directory: src/python
         run: pip3 install .
 
+      - name:  DELETE ME
+        run: echo $SERVER_LOGS_FILE
+
       - name: Startup the server and wait for it to initialize
         run: (aqueduct server > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
 
@@ -91,11 +94,12 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 5
+        run: pytest . -rP --publish -n 5 -k test_basic_flow
+        # TODO: FIX
 
       - uses: actions/upload-artifact@v3
         if: ${{ always() }}
         with:
           name: Server Logs
-          path: $SERVER_LOGS_FILE
+          path: $(echo $SERVER_LOGS_FILE)
 
