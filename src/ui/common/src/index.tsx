@@ -1,4 +1,3 @@
-/* Leaving comment to keep me around. Please dont remove me. */
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import setUser from './components/hooks/setUser';
 //import { AqueductConsts, ClusterEnvironment useAqueductConsts } from "./components/hooks/useAqueductConsts";
@@ -18,7 +17,7 @@ import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
-import { IntegrationTextInputField } from './components/integrations/dialogs/dialog';
+import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { IntegrationDialog } from './components/integrations/dialogs/dialog';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
