@@ -1,8 +1,9 @@
 import LoadingButton, { loadingButtonClasses } from '@mui/lab/LoadingButton';
 import { buttonClasses } from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
+import { theme } from "../../styles/theme/theme";
 
-const AqueductLoadingButton = styled(LoadingButton)(({ theme }) => {
+const AqueductLoadingButton = styled(LoadingButton)(() => {
   return {
     [`&.${loadingButtonClasses.root}`]: {
       textTransform: 'none',
