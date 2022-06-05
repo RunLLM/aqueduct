@@ -1,25 +1,9 @@
 import React from 'react';
-import { getBezierPath, Position } from 'react-flow-renderer';
+import { EdgeProps, getBezierPath } from 'react-flow-renderer';
 
 import { theme } from '../../../styles/theme/theme';
 
-type AqueductBezierProps = {
-  id: string;
-  sourceX: number;
-  sourceY: number;
-  targetX: number;
-  targetY: number;
-  sourcePosition: Position;
-  targetPosition: Position;
-  arrowHeadType: string;
-  markerEndId: string;
-  // These are types that we're required to have here because ReactFlow
-  // passes them in, but we don't use them (currently).
-  style: Record<string, string>;
-  data: Record<string, string>;
-};
-
-const AqueductBezier: React.FC<AqueductBezierProps> = ({
+const AqueductBezier: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,

@@ -14,12 +14,6 @@ import { Operator } from './operators';
 
 const { httpProtocol, apiAddress } = useAqueductConsts();
 
-export const INITIAL_DATABASE_NODE_ID = 'initial_database';
-export const INITIAL_SQL_NODE_ID = 'initial_sql';
-export const INITIAL_INPUT_ARTIFACT_NODE_ID = 'initial_input_artifact';
-export const INITIAL_FUNCTION_NODE_ID = 'initial_function';
-export const INITIAL_OUTPUT_ARTIFACT_NODE_ID = 'initial_output_artifact';
-
 export const EdgeTypes = {
   quadratic: AqueductQuadratic,
   straight: AqueductStraight,

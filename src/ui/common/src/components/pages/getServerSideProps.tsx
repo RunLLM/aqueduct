@@ -1,6 +1,4 @@
-import { GetServerSideProps } from 'next';
-
-export const getServerSideProps: GetServerSideProps = (context) => {
+export const getServerSideProps: (context) => { [p: string]: any } = () => {
   return {
     props: {},
   };
