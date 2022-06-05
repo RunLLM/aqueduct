@@ -9,7 +9,7 @@ import (
 )
 
 type OperatorMapping struct {
-	OpName	string		`json:"op_name"`
+	OpName	string		`json:"name"`
 	Inputs  []uuid.UUID `json:"inputs"`
 	Outputs []uuid.UUID `json:"outputs"`
 }
