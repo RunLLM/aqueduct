@@ -8,7 +8,7 @@ on:
       - 'src/python/**'
       - 'integration_tests/**'
       - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-test.yml'
+      - '.github/workflows/integration-tests.yml'
   issue_comment:
     types: [ created ]
   workflow_dispatch:
