@@ -21,20 +21,22 @@ server:
 	mkdir -p build
 	cp $$GOPATH/bin/server build/server
 
-migrator-lean:
+migrator-release:
 	cd golang/cmd/migrator && go install -ldflags="-s -w" -trimpath
 	mkdir -p build # Make the build directory if it doesn't exist
 	mv $$GOPATH/bin/migrator build/migrator
 
-executor-lean:
+executor-release:
 	cd golang/cmd/executor && go install -ldflags="-s -w" -trimpath
 	mkdir -p build
 	cp $$GOPATH/bin/executor build/executor
 
-server-lean:
+server-release:
 	cd golang/cmd/server && go install -ldflags="-s -w" -trimpath
 	mkdir -p build
 	cp $$GOPATH/bin/server build/server
+
+release: server-release executor-release migrator-release
 
 test:
 	cd golang && go test -v $$(go list ./...)
@@ -54,4 +56,5 @@ clean:
 
 .PHONY: 
 	server executor migrator \
+	server-release executor-release migrator-release release \
 	test test-database lint-go clean \
