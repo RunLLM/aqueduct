@@ -139,11 +139,9 @@ def generate_welcome_message(expose_ip):
 ***************************************************
 Your API Key: {apikey}
 
-Visit this address in a web browser to see your workflows
-Web UI Address: http://{expose_ip}:3000
+The Web UI is accessible at: http://{expose_ip}:3000
 
-Use this address and to connect your Aqueduct SDK Client 
-Server Address: http://{expose_ip}:8080
+You can connect to the backend server from your SDK at: http://{expose_ip}:8080
 ***************************************************
 """
     return message
@@ -276,7 +274,7 @@ def get_apikey():
             print(exc)
             exit(1)
 
-def apiKey():
+def apikey():
     print(get_apikey())
 
 def clear():
@@ -345,17 +343,19 @@ if __name__ == "__main__":
             ui_popen.kill()
             print('Aqueduct service successfully terminated.')
     elif args.command == "server":
-        print("Command [aqueduct server] has been deprecated in favor of [aqueduct start]")
+        print("aqueduct ui and aqueduct server have been deprecated; please use aqueduct start to run both the UI and backend servers")
     elif args.command == "install":
         install(args.system[0]) # argparse makes this an array so only pass in value [0].
     elif args.command == "ui":
-        print("Command [aqueduct ui] has been deprecated in favor of [aqueduct start]")
+        print("aqueduct ui and aqueduct server have been deprecated; please use aqueduct start to run both the UI and backend servers")
     elif args.command == "apikey":
-        apiKey()
+        apikey()
     elif args.command == "clear":
         clear()
     elif args.command == "version":
         version()
+    elif args.command is None:
+        parser.print_help()
     else:
         print("Unsupported command:", args.command)
         sys.exit(1)
