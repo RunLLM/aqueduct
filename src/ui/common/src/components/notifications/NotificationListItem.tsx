@@ -54,7 +54,6 @@ export const NotificationListItem: React.FC<Props> = ({
               variant="body1"
               gutterBottom
               sx={{
-                fontWeight: 'light',
                 fontFamily: 'Monospace',
                 '&:hover': { textDecoration: 'underline' },
               }}
