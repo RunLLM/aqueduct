@@ -21,13 +21,13 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { BigQueryDialog } from './bigqueryDialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-import { IntegrationTextInputField } from "./IntegrationTextInputField";
 
 type Props = {
   user: UserProfile;
