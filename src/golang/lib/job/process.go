@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -50,12 +51,54 @@ type cronMetadata struct {
 	jobSpec Spec
 }
 
+// Please use thread-safe read / insert / remove APIs to maintain maps.
+// These APIs are wrapped with proper locks to support concurrency.
+// Never try to access map using go's native APIs.
 type ProcessJobManager struct {
 	conf          *ProcessConfig
 	cmds          map[string]*Command
 	cronScheduler *gocron.Scheduler
 	// A mapping from cron job name to cron job object pointer.
 	cronMapping map[string]*cronMetadata
+	mutex       *sync.RWMutex
+}
+
+func (j *ProcessJobManager) getCmd(key string) (*Command, bool) {
+	j.mutex.RLock()
+	cmd, ok := j.cmds[key]
+	j.mutex.RUnlock()
+	return cmd, ok
+}
+
+func (j *ProcessJobManager) setCmd(key string, cmd *Command) {
+	j.mutex.Lock()
+	j.cmds[key] = cmd
+	j.mutex.Unlock()
+}
+
+func (j *ProcessJobManager) deleteCmd(key string) {
+	j.mutex.Lock()
+	delete(j.cmds, key)
+	j.mutex.Unlock()
+}
+
+func (j *ProcessJobManager) getCronMap(key string) (*cronMetadata, bool) {
+	j.mutex.RLock()
+	cron, ok := j.cronMapping[key]
+	j.mutex.RUnlock()
+	return cron, ok
+}
+
+func (j *ProcessJobManager) setCronMap(key string, cron *cronMetadata) {
+	j.mutex.Lock()
+	j.cronMapping[key] = cron
+	j.mutex.Unlock()
+}
+
+func (j *ProcessJobManager) deleteCronMap(key string) {
+	j.mutex.Lock()
+	delete(j.cronMapping, key)
+	j.mutex.Unlock()
 }
 
 func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
@@ -79,6 +122,7 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 		cmds:          map[string]*Command{},
 		cronScheduler: cronScheduler,
 		cronMapping:   map[string]*cronMetadata{},
+		mutex:         &sync.RWMutex{},
 	}, nil
 }
 
@@ -167,7 +211,7 @@ func (j *ProcessJobManager) Launch(
 	name string,
 	spec Spec,
 ) error {
-	if _, ok := j.cmds[name]; ok {
+	if _, ok := j.getCmd(name); ok {
 		return ErrJobAlreadyExists
 	}
 
@@ -177,19 +221,21 @@ func (j *ProcessJobManager) Launch(
 		return err
 	}
 
-	j.cmds[name] = &Command{
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	j.setCmd(name, &Command{
 		cmd:    cmd,
-		stdout: &bytes.Buffer{},
-		stderr: &bytes.Buffer{},
-	}
-	cmd.Stdout = j.cmds[name].stdout
-	cmd.Stderr = j.cmds[name].stderr
+		stdout: stdout,
+		stderr: stderr,
+	})
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	return cmd.Start()
 }
 
 func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
-	command, ok := j.cmds[name]
+	command, ok := j.getCmd(name)
 	if !ok {
 		return shared.UnknownExecutionStatus, ErrJobNotExist
 	}
@@ -211,7 +257,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	err = command.cmd.Wait()
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.
-	defer delete(j.cmds, name)
+	defer j.deleteCmd(name)
 	if err != nil {
 		log.Errorf("Unexpected error occured while executing the job: \nStdout: %s\nStderr: %s",
 			command.stdout.String(),
@@ -230,14 +276,16 @@ func (j *ProcessJobManager) DeployCronJob(
 	period string,
 	spec Spec,
 ) error {
-	if _, ok := j.cronMapping[name]; ok {
+	if _, ok := j.getCronMap(name); ok {
 		return errors.Newf("Cron job with name %s already exists", name)
 	}
 
-	j.cronMapping[name] = &cronMetadata{
+	cron := &cronMetadata{
 		cronJob: nil,
 		jobSpec: spec,
 	}
+
+	j.setCronMap(name, cron)
 
 	if period != "" {
 		cronJob, err := j.cronScheduler.Cron(period).Do(j.generateCronFunction(name, spec))
@@ -245,19 +293,19 @@ func (j *ProcessJobManager) DeployCronJob(
 			return err
 		}
 
-		j.cronMapping[name].cronJob = cronJob
+		cron.cronJob = cronJob
 	}
 
 	return nil
 }
 
 func (j *ProcessJobManager) CronJobExists(ctx context.Context, name string) bool {
-	_, ok := j.cronMapping[name]
+	_, ok := j.getCronMap(name)
 	return ok
 }
 
 func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
-	cronMetadata, ok := j.cronMapping[name]
+	cronMetadata, ok := j.getCronMap(name)
 	if !ok {
 		return errors.New("Cron job not found")
 	} else {
@@ -290,10 +338,10 @@ func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronSt
 }
 
 func (j *ProcessJobManager) DeleteCronJob(ctx context.Context, name string) error {
-	cronMetadata, ok := j.cronMapping[name]
+	cronMetadata, ok := j.getCronMap(name)
 	if ok {
 		j.cronScheduler.RemoveByReference(cronMetadata.cronJob)
-		delete(j.cronMapping, name)
+		j.deleteCronMap(name)
 	}
 
 	return nil
