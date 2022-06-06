@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check for Comment triggers
+        if: ${{ github.event_name == 'issue_comment' }}
         uses: khan/pull-request-comment-trigger@master
         id: check_comment
         with:
@@ -33,12 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: check-comment-trigger
-    if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
         # TODO(ENG-1174, ENG-1182): Get OSS working with Python 3.10 and 3.7
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
