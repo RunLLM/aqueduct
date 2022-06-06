@@ -43,8 +43,8 @@ def test_local_check(sp_client):
 def test_local_dataframe_input(sp_client):
     db = sp_client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_cloud = dummy_sentiment_model(sql_artifact).get()
-    output_local = dummy_sentiment_model.local(sql_artifact.get())
+    output_cloud = run_sentiment_model(sql_artifact).get()
+    output_local = run_sentiment_model_local(sql_artifact.get())
     assert type(output_local) is DataFrame
     assert output_cloud.equals(output_local)
 
