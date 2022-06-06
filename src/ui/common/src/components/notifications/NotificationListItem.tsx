@@ -49,12 +49,12 @@ export const NotificationListItem: React.FC<Props> = ({
             flexDirection: 'row',
           }}
         >
-          <Typography variant="body1" sx={{ color: 'gray800' }}>
+          <Typography variant="body1" sx={{ color: 'gray.800' }}>
             <Typography
               variant="body1"
               gutterBottom
               sx={{
-                fontWeight: 'medium',
+                fontWeight: 'light',
                 fontFamily: 'Monospace',
                 '&:hover': { textDecoration: 'underline' },
               }}
@@ -89,12 +89,21 @@ export const NotificationListItem: React.FC<Props> = ({
           width: '100%',
         }}
       >
-        {title}
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{
+            fontFamily: 'Monospace',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
+          {notification.content}
+        </Typography>
         <FontAwesomeIcon
           icon={faXmark}
           style={{
             cursor: 'pointer',
-            color: 'gray600',
+            color: 'gray.600',
           }}
           onClick={() =>
             dispatch(handleArchiveNotification({ user, id: notification.id }))
@@ -105,36 +114,18 @@ export const NotificationListItem: React.FC<Props> = ({
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
         }}
       >
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{
-              fontWeight: 'light',
-              color: 'gray600',
-              fontFamily: 'Monospace',
-            }}
-          >
-            {/* Show notification associated with 'workflow_run' as 'workflow' category */}
-            {notification.level === NotificationLogLevel.Success
-              ? ' Success'
-              : ' Failure'}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{
-              fontWeight: 'light',
-              color: 'gray600',
-            }}
-          >
-            {`${dateString(notification.createdAt)}`}
-          </Typography>
-        </Box>
+        <Typography
+          variant="body1"
+          sx={{
+            fontWeight: 'light',
+            color: 'gray.600',
+          }}
+        >
+          {`${dateString(notification.createdAt)}`}
+        </Typography>
       </Box>
     </Box>
   );
@@ -148,11 +139,10 @@ export const NotificationListItem: React.FC<Props> = ({
     <Link
       underline="none"
       color="inherit"
-      href={`/workflow/${
-        notification.workflowMetadata.id
-      }/?workflowDagResultId=${encodeURI(
-        notification.workflowMetadata.dag_result_id
-      )}`}
+      href={`/workflow/${notification.workflowMetadata.id
+        }/?workflowDagResultId=${encodeURI(
+          notification.workflowMetadata.dag_result_id
+        )}`}
     >
       <ListItem
         sx={{
