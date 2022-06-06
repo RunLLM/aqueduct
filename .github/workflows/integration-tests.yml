@@ -2,12 +2,12 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ fix_integration_tests ]
-#    paths:
-#      - 'src/golang/**'
-#      - 'src/python/**'
-#      - 'integration_tests/**'
-#      - 'sdk/aqueduct/**'
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
   issue_comment:
     types: [ created ]
   workflow_dispatch:
