@@ -54,16 +54,13 @@ export const NotificationListItem: React.FC<Props> = ({
               variant="body1"
               gutterBottom
               sx={{
+                fontWeight: 'medium',
                 fontFamily: 'Monospace',
                 '&:hover': { textDecoration: 'underline' },
               }}
             >
               {notification.workflowMetadata.name}
             </Typography>
-
-            {notification.level === NotificationLogLevel.Success
-              ? ' succeeded'
-              : ' failed'}
           </Typography>
         </Box>
       ) : (
@@ -97,24 +94,13 @@ export const NotificationListItem: React.FC<Props> = ({
           icon={faXmark}
           style={{
             cursor: 'pointer',
-            color: 'gray.600',
+            color: 'gray600',
           }}
           onClick={() =>
             dispatch(handleArchiveNotification({ user, id: notification.id }))
           }
         />
       </Box>
-
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{
-          fontFamily: 'Monospace',
-          '&:hover': { textDecoration: 'underline' },
-        }}
-      >
-        {notification.content}
-      </Typography>
 
       <Box
         sx={{
@@ -126,18 +112,25 @@ export const NotificationListItem: React.FC<Props> = ({
         <Box>
           <Typography
             variant="body1"
-            sx={{ fontWeight: 'medium', color: 'gray600' }}
+            sx={{
+              fontWeight: 'light',
+              color: 'gray600',
+              fontFamily: 'Monospace',
+            }}
           >
             {/* Show notification associated with 'workflow_run' as 'workflow' category */}
-            {association.object === NotificationAssociation.WorkflowDagResult
-              ? NotificationAssociation.Workflow
-              : association.object}
+            {notification.level === NotificationLogLevel.Success
+              ? ' Success'
+              : ' Failure'}
           </Typography>
         </Box>
         <Box>
           <Typography
             variant="body1"
-            sx={{ fontWeight: 'light', color: 'gray600' }}
+            sx={{
+              fontWeight: 'light',
+              color: 'gray600',
+            }}
           >
             {`${dateString(notification.createdAt)}`}
           </Typography>
