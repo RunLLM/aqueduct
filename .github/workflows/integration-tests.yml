@@ -2,7 +2,7 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ fix_integration_tests ]
     paths:
       - 'src/golang/**'
       - 'src/python/**'
@@ -19,6 +19,7 @@ jobs:
     outputs:
       is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
     timeout-minutes: 5
+    if: ${{ github.event_name == issue_comment }}
     steps:
       - name: Check for Comment triggers
         uses: khan/pull-request-comment-trigger@master
