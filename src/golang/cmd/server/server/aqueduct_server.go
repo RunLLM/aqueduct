@@ -231,6 +231,8 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 }
 
 func (s *AqServer) Run(expose bool) {
+	// When we configure the server to listen on ":<PORT>" (without specifying the ip), it exposes itself
+	// to the public.
 	ip := ""
 	if !expose {
 		ip = "localhost"
