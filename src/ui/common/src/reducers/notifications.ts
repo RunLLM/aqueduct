@@ -51,25 +51,6 @@ export const handleArchiveNotification = createAsyncThunk<
   }
 );
 
-// export const handleArchiveNotification = createAsyncThunk(
-//   'notificationsReducer/archive',
-//   async (
-//     args: {
-//       user: UserProfile;
-//       id: string;
-//     },
-//     thunkAPI
-//   ) => {
-//     const { user, id } = args;
-//     const errMsg = await archiveNotification(user, id);
-//     if (errMsg) {
-//       return thunkAPI.rejectWithValue(errMsg);
-//     }
-//
-//     return;
-//   }
-// );
-
 export const handleArchiveAllNotifications = createAsyncThunk(
   'notificationsReducer/archiveAll',
   async (args: { user: UserProfile; notifications: Notification[] }) => {
