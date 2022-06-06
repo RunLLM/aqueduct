@@ -206,7 +206,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		failedArtifactIds = append(failedArtifactIds, failedArtifactId)
 	}
 
-	checkResults, err := h.CustomReader.GetValidationOperatorResultsByArtifactIds(ctx, allArtifactIds, h.Database)
+	checkResults, err := h.CustomReader.GetCheckResultsByArtifactIds(ctx, allArtifactIds, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}

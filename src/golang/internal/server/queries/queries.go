@@ -81,7 +81,7 @@ type Reader interface {
 		ctx context.Context,
 		artifactIds []uuid.UUID,
 		db database.Database,
-	) ([]ArtifactResponse, error)
+	) ([]ArtifactCheckResponse, error)
 	GetOperatorResultsByArtifactIdsAndWorkflowDagResultIds(
 		ctx context.Context,
 		artifactIds, workflowDagResultIds []uuid.UUID,
