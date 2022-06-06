@@ -8,6 +8,7 @@ import shutil
 import string
 import subprocess
 import sys
+import time
 import yaml
 
 import distro
@@ -17,6 +18,16 @@ server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
 package_version = "0.0.1"
+
+welcome_message = """
+***************************************************
+Your API Key: %s
+
+The Web UI is accessible at: http://%s:3000
+
+You can connect to the backend server from your SDK at: http://%s:8080
+***************************************************
+"""
 
 def update_config_yaml(file):
     s=string.ascii_uppercase+string.digits
@@ -135,16 +146,7 @@ def generate_welcome_message(expose_ip):
     if not expose_ip:
         expose_ip = "localhost"
     apikey = get_apikey()
-    message = f"""
-***************************************************
-Your API Key: {apikey}
-
-The Web UI is accessible at: http://{expose_ip}:3000
-
-You can connect to the backend server from your SDK at: http://{expose_ip}:8080
-***************************************************
-"""
-    return message
+    return welcome_message % (apikey, expose_ip, expose_ip)
 
 def server(expose_ip):
     if not os.path.isdir(server_directory):
@@ -333,6 +335,7 @@ if __name__ == "__main__":
         try:
             server_popen = server(args.expose)
             ui_popen = ui(args.expose)
+            time.sleep(2)
             print(generate_welcome_message(args.expose))
             server_popen.wait()
             ui_popen.wait()
