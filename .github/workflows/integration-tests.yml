@@ -1,0 +1,103 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+  issue_comment:
+    types: [ created ]
+  workflow_dispatch:
+
+jobs:
+  check-comment-trigger:
+    name: Check Comment Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
+    timeout-minutes: 5
+    steps:
+      - name: Check for Comment triggers
+        uses: khan/pull-request-comment-trigger@master
+        id: check_comment
+        with:
+          trigger: 'ci'
+          prefix_only: 'true'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: check-comment-trigger
+    if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
+    strategy:
+      matrix:
+        # These are all the Python versions that we support.
+        # TODO(ENG-1174, ENG-1182): Get OSS working with Python 3.10 and 3.7
+        python-version: ['3.8', '3.9', '3.10']
+
+    name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create the logs directory
+        run: mkdir -p logs
+
+      - name: Set filename for the server's output logs
+        run: echo "SERVER_LOGS_FILE=logs/server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up GOPATH variable
+        run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Install aqueduct-ml
+        working-directory: src/python
+        run: pip3 install .
+
+      - name: Startup the server and wait for it to initialize
+        run: (aqueduct server > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
+      - name: Update aqueduct with latest code
+        run: python3 scripts/install_local.py
+
+      - name: Install packages needed for testing
+        run: pip3 install nltk matplotlib pytest-xdist
+
+      - name: Start aqueduct server
+        run: (aqueduct server > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      - name: Fetch the API key
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run the Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/sdk
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP --publish -n 5
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: Server Logs
+          path: logs/
+
