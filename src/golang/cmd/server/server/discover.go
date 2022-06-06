@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/internal/server/queries"
 	"github.com/aqueducthq/aqueduct/internal/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -51,6 +52,7 @@ type DiscoverHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
+	CustomReader      queries.Reader
 	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
@@ -170,7 +172,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve table names from storage.")
 	}
 
-	loadOperatorMetadata, err := h.IntegrationReader.GetLoadOperatorSpecByOrganization(
+	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
 		ctx,
 		args.OrganizationId,
 		h.Database,
@@ -193,7 +195,7 @@ func (h *DiscoverHandler) Perform(
 	baseTables := make([]string, 0, len(tableNames))
 
 	for _, tableName := range tableNames {
-		if _, isUserTable := userTables[tableName]; !isUserTable { // not a user-created table
+		if isUserTable := userTables[tableName]; !isUserTable { // not a user-created table
 			baseTables = append(baseTables, tableName)
 		}
 	}
