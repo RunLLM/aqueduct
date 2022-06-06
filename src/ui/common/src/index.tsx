@@ -17,8 +17,8 @@ import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
-import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { IntegrationDialog } from './components/integrations/dialogs/dialog';
+import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
 import { PostgresDialog } from './components/integrations/dialogs/postgresDialog';
@@ -86,76 +86,105 @@ import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import Status from './components/workflows/workflowStatus';
-import dataPreview, {dataPreviewSlice, getDataArtifactPreview} from "./reducers/dataPreview";
-import integrations, {handleLoadIntegrations, integrationsSlice} from "./reducers/integrations";
-import workflowSummaries, {handleFetchAllWorkflowSummaries, listWorkflowSlice} from "./reducers/listWorkflowSummaries";
+import dataPreview, {
+  dataPreviewSlice,
+  getDataArtifactPreview,
+} from './reducers/dataPreview';
+import integrations, {
+  handleLoadIntegrations,
+  integrationsSlice,
+} from './reducers/integrations';
+import workflowSummaries, {
+  handleFetchAllWorkflowSummaries,
+  listWorkflowSlice,
+} from './reducers/listWorkflowSummaries';
 import nodeSelection, {
   ArtifactTypeToNodeTypeMap,
   NodeType,
-  OperatorTypeToNodeTypeMap, resetSelectedNode, selectNode
-} from "./reducers/nodeSelection";
+  OperatorTypeToNodeTypeMap,
+  resetSelectedNode,
+  selectNode,
+} from './reducers/nodeSelection';
 import notifications, {
   handleArchiveAllNotifications,
   handleArchiveNotification,
-  handleFetchNotifications, notificationsSlice
-} from "./reducers/notifications";
+  handleFetchNotifications,
+  notificationsSlice,
+} from './reducers/notifications';
 import openSideSheet, {
-  openSideSheetSlice, setAllSideSheetState,
+  openSideSheetSlice,
+  setAllSideSheetState,
   setBottomSideSheetOpenState,
   setLeftSideSheetOpenState,
-  setRightSideSheetOpenState, setWorkflowStatusBarOpenState
-} from "./reducers/openSideSheet";
+  setRightSideSheetOpenState,
+  setWorkflowStatusBarOpenState,
+} from './reducers/openSideSheet';
 import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
-  handleGetWorkflow, selectResultIdx,
-  workflowSlice
-} from "./reducers/workflow";
-import { store } from "./stores/store";
-import { theme } from "./styles/theme/theme";
-import { ArtifactType, getUpstreamOperator } from "./utils/artifacts";
-import { createCronString, DayOfWeek, deconstructCronString, getNextUpdateTime, PeriodUnit } from "./utils/cron";
-import {DataColumnTypeNames} from "./utils/data";
-import fetchUser from "./utils/fetchUser";
+  handleGetWorkflow,
+  selectResultIdx,
+  workflowSlice,
+} from './reducers/workflow';
+import { store } from './stores/store';
+import { theme } from './styles/theme/theme';
+import { ArtifactType, getUpstreamOperator } from './utils/artifacts';
+import {
+  createCronString,
+  DayOfWeek,
+  deconstructCronString,
+  getNextUpdateTime,
+  PeriodUnit,
+} from './utils/cron';
+import { DataColumnTypeNames } from './utils/data';
+import fetchUser from './utils/fetchUser';
 import {
   connectIntegration,
   fetchBranches,
   fetchRepos,
   formatService,
-  SupportedIntegrations
-} from "./utils/integrations";
+  SupportedIntegrations,
+} from './utils/integrations';
+import { dateString } from './utils/metadata';
 import {
   archiveNotification,
   listNotifications,
   NotificationAssociation,
   NotificationLogLevel,
   NotificationStatus,
-} from "./utils/notifications";
-import {dateString} from "./utils/metadata";
+} from './utils/notifications';
 import {
-  CheckLevel, exportFunction,
+  CheckLevel,
+  exportFunction,
   FunctionGranularity,
-  FunctionType, handleExportFunction,
+  FunctionType,
+  handleExportFunction,
   normalizeOperator,
   OperatorType,
-  ServiceType
-} from "./utils/operators";
-import {exportCsv} from "./utils/preview";
-import {EdgeTypes, getDagLayoutElements, ReactflowNodeType} from "./utils/reactflow";
+  ServiceType,
+} from './utils/operators';
+import { exportCsv } from './utils/preview';
+import {
+  EdgeTypes,
+  getDagLayoutElements,
+  ReactflowNodeType,
+} from './utils/reactflow';
 import ExecutionStatus, {
   AllTransition,
   CheckStatus,
-  ContentSidebarOffsetInPx, HeightTransition,
+  ContentSidebarOffsetInPx,
+  HeightTransition,
   LoadingStatusEnum,
-  TransitionLengthInMs, WidthTransition
-} from "./utils/shared";
-import {getDataSideSheetContent, sideSheetSwitcher} from "./utils/sidesheets";
+  TransitionLengthInMs,
+  WidthTransition,
+} from './utils/shared';
+import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
   computeTopologicalOrder,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
-  WorkflowUpdateTrigger
-} from "./utils/workflows";
+  WorkflowUpdateTrigger,
+} from './utils/workflows';
 
 module.exports = {
   GettingStartedTutorial,

@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
 import { IntegrationConfig, MariaDbConfig } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './IntegrationTextInputField'
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: MariaDbConfig = {
   host: '127.0.0.1',

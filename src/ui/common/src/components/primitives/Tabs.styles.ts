@@ -1,7 +1,8 @@
 import { styled } from '@mui/material/styles';
 import Tab, { tabClasses } from '@mui/material/Tab';
 import Tabs, { tabsClasses } from '@mui/material/Tabs';
-import { theme } from "../../styles/theme/theme";
+
+import { theme } from '../../styles/theme/theme';
 
 const AqueductTabs = styled(Tabs)(() => {
   return {
