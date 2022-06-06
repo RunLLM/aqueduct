@@ -8,8 +8,6 @@ on:
 #      - 'src/python/**'
 #      - 'integration_tests/**'
 #      - 'sdk/aqueduct/**'
-  pull_request:
-    types: [ opened ]
   issue_comment:
     types: [ created ]
   workflow_dispatch:
@@ -21,9 +19,9 @@ jobs:
     outputs:
       is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
     timeout-minutes: 5
-    if: ${{ github.event_name == 'issue_comment' }}
     steps:
       - name: Check for Comment triggers
+        if: ${{ github.event_name == 'issue_comment' }}
         uses: khan/pull-request-comment-trigger@master
         id: check_comment
         with:
@@ -35,7 +33,7 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ github.event_name != 'issue_comment' }}
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
