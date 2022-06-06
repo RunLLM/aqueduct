@@ -21,6 +21,21 @@ server:
 	mkdir -p build
 	cp $$GOPATH/bin/server build/server
 
+migrator-lean:
+	cd golang/cmd/migrator && go install -ldflags="-s -w" -trimpath
+	mkdir -p build # Make the build directory if it doesn't exist
+	mv $$GOPATH/bin/migrator build/migrator
+
+executor-lean:
+	cd golang/cmd/executor && go install -ldflags="-s -w" -trimpath
+	mkdir -p build
+	cp $$GOPATH/bin/executor build/executor
+
+server-lean:
+	cd golang/cmd/server && go install -ldflags="-s -w" -trimpath
+	mkdir -p build
+	cp $$GOPATH/bin/server build/server
+
 test:
 	cd golang && go test -v $$(go list ./...)
 
