@@ -35,8 +35,7 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: check-comment-trigger
-    if: ${{ needs.check-comment-trigger.outputs.is-comment-triggered == 'true' || github.event_name != 'issue_comment' }}
+    if: ${{ github.event_name != 'issue_comment' || jobs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
