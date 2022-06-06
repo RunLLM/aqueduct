@@ -9,8 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-// TODO: Remove this export to ensure that we are using the memoized default export below.
-export const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
+const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faMagnifyingGlass}

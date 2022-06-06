@@ -230,7 +230,6 @@ module.exports = {
   MenuSidebarOffset,
   DefaultLayout,
   MenuSidebarWidth,
-  //SidebarButtonProps TODO: Figure out how to export this type.
   MenuSidebar,
   NotificationListItem,
   NotificationsPopover,
