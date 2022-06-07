@@ -63,7 +63,7 @@ jobs:
       - name: Run demo notebooks
         working-directory: sdk/examples
         timeout-minutes: 15
-        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.TEST_DEMO_NOTEBOOK_API_KEY }}
+        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.API_KEY }}
 
       - uses: actions/upload-artifact@v3
         if: ${{ always() }}
