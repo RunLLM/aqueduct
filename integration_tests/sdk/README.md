@@ -1,29 +1,24 @@
 # SDK Integration Tests
 
-The repo contains integration test cases that use our Python SDK against a cluster. Example models used are the
-[sentiment model](https://github.com/spiralai/example-notebooks/tree/master/sentiment/vader) and the [churn model](https://github.com/spiralai/example-notebooks/tree/master/churn/churn_predictor).
-
-Each test is built to clean up after itself. If it creates a workflow, it will attempt to delete it in the end.
+These tests run the SDK against an Aqueduct backend. Each test is built to clean up after itself. If it creates a workflow, it will attempt to delete it in the end. Tests can be run in parallel.
 
 ## Usage
 
 Running all the tests in this repo:
-`EMAIL=<EMAIL> API_KEY=<API_KEY> GATEWAY_ADDRESS=<GATEWAY_ELB_ADDRESS> INTEGRATION=<CONNECTED_INTEGRATION_NAME> pytest . -rP`
-Note that integration names can be found in the `integration` table of your cluster's Postgres instance.
-
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=aqueduct_demo pytest . -rP`
+gg
 Running all the tests in a single file:
-`<...> pytest <path to test file> -s`
+- `<your env variables> pytest <path to test file> -rP`
 
 Running a specific test:
-`<...>  pytest . -rP -k '<specific test name>'`
+- `<your env variables>  pytest . -rP -k '<specific test name>'`
 
-There are two complexity flags to toggle for the suite:
-`--complex_models`: if set, we will always run real models like sentiment and churn. Otherwise, tests will default instead
-to a dummy function, which is significantly faster to evaluate.
-`--publish`: if set, our flow tests will run flow.publish() instead flow.test(). Again, leaving this flag out will speed
-up test execution, at the expense of losing `publish()` coverage.
+Running tests in parallel, with concurrency 5:
+- Install pytest-xdist
+- `<your env variables> pytest . -rP -n 5`
 
-You can always run tests in parallel by installing pytest-xdist` and adding `-n <num_workers>` to your command.
+There are two additional flags that can be included:
 
-Note that integration tests will default to using http. So test against a https cluster, use the `--https` flag. Eg.
-`<...> pytest . -rP --https`
+`--complex_models`: if set, we will always run real models like sentiment and churn. Otherwise, tests will default instead to dummy functions, which are faster to evaluate.
+
+`--publish`: if set, flows will actually be published into the backend, with the expectation that they are deleted afterwards. Otherwise, we may only call `.get()` for much of the test verification. Leaving this flag out will improve speed tests, at the expense of losing test coverage of `publish_flow()`.
