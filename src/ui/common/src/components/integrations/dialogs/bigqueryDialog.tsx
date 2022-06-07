@@ -3,7 +3,7 @@ import Link from '@mui/material/Link';
 import React, { useEffect, useState } from 'react';
 
 import { BigQueryConfig, IntegrationConfig } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './dialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
@@ -16,8 +16,8 @@ type Props = {
 export type FileEventTarget = EventTarget & { files: FileList };
 
 export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [projectId, setProjectId] = useState(null);
-  const [credentials, setCredentials] = useState(null);
+  const [projectId, setProjectId] = useState<string>(null);
+  const [credentials, setCredentials] = useState<string>(null);
 
   useEffect(() => {
     const config: BigQueryConfig = {

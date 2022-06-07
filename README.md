@@ -19,15 +19,11 @@ To get started with Aqueduct:
     ```bash
     pip3 install aqueduct-ml
     ```
-3. Launch the server by running: 
+3. Launch both the server and the UI by running: 
     ```bash
-    aqueduct server &
+    aqueduct start
     ```
-4. Launch the web-ui by running:
-    ```bash
-    aqueduct ui &
-    ```
-5. Get your API Key by running:
+4. Get your API Key by running:
     ```bash
     aqueduct apikey
     ```

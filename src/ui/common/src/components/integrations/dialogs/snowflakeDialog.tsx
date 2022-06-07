@@ -5,7 +5,7 @@ import {
   IntegrationConfig,
   SnowflakeConfig,
 } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './dialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: SnowflakeConfig = {
   account_identifier: '123456',
@@ -20,11 +20,11 @@ type Props = {
 };
 
 export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [accountIdentifier, setAccountIdentifier] = useState(null);
-  const [warehouse, setWarehouse] = useState(null);
-  const [database, setDatabase] = useState(null);
-  const [username, setUsername] = useState(null);
-  const [password, setPassword] = useState(null);
+  const [accountIdentifier, setAccountIdentifier] = useState<string>(null);
+  const [warehouse, setWarehouse] = useState<string>(null);
+  const [database, setDatabase] = useState<string>(null);
+  const [username, setUsername] = useState<string>(null);
+  const [password, setPassword] = useState<string>(null);
 
   useEffect(() => {
     const config: SnowflakeConfig = {
