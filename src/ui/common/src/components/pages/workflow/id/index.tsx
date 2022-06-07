@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { parse } from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
@@ -48,12 +48,12 @@ import WorkflowHeader from '../../../workflows/workflowHeader';
 
 type WorkflowPageProps = {
   user: UserProfile;
-  workflowId: string;
 };
 
-const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
+const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
+  const workflowId = useParams().id;
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
