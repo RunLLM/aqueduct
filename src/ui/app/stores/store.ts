@@ -5,6 +5,7 @@ import { nodeSelection as nodeSelectionReducer } from '@aqueducthq/common';
 import { notifications as notificationsReducer } from '@aqueducthq/common';
 import { openSideSheet as openSideSheetReducer } from '@aqueducthq/common';
 import { workflow as workflowReducer } from '@aqueducthq/common';
+import { integrationTableData as integrationTableDataReducer } from '@aqueducthq/common';
 import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
         dataPreviewReducer,
         integrationsReducer,
         workflowReducer,
+        integrationTableDataReducer,
     },
 });
 
