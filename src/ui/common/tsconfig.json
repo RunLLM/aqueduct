@@ -26,7 +26,6 @@
     // use Node's module resolution algorithm, instead of the legacy TS one
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": true,
     // transpile JSX to React.createElement
     //"jsx": "react",
     "jsx": "preserve",
@@ -39,7 +38,6 @@
     // match output dir to input dir. e.g. dist/index instead of dist/src/index
     "rootDir": "./src",
     "incremental": true,
-
     // linter checks for common issues
     //"noImplicitReturns": true,
     //"noFallthroughCasesInSwitch": true,

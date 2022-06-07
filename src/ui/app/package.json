@@ -3,6 +3,7 @@
   "name": "@aqueducthq/ui",
   "version": "0.0.1",
   "scripts": {
+    "preinstall": "npx force-resolutions",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -14,8 +15,11 @@
     "url": "https://github.com/aqueducthq/aqueduct.git",
     "directory": "ui/ui-community"
   },
+  "resolutions": {
+    "@types/react": "^18.0.8"
+  },
   "dependencies": {
-    "@aqueducthq/common": "0.0.2",
+    "@aqueducthq/common": "0.0.5",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
@@ -23,16 +27,15 @@
     "@reduxjs/toolkit": "^1.8.1",
     "next": "12.1.5",
     "next-transpile-modules": "^9.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
     "react-flow-renderer": "^10.1.0",
-    "react-redux": "^8.0.0",
-    "react-code-blocks": "^0.0.9-0"
+    "react-redux": "^8.0.0"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^12.1.5",
     "@types/node": "^17.0.35",
-    "@types/react": "^17.0.3",
+    "@types/react": "^18.0.8",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
     "autoprefixer": "^10.4.7",

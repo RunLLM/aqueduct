@@ -1,7 +1,6 @@
 setuptools
 cloudpickle
 numpy
-pipreqsnb
 requests
 pandas
 IPython

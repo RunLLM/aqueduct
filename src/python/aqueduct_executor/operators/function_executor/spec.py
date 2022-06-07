@@ -4,6 +4,7 @@ from typing import List
 try:
     from typing import Literal
 except ImportError:
+    # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
 
 from pydantic import BaseModel, Extra, parse_obj_as, validator

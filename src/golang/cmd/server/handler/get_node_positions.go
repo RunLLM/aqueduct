@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"sort"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -83,8 +84,21 @@ func orderNodes(operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping) (
 	activeEdges := 0
 	layers = append(layers, []uuid.UUID{})
 	activeLayerEdges = append(activeLayerEdges, 0)
-
+	
+	// make a map with key: op uuid ; val: op name
+	opNameIdPair := make(map[string]uuid.UUID)
+	opNames := []string{}	
 	for opId, op := range operatorIdToInputOutput {
+		opNameIdPair[op.OpName] = opId
+		opNames = append(opNames, op.OpName)
+	}
+	// sort by name
+	sort.Strings(opNames)
+
+	// retrieve a ordering for uuid
+	for _, name := range opNames {
+		opId := opNameIdPair[name]
+		op := operatorIdToInputOutput[opId]
 		for _, artfId := range op.Inputs {
 			_, ok := artifactToDownstream[artfId]
 			if !ok {

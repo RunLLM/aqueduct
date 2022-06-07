@@ -1,6 +1,13 @@
-# Aqueduct: Prediction Infrastructure for Data Scientists
+[<img src="https://uploads-ssl.webflow.com/62336685e5efee770a9c69b6/624b700d8164e226ea67f495_aqueduct%20logo-p-500.jpeg" width="35%"/>](https://www.aqueducthq.com)
 
-Aqueduct is open-source prediction infrastructure built for data scientists, by data scientists. 
+## Aqueduct: Prediction Infrastructure for Data Scientists
+
+[![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
+[![Slack](https://img.shields.io/static/v1.svg?label=chat&message=on%20slack&color=27b1ff&style=flat)](https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A)
+[![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/aqueducthq/aqueduct/blob/master/LICENSE)
+[![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
+[![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
+
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into the performance of their prediction pipelines -- all from the comfort of a Python notebook. 
 
 The core abstraction in Aqueduct is a [Workflow](https://docs.aqueducthq.com/workflows), which is a sequence of [Artifacts](https://docs.aqueducthq.com/artifacts) (data) that are transformed by [Operators](https://docs.aqueducthq.com/operators) (compute). 
@@ -13,15 +20,11 @@ To get started with Aqueduct:
     ```bash
     pip3 install aqueduct-ml
     ```
-3. Launch the server by running: 
+3. Launch both the server and the UI by running: 
     ```bash
-    aqueduct server &
+    aqueduct start
     ```
-4. Launch the web-ui by running:
-    ```bash
-    aqueduct ui &
-    ```
-5. Get your API Key by running:
+4. Get your API Key by running:
     ```bash
     aqueduct apikey
     ```
@@ -31,12 +34,13 @@ Once you have the Aqueduct server running, this 25-line code snippet is all you 
 ```python
 import aqueduct as aq
 from aqueduct import op, metric
+import pandas as pd
 from transformers import pipeline
 import torch
 
-client = aq.AqueductClient("YOUR_API_KEY", "localhost:8080")
+client = aq.Client("YOUR_API_KEY", "localhost:8080")
 
-demo_db = client.integration("aqueduct_demo/")
+demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
 
 @op()
