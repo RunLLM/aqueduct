@@ -7,6 +7,7 @@ import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
 import openSideSheetReducer from '../reducers/openSideSheet';
 import workflowReducer from '../reducers/workflow';
+import integrationTableDataReducer from '../reducers/integrationTableData';
 //import {AnyAction, CombinedState, configureStore, Reducer} from '@reduxjs/toolkit';
 
 /*
@@ -28,6 +29,7 @@ export const store = configureStore({
     dataPreviewReducer,
     integrationsReducer,
     workflowReducer,
+    integrationTableDataReducer,
   },
 });
 
