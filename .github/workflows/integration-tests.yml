@@ -39,8 +39,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        # TODO(ENG-1182): Get OSS working with and 3.7
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
