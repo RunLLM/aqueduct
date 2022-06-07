@@ -128,6 +128,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     setTable(newValue);
   };
   const loading = tableListStatus === ExecutionStatus.Pending;
+  const hasTable = table != null && table !== '';
   return (
     <DefaultLayout user={user}>
       <Head>
@@ -173,7 +174,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
 
           <Box sx={{ mt: 3 }}>
-            {table !== '' && tableDataStatus === ExecutionStatus.Pending && (
+            {hasTable && tableDataStatus === ExecutionStatus.Pending && (
               <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
                 <CircularProgress size={30} />
                 <Typography sx={{ ml: 2 }}>
@@ -181,14 +182,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 </Typography>
               </Box>
             )}
-            {table !== '' && tableDataStatus === ExecutionStatus.Failed && (
+            {hasTable && tableDataStatus === ExecutionStatus.Failed && (
               <Alert style={{ marginTop: '10px' }} severity="error">
                 Table <b>{table}</b> failed to load. Try refreshing the page.{' '}
                 <br />
                 Error: {retrievedTableData}
               </Alert>
             )}
-            {table !== '' &&
+            {hasTable &&
               tableDataStatus === ExecutionStatus.Succeeded &&
               retrievedTableData !== '' && (
                 <div style={{ height: '50vh', width: 'calc(100% - 25px)' }}>
