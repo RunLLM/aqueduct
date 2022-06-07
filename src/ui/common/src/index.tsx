@@ -146,6 +146,7 @@ import {
   SupportedIntegrations,
 } from './utils/integrations';
 import { dateString } from './utils/metadata';
+
 import {
   archiveNotification,
   listNotifications,
@@ -174,19 +175,20 @@ import ExecutionStatus, {
   CheckStatus,
   ContentSidebarOffsetInPx,
   HeightTransition,
+  LoadingStatus,
   LoadingStatusEnum,
   TransitionLengthInMs,
   WidthTransition,
 } from './utils/shared';
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
-  computeTopologicalOrder,
+  computeTopologicalOrder, ListWorkflowSummary,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
   WorkflowUpdateTrigger,
 } from './utils/workflows';
 
-module.exports = {
+export {
   GettingStartedTutorial,
   setUser,
   useAqueductConsts,
@@ -227,6 +229,8 @@ module.exports = {
   AqueductSidebar,
   Card,
   DataPreviewer,
+  ListWorkflowSummary,
+  LoadingStatus,
   MenuSidebarOffset,
   DefaultLayout,
   MenuSidebarWidth,
