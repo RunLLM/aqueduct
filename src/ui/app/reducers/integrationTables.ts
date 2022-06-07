@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import ExecutionStatus from '../utils/shared';
+import ExecutionStatus from '@aqueducthq/common/src/utils/shared';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
-import { RootState } from '../stores/store';
+import { useAqueductConsts } from '@aqueducthq/common/src/components/hooks/useAqueductConsts';
+import { RootState } from '@stores/store';
 
 export interface IntegrationTablesState {
   integrationTables: string[];

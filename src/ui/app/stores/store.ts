@@ -1,11 +1,14 @@
 import dataPreviewReducer from '@reducers/dataPreview';
 import integrationsReducer from '@reducers/integrations';
+import integrationTableDataReducer from '@reducers/integrationTableData';
+import integrationTablesReducer from '@reducers/integrationTables';
 import listWorkflowReducer from '@reducers/listWorkflowSummaries';
 import nodeSelectionReducer from '@reducers/nodeSelection';
 import notificationsReducer from '@reducers/notifications';
 import openSideSheetReducer from '@reducers/openSideSheet';
 import workflowReducer from '@reducers/workflow';
 import { configureStore } from '@reduxjs/toolkit';
+
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +17,8 @@ export const store = configureStore({
         notificationsReducer,
         listWorkflowReducer,
         dataPreviewReducer,
+        integrationTablesReducer,
+        integrationTableDataReducer,
         integrationsReducer,
         workflowReducer,
     },
