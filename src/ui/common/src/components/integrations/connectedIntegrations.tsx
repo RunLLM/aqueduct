@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IntegrationCard } from '../../components/integrations/cards/card';
+import Link from '@mui/material/Link';
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
@@ -43,9 +44,11 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         .map((integration, idx) => {
           return (
             <Box key={idx}>
-              <Card>
-                <IntegrationCard integration={integration} />
-              </Card>
+              <Link underline="none" color="inherit" href={`/integration/${integration.id}`}>
+                <Card>
+                  <IntegrationCard integration={integration} />
+                </Card>
+              </Link>
 
               {idx < integrations.length - 1 && <Divider />}
             </Box>
