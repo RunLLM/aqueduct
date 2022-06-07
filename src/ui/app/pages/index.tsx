@@ -4,13 +4,14 @@ import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common';
 
 const Home: React.FC = () => {
+    const router = useRouter();
     const { user, loading, success } = useUser();
+
     if (loading) {
         return null;
     }
 
     if (!success) {
-        const router = useRouter();
         router.push('/login');
         return null;
     }
