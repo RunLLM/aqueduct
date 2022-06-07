@@ -162,16 +162,16 @@ class MetricArtifact(Artifact):
         metric_name = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id).name
 
         if bound_name is self.BOUND_LOWER:
-            name = "less than %s" % bound_value
-            description = "Check that the metric %s is lower than %s" % (metric_name, bound_value)
+            name = "greater than %s" % bound_value
+            description = "Check that the metric %s is greater than %s" % (metric_name, bound_value)
 
             def check_lower_bound(metric_val: float) -> bool:
                 return metric_val > bound_value
 
             bound_fn = check_lower_bound
         elif bound_name is self.BOUND_UPPER:
-            name = "greater than %s" % bound_value
-            description = "Check that the metric %s is greater than %s" % (metric_name, bound_value)
+            name = "less than %s" % bound_value
+            description = "Check that the metric %s is less than %s" % (metric_name, bound_value)
 
             def check_upper_bound(metric_val: float) -> bool:
                 return metric_val < bound_value
