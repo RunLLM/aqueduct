@@ -41,9 +41,6 @@ export const AddIntegrations: React.FC<Props> = ({
                     },
                   }}
                 >
-                  {/* NOTE: We are not using Next's image here because it requires us
-                                      to fill out both width and height which are different for different
-                                      logos. */}
                   <img
                     src={integration.logo}
                     height="85px"

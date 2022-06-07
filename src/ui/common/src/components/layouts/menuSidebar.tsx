@@ -11,7 +11,7 @@ import { Avatar, Link, Menu, MenuItem, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import { useRouter } from 'next/router';
+import { useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -110,7 +110,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [currentPage, setCurrentPage] = useState(undefined);
   const dispatch: AppDispatch = useDispatch();
-  const router = useRouter();
+  const location = useLocation();
 
   const numUnreadNotifications = useSelector(
     (state: RootState) =>
@@ -120,7 +120,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   );
 
   useEffect(() => {
-    setCurrentPage(router.pathname);
+    setCurrentPage(location.pathname);
 
     if (user) {
       dispatch(handleFetchNotifications({ user }));

@@ -1,7 +1,6 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { parse } from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
@@ -53,7 +52,7 @@ type WorkflowPageProps = {
 };
 
 const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
   const currentNode = useSelector(
@@ -232,7 +231,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    router.push('/404');
+    navigate('/404');
     return null;
   }
 
@@ -296,12 +295,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
     return null;
   };
 
+  useEffect(() => {
+    document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`
+  }, [])
+
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title> {workflow.selectedDag.metadata.name} | Aqueduct </title>
-      </Head>
-
       <Box
         sx={{
           display: 'flex',
