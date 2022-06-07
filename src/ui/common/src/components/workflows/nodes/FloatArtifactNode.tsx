@@ -9,7 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-export const FloatArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
+const FloatArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faChartLine}

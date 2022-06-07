@@ -1,8 +1,7 @@
-import useUser from '@aqueducthq/common/src/components/hooks/useUser';
-import IntegrationsPage from '@aqueducthq/common/src/components/pages/integrations';
+import { IntegrationsPage, useUser } from '@aqueducthq/common';
 import { useRouter } from 'next/router';
 import React from 'react';
-export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Integrations: React.FC = () => {
     const { user, loading, success } = useUser();

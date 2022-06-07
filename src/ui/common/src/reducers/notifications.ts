@@ -18,7 +18,21 @@ const initialNotificationsState: NotificationsState = {
   notifications: [],
 };
 
-export const handleArchiveNotification = createAsyncThunk(
+type UserPayload = {
+  user: UserProfile;
+  id: string;
+};
+
+export const handleArchiveNotification = createAsyncThunk<
+  // return type of the payload creator
+  void,
+  // first argument to the payload creator
+  { user: UserProfile; id: string },
+  // arguments for the ThunkAPI
+  {
+    rejectValue: string;
+  }
+>(
   'notificationsReducer/archive',
   async (
     args: {
@@ -32,6 +46,8 @@ export const handleArchiveNotification = createAsyncThunk(
     if (errMsg) {
       return thunkAPI.rejectWithValue(errMsg);
     }
+
+    return;
   }
 );
 
