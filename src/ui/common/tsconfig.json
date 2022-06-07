@@ -38,7 +38,6 @@
     // match output dir to input dir. e.g. dist/index instead of dist/src/index
     "rootDir": "./src",
     "incremental": true,
-
     // linter checks for common issues
     //"noImplicitReturns": true,
     //"noFallthroughCasesInSwitch": true,

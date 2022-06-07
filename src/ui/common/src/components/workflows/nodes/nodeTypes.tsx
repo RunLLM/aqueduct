@@ -1,10 +1,10 @@
-import { BoolArtifactNode } from './BoolArtifactNode';
-import { CheckOperatorNode } from './CheckOperatorNode';
-import { DatabaseNode } from './DatabaseNode';
-import { FloatArtifactNode } from './FloatArtifactNode';
-import { FunctionOperatorNode } from './FunctionOperatorNode';
-import { MetricOperatorNode } from './MetricOperatorNode';
-import { TableArtifactNode } from './TableArtifactNode';
+import BoolArtifactNode from './BoolArtifactNode';
+import CheckOperatorNode from './CheckOperatorNode';
+import DatabaseNode from './DatabaseNode';
+import FloatArtifactNode from './FloatArtifactNode';
+import FunctionOperatorNode from './FunctionOperatorNode';
+import MetricOperatorNode from './MetricOperatorNode';
+import TableArtifactNode from './TableArtifactNode';
 
 export const nodeTypes = {
   database: DatabaseNode,

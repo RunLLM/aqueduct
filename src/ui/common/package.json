@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "alias": {
@@ -81,6 +81,8 @@
     "@types/react-dom": "^18.0.5",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
+    "autoprefixer": "^10.4.7",
+    "cssnano": "^5.1.10",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
@@ -92,6 +94,7 @@
     "prettier": "^2.2.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
