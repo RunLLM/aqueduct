@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Callable, Mapping, Optional, Union
 
 import requests
 from croniter import croniter
+import yaml
 
 from .dag import DAG, Schedule, RetentionPolicy
 from .enums import TriggerType
@@ -353,6 +354,15 @@ def generate_extract_op_name(
 
     return op_name
 
+def get_apikey() -> str:
+    server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+    config_file = os.path.join(server_directory, "config", "config.yml")
+    with open(config_file, "r") as f:
+        try:
+            return yaml.safe_load(f)['apiKey']
+        except yaml.YAMLError as exc:
+            print(exc)
+            exit(1)
 
 def get_checks_for_op(op: Operator, dag: DAG) -> List[Operator]:
     check_operators = []
