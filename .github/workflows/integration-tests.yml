@@ -2,7 +2,7 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ integration_test_310 ]
+    branches: [ main ]
     paths:
       - 'src/golang/**'
       - 'src/python/**'
