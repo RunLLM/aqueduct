@@ -35,7 +35,7 @@ export type ReactFlowNodeData = {
 };
 
 // These are generic dag supports
-type NodePos = { x: number; y: number };
+export type NodePos = { x: number; y: number };
 
 function getOperatorNode(
   op: Operator,

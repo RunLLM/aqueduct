@@ -20,6 +20,7 @@ import {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleGetSelectDagPosition,
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -71,6 +72,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
+  const dagPosition = useSelector(
+    (state: RootState) => state.workflowReducer.selectedDagPosition
+  );
+
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -93,8 +98,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults]);
 
+    if (workflow.selectedDag) {
+      dispatch(handleGetSelectDagPosition({ apiKey: user.apiKey, operators: workflow.selectedDag?.operators }))
+      console.log("dagPosition: ",dagPosition )
+    }
+  }, [workflow.dagResults]);
+  console.log("dagPosition: ",dagPosition )
   /**
    * This function dispatches calls to fetch artifact results and contents.
    *
@@ -295,6 +305,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
 
     return null;
   };
+
+
 
   return (
     <DefaultLayout user={user}>
