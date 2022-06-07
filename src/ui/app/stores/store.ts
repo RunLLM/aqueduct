@@ -9,7 +9,6 @@ import { openSideSheet as openSideSheetReducer } from '@aqueducthq/common';
 import { workflow as workflowReducer } from '@aqueducthq/common';
 import { configureStore } from '@reduxjs/toolkit';
 
-
 export const store = configureStore({
     reducer: {
         nodeSelectionReducer,

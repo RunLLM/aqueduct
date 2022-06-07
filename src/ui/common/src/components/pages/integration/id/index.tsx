@@ -47,7 +47,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     (state: RootState) => state.integrationsReducer.integrations
   );
   const integrationTables = useSelector(
-    (state: RootState) => state.integrationTablesReducer.integrationTables);
+    (state: RootState) => state.integrationTablesReducer.integrationTables
+  );
   const tableListStatus = useSelector(
     (state: RootState) => state.integrationTablesReducer.thunkState
   );

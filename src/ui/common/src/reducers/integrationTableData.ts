@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import ExecutionStatus from '../utils/shared';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
+import ExecutionStatus from '../utils/shared';
 
 type TableData = {
   status: ExecutionStatus;
@@ -76,7 +76,7 @@ export const handleLoadIntegrationTable = createAsyncThunk<
 
 export const integrationTableDataSlice = createSlice({
   name: 'integrationTableDataReducer',
-  initialState,
+  initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(

@@ -33,7 +33,9 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.openSideSheetReducer
   );
   const { fitView } = useReactFlow();
-  useEffect(() => { fitView() }, []);
+  useEffect(() => {
+    fitView();
+  }, []);
 
   useEffect(() => {
     // NOTE(vikram): There's a timeout here because there seems to be a
