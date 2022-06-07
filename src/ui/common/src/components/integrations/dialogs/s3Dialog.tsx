@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
 import { IntegrationConfig, S3Config } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './dialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
   bucket: 'aqueduct',
@@ -15,9 +15,9 @@ type Props = {
 };
 
 export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [bucket, setBucket] = useState(null);
-  const [accessKeyId, setAccessKeyId] = useState(null);
-  const [secretAccessKey, setSecretAccessKey] = useState(null);
+  const [bucket, setBucket] = useState<string>(null);
+  const [accessKeyId, setAccessKeyId] = useState<string>(null);
+  const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
 
   useEffect(() => {
     const config: S3Config = {

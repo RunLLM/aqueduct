@@ -3,8 +3,10 @@
 ## Aqueduct: Prediction Infrastructure for Data Scientists
 
 [![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
+[![Slack](https://img.shields.io/static/v1.svg?label=chat&message=on%20slack&color=27b1ff&style=flat)](https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A)
 [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/aqueducthq/aqueduct/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
+[![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
 
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into the performance of their prediction pipelines -- all from the comfort of a Python notebook. 
 
@@ -18,15 +20,11 @@ To get started with Aqueduct:
     ```bash
     pip3 install aqueduct-ml
     ```
-3. Launch the server by running: 
+3. Launch both the server and the UI by running: 
     ```bash
-    aqueduct server &
+    aqueduct start
     ```
-4. Launch the web-ui by running:
-    ```bash
-    aqueduct ui &
-    ```
-5. Get your API Key by running:
+4. Get your API Key by running:
     ```bash
     aqueduct apikey
     ```

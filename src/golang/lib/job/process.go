@@ -60,45 +60,46 @@ type ProcessJobManager struct {
 	cronScheduler *gocron.Scheduler
 	// A mapping from cron job name to cron job object pointer.
 	cronMapping map[string]*cronMetadata
-	mutex       *sync.RWMutex
+	cmdMutex    *sync.RWMutex
+	cronMutex   *sync.RWMutex
 }
 
 func (j *ProcessJobManager) getCmd(key string) (*Command, bool) {
-	j.mutex.RLock()
+	j.cmdMutex.RLock()
 	cmd, ok := j.cmds[key]
-	j.mutex.RUnlock()
+	j.cmdMutex.RUnlock()
 	return cmd, ok
 }
 
 func (j *ProcessJobManager) setCmd(key string, cmd *Command) {
-	j.mutex.Lock()
+	j.cmdMutex.Lock()
 	j.cmds[key] = cmd
-	j.mutex.Unlock()
+	j.cmdMutex.Unlock()
 }
 
 func (j *ProcessJobManager) deleteCmd(key string) {
-	j.mutex.Lock()
+	j.cmdMutex.Lock()
 	delete(j.cmds, key)
-	j.mutex.Unlock()
+	j.cmdMutex.Unlock()
 }
 
 func (j *ProcessJobManager) getCronMap(key string) (*cronMetadata, bool) {
-	j.mutex.RLock()
+	j.cronMutex.RLock()
 	cron, ok := j.cronMapping[key]
-	j.mutex.RUnlock()
+	j.cronMutex.RUnlock()
 	return cron, ok
 }
 
 func (j *ProcessJobManager) setCronMap(key string, cron *cronMetadata) {
-	j.mutex.Lock()
+	j.cronMutex.Lock()
 	j.cronMapping[key] = cron
-	j.mutex.Unlock()
+	j.cronMutex.Unlock()
 }
 
 func (j *ProcessJobManager) deleteCronMap(key string) {
-	j.mutex.Lock()
+	j.cronMutex.Lock()
 	delete(j.cronMapping, key)
-	j.mutex.Unlock()
+	j.cronMutex.Unlock()
 }
 
 func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
@@ -122,7 +123,8 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 		cmds:          map[string]*Command{},
 		cronScheduler: cronScheduler,
 		cronMapping:   map[string]*cronMetadata{},
-		mutex:         &sync.RWMutex{},
+		cmdMutex:      &sync.RWMutex{},
+		cronMutex:     &sync.RWMutex{},
 	}, nil
 }
 

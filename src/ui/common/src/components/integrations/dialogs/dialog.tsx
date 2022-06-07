@@ -9,9 +9,8 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
 import { useRouter } from 'next/router';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import UserProfile from '../../../utils/auth';
 import {
@@ -22,64 +21,13 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { BigQueryDialog } from './bigqueryDialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-
-type IntegrationTextFieldProps = {
-  label: string;
-  description: string;
-  spellCheck: boolean;
-  required: boolean;
-  placeholder: string;
-  onChange: (
-    event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => void;
-  value: string;
-  type?: string;
-  disabled?: boolean;
-};
-
-export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
-  label,
-  description,
-  spellCheck,
-  required,
-  placeholder,
-  onChange,
-  value,
-  type,
-  disabled,
-}) => {
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ my: 1 }}>
-        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-          {label}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'darkGray' }}>
-          {description}
-        </Typography>
-      </Box>
-      <Box>
-        <TextField
-          spellCheck={spellCheck}
-          required={required}
-          placeholder={placeholder}
-          onChange={onChange}
-          value={value}
-          type={type ? type : null}
-          fullWidth={true}
-          size={'small'}
-          disabled={disabled}
-        />
-      </Box>
-    </Box>
-  );
-};
 
 type Props = {
   user: UserProfile;
