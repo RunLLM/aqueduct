@@ -9,7 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-export const DatabaseNode: React.FC<Props> = ({ data, isConnectable }) => {
+const DatabaseNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faDatabase}

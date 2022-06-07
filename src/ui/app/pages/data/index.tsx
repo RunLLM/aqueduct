@@ -1,9 +1,7 @@
-import useUser from '@aqueducthq/common/src/components/hooks/useUser';
-import DataPage from '@aqueducthq/common/src/components/pages/data';
+import { DataPage, useUser } from '@aqueducthq/common';
 import { useRouter } from 'next/router';
 import React from 'react';
-
-export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Data: React.FC = () => {
     const { user, loading, success } = useUser();

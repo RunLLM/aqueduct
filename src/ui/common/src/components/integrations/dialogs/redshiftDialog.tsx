@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
 import { IntegrationConfig, RedshiftConfig } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './dialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: RedshiftConfig = {
   host: 'aqueduct.us-east-2.redshift.amazonaws.com',
@@ -17,11 +17,11 @@ type Props = {
 };
 
 export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [host, setHost] = useState(null);
-  const [port, setPort] = useState(null);
-  const [database, setDatabase] = useState(null);
-  const [username, setUsername] = useState(null);
-  const [password, setPassword] = useState(null);
+  const [host, setHost] = useState<string>(null);
+  const [port, setPort] = useState<string>(null);
+  const [database, setDatabase] = useState<string>(null);
+  const [username, setUsername] = useState<string>(null);
+  const [password, setPassword] = useState<string>(null);
 
   useEffect(() => {
     const config: RedshiftConfig = {
