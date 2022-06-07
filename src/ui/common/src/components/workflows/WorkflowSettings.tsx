@@ -19,7 +19,6 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 
 import UserProfile from '../../utils/auth';
@@ -34,6 +33,7 @@ import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
+import { useNavigate } from 'react-router-dom'
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -163,7 +163,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   onClose,
 }) => {
   const { httpProtocol, apiAddress } = useAqueductConsts();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
@@ -299,7 +299,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             'Successfully deleted your workflow. Redirecting you to the workflows page...'
           );
           setShowDeleteMessage(true);
-          router.push('/workflows');
+          navigate('/workflows');
         } else {
           setDeleteSucceeded(false);
           setDeleteMessage(
@@ -344,7 +344,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         if (res.ok) {
           setUpdateSucceeded(true);
           setUpdateMessage('Sucessfully updated your workflow.');
-          router.reload(); // Refresh the page to reflect the updated settings.
+          location.reload(); // Refresh the page to reflect the updated settings.
         } else {
           setUpdateSucceeded(false);
           setUpdateMessage(

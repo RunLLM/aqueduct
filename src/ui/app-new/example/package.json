@@ -8,17 +8,24 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "react-app-polyfill": "^1.0.0"
+    "@aqueducthq/common": "^0.0.5",
+    "react-app-polyfill": "^1.0.0",
+    "react-redux": "^8.0.2",
+    "react-router-dom": "^6.3.0"
   },
   "alias": {
     "react": "../node_modules/react",
     "react-dom": "../node_modules/react-dom/profiling",
-    "scheduler/tracing": "../node_modules/scheduler/tracing-profiling"
+    "react-dom/client": "../node_modules/react-dom/client",
+    "scheduler/tracing": "../node_modules/scheduler/tracing-profiling",
+    "process": false
   },
   "devDependencies": {
+    "@babel/core": "^7.18.2",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.5",
     "parcel": "2.6.0",
+    "process": "^0.11.10",
     "typescript": "^3.9.10"
   }
 }

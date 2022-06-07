@@ -1,10 +1,9 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
 import React, { ChangeEvent, useState } from 'react';
 import cookies from 'react-cookies';
+import { useNavigate } from 'react-router-dom';
 
 import fetchUser from '../../utils/fetchUser';
 import setUser from '../hooks/setUser';
@@ -15,7 +14,7 @@ export const LoginPage: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(
     cookies.load('aqueduct-api-key')
   );
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const onApiKeyTextFieldChanged = (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -45,7 +44,7 @@ export const LoginPage: React.FC = () => {
     } else {
       setValidationError(false);
       setUser(apiKey);
-      router.push('/');
+      navigate('/');
     }
   };
 
@@ -69,12 +68,12 @@ export const LoginPage: React.FC = () => {
             flexDirection: 'column',
           }}
         >
-          <Image
-            width="150px"
-            height="150px"
+          <img
             src={
               'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_color_on_white.png'
             }
+            width="150px"
+            height="150px"
           />
           <TextField
             error={validationError}

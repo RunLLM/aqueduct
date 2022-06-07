@@ -9,7 +9,6 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 
 import UserProfile from '../../../utils/auth';
@@ -28,6 +27,7 @@ import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   user: UserProfile;
@@ -40,7 +40,7 @@ export const IntegrationDialog: React.FC<Props> = ({
   service,
   onCloseDialog,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<IntegrationConfig>({});
   const [disableConnect, setDisableConnect] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
@@ -114,7 +114,7 @@ export const IntegrationDialog: React.FC<Props> = ({
         setSuccessMessage('Successfully connected to ' + service + '!');
         setIsConnecting(false);
         onCloseDialog();
-        router.push('/integrations');
+        navigate('/integrations');
       })
       .catch((err) => {
         setErrMsg('Unable to connect integration. ' + err.message);
