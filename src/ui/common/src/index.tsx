@@ -1,6 +1,6 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import setUser from './components/hooks/setUser';
-//import { AqueductConsts, ClusterEnvironment useAqueductConsts } from "./components/hooks/useAqueductConsts";
+//import { AqueductConsts, useAqueductConsts } from "./components/hooks/useAqueductConsts";
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import { AddIntegrations } from './components/integrations/addIntegrations';
