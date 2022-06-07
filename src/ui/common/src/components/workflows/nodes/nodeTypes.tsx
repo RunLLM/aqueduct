@@ -1,24 +1,24 @@
-import {CheckOperatorNode} from "./CheckOperatorNode";
-import {MetricOperatorNode} from "./MetricOperatorNode";
-import {DatabaseNode} from "./DatabaseNode";
-import {FunctionOperatorNode} from "./FunctionOperatorNode";
-import {TableArtifactNode} from "./TableArtifactNode";
-import {BoolArtifactNode} from "./BoolArtifactNode";
-import {FloatArtifactNode} from "./FloatArtifactNode";
+import BoolArtifactNode from './BoolArtifactNode';
+import CheckOperatorNode from './CheckOperatorNode';
+import DatabaseNode from './DatabaseNode';
+import FloatArtifactNode from './FloatArtifactNode';
+import FunctionOperatorNode from './FunctionOperatorNode';
+import MetricOperatorNode from './MetricOperatorNode';
+import TableArtifactNode from './TableArtifactNode';
 
 export const nodeTypes = {
-    database: DatabaseNode,
-    tableArtifact: TableArtifactNode,
-    floatArtifact: FloatArtifactNode,
-    boolArtifact: BoolArtifactNode,
-    function: FunctionOperatorNode,
+  database: DatabaseNode,
+  tableArtifact: TableArtifactNode,
+  floatArtifact: FloatArtifactNode,
+  boolArtifact: BoolArtifactNode,
+  function: FunctionOperatorNode,
 
-    // These are generic DAG nodes
-    functionOp: FunctionOperatorNode,
-    extractOp: DatabaseNode,
-    loadOp: DatabaseNode,
-    metricOp: MetricOperatorNode,
-    checkOp: CheckOperatorNode,
+  // These are generic DAG nodes
+  functionOp: FunctionOperatorNode,
+  extractOp: DatabaseNode,
+  loadOp: DatabaseNode,
+  metricOp: MetricOperatorNode,
+  checkOp: CheckOperatorNode,
 };
 
 export default nodeTypes;

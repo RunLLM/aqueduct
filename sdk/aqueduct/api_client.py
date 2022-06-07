@@ -98,8 +98,8 @@ class APIClient:
                 "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
             )
             raise ClientValidationError(
-                "Unable to connect to server. Double check that your specified address `%s` is correct. "
-                "See verbose logs for the exact connection errors." % self.aqueduct_address,
+                "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
+                % (self.api_key, self.aqueduct_address),
             )
         return False
 

@@ -1,25 +1,22 @@
-import useUser from "@aqueducthq/common/src/components/hooks/useUser";
-import HomePage from "@aqueducthq/common/src/components/pages/HomePage";
-import { useRouter } from "next/router";
-import React from "react";
-
-export { getServerSideProps } from "@aqueducthq/common/src/components/pages/getServerSideProps";
+import { HomePage, useUser } from '@aqueducthq/common';
+import { useRouter } from 'next/router';
+import React from 'react';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Home: React.FC = () => {
-  const { user, loading, success } = useUser();
-  if (loading) {
-    return null;
-  }
-
-  if (!success) {
     const router = useRouter();
-    router.push("/login");
-    return null;
-  }
+    const { user, loading, success } = useUser();
 
-  //return <GettingStartedTutorial user={user} />;
+    if (loading) {
+        return null;
+    }
 
-  return <HomePage user={user} />;
+    if (!success) {
+        router.push('/login');
+        return null;
+    }
+
+    return <HomePage user={user} />;
 };
 
 export default Home;

@@ -10,10 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var confPath = flag.String(
-	"config",
-	"",
-	"The path to .yml config file",
+var (
+	confPath = flag.String(
+		"config",
+		"",
+		"The path to .yml config file",
+	)
+	expose = flag.Bool("expose", false, "Whether you want to expose the server to the public.")
 )
 
 func main() {
@@ -43,5 +46,5 @@ func main() {
 
 	// Start the HTTP server and listen for requests indefinitely.
 	log.Infof("You can use api key %s to connect to the server", serverConfig.ApiKey)
-	s.Run()
+	s.Run(*expose)
 }
