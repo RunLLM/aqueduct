@@ -3,10 +3,10 @@ Installs aqueduct from the local repo. Run with `python3 scripts/install_local.p
 
 Requirements:
 - `aqueduct-ml` must already be installed.
-- `aqueduct server` must have been run at least once since the last `aqueduct clear`. (~/.aqueduct/server must exist)
+- `aqueduct start` must have been run at least once since the last `aqueduct clear`. (~/.aqueduct/server must exist)
 - The aqueduct server must not be running.
 
-After this script completes, running `aqueduct server` will start the backend with the local changes.
+After this script completes, running `aqueduct start` will start the backend with the local changes.
 The sdk will also be updated with any local changes.
 """
 

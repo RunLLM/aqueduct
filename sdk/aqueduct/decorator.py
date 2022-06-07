@@ -130,8 +130,7 @@ def op(
     Calling the decorated function returns a TableArtifact. The decorated function
     can take any number of artifact inputs.
 
-    The requirements.txt file in the current directory is used. If no such file exists,
-    we will infer the requirements that the function needs.
+    The requirements.txt file in the current directory is used, if it exists.
 
     Args:
         name:
@@ -210,8 +209,7 @@ def metric(
     Calling the decorated function returns a MetricArtifact. The decorated function
     can take any number of artifact inputs.
 
-    The requirements.txt file in the current directory is used. If no such file exists,
-    we will infer the requirements that the function needs.
+    The requirements.txt file in the current directory is used, if it exists.
 
     Args:
         name:
@@ -299,8 +297,7 @@ def check(
     Calling the decorated function returns a CheckArtifact. The decorated python function
     can have any number of artifact inputs.
 
-    The requirements.txt file in the current directory is used. If no such file exists,
-    we will infer the requirements that the function needs.
+    The requirements.txt file in the current directory is used, if it exists.
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
     will fail the workflow when run in our system.

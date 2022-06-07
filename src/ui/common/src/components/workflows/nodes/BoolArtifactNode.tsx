@@ -9,7 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-export const BoolArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
+const BoolArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faCircleCheck}
