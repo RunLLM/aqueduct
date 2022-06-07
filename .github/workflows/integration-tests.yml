@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
@@ -11,7 +12,6 @@ on:
       - '.github/workflows/integration-tests.yml'
   issue_comment:
     types: [ created ]
-  workflow_dispatch:
 
 jobs:
   check-comment-trigger:
@@ -83,11 +83,11 @@ jobs:
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py
 
-      - name: Install packages needed for testing
-        run: pip3 install nltk matplotlib pytest-xdist
-
       - name: Start aqueduct server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      - name: Install packages needed for testing
+        run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
