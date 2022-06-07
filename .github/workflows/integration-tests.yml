@@ -2,7 +2,7 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ eng-1191-remove-pipreqsnb-for-requirements ]
+    branches: [ ]
     paths:
       - 'src/golang/**'
       - 'src/python/**'
