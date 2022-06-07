@@ -193,8 +193,6 @@ import {
   WorkflowUpdateTrigger,
 } from './utils/workflows';
 
-tableKeyFn;
-
 export {
   AddIntegrations,
   AllTransition,
