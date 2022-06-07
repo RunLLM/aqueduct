@@ -7,28 +7,26 @@ import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common';
 
 const Account: React.FC = () => {
+    const router = useRouter();
     const { user, loading, success } = useUser();
-    if (loading) {
-        return null;
-    }
-
-    if (!success) {
-        const router = useRouter();
-        router.push('/login');
-        return null;
-    }
-
     const { apiAddress } = useAqueductConsts();
-
     const serverAddress = apiAddress ? `${apiAddress}` : '<server address>';
-
     const apiConnectionSnippet = `import aqueduct
 client = aqueduct.Client(
     "${user.apiKey}",
     "${serverAddress}"
 )`;
-
     const maxContentWidth = '600px';
+
+    if (loading) {
+        return null;
+    }
+
+    if (!success) {
+        router.push('/login');
+        return null;
+    }
+
     return (
         <DefaultLayout user={user}>
             <Head>
