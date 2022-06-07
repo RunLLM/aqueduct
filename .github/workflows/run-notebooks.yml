@@ -20,6 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set filename for the server's output logs
+        run: echo "SERVER_LOGS_FILE=server_logs" >> $GITHUB_ENV
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
@@ -48,6 +51,9 @@ jobs:
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py
 
+      - name: Start aqueduct server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
       - name: Install Packages needed by the notebooks
         run: pip3 install sklearn
 
@@ -58,3 +64,9 @@ jobs:
         working-directory: sdk/examples
         timeout-minutes: 15
         run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.TEST_DEMO_NOTEBOOK_API_KEY }}
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: Server Logs
+          path: server_logs
