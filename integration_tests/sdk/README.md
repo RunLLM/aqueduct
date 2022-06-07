@@ -6,7 +6,7 @@ These tests run the SDK against an Aqueduct backend. Each test is built to clean
 
 Running all the tests in this repo:
 `API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=aqueduct_demo pytest . -rP`
-gg
+
 Running all the tests in a single file:
 - `<your env variables> pytest <path to test file> -rP`
 
