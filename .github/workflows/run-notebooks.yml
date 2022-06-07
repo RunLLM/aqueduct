@@ -9,9 +9,6 @@ on:
   pull_request:
     paths:
       - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
-  push: # TODO REMOVE
-    branches: [ eng-1184-add-automated-notebook-github-actions-to ]
-
 
 jobs:
   run-notebooks:
