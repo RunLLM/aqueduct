@@ -21,7 +21,7 @@ type Server interface {
 	//	`err`: any error generated when handling the request, which could be nil when successful.
 	Log(ctx context.Context, key string, req *http.Request, statusCode int, err error)
 	// `Run()` should start the server service and handle requests. This will be called in `main()`.
-	Run()
+	Run(expose bool)
 }
 
 func GetAllHeaders(server Server) []string {

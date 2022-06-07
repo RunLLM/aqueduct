@@ -1,60 +1,60 @@
-import {normalizeOperator, Operator} from "./operators";
-import ExecutionStatus from "./shared";
-import {Artifact} from "./artifacts";
+import { Artifact } from './artifacts';
+import { normalizeOperator, Operator } from './operators';
+import ExecutionStatus from './shared';
 
 export type S3Config = {
-    region: string;
-    bucket: string;
+  region: string;
+  bucket: string;
 };
 
 export enum WorkflowUpdateTrigger {
-    Manual = 'manual',
-    Periodic = 'periodic',
-    Airflow = 'airflow',
+  Manual = 'manual',
+  Periodic = 'periodic',
+  Airflow = 'airflow',
 }
 
 export type WorkflowSchedule = {
-    trigger: WorkflowUpdateTrigger;
-    cron_schedule: string;
-    disable_manual_trigger: boolean;
-    paused: boolean;
+  trigger: WorkflowUpdateTrigger;
+  cron_schedule: string;
+  disable_manual_trigger: boolean;
+  paused: boolean;
 };
 
 export type ListWorkflowSummary = {
-    id: string;
-    name: string;
-    description: string;
-    created_at: number;
-    last_run_at: number;
-    status: ExecutionStatus;
-    watcher_auth0_id: string[];
+  id: string;
+  name: string;
+  description: string;
+  created_at: number;
+  last_run_at: number;
+  status: ExecutionStatus;
+  watcher_auth0_id: string[];
 };
 
 export type WorkflowDagResultSummary = {
-    id: string;
-    created_at: number;
-    status: ExecutionStatus;
-    workflow_dag_id: string;
+  id: string;
+  created_at: number;
+  status: ExecutionStatus;
+  workflow_dag_id: string;
 };
 
 export type Workflow = {
-    id: string;
-    user_id: string;
-    name: string;
-    description: string;
-    schedule: WorkflowSchedule;
-    created_at: number;
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  schedule: WorkflowSchedule;
+  created_at: number;
 };
 
 export type WorkflowDag = {
-    id: string;
-    workflow_id: string;
-    s3_config: S3Config;
-    created_at: number;
+  id: string;
+  workflow_id: string;
+  s3_config: S3Config;
+  created_at: number;
 
-    metadata?: Workflow;
-    operators: { [id: string]: Operator };
-    artifacts: { [id: string]: Artifact };
+  metadata?: Workflow;
+  operators: { [id: string]: Operator };
+  artifacts: { [id: string]: Artifact };
 };
 
 // This function `normalize` an arbitrary object (typically from an API call)
@@ -63,41 +63,41 @@ export type WorkflowDag = {
 // For now, we only handle all lists / maps field. Ideally, we should
 // handle all fields like `workflow.id = workflow?.id ?? ''`.
 export function normalizeWorkflowDag(dag): WorkflowDag {
-    const operators: Operator[] = Object.values(dag.operators ?? {});
-    dag.operators = {};
-    operators.forEach((op) => {
-        if (op.id) {
-            dag.operators[op.id] = normalizeOperator(op);
-        }
-    });
+  const operators: Operator[] = Object.values(dag.operators ?? {});
+  dag.operators = {};
+  operators.forEach((op) => {
+    if (op.id) {
+      dag.operators[op.id] = normalizeOperator(op);
+    }
+  });
 
-    dag.artifacts = dag.artifacts ?? {};
-    return dag;
+  dag.artifacts = dag.artifacts ?? {};
+  return dag;
 }
 
 export type GetWorkflowResponse = {
-    workflow_dags: { [id: string]: WorkflowDag };
-    workflow_dag_results: WorkflowDagResultSummary[];
-    watcherAuthIds: string[];
+  workflow_dags: { [id: string]: WorkflowDag };
+  workflow_dag_results: WorkflowDagResultSummary[];
+  watcherAuthIds: string[];
 };
 
 export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {
-    const dags: WorkflowDag[] = Object.values(resp.workflow_dags ?? {});
-    resp.workflow_dags = {};
-    dags.forEach((dag) => {
-        if (dag.id) {
-            resp.workflow_dags[dag.id] = normalizeWorkflowDag(dag);
-        }
-    });
-    resp.workflow_dag_results = (resp.workflow_dag_results ?? []).sort((x, y) =>
-        x.created_at < y.created_at ? 1 : -1,
-    );
+  const dags: WorkflowDag[] = Object.values(resp.workflow_dags ?? {});
+  resp.workflow_dags = {};
+  dags.forEach((dag) => {
+    if (dag.id) {
+      resp.workflow_dags[dag.id] = normalizeWorkflowDag(dag);
+    }
+  });
+  resp.workflow_dag_results = (resp.workflow_dag_results ?? []).sort((x, y) =>
+    x.created_at < y.created_at ? 1 : -1
+  );
 
-    return resp;
+  return resp;
 }
 
 export type ListWorkflowResponse = {
-    workflows: ListWorkflowSummary[];
+  workflows: ListWorkflowSummary[];
 };
 
 /**
@@ -111,49 +111,51 @@ export type ListWorkflowResponse = {
  *   need to save for rendering edges.
  *
  */
-export function computeTopologicalOrder(operators: { [id: string]: Operator }): [string[][], number[]] {
-    const artifactToDownstream: { [id: string]: string[] } = {};
-    const upstreamCount: { [id: string]: number } = {};
-    const layers: string[][] = [];
-    const activeLayerEdges: number[] = [];
-    let activeEdges = 0;
+export function computeTopologicalOrder(operators: {
+  [id: string]: Operator;
+}): [string[][], number[]] {
+  const artifactToDownstream: { [id: string]: string[] } = {};
+  const upstreamCount: { [id: string]: number } = {};
+  const layers: string[][] = [];
+  const activeLayerEdges: number[] = [];
+  let activeEdges = 0;
+  layers.push([]);
+  activeLayerEdges.push(0);
+
+  for (const opId in operators) {
+    const op = operators[opId];
+    op.inputs.map((artfId) => {
+      if (!(artfId in artifactToDownstream)) {
+        artifactToDownstream[artfId] = [];
+      }
+      artifactToDownstream[artfId].push(opId);
+    });
+
+    upstreamCount[opId] = op.inputs.length;
+    if (op.inputs.length === 0) {
+      layers[layers.length - 1].push(opId);
+    }
+  }
+
+  while (layers[layers.length - 1].length > 0) {
+    const frontier = layers[layers.length - 1];
     layers.push([]);
-    activeLayerEdges.push(0);
-
-    for (const opId in operators) {
-        const op = operators[opId];
-        op.inputs.map((artfId) => {
-            if (!(artfId in artifactToDownstream)) {
-                artifactToDownstream[artfId] = [];
+    frontier.map((opId) => {
+      const op = operators[opId];
+      op.outputs.map((artfId) => {
+        if (artfId in artifactToDownstream) {
+          artifactToDownstream[artfId].map((downstreamOpId) => {
+            activeEdges += 1;
+            upstreamCount[downstreamOpId] = upstreamCount[downstreamOpId] - 1;
+            if (upstreamCount[downstreamOpId] === 0) {
+              layers[layers.length - 1].push(downstreamOpId);
+              activeEdges -= operators[downstreamOpId].inputs.length;
             }
-            artifactToDownstream[artfId].push(opId);
-        });
-
-        upstreamCount[opId] = op.inputs.length;
-        if (op.inputs.length === 0) {
-            layers[layers.length - 1].push(opId);
+          });
         }
-    }
-
-    while (layers[layers.length - 1].length > 0) {
-        const frontier = layers[layers.length - 1];
-        layers.push([]);
-        frontier.map((opId) => {
-            const op = operators[opId];
-            op.outputs.map((artfId) => {
-                if (artfId in artifactToDownstream) {
-                    artifactToDownstream[artfId].map((downstreamOpId) => {
-                        activeEdges += 1;
-                        upstreamCount[downstreamOpId] = upstreamCount[downstreamOpId] - 1;
-                        if (upstreamCount[downstreamOpId] === 0) {
-                            layers[layers.length - 1].push(downstreamOpId);
-                            activeEdges -= operators[downstreamOpId].inputs.length;
-                        }
-                    });
-                }
-            });
-        });
-        activeLayerEdges.push(activeEdges);
-    }
-    return [layers, activeLayerEdges];
+      });
+    });
+    activeLayerEdges.push(activeEdges);
+  }
+  return [layers, activeLayerEdges];
 }

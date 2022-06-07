@@ -1,23 +1,23 @@
-import useUser from "@aqueducthq/common/src/components/hooks/useUser";
-import WorkflowPage from "@aqueducthq/common/src/components/pages/workflow/id";
-import { useRouter } from "next/router";
-import React from "react";
-export { getServerSideProps } from "@aqueducthq/common/src/components/pages/getServerSideProps";
+import { useUser, WorkflowPage } from '@aqueducthq/common';
+import { useRouter } from 'next/router';
+import React from 'react';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Workflow: React.FC = () => {
-  const { user, loading, success } = useUser();
-  if (loading) {
-    return null;
-  }
+    const router = useRouter();
+    const workflowId = router.query.id as string;
+    const { user, loading, success } = useUser();
 
-  const router = useRouter();
-  if (!success) {
-    router.push("/login");
-    return null;
-  }
+    if (loading) {
+        return null;
+    }
 
-  const workflowId = router.query.id as string;
-  return <WorkflowPage user={user} workflowId={workflowId} />;
+    if (!user || !success) {
+        router.push('/login');
+        return null;
+    }
+
+    return <WorkflowPage user={user} workflowId={workflowId} />;
 };
 
 export default Workflow;

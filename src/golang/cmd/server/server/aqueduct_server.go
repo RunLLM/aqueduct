@@ -230,7 +230,14 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, utils.Server, s.Name, err)
 }
 
-func (s *AqServer) Run() {
+func (s *AqServer) Run(expose bool) {
+	// When we configure the server to listen on ":<PORT>" (without specifying the ip), it exposes itself
+	// to the public.
+	ip := ""
+	if !expose {
+		ip = "localhost"
+	}
+
 	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", connection.ServerInternalPort), s.Router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, connection.ServerInternalPort), s.Router))
 }

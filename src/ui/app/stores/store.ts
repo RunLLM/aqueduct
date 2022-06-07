@@ -1,22 +1,22 @@
-import dataPreviewReducer from "@reducers/dataPreview";
-import integrationsReducer from "@reducers/integrations";
-import listWorkflowReducer from "@reducers/listWorkflowSummaries";
-import nodeSelectionReducer from "@reducers/nodeSelection";
-import notificationsReducer from "@reducers/notifications";
-import openSideSheetReducer from "@reducers/openSideSheet";
-import workflowReducer from "@reducers/workflow";
-import { configureStore } from "@reduxjs/toolkit";
+import { dataPreview as dataPreviewReducer } from '@aqueducthq/common';
+import { integrations as integrationsReducer } from '@aqueducthq/common';
+import { workflowSummaries as listWorkflowReducer } from '@aqueducthq/common';
+import { nodeSelection as nodeSelectionReducer } from '@aqueducthq/common';
+import { notifications as notificationsReducer } from '@aqueducthq/common';
+import { openSideSheet as openSideSheetReducer } from '@aqueducthq/common';
+import { workflow as workflowReducer } from '@aqueducthq/common';
+import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
-  reducer: {
-    nodeSelectionReducer,
-    openSideSheetReducer,
-    notificationsReducer,
-    listWorkflowReducer,
-    dataPreviewReducer,
-    integrationsReducer,
-    workflowReducer,
-  },
+    reducer: {
+        nodeSelectionReducer,
+        openSideSheetReducer,
+        notificationsReducer,
+        listWorkflowReducer,
+        dataPreviewReducer,
+        integrationsReducer,
+        workflowReducer,
+    },
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

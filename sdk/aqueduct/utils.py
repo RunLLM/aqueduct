@@ -242,7 +242,6 @@ def _package_files_and_requirements(
             "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
             % func.__name__
         )
-        _infer_requirements(func, dir_path)
     # Figure out the python version
     python_version = ".".join((str(x) for x in sys.version_info[:2]))
     with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
@@ -251,54 +250,6 @@ def _package_files_and_requirements(
         os.remove(os.path.join(dir_path, func_file))
 
     os.chdir(current_directory_path)
-
-
-def _infer_requirements(
-    func: Union[UserFunction, MetricFunction, CheckFunction],
-    dir_path: str,
-) -> None:
-    """
-    Infers requirements in the current directory and writes it to a requirements.txt.
-    Assumes that no requirements exist.
-
-    Arguments:
-        func:
-            A user-defined function
-        dir_path:
-            Absolute path of directory to infer requirements from.
-    """
-    assert not os.path.exists(REQUIREMENTS_FILE)
-    process = subprocess.Popen(
-        "pipreqsnb %s" % dir_path,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    req_file_path = os.path.join(dir_path, REQUIREMENTS_FILE)
-    stdout_raw, stderr_raw = process.communicate()
-
-    stdout = stdout_raw.decode("utf-8")
-    stderr = stderr_raw.decode("utf-8")
-    if len(stdout) > 0:
-        Logger.logger.info("%s: %s" % (func.__name__, stdout))
-    if len(stderr) > 0:
-        if process.returncode == 0:
-            Logger.logger.info("%s: %s" % (func.__name__, stderr))
-        else:
-            Logger.logger.error("%s: %s" % (func.__name__, stderr))
-    if process.returncode:
-        raise Exception("Unable to infer requirements.")
-
-    # Blacklist requirements we don't want to infer
-    with open(req_file_path, "r") as f:
-        lines = f.readlines()
-    with open(req_file_path, "w") as f:
-        for line in lines:
-            # TODO(ENG-531): use the --mode flag with pipreqsnb instead
-            line = line.replace("==", ">=")
-
-            if not line.startswith(BLACKLISTED_REQUIREMENTS):
-                f.write(line)
 
 
 def _make_archive(source: str, destination: str) -> None:
