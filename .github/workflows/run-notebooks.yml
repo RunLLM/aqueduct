@@ -1,13 +1,16 @@
 name: Run Notebooks
 
-# Run all example notebooks periodically and on notebook updates.
-
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'sdk/aqueduct/**'
   pull_request:
     paths:
+      - '.github/workflows/run-notebooks.yml'
       - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
       - "sdk/examples/sentiment_analysis/Sentiment Model.ipynb"
 

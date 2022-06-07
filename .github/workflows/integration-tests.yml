@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
@@ -11,7 +12,6 @@ on:
       - '.github/workflows/integration-tests.yml'
   issue_comment:
     types: [ created ]
-  workflow_dispatch:
 
 jobs:
   check-comment-trigger:
