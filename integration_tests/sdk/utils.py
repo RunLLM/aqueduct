@@ -9,6 +9,7 @@ from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
+from pandas import DataFrame
 
 # Should be set before each test runs.
 from test_functions.sentiment.model import sentiment_model, sentiment_model_multiple_input
@@ -51,7 +52,7 @@ def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
     else:
         return dummy_sentiment_model(artifact)
 
-def run_sentiment_model_local(artifact: TableArtifact) -> TableArtifact:
+def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
     """
     Run sentiment model locally using .local() method. Calls the full sentiment model 
     local method if --complex_models flag is set. Otherwise, will use simple model,which
@@ -75,7 +76,7 @@ def run_sentiment_model_multiple_input(
 
 def run_sentiment_model_local_multiple_input(
     artifact1: TableArtifact, artifact2: TableArtifact
-) -> TableArtifact:
+) -> DataFrame:
     """
     Same test setup as `run_sentiment_model_local` but takes in two artifacts.
     """
