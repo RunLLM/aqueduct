@@ -9,7 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-export const FunctionOperatorNode: React.FC<Props> = ({
+const FunctionOperatorNode: React.FC<Props> = ({
   data,
   isConnectable,
 }) => {

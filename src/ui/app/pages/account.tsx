@@ -1,12 +1,10 @@
-import { useAqueductConsts } from '@aqueducthq/common/src/components/hooks/useAqueductConsts';
-import useUser from '@aqueducthq/common/src/components/hooks/useUser';
-import DefaultLayout from '@aqueducthq/common/src/components/layouts/default';
+import { DefaultLayout, useAqueductConsts, useUser } from '@aqueducthq/common';
 import { Box, Typography } from '@mui/material';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 
-export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Account: React.FC = () => {
     const router = useRouter();

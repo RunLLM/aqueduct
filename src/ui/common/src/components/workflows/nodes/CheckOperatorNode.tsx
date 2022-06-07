@@ -9,7 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-export const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
+const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faMagnifyingGlass}

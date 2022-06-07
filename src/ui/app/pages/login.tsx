@@ -1,4 +1,4 @@
-import LoginPage from '@aqueducthq/common/src/components/pages/LoginPage';
+import { LoginPage } from '@aqueducthq/common';
 import React from 'react';
 
 const Login: React.FC = () => {

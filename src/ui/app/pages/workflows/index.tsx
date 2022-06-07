@@ -1,8 +1,7 @@
-import useUser from '@aqueducthq/common/src/components/hooks/useUser';
-import WorkflowsPage from '@aqueducthq/common/src/components/pages/workflows';
+import { useUser, WorkflowsPage } from '@aqueducthq/common';
 import { useRouter } from 'next/router';
 import React from 'react';
-export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
+export { getServerSideProps } from '@aqueducthq/common';
 
 const Workflows: React.FC = () => {
     const router = useRouter();

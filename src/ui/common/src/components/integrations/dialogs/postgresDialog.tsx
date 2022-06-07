@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
 import { IntegrationConfig, PostgresConfig } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './dialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: PostgresConfig = {
   host: '127.0.0.1:5432',
@@ -16,10 +16,10 @@ type Props = {
 };
 
 export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [address, setAddress] = useState(null);
-  const [database, setDatabase] = useState(null);
-  const [username, setUsername] = useState(null);
-  const [password, setPassword] = useState(null);
+  const [address, setAddress] = useState<string>(null);
+  const [database, setDatabase] = useState<string>(null);
+  const [username, setUsername] = useState<string>(null);
+  const [password, setPassword] = useState<string>(null);
 
   useEffect(() => {
     const config: PostgresConfig = {
