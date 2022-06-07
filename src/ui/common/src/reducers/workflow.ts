@@ -4,7 +4,7 @@ import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { GetArtifactResultResponse } from '../utils/artifacts';
 import { GetOperatorResultResponse, Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
-import { NodePos } from 'src/utils/reactflow';
+import { NodePos } from '../utils/reactflow';
 import {
   GetWorkflowResponse,
   normalizeGetWorkflowResponse,
@@ -44,7 +44,7 @@ export type WorkflowState = {
 
   selectedResult?: WorkflowDagResultSummary;
   selectedDag?: WorkflowDag;
-  selectedDagPosition? : selectDagPositionResult;
+  selectedDagPosition?: any;
   artifactResults: { [id: string]: ArtifactResult };
   operatorResults: { [id: string]: OperatorResult };
 };
@@ -57,6 +57,7 @@ const initialState: WorkflowState = {
   artifactResults: {},
   operatorResults: {},
   watcherAuthIds: [],
+  selectedDagPosition: { loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' }},
 };
 
 export const handleGetOperatorResults = createAsyncThunk<
@@ -283,12 +284,14 @@ export const workflowSlice = createSlice({
     });
 
     builder.addCase(handleGetWorkflow.pending, (state) => {
+      console.log("reached fulfilled")
       state.loadingStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
 
     builder.addCase(
       handleGetWorkflow.fulfilled,
       (state, { payload }: PayloadAction<GetWorkflowResponse>) => {
+        console.log("reached fulfilled")
         state.dags = payload.workflow_dags;
         state.dagResults = payload.workflow_dag_results;
         state.watcherAuthIds = payload.watcherAuthIds;
@@ -299,6 +302,7 @@ export const workflowSlice = createSlice({
     );
 
     builder.addCase(handleGetWorkflow.rejected, (state, { payload }) => {
+      console.log("reached fulfilled")
       state.loadingStatus = {
         loading: LoadingStatusEnum.Failed,
         err: payload as string,

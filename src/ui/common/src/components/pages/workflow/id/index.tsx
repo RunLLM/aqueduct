@@ -99,11 +99,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
       }
     }
 
+    // if (workflow.selectedDag) {
+    //   dispatch(handleGetSelectDagPosition({ apiKey: user.apiKey, operators: workflow.selectedDag?.operators }))
+    //   console.log("use effect 1 dagPosition: ",dagPosition )
+    // }
+  }, [workflow.dagResults]);
+
+  useEffect(() => {
+    console.log("use effect 1 dagPosition: ",dagPosition )
     if (workflow.selectedDag) {
       dispatch(handleGetSelectDagPosition({ apiKey: user.apiKey, operators: workflow.selectedDag?.operators }))
-      console.log("dagPosition: ",dagPosition )
+      console.log("use effect 2 dagPosition: ",dagPosition )
     }
-  }, [workflow.dagResults]);
+  }, [workflow.selectedDag]);
+
   console.log("dagPosition: ",dagPosition )
   /**
    * This function dispatches calls to fetch artifact results and contents.
