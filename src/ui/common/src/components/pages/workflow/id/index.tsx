@@ -72,6 +72,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   );
 
   useEffect(() => {
+    if (workflow.selectedDag !== undefined) {
+      document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`
+    }
+  }, [workflow.selectedDag])
+
+
+  useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, []);
@@ -295,10 +302,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     return null;
   };
 
-  useEffect(() => {
-    document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`
-  }, [])
-
   return (
     <DefaultLayout user={user}>
       <Box
@@ -321,7 +324,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
             mt: 2,
             p: 3,
             mb: contentBottomOffsetInPx,
-            width: '100%',
             backgroundColor: 'gray.50',
           }}
         >
