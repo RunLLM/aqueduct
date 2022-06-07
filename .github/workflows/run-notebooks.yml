@@ -1,0 +1,60 @@
+name: Run Notebooks
+
+# Run all example notebooks periodically and on notebook updates.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
+  pull_request:
+    paths:
+      - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+  push: # TODO REMOVE
+    branches: [ eng-1184-add-automated-notebook-github-actions-to ]
+
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.10'
+
+      - name: Set up GOPATH variable
+        run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Install aqueduct-ml
+        working-directory: src/python
+        run: pip3 install .
+
+      - name: Startup the server and wait for it to initialize
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
+      - name: Update aqueduct with latest code
+        run: python3 scripts/install_local.py
+
+      - name: Install Packages needed by the notebooks
+        run: pip3 install sklearn
+
+      - name: Fetch the API key
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run demo notebooks
+        working-directory: sdk/examples
+        timeout-minutes: 15
+        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.TEST_DEMO_NOTEBOOK_API_KEY }}
