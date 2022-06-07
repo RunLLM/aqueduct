@@ -33,6 +33,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.openSideSheetReducer
   );
   const { fitView } = useReactFlow();
+  useEffect(() => { fitView() }, []);
 
   useEffect(() => {
     // NOTE(vikram): There's a timeout here because there seems to be a
@@ -42,7 +43,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
 
-  useEffect(fitView);
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}

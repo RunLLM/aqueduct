@@ -5,13 +5,14 @@ import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
 
 const Workflows: React.FC = () => {
+    const router = useRouter();
     const { user, loading, success } = useUser();
+
     if (loading) {
         return null;
     }
 
     if (!success) {
-        const router = useRouter();
         router.push('/login');
         return null;
     }

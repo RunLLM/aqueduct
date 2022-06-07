@@ -5,18 +5,19 @@ import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common/src/components/pages/getServerSideProps';
 
 const Workflow: React.FC = () => {
+    const router = useRouter();
+    const workflowId = router.query.id as string;
     const { user, loading, success } = useUser();
+
     if (loading) {
         return null;
     }
 
-    const router = useRouter();
-    if (!success) {
+    if (!user || !success) {
         router.push('/login');
         return null;
     }
 
-    const workflowId = router.query.id as string;
     return <WorkflowPage user={user} workflowId={workflowId} />;
 };
 
