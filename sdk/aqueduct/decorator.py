@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Tuple, Union, List
+from typing import Callable, List, Optional, Union
 from functools import wraps
 
 from aqueduct.artifact import Artifact, ArtifactSpec
