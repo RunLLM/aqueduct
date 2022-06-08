@@ -18,9 +18,9 @@ jobs:
         with:
           node-version: "16"
 
-#      - name: Install dependencies
-#        working-directory: ./src/ui/app
-#        run: npm install
+      - name: Install dependencies
+        working-directory: ./src/ui/app
+        run: npm install
 
       - name: Format check
         working-directory: ./src/ui/app
