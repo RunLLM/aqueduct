@@ -1,8 +1,6 @@
 name: Backend Unit Tests
 
 on:
-  push: # TODO: remove
-    branches: [  eng-1183-add-unit-test-github-actions-to-the ]
   pull_request:
     branches: [ main ]
     paths:
@@ -10,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run Src Unit Tests
+    name: Run Backend Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
