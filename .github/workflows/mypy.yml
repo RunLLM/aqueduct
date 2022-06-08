@@ -1,11 +1,9 @@
 name: Mypy
 
 on:
-  push: # TODO: remove
-    branches: [ eng-1186-add-sdk-mypy-github-action-to-the-public ]
   pull_request:
     paths:
-      - 'sdk/**'
+      - 'sdk/aqueduct/**'
 
 jobs:
   sdk:
