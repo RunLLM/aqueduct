@@ -3,21 +3,21 @@ import pytest
 
 from constants import SENTIMENT_SQL_QUERY
 from test_metrics.constant.model import constant_metric
-from utils import get_integration_name, run_flow_test, generate_new_flow_name
+from utils import get_integration_name, run_flow_test
 from aqueduct import metric
 from aqueduct.error import AqueductError
 
 
-def test_basic_metric(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_basic_metric(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     metric = constant_metric(sql_artifact)
     assert metric.get() == 17.5
 
 
-def test_metric_bound(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_metric_bound(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     metric = constant_metric(sql_artifact)
@@ -40,11 +40,11 @@ def test_metric_bound(sp_client):
     assert not check_artifact.get()
 
 
-def test_register_metric(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_register_metric(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     metric_artifact = constant_metric(sql_artifact)
-    run_flow_test(sp_client, artifacts=[sql_artifact, metric_artifact])
+    run_flow_test(client, artifacts=[sql_artifact, metric_artifact])
 
 
 @metric()
@@ -59,8 +59,8 @@ def metric_with_multiple_inputs(df1, m, df2):
     return m + 10
 
 
-def test_metric_mixed_inputs(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_metric_mixed_inputs(client):
+    db = client.integration(name=get_integration_name())
     sql1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql2 = db.sql(query=SENTIMENT_SQL_QUERY)
     metric_input = constant_metric(sql1)
@@ -68,4 +68,4 @@ def test_metric_mixed_inputs(sp_client):
     metric_output = metric_with_multiple_inputs(sql1, metric_input, sql2)
     assert metric_output.get() == 27.5
 
-    run_flow_test(sp_client, artifacts=[metric_output])
+    run_flow_test(client, artifacts=[metric_output])

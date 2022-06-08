@@ -1,4 +1,3 @@
-from gettext import install
 import os
 import setuptools
 import sys

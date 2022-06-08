@@ -10,7 +10,6 @@ class TabularConnector(ABC):
     @abstractmethod
     def authenticate(self) -> None:
         """Authenticates connector configuration. Raises a ConnectionError if there is an error."""
-        pass
 
     @abstractmethod
     def discover(self) -> List[str]:
@@ -19,7 +18,6 @@ class TabularConnector(ABC):
         Returns:
             A list of items discovered.
         """
-        pass
 
     @abstractmethod
     def extract(self, params: extract.Params) -> pd.DataFrame:
@@ -31,7 +29,6 @@ class TabularConnector(ABC):
         Returns:
             A DataFrame that contains the data extracted by the connector.
         """
-        pass
 
     @abstractmethod
     def load(self, params: load.Params, df: pd.DataFrame) -> None:
@@ -41,4 +38,3 @@ class TabularConnector(ABC):
             params: Load parameters for the connector.
             df: DataFrame to load.
         """
-        pass
