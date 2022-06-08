@@ -1,8 +1,6 @@
 name: SDK Unit Tests
 
 on:
-  push: # TODO: REMOVE
-    branches: [ eng-1183-add-unit-test-github-actions-to-the ]
   pull_request:
     paths:
       - 'sdk/aqueduct/**'

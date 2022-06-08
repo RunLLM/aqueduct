@@ -1,0 +1,28 @@
+name: Backend Unit Tests
+
+on:
+  push: # TODO: remove
+    branches: [  eng-1183-add-unit-test-github-actions-to-the ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+
+jobs:
+  test:
+    name: Run Src Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Turn on GO111MODULE
+        run: go env -w GO111MODULE=on
+
+      - name: Run Tests
+        working-directory: ./src
+        run: make test
