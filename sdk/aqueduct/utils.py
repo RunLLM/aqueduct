@@ -316,6 +316,17 @@ def _make_archive(source: str, destination: str) -> None:
     shutil.move("%s.%s" % (name, format), destination)
 
 
+def apikey() -> str:
+    ServerDirectory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+    configFile = os.path.join(ServerDirectory, "config", "config.yml")
+    with open(configFile, "r") as f:
+        try:
+            return yaml.safe_load(f)['apiKey']
+        except yaml.YAMLError as exc:
+            print(exc)
+            exit(1)
+
+
 def artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
 
@@ -354,15 +365,6 @@ def generate_extract_op_name(
 
     return op_name
 
-def get_apikey() -> str:
-    server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
-    config_file = os.path.join(server_directory, "config", "config.yml")
-    with open(config_file, "r") as f:
-        try:
-            return yaml.safe_load(f)['apiKey']
-        except yaml.YAMLError as exc:
-            print(exc)
-            exit(1)
 
 def get_checks_for_op(op: Operator, dag: DAG) -> List[Operator]:
     check_operators = []
