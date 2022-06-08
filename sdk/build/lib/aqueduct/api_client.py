@@ -241,7 +241,7 @@ class APIClient:
         return response.json()
 
     def get_node_positions(
-        self, operator_mapping: Dict[str, Dict[str, Any]]
+        self, operator_mapping: Dict[str, Dict[str, List[str]]]
     ) -> Tuple[Dict[str, Dict[str, float]], Dict[str, Dict[str, float]]]:
         """Queries the `self.NODE_POSITION_ROUTE` endpoint for graph display's nodes' positions.
 

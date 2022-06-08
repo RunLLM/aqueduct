@@ -1,0 +1,2 @@
+CSV = "csv"
+JSON = "json"

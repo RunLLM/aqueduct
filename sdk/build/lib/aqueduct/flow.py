@@ -4,7 +4,7 @@ from .artifact import Artifact
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.metric_artifact import MetricArtifact
 
-from typing import Dict, List, Mapping, Union, Any
+from typing import Dict, List, Mapping, Union
 from textwrap import wrap
 
 from aqueduct.integrations.integration import IntegrationInfo
@@ -109,7 +109,7 @@ def _show_dag(
     """
     operator_by_id: Dict[str, Operator] = {}
     artifact_by_id: Dict[str, Artifact] = {}
-    operator_mapping: Dict[str, Dict[str, Any]] = {}
+    operator_mapping: Dict[str, Dict[str, List[str]]] = {}
 
     for operator in dag.list_operators():
         operator_by_id[str(operator.id)] = operator
