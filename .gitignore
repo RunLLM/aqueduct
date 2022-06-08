@@ -53,6 +53,7 @@ ui/.vercel
 
 ### SDK ###
 sdk/__pycache__
+sdk/build/
 
 sdk/.ipynb_checkpoints/*
 **/dist
