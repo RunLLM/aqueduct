@@ -9,6 +9,10 @@ import fetchUser from '../../utils/fetchUser';
 import setUser from '../hooks/setUser';
 
 export const LoginPage: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Login | Aquedudct';
+  }, []);
+
   const [validationError, setValidationError] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>(

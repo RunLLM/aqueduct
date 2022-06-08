@@ -20,6 +20,7 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import UserProfile from '../../utils/auth';
 import {
@@ -33,7 +34,6 @@ import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
-import { useNavigate } from 'react-router-dom'
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -162,7 +162,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   open,
   onClose,
 }) => {
-  const { httpProtocol, apiAddress } = useAqueductConsts();
+  const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
 
   const [name, setName] = useState(workflowDag.metadata?.name);
@@ -280,15 +280,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     event.preventDefault();
     setIsDeleting(true);
 
-    fetch(
-      `${httpProtocol}://${apiAddress}/workflow/${workflowDag.workflow_id}/delete`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': user.apiKey,
-        },
-      }
-    ).then((res) => {
+    fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/delete`, {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+      },
+    }).then((res) => {
       res.json().then((body) => {
         setIsDeleting(false);
         setShowDeleteDialog(false);
@@ -328,16 +325,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       },
     };
 
-    fetch(
-      `${httpProtocol}://${apiAddress}/workflow/${workflowDag.workflow_id}/edit`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': user.apiKey,
-        },
-        body: JSON.stringify(changes),
-      }
-    ).then((res) => {
+    fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+      },
+      body: JSON.stringify(changes),
+    }).then((res) => {
       res.json().then((body) => {
         setIsUpdating(false);
 

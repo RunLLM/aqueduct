@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import UserProfile from '../../../utils/auth';
 import {
@@ -27,7 +28,6 @@ import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-import { useNavigate } from 'react-router-dom';
 
 type Props = {
   user: UserProfile;

@@ -11,9 +11,9 @@ import { Avatar, Link, Menu, MenuItem, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import { useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';

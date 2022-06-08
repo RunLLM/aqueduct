@@ -11,10 +11,7 @@ type Props = {
   supportedIntegrations: ServiceInfoMap;
 };
 
-const AddIntegrations: React.FC<Props> = ({
-  user,
-  supportedIntegrations,
-}) => {
+const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
   return (
     <Box sx={{ maxWidth: '950px' }}>
       <Grid container spacing={2} sx={{ my: '20px', width: '100%' }}>

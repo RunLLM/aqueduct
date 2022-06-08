@@ -107,8 +107,8 @@ const DataPage: React.FC<Props> = ({ user }) => {
   const noDataText = <Typography variant="h5">No data to display.</Typography>;
 
   useEffect(() => {
-    document.title = "Data | Aqueduct";
-  }, [])
+    document.title = 'Data | Aqueduct';
+  }, []);
 
   return (
     <DefaultLayout user={user}>

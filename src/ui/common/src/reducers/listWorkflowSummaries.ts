@@ -25,10 +25,10 @@ export const handleFetchAllWorkflowSummaries = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    const { httpProtocol, apiAddress } = useAqueductConsts();
+    const { apiAddress } = useAqueductConsts();
 
     const { apiKey } = args;
-    const response = await fetch(`${httpProtocol}://${apiAddress}/workflows`, {
+    const response = await fetch(`${apiAddress}/api/workflows`, {
       method: 'GET',
       headers: {
         'api-key': apiKey,

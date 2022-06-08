@@ -11,7 +11,7 @@ import {
   WorkflowDagResultSummary,
 } from '../utils/workflows';
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 
 export type ArtifactResult = {
   loadingStatus: LoadingStatus;
@@ -59,7 +59,7 @@ export const handleGetOperatorResults = createAsyncThunk<
   ) => {
     const { apiKey, workflowDagResultId, operatorId } = args;
     const res = await fetch(
-      `${httpProtocol}://${apiAddress}/operator_result/${workflowDagResultId}/${operatorId}`,
+      `${apiAddress}/api/operator_result/${workflowDagResultId}/${operatorId}`,
       {
         method: 'GET',
         headers: {
@@ -92,7 +92,7 @@ export const handleGetArtifactResults = createAsyncThunk<
   ) => {
     const { apiKey, workflowDagResultId, artifactId } = args;
     const res = await fetch(
-      `${httpProtocol}://${apiAddress}/artifact_result/${workflowDagResultId}/${artifactId}`,
+      `${apiAddress}/api/artifact_result/${workflowDagResultId}/${artifactId}`,
       {
         method: 'GET',
         headers: {
@@ -124,15 +124,12 @@ export const handleGetWorkflow = createAsyncThunk<
   ) => {
     const { apiKey, workflowId } = args;
 
-    const res = await fetch(
-      `${httpProtocol}://${apiAddress}/workflow/${workflowId}`,
-      {
-        method: 'GET',
-        headers: {
-          'api-key': apiKey,
-        },
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/workflow/${workflowId}`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
 
     const body = await res.json();
     if (!res.ok) {

@@ -19,7 +19,7 @@ module.exports = {
 
     }
   },
-  extends: ["plugin:react/recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended", "plugin:@next/next/recommended"],
+  extends: ["plugin:react/recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
   plugins: ['simple-import-sort', "unused-imports"],
   rules: {
     // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs

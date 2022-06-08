@@ -14,7 +14,7 @@ const initialState: IntegrationState = {
   thunkState: 'IDLE',
 };
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 export const handleLoadIntegrations = createAsyncThunk<
   Integration[],
   { apiKey: string; forceLoad?: boolean },
@@ -36,15 +36,12 @@ export const handleLoadIntegrations = createAsyncThunk<
     }
 
     const { apiKey } = args;
-    const response = await fetch(
-      `${httpProtocol}://${apiAddress}/integrations`,
-      {
-        method: 'GET',
-        headers: {
-          'api-key': apiKey,
-        },
-      }
-    );
+    const response = await fetch(`${apiAddress}/api/integrations`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
 
     const responseBody = await response.json();
     if (!response.ok) {

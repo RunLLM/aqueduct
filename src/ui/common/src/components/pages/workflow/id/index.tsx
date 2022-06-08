@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import { useNavigate, useParams } from 'react-router-dom';
 import { parse } from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -73,10 +73,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
 
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
-      document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`
+      document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
     }
-  }, [workflow.selectedDag])
-
+  }, [workflow.selectedDag]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));

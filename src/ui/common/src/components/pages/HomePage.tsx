@@ -11,7 +11,7 @@ type HomePageProps = {
 const HomePage: React.FC<HomePageProps> = ({ user }) => {
   // Set the title of the page on page load.
   useEffect(() => {
-    document.title = "Home | Aqueduct";
+    document.title = 'Home | Aqueduct';
   }, []);
 
   return (

@@ -15,7 +15,7 @@ type Props = {
 
 const IntegrationsPage: React.FC<Props> = ({ user }) => {
   useEffect(() => {
-    document.title = "Integrations | Aqueduct";
+    document.title = 'Integrations | Aqueduct';
   }, []);
 
   return (
