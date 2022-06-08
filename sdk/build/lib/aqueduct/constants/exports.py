@@ -1,2 +1,0 @@
-CSV = "csv"
-JSON = "json"

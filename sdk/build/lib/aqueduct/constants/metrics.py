@@ -1,2 +1,0 @@
-LATENCY = "latency"
-THROUGHPUT = "throughput"
