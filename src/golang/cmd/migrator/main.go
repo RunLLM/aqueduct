@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/cmd/migrator/migrator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	log "github.com/sirupsen/logrus"
 )
@@ -102,18 +103,18 @@ func main() {
 		if len(cmdArgs) != 2 {
 			log.Fatal(createErrMsg)
 		}
-		handleCreate(cmdArgs)
+		migrator.HandleCreate(cmdArgs)
 	case gotoCmd:
 		if len(cmdArgs) != 1 {
 			log.Fatal(goToErrMsg)
 		}
-		handleGoTo(cmdArgs, conf)
+		migrator.HandleGoTo(cmdArgs, conf)
 	case upCmd:
-		handleUp(conf)
+		migrator.HandleUp(conf)
 	case downCmd:
-		handleDown(conf)
+		migrator.HandleDown(conf)
 	case versionCmd:
-		handleVersion(conf)
+		migrator.HandleVersion(conf)
 	default:
 		printUsage()
 		log.Fatal("Unknown command specified.")
