@@ -1,6 +1,8 @@
 name: SDK Unit Tests
 
 on:
+  push: # TODO: REMOVE
+    branches: [  eng-1185-add-automated-ui-build-github-action-to ]
   pull_request:
     paths:
       - 'sdk/aqueduct/**'
@@ -16,10 +18,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-
-      - name: Install Dependencies
-        working-directory: ./sdk
-        run: pip3 install .
+#
+#      - name: Install Dependencies
+#        working-directory: ./sdk
+#        run: pip3 install .
 
       - name: Install pytest
         run: pip3 install pytest
