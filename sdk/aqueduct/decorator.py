@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Any
 from functools import wraps
 
 from aqueduct.artifact import Artifact, ArtifactSpec
@@ -35,6 +35,9 @@ DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
 
 # Type declarations for checks
 DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
+
+def _is_input_artifact(type: Any) -> bool:
+    return isinstance(input, TableArtifact) or isinstance(input, MetricArtifact) or isinstance(input, ParamArtifact)
 
 
 def wrap_spec(
@@ -197,9 +200,13 @@ def op(
 
             return new_function_artifact
         
-        # Enable .local(*args) which calls on the original function with dataframes as inputs.
+        # Enable .local(*args) which calls the original function with the raw inputs.
+        # def local_func(*inputs: InputArtifactLocal) -> DataFrame:
+        #     raw_inputs = [input.get() if _is_input_artifact(input) else input for input in inputs]
+        #     return func(*raw_inputs)
+        print("HELLO")
         local_func : Callable[[InputArtifactLocal], DataFrame] = lambda *inputs : func(
-            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
+            *tuple([input.get() if isinstance(input, InputArtifact.__args__) else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
