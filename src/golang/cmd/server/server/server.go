@@ -4,15 +4,16 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 )
 
 type Server interface {
 	// `Handlers()` returns a map of route:handler which the server handles.
-	Handlers() map[string]Handler
+	Handlers() map[string]handler.Handler
 	// `AddHandler()` specifies how the server initialize with a particular handler.
 	// It's wrapped in `AddAllHandler()` helper and should be called before `Run()`.
-	AddHandler(route string, handler Handler)
+	AddHandler(route string, handler handler.Handler)
 	// `Log()` specifies how an outcome of http request is logged.
 	// Args:
 	//	`key`: additional identifier for the log, for example, the name of the server service.
