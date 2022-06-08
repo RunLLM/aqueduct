@@ -1,0 +1,37 @@
+name: Mypy
+
+on:
+  push: # TODO: remove
+    branches: [ eng-1186-add-sdk-mypy-github-action-to-the-public ]
+  pull_request:
+    paths:
+      - 'sdk/**'
+
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+
+    name: Run Mypy on the SDK
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          pip install mypy pydantic
+
+      - name: Install Type Stub Libraries
+        run : |
+          python3 -m pip install types-croniter types-requests
+
+      - name: mypy
+        working-directory: sdk
+        run: |
+          mypy -m aqueduct --ignore-missing-imports --strict
