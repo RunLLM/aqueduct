@@ -125,7 +125,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   ) => {
     setTable(newValue);
   };
-  
+
   const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
 
