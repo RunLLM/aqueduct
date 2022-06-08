@@ -4,11 +4,11 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "parcel index.html",
+    "start": "parcel --no-cache --no-hmr index.html",
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "@aqueducthq/common": "^0.0.5",
+    "@aqueducthq/common": "^0.0.6",
     "@mui/material": "^5.6.2",
     "@reduxjs/toolkit": "^1.8.1",
     "dotenv": "^16.0.1",

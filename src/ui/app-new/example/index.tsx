@@ -1,9 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-// import HomePage from './pages/home';
-import { Thing } from '../.';
-import AboutPage from "./pages/about";
 import { HomePage, DataPage, IntegrationsPage, WorkflowPage, WorkflowsPage, LoginPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';

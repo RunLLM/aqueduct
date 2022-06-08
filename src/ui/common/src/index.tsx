@@ -1,9 +1,8 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import setUser from './components/hooks/setUser';
-//import { AqueductConsts, useAqueductConsts } from "./components/hooks/useAqueductConsts";
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
-import { AddIntegrations } from './components/integrations/addIntegrations';
+import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard, dataCardName } from './components/integrations/cards/card';
