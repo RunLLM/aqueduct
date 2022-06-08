@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'ui/**'
+      - 'src/ui/**'
 
 jobs:
   build:
@@ -19,13 +19,13 @@ jobs:
           node-version: "16"
 
       - name: Install dependencies
-        working-directory: ./ui
+        working-directory: ./src/ui
         run: npm install
 
       - name: Format check
-        working-directory: ./ui
+        working-directory: ./src/ui
         run: npm run lint
 
       - name: Build
-        working-directory: ./ui
+        working-directory: ./src/ui
         run: make build
