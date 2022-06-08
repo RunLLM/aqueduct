@@ -9,10 +9,7 @@ type Props = {
   isConnectable: boolean;
 };
 
-const FunctionOperatorNode: React.FC<Props> = ({
-  data,
-  isConnectable,
-}) => {
+const FunctionOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faCode}

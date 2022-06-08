@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import Link from '@mui/material/Link';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -43,9 +44,15 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         .map((integration, idx) => {
           return (
             <Box key={idx}>
-              <Card>
-                <IntegrationCard integration={integration} />
-              </Card>
+              <Link
+                underline="none"
+                color="inherit"
+                href={`/integration/${integration.id}`}
+              >
+                <Card>
+                  <IntegrationCard integration={integration} />
+                </Card>
+              </Link>
 
               {idx < integrations.length - 1 && <Divider />}
             </Box>
