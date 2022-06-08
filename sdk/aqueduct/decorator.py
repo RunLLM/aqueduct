@@ -18,10 +18,12 @@ from aqueduct.utils import (
     artifact_name_from_op_name,
 )
 from aqueduct.error import AqueductError
+from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
 InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
+InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
@@ -132,6 +134,9 @@ def op(
 
     The requirements.txt file in the current directory is used, if it exists.
 
+    To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
+    >>> compute_recommendations.local(customer_profiles, recent_clicks)
+
     Args:
         name:
             Operator name.
@@ -141,7 +146,7 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-
+                    
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -191,7 +196,12 @@ def op(
             assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
-
+        
+        # Enable .local(*args) which calls on the original function with dataframes as inputs.
+        local_func : Callable[[InputArtifactLocal], DataFrame] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
@@ -210,6 +220,9 @@ def metric(
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
+
+    To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
+    >>> compute_recommendations.local(customer_profiles, recent_clicks)
 
     Args:
         name:
@@ -279,6 +292,11 @@ def metric(
 
             return new_metric_artifact
 
+        # Enable .local(*args) which calls on the original function with dataframes as inputs.
+        local_func : Callable[[InputArtifactLocal], float] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
@@ -301,6 +319,9 @@ def check(
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
     will fail the workflow when run in our system.
+
+    To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
+    >>> compute_recommendations.local(customer_profiles, recent_clicks)
 
     Args:
         name:
@@ -371,6 +392,11 @@ def check(
 
             return new_check_artifact
 
+        # Enable .local(*args) which calls on the original function with dataframes as inputs.
+        local_func : Callable[[InputArtifactLocal], bool] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
+        )
+        wrapped.local = local_func
         return wrapped
 
     if callable(name):
