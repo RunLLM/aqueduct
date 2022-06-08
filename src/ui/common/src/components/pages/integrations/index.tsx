@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
-import { AddIntegrations } from '../../integrations/addIntegrations';
+import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 

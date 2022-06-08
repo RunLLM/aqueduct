@@ -11,7 +11,7 @@ type Props = {
   supportedIntegrations: ServiceInfoMap;
 };
 
-export const AddIntegrations: React.FC<Props> = ({
+const AddIntegrations: React.FC<Props> = ({
   user,
   supportedIntegrations,
 }) => {
@@ -67,3 +67,5 @@ export const AddIntegrations: React.FC<Props> = ({
     </Box>
   );
 };
+
+export default AddIntegrations;

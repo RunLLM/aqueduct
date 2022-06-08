@@ -47,6 +47,8 @@ ui/*yarn-error.log*
 
 # local env files
 **/.env.local
+**/.env
+**/.parcel-cache
 
 # vercel
 ui/.vercel
