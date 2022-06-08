@@ -1,10 +1,13 @@
-import { Alert, Autocomplete, TextField, Typography } from '@mui/material';
+import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Autocomplete, Button, TextField, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
 import Head from 'next/head';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { AddTableDialog } from 'src/components/integrations/dialogs/dialog';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import DefaultLayout from '../../../../components/layouts/default';
@@ -30,6 +33,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const [table, setTable] = useState<string>('');
+  const [showDialog, setShowDialog] = useState(false);
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
@@ -148,6 +152,17 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         </Typography>
 
         <DetailIntegrationCard integration={selectedIntegration} />
+
+        {selectedIntegration.name === 'aqueduct_demo' && (
+            <Button variant="contained" onClick={() => setShowDialog(true)}>
+                <FontAwesomeIcon icon={faUpload} />
+                <Typography sx={{ ml: 1 }}>Add CSV</Typography>
+            </Button>
+        )}
+
+        {showDialog && (
+            <AddTableDialog user={user} integrationId={selectedIntegration.id} onCloseDialog={() => setShowDialog(false)} />
+        )}
 
         <Box sx={{ mt: 4 }}>
           <Typography variant="h4" gutterBottom component="div">

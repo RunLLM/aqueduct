@@ -1,3 +1,4 @@
+import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Box,
@@ -14,13 +15,16 @@ import React, { useEffect, useState } from 'react';
 
 import UserProfile from '../../../utils/auth';
 import {
+  addTable,
   connectIntegration,
+  CSVConfig,
   formatService,
   IntegrationConfig,
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { BigQueryDialog } from './bigqueryDialog';
+import { CSVDialog } from './csvDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
@@ -29,13 +33,108 @@ import { RedshiftDialog } from './redshiftDialog';
 import { S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 
-type Props = {
+type AddTableDialogProps = {
+  user: UserProfile;
+  integrationId: string;
+  onCloseDialog: () => void;
+};
+
+export const AddTableDialog: React.FC<AddTableDialogProps> = ({ user, integrationId, onCloseDialog }) => {
+  const router = useRouter();
+
+  const [config, setConfig] = useState<CSVConfig>({
+    name: '',
+    csv: null,
+  });
+  const [disableConnect, setDisableConnect] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  const handleSuccessToastClose = () => {
+      setShowSuccessToast(false);
+  };
+
+  useEffect(() => {
+      setDisableConnect(!isConfigComplete(config));
+  }, [config]);
+
+  const dialogHeader = (
+      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+          <Typography variant="h5">{'Upload CSV'}</Typography>
+          <img
+              height="45px"
+              src={
+                  'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/csv-outline.png'
+              }
+          />
+      </Box>
+  );
+
+  const serviceDialog = <CSVDialog setDialogConfig={setConfig} />;
+
+  const confirmConnect = () => {
+      setIsConnecting(true);
+      setErrMsg(null);
+      addTable(user, integrationId, config)
+          .then(() => {
+              setShowSuccessToast(true);
+              const successMessage = 'Successfully uploaded CSV file to the demo database!';
+              setSuccessMessage(successMessage);
+              setIsConnecting(false);
+              onCloseDialog();
+              router.push(`/integration/${integrationId}`);
+          })
+          .catch((err) => {
+              const errorMessage = 'Unable to upload CSV file to the demo database: ';
+              setErrMsg(errorMessage + err.message);
+              setIsConnecting(false);
+          });
+  };
+
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [errMsg, setErrMsg] = useState(null);
+
+  return (
+      <Dialog open={true} onClose={onCloseDialog}>
+          <DialogTitle>{dialogHeader}</DialogTitle>
+          <DialogContent>
+              {serviceDialog}
+              {errMsg && <Alert severity="error">{errMsg}</Alert>}
+              <Snackbar
+                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  open={showSuccessToast}
+                  onClose={handleSuccessToastClose}
+                  key={'integrations-dialog-success-snackbar'}
+                  autoHideDuration={6000}
+              >
+                  <Alert onClose={handleSuccessToastClose} severity="success" sx={{ width: '100%' }}>
+                      {successMessage}
+                  </Alert>
+              </Snackbar>
+          </DialogContent>
+          <DialogActions>
+              <Button autoFocus onClick={onCloseDialog}>
+                  Cancel
+              </Button>
+              <LoadingButton
+                  autoFocus
+                  onClick={confirmConnect}
+                  loading={isConnecting || disableConnect}
+                >
+                  Confirm
+              </LoadingButton>
+          </DialogActions>
+      </Dialog>
+  );
+};
+
+type IntegrationDialogProps = {
   user: UserProfile;
   service: Service;
   onCloseDialog: () => void;
 };
 
-export const IntegrationDialog: React.FC<Props> = ({
+export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   user,
   service,
   onCloseDialog,
@@ -145,43 +244,43 @@ export const IntegrationDialog: React.FC<Props> = ({
   return (
     <Dialog open={true} onClose={onCloseDialog}>
       <DialogTitle>{dialogHeader}</DialogTitle>
-      <DialogContent>
-        {nameInput}
-        {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={showSuccessToast}
-          onClose={handleSuccessToastClose}
-          key={'integrations-dialog-success-snackbar'}
-          autoHideDuration={6000}
-        >
-          <Alert
+        <DialogContent>
+          {nameInput}
+          {serviceDialog}
+          {errMsg && <Alert severity="error">{errMsg}</Alert>}
+          <Snackbar
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            open={showSuccessToast}
             onClose={handleSuccessToastClose}
-            severity="success"
-            sx={{ width: '100%' }}
+            key={'integrations-dialog-success-snackbar'}
+            autoHideDuration={6000}
           >
-            {successMessage}
-          </Alert>
-        </Snackbar>
+            <Alert
+              onClose={handleSuccessToastClose}
+              severity="success"
+              sx={{ width: '100%' }}
+            >
+              {successMessage}
+            </Alert>
+          </Snackbar>
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={onCloseDialog}>
           Cancel
         </Button>
-        <Button
-          autoFocus
-          onClick={confirmConnect}
-          disabled={isConnecting || disableConnect}
-        >
-          Confirm
-        </Button>
+        <LoadingButton
+            autoFocus
+            onClick={confirmConnect}
+            loading={isConnecting || disableConnect}
+          >
+            Confirm
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
 };
 
 // Helper function to check if the Integration config is completely filled
-function isConfigComplete(config: IntegrationConfig): boolean {
+function isConfigComplete(config: IntegrationConfig | CSVConfig): boolean {
   return Object.values(config).every((x) => x && x !== '');
 }
