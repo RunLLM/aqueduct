@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/google/uuid"
 )
 
@@ -21,7 +21,7 @@ func WithRequestId() func(http.Handler) http.Handler {
 				requestIdStr = requestId.String()
 			}
 
-			contextWithReqId := context.WithValue(r.Context(), utils.UserRequestIdKey, requestIdStr)
+			contextWithReqId := context.WithValue(r.Context(), aq_context.UserRequestIdKey, requestIdStr)
 			h.ServeHTTP(w, r.WithContext(contextWithReqId))
 		})
 	}

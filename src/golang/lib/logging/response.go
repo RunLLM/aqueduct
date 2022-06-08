@@ -4,8 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/utils"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	log "github.com/sirupsen/logrus"
+)
+
+type Component string
+
+const (
+	ServerComponent Component = "Server"
 )
 
 func LogRoute(
@@ -14,7 +20,7 @@ func LogRoute(
 	r *http.Request,
 	excludedHeaderFields map[string]bool,
 	statusCode int,
-	component string,
+	component Component,
 	serviceName string,
 	err error,
 ) {
@@ -40,15 +46,15 @@ func LogRoute(
 		"Code":          statusCode,
 		"Component":     component,
 		"Route":         routeName,
-		"UserId":        ctx.Value(utils.UserIdKey),
-		"UserRequestId": ctx.Value(utils.UserRequestIdKey),
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
 	}).Info()
 }
 
 func LogAsyncEvent(
 	ctx context.Context,
-	component string,
+	component Component,
 	serviceName string,
 	err error,
 ) {
@@ -63,8 +69,8 @@ func LogAsyncEvent(
 		"ServiceName":   serviceName,
 		"Status":        status,
 		"Component":     component,
-		"UserId":        ctx.Value(utils.UserIdKey),
-		"UserRequestId": ctx.Value(utils.UserRequestIdKey),
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
 	}).Info()
 }

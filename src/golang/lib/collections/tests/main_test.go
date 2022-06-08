@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/migrator/migration"
+	"github.com/aqueducthq/aqueduct/cmd/migrator/migrator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	log "github.com/sirupsen/logrus"
 )
@@ -166,7 +166,7 @@ func initDatabaseSchema(db database.Database) {
 		log.Fatalf("Unable to change cwd: %v", err)
 	}
 
-	if err := migration.GoTo(context.Background(), schemaVersion, db); err != nil {
+	if err := migrator.GoTo(context.Background(), schemaVersion, db); err != nil {
 		db.Close()
 		log.Fatalf("Unable to initialize schema: %v", err)
 	}
