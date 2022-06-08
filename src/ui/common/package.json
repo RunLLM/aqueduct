@@ -39,6 +39,7 @@
     "@mui/material": "^5.6.2",
     "@reduxjs/toolkit": "^1.8.1",
     "autosuggest-highlight": "^3.2.1",
+    "core-js": "^3.22.8",
     "cron-parser": "^4.0.0",
     "query-string": "^7.1.1",
     "random-word-slugs": "^0.1.6",
@@ -98,8 +99,5 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^3.9.10"
-  },
-  "dependencies": {
-    "core-js": "^3.22.8"
   }
 }

@@ -34,6 +34,9 @@ src/build/
 # dependencies
 **/node_modules
 
+# parcel cache
+**/.parcel-cache
+
 # next.js
 **/.next
 
