@@ -23,7 +23,7 @@ from pandas import DataFrame
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
 InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact,DataFrame]
+InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
