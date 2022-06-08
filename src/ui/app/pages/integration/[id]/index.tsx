@@ -6,10 +6,12 @@ export { getServerSideProps } from '@aqueducthq/common';
 
 const IntegrationDetails: React.FC = () => {
     const { user, loading, success } = useUser();
+    const router = useRouter();
+    
     if (loading) {
         return null;
     }
-    const router = useRouter();
+    
     if (!success) {
         router.push('/login');
         return null;

@@ -109,17 +109,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     });
   }
 
-  if (!integrations) {
-    return null;
-  }
   let selectedIntegration = null;
-  (integrations as Integration[]).forEach((integration) => {
-    if (integration.id === integrationId) {
-      selectedIntegration = integration;
-    }
-  });
-  if (!selectedIntegration) {
-    return null;
+
+  if (integrations) {
+    (integrations as Integration[]).forEach((integration) => {
+      if (integration.id === integrationId) {
+        selectedIntegration = integration;
+      }
+    });
   }
 
   const handleChange = (
@@ -128,8 +125,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   ) => {
     setTable(newValue);
   };
+  
   const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
+
+  if (!integrations || !selectedIntegration) {
+    return null;
+  }
+
   return (
     <DefaultLayout user={user}>
       <Head>
