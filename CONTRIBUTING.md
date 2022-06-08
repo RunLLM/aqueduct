@@ -1,4 +1,6 @@
-Welcome to the Aqueduct contributor family! Here you will find guides for setting up your development
+# Welcome to the Aqueduct contributing guide <!-- omit in toc -->
+
+Thank you for becoming an Aqueduct contributor! Here you will find guides for setting up your development
 environment and contributing to our codebase.
 
 ## Setting up development environment
