@@ -1,7 +1,7 @@
 {
-  "name": "example",
-  "version": "1.0.0",
-  "license": "MIT",
+  "name": "@aqueducthq/ui",
+  "author": "Aqueduct, Inc. <hello@aqueducthq.com",
+  "version": "0.0.2",
   "scripts": {
     "start": "parcel --no-cache --no-hmr index.html",
     "build": "parcel build index.html",

@@ -41,7 +41,6 @@ type GettingStartedTutorialProps = {
 const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
   user,
 }) => {
-  console.log(user);
   let greeting = `Welcome ${user.given_name ?? user.email}!`;
   if (user.email === 'default' || !user.given_name) {
     greeting = 'Welcome to Aqueduct!';
