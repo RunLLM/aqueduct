@@ -1,0 +1,78 @@
+name: Run Notebooks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'sdk/aqueduct/**'
+  pull_request:
+    paths:
+      - '.github/workflows/run-notebooks.yml'
+      - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+      - "sdk/examples/sentiment_analysis/Sentiment Model.ipynb"
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set filename for the server's output logs
+        run: echo "SERVER_LOGS_FILE=server_logs" >> $GITHUB_ENV
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.10'
+
+      - name: Set up GOPATH variable
+        run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Install aqueduct-ml
+        working-directory: src/python
+        run: pip3 install .
+
+      - name: Startup the server and wait for it to initialize
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
+      - name: Update aqueduct with latest code
+        run: python3 scripts/install_local.py
+
+      - name: Start aqueduct server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      - name: Install Packages needed by the notebooks
+        run: pip3 install sklearn transformers torch
+
+      - name: Fetch the API key
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run Sentiment Notebook
+        working-directory: sdk/examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+
+      - name: Run Churn Notebook
+        working-directory: sdk/examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: Server Logs
+          path: server_logs

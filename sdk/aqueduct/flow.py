@@ -117,7 +117,7 @@ def _show_dag(
         operator_mapping[str(operator.id)] = {
             "inputs": [str(v) for v in operator.inputs],
             "outputs": [str(v) for v in operator.outputs],
-            "name": op.name,
+            "name": operator.name,
         }
     for artifact_uuid in dag.list_artifacts():
         artifact_by_id[str(artifact_uuid.id)] = artifact_uuid
