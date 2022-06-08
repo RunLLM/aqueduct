@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
@@ -11,7 +12,6 @@ on:
       - '.github/workflows/integration-tests.yml'
   issue_comment:
     types: [ created ]
-  workflow_dispatch:
 
 jobs:
   check-comment-trigger:
@@ -39,8 +39,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        # TODO(ENG-1182): Get OSS working with and 3.7
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -84,11 +83,11 @@ jobs:
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py
 
-      - name: Install packages needed for testing
-        run: pip3 install nltk matplotlib pytest-xdist
-
       - name: Start aqueduct server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+
+      - name: Install packages needed for testing
+        run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
