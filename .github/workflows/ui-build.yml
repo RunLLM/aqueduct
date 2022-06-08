@@ -1,8 +1,6 @@
 name: UI Build
 
 on:
-  push:
-    branches: [ eng-1185-add-automated-ui-build-github-action-to ] # TODO: REMOVE
   pull_request:
     branches: [ main ]
     paths:
