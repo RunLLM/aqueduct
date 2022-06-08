@@ -19,7 +19,7 @@
     "@types/react": "^18.0.8"
   },
   "dependencies": {
-    "@aqueducthq/common": "0.0.7",
+    "@aqueducthq/common": "0.0.6",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
