@@ -48,6 +48,7 @@ import NotificationsPopover from './components/notifications/NotificationsPopove
 import DataPage from './components/pages/data';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
+import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import WorkflowPage from './components/pages/workflow/id';
@@ -94,6 +95,16 @@ import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
 } from './reducers/integrations';
+import integrationTableData, {
+  handleLoadIntegrationTable,
+  integrationTableDataSlice,
+  tableKeyFn,
+} from './reducers/integrationTableData';
+import integrationTables, {
+  handleLoadIntegrationTables,
+  integrationTablesSlice,
+  IntegrationTablesState,
+} from './reducers/integrationTables';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -264,14 +275,22 @@ export {
   handleGetOperatorResults,
   handleGetWorkflow,
   handleLoadIntegrations,
+  handleLoadIntegrationTable,
+  handleLoadIntegrationTables,
   HeightTransition,
   HomePage,
   IconButton,
   IntegrationCard,
+  IntegrationDetailsPage,
   IntegrationDialog,
   integrations,
   IntegrationsPage,
   integrationsSlice,
+  integrationTableData,
+  integrationTableDataSlice,
+  integrationTables,
+  integrationTablesSlice,
+  IntegrationTablesState,
   IntegrationTextInputField,
   listNotifications,
   listWorkflowSlice,
@@ -340,6 +359,7 @@ export {
   SupportedIntegrations,
   Tab,
   TableArtifactNode,
+  tableKeyFn,
   Tabs,
   theme,
   TransitionLengthInMs,

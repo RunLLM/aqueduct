@@ -1,5 +1,5 @@
-import useUser from '@aqueducthq/common';
-import IntegrationDetailsPage from '@aqueducthq/common';
+import { useUser } from '@aqueducthq/common';
+import { IntegrationDetailsPage } from '@aqueducthq/common';
 import { useRouter } from 'next/router';
 import React from 'react';
 export { getServerSideProps } from '@aqueducthq/common';
