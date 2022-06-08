@@ -316,17 +316,6 @@ def _make_archive(source: str, destination: str) -> None:
     shutil.move("%s.%s" % (name, format), destination)
 
 
-def apikey() -> str:
-    ServerDirectory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
-    configFile = os.path.join(ServerDirectory, "config", "config.yml")
-    with open(configFile, "r") as f:
-        try:
-            return yaml.safe_load(f)['apiKey']
-        except yaml.YAMLError as exc:
-            print(exc)
-            exit(1)
-
-
 def artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
 

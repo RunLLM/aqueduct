@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Dict, List, Union, Optional
 
 from aqueduct.generic_artifact import Artifact as GenericArtifact
+import yaml
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
@@ -33,6 +34,15 @@ from .utils import (
 import __main__ as main
 import os
 
+def apikey() -> str:
+    ServerDirectory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+    configFile = os.path.join(ServerDirectory, "config", "config.yml")
+    with open(configFile, "r") as f:
+        try:
+            return yaml.safe_load(f)['apiKey']
+        except yaml.YAMLError as exc:
+            print(exc)
+            exit(1)
 
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
