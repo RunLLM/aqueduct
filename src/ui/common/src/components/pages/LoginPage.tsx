@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import React, { ChangeEvent, useState } from 'react';
+import React, {ChangeEvent, useEffect, useState} from 'react';
 import cookies from 'react-cookies';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import fetchUser from '../../utils/fetchUser';
 import setUser from '../hooks/setUser';
@@ -14,7 +14,12 @@ export const LoginPage: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(
     cookies.load('aqueduct-api-key')
   );
+
   const navigate = useNavigate();
+
+  const [isAuthed, setIsAuthed] = useState<boolean>(false);
+  // used to trigger a re-render of the page after auth has gone through.
+  const [toggle, setToggle] = useState<boolean>(false);
 
   const onApiKeyTextFieldChanged = (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -36,17 +41,24 @@ export const LoginPage: React.FC = () => {
     if (!apiKey || apiKey.length === 0) {
       setValidationError(true);
       setErrorMsg('Api key should not be empty.');
+      setIsAuthed(false);
     } else if (!success) {
       setValidationError(true);
       setErrorMsg(
         "Invalid key, please copy the key from 'aqueduct apikey' outputs."
       );
+      setIsAuthed(false);
     } else {
       setValidationError(false);
       setUser(apiKey);
-      navigate('/');
+      setIsAuthed(true);
+      navigate('/', { replace: true })
     }
   };
+
+  if (isAuthed) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <Box
