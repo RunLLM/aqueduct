@@ -56,16 +56,16 @@ class APIClient:
     Internal client class used to send requests to the aqueduct cluster.
     """
 
-    PREVIEW_ROUTE = "/preview"
-    REGISTER_WORKFLOW_ROUTE = "/workflow/register"
-    LIST_INTEGRATIONS_ROUTE = "/integrations"
-    LIST_TABLES_ROUTE = "/tables"
-    GET_WORKFLOW_ROUTE_TEMPLATE = "/workflow/%s"
-    REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/workflow/%s/refresh"
-    DELETE_WORKFLOW_ROUTE_TEMPLATE = "/workflow/%s/delete"
-    LIST_GITHUB_REPO_ROUTE = "/integrations/github/repos"
-    LIST_GITHUB_BRANCH_ROUTE = "/integrations/github/branches"
-    NODE_POSITION_ROUTE = "/positioning"
+    PREVIEW_ROUTE = "/api/preview"
+    REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
+    LIST_INTEGRATIONS_ROUTE = "/api/integrations"
+    LIST_TABLES_ROUTE = "/api/tables"
+    GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
+    DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
+    LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
+    LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
+    NODE_POSITION_ROUTE = "/api/positioning"
 
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
