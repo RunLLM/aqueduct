@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Tuple, Union, List
 from functools import wraps
 
 from aqueduct.artifact import Artifact, ArtifactSpec
@@ -23,8 +23,7 @@ from pandas import DataFrame
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
 InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifact_list = [TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifact_local = Union[TableArtifact, MetricArtifact, ParamArtifact,DataFrame]
+InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact,DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
@@ -200,8 +199,8 @@ def op(
             return new_function_artifact
         
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifact_local], DataFrame] = lambda *inputs : func(
-            *tuple([input.get() if type(input) in InputArtifact_list else input for input in inputs ])
+        local_func : Callable[[InputArtifactLocal], DataFrame] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
@@ -296,8 +295,8 @@ def metric(
             return new_metric_artifact
 
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifact_local], float] = lambda *inputs : func(
-            *tuple([input.get() if type(input) in InputArtifact_list else input for input in inputs ])
+        local_func : Callable[[InputArtifactLocal], float] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
@@ -397,8 +396,8 @@ def check(
             return new_check_artifact
 
         # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifact_local], bool] = lambda *inputs : func(
-            *tuple([input.get() if type(input) in InputArtifact_list else input for input in inputs ])
+        local_func : Callable[[InputArtifactLocal], bool] = lambda *inputs : func(
+            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
         )
         wrapped.local = local_func
         return wrapped
