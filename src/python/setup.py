@@ -10,7 +10,7 @@ setup(
     name="aqueduct-ml",
     version="0.0.1",
     install_requires=install_requires,
-    scripts=['bin/aqueduct'],
+    scripts=["bin/aqueduct"],
     packages=find_packages(),
     description="Aqueduct OSS backend.",
     url="https://www.aqueducthq.com/",

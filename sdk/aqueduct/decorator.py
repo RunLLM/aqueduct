@@ -38,7 +38,11 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 
 
 def _is_input_artifact(elem: Any) -> bool:
-    return isinstance(elem, TableArtifact) or isinstance(elem, MetricArtifact) or isinstance(elem, ParamArtifact)
+    return (
+        isinstance(elem, TableArtifact)
+        or isinstance(elem, MetricArtifact)
+        or isinstance(elem, ParamArtifact)
+    )
 
 
 def wrap_spec(
@@ -150,7 +154,7 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-                    
+
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -200,7 +204,7 @@ def op(
             assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
-        
+
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: InputArtifactLocal) -> DataFrame:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
