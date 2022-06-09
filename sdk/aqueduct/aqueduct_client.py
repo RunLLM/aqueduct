@@ -45,7 +45,7 @@ def apikey() -> str:
     config_file = os.path.join(server_directory, "config", "config.yml")
     with open(config_file, "r") as f:
         try:
-            return yaml.safe_load(f)['apiKey']
+            return str(yaml.safe_load(f)['apiKey'])
         except yaml.YAMLError as exc:
             print(exc)
             exit(1)
