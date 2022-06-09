@@ -2,11 +2,12 @@ import sys
 import os
 
 from setuptools import find_packages, setup
-
+from pathlib import Path
 
 install_requires = open("requirements.txt").read().strip().split("\n")
 
-long_description = open("README.md").read()
+readme_path = Path(os.environ["PWD"], "../../README.md")
+long_description = open(readme_path).read()
 
 setup(
     name="aqueduct-ml",
@@ -14,7 +15,7 @@ setup(
     install_requires=install_requires,
     scripts=['bin/aqueduct'],
     packages=find_packages(),
-    description="Prediction Infrastructure for Data Scientists.",
+    description="Prediction Infrastructure for Data Scientists",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://www.aqueducthq.com/",
