@@ -131,6 +131,7 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 }
 
 func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cmd, error) {
+	var cmd *exec.Cmd
 	if spec.Type() == WorkflowJobType {
 		workflowSpec, ok := spec.(*WorkflowSpec)
 		if !ok {
@@ -145,13 +146,13 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		logFilePath := path.Join(defaultLogsDir, jobName)
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
-		return exec.Command(
+		cmd = exec.Command(
 			fmt.Sprintf("%s/%s", j.conf.BinaryDir, workflowExecutorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
 			logFilePath,
-		), nil
+		)
 	} else if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -164,38 +165,40 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"bash",
 			filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
 			specStr,
-		), nil
+		)
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, paramPythonPath),
 			"--spec",
 			specStr,
-		), nil
+		)
 	} else {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, connectorPythonPath),
 			"--spec",
 			specStr,
-		), nil
+		)
 	}
+	log.Infof("Running job with command: %s", cmd.String())
+	return cmd, nil
 }
 
 func (j *ProcessJobManager) generateCronFunction(name string, jobSpec Spec) func() {
