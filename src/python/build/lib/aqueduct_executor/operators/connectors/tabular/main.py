@@ -70,7 +70,7 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
 def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
     df = utils.read_csv(spec.csv)
     op.load(spec.load_parameters, df)
-    
+
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)

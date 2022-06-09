@@ -42,6 +42,7 @@ const (
 	AuthenticateJobType   JobType = "authenticate"
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
+	LoadTableJobType      JobType = "load-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -127,6 +128,12 @@ type LoadSpec struct {
 	InputMetadataPath string               `json:"input_metadata_path"  yaml:"input_metadata_path"`
 }
 
+type LoadTableSpec struct {
+	basePythonSpec
+	CSV            string   `json:"csv"  yaml:"csv"`
+	LoadParameters LoadSpec `json:"load_parameters"  yaml:"load_parameters"`
+}
+
 type AuthenticateSpec struct {
 	basePythonSpec
 	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
@@ -166,6 +173,10 @@ func (*ExtractSpec) Type() JobType {
 
 func (*LoadSpec) Type() JobType {
 	return LoadJobType
+}
+
+func (*LoadTableSpec) Type() JobType {
+	return LoadTableJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -356,6 +367,46 @@ func NewLoadSpec(
 	}
 }
 
+// NewLoadTableSpec constructs a Spec for a LoadTableJob.
+func NewLoadTableSpec(
+	name string,
+	csv string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	connectorName integration.Service,
+	connectorConfig auth.Config,
+	parameters connector.LoadParams,
+	inputContentPath string,
+	inputMetadataPath string,
+) Spec {
+	return &LoadTableSpec{
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type: LoadTableJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		CSV: csv,
+		LoadParameters: LoadSpec{
+			basePythonSpec: basePythonSpec{
+				baseSpec: baseSpec{
+					Type: LoadJobType,
+					Name: name,
+				},
+				StorageConfig: *storageConfig,
+				MetadataPath:  metadataPath,
+			},
+			ConnectorName:     connectorName,
+			ConnectorConfig:   connectorConfig,
+			Parameters:        parameters,
+			InputContentPath:  inputContentPath,
+			InputMetadataPath: inputMetadataPath,
+		},
+	}
+}
+
 // NewDiscoverSpec constructs a Spec for a DiscoverJob.
 func NewDiscoverSpec(
 	name string,
@@ -430,6 +481,8 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 			spec = &ExtractSpec{}
 		case LoadJobType:
 			spec = &LoadSpec{}
+		case LoadTableJobType:
+			spec = &LoadTableSpec{}
 		case DiscoverJobType:
 			spec = &DiscoverSpec{}
 		default:

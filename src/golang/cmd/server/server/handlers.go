@@ -115,6 +115,13 @@ func (s *AqServer) Handlers() map[string]Handler {
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
+		routes.CreateTableRoute: &CreateTableHandler{
+			Database:          s.Database,
+			IntegrationReader: s.IntegrationReader,
+			StorageConfig:     s.StorageConfig,
+			JobManager:        s.JobManager,
+			Vault:             s.Vault,
+		},
 		routes.RefreshWorkflowRoute: &RefreshWorkflowHandler{
 			Database:       s.Database,
 			JobManager:     s.JobManager,

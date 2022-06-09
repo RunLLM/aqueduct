@@ -98,7 +98,7 @@ class LoadSpec(models.BaseSpec):
     _unwrap_connector_config = validator("connector_config", allow_reuse=True, pre=True)(
         unwrap_connector_config
     )
-    
+
 class LoadTableSpec(models.BaseSpec):
     name: str
     type: Literal[enums.JobType.LOADTABLE]
