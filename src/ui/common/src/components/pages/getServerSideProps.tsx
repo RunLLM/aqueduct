@@ -1,5 +1,5 @@
-export async function getServerSideProps(context) {
-    return {
-        props: {},
-    };
-}
+export const getServerSideProps: (context) => { [p: string]: any } = () => {
+  return {
+    props: {},
+  };
+};

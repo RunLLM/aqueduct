@@ -1,0 +1,10 @@
+boto3
+cloudpickle
+numpy
+pandas
+pydantic
+SQLAlchemy
+distro
+pyyaml
+typing_extensions
+aqueduct-sdk>=0.0.2

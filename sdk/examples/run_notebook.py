@@ -29,6 +29,12 @@ parser.add_argument(
     default=None,
     help="The api_key to use when running the notebook, instead of the notebook value.",
 )
+parser.add_argument(
+    "--server_address",
+    required=False,
+    default=None,
+    help="The server address to use when running the notebook, instead of the notebook value.",
+)
 args = parser.parse_args()
 
 
@@ -141,7 +147,12 @@ if args.api_key is not None:
     new_api_key = args.api_key.strip('"')
     code = code.replace(api_key, new_api_key)
     api_key = new_api_key
+
 server_address = extract_credential(SERVER_ADDRESS_CODE_SNIPPET)
+if args.server_address is not None:
+    new_server_address = args.server_address.strip('"')
+    code = code.replace(server_address, new_server_address)
+    server_address = new_server_address
 
 with open(notebook_script_path, "w") as f:
     f.write(code)

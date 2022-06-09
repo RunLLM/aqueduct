@@ -1,3 +1,5 @@
+import { configureStore } from '@reduxjs/toolkit';
+
 import dataPreviewReducer from '../reducers/dataPreview';
 import integrationsReducer from '../reducers/integrations';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
@@ -5,7 +7,6 @@ import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
 import openSideSheetReducer from '../reducers/openSideSheet';
 import workflowReducer from '../reducers/workflow';
-import {configureStore} from "@reduxjs/toolkit";
 //import {AnyAction, CombinedState, configureStore, Reducer} from '@reduxjs/toolkit';
 
 /*
@@ -19,15 +20,15 @@ const rootReducer: Reducer<CombinedState<{
 */
 
 export const store = configureStore({
-    reducer: {
-        nodeSelectionReducer,
-        openSideSheetReducer,
-        notificationsReducer,
-        listWorkflowReducer,
-        dataPreviewReducer,
-        integrationsReducer,
-        workflowReducer,
-    }
+  reducer: {
+    nodeSelectionReducer,
+    openSideSheetReducer,
+    notificationsReducer,
+    listWorkflowReducer,
+    dataPreviewReducer,
+    integrationsReducer,
+    workflowReducer,
+  },
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
