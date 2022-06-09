@@ -6,6 +6,8 @@ from setuptools import find_packages, setup
 
 install_requires = open("requirements.txt").read().strip().split("\n")
 
+long_description = open("README.md").read()
+
 setup(
     name="aqueduct-ml",
     version="0.0.2",
@@ -13,6 +15,8 @@ setup(
     scripts=['bin/aqueduct'],
     packages=find_packages(),
     description="Aqueduct OSS backend.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://www.aqueducthq.com/",
     license="Apache License 2.0",
     author="Aqueduct, Inc.",
