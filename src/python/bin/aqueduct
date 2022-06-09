@@ -132,7 +132,7 @@ def generate_welcome_message(expose):
     if not expose:
         expose_ip = "localhost"
     else:
-        expose_ip = "<PUBLIC_IP>"
+        expose_ip = "<IP_ADDRESS>"
     apikey = get_apikey()
     return welcome_message % (apikey, expose_ip)
 
