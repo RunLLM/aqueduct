@@ -23,7 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
-	workflowExecutorBinary       = "executor"
+	exectuorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
 	processRunningStatus = "R"
@@ -146,7 +146,28 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
 		return exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, workflowExecutorBinary),
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
+			"--spec",
+			specStr,
+			"--logs-path",
+			logFilePath,
+		), nil
+	} else if spec.Type() == WorkflowRetentionType {
+		workflowRetentionSpec, ok := spec.(*WorkflowSpec)
+		if !ok {
+			return nil, errors.New("Unable to cast job spec to workflowRetentionSpec.")
+		}
+
+		specStr, err := EncodeSpec(workflowRetentionSpec, GobSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		logFilePath := path.Join(defaultLogsDir, jobName)
+		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
+
+		return exec.Command(
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
