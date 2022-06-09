@@ -15,7 +15,6 @@ import distro
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
-ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
 package_version = "0.0.1"
 
@@ -47,16 +46,6 @@ def update_config_yaml(file):
             else:
                 sources.write(line)
 
-def generate_env_local(ip):
-    if os.path.isfile(os.path.join(ui_directory, "app", ".env.local")):
-        execute_command(["rm", os.path.join(ui_directory, "app", ".env.local")])
-
-    execute_command(["touch", os.path.join(ui_directory, "app", ".env.local")])
-
-    with open(os.path.join(ui_directory, "app", ".env.local"), "w") as env_file:
-        env_file.write("SERVER_ADDRESS=%s:8080\n" % ip)
-        env_file.write("NEXT_PUBLIC_PROTOCOL=http\n")
-
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
         proc.communicate()
@@ -87,23 +76,6 @@ def require_update(file_path):
             return False
         else:
             return True
-
-def update_ui_version():
-    print("Updating UI version to %s" % package_version)
-    try:
-        execute_command(["rm", "-rf", ui_directory])
-        os.mkdir(ui_directory)
-        generate_version_file(os.path.join(ui_directory, "__version__"))
-        s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
-        execute_command(["curl", os.path.join(s3_prefix, "ui.zip"), "--output", os.path.join(ui_directory, "ui.zip")])
-        execute_command(["unzip", os.path.join(ui_directory, "ui.zip"), "-d", ui_directory])
-        execute_command(["rm", os.path.join(ui_directory, "ui.zip")])
-        execute_command(["npm", "install"], os.path.join(ui_directory, "app"))
-        execute_command(["npm", "run", "build"], os.path.join(ui_directory, "app"))
-    except Exception as e:
-        print(e)
-        execute_command(["rm", "-rf", ui_directory])
-        exit(1)
 
 def download_golang_binaries(s3_prefix):
     system = platform.system()
@@ -186,9 +158,9 @@ def server(expose_ip):
             exit(1)
 
     if expose_ip:
-        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"])
+        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"], server_directory)
     else:
-        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml")])
+        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml")], server_directory)
     return server_popen
 
 def install_postgres():
@@ -250,22 +222,6 @@ def install(system):
         install_sqlserver()
     else:
         raise Exception("Unsupported system: %s" % system)
-
-def ui(expose_ip):
-    if not os.path.isdir(ui_directory):
-        update_ui_version()
-
-    if require_update(os.path.join(ui_directory, "__version__")):
-        update_ui_version()
-
-    if expose_ip:
-        server_ip = expose_ip
-        print("The Aqueduct server at " + server_ip + " will be externally accessible.")
-    else:
-        server_ip = "localhost"
-
-    generate_env_local(server_ip)
-    return execute_command_nonblocking(["npm", "run", "start"], os.path.join(ui_directory, "app"))
 
 def get_apikey():
     config_file = os.path.join(server_directory, "config", "config.yml")
@@ -334,16 +290,13 @@ if __name__ == "__main__":
     if args.command == "start":
         try:
             server_popen = server(args.expose)
-            ui_popen = ui(args.expose)
             time.sleep(2)
             print(generate_welcome_message(args.expose))
             server_popen.wait()
-            ui_popen.wait()
         except (Exception, KeyboardInterrupt) as e:
             print(e)
             print('\nTerminating Aqueduct service...')
             server_popen.kill()
-            ui_popen.kill()
             print('Aqueduct service successfully terminated.')
     elif args.command == "server":
         print("aqueduct ui and aqueduct server have been deprecated; please use aqueduct start to run both the UI and backend servers")
