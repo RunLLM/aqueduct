@@ -242,7 +242,7 @@ func (s *AqServer) Run(expose bool) {
 		ip = "localhost"
 	}
 
-	static := http.FileServer(http.Dir("/home/ubuntu/.aqueduct/server/bin/ui-dist"))
+	static := http.FileServer(http.Dir("."))
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
@@ -252,7 +252,7 @@ func (s *AqServer) Run(expose bool) {
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "/home/ubuntu/.aqueduct/server/bin/ui-dist/index.html")
+		http.ServeFile(w, r, "./index.html")
 	}
 
 	return http.HandlerFunc(fn)

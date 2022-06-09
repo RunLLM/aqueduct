@@ -89,3 +89,5 @@ sdk/docs/build/
 **/*_aqueduct_metric/
 **/*_aqueduct_check/
 **/*_internal_aqueduct_bound_check/
+
+src/python/README.md

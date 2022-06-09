@@ -17,15 +17,13 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.1"
+package_version = "0.0.2"
 
 welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI is accessible at: http://%s:3000
-
-You can connect to the backend server from your SDK at: http://%s:8080
+The Web UI and the backend server are accessible at: http://%s:8080
 ***************************************************
 """
 
@@ -46,16 +44,6 @@ def update_config_yaml(file):
                 sources.write(line.replace("<API_KEY>", api_key))
             else:
                 sources.write(line)
-
-def generate_env_local(ip):
-    if os.path.isfile(os.path.join(ui_directory, "app", ".env.local")):
-        execute_command(["rm", os.path.join(ui_directory, "app", ".env.local")])
-
-    execute_command(["touch", os.path.join(ui_directory, "app", ".env.local")])
-
-    with open(os.path.join(ui_directory, "app", ".env.local"), "w") as env_file:
-        env_file.write("SERVER_ADDRESS=%s:8080\n" % ip)
-        env_file.write("NEXT_PUBLIC_PROTOCOL=http\n")
 
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
@@ -98,8 +86,6 @@ def update_ui_version():
         execute_command(["curl", os.path.join(s3_prefix, "ui.zip"), "--output", os.path.join(ui_directory, "ui.zip")])
         execute_command(["unzip", os.path.join(ui_directory, "ui.zip"), "-d", ui_directory])
         execute_command(["rm", os.path.join(ui_directory, "ui.zip")])
-        execute_command(["npm", "install"], os.path.join(ui_directory, "app"))
-        execute_command(["npm", "run", "build"], os.path.join(ui_directory, "app"))
     except Exception as e:
         print(e)
         execute_command(["rm", "-rf", ui_directory])
@@ -142,13 +128,21 @@ def update_server_version():
 
     execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "8"])
 
-def generate_welcome_message(expose_ip):
-    if not expose_ip:
+def generate_welcome_message(expose):
+    if not expose:
         expose_ip = "localhost"
+    else:
+        expose_ip = "<IP_ADDRESS>"
     apikey = get_apikey()
-    return welcome_message % (apikey, expose_ip, expose_ip)
+    return welcome_message % (apikey, expose_ip)
 
-def server(expose_ip):
+def start(expose):
+    if not os.path.isdir(ui_directory):
+        update_ui_version()
+
+    if require_update(os.path.join(ui_directory, "__version__")):
+        update_ui_version()
+    
     if not os.path.isdir(server_directory):
         try:
             directories = [
@@ -186,11 +180,11 @@ def server(expose_ip):
                 execute_command(["rm", os.path.join(server_directory, "__version__")])
             exit(1)
 
-    if expose_ip:
-        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"])
+    if expose:
+        popen_handle = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"], ui_directory)
     else:
-        server_popen = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml")])
-    return server_popen
+        popen_handle = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml")], ui_directory)
+    return popen_handle
 
 def install_postgres():
     execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
@@ -298,8 +292,8 @@ if __name__ == "__main__":
                                an external server, where <IP_ADDRESS> is the
                                public IP of the server running the Aqueduct service.
                                ''')
-    start_args.add_argument('--expose', dest="expose", 
-                    help="The IP address of the server running Aqueduct.") 
+    start_args.add_argument('--expose', default=False, action='store_true',
+                    help="Use this option to expose the server to the public.")
     server_args = subparsers.add_parser('server', help=
                                    '''This starts the Aqueduct server in a
                                    blocking fashion. To background the process,
@@ -334,17 +328,14 @@ if __name__ == "__main__":
     
     if args.command == "start":
         try:
-            server_popen = server(args.expose)
-            ui_popen = ui(args.expose)
+            popen_handle = start(args.expose)
             time.sleep(2)
             print(generate_welcome_message(args.expose))
-            server_popen.wait()
-            ui_popen.wait()
+            popen_handle.wait()
         except (Exception, KeyboardInterrupt) as e:
             print(e)
             print('\nTerminating Aqueduct service...')
-            server_popen.kill()
-            ui_popen.kill()
+            popen_handle.kill()
             print('Aqueduct service successfully terminated.')
     elif args.command == "server":
         print("aqueduct ui and aqueduct server have been deprecated; please use aqueduct start to run both the UI and backend servers")

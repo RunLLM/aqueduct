@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import { Button } from '../primitives/Button.styles';
 import TextField from '@mui/material/TextField';
-import React, { ChangeEvent, useState, useEffect } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 
 import fetchUser from '../../utils/fetchUser';
