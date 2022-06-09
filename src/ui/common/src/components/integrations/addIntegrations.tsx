@@ -11,10 +11,7 @@ type Props = {
   supportedIntegrations: ServiceInfoMap;
 };
 
-export const AddIntegrations: React.FC<Props> = ({
-  user,
-  supportedIntegrations,
-}) => {
+const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
   return (
     <Box sx={{ maxWidth: '950px' }}>
       <Grid container spacing={2} sx={{ my: '20px', width: '100%' }}>
@@ -41,9 +38,6 @@ export const AddIntegrations: React.FC<Props> = ({
                     },
                   }}
                 >
-                  {/* NOTE: We are not using Next's image here because it requires us
-                                      to fill out both width and height which are different for different
-                                      logos. */}
                   <img
                     src={integration.logo}
                     height="85px"
@@ -70,3 +64,5 @@ export const AddIntegrations: React.FC<Props> = ({
     </Box>
   );
 };
+
+export default AddIntegrations;

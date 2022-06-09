@@ -23,6 +23,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
@@ -113,6 +114,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		AllowedMethods: []string{"GET", "POST"},
 	})
 	s.Router.Use(corsMiddleware.Handler)
+	s.Router.Use(middleware.Logger)
 	AddAllHandlers(s)
 
 	if err := collections.RequireSchemaVersion(
@@ -240,6 +242,18 @@ func (s *AqServer) Run(expose bool) {
 		ip = "localhost"
 	}
 
+	static := http.FileServer(http.Dir("."))
+	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
+	s.Router.Get("/*", IndexHandler())
+
 	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, connection.ServerInternalPort), s.Router))
+}
+
+func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./index.html")
+	}
+
+	return http.HandlerFunc(fn)
 }

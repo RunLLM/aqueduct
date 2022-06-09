@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box';
-import Head from 'next/head';
 import React from 'react';
 
 import UserProfile from '../../utils/auth';
@@ -10,7 +9,7 @@ export const MenuSidebarOffset = '250px';
 type Props = {
   user: UserProfile;
   contentWidth?: string;
-  children: React.ReactElement[];
+  children: React.ReactElement | React.ReactElement[];
 };
 
 export const DefaultLayout: React.FC<Props> = ({
@@ -27,10 +26,6 @@ export const DefaultLayout: React.FC<Props> = ({
         overflow: 'auto',
       }}
     >
-      <Head>
-        <link rel="icon" href="/public/favicon.ico" />
-      </Head>
-
       <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
         <MenuSidebar user={user} />
 

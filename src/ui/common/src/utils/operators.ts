@@ -139,21 +139,18 @@ export type GetOperatorResultResponse = {
   logs: { [name: string]: string };
 };
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 
 export async function exportFunction(
   user: UserProfile,
   operatorId: string
 ): Promise<Blob> {
-  const res = await fetch(
-    `${httpProtocol}://${apiAddress}/function/${operatorId}/export`,
-    {
-      method: 'GET',
-      headers: {
-        'api-key': user.apiKey,
-      },
-    }
-  );
+  const res = await fetch(`${apiAddress}/api/function/${operatorId}/export`, {
+    method: 'GET',
+    headers: {
+      'api-key': user.apiKey,
+    },
+  });
 
   if (!res.ok) {
     const message = await res.text();

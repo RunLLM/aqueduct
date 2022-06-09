@@ -26,7 +26,7 @@ type Props = {
 };
 
 const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
-  const { httpProtocol, apiAddress } = useAqueductConsts();
+  const { apiAddress } = useAqueductConsts();
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -73,15 +73,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
 
   const triggerWorkflowRun = () => {
     setShowRunWorkflowDialog(false);
-    fetch(
-      `${httpProtocol}://${apiAddress}/workflow/${workflowDag.workflow_id}/refresh`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': user.apiKey,
-        },
-      }
-    )
+    fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+      },
+    })
       .then((res) => {
         res.json().then((body) => {
           if (res.ok) {
