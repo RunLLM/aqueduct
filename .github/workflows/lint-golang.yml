@@ -28,8 +28,8 @@ jobs:
           # Optional: working directory, useful for monorepos.
           working-directory: src/golang
 
-          # Optional: golangci-lint command line arguments. (We use `.golangci.yml` for all configuration instead).
-          # args:
+          # Optional: golangci-lint command line arguments.
+          args: --concurrency 4
 
           # NOTE (saurav): This flag should be enabled, but for now there is a known issue when using
           # only-new-issues with working-directory (https://github.com/golangci/golangci-lint-action/issues/150).
