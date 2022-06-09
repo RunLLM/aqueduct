@@ -2,7 +2,7 @@ package executor
 
 import (
 	"context"
-	"errors"
+	"github.com/dropbox/godropbox/errors"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
 )

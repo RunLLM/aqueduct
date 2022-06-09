@@ -93,7 +93,6 @@ func updateCompletedOp(
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 	jobManager job.JobManager,
-	vaultObject vault.Vault,
 	isPreview bool,
 ) (bool, error) {
 	completedIds := make([]uuid.UUID, 0, len(active))
@@ -475,7 +474,6 @@ func orchestrate(
 			artifactResultWriter,
 			db,
 			jobManager,
-			vaultObject,
 			isPreview,
 		)
 		if err != nil {

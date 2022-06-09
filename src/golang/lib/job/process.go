@@ -265,8 +265,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 			command.stdout.String(),
 			command.stderr.String(),
 		)
-
-		return shared.FailedExecutionStatus, nil
+		return shared.FailedExecutionStatus, nil // nolint:nilerr // Poll() should not error on command execution issues.
 	}
 
 	return shared.SucceededExecutionStatus, nil

@@ -1,18 +1,52 @@
+# Hand-picked from the linters in https://golangci-lint.run/usage/linters
+run:
+  timeout: 3m
+
+output:
+  sort-results: true
+
 linters:
   disable-all: true
   enable:
-#    - deadcode
-#    - errcheck
+    - deadcode
+    - errcheck
     - gosimple
     - staticcheck
     - structcheck
+    - unused
+    - varcheck
+    - bidichk
+    - decorder
+    - exhaustive
+    - makezero
+    - forcetypeassert
+    - nilerr
+    - gci
+    - goconst
+    - goerr113
+    - gofmt # has autofixer.
+    - gofumpt # has autofixer.
+    - goheader
+    - goimports # has autofixer.
+    - goprintffuncname
+    - gosec
+    - misspell # has autofixer.
+    - prealloc
+    - predeclared
+    - rowserrcheck
+    - sqlclosecheck
+#    - stylecheck # It would be great to enable this but there are a lot of naming issues right now.
+    - unconvert
+    - unparam
+    - wastedassign
+#    - wrapcheck # This would be great to have.
 
-#    - gosec
 
 linters-settings:
   errcheck:
     exclude-functions:
       - defer # these tend to be best effort.
-
+  exhaustive:
+    default-signifies-exhaustive: true
   gosec:
     severity: high
