@@ -22,7 +22,7 @@ dist:
 	# This is to ensure that the server address is empty in production mode. We
 	# do this because we run the UI and the backend on the same Go server, so we
 	# don't need to specify an address when making a request.
-	cd app && echo "SERVER_ADDRESS=" >> .env
+	cd app && echo "SERVER_ADDRESS=" > .env
 	cd app && npm run build
 
 	# These are bad hacks that allow us to replace the path in the production
