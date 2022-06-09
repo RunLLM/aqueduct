@@ -41,8 +41,12 @@ jobs:
         working-directory: src/python
         run: pip3 install .
 
-      - name: Startup the server and wait for it to initialize
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+      - name: Start the server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+
+      - name: Wait for server
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
@@ -52,11 +56,15 @@ jobs:
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py
 
-      - name: Start aqueduct server
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &) && sleep 10
+      - name: Start the server again
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install Packages needed by the notebooks
         run: pip3 install sklearn transformers torch
+
+      - name: Wait for server again
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
