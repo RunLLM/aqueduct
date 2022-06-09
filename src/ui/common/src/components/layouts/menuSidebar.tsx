@@ -203,7 +203,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               ml: 1,
             }}
           >
-            {user.name}
+            {user.name === 'aqueduct user' ? 'Aqueduct' : user.name}
           </Box>
         </Button>
         {/* end popover target */}

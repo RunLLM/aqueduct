@@ -33,7 +33,6 @@ const (
 	RequiredSchemaVersion = 8
 
 	accountOrganizationId = "aqueduct"
-	UiServerPort          = 8081
 )
 
 type AqServer struct {
