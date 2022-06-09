@@ -13,9 +13,9 @@ import { DataGrid } from '@mui/x-data-grid';
 import Head from 'next/head';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AddTableDialog } from 'src/components/integrations/dialogs/dialog';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
+import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
 import DefaultLayout from '../../../../components/layouts/default';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {

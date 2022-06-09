@@ -1,8 +1,8 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { CSVConfig } from '../../../utils/integrations';
 import React, { useEffect, useState } from 'react';
 
+import { CSVConfig } from '../../../utils/integrations';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
