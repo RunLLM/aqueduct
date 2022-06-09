@@ -1,5 +1,4 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
-import setUser from './components/hooks/setUser';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -326,7 +325,6 @@ export {
   setBottomSideSheetOpenState,
   setLeftSideSheetOpenState,
   setRightSideSheetOpenState,
-  setUser,
   setWorkflowStatusBarOpenState,
   SidebarPosition,
   sideSheetSwitcher,

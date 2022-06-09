@@ -82,9 +82,6 @@ const DataPage: React.FC<Props> = ({ user }) => {
   const dataCardsInfo = useSelector(
     (state: RootState) => state.dataPreviewReducer
   );
-  if (dataCardsInfo.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    console.log(dataCardsInfo.loadingStatus.err);
-  }
 
   const [filterText, setFilterText] = useState<string>('');
 
