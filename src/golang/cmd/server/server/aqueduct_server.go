@@ -7,11 +7,11 @@ import (
 	"path"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/authentication"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/request_id"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/verification"
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/connection"
@@ -33,7 +33,6 @@ const (
 	RequiredSchemaVersion = 8
 
 	accountOrganizationId = "aqueduct"
-	UiServerPort          = 8081
 )
 
 type AqServer struct {
@@ -59,10 +58,12 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 
-	jobManager, err := job.NewProcessJobManager(&job.ProcessConfig{
-		BinaryDir:          path.Join(aqPath, job.BinaryDir),
-		OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
-	})
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		},
+	)
 	if err != nil {
 		db.Close()
 		log.Fatal("Unable to create job manager: ", err)
@@ -190,22 +191,22 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	return nil
 }
 
-func (s *AqServer) AddHandler(route string, handler Handler) {
+func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	var middleware alice.Chain
-	if handler.AuthMethod() == ApiKeyAuthMethod {
+	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
 		middleware = alice.New(
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 			verification.VerifyRequest(),
 		)
 	} else {
-		panic(ErrUnsupportedAuthMethod)
+		panic(handler.ErrUnsupportedAuthMethod)
 	}
 
 	s.Router.Method(
-		string(handler.Method()),
+		string(handlerObj.Method()),
 		route,
-		middleware.ThenFunc(ExecuteHandler(s, handler)),
+		middleware.ThenFunc(ExecuteHandler(s, handlerObj)),
 	)
 }
 
@@ -230,7 +231,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 		"Referer",
 	})
 
-	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, utils.Server, s.Name, err)
+	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
 func (s *AqServer) Run(expose bool) {

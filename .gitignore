@@ -12,6 +12,7 @@ src/build/
 *.dll
 *.so
 *.dylib
+**/bin
 
 # Test binary, built with `go test -c`
 *.test
@@ -51,13 +52,13 @@ ui/*yarn-error.log*
 # local env files
 **/.env.local
 **/.env
-**/.parcel-cache
 
 # vercel
 ui/.vercel
 
 ### SDK ###
 sdk/__pycache__
+sdk/build/
 
 sdk/.ipynb_checkpoints/*
 **/dist
