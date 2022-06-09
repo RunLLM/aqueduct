@@ -20,6 +20,17 @@ Released on 6/9/2022
 
 ### Contributors
 
+* [Joey Gonzalez](https://github.com/jegonzal)
+* [Kenneth Xu](https://github.com/kenxu95)
+* [Vikram Sreekanti](https://github.com/vsreekanti)
+* [Chenggang Wu](https://github.com/cw75)
+* [Boyuan Deng](https://github.com/Boyuan-Deng)
+* [Fanjia Yan](https://github.com/Fanjia-Yang)
+* [Haris Choudhary](https://github.com/HarisChoudhary)
+* [Andre Giron](https://github.com/agiron123)
+* [Will Crosier](https://github.com/datadawg88)
+* [Wei Chen](https://github.com/likawind)
+
 ## 0.0.1
 Released on 5/26/2022
 
