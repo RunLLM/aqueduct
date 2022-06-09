@@ -36,10 +36,10 @@ import os
 
 def apikey() -> str:
     """
-    Get the local host API key if the server is running locally 
+    Get the local host API key if the server is running locally. 
 
     Returns:
-        The local API key
+        The local API key.
     """
     server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
     config_file = os.path.join(server_directory, "config", "config.yml")
