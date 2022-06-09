@@ -12,6 +12,7 @@ var (
 	ErrNoJobSpec               = errors.New("Job spec doesn't exist.")
 	ErrJobNotExist             = errors.New("Job does not exist.")
 	ErrJobAlreadyExists        = errors.New("Job already exists.")
+	ErrPollJobTimeout          = errors.New("Reached timeout waiting for the job to finish.")
 )
 
 type JobManager interface {
