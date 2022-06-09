@@ -1,4 +1,3 @@
-# Hand-picked from the linters in https://golangci-lint.run/usage/linters
 run:
   timeout: 3m
   tests: false
@@ -8,6 +7,7 @@ run:
 output:
   sort-results: true
 
+# These were hand-picked from the linters in https://golangci-lint.run/usage/linters.
 linters:
   disable-all: true
   enable:
@@ -40,8 +40,8 @@ linters:
     - unconvert
     - unparam
     - wastedassign
-#    - stylecheck # It would be great to enable this but there are a lot of naming issues right now.
-#    - wrapcheck # This would be great to have.
+#    - stylecheck # TODO(ENG-1231)
+#    - wrapcheck # TODO(ENG-1230): Wrapping errors at the edge of our system will give us better stack traces.
 
 
 linters-settings:
