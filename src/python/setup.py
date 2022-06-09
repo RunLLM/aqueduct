@@ -14,7 +14,7 @@ setup(
     install_requires=install_requires,
     scripts=['bin/aqueduct'],
     packages=find_packages(),
-    description="Aqueduct OSS backend.",
+    description="Prediction Infrastructure for Data Scientists.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://www.aqueducthq.com/",
