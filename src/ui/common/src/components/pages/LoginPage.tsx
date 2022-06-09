@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box';
-import { Button } from '../primitives/Button.styles';
 import TextField from '@mui/material/TextField';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 
 import fetchUser from '../../utils/fetchUser';
+import { Button } from '../primitives/Button.styles';
 
 export const LoginPage: React.FC = () => {
   useEffect(() => {
@@ -39,11 +39,11 @@ export const LoginPage: React.FC = () => {
     if (!success) {
       setValidationError(true);
       setErrorMsg(
-        "Invalid API Key. You can find your API Key by running `aqueduct apikey` on the machine where Aqueduct is running."
+        'Invalid API Key. You can find your API Key by running `aqueduct apikey` on the machine where Aqueduct is running.'
       );
     } else {
       setCookie('aqueduct-api-key', apiKey, { path: '/' });
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
       setValidationError(false);
 
       // Once we validate, we force a reload of the page. This is because React

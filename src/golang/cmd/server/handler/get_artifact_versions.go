@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
@@ -188,11 +189,13 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 			latestVersions[artifactResult.ArtifactId].Versions[artifactResult.WorkflowDagResultId] = artifactVersion{
 				Timestamp: artifactResult.Timestamp.Unix(),
 				Status:    artifactResult.Status,
+				Checks:    nil,
 			}
 		} else {
 			historicalVersions[artifactResult.ArtifactId].Versions[artifactResult.WorkflowDagResultId] = artifactVersion{
 				Timestamp: artifactResult.Timestamp.Unix(),
 				Status:    artifactResult.Status,
+				Checks:    nil,
 			}
 		}
 
@@ -215,6 +218,8 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	// We now fill in the validation test result. We can join the validation test result with the correct
 	// artifact version by the workflow dag result id.
 	for _, checkResult := range checkResults {
+		fmt.Println("!>>")
+		fmt.Println(checkResult.Status)
 		checkResultObject := CheckResult{
 			Name:     checkResult.Name,
 			Status:   checkResult.Status,
