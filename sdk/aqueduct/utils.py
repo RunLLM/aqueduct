@@ -8,7 +8,6 @@ import ipynbname
 import cloudpickle as cp
 import tempfile
 import os
-import subprocess
 import shutil
 import json
 import uuid

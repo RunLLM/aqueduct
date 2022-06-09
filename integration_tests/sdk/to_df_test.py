@@ -8,9 +8,6 @@ from aqueduct.error import (
 from constants import (
     SENTIMENT_SQL_QUERY,
 )
-from test_functions.noop_with_requirements.model import noop_model_with_requirements_file
-from test_functions.noop_without_requirements.model import noop_model_without_requirements_file
-from test_functions.sentiment_without_requirements.model import sentiment_model_without_requirements
 from test_functions.simple.file_dependency_model import (
     model_with_file_dependency,
     model_with_invalid_dependencies,
@@ -26,8 +23,8 @@ from utils import (
 )
 
 
-def test_basic_get(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_basic_get(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_df = sql_artifact.get()
     assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
@@ -45,8 +42,8 @@ def test_basic_get(sp_client):
     assert output_df.shape[0] == 100
 
 
-def test_complex_get(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_complex_get(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -77,8 +74,8 @@ def test_complex_get(sp_client):
     assert fn_df.shape[0] == 100
 
 
-def test_basic_file_dependencies(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_basic_file_dependencies(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     output_artifact = model_with_file_dependency(sql_artifact)
@@ -93,8 +90,8 @@ def test_basic_file_dependencies(sp_client):
     assert output_df.shape[0] == 100
 
 
-def test_invalid_file_dependencies(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_invalid_file_dependencies(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     output_artifact = model_with_invalid_dependencies(sql_artifact)
