@@ -129,18 +129,25 @@ export type CSVConfig = {
   csv: FileData;
 };
 
-export async function addTable(user: UserProfile, integrationId: string, config: CSVConfig): Promise<void> {
-  const res = await fetch(`${httpProtocol}://${apiAddress}/integration/${integrationId}/create`, {
+export async function addTable(
+  user: UserProfile,
+  integrationId: string,
+  config: CSVConfig
+): Promise<void> {
+  const res = await fetch(
+    `${httpProtocol}://${apiAddress}/integration/${integrationId}/create`,
+    {
       method: 'POST',
       headers: {
-          'api-key': user.apiKey,
-          'table-name': config.name,
+        'api-key': user.apiKey,
+        'table-name': config.name,
       },
       body: config.csv.data,
-  });
+    }
+  );
   if (!res.ok) {
-      const message = await res.text();
-      throw new Error(message);
+    const message = await res.text();
+    throw new Error(message);
   }
 }
 

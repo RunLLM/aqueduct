@@ -1,6 +1,12 @@
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Autocomplete, Button, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Autocomplete,
+  Button,
+  TextField,
+  Typography,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
@@ -154,14 +160,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         <DetailIntegrationCard integration={selectedIntegration} />
 
         {selectedIntegration.name === 'aqueduct_demo' && (
-            <Button variant="contained" onClick={() => setShowDialog(true)}>
-                <FontAwesomeIcon icon={faUpload} />
-                <Typography sx={{ ml: 1 }}>Add CSV</Typography>
-            </Button>
+          <Button variant="contained" onClick={() => setShowDialog(true)}>
+            <FontAwesomeIcon icon={faUpload} />
+            <Typography sx={{ ml: 1 }}>Add CSV</Typography>
+          </Button>
         )}
 
         {showDialog && (
-            <AddTableDialog user={user} integrationId={selectedIntegration.id} onCloseDialog={() => setShowDialog(false)} />
+          <AddTableDialog
+            user={user}
+            integrationId={selectedIntegration.id}
+            onCloseDialog={() => setShowDialog(false)}
+          />
         )}
 
         <Box sx={{ mt: 4 }}>

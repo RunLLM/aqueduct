@@ -1,4 +1,4 @@
-import { Box, Input, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useEffect, useState } from 'react';
 
@@ -31,17 +31,17 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
 
   const fileUploadDescription = (
     <>
-        <>Follow the instructions </>
-        <Link
-            sx={{ fontSize: 'inherit' }}
-            target="_blank"
-            href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
-        >
-            here
-        </Link>
-        <> to get your service account key file.</>
+      <>Follow the instructions </>
+      <Link
+        sx={{ fontSize: 'inherit' }}
+        target="_blank"
+        href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
+      >
+        here
+      </Link>
+      <> to get your service account key file.</>
     </>
-);
+  );
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -54,7 +54,7 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         onChange={(event) => setProjectId(event.target.value)}
         value={projectId}
       />
-      
+
       <IntegrationFileUploadField
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
@@ -62,14 +62,14 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         file={file}
         placeholder={'Upload your service account key file.'}
         onFile={(file) => {
-            setFile(file);
-            readCredentialsFile(file, setCredentials);
+          setFile(file);
+          readCredentialsFile(file, setCredentials);
         }}
         onReset={(_) => {
-            setFile(null);
-            setCredentials(null);
+          setFile(null);
+          setCredentials(null);
         }}
-        />
+      />
     </Box>
   );
 };
