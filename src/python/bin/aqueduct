@@ -124,7 +124,6 @@ def update_server_version():
 
     execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
     execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
-    execute_command(["curl", os.path.join(s3_prefix, "db/demo.db"), "--output", os.path.join(server_directory, "db/demo.db")])
 
     execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "8"])
 
@@ -164,6 +163,7 @@ def start(expose):
             s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
             execute_command(["curl", os.path.join(s3_prefix, "config/config.yml"), "--output", os.path.join(server_directory, "config/config.yml")])
             update_config_yaml(os.path.join(server_directory, "config", "config.yml"))
+            execute_command(["curl", os.path.join(s3_prefix, "db/demo.db"), "--output", os.path.join(server_directory, "db/demo.db")])
 
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
