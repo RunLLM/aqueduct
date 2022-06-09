@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List, Union, Optional
 
 from aqueduct.generic_artifact import Artifact as GenericArtifact
-import yaml
+from yaml import safe_load, YAMLError
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
@@ -45,8 +45,8 @@ def apikey() -> str:
     config_file = os.path.join(server_directory, "config", "config.yml")
     with open(config_file, "r") as f:
         try:
-            return str(yaml.safe_load(f)['apiKey'])
-        except yaml.YAMLError as exc:
+            return str(safe_load(f)['apiKey'])
+        except YAMLError as exc:
             print(exc)
             exit(1)
 
