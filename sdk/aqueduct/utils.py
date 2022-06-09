@@ -17,7 +17,6 @@ from typing import Any, Dict, List, Callable, Mapping, Optional, Union
 
 import requests
 from croniter import croniter
-import yaml
 
 from .dag import DAG, Schedule, RetentionPolicy
 from .enums import TriggerType

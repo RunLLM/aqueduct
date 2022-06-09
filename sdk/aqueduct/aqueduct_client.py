@@ -35,9 +35,15 @@ import __main__ as main
 import os
 
 def apikey() -> str:
-    ServerDirectory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
-    configFile = os.path.join(ServerDirectory, "config", "config.yml")
-    with open(configFile, "r") as f:
+    """
+    Get the local host API key if the server is running locally 
+
+    Returns:
+        The local API key
+    """
+    server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+    config_file = os.path.join(server_directory, "config", "config.yml")
+    with open(config_file, "r") as f:
         try:
             return yaml.safe_load(f)['apiKey']
         except yaml.YAMLError as exc:
