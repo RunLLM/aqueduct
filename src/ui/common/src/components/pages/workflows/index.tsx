@@ -17,6 +17,9 @@ type Props = {
 
 const WorkflowsPage: React.FC<Props> = ({ user }) => {
   const dispatch: AppDispatch = useDispatch();
+  useEffect(() => {
+    document.title = 'Workflows | Aqueduct';
+  }, []);
 
   useEffect(() => {
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));

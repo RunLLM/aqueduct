@@ -12,6 +12,7 @@ src/build/
 *.dll
 *.so
 *.dylib
+**/bin
 
 # Test binary, built with `go test -c`
 *.test
@@ -34,6 +35,9 @@ src/build/
 # dependencies
 **/node_modules
 
+# parcel cache
+**/.parcel-cache
+
 # next.js
 **/.next
 
@@ -47,12 +51,14 @@ ui/*yarn-error.log*
 
 # local env files
 **/.env.local
+**/.env
 
 # vercel
 ui/.vercel
 
 ### SDK ###
 sdk/__pycache__
+sdk/build/
 
 sdk/.ipynb_checkpoints/*
 **/dist
@@ -83,3 +89,5 @@ sdk/docs/build/
 **/*_aqueduct_metric/
 **/*_aqueduct_check/
 **/*_internal_aqueduct_bound_check/
+
+src/python/README.md

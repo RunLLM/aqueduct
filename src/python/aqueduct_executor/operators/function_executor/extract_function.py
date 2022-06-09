@@ -27,7 +27,8 @@ def _unzip_function_contents(function_in_bytes: bytes, extract_path: str) -> Non
         # Assumes all extracted file will be located in nested path.
         nested_path = os.path.join(extract_path, toplevel_dir)
         op_path = os.path.join(extract_path, OP_DIR)
-        shutil.copytree(nested_path, op_path, dirs_exist_ok=True)
+        shutil.rmtree(op_path, ignore_errors=True)
+        shutil.copytree(nested_path, op_path)
         shutil.rmtree(nested_path)
 
 
