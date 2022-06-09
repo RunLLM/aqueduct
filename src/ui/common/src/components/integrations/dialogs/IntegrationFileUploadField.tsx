@@ -1,8 +1,9 @@
 import { Box, Button, Input, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import React, { MouseEventHandler, useEffect, useRef } from 'react';
-import { theme } from 'src/styles/theme/theme';
-import { FileData } from 'src/utils/integrations';
+
+import { theme } from '../../../styles/theme/theme';
+import { FileData } from '../../../utils/integrations';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
