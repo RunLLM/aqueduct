@@ -4,7 +4,6 @@ name: Golang Linter
 
 on:
   pull_request:
-    branches: [ main ]
     paths:
       - 'src/golang/**'
 
