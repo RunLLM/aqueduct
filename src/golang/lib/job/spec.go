@@ -130,8 +130,10 @@ type LoadSpec struct {
 
 type LoadTableSpec struct {
 	basePythonSpec
-	CSV            string   `json:"csv"  yaml:"csv"`
-	LoadParameters LoadSpec `json:"load_parameters"  yaml:"load_parameters"`
+	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	CSV             string              `json:"csv"  yaml:"csv"`
+	LoadParameters  LoadSpec            `json:"load_parameters"  yaml:"load_parameters"`
 }
 
 type AuthenticateSpec struct {
@@ -388,7 +390,9 @@ func NewLoadTableSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		CSV: csv,
+		ConnectorName:   connectorName,
+		ConnectorConfig: connectorConfig,
+		CSV:             csv,
 		LoadParameters: LoadSpec{
 			basePythonSpec: basePythonSpec{
 				baseSpec: baseSpec{

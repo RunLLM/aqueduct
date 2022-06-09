@@ -12,19 +12,34 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
+
+
+try:
+    from typing import Literal
+except ImportError:
+    # Python 3.7 does not support typing.Literal
+    from typing_extensions import Literal
+
+from pydantic import validator
+
+from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.storage import config as sconfig
+
+
 def run(spec: spec.Spec, storage: Storage):
     """
     Runs one of the following connector operations:
     - authenticate
     - extract
     - load
+    - load-table
     - discover
 
     Arguments:
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
-
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
@@ -69,7 +84,9 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
 
 def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
     df = utils.read_csv(spec.csv)
-    op.load(spec.load_parameters, df)
+    print(df)
+    print(spec.load_parameters.parameters)
+    op.load(spec.load_parameters.parameters, df)
     
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):
     tables = op.discover()
@@ -128,7 +145,7 @@ def _parse_spec(spec_json: str) -> spec.Spec:
     Parses a JSON string into a spec.Spec.
     """
     data = json.loads(spec_json)
-
+    
     print("Job Spec: \n{}".format(json.dumps(data, indent=4)))
 
     return parse_obj_as(spec.Spec, data)

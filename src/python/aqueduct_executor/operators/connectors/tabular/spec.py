@@ -104,8 +104,15 @@ class LoadTableSpec(models.BaseSpec):
     type: Literal[enums.JobType.LOADTABLE]
     storage_config: sconfig.StorageConfig
     metadata_path: str
+    connector_name: common.Name
+    connector_config: config.Config
     csv: str
     load_parameters: LoadSpec
+
+    # validators
+    _unwrap_connector_config = validator("connector_config", allow_reuse=True, pre=True)(
+        unwrap_connector_config
+    )
 
 class DiscoverSpec(models.BaseSpec):
     name: str

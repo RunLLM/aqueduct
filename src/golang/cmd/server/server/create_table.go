@@ -68,8 +68,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
-
-	tableName := chi.URLParam(r, gateway_utils.IntegrationIdUrlParam)
+	tableName := r.Header.Get(gateway_utils.TableNameHeader)
 	integrationIdStr := chi.URLParam(r, gateway_utils.IntegrationIdUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {

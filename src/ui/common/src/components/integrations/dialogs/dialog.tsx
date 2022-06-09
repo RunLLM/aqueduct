@@ -93,8 +93,6 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
           'Successfully uploaded CSV file to the demo database!';
         setSuccessMessage(successMessage);
         setIsConnecting(false);
-        onCloseDialog();
-        router.push(`/integration/${integrationId}`);
       })
       .catch((err) => {
         const errorMessage = 'Unable to upload CSV file to the demo database: ';
@@ -135,7 +133,8 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
         <LoadingButton
           autoFocus
           onClick={confirmConnect}
-          loading={isConnecting || disableConnect}
+          disabled={disableConnect}
+          loading={isConnecting}
         >
           Confirm
         </LoadingButton>
@@ -287,7 +286,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         <LoadingButton
           autoFocus
           onClick={confirmConnect}
-          loading={isConnecting || disableConnect}
+          disabled={disableConnect}
+          loading={isConnecting}
         >
           Confirm
         </LoadingButton>
