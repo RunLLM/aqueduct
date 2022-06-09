@@ -24,11 +24,11 @@ func (w *standardWriterImpl) CreateUser(
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, tx)
 
 	reader := standardReaderImpl{}
 	if _, err := reader.GetOrganizationAdmin(ctx, organizationId, tx); role != string(AdminRole) && err != nil {
-		if err != database.ErrNoRows {
+		if errors.IsError(err, database.ErrNoRows) {
 			return nil, err
 		}
 
@@ -218,7 +218,7 @@ func (w *standardWriterImpl) ResetApiKey(
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, tx)
 
 	newApiKey, err := generateApiKey(ctx, tx)
 	if err != nil {
@@ -265,13 +265,16 @@ func generateApiKey(ctx context.Context, db database.Database) (string, error) {
 		"SELECT %s FROM app_user WHERE api_key = $1;",
 		allColumns(),
 	)
-	var apiKey string
 
 	for {
-		apiKey = tokenGenerator()
-		err := db.Query(ctx, &User{}, checkApiKeyQuery, apiKey)
+		apiKey, err := tokenGenerator()
+		if err != nil {
+			return "", err
+		}
 
-		if err == database.ErrNoRows {
+		err = db.Query(ctx, &User{}, checkApiKeyQuery, apiKey)
+
+		if errors.IsError(err, database.ErrNoRows) {
 			// Generated API key is unique
 			return apiKey, nil
 		}
@@ -282,8 +285,11 @@ func generateApiKey(ctx context.Context, db database.Database) (string, error) {
 	}
 }
 
-func tokenGenerator() string {
+func tokenGenerator() (string, error) {
 	b := make([]byte, apiKeyLength/2)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", b), nil
 }

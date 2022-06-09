@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/dropbox/godropbox/errors"
 )
 
 //	The `RequireApiKey` middleware expects a request whose header contains
@@ -21,7 +22,7 @@ func RequireApiKey(userReader user.Reader, db database.Database) func(http.Handl
 			apiKey := r.Header.Get(routes.ApiKeyHeader)
 
 			userObject, err := userReader.GetUserFromApiKey(r.Context(), apiKey, db)
-			if err == database.ErrNoRows {
+			if errors.IsError(err, database.ErrNoRows) {
 				response.SendErrorResponse(w, "Invalid API key credentials.", http.StatusForbidden)
 			} else if err != nil {
 				// Something went wrong with accessing the database

@@ -261,7 +261,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	// collect the entry in j.cmds.
 	defer j.deleteCmd(name)
 	if err != nil {
-		log.Errorf("Unexpected error occured while executing the job: \nStdout: %s\nStderr: %s",
+		log.Errorf("Unexpected error occurred while executing the job: \nStdout: %s\nStderr: %s",
 			command.stdout.String(),
 			command.stderr.String(),
 		)

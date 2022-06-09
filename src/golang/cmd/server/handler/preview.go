@@ -134,7 +134,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		dagSummary.Dag,
 	); err != nil {
 		if _, ok := dag_utils.ValidationErrors[err]; !ok {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occured while validating the DAG.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occurred while validating the DAG.")
 		} else {
 			return nil, http.StatusBadRequest, err
 		}

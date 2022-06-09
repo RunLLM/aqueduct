@@ -34,11 +34,11 @@ func (w *sqliteWriterImpl) CreateUser(
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, tx)
 
 	reader := standardReaderImpl{}
 	if _, err := reader.GetOrganizationAdmin(ctx, organizationId, tx); role != string(AdminRole) && err != nil {
-		if err != database.ErrNoRows {
+		if errors.IsError(err, database.ErrNoRows) {
 			return nil, err
 		}
 

@@ -56,7 +56,6 @@ func ParseDagSummaryFromRequest(
 		program, status, err := extractOperatorContentsFromRequest(
 			r,
 			&op,
-			userId,
 			ghClient,
 		)
 		if err != nil {
@@ -83,7 +82,6 @@ func ParseDagSummaryFromRequest(
 func extractOperatorContentsFromRequest(
 	r *http.Request,
 	op *operator.Operator,
-	userId uuid.UUID,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {
@@ -122,7 +120,7 @@ func extractOperatorContentsFromRequest(
 	}
 
 	isGhFunction, err := github.IsFunctionFromGithub(fn)
-	if err == github.ErrGithubMetadataMissing {
+	if errors.IsError(err, github.ErrGithubMetadataMissing) {
 		return nil, http.StatusBadRequest, err
 	}
 

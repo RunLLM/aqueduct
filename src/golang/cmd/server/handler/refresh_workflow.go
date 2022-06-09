@@ -84,7 +84,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		h.Database,
 	)
 	if err != nil {
-		if err == database.ErrNoRows {
+		if errors.IsError(err, database.ErrNoRows) {
 			return nil, http.StatusBadRequest, errors.New("Unable to find workflow.")
 		}
 		return nil, http.StatusInternalServerError, errors.New("Unable to find workflow.")

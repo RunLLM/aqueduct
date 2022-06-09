@@ -1,6 +1,9 @@
 # Hand-picked from the linters in https://golangci-lint.run/usage/linters
 run:
   timeout: 3m
+  tests: false
+  skip-dirs:
+    - .*/tests/*
 
 output:
   sort-results: true
@@ -19,7 +22,6 @@ linters:
     - decorder
     - exhaustive
     - makezero
-    - forcetypeassert
     - nilerr
     - gci
     - goconst
@@ -35,17 +37,14 @@ linters:
     - predeclared
     - rowserrcheck
     - sqlclosecheck
-#    - stylecheck # It would be great to enable this but there are a lot of naming issues right now.
     - unconvert
     - unparam
     - wastedassign
+#    - stylecheck # It would be great to enable this but there are a lot of naming issues right now.
 #    - wrapcheck # This would be great to have.
 
 
 linters-settings:
-  errcheck:
-    exclude-functions:
-      - defer # these tend to be best effort.
   exhaustive:
     default-signifies-exhaustive: true
   gosec:

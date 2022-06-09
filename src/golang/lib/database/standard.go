@@ -3,6 +3,9 @@ package database
 import (
 	"context"
 	"database/sql"
+
+	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // Database implementation for any database that has a driver that implements the
@@ -63,10 +66,11 @@ func (stx *standardTransaction) Rollback(ctx context.Context) error {
 	}
 
 	err := stx.tx.Rollback()
-	if err != sql.ErrTxDone {
+	if !errors.IsError(err, sql.ErrTxDone) {
 		// Transaction was not already committed or aborted
 		logQuery("Transaction ROLLBACK")
 	}
+	log.Errorf("Rollback failed: %v.", err)
 
 	return err
 }

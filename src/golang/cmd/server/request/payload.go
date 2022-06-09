@@ -3,11 +3,11 @@ package request
 import (
 	"bytes"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 //	Given an http request, this helper function extract its payload as a
@@ -27,19 +27,30 @@ func ExtractHttpPayload(contentType, fileName string, isFile bool, r *http.Reque
 			//	`multipart/form-data` is typically followed by a boundary string that
 			//	varies across requests, so we want to omit that part.
 			//	Limit max input length.
-			r.ParseMultipartForm(32 << 20)
+			err = r.ParseMultipartForm(32 << 20)
+			if err != nil {
+				return nil, err
+			}
 			var buf bytes.Buffer
 
 			file, header, err := r.FormFile(fileName)
 			if err != nil {
-				return payload, err
+				return nil, errors.Wrap(err, "Unable to read file and header from request.")
 			}
 
 			log.Printf("filename is %v, size is %v", header.Filename, header.Size)
 
-			defer file.Close()
+			defer func() {
+				err = file.Close()
+				if err != nil {
+					log.Errorf("Unable to close file descriptor used to extract HTTP payload from request.")
+				}
+			}()
 
-			io.Copy(&buf, file)
+			_, err = io.Copy(&buf, file)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to read file from request.")
+			}
 			payload = buf.Bytes()
 		} else {
 			// If we reach here, it means the value is sent as `String` instead of `File`,

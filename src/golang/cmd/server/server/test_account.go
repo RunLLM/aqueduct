@@ -25,11 +25,11 @@ func CreateTestAccount(
 ) (*user.User, error) {
 	// Check if test user already exists
 	testUser, err := s.UserReader.GetUserFromApiKey(context.Background(), apiKey, s.Database)
-	if err != nil && err != database.ErrNoRows {
+	if err != nil && !errors.IsError(err, database.ErrNoRows) {
 		return nil, errors.Newf("Unable to check if test account exists: %v", err)
 	}
 
-	if err == database.ErrNoRows {
+	if errors.IsError(err, database.ErrNoRows) {
 		// Create a test user to perform actions from SDK.
 		testUser, err = s.UserWriter.CreateUserWithApiKey(
 			context.Background(),

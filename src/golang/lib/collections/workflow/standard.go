@@ -127,7 +127,7 @@ func (r *standardReaderImpl) GetWorkflowByName(
 
 	var workflow Workflow
 	err := db.Query(ctx, &workflow, query, userId, name)
-	if err == database.ErrNoRows {
+	if errors.IsError(err, database.ErrNoRows) {
 		return nil, nil
 	}
 	return &workflow, err
