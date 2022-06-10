@@ -43,7 +43,7 @@ def unwrap_connector_config(cls, connector_config, values):
     if "connector_name" not in values:
         raise ValueError("Unknown connector name.")
 
-    connector_name = values["connector_name"]
+    values["connector_name"]
 
     if not isinstance(connector_config, dict):
         raise ValueError("connector_config is not a dictionary.")

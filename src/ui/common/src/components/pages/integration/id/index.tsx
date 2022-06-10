@@ -10,7 +10,7 @@ import {
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
-import Head from 'next/head';
+import { useParams } from 'react-router-dom';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -30,14 +30,13 @@ import ExecutionStatus from '../../../../utils/shared';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
-  integrationId: string;
 };
 
 const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
-  integrationId,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  const integrationId = useParams().id;
   const [table, setTable] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
 
@@ -145,13 +144,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title>
-          {' '}
-          Integration Details: {selectedIntegration.name} | Spiral Labs{' '}
-        </title>
-      </Head>
-
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details

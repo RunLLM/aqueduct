@@ -1,11 +1,10 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { parse } from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -49,12 +48,12 @@ import WorkflowHeader from '../../../workflows/workflowHeader';
 
 type WorkflowPageProps = {
   user: UserProfile;
-  workflowId: string;
 };
 
-const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
-  const router = useRouter();
+const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
+  const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
+  const workflowId = useParams().id;
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -71,6 +70,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
+
+  useEffect(() => {
+    if (workflow.selectedDag !== undefined) {
+      document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
+    }
+  }, [workflow.selectedDag]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -232,7 +237,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    router.push('/404');
+    navigate('/404');
     return null;
   }
 
@@ -298,10 +303,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
 
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title> {workflow.selectedDag.metadata.name} | Aqueduct </title>
-      </Head>
-
       <Box
         sx={{
           display: 'flex',
@@ -322,7 +323,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, workflowId }) => {
             mt: 2,
             p: 3,
             mb: contentBottomOffsetInPx,
-            width: '100%',
             backgroundColor: 'gray.50',
           }}
         >

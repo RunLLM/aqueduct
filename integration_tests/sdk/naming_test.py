@@ -9,10 +9,10 @@ from test_functions.simple.model import dummy_model, dummy_sentiment_model, dumm
 from utils import get_integration_name, run_sentiment_model, run_sentiment_model_multiple_input
 
 
-def test_extract_with_default_name_collision(sp_client):
+def test_extract_with_default_name_collision(client):
     # In the case where no explicit name is supplied, we expect new extract
     # operators to always be created.
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact_1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact_2 = db.sql(query=SENTIMENT_SQL_QUERY)
 
@@ -32,9 +32,9 @@ def test_extract_with_default_name_collision(sp_client):
     assert fn_df.shape[0] == 100
 
 
-def test_extract_with_explicit_name_collision(sp_client):
+def test_extract_with_explicit_name_collision(client):
     # In the case where an explicit name is supplied, we will overwrite any colliding ops.
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact_1 = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     fn_artifact = run_sentiment_model(sql_artifact_1)
@@ -62,10 +62,10 @@ def test_extract_with_explicit_name_collision(sp_client):
     assert fn_df.shape[0] == 100
 
 
-def test_function_with_name_collision(sp_client):
+def test_function_with_name_collision(client):
     """Colliding functions are always overwritten."""
 
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     # There's not an easy way to programmatically change the function, so lets
@@ -87,9 +87,9 @@ def test_function_with_name_collision(sp_client):
     assert fn_df.shape[0] == 100
 
 
-def test_naming_collision_with_different_types(sp_client):
+def test_naming_collision_with_different_types(client):
     # An overwrite is invalid because the operators are of different types.
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     # Function collides with existing sql artifact
@@ -103,9 +103,9 @@ def test_naming_collision_with_different_types(sp_client):
         _ = db.sql(query=SENTIMENT_SQL_QUERY, name="dummy_sentiment_model")
 
 
-def test_naming_collision_with_dependency(sp_client):
+def test_naming_collision_with_dependency(client):
     # Overwrite is invalid when the operator being replaced is an upstream dependency.
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sentiment_model")
     dummy_model_output = dummy_model(sql_artifact)
     dummy_model_2_output = dummy_model_2(dummy_model_output)

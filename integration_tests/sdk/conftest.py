@@ -38,7 +38,7 @@ def fetch_flags(pytestconfig):
 
 
 @pytest.fixture(scope="function")
-def sp_client(pytestconfig):
+def client(pytestconfig):
     api_key = os.getenv(API_KEY_ENV_NAME)
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
     if api_key is None or server_address is None:

@@ -24,7 +24,7 @@ const initialState: Record<string, TableData> = {
 
 export const tableKeyFn = (table: string): string => `table${table}`;
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 export const handleLoadIntegrationTable = createAsyncThunk<
   string,
   { apiKey: string; integrationId: string; table: string; forceLoad?: boolean },
@@ -54,7 +54,7 @@ export const handleLoadIntegrationTable = createAsyncThunk<
       return state.integrationTableDataReducer[tableKey].data;
     }
     const tableResponse = await fetch(
-      `${httpProtocol}://${apiAddress}/integration/${integrationId}/preview_table`,
+      `${apiAddress}/api/integration/${integrationId}/preview_table`,
       {
         method: 'GET',
         headers: {

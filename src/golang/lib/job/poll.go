@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // PollJob waits for the specified job to finish and returns its status.
@@ -33,7 +32,7 @@ func PollJob(
 				return status, nil
 			}
 		case <-timeout.C:
-			return shared.UnknownExecutionStatus, errors.New("Reached timeout waiting for the job to finish.")
+			return shared.UnknownExecutionStatus, ErrPollJobTimeout
 		}
 	}
 }

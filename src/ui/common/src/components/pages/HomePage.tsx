@@ -1,5 +1,4 @@
-import Head from 'next/head';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import UserProfile from '../../utils/auth';
 import GettingStartedTutorial from '../cards/GettingStartedTutorial';
@@ -10,11 +9,14 @@ type HomePageProps = {
 };
 
 const HomePage: React.FC<HomePageProps> = ({ user }) => {
+  // Set the title of the page on page load.
+  useEffect(() => {
+    document.title = 'Home | Aqueduct';
+  }, []);
+
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title>Home | Aqueduct</title>
-      </Head>
+      <div />
       <GettingStartedTutorial user={user} />
     </DefaultLayout>
   );

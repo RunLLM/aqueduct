@@ -1,21 +1,22 @@
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import React, { ChangeEvent, useState } from 'react';
-import cookies from 'react-cookies';
+import React, { ChangeEvent, useEffect, useState } from 'react';
+import { useCookies } from 'react-cookie';
 
 import fetchUser from '../../utils/fetchUser';
-import setUser from '../hooks/setUser';
+import { Button } from '../primitives/Button.styles';
 
 export const LoginPage: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Login | Aqueduct';
+  }, []);
+
+  const [cookies, setCookie, removeCookie] = useCookies(['aqueduct-api-key']);
+
+  const [isAuthed, setIsAuthed] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [apiKey, setApiKey] = useState<string>(
-    cookies.load('aqueduct-api-key')
-  );
-  const router = useRouter();
+  const [apiKey, setApiKey] = useState<string>(cookies['aqueduct-api-key']);
 
   const onApiKeyTextFieldChanged = (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -26,7 +27,7 @@ export const LoginPage: React.FC = () => {
       setErrorMsg('');
     } else {
       setValidationError(true);
-      setErrorMsg('Api key should not be empty.');
+      setErrorMsg('API Key should not be empty.');
     }
     setApiKey(input);
   };
@@ -34,18 +35,22 @@ export const LoginPage: React.FC = () => {
   const onGetStartedClicked = async (event: React.MouseEvent) => {
     event.preventDefault();
     const { success } = await fetchUser(apiKey);
-    if (!apiKey || apiKey.length === 0) {
-      setValidationError(true);
-      setErrorMsg('Api key should not be empty.');
-    } else if (!success) {
+
+    if (!success) {
       setValidationError(true);
       setErrorMsg(
-        "Invalid key, please copy the key from 'aqueduct apikey' outputs."
+        'Invalid API Key. You can find your API Key by running `aqueduct apikey` on the machine where Aqueduct is running.'
       );
     } else {
+      setCookie('aqueduct-api-key', apiKey, { path: '/' });
+      await new Promise((r) => setTimeout(r, 100));
       setValidationError(false);
-      setUser(apiKey);
-      router.push('/');
+
+      // Once we validate, we force a reload of the page. This is because React
+      // doesn't give us an easy way to read the cookie state once it's
+      // changed, so even though we've updated the cookie, the App will still
+      // think that the user isn't logged in and will show the login page.
+      window.location.reload();
     }
   };
 
@@ -69,12 +74,12 @@ export const LoginPage: React.FC = () => {
             flexDirection: 'column',
           }}
         >
-          <Image
-            width="150px"
-            height="150px"
+          <img
             src={
               'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_color_on_white.png'
             }
+            width="150px"
+            height="150px"
           />
           <TextField
             error={validationError}

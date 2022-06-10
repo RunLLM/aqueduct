@@ -1,7 +1,7 @@
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 
-const { apiAddress, httpProtocol } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 
 export type Integration = {
   id: string;
@@ -135,7 +135,7 @@ export async function addTable(
   config: CSVConfig
 ): Promise<void> {
   const res = await fetch(
-    `${httpProtocol}://${apiAddress}/integration/${integrationId}/create`,
+    `${apiAddress}/api/integration/${integrationId}/create`,
     {
       method: 'POST',
       headers: {
@@ -155,15 +155,12 @@ export async function fetchRepos(
   user: UserProfile
 ): Promise<[string[], string]> {
   try {
-    const res = await fetch(
-      `${httpProtocol}://${apiAddress}/integrations/github/repos`,
-      {
-        method: 'GET',
-        headers: {
-          'api-key': user.apiKey,
-        },
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/integrations/github/repos`, {
+      method: 'GET',
+      headers: {
+        'api-key': user.apiKey,
+      },
+    });
 
     if (!res.ok) {
       return [[], await res.text()];
@@ -181,16 +178,13 @@ export async function fetchBranches(
   repo: string
 ): Promise<[string[], string]> {
   try {
-    const res = await fetch(
-      `${httpProtocol}://${apiAddress}/integrations/github/branches`,
-      {
-        method: 'GET',
-        headers: {
-          'api-key': user.apiKey,
-          'github-repo': repo,
-        },
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/integrations/github/branches`, {
+      method: 'GET',
+      headers: {
+        'api-key': user.apiKey,
+        'github-repo': repo,
+      },
+    });
 
     if (!res.ok) {
       return [[], await res.text()];
@@ -209,18 +203,15 @@ export async function connectIntegration(
   name: string,
   config: IntegrationConfig
 ): Promise<void> {
-  const res = await fetch(
-    `${httpProtocol}://${apiAddress}/integration/connect`,
-    {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-        'integration-name': name,
-        'integration-service': service,
-        'integration-config': JSON.stringify(config),
-      },
-    }
-  );
+  const res = await fetch(`${apiAddress}/api/integration/connect`, {
+    method: 'POST',
+    headers: {
+      'api-key': user.apiKey,
+      'integration-name': name,
+      'integration-service': service,
+      'integration-config': JSON.stringify(config),
+    },
+  });
 
   if (!res.ok) {
     const message = await res.text();

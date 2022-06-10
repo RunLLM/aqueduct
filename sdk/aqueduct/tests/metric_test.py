@@ -2,13 +2,11 @@ import json
 from unittest.mock import MagicMock
 from io import StringIO
 import sys
-from aqueduct.check_artifact import CheckArtifact
 
 from aqueduct.decorator import metric, check
 from aqueduct.api_client import APIClient
 from aqueduct.enums import ExecutionStatus
 from aqueduct.responses import (
-    CheckArtifactResult,
     PreviewResponse,
     OperatorResult,
     ArtifactResult,

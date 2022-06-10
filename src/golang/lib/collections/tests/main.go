@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/internal/server/queries"
+	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
