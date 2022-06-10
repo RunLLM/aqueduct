@@ -20,7 +20,7 @@ const initialState: IntegrationTablesState = {
   err: '',
 };
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 export const handleLoadIntegrationTables = createAsyncThunk<
   any | string[],
   { apiKey: string; integrationId: string; forceLoad?: boolean },
@@ -44,7 +44,7 @@ export const handleLoadIntegrationTables = createAsyncThunk<
 
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${httpProtocol}://${apiAddress}/integration/${integrationId}/discover`,
+      `${apiAddress}/api/integration/${integrationId}/discover`,
       {
         method: 'GET',
         headers: {

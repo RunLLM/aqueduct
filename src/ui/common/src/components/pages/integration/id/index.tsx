@@ -10,9 +10,9 @@ import {
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
-import Head from 'next/head';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
@@ -30,14 +30,13 @@ import ExecutionStatus from '../../../../utils/shared';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
-  integrationId: string;
 };
 
 const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
-  integrationId,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  const integrationId: string = useParams().id;
   const [table, setTable] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
 
@@ -138,6 +137,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
+
+  useEffect(() => {
+    if (selectedIntegration && selectedIntegration.name) {
+      document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+    } else {
+      document.title = `Integration Details | Aqueduct`;
+    }
+  }, []);
 
   if (!integrations || !selectedIntegration) {
     return null;
