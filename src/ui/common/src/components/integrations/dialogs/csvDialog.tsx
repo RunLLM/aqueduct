@@ -45,7 +45,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
           if (files.length > 1) {
             setErrMsg('Please upload just one file.');
           } else {
-            const file = files[0]
+            const file = files[0];
             if (file.name.slice(-4) !== '.csv') {
               setErrMsg('Please upload a CSV file.');
             } else {

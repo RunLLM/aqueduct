@@ -11,7 +11,6 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import UserProfile from '../../../utils/auth';
 import {
@@ -44,7 +43,6 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   integrationId,
   onCloseDialog,
 }) => {
-  const navigate = useNavigate();
 
   const [config, setConfig] = useState<CSVConfig>({
     name: '',
@@ -97,8 +95,6 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
           'Successfully uploaded CSV file to the demo database!';
         setSuccessMessage(successMessage);
         setIsConnecting(false);
-        onCloseDialog();
-        navigate(`/integration/${integrationId}`);
       })
       .catch((err) => {
         const errorMessage = 'Unable to upload CSV file to the demo database: ';
