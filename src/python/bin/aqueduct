@@ -195,7 +195,7 @@ def start(expose, port):
         if not server_port == default_server_port:
             print("Default port %d is occupied. Next available port is %d" % (default_server_port, server_port))
     else:
-        server_port = port
+        server_port = int(port)
         print("Server will use the user-specified port %d" % server_port)
 
     if expose:
@@ -366,7 +366,7 @@ if __name__ == "__main__":
     
     if args.command == "start":
         try:
-            popen_handle, server_port = start(args.expose, int(args.port))
+            popen_handle, server_port = start(args.expose, args.port)
             time.sleep(1)
             terminated = popen_handle.poll()
             if terminated:
