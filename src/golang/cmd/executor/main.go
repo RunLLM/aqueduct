@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"os"
+	"path/filepath"
+
 	"github.com/aqueducthq/aqueduct/cmd/executor/executor"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"path/filepath"
 )
 
 const (
