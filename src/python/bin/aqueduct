@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import random
+import socket
 import string
 import subprocess
 import sys
@@ -137,6 +138,10 @@ def generate_welcome_message(expose):
     apikey = get_apikey()
     return welcome_message % (apikey, expose_ip)
 
+def is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("localhost", port)) == 0
+
 def start(expose):
     if not os.path.isdir(ui_directory):
         update_ui_version()
@@ -181,6 +186,10 @@ def start(expose):
             if os.path.isfile(os.path.join(server_directory, "__version__")):
                 execute_command(["rm", os.path.join(server_directory, "__version__")])
             exit(1)
+
+    server_port = 8080
+    if is_port_in_use(server_port):
+        print("port already in use!")
 
     if expose:
         popen_handle = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"], ui_directory)
