@@ -23,7 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
-	exectuorBinary               = "executor"
+	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
 	processRunningStatus = "R"
@@ -147,7 +147,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
 		cmd = exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
@@ -168,7 +168,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
 		cmd = exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
@@ -204,7 +204,10 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
-	} else {
+	} else if spec.Type() == AuthenticateJobType ||
+		spec.Type() == LoadJobType ||
+		spec.Type() == ExtractJobType ||
+		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
@@ -217,6 +220,8 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
+	} else {
+		return nil, errors.New("Unsupported JobType was passed in.")
 	}
 	log.Infof("Running job with command: %s", cmd.String())
 	return cmd, nil
