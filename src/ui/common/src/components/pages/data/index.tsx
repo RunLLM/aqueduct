@@ -12,7 +12,6 @@ import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataPreviewInfo } from '../../../utils/data';
-import { LoadingStatusEnum } from '../../../utils/shared';
 import { DataCard, dataCardName } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
