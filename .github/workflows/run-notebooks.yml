@@ -38,8 +38,7 @@ jobs:
           go-version: 1.16.3
 
       - name: Install aqueduct-ml
-        working-directory: src/python
-        run: pip3 install .
+        run: pip3 install aqueduct-ml
 
       - name: Start the server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
