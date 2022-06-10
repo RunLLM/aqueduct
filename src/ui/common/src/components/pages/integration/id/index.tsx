@@ -129,7 +129,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const hasTable = table != null && table !== '';
 
   useEffect(() => {
-    document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+    if (!selectedIntegration) {
+      document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+    } else {
+      document.title = `Integration Details | Aqueduct`;
+    }
   }, []);
 
   if (!integrations || !selectedIntegration) {
