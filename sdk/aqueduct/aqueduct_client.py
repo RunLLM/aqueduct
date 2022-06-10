@@ -34,9 +34,10 @@ from .utils import (
 import __main__ as main
 import os
 
+
 def get_apikey() -> str:
     """
-    Get the API key if the server is running locally. 
+    Get the API key if the server is running locally.
 
     Returns:
         The API key.
@@ -45,11 +46,14 @@ def get_apikey() -> str:
     config_file = os.path.join(server_directory, "config", "config.yml")
     with open(config_file, "r") as f:
         try:
-            return str(yaml.safe_load(f)['apiKey'])
+            return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print("This API works only when you are running the\
-            server and the SDK on the same machine.xc")
+            print(exec)
+            print(
+                "This API works only when you are running the server and the SDK on the same machine."
+            )
             exit(1)
+
 
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
