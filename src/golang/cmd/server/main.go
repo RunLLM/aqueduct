@@ -7,6 +7,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/server"
 	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib/connection"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,6 +18,7 @@ var (
 		"The path to .yml config file",
 	)
 	expose = flag.Bool("expose", false, "Whether you want to expose the server to the public.")
+	port   = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
 )
 
 func main() {
@@ -46,5 +48,5 @@ func main() {
 
 	// Start the HTTP server and listen for requests indefinitely.
 	log.Infof("You can use api key %s to connect to the server", serverConfig.ApiKey)
-	s.Run(*expose)
+	s.Run(*expose, *port)
 }

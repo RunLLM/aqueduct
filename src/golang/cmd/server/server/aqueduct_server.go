@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/connection"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
@@ -237,7 +236,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
-func (s *AqServer) Run(expose bool) {
+func (s *AqServer) Run(expose bool, port int) {
 	// When we configure the server to listen on ":<PORT>" (without specifying the ip), it exposes itself
 	// to the public.
 	ip := ""
@@ -249,8 +248,8 @@ func (s *AqServer) Run(expose bool) {
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
-	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, connection.ServerInternalPort), s.Router))
+	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, port), s.Router))
 }
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
