@@ -1,7 +1,7 @@
 # Contributing to Aqueduct
 
-Thank you for contributing to Aqueduct! This is a quick quide to setting up
-yoru devlopment environment and contributing to the codebase.
+Thank you for contributing to Aqueduct! This is a quick guide to setting up
+your development environment and contributing to the codebase.
 
 We welcome contributions from anyone who's excited about building prediction 
 infrastructure for data scientists. Contributions can be both in the form of
@@ -34,7 +34,7 @@ common data systems. We currently support Python versions 3.7 through 3.10.
 
 ## Contributing to the codebase
 
-If you're fixing a sipmle bug, please feel free to submit a pull request
+If you're fixing a simple bug, please feel free to submit a pull request
 directly.  However, if you find yourself implementing a larger change or
 working on a new feature, we'd love to hear from you before you dive into the
 code -- this helps us know what's going on in the community and also gives
