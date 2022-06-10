@@ -12,7 +12,7 @@ const (
 	ListIntegrationsRoute   = "/api/integrations"
 	ConnectIntegrationRoute = "/api/integration/connect"
 	DeleteIntegrationRoute  = "/api/integration/{integrationId}/delete"
-	CreateTableRoute        = "/integration/{integrationId}/create"
+	CreateTableRoute        = "/api/integration/{integrationId}/create"
 	PreviewTableRoute       = "/api/integration/{integrationId}/preview_table"
 	DiscoverRoute           = "/api/integration/{integrationId}/discover"
 
