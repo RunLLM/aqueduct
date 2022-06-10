@@ -297,13 +297,13 @@ if __name__ == "__main__":
     start_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
     server_args = subparsers.add_parser('server', help=
-                                   '''This starts the Aqueduct server in a
+                                   '''[DEPRECATED] This starts the Aqueduct server in a
                                    blocking fashion. To background the process,
                                    run aqueduct server &.''')
     server_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
     ui_args = subparsers.add_parser('ui', help=
-                               '''This starts the Aqueduct UI in a blocking
+                               '''[DEPRECATED] This starts the Aqueduct UI in a blocking
                                fashion. To background the process run aqueduct
                                ui &.
 
