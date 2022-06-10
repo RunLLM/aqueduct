@@ -262,7 +262,7 @@ func waitForActiveOperators(
 			jobStatus, err := jobManager.Poll(ctx, operatorIdToJobId[id])
 			if err != nil {
 				// If the err is job doesn't exist, then it means it already finished and was garbage-collected.
-				if !errors.IsError(err, job.ErrJobNotExist) {
+				if err != job.ErrJobNotExist {
 					log.Errorf(
 						"Unexpected error occurred when checking the job status during failed workflow cleanup. %v",
 						err,

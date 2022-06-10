@@ -120,7 +120,7 @@ func extractOperatorContentsFromRequest(
 	}
 
 	isGhFunction, err := github.IsFunctionFromGithub(fn)
-	if errors.IsError(err, github.ErrGithubMetadataMissing) {
+	if err == github.ErrGithubMetadataMissing {
 		return nil, http.StatusBadRequest, err
 	}
 

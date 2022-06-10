@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -66,7 +65,7 @@ func (stx *standardTransaction) Rollback(ctx context.Context) error {
 	}
 
 	err := stx.tx.Rollback()
-	if !errors.IsError(err, sql.ErrTxDone) {
+	if err != sql.ErrTxDone {
 		// Transaction was not already committed or aborted
 		logQuery("Transaction ROLLBACK")
 	}

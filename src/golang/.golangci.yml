@@ -25,7 +25,6 @@ linters:
     - nilerr
     - gci
     - goconst
-    - goerr113
     - gofmt # has autofixer.
     - gofumpt # has autofixer.
     - goheader

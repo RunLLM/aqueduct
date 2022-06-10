@@ -28,7 +28,7 @@ func (w *standardWriterImpl) CreateUser(
 
 	reader := standardReaderImpl{}
 	if _, err := reader.GetOrganizationAdmin(ctx, organizationId, tx); role != string(AdminRole) && err != nil {
-		if errors.IsError(err, database.ErrNoRows) {
+		if err != database.ErrNoRows {
 			return nil, err
 		}
 
@@ -274,7 +274,7 @@ func generateApiKey(ctx context.Context, db database.Database) (string, error) {
 
 		err = db.Query(ctx, &User{}, checkApiKeyQuery, apiKey)
 
-		if errors.IsError(err, database.ErrNoRows) {
+		if err == database.ErrNoRows {
 			// Generated API key is unique
 			return apiKey, nil
 		}

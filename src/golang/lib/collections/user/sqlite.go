@@ -38,7 +38,7 @@ func (w *sqliteWriterImpl) CreateUser(
 
 	reader := standardReaderImpl{}
 	if _, err := reader.GetOrganizationAdmin(ctx, organizationId, tx); role != string(AdminRole) && err != nil {
-		if errors.IsError(err, database.ErrNoRows) {
+		if err != database.ErrNoRows {
 			return nil, err
 		}
 
