@@ -214,6 +214,11 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
+	fmt.Println("allArtifactIds")
+	fmt.Println(allArtifactIds)
+	fmt.Println("CHECK RESULTS>>>")
+	fmt.Println(checkResults)
+	fmt.Println("CHECK RESULTS<<<")
 
 	// We now fill in the validation test result. We can join the validation test result with the correct
 	// artifact version by the workflow dag result id.
