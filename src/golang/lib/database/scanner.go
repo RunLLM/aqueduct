@@ -64,7 +64,7 @@ func scanRow(rows *sql.Rows, dest interface{}) error {
 		return err
 	}
 
-	var fieldPtrs []interface{}
+	fieldPtrs := make([]interface{}, 0, len(cols))
 	for _, col := range cols {
 		// Get index of field in struct `destElem` that corresponds to column `col`
 		fieldIdx := getMatchingFieldIndex(destStructType, col)

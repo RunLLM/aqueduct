@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Any
 from functools import wraps
 
 from aqueduct.artifact import Artifact, ArtifactSpec
@@ -35,6 +35,14 @@ DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
 
 # Type declarations for checks
 DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
+
+
+def _is_input_artifact(elem: Any) -> bool:
+    return (
+        isinstance(elem, TableArtifact)
+        or isinstance(elem, MetricArtifact)
+        or isinstance(elem, ParamArtifact)
+    )
 
 
 def wrap_spec(
@@ -146,7 +154,7 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-                    
+
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -196,12 +204,13 @@ def op(
             assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
-        
-        # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifactLocal], DataFrame] = lambda *inputs : func(
-            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
-        )
-        wrapped.local = local_func
+
+        # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
+        def local_func(*inputs: InputArtifactLocal) -> DataFrame:
+            raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
+            return func(*raw_inputs)
+
+        setattr(wrapped, "local", local_func)
         return wrapped
 
     if callable(name):
@@ -292,11 +301,12 @@ def metric(
 
             return new_metric_artifact
 
-        # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifactLocal], float] = lambda *inputs : func(
-            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
-        )
-        wrapped.local = local_func
+        # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
+        def local_func(*inputs: InputArtifactLocal) -> float:
+            raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
+            return func(*raw_inputs)
+
+        setattr(wrapped, "local", local_func)
         return wrapped
 
     if callable(name):
@@ -392,11 +402,12 @@ def check(
 
             return new_check_artifact
 
-        # Enable .local(*args) which calls on the original function with dataframes as inputs.
-        local_func : Callable[[InputArtifactLocal], bool] = lambda *inputs : func(
-            *tuple([input.get() if isinstance(input,InputArtifact.__args__) else input for input in inputs ])
-        )
-        wrapped.local = local_func
+        # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
+        def local_func(*inputs: InputArtifactLocal) -> bool:
+            raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
+            return func(*raw_inputs)
+
+        setattr(wrapped, "local", local_func)
         return wrapped
 
     if callable(name):

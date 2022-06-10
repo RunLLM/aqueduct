@@ -12,7 +12,7 @@ import {
 import { Artifact } from './artifacts';
 import { Operator } from './operators';
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 
 export const EdgeTypes = {
   quadratic: AqueductQuadratic,
@@ -107,16 +107,13 @@ async function getPositions(
   apiKey: string
 ): Promise<[{ [opId: string]: NodePos }, { [artfId: string]: NodePos }]> {
   try {
-    const response = await fetch(
-      `${httpProtocol}://${apiAddress}/positioning`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': apiKey,
-        },
-        body: JSON.stringify(operators),
-      }
-    );
+    const response = await fetch(`${apiAddress}/api/positioning`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(operators),
+    });
     const json = await response.json();
     return [json['operator_positions'], json['artifact_positions']];
   } catch (e) {

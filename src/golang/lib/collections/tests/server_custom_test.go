@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/internal/server/queries"
+	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"

@@ -7,11 +7,11 @@ import (
 	"path"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/authentication"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/request_id"
-	"github.com/aqueducthq/aqueduct/internal/server/middleware/verification"
-	"github.com/aqueducthq/aqueduct/internal/server/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/connection"
@@ -23,6 +23,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
@@ -57,10 +58,12 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 
-	jobManager, err := job.NewProcessJobManager(&job.ProcessConfig{
-		BinaryDir:          path.Join(aqPath, job.BinaryDir),
-		OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
-	})
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		},
+	)
 	if err != nil {
 		db.Close()
 		log.Fatal("Unable to create job manager: ", err)
@@ -111,6 +114,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		AllowedMethods: []string{"GET", "POST"},
 	})
 	s.Router.Use(corsMiddleware.Handler)
+	s.Router.Use(middleware.Logger)
 	AddAllHandlers(s)
 
 	if err := collections.RequireSchemaVersion(
@@ -167,7 +171,10 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	ctx := context.Background()
 
 	// Delete old CronJob if it exists
-	s.JobManager.DeleteCronJob(ctx, name)
+	err := s.JobManager.DeleteCronJob(ctx, name)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete existing workflow retention job")
+	}
 
 	spec := job.NewWorkflowRetentionJobSpec(
 		s.Database.Config(),
@@ -175,34 +182,34 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 		s.JobManager.Config(),
 	)
 
-	err := s.JobManager.DeployCronJob(
+	err = s.JobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
 		spec,
 	)
 	if err != nil {
-		return errors.Wrap(err, "unable to start workflow retention cron job")
+		return errors.Wrap(err, "Unable to start workflow retention cron job")
 	}
 	return nil
 }
 
-func (s *AqServer) AddHandler(route string, handler Handler) {
+func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	var middleware alice.Chain
-	if handler.AuthMethod() == ApiKeyAuthMethod {
+	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
 		middleware = alice.New(
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 			verification.VerifyRequest(),
 		)
 	} else {
-		panic(ErrUnsupportedAuthMethod)
+		panic(handler.ErrUnsupportedAuthMethod)
 	}
 
 	s.Router.Method(
-		string(handler.Method()),
+		string(handlerObj.Method()),
 		route,
-		middleware.ThenFunc(ExecuteHandler(s, handler)),
+		middleware.ThenFunc(ExecuteHandler(s, handlerObj)),
 	)
 }
 
@@ -227,7 +234,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 		"Referer",
 	})
 
-	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, utils.Server, s.Name, err)
+	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
 func (s *AqServer) Run(expose bool) {
@@ -238,6 +245,18 @@ func (s *AqServer) Run(expose bool) {
 		ip = "localhost"
 	}
 
+	static := http.FileServer(http.Dir("."))
+	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
+	s.Router.Get("/*", IndexHandler())
+
 	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, connection.ServerInternalPort), s.Router))
+}
+
+func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./index.html")
+	}
+
+	return http.HandlerFunc(fn)
 }

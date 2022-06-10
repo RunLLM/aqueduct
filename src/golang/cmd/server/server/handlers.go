@@ -1,22 +1,25 @@
 package server
 
-import "github.com/aqueducthq/aqueduct/internal/server/routes"
+import (
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+)
 
-func (s *AqServer) Handlers() map[string]Handler {
-	return map[string]Handler{
-		routes.ArchiveNotificationRoute: &ArchiveNotificationHandler{
+func (s *AqServer) Handlers() map[string]handler.Handler {
+	return map[string]handler.Handler{
+		routes.ArchiveNotificationRoute: &handler.ArchiveNotificationHandler{
 			NotificationReader: s.NotificationReader,
 			NotificationWriter: s.NotificationWriter,
 			Database:           s.Database,
 		},
-		routes.ConnectIntegrationRoute: &ConnectIntegrationHandler{
+		routes.ConnectIntegrationRoute: &handler.ConnectIntegrationHandler{
 			Database:          s.Database,
 			IntegrationWriter: s.IntegrationWriter,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 			StorageConfig:     s.StorageConfig,
 		},
-		routes.DeleteWorkflowRoute: &DeleteWorkflowHandler{
+		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:                s.Database,
 			JobManager:              s.JobManager,
 			WorkflowReader:          s.WorkflowReader,
@@ -37,7 +40,7 @@ func (s *AqServer) Handlers() map[string]Handler {
 			ArtifactWriter:          s.ArtifactWriter,
 			ArtifactResultWriter:    s.ArtifactResultWriter,
 		},
-		routes.EditWorkflowRoute: &EditWorkflowHandler{
+		routes.EditWorkflowRoute: &handler.EditWorkflowHandler{
 			Database:       s.Database,
 			WorkflowReader: s.WorkflowReader,
 			WorkflowWriter: s.WorkflowWriter,
@@ -45,29 +48,29 @@ func (s *AqServer) Handlers() map[string]Handler {
 			Vault:          s.Vault,
 			GithubManager:  s.GithubManager,
 		},
-		routes.ExportFunctionRoute: &ExportFunctionHandler{
+		routes.ExportFunctionRoute: &handler.ExportFunctionHandler{
 			Database:          s.Database,
 			OperatorReader:    s.OperatorReader,
 			WorkflowDagReader: s.WorkflowDagReader,
 		},
-		routes.GetArtifactResultRoute: &GetArtifactResultHandler{
+		routes.GetArtifactResultRoute: &handler.GetArtifactResultHandler{
 			Database:             s.Database,
 			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 			WorkflowDagReader:    s.WorkflowDagReader,
 		},
-		routes.GetArtifactVersionsRoute: &GetArtifactVersionsHandler{
+		routes.GetArtifactVersionsRoute: &handler.GetArtifactVersionsHandler{
 			Database:     s.Database,
 			CustomReader: s.CustomReader,
 		},
-		routes.GetNodePositionsRoute: &GetNodePositionsHandler{},
-		routes.GetOperatorResultRoute: &GetOperatorResultHandler{
+		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
+		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
 			Database:             s.Database,
 			OperatorReader:       s.OperatorReader,
 			OperatorResultReader: s.OperatorResultReader,
 		},
-		routes.GetUserProfileRoute: &GetUserProfileHandler{},
-		routes.GetWorkflowRoute: &GetWorkflowHandler{
+		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
+		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database:                s.Database,
 			ArtifactReader:          s.ArtifactReader,
 			OperatorReader:          s.OperatorReader,
@@ -77,30 +80,30 @@ func (s *AqServer) Handlers() map[string]Handler {
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			WorkflowDagResultReader: s.WorkflowDagResultReader,
 		},
-		routes.ListBuiltinFunctionsRoute: &ListBuiltinFunctionsHandler{
+		routes.ListBuiltinFunctionsRoute: &handler.ListBuiltinFunctionsHandler{
 			StorageConfig: s.StorageConfig,
 		},
-		routes.ListIntegrationsRoute: &ListIntegrationsHandler{
+		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
 		},
-		routes.ListNotificationsRoute: &ListNotificationsHandler{
+		routes.ListNotificationsRoute: &handler.ListNotificationsHandler{
 			Database:           s.Database,
 			NotificationReader: s.NotificationReader,
 			WorkflowReader:     s.WorkflowReader,
 		},
-		routes.ListWorkflowsRoute: &ListWorkflowsHandler{
+		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:       s.Database,
 			WorkflowReader: s.WorkflowReader,
 		},
-		routes.PreviewTableRoute: &PreviewTableHandler{
+		routes.PreviewTableRoute: &handler.PreviewTableHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
 			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
-		routes.PreviewRoute: &PreviewHandler{
+		routes.PreviewRoute: &handler.PreviewHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
 			StorageConfig:     s.StorageConfig,
@@ -108,7 +111,7 @@ func (s *AqServer) Handlers() map[string]Handler {
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
-		routes.DiscoverRoute: &DiscoverHandler{
+		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:          s.Database,
 			CustomReader:      s.CustomReader,
 			IntegrationReader: s.IntegrationReader,
@@ -116,14 +119,14 @@ func (s *AqServer) Handlers() map[string]Handler {
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
-		routes.RefreshWorkflowRoute: &RefreshWorkflowHandler{
+		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
 			Database:       s.Database,
 			JobManager:     s.JobManager,
 			GithubManager:  s.GithubManager,
 			Vault:          s.Vault,
 			WorkflowReader: s.WorkflowReader,
 		},
-		routes.RegisterWorkflowRoute: &RegisterWorkflowHandler{
+		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,
 			JobManager:    s.JobManager,
 			GithubManager: s.GithubManager,
@@ -142,7 +145,7 @@ func (s *AqServer) Handlers() map[string]Handler {
 			WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 			WorkflowWatcherWriter: s.WorkflowWatcherWriter,
 		},
-		routes.ResetApiKeyRoute: &ResetApiKeyHandler{
+		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database:   s.Database,
 			UserWriter: s.UserWriter,
 		},

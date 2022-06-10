@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/internal/migration"
+	"github.com/aqueducthq/aqueduct/cmd/migrator/migrator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	log "github.com/sirupsen/logrus"
 )
@@ -158,7 +158,12 @@ func initDatabaseSchema(db database.Database) {
 		log.Fatalf("Unable to read cwd: %v", err)
 	}
 
-	defer os.Chdir(cwd)
+	defer func() {
+		err = os.Chdir(cwd)
+		if err != nil {
+			log.Errorf("Error when changing cwd: %v", err)
+		}
+	}()
 
 	// The schema change logic must be invoked from the `golang/` directory
 	if err := os.Chdir("../../.."); err != nil {
@@ -166,7 +171,7 @@ func initDatabaseSchema(db database.Database) {
 		log.Fatalf("Unable to change cwd: %v", err)
 	}
 
-	if err := migration.GoTo(context.Background(), schemaVersion, db); err != nil {
+	if err := migrator.GoTo(context.Background(), schemaVersion, db); err != nil {
 		db.Close()
 		log.Fatalf("Unable to initialize schema: %v", err)
 	}

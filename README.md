@@ -1,4 +1,4 @@
-[<img src="https://uploads-ssl.webflow.com/62336685e5efee770a9c69b6/624b700d8164e226ea67f495_aqueduct%20logo-p-500.jpeg" width="35%"/>](https://www.aqueducthq.com)
+[<img src="https://user-images.githubusercontent.com/867892/172955552-f1f29c80-713f-41e9-af0c-7d7c8ee622f0.jpg" width= "35%" />](https://www.aqueducthq.com)
 
 ## Aqueduct: Prediction Infrastructure for Data Scientists
 

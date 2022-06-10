@@ -1,7 +1,7 @@
 package connection
 
 const (
-	// Ports used by system components
+	// Ports used by system components.
 	PostgresPort = 5432
 
 	ServerExternalPort      = 80

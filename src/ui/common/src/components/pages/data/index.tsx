@@ -5,7 +5,6 @@ import { Autocomplete } from '@mui/material';
 import Box from '@mui/material/Box';
 import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
-import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -13,7 +12,6 @@ import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataPreviewInfo } from '../../../utils/data';
-import { LoadingStatusEnum } from '../../../utils/shared';
 import { DataCard, dataCardName } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
@@ -83,9 +81,6 @@ const DataPage: React.FC<Props> = ({ user }) => {
   const dataCardsInfo = useSelector(
     (state: RootState) => state.dataPreviewReducer
   );
-  if (dataCardsInfo.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    console.log(dataCardsInfo.loadingStatus.err);
-  }
 
   const [filterText, setFilterText] = useState<string>('');
 
@@ -107,12 +102,13 @@ const DataPage: React.FC<Props> = ({ user }) => {
     });
   const noDataText = <Typography variant="h5">No data to display.</Typography>;
 
+  useEffect(() => {
+    document.title = 'Data | Aqueduct';
+  }, []);
+
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title> Data | Aqueduct </title>
-      </Head>
-
+      <div />
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Data
