@@ -47,8 +47,8 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)['apiKey'])
         except yaml.YAMLError as exc:
-            print("This API works only when you are running the\
-            server and the SDK on the same machine.xc")
+            print(exec)
+            print("This API works only when you are running the server and the SDK on the same machine.")
             exit(1)
 
 class Client:
