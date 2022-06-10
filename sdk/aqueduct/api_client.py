@@ -88,18 +88,14 @@ class APIClient:
             return True
         except Exception as e:
             Logger.logger.info(
-                "Testing if connection is HTTPS fails with:\n{}: {}".format(
-                    type(e).__name__, e
-                )
+                "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
             )
 
         try:
             _ = self._list_integrations(use_https=False)
         except Exception as e:
             Logger.logger.info(
-                "Testing if connection is HTTP fails with:\n{}: {}".format(
-                    type(e).__name__, e
-                )
+                "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
             )
             raise ClientValidationError(
                 "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
@@ -168,9 +164,7 @@ class APIClient:
         Returns:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
-        assert (
-            dag.workflow_id is None
-        ), "Unexpected internal field set when previewing a workflow."
+        assert dag.workflow_id is None, "Unexpected internal field set when previewing a workflow."
         headers = {
             **utils.generate_auth_headers(self.api_key),
         }
@@ -191,9 +185,7 @@ class APIClient:
         preview_resp = PreviewResponse(**resp.json())
         _print_preview_logs(preview_resp, dag)
         if preview_resp.status == ExecutionStatus.PENDING:
-            raise InternalAqueductError(
-                "Preview route should not be returning PENDING status."
-            )
+            raise InternalAqueductError("Preview route should not be returning PENDING status.")
         if preview_resp.status == ExecutionStatus.FAILED:
             raise AqueductError(
                 "Preview execution failed. See console logs for error message and trace."
@@ -204,9 +196,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
-        assert (
-            dag.workflow_id is None
-        ), "Unexpected internal field set when registering a workflow."
+        assert dag.workflow_id is None, "Unexpected internal field set when registering a workflow."
 
         headers = {
             **utils.generate_auth_headers(self.api_key),
@@ -245,9 +235,7 @@ class APIClient:
 
     def get_workflow(self, flow_id: str) -> Any:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(
-            self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
-        )
+        url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
         return response.json()
