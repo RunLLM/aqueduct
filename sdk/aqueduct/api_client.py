@@ -80,6 +80,7 @@ class APIClient:
 
     def _test_connection_protocol(self) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
+
         First tries https, then falls back to http.
         """
         try:
@@ -154,10 +155,12 @@ class APIClient:
         dag: DAG,
     ) -> PreviewResponse:
         """Makes a request against the /preview endpoint.
+
         Args:
             dag:
                 The DAG object to be serialized into the request header. Preview will
                 execute this entire DAG object.
+
         Returns:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
@@ -224,15 +227,15 @@ class APIClient:
 
     def delete_workflow(self, flow_id: str) -> None:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(
-            self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
-        )
+        url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
         response = requests.post(url, headers=headers)
         utils.raise_errors(response)
 
     def get_workflow(self, flow_id: str) -> Any:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
+        url = self._construct_full_url(
+            self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
+        )
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
         return response.json()
@@ -241,6 +244,7 @@ class APIClient:
         self, operator_mapping: Dict[str, Dict[str, Any]]
     ) -> Tuple[Dict[str, Dict[str, float]], Dict[str, Dict[str, float]]]:
         """Queries the `self.NODE_POSITION_ROUTE` endpoint for graph display's nodes' positions.
+
         Args:
             operator_mapping:
                 The mapping between each operator in the graph and all required metadata.
@@ -248,6 +252,7 @@ class APIClient:
                 The expected keys are:
                     `inputs`: list of the input artifacts' UUIDs
                     `output`: list of the output artifacts' UUIDs
+
         Returns:
             Two mappings of UUIDs to positions, structured as a dictionary with the keys "x" and "y".
             The first mapping is for operators and the second is for artifacts.
