@@ -10,9 +10,9 @@ import {
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
-import { useParams } from 'react-router-dom';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
