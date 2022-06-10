@@ -331,7 +331,7 @@ if __name__ == "__main__":
                                ''')
     start_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
-    start_args.add_argument('--port', dest="port", help="Specify the port that the server listens to.")
+    start_args.add_argument('--port', dest="port", help="Specify the port on which the Aqueduct server runs.")
     server_args = subparsers.add_parser('server', help=
                                    '''[DEPRECATED] This starts the Aqueduct server in a
                                    blocking fashion. To background the process,
