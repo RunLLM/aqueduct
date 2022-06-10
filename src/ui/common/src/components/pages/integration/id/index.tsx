@@ -143,15 +143,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
+  useEffect(() => {
+    document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+  }, []);
+
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title>
-          {' '}
-          Integration Details: {selectedIntegration.name} | Spiral Labs{' '}
-        </title>
-      </Head>
-
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
