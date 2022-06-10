@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
@@ -107,7 +106,6 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	for _, IdObject := range latestWorkflowDagIdObjects {
 		latestWorkflowDagIds = append(latestWorkflowDagIds, IdObject.Id)
 	}
-
 	// Handle the no data case so it doesn't throw an error in GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds
 	if len(latestWorkflowDagIds) == 0 || len(loadOperatorIds) == 0 {
 		return getArtifactVersionsResponse{
@@ -214,17 +212,10 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
-	fmt.Println("allArtifactIds")
-	fmt.Println(allArtifactIds)
-	fmt.Println("CHECK RESULTS>>>")
-	fmt.Println(checkResults)
-	fmt.Println("CHECK RESULTS<<<")
 
 	// We now fill in the validation test result. We can join the validation test result with the correct
 	// artifact version by the workflow dag result id.
 	for _, checkResult := range checkResults {
-		fmt.Println("!>>")
-		fmt.Println(checkResult.Status)
 		checkResultObject := CheckResult{
 			Name:     checkResult.Name,
 			Status:   checkResult.Status,

@@ -116,9 +116,7 @@ func (r *standardReaderImpl) GetCheckResultsByArtifactIds(
 		stmt_preparers.GenerateArgsList(len(artifactIds), 1),
 		operator.CheckType,
 	)
-
 	args := stmt_preparers.CastIdsListToInterfaceList(artifactIds)
-
 	var response []ArtifactCheckResponse
 	err := db.Query(ctx, &response, query, args...)
 	return response, err
