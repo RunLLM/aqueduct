@@ -91,7 +91,11 @@ def update_ui_version():
         execute_command(["rm", "-rf", ui_directory])
         exit(1)
 
-def download_golang_binaries(s3_prefix):
+def download_server_binaries():
+    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
+    execute_command(["rm", "-rf", os.path.join(server_directory, "bin")])
+    os.mkdir(os.path.join(server_directory, "bin"))
+
     system = platform.system()
     arch = platform.machine()
     if system == "Linux" and arch == "x86_64":
@@ -111,6 +115,9 @@ def download_golang_binaries(s3_prefix):
         execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
     else:
         raise Exception("Unsupported operating system and architecture combination: %s, %s" % (system, arch))
+    
+    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
+    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
 
 def update_server_version():
     print("Updating server version to %s" % package_version)
@@ -118,12 +125,8 @@ def update_server_version():
         execute_command(["rm", os.path.join(server_directory, "__version__")])
     generate_version_file(os.path.join(server_directory, "__version__"))
 
-    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-    download_golang_binaries(s3_prefix)
+    download_server_binaries()
     update_executable_permissions()
-
-    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
-    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
 
     execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "8"])
 
