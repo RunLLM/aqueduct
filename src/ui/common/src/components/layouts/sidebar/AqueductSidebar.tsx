@@ -22,7 +22,7 @@ import {
   CollapsedStatusBarWidthInPx,
   StatusBarWidthInPx,
 } from '../../workflows/StatusBar';
-import { MenuSidebarWidth } from '../menuSidebar';
+import { MenuSidebarOffset } from '../default';
 
 export enum SidebarPosition {
   // opens from left to right
@@ -61,7 +61,7 @@ export const getBottomSideSheetWidth = (
   workflowStatusBarOpen: boolean,
   baseWidth = '100%'
 ): string | string[] => {
-  return `calc(${baseWidth} - ${MenuSidebarWidth} - ${
+  return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
     2 * BottomSidebarMarginInPx
   }px - ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
 };

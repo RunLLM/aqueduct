@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 
-from typing import Any, Callable, Dict, Optional, cast
+from typing import Any, Callable, Dict, Optional
 import uuid
 
 from aqueduct.utils import get_description_for_metric

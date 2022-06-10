@@ -4,7 +4,7 @@ import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { DataPreview } from '../utils/data';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
-const { apiAddress, httpProtocol } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 
 export interface DataPreviewState {
   loadingStatus: LoadingStatus;
@@ -31,15 +31,12 @@ export const getDataArtifactPreview = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey } = args;
-    const response = await fetch(
-      `${httpProtocol}://${apiAddress}/artifact_versions`,
-      {
-        method: 'GET',
-        headers: {
-          'api-key': apiKey,
-        },
-      }
-    );
+    const response = await fetch(`${apiAddress}/api/rtifact_versions`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
 
     const body = await response.json();
 

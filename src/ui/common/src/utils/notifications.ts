@@ -1,7 +1,7 @@
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 
-const { httpProtocol, apiAddress } = useAqueductConsts();
+const { apiAddress } = useAqueductConsts();
 export enum NotificationStatus {
   Unread = 'unread',
   Archived = 'archived',
@@ -44,7 +44,7 @@ export async function listNotifications(
   user: UserProfile
 ): Promise<[Notification[], string]> {
   try {
-    const res = await fetch(`${httpProtocol}://${apiAddress}/notifications`, {
+    const res = await fetch(`${apiAddress}/api/notifications`, {
       method: 'GET',
       headers: { 'api-key': user.apiKey },
     });
@@ -66,13 +66,10 @@ export async function archiveNotification(
   id: string
 ): Promise<string> {
   try {
-    const res = await fetch(
-      `${httpProtocol}://${apiAddress}/notifications/${id}/archive`,
-      {
-        method: 'POST',
-        headers: { 'api-key': user.apiKey },
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/notifications/${id}/archive`, {
+      method: 'POST',
+      headers: { 'api-key': user.apiKey },
+    });
 
     const body = await res.json();
     if (!res.ok) {

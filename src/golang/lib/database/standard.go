@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"database/sql"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Database implementation for any database that has a driver that implements the
@@ -66,6 +68,9 @@ func (stx *standardTransaction) Rollback(ctx context.Context) error {
 	if err != sql.ErrTxDone {
 		// Transaction was not already committed or aborted
 		logQuery("Transaction ROLLBACK")
+	}
+	if err != nil {
+		log.Errorf("Rollback failed: %v.", err)
 	}
 
 	return err

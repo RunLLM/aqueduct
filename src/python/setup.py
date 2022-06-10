@@ -1,18 +1,21 @@
-import sys
-import os
-
 from setuptools import find_packages, setup
-
+from pathlib import Path
+import os
 
 install_requires = open("requirements.txt").read().strip().split("\n")
 
+readme_path = Path(os.environ["PWD"], "../../README.md")
+long_description = open(readme_path).read()
+
 setup(
     name="aqueduct-ml",
-    version="0.0.1",
+    version="0.0.2",
     install_requires=install_requires,
-    scripts=['bin/aqueduct'],
+    scripts=["bin/aqueduct"],
     packages=find_packages(),
-    description="Aqueduct OSS backend.",
+    description="Prediction Infrastructure for Data Scientists",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://www.aqueducthq.com/",
     license="Apache License 2.0",
     author="Aqueduct, Inc.",

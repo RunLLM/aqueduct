@@ -8,7 +8,7 @@ from aqueduct.generic_artifact import Artifact as GenericArtifact
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
 from .dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta, Metadata, AddOrReplaceOperatorDelta
-from .enums import ServiceType, RelationalDBServices, OperatorType
+from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
     IncompleteFlowException,

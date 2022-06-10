@@ -10,8 +10,8 @@ from utils import (
 )
 
 
-def test_sql_integration_load_table(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_sql_integration_load_table(client):
+    db = client.integration(name=get_integration_name())
     df = db.table(name="hotel_reviews")
     assert len(df) == 100
     assert list(df) == [
@@ -22,13 +22,13 @@ def test_sql_integration_load_table(sp_client):
     ]
 
 
-def test_invalid_source_integration(sp_client):
+def test_invalid_source_integration(client):
     with pytest.raises(InvalidIntegrationException):
-        sp_client.integration(name="wrong integration name")
+        client.integration(name="wrong integration name")
 
 
-def test_invalid_destination_integration(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_invalid_destination_integration(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = run_sentiment_model(sql_artifact)
 
