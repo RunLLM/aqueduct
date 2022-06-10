@@ -113,6 +113,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:          s.Database,
+			CustomReader:      s.CustomReader,
 			IntegrationReader: s.IntegrationReader,
 			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,

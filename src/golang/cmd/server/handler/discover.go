@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -14,6 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -51,6 +53,7 @@ type DiscoverHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
+	CustomReader      queries.Reader
 	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
@@ -170,7 +173,35 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve table names from storage.")
 	}
 
+	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
+		ctx,
+		args.OrganizationId,
+		h.Database,
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to get load operators.")
+	}
+
+	// All user-created tables.
+	userTables := make(map[string]bool, len(loadOperatorMetadata))
+	for _, loadOperator := range loadOperatorMetadata {
+		loadSpec, ok := connector.CastToRelationalDBLoadParams(loadOperator.Spec.Load().Parameters)
+		if !ok {
+			return nil, http.StatusInternalServerError, errors.Newf("Cannot load table")
+		}
+		table := loadSpec.Table
+		userTables[table] = true
+	}
+
+	baseTables := make([]string, 0, len(tableNames))
+
+	for _, tableName := range tableNames {
+		if isUserTable := userTables[tableName]; !isUserTable { // not a user-created table
+			baseTables = append(baseTables, tableName)
+		}
+	}
+
 	return discoverResponse{
-		TableNames: tableNames,
+		TableNames: baseTables,
 	}, http.StatusOK, nil
 }

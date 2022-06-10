@@ -36,7 +36,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const integrationId = useParams().id;
+  const integrationId: string = useParams().id;
   const [table, setTable] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
 
@@ -138,13 +138,17 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
 
+  useEffect(() => {
+    if (selectedIntegration && selectedIntegration.name) {
+      document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+    } else {
+      document.title = `Integration Details | Aqueduct`;
+    }
+  }, []);
+
   if (!integrations || !selectedIntegration) {
     return null;
   }
-
-  useEffect(() => {
-    document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
-  }, []);
 
   return (
     <DefaultLayout user={user}>
