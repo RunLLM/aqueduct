@@ -3,7 +3,7 @@ name: Integration Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main, fix_integration_test ]
+    branches: [ main ]
     paths:
       - 'src/golang/**'
       - 'src/python/**'
