@@ -136,7 +136,8 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
         <LoadingButton
           autoFocus
           onClick={confirmConnect}
-          loading={isConnecting || disableConnect}
+          loading={isConnecting}
+          disabled={disableConnect}
         >
           Confirm
         </LoadingButton>
@@ -288,7 +289,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         <LoadingButton
           autoFocus
           onClick={confirmConnect}
-          loading={isConnecting || disableConnect}
+          loading={isConnecting}
+          disabled={disableConnect}
         >
           Confirm
         </LoadingButton>
