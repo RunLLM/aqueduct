@@ -29,7 +29,7 @@ func randString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = letters[rand.Intn(len(letters))] // nolint:gosec
 	}
 	return string(b)
 }
@@ -38,7 +38,7 @@ func randString(n int) string {
 func randIdsFromList(n int, ids []uuid.UUID) []uuid.UUID {
 	randIds := make([]uuid.UUID, 0, n)
 	for i := 0; i < n; i++ {
-		randId := ids[rand.Intn(len(ids))]
+		randId := ids[rand.Intn(len(ids))] // nolint:gosec
 		randIds = append(randIds, randId)
 	}
 	return randIds
@@ -79,7 +79,7 @@ func randWorkflowDagIdsFromList(n int, workflowDags []workflow_dag.WorkflowDag) 
 func randOrgIdsFromList(n int, users []user.User) []string {
 	orgIds := make([]string, 0, n)
 	for i := 0; i < n; i++ {
-		idx := rand.Intn(len(users))
+		idx := rand.Intn(len(users)) // nolint:gosec
 		orgIds = append(orgIds, users[idx].OrganizationId)
 	}
 	return orgIds

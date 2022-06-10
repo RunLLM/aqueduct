@@ -23,7 +23,7 @@ func (ex *WorkflowRetentionExecutor) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to start transaction.")
 	}
-	defer txn.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
 	workflowObjects, err := ex.WorkflowReader.GetAllWorkflows(ctx, txn)

@@ -301,13 +301,13 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	// collect the entry in j.cmds.
 	defer j.deleteCmd(name)
 	if err != nil {
-		log.Errorf("Unexpected error occured while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
+		log.Errorf("Unexpected error occurred while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
 			name,
 			err,
 			command.stdout.String(),
 			command.stderr.String(),
 		)
-		return shared.FailedExecutionStatus, nil
+		return shared.FailedExecutionStatus, nil // nolint:nilerr // Poll() should not error on command execution issues.
 	}
 
 	log.Infof("Job %s Stdout:\n %s \n Stderr: \n %s",
