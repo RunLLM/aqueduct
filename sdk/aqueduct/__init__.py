@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from aqueduct.aqueduct_client import Client
+from aqueduct.aqueduct_client import Client, get_apikey
 from aqueduct.enums import (
     CheckSeverity,
     LoadUpdateMode,
