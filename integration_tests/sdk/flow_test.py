@@ -94,7 +94,7 @@ def test_publish_with_schedule(client):
         client,
         artifacts=[output_artifact],
         schedule=aqueduct.hourly(minute=aqueduct.Minute(execute_at.minute)),
-        num_runs=2, # Wait for two runs because registering a workflow always triggers an immediate run first.
+        num_runs=2,  # Wait for two runs because registering a workflow always triggers an immediate run first.
     )
 
 

@@ -102,7 +102,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}
-	defer txn.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
 	workflowObject, err := h.WorkflowReader.GetWorkflow(ctx, args.workflowId, txn)

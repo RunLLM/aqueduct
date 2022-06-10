@@ -56,7 +56,6 @@ func ParseDagSummaryFromRequest(
 		program, status, err := extractOperatorContentsFromRequest(
 			r,
 			&op,
-			userId,
 			ghClient,
 		)
 		if err != nil {
@@ -83,7 +82,6 @@ func ParseDagSummaryFromRequest(
 func extractOperatorContentsFromRequest(
 	r *http.Request,
 	op *operator.Operator,
-	userId uuid.UUID,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {

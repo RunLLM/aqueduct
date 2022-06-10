@@ -171,7 +171,10 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	ctx := context.Background()
 
 	// Delete old CronJob if it exists
-	s.JobManager.DeleteCronJob(ctx, name)
+	err := s.JobManager.DeleteCronJob(ctx, name)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete existing workflow retention job")
+	}
 
 	spec := job.NewWorkflowRetentionJobSpec(
 		s.Database.Config(),
@@ -179,14 +182,14 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 		s.JobManager.Config(),
 	)
 
-	err := s.JobManager.DeployCronJob(
+	err = s.JobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
 		spec,
 	)
 	if err != nil {
-		return errors.Wrap(err, "unable to start workflow retention cron job")
+		return errors.Wrap(err, "Unable to start workflow retention cron job")
 	}
 	return nil
 }

@@ -51,9 +51,10 @@ def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
     else:
         return dummy_sentiment_model(artifact)
 
+
 def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
     """
-    Run sentiment model locally using .local() method. Calls the full sentiment model 
+    Run sentiment model locally using .local() method. Calls the full sentiment model
     local method if --complex_models flag is set. Otherwise, will use simple model,which
     appends the same column with a dummy value.
     """
@@ -61,6 +62,7 @@ def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
         return sentiment_model.local(artifact)
     else:
         return dummy_sentiment_model.local(artifact)
+
 
 def run_sentiment_model_multiple_input(
     artifact1: TableArtifact, artifact2: TableArtifact
@@ -72,6 +74,7 @@ def run_sentiment_model_multiple_input(
         return sentiment_model_multiple_input(artifact1, artifact2)
     else:
         return dummy_sentiment_model_multiple_input(artifact1, artifact2)
+
 
 def run_sentiment_model_local_multiple_input(
     artifact1: TableArtifact, artifact2: TableArtifact

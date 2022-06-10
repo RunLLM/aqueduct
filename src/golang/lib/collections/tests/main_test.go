@@ -158,7 +158,12 @@ func initDatabaseSchema(db database.Database) {
 		log.Fatalf("Unable to read cwd: %v", err)
 	}
 
-	defer os.Chdir(cwd)
+	defer func() {
+		err = os.Chdir(cwd)
+		if err != nil {
+			log.Errorf("Error when changing cwd: %v", err)
+		}
+	}()
 
 	// The schema change logic must be invoked from the `golang/` directory
 	if err := os.Chdir("../../.."); err != nil {
