@@ -194,7 +194,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		}
 	}
 
-	failedArtifactIds := make([]uuid.UUID, len(failedArtifactIdsMap))
+	failedArtifactIds := make([]uuid.UUID, 0, len(failedArtifactIdsMap))
 	for failedArtifactId := range failedArtifactIdsMap {
 		failedArtifactIds = append(failedArtifactIds, failedArtifactId)
 	}

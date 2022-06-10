@@ -13,7 +13,7 @@ const AllowedSdkClientVersion = 3
 func VerifySdkRequest(sdkVersion string) (responseCode int, reason string) {
 	sdkVersionParsed, err := strconv.Atoi(sdkVersion)
 	if err != nil {
-		return http.StatusBadRequest, "Could not recognize the recieved sdk client version as an integer"
+		return http.StatusBadRequest, "Could not recognize the received sdk client version as an integer"
 	}
 
 	if sdkVersionParsed < AllowedSdkClientVersion {

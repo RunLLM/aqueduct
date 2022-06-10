@@ -9,7 +9,7 @@ import (
 )
 
 type OperatorMapping struct {
-	OpName	string		`json:"name"`
+	OpName  string      `json:"name"`
 	Inputs  []uuid.UUID `json:"inputs"`
 	Outputs []uuid.UUID `json:"outputs"`
 }
@@ -21,6 +21,6 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read request body.")
 	}
-	
+
 	return operator_mapping, http.StatusOK, nil
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	log "github.com/sirupsen/logrus"
 )
 
 type EmptyResponse struct{}
@@ -33,7 +34,10 @@ func SendJsonResponse(w http.ResponseWriter, response interface{}, statusCode in
 
 	w.Header().Set(routes.ContentTypeHeader, "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(jsonBlob)
+	_, err = w.Write(jsonBlob)
+	if err != nil {
+		log.Errorf("Failed to write json to the response.")
+	}
 }
 
 // Send small content (that fits in single-machine memory) in binary
@@ -41,5 +45,8 @@ func SendSmallFileResponse(w http.ResponseWriter, fileName string, content *byte
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set(routes.ContentTypeHeader, "application/octet-stream")
 	w.Header().Set("Content-Transfer-Encoding", "binary")
-	io.Copy(w, content)
+	_, err := io.Copy(w, content)
+	if err != nil {
+		log.Errorf("Failed to copy content into response.")
+	}
 }

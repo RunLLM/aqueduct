@@ -50,7 +50,7 @@ type Database interface {
 // Transaction defines an interface for performing Database operations inside of a transaction.
 type Transaction interface {
 	// Rollback aborts the transaction. If the transaction was already committed,
-	// Rollback acts as a no-op, so it is safe to use as a deferred statement.
+	// Rollback acts as a no-op, so it is safe to use as a deferred statement. See TxnRollbackIgnoreErr().
 	Rollback(ctx context.Context) error
 
 	// Commit commits the transaction.
@@ -58,6 +58,12 @@ type Transaction interface {
 
 	// A Transaction should be able to perform all Database operations.
 	Database
+}
+
+// Usage: `defer TxnRollbackIgnoreErr(ctx, txn)`
+// Because its bad practice for a defer to return an error.
+func TxnRollbackIgnoreErr(ctx context.Context, txn Transaction) {
+	_ = txn.Rollback(ctx)
 }
 
 func NewDatabase(conf *DatabaseConfig) (Database, error) {
