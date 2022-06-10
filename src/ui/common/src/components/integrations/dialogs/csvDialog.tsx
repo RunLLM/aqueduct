@@ -8,9 +8,10 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 type Props = {
   setDialogConfig: (config: CSVConfig) => void;
+  setErrMsg: (msg: string) => void;
 };
 
-export const CSVDialog: React.FC<Props> = ({ setDialogConfig }) => {
+export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
   const [name, setName] = useState<string>('');
   const [csv, setCSV] = useState(null);
 
@@ -40,14 +41,23 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig }) => {
         required={true}
         placeholder={'Upload the CSV file.'}
         file={csv}
-        onFile={(file) => {
-          name ? null : setName(`${file.name.slice(0, -4)}`);
-          const reader = new FileReader();
-          reader.onloadend = function (event) {
-            const content = event.target.result as string;
-            setCSV({ name: file.name, data: content });
-          };
-          reader.readAsText(file);
+        onFiles={(files) => {
+          if (files.length > 1) {
+            setErrMsg('Please upload just one file.');
+          } else {
+            const file = files[0]
+            if (file.name.slice(-4) !== '.csv') {
+              setErrMsg('Please upload a CSV file.');
+            } else {
+              name ? null : setName(file.name.slice(0, -4));
+              const reader = new FileReader();
+              reader.onloadend = function (event) {
+                const content = event.target.result as string;
+                setCSV({ name: file.name, data: content });
+              };
+              reader.readAsText(file);
+            }
+          }
         }}
         onReset={(_) => {
           setName('');

@@ -13,13 +13,13 @@ type IntegrationFileUploadFieldProps = {
   required: boolean;
   file: FileData;
   placeholder: string;
-  onFile: (file: File) => void;
+  onFiles: (files: FileList) => void;
   onReset: MouseEventHandler<HTMLAnchorElement>;
 };
 
 export const IntegrationFileUploadField: React.FC<
   IntegrationFileUploadFieldProps
-> = ({ label, description, required, file, placeholder, onFile, onReset }) => {
+> = ({ label, description, required, file, placeholder, onFiles, onReset }) => {
   let header, contents;
   const drop = useRef(undefined);
   const [dragging, setDragging] = React.useState(false);
@@ -63,7 +63,7 @@ export const IntegrationFileUploadField: React.FC<
 
     const { files } = e.dataTransfer;
     if (files && files.length) {
-      onFile(files[0]);
+      onFiles(files);
     }
   };
 
@@ -158,8 +158,7 @@ export const IntegrationFileUploadField: React.FC<
             type="file"
             onChange={(e) => {
               const fileEvent: FileEventTarget = e.target as FileEventTarget;
-              const file = fileEvent.files[0];
-              onFile(file);
+              onFiles(fileEvent.files);
             }}
             required={required}
             sx={{ display: 'none' }}

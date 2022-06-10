@@ -51,6 +51,8 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   const [disableConnect, setDisableConnect] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [errMsg, setErrMsg] = useState(null);
 
   const handleSuccessToastClose = () => {
     setShowSuccessToast(false);
@@ -79,7 +81,9 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
     </Box>
   );
 
-  const serviceDialog = <CSVDialog setDialogConfig={setConfig} />;
+  const serviceDialog = (
+    <CSVDialog setDialogConfig={setConfig} setErrMsg={setErrMsg} />
+  );
 
   const confirmConnect = () => {
     setIsConnecting(true);
@@ -98,9 +102,6 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
         setIsConnecting(false);
       });
   };
-
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [errMsg, setErrMsg] = useState(null);
 
   return (
     <Dialog open={true} onClose={onCloseDialog}>

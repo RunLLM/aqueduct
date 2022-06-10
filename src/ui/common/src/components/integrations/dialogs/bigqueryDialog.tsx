@@ -61,7 +61,8 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         required={true}
         file={file}
         placeholder={'Upload your service account key file.'}
-        onFile={(file) => {
+        onFiles={(files) => {
+          const file = files[0];
           setFile(file);
           readCredentialsFile(file, setCredentials);
         }}
