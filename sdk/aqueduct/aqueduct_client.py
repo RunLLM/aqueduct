@@ -34,12 +34,12 @@ from .utils import (
 import __main__ as main
 import os
 
-def apikey() -> str:
+def get_apikey() -> str:
     """
-    Get the local host API key if the server is running locally. 
+    Get the API key if the server is running locally. 
 
     Returns:
-        The local API key.
+        The API key.
     """
     server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
     config_file = os.path.join(server_directory, "config", "config.yml")
@@ -47,7 +47,8 @@ def apikey() -> str:
         try:
             return str(yaml.safe_load(f)['apiKey'])
         except yaml.YAMLError as exc:
-            print(exc)
+            print("This API works only when you are running the\
+            server and the SDK on the same machine.xc")
             exit(1)
 
 class Client:
