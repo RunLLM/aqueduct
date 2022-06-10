@@ -3,7 +3,7 @@ name: Integration Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, fix_gh_timeouts ] # TODO: REMOVE
     paths:
       - 'src/golang/**'
       - 'src/python/**'
