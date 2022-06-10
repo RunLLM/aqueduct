@@ -5,7 +5,6 @@ import uuid
 
 from aqueduct import Flow
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
@@ -124,7 +123,7 @@ def run_flow_test(
     return flow
 
 
-def wait_for_flow_runs(sp_client: aqueduct.Client, flow_id: uuid.UUID, num_runs: int = 1) -> int:
+def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: int = 1) -> int:
     """
     Returns only when the specified flow has run successfully at least `num_runs` times.
     Any run failure is not tolerated. Will timeout after a few minutes.
@@ -140,7 +139,7 @@ def wait_for_flow_runs(sp_client: aqueduct.Client, flow_id: uuid.UUID, num_runs:
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         time.sleep(poll_threshold)
-        flow_resp = sp_client._get_flow_info(str(flow_id))
+        flow_resp = client._get_flow_info(str(flow_id))
 
         # A flow has been successfully published if it makes at least one workflow run, and
         # all its workflow runs have executed successfully.
@@ -163,9 +162,9 @@ def wait_for_flow_runs(sp_client: aqueduct.Client, flow_id: uuid.UUID, num_runs:
     return -1
 
 
-def delete_flow(sp_client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
+def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
     try:
-        sp_client.delete_flow(str(workflow_id))
+        client.delete_flow(str(workflow_id))
     except Exception as e:
         print("Error deleting workflow %s with exception %s" % (workflow_id, e))
     else:

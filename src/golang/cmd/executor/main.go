@@ -35,8 +35,11 @@ func init() {
 	// Create the directory for the logs if it doesn't already exist.
 	if len(*logsFilePath) > 0 {
 		logsDir := filepath.Dir(*logsFilePath)
-		if _, err := os.Stat(logsDir); errors.IsError(err, os.ErrNotExist) {
-			_ = os.Mkdir(logsDir, os.ModePerm)
+		if _, err := os.Stat(logsDir); os.IsNotExist(err) {
+			err = os.Mkdir(logsDir, os.ModePerm)
+			if err != nil {
+				log.Infof("Unable to make directory %s: %v ", logsDir, err)
+			}
 		}
 	}
 }
@@ -54,7 +57,7 @@ func main() {
 	if len(*logsFilePath) > 0 {
 		logFile, err := redirectLogOutput(*logsFilePath)
 		if err != nil {
-			log.Error("Unable to redirect log output.")
+			log.Errorf("Unable to redirect log output. %v", err)
 			return
 		}
 		defer logFile.Close()

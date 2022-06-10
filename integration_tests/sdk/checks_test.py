@@ -9,7 +9,7 @@ from aqueduct.error import (
     AqueductError,
 )
 from test_metrics.constant.model import constant_metric
-from utils import get_integration_name, run_flow_test, run_sentiment_model, generate_new_flow_name
+from utils import get_integration_name, run_flow_test, run_sentiment_model
 
 
 @check()
@@ -35,31 +35,31 @@ def success_on_multiple_mixed_inputs(metric, df):
     return True
 
 
-def test_check_on_table(sp_client):
+def test_check_on_table(client):
     """Test check on a function operator."""
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     check_artifact = success_on_single_table_input(sql_artifact)
     assert check_artifact.get()
 
-    run_flow_test(sp_client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact])
 
 
-def test_check_on_metric(sp_client):
+def test_check_on_metric(client):
     """Test check on a metric operator."""
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     metric = constant_metric(sql_artifact)
 
     check_artifact = success_on_single_metric_input(metric)
     assert check_artifact.get()
 
-    run_flow_test(sp_client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact])
 
 
-def test_check_on_multiple_mixed_inputs(sp_client):
+def test_check_on_multiple_mixed_inputs(client):
     """Test check on multiple tables and metrics."""
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(query=SENTIMENT_SQL_QUERY)
     metric = constant_metric(sql_artifact1)
 
@@ -69,12 +69,12 @@ def test_check_on_multiple_mixed_inputs(sp_client):
     check_artifact = success_on_multiple_mixed_inputs(metric, table)
     assert check_artifact.get()
 
-    run_flow_test(sp_client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact])
 
 
-def test_edit_check(sp_client):
+def test_edit_check(client):
     """Test that checks can be edited by replacing with the same name."""
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     @check()
@@ -96,9 +96,9 @@ def test_edit_check(sp_client):
         failed_check.get()
 
 
-def test_delete_check(sp_client):
+def test_delete_check(client):
     """Test that checks can be deleted by name."""
-    db = sp_client.integration(name=get_integration_name())
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     with pytest.raises(InvalidUserActionException):
@@ -116,8 +116,8 @@ def test_delete_check(sp_client):
         check_artifact_on_metric.get()
 
 
-def test_check_wrong_input_type(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_check_wrong_input_type(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # User function receives a dataframe when it's expecting a metric.
@@ -134,8 +134,8 @@ def test_check_wrong_input_type(sp_client):
         fn_artifact.get()
 
 
-def test_check_wrong_number_of_inputs(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_check_wrong_number_of_inputs(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(query=SENTIMENT_SQL_QUERY)
     check_artifact = success_on_single_table_input(sql_artifact1, sql_artifact2)
@@ -150,8 +150,8 @@ def success_check_return_numpy_bool(df):
     return df["total_charges"].mean() < 2500
 
 
-def test_check_with_numpy_bool_output(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_check_with_numpy_bool_output(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=CHURN_SQL_QUERY)
     check_artifact = success_check_return_numpy_bool(sql_artifact)
     assert check_artifact.get()
@@ -167,8 +167,8 @@ def failure_check_return_series_of_booleans(df):
     return pd.Series([True, False, True])
 
 
-def test_check_with_series_output(sp_client):
-    db = sp_client.integration(name=get_integration_name())
+def test_check_with_series_output(client):
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     passed = success_check_return_series_of_booleans(sql_artifact)
@@ -177,4 +177,4 @@ def test_check_with_series_output(sp_client):
     failed = failure_check_return_series_of_booleans(sql_artifact)
     assert not failed.get()
 
-    run_flow_test(sp_client, artifacts=[sql_artifact, passed, failed])
+    run_flow_test(client, artifacts=[sql_artifact, passed, failed])
