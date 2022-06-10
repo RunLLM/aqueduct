@@ -69,7 +69,9 @@ func (stx *standardTransaction) Rollback(ctx context.Context) error {
 		// Transaction was not already committed or aborted
 		logQuery("Transaction ROLLBACK")
 	}
-	log.Errorf("Rollback failed: %v.", err)
+	if err != nil {
+		log.Errorf("Rollback failed: %v.", err)
+	}
 
 	return err
 }
