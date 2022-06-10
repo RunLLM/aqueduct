@@ -12,6 +12,7 @@ src/build/
 *.dll
 *.so
 *.dylib
+**/bin
 
 # Test binary, built with `go test -c`
 *.test
@@ -34,6 +35,9 @@ src/build/
 # dependencies
 **/node_modules
 
+# parcel cache
+**/.parcel-cache
+
 # next.js
 **/.next
 
@@ -47,6 +51,7 @@ ui/*yarn-error.log*
 
 # local env files
 **/.env.local
+**/.env
 
 # vercel
 ui/.vercel

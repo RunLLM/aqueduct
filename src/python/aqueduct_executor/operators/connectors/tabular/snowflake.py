@@ -1,8 +1,7 @@
-from typing import Optional
 
 from sqlalchemy import create_engine, engine
 
-from aqueduct_executor.operators.connectors.tabular import config, models, relational
+from aqueduct_executor.operators.connectors.tabular import config, relational
 
 
 class SnowflakeConnector(relational.RelationalConnector):

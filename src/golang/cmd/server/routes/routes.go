@@ -2,37 +2,37 @@ package routes
 
 // Please sort the route by their VALUEs
 const (
-	GetArtifactVersionsRoute = "/artifact_versions"
-	GetArtifactResultRoute   = "/artifact_result/{workflowDagResultId}/{artifactId}"
+	GetArtifactVersionsRoute = "/api/artifact_versions"
+	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
 
-	ListBuiltinFunctionsRoute = "/builtinFunctions"
-	GetFunctionRoute          = "/function/{functionId}"
-	ExportFunctionRoute       = "/function/{operatorId}/export"
+	ListBuiltinFunctionsRoute = "/api/builtinFunctions"
+	GetFunctionRoute          = "/api/function/{functionId}"
+	ExportFunctionRoute       = "/api/function/{operatorId}/export"
 
-	ListIntegrationsRoute   = "/integrations"
-	ConnectIntegrationRoute = "/integration/connect"
-	DeleteIntegrationRoute  = "/integration/{integrationId}/delete"
-	PreviewTableRoute       = "/integration/{integrationId}/preview_table"
-	DiscoverRoute           = "/integration/{integrationId}/discover"
+	ListIntegrationsRoute   = "/api/integrations"
+	ConnectIntegrationRoute = "/api/integration/connect"
+	DeleteIntegrationRoute  = "/api/integration/{integrationId}/delete"
+	PreviewTableRoute       = "/api/integration/{integrationId}/preview_table"
+	DiscoverRoute           = "/api/integration/{integrationId}/discover"
 
-	ResetApiKeyRoute = "/keys/reset"
+	ResetApiKeyRoute = "/api/keys/reset"
 
-	ListNotificationsRoute   = "/notifications"
-	ArchiveNotificationRoute = "/notifications/{notificationId}/archive"
+	ListNotificationsRoute   = "/api/notifications"
+	ArchiveNotificationRoute = "/api/notifications/{notificationId}/archive"
 
-	GetOperatorResultRoute = "/operator_result/{workflowDagResultId}/{operatorId}"
+	GetOperatorResultRoute = "/api/operator_result/{workflowDagResultId}/{operatorId}"
 
-	GetNodePositionsRoute = "/positioning"
-	PreviewRoute          = "/preview"
+	GetNodePositionsRoute = "/api/positioning"
+	PreviewRoute          = "/api/preview"
 
-	GetUserProfileRoute = "/user"
+	GetUserProfileRoute = "/api/user"
 
-	ListWorkflowsRoute    = "/workflows"
-	RegisterWorkflowRoute = "/workflow/register"
-	GetWorkflowRoute      = "/workflow/{workflowId}"
-	DeleteWorkflowRoute   = "/workflow/{workflowId}/delete"
-	EditWorkflowRoute     = "/workflow/{workflowId}/edit"
-	RefreshWorkflowRoute  = "/workflow/{workflowId}/refresh"
-	UnwatchWorkflowRoute  = "/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute    = "/workflow/{workflowId}/watch"
+	ListWorkflowsRoute    = "/api/workflows"
+	RegisterWorkflowRoute = "/api/workflow/register"
+	GetWorkflowRoute      = "/api/workflow/{workflowId}"
+	DeleteWorkflowRoute   = "/api/workflow/{workflowId}/delete"
+	EditWorkflowRoute     = "/api/workflow/{workflowId}/edit"
+	RefreshWorkflowRoute  = "/api/workflow/{workflowId}/refresh"
+	UnwatchWorkflowRoute  = "/api/workflow/{workflowId}/unwatch"
+	WatchWorkflowRoute    = "/api/workflow/{workflowId}/watch"
 )

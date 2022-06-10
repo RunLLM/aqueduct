@@ -1,12 +1,11 @@
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import Head from 'next/head';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
-import { AddIntegrations } from '../../integrations/addIntegrations';
+import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 
@@ -15,12 +14,12 @@ type Props = {
 };
 
 const IntegrationsPage: React.FC<Props> = ({ user }) => {
+  useEffect(() => {
+    document.title = 'Integrations | Aqueduct';
+  }, []);
+
   return (
     <DefaultLayout user={user}>
-      <Head>
-        <title> Integrations | Aqueduct </title>
-      </Head>
-
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integrations

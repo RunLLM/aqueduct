@@ -5,8 +5,8 @@ export default async function fetchUser(
   apiKey: string
 ): Promise<{ success: boolean; user?: UserProfile }> {
   try {
-    const { apiAddress, httpProtocol } = useAqueductConsts();
-    const response = await fetch(`${httpProtocol}://${apiAddress}/user`, {
+    const { apiAddress } = useAqueductConsts();
+    const response = await fetch(`${apiAddress}/api/user`, {
       method: 'GET',
       headers: {
         'api-key': apiKey,
