@@ -1,8 +1,11 @@
-from gettext import install
 import os
 import setuptools
 import sys
 
+from pathlib import Path
+
+readme_path = Path(os.environ["PWD"], "../README.md")
+long_description = open(readme_path).read()
 
 req_file_name = "requirements/python-%s-%s.txt" % (sys.version_info[0], sys.version_info[1])
 
@@ -15,10 +18,12 @@ else:
 
 setuptools.setup(
     name="aqueduct-sdk",
-    version="0.0.1",
+    version="0.0.2",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
-    description="Python SDK for the Aqueduct prediction infrastructure.",
+    description="Python SDK for the Aqueduct prediction infrastructure",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/aqueducthq/aqueduct",
     license="Apache License 2.0",
     packages=setuptools.find_packages(),

@@ -1,0 +1,39 @@
+name: Python Linter
+
+# We use the Python Black linter.
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/python/**'
+      - 'sdk/**'
+      - 'integration_tests/**'
+
+jobs:
+  lint-src:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          src: "./src/python"
+          options: "--check --line-length=100"
+
+  lint-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          src: "./sdk"
+          options: "--check --line-length=100"
+
+  lint-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          src: "./integration_tests"
+          options: "--check --line-length=100"

@@ -23,18 +23,20 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
-	workflowExecutorBinary       = "executor"
+	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
 	processRunningStatus = "R"
 
 	BinaryDir          = "bin/"
 	OperatorStorageDir = "storage/operators/"
+	LogsDir            = "logs/"
 )
 
 var (
 	defaultBinaryDir          = path.Join(os.Getenv("HOME"), ".aqueduct", BinaryDir)
 	defaultOperatorStorageDir = path.Join(os.Getenv("HOME"), ".aqueduct", OperatorStorageDir)
+	defaultLogsDir            = path.Join(os.Getenv("HOME"), ".aqueduct", "server", LogsDir)
 )
 
 type Command struct {
@@ -128,7 +130,8 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 	}, nil
 }
 
-func (j *ProcessJobManager) mapJobTypeToCmd(spec Spec) (*exec.Cmd, error) {
+func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cmd, error) {
+	var cmd *exec.Cmd
 	if spec.Type() == WorkflowJobType {
 		workflowSpec, ok := spec.(*WorkflowSpec)
 		if !ok {
@@ -140,11 +143,37 @@ func (j *ProcessJobManager) mapJobTypeToCmd(spec Spec) (*exec.Cmd, error) {
 			return nil, err
 		}
 
-		return exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, workflowExecutorBinary),
+		logFilePath := path.Join(defaultLogsDir, jobName)
+		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
+
+		cmd = exec.Command(
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
 			"--spec",
 			specStr,
-		), nil
+			"--logs-path",
+			logFilePath,
+		)
+	} else if spec.Type() == WorkflowRetentionType {
+		workflowRetentionSpec, ok := spec.(*WorkflowSpec)
+		if !ok {
+			return nil, errors.New("Unable to cast job spec to workflowRetentionSpec.")
+		}
+
+		specStr, err := EncodeSpec(workflowRetentionSpec, GobSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		logFilePath := path.Join(defaultLogsDir, jobName)
+		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
+
+		cmd = exec.Command(
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
+			"--spec",
+			specStr,
+			"--logs-path",
+			logFilePath,
+		)
 	} else if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -157,49 +186,55 @@ func (j *ProcessJobManager) mapJobTypeToCmd(spec Spec) (*exec.Cmd, error) {
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"bash",
 			filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
 			specStr,
-		), nil
+		)
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, paramPythonPath),
 			"--spec",
 			specStr,
-		), nil
-	} else {
+		)
+	} else if spec.Type() == AuthenticateJobType ||
+		spec.Type() == LoadJobType ||
+		spec.Type() == ExtractJobType ||
+		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
 		}
 
-		return exec.Command(
+		cmd = exec.Command(
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, connectorPythonPath),
 			"--spec",
 			specStr,
-		), nil
+		)
+	} else {
+		return nil, errors.New("Unsupported JobType was passed in.")
 	}
+	log.Infof("Running job with command: %s", cmd.String())
+	return cmd, nil
 }
 
 func (j *ProcessJobManager) generateCronFunction(name string, jobSpec Spec) func() {
 	return func() {
 		jobName := fmt.Sprintf("%s-%d", name, time.Now().Unix())
-		log.Infof("Running cron job %s", jobName)
 		err := j.Launch(context.Background(), jobName, jobSpec)
 		if err != nil {
 			log.Errorf("Error running cron job %s: %v", jobName, err)
 		} else {
-			log.Infof("Successfully ran cron job %s", jobName)
+			log.Infof("Launched cron job %s", jobName)
 		}
 	}
 }
@@ -213,11 +248,12 @@ func (j *ProcessJobManager) Launch(
 	name string,
 	spec Spec,
 ) error {
+	log.Infof("Running %s job %s.", spec.Type(), name)
 	if _, ok := j.getCmd(name); ok {
 		return ErrJobAlreadyExists
 	}
 
-	cmd, err := j.mapJobTypeToCmd(spec)
+	cmd, err := j.mapJobTypeToCmd(name, spec)
 	cmd.Env = os.Environ()
 	if err != nil {
 		return err
@@ -256,19 +292,28 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 		return shared.PendingExecutionStatus, nil
 	}
 
+	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success
+	//  execution status when it should be failure.
+	// TODO(ENG-1196): workflows that do not completely succeed still return a success execution status here.
 	err = command.cmd.Wait()
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.
 	defer j.deleteCmd(name)
 	if err != nil {
-		log.Errorf("Unexpected error occurred while executing the job: \nStdout: %s\nStderr: %s",
+		log.Errorf("Unexpected error occurred while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
+			name,
+			err,
 			command.stdout.String(),
 			command.stderr.String(),
 		)
-
-		return shared.FailedExecutionStatus, nil
+		return shared.FailedExecutionStatus, nil // nolint:nilerr // Poll() should not error on command execution issues.
 	}
 
+	log.Infof("Job %s Stdout:\n %s \n Stderr: \n %s",
+		name,
+		command.stdout.String(),
+		command.stderr.String(),
+	)
 	return shared.SucceededExecutionStatus, nil
 }
 

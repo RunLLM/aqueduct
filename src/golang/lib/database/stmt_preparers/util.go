@@ -48,16 +48,6 @@ func removeTrailingSemiColon(s string) string {
 	return s
 }
 
-// Removes trailing comma if it exists, also checks for comma followed by space
-func removeTrailingComma(s string) string {
-	if s[len(s)-1] == ',' {
-		return s[:len(s)-1]
-	} else if s[len(s)-2:] == ", " {
-		return s[:len(s)-2]
-	}
-	return s
-}
-
 // Generates a temporary table name
 func generateTempName() string {
 	uid, _ := uuid.NewUUID()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/gorhill/cronexpr"
@@ -24,7 +25,7 @@ func (s *AqServer) triggerMissedCronJobs(
 	if lastExpectedTriggerTime > referenceTime.Unix() {
 		// This means that the workflow should have been triggered, but it wasn't.
 		// So we manually trigger the workflow here.
-		_, _, err := (&RefreshWorkflowHandler{
+		_, _, err := (&handler.RefreshWorkflowHandler{
 			Database:       s.Database,
 			JobManager:     s.JobManager,
 			GithubManager:  s.GithubManager,
@@ -32,8 +33,8 @@ func (s *AqServer) triggerMissedCronJobs(
 			WorkflowReader: s.WorkflowReader,
 		}).Perform(
 			ctx,
-			&refreshWorkflowArgs{
-				workflowId: workflowId,
+			&handler.RefreshWorkflowArgs{
+				WorkflowId: workflowId,
 			},
 		)
 		if err != nil {
@@ -101,7 +102,7 @@ func (s *AqServer) initializeWorkflowCronJobs(ctx context.Context) error {
 				wf.Schedule.CronSchedule = ""
 			}
 
-			err = createWorkflowCronJob(
+			err = handler.CreateWorkflowCronJob(
 				ctx,
 				&wf,
 				s.Database.Config(),
