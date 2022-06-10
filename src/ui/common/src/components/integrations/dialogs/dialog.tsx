@@ -44,7 +44,7 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   integrationId,
   onCloseDialog,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [config, setConfig] = useState<CSVConfig>({
     name: '',
@@ -98,7 +98,7 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
         setSuccessMessage(successMessage);
         setIsConnecting(false);
         onCloseDialog();
-        router.push(`/integration/${integrationId}`);
+        navigate(`/integration/${integrationId}`);
       })
       .catch((err) => {
         const errorMessage = 'Unable to upload CSV file to the demo database: ';
