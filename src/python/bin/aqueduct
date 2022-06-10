@@ -24,7 +24,7 @@ welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI and the backend server are accessible at: http://%s:%s
+The Web UI and the backend server are accessible at: http://%s:%d
 ***************************************************
 """
 
@@ -143,7 +143,7 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("localhost", port)) == 0
 
-def start(expose):
+def start(expose, port):
     if not os.path.isdir(ui_directory):
         update_ui_version()
 
@@ -188,11 +188,15 @@ def start(expose):
                 execute_command(["rm", os.path.join(server_directory, "__version__")])
             exit(1)
 
-    server_port = default_server_port
-    while is_port_in_use(server_port):
-        server_port += 1
-    
-    print("Next available port is %s" % server_port)
+    if port is None:
+        server_port = default_server_port
+        while is_port_in_use(server_port):
+            server_port += 1
+        if not server_port == default_server_port:
+            print("Default port %d is occupied. Next available port is %d" % (default_server_port, server_port))
+    else:
+        server_port = port
+        print("Server will use the user-specified port %d" % server_port)
 
     if expose:
         popen_handle = execute_command_nonblocking(
@@ -327,6 +331,7 @@ if __name__ == "__main__":
                                ''')
     start_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
+    start_args.add_argument('--port', dest="port", help="Specify the port that the server listens to.")
     server_args = subparsers.add_parser('server', help=
                                    '''[DEPRECATED] This starts the Aqueduct server in a
                                    blocking fashion. To background the process,
@@ -361,7 +366,7 @@ if __name__ == "__main__":
     
     if args.command == "start":
         try:
-            popen_handle, server_port = start(args.expose)
+            popen_handle, server_port = start(args.expose, int(args.port))
             time.sleep(1)
             terminated = popen_handle.poll()
             if terminated:
