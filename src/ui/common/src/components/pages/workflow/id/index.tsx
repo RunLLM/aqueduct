@@ -194,7 +194,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   const updateLayout = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      selectedDag &&
+      !!selectedDag &&
       dagPosition?.loadingStatus.loading === LoadingStatusEnum.Succeeded
     ) {
       const elem = getDagLayoutElements(
