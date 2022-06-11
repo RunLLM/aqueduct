@@ -39,6 +39,50 @@ type S3LoadParams struct {
 	Format   string `json:"format"`
 }
 
+func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, bool) {
+	postgres, ok := params.(*PostgresLoadParams)
+	if ok {
+		return &postgres.RelationalDBLoadParams, true
+	}
+
+	snowflake, ok := params.(*SnowflakeLoadParams)
+	if ok {
+		return &snowflake.RelationalDBLoadParams, true
+	}
+
+	mysql, ok := params.(*MySqlLoadParams)
+	if ok {
+		return &mysql.RelationalDBLoadParams, true
+	}
+
+	redshift, ok := params.(*RedshiftLoadParams)
+	if ok {
+		return &redshift.RelationalDBLoadParams, true
+	}
+
+	mariadb, ok := params.(*MariaDbLoadParams)
+	if ok {
+		return &mariadb.RelationalDBLoadParams, true
+	}
+
+	sqlserver, ok := params.(*SqlServerLoadParams)
+	if ok {
+		return &sqlserver.RelationalDBLoadParams, true
+	}
+
+	bigquery, ok := params.(*BigQueryLoadParams)
+	if ok {
+		return &bigquery.RelationalDBLoadParams, true
+	}
+
+	sqlite, ok := params.(*SqliteLoadParams)
+	if ok {
+		return &sqlite.RelationalDBLoadParams, true
+	}
+
+	return nil, false
+}
+
 func (*PostgresLoadParams) isLoadParams() {}
 
 func (*SnowflakeLoadParams) isLoadParams() {}
