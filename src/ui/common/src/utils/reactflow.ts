@@ -34,6 +34,11 @@ export type ReactFlowNodeData = {
   label?: string;
 };
 
+export type GetPositionResponse = {
+  operator_positions: { [opId: string]: NodePos }
+  artifact_positions: { [artfId: string]: NodePos }
+}
+
 // These are generic dag supports
 type NodePos = { x: number; y: number };
 
@@ -121,14 +126,16 @@ async function getPositions(
   }
 }
 
-export const getDagLayoutElements = async (
+export const getDagLayoutElements = (
   operators: { [id: string]: Operator },
   artifacts: { [id: string]: Artifact },
+  position: GetPositionResponse,
   onChange: () => void,
   onConnect: (any) => void,
   apiKey: string
-): Promise<{ nodes: Node<ReactFlowNodeData>[]; edges: Edge[] }> => {
-  const [opPositions, artfPositions] = await getPositions(operators, apiKey);
+): { nodes: Node<ReactFlowNodeData>[]; edges: Edge[] } => {
+  const opPositions = position.operator_positions;
+  const artfPositions = position.artifact_positions;
   const opNodes = Object.values(operators).map((op) =>
     getOperatorNode(op, opPositions[op.id], onChange, onConnect)
   );

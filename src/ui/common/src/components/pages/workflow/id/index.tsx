@@ -19,6 +19,7 @@ import {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleGetSelectDagPosition,
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -70,6 +71,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
+  const dagPosition = useSelector(
+    (state: RootState) => state.workflowReducer.selectedDagPosition
+  );
 
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
@@ -100,6 +104,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     }
   }, [workflow.dagResults]);
 
+  useEffect(() => {
+    if (workflow.selectedDag) {
+      dispatch(handleGetSelectDagPosition({ apiKey: user.apiKey, operators: workflow.selectedDag?.operators }))
+    }
+  }, [workflow.selectedDag]);
   /**
    * This function dispatches calls to fetch artifact results and contents.
    *
@@ -179,34 +188,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     dispatch(resetSelectedNode());
   };
 
-  const asyncSetDagLayoutElements = async (
-    operators: { [id: string]: Operator },
-    artifacts: { [id: string]: Artifact },
-    apiKey: string
-  ) => {
-    const elem = await getDagLayoutElements(
-      operators,
-      artifacts,
-      onChange,
-      () => {
-        // Do nothing.
-      },
-      apiKey
-    );
-
-    setDagLayoutElements(elem);
-  };
 
   const updateLayout = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      !!selectedDag
+      selectedDag && dagPosition?.loadingStatus.loading === LoadingStatusEnum.Succeeded 
     ) {
-      asyncSetDagLayoutElements(
+      const elem = getDagLayoutElements(
         selectedDag.operators,
         selectedDag.artifacts,
+        dagPosition.result,
+        onChange,
+        () => {
+          // Do nothing.
+        },
         user.apiKey
       );
+      setDagLayoutElements(elem);
     }
   };
 
@@ -225,15 +223,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
 
   useEffect(getDagDetails, [workflow.selectedDag]);
 
-  useEffect(updateLayout, [
-    user.apiKey,
-    workflow.selectedDag,
-    workflow.selectedResult,
-    workflow.loadingStatus.loading,
-    openSideSheetState.bottomSideSheetOpen,
-    openSideSheetState.workflowStatusBarOpen,
-    currentNode,
-  ]);
+  useEffect(updateLayout, [workflow.selectedDagPosition]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {

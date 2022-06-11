@@ -2,8 +2,9 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { GetArtifactResultResponse } from '../utils/artifacts';
-import { GetOperatorResultResponse } from '../utils/operators';
+import { GetOperatorResultResponse, Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
+import { GetPositionResponse } from '../utils/reactflow';
 import {
   GetWorkflowResponse,
   normalizeGetWorkflowResponse,
@@ -12,6 +13,11 @@ import {
 } from '../utils/workflows';
 
 const { apiAddress } = useAqueductConsts();
+
+type selectDagPositionResult = {
+  loadingStatus: LoadingStatus;
+  result?: GetPositionResponse
+}
 
 export type ArtifactResult = {
   loadingStatus: LoadingStatus;
@@ -31,6 +37,7 @@ export type WorkflowState = {
 
   selectedResult?: WorkflowDagResultSummary;
   selectedDag?: WorkflowDag;
+  selectedDagPosition? : selectDagPositionResult;
   artifactResults: { [id: string]: ArtifactResult };
   operatorResults: { [id: string]: OperatorResult };
 };
@@ -140,6 +147,39 @@ export const handleGetWorkflow = createAsyncThunk<
   }
 );
 
+export const handleGetSelectDagPosition = createAsyncThunk<
+  GetPositionResponse,
+  { apiKey: string; operators: { [id: string]: Operator } }
+>(
+  'workflowReducer/getSelectDagPosition',
+  async (
+    args: {
+      apiKey: string;
+      operators: { [id: string]: Operator };
+    },
+    thunkAPI
+  ) => {
+    console.log("reached handle Position");
+    const { apiKey, operators } = args;
+    const res = await fetch(
+      `${apiAddress}/api/positioning`,
+      {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+        },
+        body: JSON.stringify(operators),
+      }
+    );
+
+    const body = await res.json();
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(body.error);
+    }
+    return body as GetPositionResponse;
+  }
+);
+
 const handleSelectResultIdx = (state: WorkflowState, idx: number) => {
   state.artifactResults = {};
   state.operatorResults = {};
@@ -156,6 +196,26 @@ export const workflowSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(handleGetSelectDagPosition.pending, (state, action) => {
+      state.selectedDagPosition = {
+        loadingStatus: { loading: LoadingStatusEnum.Loading, err: '' },
+      };
+    });
+    builder.addCase(handleGetSelectDagPosition.fulfilled, (state, action) => {
+      const response = action.payload;
+      state.selectedDagPosition.loadingStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+      state.selectedDagPosition.result = response;
+    });
+    builder.addCase(handleGetSelectDagPosition.rejected, (state, action) => {
+      const payload = action.payload;
+      state.selectedDagPosition.loadingStatus = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
+    });
     builder.addCase(handleGetOperatorResults.pending, (state, action) => {
       const operatorId = action.meta.arg.operatorId;
       state.operatorResults[operatorId] = {
