@@ -35,9 +35,9 @@ export type ReactFlowNodeData = {
 };
 
 export type GetPositionResponse = {
-  operator_positions: { [opId: string]: NodePos }
-  artifact_positions: { [artfId: string]: NodePos }
-}
+  operator_positions: { [opId: string]: NodePos };
+  artifact_positions: { [artfId: string]: NodePos };
+};
 
 // These are generic dag supports
 type NodePos = { x: number; y: number };

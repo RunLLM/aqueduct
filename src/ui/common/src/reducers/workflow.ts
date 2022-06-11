@@ -3,8 +3,8 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { GetArtifactResultResponse } from '../utils/artifacts';
 import { GetOperatorResultResponse, Operator } from '../utils/operators';
-import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import { GetPositionResponse } from '../utils/reactflow';
+import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import {
   GetWorkflowResponse,
   normalizeGetWorkflowResponse,
@@ -16,8 +16,8 @@ const { apiAddress } = useAqueductConsts();
 
 type selectDagPositionResult = {
   loadingStatus: LoadingStatus;
-  result?: GetPositionResponse
-}
+  result?: GetPositionResponse;
+};
 
 export type ArtifactResult = {
   loadingStatus: LoadingStatus;
@@ -37,7 +37,7 @@ export type WorkflowState = {
 
   selectedResult?: WorkflowDagResultSummary;
   selectedDag?: WorkflowDag;
-  selectedDagPosition? : selectDagPositionResult;
+  selectedDagPosition?: selectDagPositionResult;
   artifactResults: { [id: string]: ArtifactResult };
   operatorResults: { [id: string]: OperatorResult };
 };
@@ -159,18 +159,15 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    console.log("reached handle Position");
+    console.log('reached handle Position');
     const { apiKey, operators } = args;
-    const res = await fetch(
-      `${apiAddress}/api/positioning`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': apiKey,
-        },
-        body: JSON.stringify(operators),
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/positioning`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(operators),
+    });
 
     const body = await res.json();
     if (!res.ok) {

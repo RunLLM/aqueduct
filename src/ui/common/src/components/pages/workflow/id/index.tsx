@@ -18,15 +18,13 @@ import {
 import {
   handleGetArtifactResults,
   handleGetOperatorResults,
-  handleGetWorkflow,
   handleGetSelectDagPosition,
+  handleGetWorkflow,
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
-import { Artifact } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
-import { Operator } from '../../../../utils/operators';
 import { exportCsv } from '../../../../utils/preview';
 import { getDagLayoutElements } from '../../../../utils/reactflow';
 import { LoadingStatusEnum } from '../../../../utils/shared';
@@ -106,7 +104,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
 
   useEffect(() => {
     if (workflow.selectedDag) {
-      dispatch(handleGetSelectDagPosition({ apiKey: user.apiKey, operators: workflow.selectedDag?.operators }))
+      dispatch(
+        handleGetSelectDagPosition({
+          apiKey: user.apiKey,
+          operators: workflow.selectedDag?.operators,
+        })
+      );
     }
   }, [workflow.selectedDag]);
   /**
@@ -188,11 +191,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     dispatch(resetSelectedNode());
   };
 
-
   const updateLayout = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      selectedDag && dagPosition?.loadingStatus.loading === LoadingStatusEnum.Succeeded 
+      selectedDag &&
+      dagPosition?.loadingStatus.loading === LoadingStatusEnum.Succeeded
     ) {
       const elem = getDagLayoutElements(
         selectedDag.operators,
