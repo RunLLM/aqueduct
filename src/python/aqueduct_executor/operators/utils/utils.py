@@ -14,8 +14,9 @@ _DEFAULT_ENCODING = "utf8"
 # Typing: all the possible artifact types to a function. Should be in sync with `InputArtifactType`.
 InputArtifact = Union[pd.DataFrame, float, int]
 
-def read_csv(csv) -> pd.DataFrame:
-    return pd.read_csv(io.StringIO(csv))
+def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
+    input_bytes = storage.get(path)
+    return pd.read_csv(io.BytesIO(input_bytes))
 
 def read_artifacts(
     storage: Storage,

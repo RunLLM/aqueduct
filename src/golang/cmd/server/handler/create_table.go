@@ -14,6 +14,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -55,7 +56,7 @@ type CreateTableArgs struct {
 	*aq_context.AqContext
 	tableName     string
 	integrationId uuid.UUID
-	csv           string
+	csv           []byte
 }
 
 type CreateTableResponse struct{}
@@ -76,11 +77,10 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	csvBytes, err := io.ReadAll(r.Body)
+	csv, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
 	}
-	csv := string(csvBytes)
 
 	return &CreateTableArgs{
 		AqContext:     aqContext,
@@ -103,9 +103,15 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Cannot get integration.")
 	}
 
+	// Save CSV
+	contentPath := fmt.Sprintf("create-table-content-%s", args.RequestId)
+	if err := storage.NewStorage(h.StorageConfig).Put(ctx, contentPath, args.csv); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
+	}
+
 	emptyResp := CreateTableResponse{}
 
-	if statusCode, err := CreateTable(ctx, args, integrationObject, h.Vault, h.StorageConfig, h.JobManager); err != nil {
+	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, h.Vault, h.StorageConfig, h.JobManager); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -114,7 +120,8 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 // CreateTable adds the CSV as a table in the database. It returns a status code for the request
 // and an error, if any.
-func CreateTable(ctx context.Context, args *CreateTableArgs, integrationObject *integration.Integration, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager) (int, error) {
+func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string, integrationObject *integration.Integration, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager) (int, error) {
+
 	// Schedule load table job
 	jobMetadataPath := fmt.Sprintf("create-table-%s", args.RequestId)
 
@@ -135,7 +142,7 @@ func CreateTable(ctx context.Context, args *CreateTableArgs, integrationObject *
 
 	jobSpec := job.NewLoadTableSpec(
 		jobName,
-		args.csv,
+		contentPath,
 		storageConfig,
 		jobMetadataPath,
 		integrationObject.Service,

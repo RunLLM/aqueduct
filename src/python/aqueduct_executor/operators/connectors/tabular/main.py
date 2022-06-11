@@ -83,9 +83,7 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
     op.load(spec.parameters, inputs[0])
 
 def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
-    df = utils.read_csv(spec.csv)
-    print(df)
-    print(spec.load_parameters.parameters)
+    df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
     
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):

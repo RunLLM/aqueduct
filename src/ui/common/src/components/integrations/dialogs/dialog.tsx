@@ -43,7 +43,6 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   integrationId,
   onCloseDialog,
 }) => {
-
   const [config, setConfig] = useState<CSVConfig>({
     name: '',
     csv: null,
