@@ -75,7 +75,7 @@ func initializeOrchestration(
 // `updateCompletedOp` checks the status of actively running operators and updates
 // their status according to the execution result. It returns a bool indicating
 // whether the workflow execution should stop due to an error in the user code, and
-// any internal system error occured during the execution.
+// any internal system error occurred during the execution.
 func updateCompletedOp(
 	ctx context.Context,
 	operators map[uuid.UUID]operator.Operator,
@@ -93,7 +93,6 @@ func updateCompletedOp(
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 	jobManager job.JobManager,
-	vaultObject vault.Vault,
 	isPreview bool,
 ) (bool, error) {
 	completedIds := make([]uuid.UUID, 0, len(active))
@@ -265,7 +264,7 @@ func waitForActiveOperators(
 				// If the err is job doesn't exist, then it means it already finished and was garbage-collected.
 				if err != job.ErrJobNotExist {
 					log.Errorf(
-						"Unexpected error occured when checking the job status during failed workflow cleanup. %v",
+						"Unexpected error occurred when checking the job status during failed workflow cleanup. %v",
 						err,
 					)
 					return
@@ -475,7 +474,6 @@ func orchestrate(
 			artifactResultWriter,
 			db,
 			jobManager,
-			vaultObject,
 			isPreview,
 		)
 		if err != nil {

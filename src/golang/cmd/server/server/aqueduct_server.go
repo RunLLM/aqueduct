@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/connection"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
@@ -171,7 +170,10 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	ctx := context.Background()
 
 	// Delete old CronJob if it exists
-	s.JobManager.DeleteCronJob(ctx, name)
+	err := s.JobManager.DeleteCronJob(ctx, name)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete existing workflow retention job")
+	}
 
 	spec := job.NewWorkflowRetentionJobSpec(
 		s.Database.Config(),
@@ -179,14 +181,14 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 		s.JobManager.Config(),
 	)
 
-	err := s.JobManager.DeployCronJob(
+	err = s.JobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
 		spec,
 	)
 	if err != nil {
-		return errors.Wrap(err, "unable to start workflow retention cron job")
+		return errors.Wrap(err, "Unable to start workflow retention cron job")
 	}
 	return nil
 }
@@ -234,7 +236,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
-func (s *AqServer) Run(expose bool) {
+func (s *AqServer) Run(expose bool, port int) {
 	// When we configure the server to listen on ":<PORT>" (without specifying the ip), it exposes itself
 	// to the public.
 	ip := ""
@@ -246,8 +248,8 @@ func (s *AqServer) Run(expose bool) {
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
-	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), connection.ServerInternalPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, connection.ServerInternalPort), s.Router))
+	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, port), s.Router))
 }
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {

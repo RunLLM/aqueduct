@@ -1,0 +1,50 @@
+run:
+  timeout: 3m
+  tests: false
+  skip-dirs:
+    - .*/tests/*
+
+output:
+  sort-results: true
+
+# These were hand-picked from the linters in https://golangci-lint.run/usage/linters.
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - staticcheck
+    - structcheck
+    - unused
+    - varcheck
+    - bidichk
+    - decorder
+    - exhaustive
+    - makezero
+    - nilerr
+    - gci
+    - goconst
+    - gofmt # has autofixer.
+    - gofumpt # has autofixer.
+    - goheader
+    - goimports # has autofixer.
+    - goprintffuncname
+    - gosec
+    - misspell # has autofixer.
+    - prealloc
+    - predeclared
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - unparam
+    - wastedassign
+#    - stylecheck # TODO(ENG-1231)
+#    - wrapcheck # TODO(ENG-1230): Wrapping errors at the edge of our system will give us better stack traces.
+
+
+linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
+  gosec:
+    severity: high
