@@ -22,7 +22,7 @@ jobs:
         run: pip3 install .
 
       - name: Install pytest
-        run: pip3 install pytest pyyaml
+        run: pip3 install pytest
 
       - name: Run Tests
         working-directory: ./sdk

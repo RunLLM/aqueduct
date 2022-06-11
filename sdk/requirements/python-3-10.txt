@@ -8,3 +8,4 @@ croniter
 pydantic
 ipynbname
 plotly
+pyyaml
