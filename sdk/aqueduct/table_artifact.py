@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Callable, Any
+from typing import Callable, Any, Optional, Dict
 import uuid
 
 import pandas as pd
@@ -15,6 +15,7 @@ from aqueduct.dag import (
     AddOrReplaceOperatorDelta,
     SubgraphDAGDelta,
     RemoveCheckOperatorDelta,
+    UpdateParametersDelta,
 )
 from aqueduct.enums import OperatorType, FunctionType, FunctionGranularity
 from aqueduct.error import (
@@ -73,7 +74,7 @@ class TableArtifact(Artifact):
         self._dag = dag
         self._artifact_id = artifact_id
 
-    def get(self) -> pd.DataFrame:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
 
         Returns:
@@ -91,7 +92,10 @@ class TableArtifact(Artifact):
                 SubgraphDAGDelta(
                     artifact_ids=[self._artifact_id],
                     include_load_operators=False,
-                )
+                ),
+                UpdateParametersDelta(
+                    parameters=parameters,
+                ),
             ],
             make_copy=True,
         )

@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+import json
+from typing import List, Optional, Union, Any
 import uuid
 
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ from aqueduct.enums import (
     LoadUpdateMode,
     CheckSeverity,
 )
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
 
 
@@ -186,3 +187,14 @@ def get_operator_type(operator: Operator) -> OperatorType:
         return OperatorType.PARAM
     else:
         raise AqueductError("Invalid operator type")
+
+
+def serialize_parameter_value(name: str, val: Any) -> str:
+    """A parameter must be JSON serializable."""
+    try:
+        return str(json.dumps(val))
+    except Exception as e:
+        raise InvalidUserArgumentException(
+            "Provided parameter %s must be able to be converted into a JSON object: %s"
+            % (name, str(e))
+        )

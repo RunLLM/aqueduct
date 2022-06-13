@@ -22,7 +22,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.s3_integration import S3Integration
-from .operators import Operator, ParamSpec, OperatorSpec
+from .operators import Operator, ParamSpec, OperatorSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
     schedule_from_cron_string,
@@ -128,13 +128,7 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
-        # Check that the supplied value is JSON-able.
-        try:
-            serialized_default = str(json.dumps(default))
-        except Exception as e:
-            raise InvalidUserArgumentException(
-                "Provided parameter must be able to be converted into a JSON object: %s" % str(e)
-            )
+        val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -146,7 +140,7 @@ class Client:
                         id=operator_id,
                         name=name,
                         description=description,
-                        spec=OperatorSpec(param=ParamSpec(val=serialized_default)),
+                        spec=OperatorSpec(param=ParamSpec(val=val)),
                         inputs=[],
                         outputs=[output_artifact_id],
                     ),
