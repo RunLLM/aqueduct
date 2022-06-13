@@ -52,18 +52,18 @@ def test_basic_param_creation(client):
     assert kv_df.get().equals(pd.DataFrame(data=kv))
 
 
-def test_non_jsonable_parameter(sp_client):
+def test_non_jsonable_parameter(client):
     with pytest.raises(InvalidUserArgumentException):
-        _ = sp_client.create_param(name="bad param", default=b"cant serialize me")
+        _ = client.create_param(name="bad param", default=b"cant serialize me")
 
-    param = sp_client.create_param(name="number", default=8)
+    param = client.create_param(name="number", default=8)
     param_doubled = double_number_input(param)
     with pytest.raises(InvalidUserArgumentException):
         _ = param_doubled.get(parameters={"number": b"cant serialize me"})
 
 
-def test_get_with_custom_parameter(sp_client):
-    param = sp_client.create_param(name="number", default=8)
+def test_get_with_custom_parameter(client):
+    param = client.create_param(name="number", default=8)
     assert param.get() == 8
 
     param_doubled = double_number_input(param)
