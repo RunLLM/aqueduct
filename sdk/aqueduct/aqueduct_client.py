@@ -334,9 +334,9 @@ class Client:
             if any(not isinstance(name, str) for name in parameters):
                 raise InvalidUserArgumentException("Parameters must be keyed by strings.")
 
-            serialized_params = json.dumps({
-                name: serialize_parameter_value(name, val) for name, val in parameters.items()
-            })
+            serialized_params = json.dumps(
+                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
+            )
 
         if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
             raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
