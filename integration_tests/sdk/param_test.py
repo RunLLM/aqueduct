@@ -13,7 +13,6 @@ import pandas as pd
 def double_number_input(num: int) -> float:
     if not isinstance(num, int):
         raise Exception("Expected an integer input.")
-    print("Result is ", 2 * num)
     return float(2 * num)
 
 
