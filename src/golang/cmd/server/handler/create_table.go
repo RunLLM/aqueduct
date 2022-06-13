@@ -104,9 +104,12 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	// Save CSV
 	contentPath := fmt.Sprintf("create-table-content-%s", args.RequestId)
-	if err := storage.NewStorage(h.StorageConfig).Put(ctx, contentPath, args.csv); err != nil {
+	csvStorage := storage.NewStorage(h.StorageConfig)
+	if err := csvStorage.Put(ctx, contentPath, args.csv); err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
 	}
+
+	defer csvStorage.Delete(ctx, contentPath)
 
 	emptyResp := CreateTableResponse{}
 
