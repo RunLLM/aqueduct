@@ -2,6 +2,7 @@ from typing import Dict, List
 
 import pytest
 
+from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name, run_flow_test
 from aqueduct import metric, op
@@ -49,6 +50,28 @@ def test_basic_param_creation(client):
 
     kv_df = convert_dict_to_df(param)
     assert kv_df.get().equals(pd.DataFrame(data=kv))
+
+
+def test_non_jsonable_parameter(sp_client):
+    with pytest.raises(InvalidUserArgumentException):
+        _ = sp_client.create_param(name="bad param", default=b"cant serialize me")
+
+    param = sp_client.create_param(name="number", default=8)
+    param_doubled = double_number_input(param)
+    with pytest.raises(InvalidUserArgumentException):
+        _ = param_doubled.get(parameters={"number": b"cant serialize me"})
+
+
+def test_get_with_custom_parameter(sp_client):
+    param = sp_client.create_param(name="number", default=8)
+    assert param.get() == 8
+
+    param_doubled = double_number_input(param)
+    assert param_doubled.get(parameters={"number": 20}) == 40
+    assert param_doubled.get() == 2 * 8
+
+    with pytest.raises(InvalidUserArgumentException):
+        param_doubled.get(parameters={"non-existant param": 10})
 
 
 @op
