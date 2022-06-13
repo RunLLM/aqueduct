@@ -15,6 +15,11 @@ _DEFAULT_ENCODING = "utf8"
 InputArtifact = Union[pd.DataFrame, float, int]
 
 
+def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
+    input_bytes = storage.get(path)
+    return pd.read_csv(io.BytesIO(input_bytes))
+
+
 def read_artifacts(
     storage: Storage,
     input_paths: List[str],

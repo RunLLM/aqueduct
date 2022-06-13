@@ -1,8 +1,9 @@
-import { Box, Input, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useEffect, useState } from 'react';
 
 import { BigQueryConfig, IntegrationConfig } from '../../../utils/integrations';
+import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: BigQueryConfig = {
@@ -17,6 +18,7 @@ export type FileEventTarget = EventTarget & { files: FileList };
 
 export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [projectId, setProjectId] = useState<string>(null);
+  const [file, setFile] = useState(null);
   const [credentials, setCredentials] = useState<string>(null);
 
   useEffect(() => {
@@ -26,6 +28,20 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
     };
     setDialogConfig(config);
   }, [projectId, credentials]);
+
+  const fileUploadDescription = (
+    <>
+      <>Follow the instructions </>
+      <Link
+        sx={{ fontSize: 'inherit' }}
+        target="_blank"
+        href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
+      >
+        here
+      </Link>
+      <> to get your service account key file.</>
+    </>
+  );
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -39,32 +55,22 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         value={projectId}
       />
 
-      <Box sx={{ my: 2 }}>
-        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-          Service Account Credentials*
-        </Typography>
-        <Typography variant="body2">
-          {'Follow the instructions '}
-          <Link
-            sx={{ fontSize: 'inherit' }}
-            target="_blank"
-            href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
-          >
-            here.
-          </Link>
-          {' to get your service account key file.'}
-        </Typography>
-
-        <Input
-          type="file"
-          sx={{ marginTop: 2 }}
-          placeholder={'Upload your service account key file.'}
-          onChange={(event) => {
-            const fileEvent: FileEventTarget = event.target as FileEventTarget;
-            readCredentialsFile(fileEvent.files[0], setCredentials);
-          }}
-        />
-      </Box>
+      <IntegrationFileUploadField
+        label={'Service Account Credentials*'}
+        description={fileUploadDescription}
+        required={true}
+        file={file}
+        placeholder={'Upload your service account key file.'}
+        onFiles={(files) => {
+          const file = files[0];
+          setFile(file);
+          readCredentialsFile(file, setCredentials);
+        }}
+        onReset={(_) => {
+          setFile(null);
+          setCredentials(null);
+        }}
+      />
     </Box>
   );
 };

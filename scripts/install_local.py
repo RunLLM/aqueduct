@@ -33,8 +33,13 @@ def execute_command(args, cwd=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--update-ui', dest="update_ui", default=False, action='store_true',
-                    help="Whether to build and replace UI files.")
+    parser.add_argument(
+        "--update-ui",
+        dest="update_ui",
+        default=False,
+        action="store_true",
+        help="Whether to build and replace UI files.",
+    )
     args = parser.parse_args()
     print("Current directory should be the root directory of the aqueduct repo.")
     cwd = os.getcwd()
