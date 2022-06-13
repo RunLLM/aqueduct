@@ -3,7 +3,6 @@ import pytest
 
 from aqueduct_executor.operators.connectors.tabular import connector
 
-
 def authenticate_test(conn: connector.TabularConnector):
     try:
         conn.authenticate()

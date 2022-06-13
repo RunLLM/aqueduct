@@ -9,6 +9,8 @@ type RelationalDBLoadParams struct {
 	UpdateMode string `json:"update_mode"`
 }
 
+type GenericRelationalDBLoadParams struct{ RelationalDBLoadParams }
+
 type PostgresLoadParams struct{ RelationalDBLoadParams }
 
 type SnowflakeLoadParams struct{ RelationalDBLoadParams }
@@ -82,6 +84,8 @@ func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, b
 
 	return nil, false
 }
+
+func (*GenericRelationalDBLoadParams) isLoadParams() {}
 
 func (*PostgresLoadParams) isLoadParams() {}
 
