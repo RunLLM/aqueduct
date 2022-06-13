@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -19,6 +20,7 @@ import (
 
 type RefreshWorkflowArgs struct {
 	WorkflowId uuid.UUID
+	Parameters map[string]string
 }
 
 // Refresh workflow creates a new workflow version by
@@ -66,8 +68,14 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
+	parameters, err := request.ExtractParamsfromRequest(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The user-defined parameters could not be extracted in current format.")
+	}
+
 	return &RefreshWorkflowArgs{
 		WorkflowId: workflowId,
+		Parameters: parameters,
 	}, http.StatusOK, nil
 }
 
@@ -99,6 +107,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		h.Vault.Config(),
 		h.JobManager.Config(),
 		h.GithubManager.Config(),
+		args.Parameters,
 	)
 
 	err = h.JobManager.Launch(

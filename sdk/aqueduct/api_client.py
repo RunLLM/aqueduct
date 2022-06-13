@@ -218,9 +218,9 @@ class APIClient:
         return RegisterWorkflowResponse(**resp.json())
 
     def refresh_workflow(
-            self,
-            flow_id: str,
-            serialized_params: Optional[str] = None,
+        self,
+        flow_id: str,
+        serialized_params: Optional[str] = None,
     ) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(

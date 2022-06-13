@@ -275,6 +275,7 @@ func CreateWorkflowCronJob(
 		vaultObject.Config(),
 		jobManager.Config(),
 		githubManager.Config(),
+		nil, /* parameters */
 	)
 
 	err := jobManager.DeployCronJob(
