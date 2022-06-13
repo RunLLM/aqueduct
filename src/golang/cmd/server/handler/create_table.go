@@ -109,9 +109,13 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
 	}
 
+	var returnErr error = nil
+	returnStatus := http.StatusOK
+
 	defer func() {
-		if err := csvStorage.Delete(ctx, contentPath); err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Error deleting CSV from temporary storage.")
+		if deleteErr := csvStorage.Delete(ctx, contentPath); deleteErr != nil {
+			returnErr = errors.Wrap(deleteErr, "Error deleting CSV from temporary storage.")
+			returnStatus = http.StatusInternalServerError
 		}
 	}()
 
@@ -121,7 +125,7 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResp, statusCode, err
 	}
 
-	return emptyResp, http.StatusOK, nil
+	return emptyResp, returnStatus, returnErr
 }
 
 // CreateTable adds the CSV as a table in the database. It returns a status code for the request
