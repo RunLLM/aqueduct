@@ -1,4 +1,12 @@
-import { Alert, Autocomplete, TextField, Typography } from '@mui/material';
+import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  Alert,
+  Autocomplete,
+  Button,
+  TextField,
+  Typography,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
@@ -7,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
+import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
 import DefaultLayout from '../../../../components/layouts/default';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -29,6 +38,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;
   const [table, setTable] = useState<string>('');
+  const [showDialog, setShowDialog] = useState(false);
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
@@ -148,6 +158,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         </Typography>
 
         <DetailIntegrationCard integration={selectedIntegration} />
+
+        {selectedIntegration.name === 'aqueduct_demo' && (
+          <Button variant="contained" onClick={() => setShowDialog(true)}>
+            <FontAwesomeIcon icon={faUpload} />
+            <Typography sx={{ ml: 1 }}>Add CSV</Typography>
+          </Button>
+        )}
+
+        {showDialog && (
+          <AddTableDialog
+            user={user}
+            integrationId={selectedIntegration.id}
+            onCloseDialog={() => setShowDialog(false)}
+          />
+        )}
 
         <Box sx={{ mt: 4 }}>
           <Typography variant="h4" gutterBottom component="div">

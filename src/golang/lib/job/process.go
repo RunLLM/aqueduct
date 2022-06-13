@@ -207,6 +207,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 	} else if spec.Type() == AuthenticateJobType ||
 		spec.Type() == LoadJobType ||
 		spec.Type() == ExtractJobType ||
+		spec.Type() == LoadTableJobType ||
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
@@ -254,10 +255,10 @@ func (j *ProcessJobManager) Launch(
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
-	cmd.Env = os.Environ()
 	if err != nil {
 		return err
 	}
+	cmd.Env = os.Environ()
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

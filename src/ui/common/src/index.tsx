@@ -15,7 +15,12 @@ import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
-import { IntegrationDialog } from './components/integrations/dialogs/dialog';
+import { CSVDialog } from './components/integrations/dialogs/csvDialog';
+import {
+  AddTableDialog,
+  IntegrationDialog,
+} from './components/integrations/dialogs/dialog';
+import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
 import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
@@ -148,9 +153,12 @@ import {
 import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
 import {
+  addTable,
   connectIntegration,
+  CSVConfig,
   fetchBranches,
   fetchRepos,
+  FileData,
   formatService,
   SupportedIntegrations,
 } from './utils/integrations';
@@ -199,6 +207,8 @@ import {
 
 export {
   AddIntegrations,
+  addTable,
+  AddTableDialog,
   AllTransition,
   AqueductBezier,
   AqueductDemoCard,
@@ -228,6 +238,8 @@ export {
   connectIntegration,
   ContentSidebarOffsetInPx,
   createCronString,
+  CSVConfig,
+  CSVDialog,
   DatabaseNode,
   DataCard,
   dataCardName,
@@ -249,6 +261,7 @@ export {
   fetchBranches,
   fetchRepos,
   fetchUser,
+  FileData,
   FloatArtifactNode,
   formatService,
   FunctionGranularity,
@@ -281,6 +294,7 @@ export {
   IntegrationCard,
   IntegrationDetailsPage,
   IntegrationDialog,
+  IntegrationFileUploadField,
   integrations,
   IntegrationsPage,
   integrationsSlice,
