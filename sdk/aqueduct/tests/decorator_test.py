@@ -24,7 +24,6 @@ def test_packaging_files():
 
         assert not os.path.exists("./test_function/test_function.py")
         assert os.path.exists("./test_function/test_dependency_folder/helper_function.py")
-        assert os.path.exists("./test_function/requirements.txt")
 
     finally:
         delete_zip_folder_and_file("test_function")
@@ -69,7 +68,6 @@ def test_serialize_function():
     zip_file = zipfile.ZipFile(zip_buffer, "r", zipfile.ZIP_DEFLATED, False)
     files = [
         "helper_function.py",
-        "requirements.txt",
         "python_version.txt",
         "model.py",
         "model.pkl",
