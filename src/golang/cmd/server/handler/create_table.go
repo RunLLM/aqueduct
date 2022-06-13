@@ -109,7 +109,11 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
 	}
 
-	defer csvStorage.Delete(ctx, contentPath)
+	defer func() {
+		if err := csvStorage.Delete(ctx, contentPath); err != nil {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Error deleting CSV from temporary storage.")
+		}
+	}()
 
 	emptyResp := CreateTableResponse{}
 
