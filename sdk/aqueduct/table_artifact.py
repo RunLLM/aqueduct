@@ -9,6 +9,7 @@ import aqueduct
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
+from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.dag import (
     DAG,
     apply_deltas_to_dag,
@@ -29,6 +30,7 @@ from aqueduct.operators import (
     LoadSpec,
     FunctionSpec,
     MetricSpec,
+    SystemMetricSpec,
 )
 from aqueduct.utils import (
     serialize_function,
@@ -320,6 +322,63 @@ class TableArtifact(Artifact):
             table_artifact.name,
         )
         return self._apply_metric_to_table(internal_std_metric, metric_name, metric_description)
+
+    def system_metric(self, metric_name: str) -> MetricArtifact:
+        """Creates a system metric that represents the given system information from the previous @op that ran on the table.
+
+        Args:
+            metric_name:
+                name of system metric to retrieve for the table.
+                valid metrics are:
+                    runtime: runtime of previous @op func in seconds
+                    max_memory: maximum memory usage of previous @op func in Mb
+
+        Returns:
+            A metric artifact that represents the requested system metric
+        """
+        if metric_name not in SYSTEM_METRICS_INFO:
+            raise AqueductError(
+                "Invalid metric requested: %s. Please choose a valid metric from: %s"
+                % (metric_name, ",".join(list(SYSTEM_METRICS_INFO.keys())))
+            )
+
+        operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        system_operator_id = generate_uuid()
+        system_output_artifact_id = generate_uuid()
+        system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
+        system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
+        metric_spec = SystemMetricSpec(metric_name=metric_name)
+        print(metric_spec.metric_name)
+        metric_artifact_spec = ArtifactSpec(float={})
+
+        apply_deltas_to_dag(
+            self._dag,
+            deltas=[
+                AddOrReplaceOperatorDelta(
+                    op=Operator(
+                        id=system_operator_id,
+                        name=system_metric_name,
+                        description=system_metric_description,
+                        spec=OperatorSpec(system_metric=metric_spec),
+                        inputs=[self._artifact_id],
+                        outputs=[system_output_artifact_id],
+                    ),
+                    output_artifacts=[
+                        aqueduct.artifact.Artifact(
+                            id=system_output_artifact_id,
+                            name=artifact_name_from_op_name(system_metric_name),
+                            spec=metric_artifact_spec,
+                        )
+                    ],
+                ),
+            ],
+        )
+
+        return MetricArtifact(
+            api_client=self._api_client,
+            dag=self._dag,
+            artifact_id=system_output_artifact_id,
+        )
 
     def _apply_metric_to_table(
         self,
