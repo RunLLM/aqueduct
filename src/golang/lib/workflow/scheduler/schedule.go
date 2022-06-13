@@ -236,6 +236,29 @@ func ScheduleOperator(
 		)
 	}
 
+	if opSpec.IsSystemMetric() {
+		if len(outputContentPaths) != 1 {
+			return "", ErrWrongNumArtifactContentPaths
+		}
+		if len(outputMetadataPaths) != 1 {
+			return "", ErrWrongNumArtifactMetadataPaths
+		}
+
+		outputArtifactTypes := []artifact.Type{artifact.FloatType}
+		return ScheduleSystemMetric(
+			ctx,
+			*opSpec.SystemMetric(),
+			metadataPath,
+			inputContentPaths,
+			inputMetadataPaths,
+			outputContentPaths,
+			outputMetadataPaths,
+			outputArtifactTypes,
+			storageConfig,
+			jobManager,
+		)
+	}
+
 	// If we reach here, the operator opSpec type is not supported.
 	return "", errors.Newf("Unsupported operator opSpec with type %s", opSpec.Type())
 }

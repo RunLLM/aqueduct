@@ -6,12 +6,14 @@ import json
 import os
 import sys
 import traceback
+import tracemalloc
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Any, Callable, List, Tuple, Dict
 
 from aqueduct_executor.operators.function_executor import spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
+from aqueduct_executor.operators.utils.timer import Timer
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
@@ -104,7 +106,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 def _execute_function(
     spec: spec.FunctionSpec,
     inputs: List[utils.InputArtifact],
-) -> Tuple[Any, Dict[str, str], str]:
+) -> Tuple[Any, Dict[str, str], str, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors. Instead, returns the error message as a string.
@@ -116,17 +118,24 @@ def _execute_function(
 
     try:
         invoke = _import_invoke_method(spec)
+        timer = Timer()
         print("Invoking the function...")
+        timer.start()
+        tracemalloc.start()
         try:
             with redirect_stdout(stdout_log), redirect_stderr(stderr_log):
-                result = invoke(*inputs)  # Unpack DataFrames argument list
+                result = invoke(*inputs)
         except Exception:
             # Include the stack trace within the user's code.
-            return (
-                None,
-                _fetch_logs(stdout_log, stderr_log),
-                _user_fn_traceback(offset=1),
-            )
+            return (None, _fetch_logs(stdout_log, stderr_log), _user_fn_traceback(offset=1), None)
+
+        elapsedTime = timer.stop()
+        current, peak = tracemalloc.get_traced_memory()
+        system_metadata = {
+            utils._RUNTIME_METRIC_NAME: str(elapsedTime),
+            utils._MAX_MEMORY_METRIC_NAME: str(peak / 10**6),
+        }
+
     except Exception as e:
         # For user-induced errors that we can't extract stack traces for,
         # just return the exception message.
@@ -134,32 +143,12 @@ def _execute_function(
             None,
             _fetch_logs(stdout_log, stderr_log),
             str(type(e).__name__) + ": " + str(e),
+            None,
         )
     finally:
         sys.path.pop(0)
 
-    return result, _fetch_logs(stdout_log, stderr_log), ""
-
-
-def _write_outputs(
-    spec: spec.FunctionSpec,
-    storage: Storage,
-    res: Any,
-    logs: Dict[str, str],
-):
-    # Force all results to be of type `list`, so we can always loop over them.
-    results = res
-    if not isinstance(res, list):
-        results = [res]
-
-    utils.write_artifacts(
-        storage,
-        spec.output_content_paths,
-        spec.output_metadata_paths,
-        results,
-        spec.output_artifact_types,
-    )
-    utils.write_operator_metadata(storage, spec.metadata_path, "", logs)
+    return result, _fetch_logs(stdout_log, stderr_log), "", system_metadata
 
 
 def run(spec: spec.FunctionSpec) -> None:
@@ -175,7 +164,7 @@ def run(spec: spec.FunctionSpec) -> None:
         )
 
         print("Invoking the function...")
-        results, logs, err_msg = _execute_function(spec, inputs)
+        results, logs, err_msg, system_metadata = _execute_function(spec, inputs)
         if len(err_msg) > 0:
             raise Exception(err_msg)
 
@@ -190,8 +179,10 @@ def run(spec: spec.FunctionSpec) -> None:
             spec.output_content_paths,
             spec.output_metadata_paths,
             results,
+            system_metadata,
             spec.output_artifact_types,
         )
+
         utils.write_operator_metadata(storage, spec.metadata_path, "", logs)
 
     except Exception as e:

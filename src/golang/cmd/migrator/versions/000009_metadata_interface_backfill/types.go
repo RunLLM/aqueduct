@@ -1,4 +1,4 @@
-package artifact_result
+package _000009_metadata_interface_backfill
 
 import (
 	"database/sql/driver"
@@ -6,9 +6,16 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 )
 
+type OldMetadata []map[string]string
+
 type Metadata struct {
 	Schema         []map[string]string // Table Schema from Pandas
 	SystemMetadata map[string]string   // Metadata from the system
+}
+
+type OldNullMetadata struct {
+	OldMetadata
+	IsNull bool
 }
 
 type NullMetadata struct {
@@ -22,6 +29,37 @@ func (m *Metadata) Value() (driver.Value, error) {
 
 func (m *Metadata) Scan(value interface{}) error {
 	return utils.ScanJsonB(value, m)
+}
+
+func (m *OldMetadata) Value() (driver.Value, error) {
+	return utils.ValueJsonB(*m)
+}
+
+func (m *OldMetadata) Scan(value interface{}) error {
+	return utils.ScanJsonB(value, m)
+}
+
+func (n *OldNullMetadata) Value() (driver.Value, error) {
+	if n.IsNull {
+		return nil, nil
+	}
+
+	return (&n.OldMetadata).Value()
+}
+
+func (n *OldNullMetadata) Scan(value interface{}) error {
+	if value == nil {
+		n.IsNull = true
+		return nil
+	}
+
+	metadata := &OldMetadata{}
+	if err := metadata.Scan(value); err != nil {
+		return err
+	}
+
+	n.OldMetadata, n.IsNull = *metadata, false
+	return nil
 }
 
 func (n *NullMetadata) Value() (driver.Value, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/metric"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/param"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/systemmetric"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -27,22 +28,24 @@ import (
 type Type string
 
 const (
-	FunctionType Type = "function"
-	MetricType   Type = "metric"
-	CheckType    Type = "check"
-	ExtractType  Type = "extract"
-	LoadType     Type = "load"
-	ParamType    Type = "param"
+	FunctionType     Type = "function"
+	MetricType       Type = "metric"
+	CheckType        Type = "check"
+	ExtractType      Type = "extract"
+	LoadType         Type = "load"
+	ParamType        Type = "param"
+	SystemMetricType Type = "systemmetric"
 )
 
 type specUnion struct {
-	Type     Type               `json:"type"`
-	Function *function.Function `json:"function,omitempty"`
-	Check    *check.Check       `json:"check,omitempty"`
-	Metric   *metric.Metric     `json:"metric,omitempty"`
-	Extract  *connector.Extract `json:"extract,omitempty"`
-	Load     *connector.Load    `json:"load,omitempty"`
-	Param    *param.Param       `json:"param,omitempty"`
+	Type         Type                       `json:"type"`
+	Function     *function.Function         `json:"function,omitempty"`
+	Check        *check.Check               `json:"check,omitempty"`
+	Metric       *metric.Metric             `json:"metric,omitempty"`
+	Extract      *connector.Extract         `json:"extract,omitempty"`
+	Load         *connector.Load            `json:"load,omitempty"`
+	Param        *param.Param               `json:"param,omitempty"`
+	SystemMetric *systemmetric.SystemMetric `json:"systemmetric,omitempty"`
 }
 
 type Spec struct {
@@ -176,6 +179,18 @@ func (s Spec) Param() *param.Param {
 	return s.spec.Param
 }
 
+func (s Spec) IsSystemMetric() bool {
+	return s.Type() == SystemMetricType
+}
+
+func (s Spec) SystemMetric() *systemmetric.SystemMetric {
+	if !s.IsSystemMetric() {
+		return nil
+	}
+
+	return s.spec.SystemMetric
+}
+
 func (s Spec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.spec)
 }
@@ -206,6 +221,9 @@ func (s *Spec) UnmarshalJSON(rawMessage []byte) error {
 		typeCount++
 	} else if spec.Param != nil {
 		spec.Type = ParamType
+		typeCount++
+	} else if spec.SystemMetric != nil {
+		spec.Type = SystemMetricType
 		typeCount++
 	}
 	if typeCount != 1 {
