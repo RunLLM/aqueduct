@@ -12,8 +12,6 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
-
-
 try:
     from typing import Literal
 except ImportError:
@@ -82,10 +80,12 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
     op.load(spec.parameters, inputs[0])
 
+
 def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
     df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
-    
+
+
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)
@@ -143,7 +143,7 @@ def _parse_spec(spec_json: str) -> spec.Spec:
     Parses a JSON string into a spec.Spec.
     """
     data = json.loads(spec_json)
-    
+
     print("Job Spec: \n{}".format(json.dumps(data, indent=4)))
 
     return parse_obj_as(spec.Spec, data)

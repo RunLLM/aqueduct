@@ -40,7 +40,9 @@ if __name__ == "__main__":
     execute_command(["make", "server"], cwd=os.path.join(cwd, "src"))
     execute_command(["cp", "./src/build/server", os.path.join(server_directory, "bin", "server")])
     execute_command(["make", "executor"], cwd=os.path.join(cwd, "src"))
-    execute_command(["cp", "./src/build/executor", os.path.join(server_directory, "bin", "executor")])
+    execute_command(
+        ["cp", "./src/build/executor", os.path.join(server_directory, "bin", "executor")]
+    )
 
     # Install the local SDK.
     os.environ["PWD"] = os.path.join(os.environ["PWD"], "sdk")
