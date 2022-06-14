@@ -17,7 +17,7 @@ from aqueduct import utils
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse
+from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse, WorkflowResponse
 
 
 def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -64,6 +64,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
     LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
@@ -189,7 +190,6 @@ class APIClient:
         Returns:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
-        assert dag.workflow_id is None, "Unexpected internal field set when previewing a workflow."
         headers = {
             **utils.generate_auth_headers(self.api_key),
         }
@@ -221,8 +221,6 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
-        assert dag.workflow_id is None, "Unexpected internal field set when registering a workflow."
-
         headers = utils.generate_auth_headers(self.api_key)
         body = {
             "dag": dag.json(exclude_none=True),
@@ -271,6 +269,16 @@ class APIClient:
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
         return response.json()
+
+    def list_workflows(self) -> List[WorkflowResponse]:
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self._construct_full_url(self.LIST_WORKFLOWS_ROUTE, self.use_https)
+        response = requests.get(url, headers=headers)
+        utils.raise_errors(response)
+
+        return [
+            WorkflowResponse(**workflow) for workflow in response.json()
+        ]
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]

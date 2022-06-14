@@ -60,6 +60,16 @@ def get_apikey() -> str:
             exit(1)
 
 
+def _parse_flow_id(flow_id: Union[str, uuid.UUID]) -> str:
+    """Verifies that a user-defined flow id is of the expected types, and returns the string id."""
+    if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
+        raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
+
+    if isinstance(flow_id, uuid.UUID):
+        return str(flow_id)
+    return flow_id
+
+
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
 
@@ -231,6 +241,22 @@ class Client:
                 % integration_info.service
             )
 
+    def list_flows(self) -> List[Dict[str, str]]:
+        return [
+            workflow_resp.to_readable_dict()
+            for workflow_resp
+            in self._api_client.list_workflows()
+        ]
+
+    def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
+        # TODO: docstring
+        flow_id = _parse_flow_id(flow_id)
+        return Flow(
+            self._api_client,
+            flow_id,
+            self._in_notebook_or_console_context,
+        )
+
     def publish_flow(
         self,
         name: str,
@@ -300,12 +326,11 @@ class Client:
         if self._in_notebook_or_console_context:
             _show_dag(self._api_client, dag)
 
-        dag.workflow_id = self._api_client.register_workflow(dag).id
+        flow_id = self._api_client.register_workflow(dag).id
         return Flow(
             self._api_client,
-            connected_integrations=self._connected_integrations,
-            dag=dag,
-            in_notebook_or_console_context=self._in_notebook_or_console_context,
+            str(flow_id),
+            self._in_notebook_or_console_context,
         )
 
     def trigger(
@@ -343,11 +368,7 @@ class Client:
                 {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
             )
 
-        if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
-
-        if isinstance(flow_id, uuid.UUID):
-            flow_id = str(flow_id)
+        flow_id = _parse_flow_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
@@ -364,11 +385,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
-
-        if isinstance(flow_id, uuid.UUID):
-            flow_id = str(flow_id)
+        flow_id = _parse_flow_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.

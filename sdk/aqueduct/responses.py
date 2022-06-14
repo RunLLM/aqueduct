@@ -1,6 +1,6 @@
 from typing import Optional, Dict, List
 import uuid
-
+from datetime import datetime
 from pydantic import BaseModel
 
 from aqueduct.enums import ExecutionStatus
@@ -88,3 +88,26 @@ class RegisterWorkflowResponse(BaseModel):
     """
 
     id: uuid.UUID
+
+
+class WorkflowResponse(BaseModel):
+    """TODO: docstring"""
+
+    id: uuid.UUID
+    name: str
+    description: str
+    created_at: int
+    last_run_at: int
+    status: ExecutionStatus
+
+    def to_readable_dict(self) -> Dict[str, str]:
+        time_format = "%Y-%m-%d %H:%M:%S"
+
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "description": self.description,
+            "created_at": datetime.utcfromtimestamp(self.created_at).strftime(time_format),
+            "last_run_at": datetime.utcfromtimestamp(self.created_at).strftime(time_format),
+            "current_status": str(self.status),
+        }

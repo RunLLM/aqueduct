@@ -19,72 +19,73 @@ from .operators import Operator
 
 
 class Flow:
-    """This class is a read-only handle to a workflow object that in the system."""
+    """This class is a read-only handle to a workflow that in the system.
+
+    A flow can have multiple runs within it.
+    """
 
     def __init__(
         self,
         api_client: APIClient,
-        connected_integrations: Dict[str, IntegrationInfo],
-        dag: DAG,
+        flow_id: str,
         in_notebook_or_console_context: bool,
     ):
-        assert (
-            dag.workflow_id is not None
-        ), "A flow object must always correspond to an existing flow in our system!"
+        assert flow_id is not None
         self._api_client = api_client
-        self._connected_integrations = connected_integrations
-        self._dag = dag
+        self._id = flow_id
         self._in_notebook_or_console_context = in_notebook_or_console_context
 
     def id(self) -> uuid.UUID:
         """Returns the id of the flow."""
-        assert self._dag.workflow_id is not None
-        return self._dag.workflow_id
+        return uuid.UUID(self._id)
 
-    def describe(self) -> None:
-        """
-        Prints out a human-readable description of the flow.
+    def list_runs(self) -> List[Dict[str, str]]:
+        # TODO: docstring
+        pass
 
-        Raises:
-            ArtifactNotFoundException:
-                An error occurred because the artifact spec is not a supported type.
-        """
+    def latest(self):
+        pass
 
-        print("==================== FLOW =================================")
-        if self._in_notebook_or_console_context:
-            _show_dag(self._api_client, self._dag)
+    def checkout(self, run_id: Union[str, uuid.UUID]):
+        pass
 
-        readable_dict = {
-            "Flow Name: ": self._dag.metadata.name,
-            "Flow Description: ": self._dag.metadata.description,
-            "Connected Integrations": [
-                {
-                    "Name": integration.name,
-                    "Validated": integration.validated,
-                }
-                for integration in self._connected_integrations.values()
-            ],
-        }
-        print(json.dumps(readable_dict, sort_keys=False, indent=4))
-
-        artifacts = self._dag.list_artifacts()
-        for artifact in artifacts:
-            if artifact.spec.float != None:
-                MetricArtifact(
-                    api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
-                ).describe()
-            elif artifact.spec.bool != None:
-                CheckArtifact(
-                    api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
-                ).describe()
-            elif artifact.spec.table != None:
-                TableArtifact(
-                    api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
-                ).describe()
-            else:
-                raise ArtifactNotFoundException(
-                    "Artifact type not supported. Artifact spec is: %s" % artifact.spec
-                )
+    # def describe(self) -> None:
+    #     """
+    #     Prints out a human-readable description of the flow.
+    #
+    #     Raises:
+    #         ArtifactNotFoundException:
+    #             An error occurred because the artifact spec is not a supported type.
+    #     """
+    #
+    #     print("==================== FLOW =================================")
+    #     if self._in_notebook_or_console_context:
+    #         _show_dag(self._api_client, self._dag)
+    #
+    #     readable_dict = {
+    #         "Flow Name: ": self._dag.metadata.name,
+    #         "Flow Description: ": self._dag.metadata.description,
+    #     }
+    #     print(json.dumps(readable_dict, sort_keys=False, indent=4))
+    #
+    #     artifacts = self._dag.list_artifacts()
+    #     for artifact in artifacts:
+    #         if artifact.spec.float != None:
+    #             MetricArtifact(
+    #                 api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
+    #             ).describe()
+    #         elif artifact.spec.bool != None:
+    #             CheckArtifact(
+    #                 api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
+    #             ).describe()
+    #         elif artifact.spec.table != None:
+    #             TableArtifact(
+    #                 api_client=self._api_client, dag=self._dag, artifact_id=artifact.id
+    #             ).describe()
+    #         else:
+    #             raise ArtifactNotFoundException(
+    #                 "Artifact type not supported. Artifact spec is: %s" % artifact.spec
+    #             )
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of

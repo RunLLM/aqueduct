@@ -34,11 +34,6 @@ class Metadata(BaseModel):
 
 
 class DAG(BaseModel):
-    # This is only ever set on Flow objects returned to the user,
-    # since flow handles must correspond to actual flows in our system.
-    # It is currently not allowed to be set on previews or publish.
-    workflow_id: Optional[uuid.UUID]
-
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, Artifact] = {}
 
