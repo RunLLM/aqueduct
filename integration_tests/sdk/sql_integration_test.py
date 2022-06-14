@@ -37,3 +37,8 @@ def test_invalid_destination_integration(client):
         output_artifact.save(
             config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
         )
+
+def test_sugar_syntax_sql(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query="select * from hotel_reviews where review_date = {{today}}")
+    assert(sql_artifact.get().empty)
