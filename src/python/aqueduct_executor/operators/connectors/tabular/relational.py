@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+from datetime import date
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -24,7 +25,12 @@ class RelationalConnector(connector.TabularConnector):
         return inspect(self.engine).get_table_names()
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
-        df = pd.read_sql(params.query, con=self.engine)
+        query = params.query
+        if "{{today}}" in query:
+            today_python = date.today()
+            today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
+            query = query.replace("{{today}}",today_sql)
+        df = pd.read_sql(query, con=self.engine)
         return df
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
