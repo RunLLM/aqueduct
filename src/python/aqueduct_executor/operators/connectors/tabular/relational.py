@@ -29,7 +29,7 @@ class RelationalConnector(connector.TabularConnector):
         if "{{today}}" in query:
             today_python = date.today()
             today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
-            query = query.replace("{{today}}",today_sql)
+            query = query.replace("{{today}}", today_sql)
         df = pd.read_sql(query, con=self.engine)
         return df
 
