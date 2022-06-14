@@ -2,8 +2,9 @@ package request
 
 import (
 	"encoding/json"
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"net/http"
+
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 )
 
 const (

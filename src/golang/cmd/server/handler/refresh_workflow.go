@@ -3,9 +3,9 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"

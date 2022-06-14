@@ -2,13 +2,13 @@ package executor
 
 import (
 	"context"
-	"github.com/dropbox/godropbox/errors"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
