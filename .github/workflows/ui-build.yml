@@ -24,6 +24,6 @@ jobs:
         working-directory: ./src/ui/app
         run: npm run lint
 
-      - name: Build
+      - name: Link and Build
         working-directory: ./src/ui
-        run: make build
+        run: make link-dev && make dist
