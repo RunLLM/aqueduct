@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'src/ui/**'
+      - '.github/workflows/ui-build.yml'
 
 jobs:
   build:
