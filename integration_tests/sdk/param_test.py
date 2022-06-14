@@ -4,7 +4,7 @@ import pytest
 
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from utils import get_integration_name, run_flow_test
+from utils import get_integration_name, run_flow_test, generate_new_flow_name
 from aqueduct import metric, op
 import pandas as pd
 
@@ -116,10 +116,27 @@ def test_edit_param_for_flow(client):
         # Wait for the first run, then refresh the workflow and verify that it runs at least
         # one more time (two runs total, since the original was manually triggered).
         flow = run_flow_test(
-            client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=True
+            client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=False
         )
-    except Exception:
+    finally:
         client.delete_flow(flow.id())
-        raise
 
     assert flow_id == flow.id()
+
+
+# TODO(ENG-1241): Once we are able to fetch flow results, Need to verify that the actual
+@pytest.mark.publish
+def test_trigger_flow_with_different_param(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    num_param = client.create_param(name="num", default=5)
+    output = double_number_input(sql_artifact, num_param)
+
+    flow_name = generate_new_flow_name()
+    flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+
+    try:
+        client.trigger(flow.id(), parameters={"num": 10})
+    finally:
+        client.delete_flow(flow.id())

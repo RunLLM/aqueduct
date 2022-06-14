@@ -155,6 +155,7 @@ func (h *EditWorkflowHandler) updateWorkflowSchedule(
 				h.Vault.Config(),
 				h.JobManager.Config(),
 				h.GithubManager.Config(),
+				nil, /* parameters */
 			)
 			err := h.JobManager.DeployCronJob(
 				ctx,

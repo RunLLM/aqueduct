@@ -303,12 +303,21 @@ class Client:
             in_notebook_or_console_context=self._in_notebook_or_console_context,
         )
 
-    def trigger(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def trigger(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        parameters: Optional[Dict[str, Any]],
+    ) -> None:
         """Immediately triggers another run of the provided flow.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            parameters:
+                A map containing custom values to use for the designated parameters. The mapping
+                is expected to be from parameter name to the custom value. These custom values
+                are not persisted to the workflow. To actually change the default parameter values
+                edit the workflow itself through `client.publish_flow()`.
 
         Raises:
             InvalidRequestError:
@@ -317,12 +326,24 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        # TODO(ENG-1144): If there the provided parameters dict is not valid, throw an error
+        #  earlier, before getting to execution.
+
+        serialized_params = None
+        if parameters is not None:
+            if any(not isinstance(name, str) for name in parameters):
+                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
+            serialized_params = json.dumps(
+                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
+            )
+
         if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
             raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
 
         if isinstance(flow_id, uuid.UUID):
             flow_id = str(flow_id)
-        self._api_client.refresh_workflow(flow_id)
+        self._api_client.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.

@@ -24,6 +24,15 @@ type WorkflowDag struct {
 	Artifacts map[uuid.UUID]artifact.Artifact `json:"artifacts,omitempty"`
 }
 
+func (dag *WorkflowDag) GetOperatorByName(name string) *operator.Operator {
+	for _, op := range dag.Operators {
+		if op.Name == name {
+			return &op
+		}
+	}
+	return nil
+}
+
 type Reader interface {
 	GetWorkflowDag(ctx context.Context, id uuid.UUID, db database.Database) (*WorkflowDag, error)
 	GetWorkflowDags(ctx context.Context, ids []uuid.UUID, db database.Database) ([]WorkflowDag, error)

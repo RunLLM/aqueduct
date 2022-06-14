@@ -450,6 +450,9 @@ class UpdateParametersDelta(DAGDelta):
         if self.parameters is None:
             return
 
+        if any(not isinstance(name, str) for name in self.parameters):
+            raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
         for param_name, new_val in self.parameters.items():
             param_op = dag.get_operator(with_name=param_name)
             if param_op is None:

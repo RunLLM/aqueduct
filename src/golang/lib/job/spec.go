@@ -75,6 +75,7 @@ type WorkflowSpec struct {
 	baseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
 	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -213,6 +214,7 @@ func NewWorkflowSpec(
 	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
+	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
 		baseSpec: baseSpec{
@@ -221,6 +223,7 @@ func NewWorkflowSpec(
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
 			Vault:      vault,

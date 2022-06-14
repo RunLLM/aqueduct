@@ -1,6 +1,6 @@
 import io
 import json
-from typing import Any, Dict, List, Tuple, IO
+from typing import Any, Dict, List, Tuple, IO, Optional
 
 import requests
 
@@ -217,12 +217,21 @@ class APIClient:
 
         return RegisterWorkflowResponse(**resp.json())
 
-    def refresh_workflow(self, flow_id: str) -> None:
+    def refresh_workflow(
+        self,
+        flow_id: str,
+        serialized_params: Optional[str] = None,
+    ) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(
             self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
         )
-        response = requests.post(url, headers=headers)
+
+        body = {}
+        if serialized_params is not None:
+            body["parameters"] = serialized_params
+
+        response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
     def delete_workflow(self, flow_id: str) -> None:
