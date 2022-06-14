@@ -17,6 +17,10 @@ jobs:
         with:
           node-version: "16"
 
+      - name: Link and Build
+        working-directory: ./src/ui
+        run: make link-dev && make dist
+
       - name: Format check common
         working-directory: ./src/ui/common
         run: npm run lint
@@ -24,15 +28,3 @@ jobs:
       - name: Format check app
         working-directory: ./src/ui/app
         run: npm run lint
-
-      - name: Link common
-        working-directory: ./src/ui
-        run: make link-dev
-
-      - name: Install dependencies
-        working-directory: ./src/ui/app
-        run: npm install
-
-      - name: Make dist
-        working-directory: ./src/ui
-        run: make dist
