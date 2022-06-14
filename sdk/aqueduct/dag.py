@@ -98,7 +98,6 @@ class DAG(BaseModel):
     def list_operators(
         self,
         filter_to: Optional[List[OperatorType]] = None,
-        exclude: Optional[List[OperatorType]] = None,
         on_artifact_id: Optional[uuid.UUID] = None,
     ) -> List[Operator]:
         """Multiple conditions can be applied to filter down the list of operators."""
@@ -106,9 +105,6 @@ class DAG(BaseModel):
 
         if filter_to is not None:
             operators = [op for op in operators if get_operator_type(op) in filter_to]
-
-        if exclude is not None:
-            operators = [op for op in operators if get_operator_type(op) not in exclude]
 
         if on_artifact_id is not None:
             operators = [op for op in operators if on_artifact_id in op.inputs]

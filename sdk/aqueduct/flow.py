@@ -100,6 +100,8 @@ def _show_dag(
 ) -> None:
     """Show the DAG visually.
 
+    Parameter operators are stripped from the displayed DAG after positions are calculated.
+
     Args:
         label_width: number of characters per line in detail pop-up.
                      Also equal to 3 + the number of characters to display on graph before truncating.
@@ -111,12 +113,7 @@ def _show_dag(
     artifact_by_id: Dict[str, Artifact] = {}
     operator_mapping: Dict[str, Dict[str, Any]] = {}
 
-    # Do not show parameter operators to the user, only parameter artifacts.
-    operators = dag.list_operators(exclude=[OperatorType.PARAM])
-    # operators = dag.list_operators()
-    print("Operators: ", [(op.id, op.name) for op in operators])
-
-    for operator in operators:
+    for operator in dag.list_operators():
         operator_by_id[str(operator.id)] = operator
         # Convert to strings because the json library cannot serialize UUIDs.
         operator_mapping[str(operator.id)] = {
@@ -127,10 +124,12 @@ def _show_dag(
     for artifact_uuid in dag.list_artifacts():
         artifact_by_id[str(artifact_uuid.id)] = artifact_uuid
 
-    print("Operator mappings: ", [operator_mapping.keys()])
-
     # Mapping of operator/artifact UUID to X, Y coordinates on the graph.
     operator_positions, artifact_positions = api_client.get_node_positions(operator_mapping)
+
+    # Remove any parameter operators, since we don't want those being displayed to the user.
+    for param_op in dag.list_operators(filter_to=[OperatorType.PARAM]):
+        del operator_positions[str(param_op.id)]
 
     # Y axis is flipping compared to the UI display, so we negate the Y values so the display matches the UI.
     for positions in [operator_positions, artifact_positions]:
@@ -161,24 +160,23 @@ def _show_dag(
 
     traces = []
 
-    print("Operators: ", [(op.id, op.name) for op in operators])
-    print("Operator positions: ", [operator_positions.keys()])
-
     # Edges
     # Draws the edges connecting each node.
     edge_x: List[Union[float, None]] = []
     edge_y: List[Union[float, None]] = []
-    for operator in operators:
-        op = operator_positions[str(operator.id)]
+    for op_id in operator_positions.keys():
+        op_pos = operator_positions[op_id]
+        op = dag.must_get_operator(with_id=uuid.UUID(op_id))
+
         # (x, y) coordinates are at the center of the node.
-        for artifact in [*operator.outputs, *operator.inputs]:
+        for artifact in [*op.outputs, *op.inputs]:
             artf = artifact_positions[str(artifact)]
 
-            edge_x.append(op["x"])
+            edge_x.append(op_pos["x"])
             edge_x.append(artf["x"])
             edge_x.append(None)
 
-            edge_y.append(op["y"])
+            edge_y.append(op_pos["y"])
             edge_y.append(artf["y"])
             edge_y.append(None)
 
