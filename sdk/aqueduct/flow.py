@@ -14,7 +14,7 @@ from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import ArtifactNotFoundException
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.enums import DisplayNodeType
+from aqueduct.enums import DisplayNodeType, OperatorType
 from .operators import Operator
 
 
@@ -111,7 +111,12 @@ def _show_dag(
     artifact_by_id: Dict[str, Artifact] = {}
     operator_mapping: Dict[str, Dict[str, Any]] = {}
 
-    for operator in dag.list_operators():
+    # Do not show parameter operators to the user, only parameter artifacts.
+    operators = dag.list_operators(exclude=[OperatorType.PARAM])
+    # operators = dag.list_operators()
+    print("Operators: ", [(op.id, op.name) for op in operators])
+
+    for operator in operators:
         operator_by_id[str(operator.id)] = operator
         # Convert to strings because the json library cannot serialize UUIDs.
         operator_mapping[str(operator.id)] = {
@@ -122,7 +127,9 @@ def _show_dag(
     for artifact_uuid in dag.list_artifacts():
         artifact_by_id[str(artifact_uuid.id)] = artifact_uuid
 
-    # Mapping of opertor/artifact UUID to X, Y coordinates on the graph.
+    print("Operator mappings: ", [operator_mapping.keys()])
+
+    # Mapping of operator/artifact UUID to X, Y coordinates on the graph.
     operator_positions, artifact_positions = api_client.get_node_positions(operator_mapping)
 
     # Y axis is flipping compared to the UI display, so we negate the Y values so the display matches the UI.
@@ -154,11 +161,14 @@ def _show_dag(
 
     traces = []
 
+    print("Operators: ", [(op.id, op.name) for op in operators])
+    print("Operator positions: ", [operator_positions.keys()])
+
     # Edges
     # Draws the edges connecting each node.
     edge_x: List[Union[float, None]] = []
     edge_y: List[Union[float, None]] = []
-    for operator in dag.list_operators():
+    for operator in operators:
         op = operator_positions[str(operator.id)]
         # (x, y) coordinates are at the center of the node.
         for artifact in [*operator.outputs, *operator.inputs]:
