@@ -40,5 +40,7 @@ def test_invalid_destination_integration(client):
 
 def test_sugar_syntax_sql(client):
     db = client.integration(name=get_integration_name())
-    sql_artifact = db.sql(query="select * from hotel_reviews where review_date = {{today}}")
-    assert(sql_artifact.get().empty)
+    sql_artifact_today = db.sql(query="select * from hotel_reviews where review_date = {{today}}")
+    assert(sql_artifact_today.get().empty)
+    sql_artifact_not_today = db.sql(query="select * from hotel_reviews where review_date != {{today}}")
+    assert len(sql_artifact_not_today.get()) == 100
