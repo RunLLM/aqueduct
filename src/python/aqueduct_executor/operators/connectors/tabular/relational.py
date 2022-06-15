@@ -29,8 +29,8 @@ class RelationalConnector(connector.TabularConnector):
         query = params.query
         matches = re.findall(r"{{[\s+]*\w+[\s+]*}}", query)
         for match in matches:
-            key_word = match.strip(" " "{}")
-            if key_word == "today":
+            tag = match.strip(" " "{}")
+            if tag == "today":
                 today_python = date.today()
                 today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
                 query = query.replace("{{today}}", today_sql)
