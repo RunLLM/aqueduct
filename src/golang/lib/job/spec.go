@@ -39,7 +39,7 @@ const (
 	WorkflowJobType       JobType = "workflow"
 	FunctionJobType       JobType = "function"
 	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "systemmetric"
+	SystemMetricJobType   JobType = "system_metric"
 	AuthenticateJobType   JobType = "authenticate"
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"

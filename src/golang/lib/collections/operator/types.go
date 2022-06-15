@@ -34,7 +34,7 @@ const (
 	ExtractType      Type = "extract"
 	LoadType         Type = "load"
 	ParamType        Type = "param"
-	SystemMetricType Type = "systemmetric"
+	SystemMetricType Type = "system_metric"
 )
 
 type specUnion struct {
@@ -45,7 +45,7 @@ type specUnion struct {
 	Extract      *connector.Extract         `json:"extract,omitempty"`
 	Load         *connector.Load            `json:"load,omitempty"`
 	Param        *param.Param               `json:"param,omitempty"`
-	SystemMetric *systemmetric.SystemMetric `json:"systemmetric,omitempty"`
+	SystemMetric *systemmetric.SystemMetric `json:"system_metric,omitempty"`
 }
 
 type Spec struct {
