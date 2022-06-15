@@ -2,10 +2,10 @@ import json
 from typing import List
 
 import pandas as pd
-import pandas_gbq
+from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load
+from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load, common
 
 
 class BigQueryConnector(connector.TabularConnector):
@@ -14,26 +14,51 @@ class BigQueryConnector(connector.TabularConnector):
 
         credentials_info = json.loads(config.service_account_credentials)
         self.credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        self.client = bigquery.Client(credentials=self.credentials, project=self.project_id)
 
     def authenticate(self) -> None:
-        # pandas_gbq does not have an explicit authenticate method, so we execute a test query
-        pandas_gbq.read_gbq("SELECT 1;", project_id=self.project_id, credentials=self.credentials)
+        # There is no explicit authenticate method, so we execute a test query
+        self.client.query("SELECT 1;")
 
     def discover(self) -> List[str]:
-        # TBD eng-708-investigate-how-to-list-tables-for-bigquery
-        return []
+        all_tables = []
+        for dataset in self.client.list_datasets():
+            tables = self.client.list_tables(dataset.dataset_id)
+            all_tables.extend([f"{table.project_id}.{table.dataset_id}.{table.table_id}" for table in tables])
+        return all_tables
+        #TODO ADD TEST
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
-        df = pandas_gbq.read_gbq(
-            params.query, project_id=self.project_id, credentials=self.credentials
-        )
+        query = self.client.query(params.query)
+        df = query.result()
         return df
+        #TODO FIX
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
-        pandas_gbq.to_gbq(
-            df,
-            params.table,
-            project_id=self.project_id,
-            if_exists=params.update_mode.value,
-            credentials=self.credentials,
+        update_mode = params.update_mode.value
+        write_disposition = common.UpdateMode.REPLACE # Default
+        if update_mode == common.UpdateMode.APPEND:
+            write_disposition = bigquery.WriteDisposition.WRITE_APPEND
+        if update_mode == common.UpdateMode.REPLACE:
+            write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
+        if update_mode == common.UpdateMode.FAIL:
+            write_disposition = bigquery.WriteDisposition.WRITE_EMPTY
+        print(update_mode)
+        print(write_disposition)
+        # Since string columns use the "object" dtype, pass in a (partial) schema
+        # to ensure the correct BigQuery data type.
+        partial_schema = []
+        for column in df:
+            if df[column].dtype == object:
+                partial_schema.append(bigquery.SchemaField(column, "STRING"))
+
+        job_config = bigquery.LoadJobConfig(
+            schema=partial_schema,
+            write_disposition=write_disposition
         )
+        job = self.client.load_table_from_dataframe(
+            df, params.table, job_config=job_config
+        )
+
+        # Wait for the load job to complete.
+        job.result()

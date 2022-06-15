@@ -19,7 +19,7 @@ const (
 	SqlScriptLanguage ScriptLanguage = "sql"
 	GoScriptLanguage  ScriptLanguage = "go"
 
-	migrationFilePath = "golang/cmd/migrator/versions"
+	migrationFilePath = "internal/migration"
 )
 
 type templateArgs struct {
@@ -99,7 +99,7 @@ func nextVersion() (int64, error) {
 		}
 
 		versionStr := s[0]
-		version, err := strconv.ParseInt(versionStr, 10, 64)
+		version, err := strconv.ParseInt(versionStr, 0, 64)
 		if err != nil {
 			return -1, err
 		}
