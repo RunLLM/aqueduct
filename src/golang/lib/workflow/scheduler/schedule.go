@@ -244,6 +244,8 @@ func ScheduleOperator(
 		if len(outputMetadataPaths) != 1 {
 			return "", ErrWrongNumArtifactMetadataPaths
 		}
+		// We currently allow the spec to contain multiple input_metadata paths.
+		// A system metric currently spans over a single operator, so we enforce that here
 		if len(inputMetadataPaths) != 1 {
 			return "", ErrWrongNumMetadataInputs
 		}

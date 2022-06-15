@@ -52,7 +52,9 @@ def read_system_metadata(
     storage: Storage,
     input_metadata_paths: List[str],
 ):
-
+    # We currently allow the spec to contain multiple input_metadata paths.
+    # A system metric currently spans over a single operator
+    # The scheduler enforces this requirement before the executor is run
     inputs: List[InputArtifact] = []
     for input_path in input_metadata_paths:
         inputs.append(_read_json_input(storage, input_path))
