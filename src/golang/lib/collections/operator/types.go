@@ -11,7 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/metric"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/systemmetric"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/system_metric"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -45,7 +45,7 @@ type specUnion struct {
 	Extract      *connector.Extract         `json:"extract,omitempty"`
 	Load         *connector.Load            `json:"load,omitempty"`
 	Param        *param.Param               `json:"param,omitempty"`
-	SystemMetric *systemmetric.SystemMetric `json:"system_metric,omitempty"`
+	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 }
 
 type Spec struct {
@@ -183,7 +183,7 @@ func (s Spec) IsSystemMetric() bool {
 	return s.Type() == SystemMetricType
 }
 
-func (s Spec) SystemMetric() *systemmetric.SystemMetric {
+func (s Spec) SystemMetric() *system_metric.SystemMetric {
 	if !s.IsSystemMetric() {
 		return nil
 	}

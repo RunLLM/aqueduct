@@ -7,7 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/systemmetric"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/system_metric"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -18,7 +18,7 @@ func generateSystemMetricJobName() string {
 
 func ScheduleSystemMetric(
 	ctx context.Context,
-	spec systemmetric.SystemMetric,
+	spec system_metric.SystemMetric,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,

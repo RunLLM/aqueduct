@@ -4,7 +4,7 @@ import traceback
 import sys
 
 from aqueduct_executor.operators.utils import enums, utils
-from aqueduct_executor.operators.systemmetric_executor import spec
+from aqueduct_executor.operators.system_metric_executor import spec
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 

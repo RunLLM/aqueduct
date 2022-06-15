@@ -15,7 +15,7 @@ from aqueduct_executor.operators.utils.storage import config
 
 class SystemMetricSpec(BaseModel):
     name: str
-    type: Literal[enums.JobType.SYSTEMMETRIC]
+    type: Literal[enums.JobType.SYSTEM_METRIC]
     storage_config: config.StorageConfig
     metadata_path: str
     metricname: str

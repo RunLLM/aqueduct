@@ -23,7 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
-	systemMetricPythonPath       = "operators.systemmetric_executor.main"
+	systemMetricPythonPath       = "operators.system_metric_executor.main"
 	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
