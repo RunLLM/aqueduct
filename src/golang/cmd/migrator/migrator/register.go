@@ -11,7 +11,6 @@ import (
 	_000006 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000006_add_retention_policy_column"
 	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000007_workflow_dag_edge_pk"
 	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000008_delete_s3_config"
-	_000009 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000009_metadata_interface_backfill"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -66,11 +65,5 @@ func init() {
 		upPostgres: _000008.UpPostgres, upSqlite: _000008.UpSqlite,
 		downPostgres: _000008.DownPostgres,
 		name:         "delete outdated s3_config column",
-	}
-
-	registeredMigrations[9] = &migration{
-		upPostgres: _000009.Up, upSqlite: _000009.Up,
-		downPostgres: _000009.Down,
-		name:         "backfill metadata in artifact_results",
 	}
 }
