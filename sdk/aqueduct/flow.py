@@ -41,8 +41,12 @@ class Flow:
         return uuid.UUID(self._id)
 
     def list_runs(self) -> List[Dict[str, str]]:
-        # TODO: docstring
-        pass
+        # TODO: docstring (note that this is in reverse order)
+        resp = self._api_client.get_workflow(self._id)
+        return [
+            dag_result.to_readable_dict()
+            for dag_result in reversed(resp.workflow_dag_results)
+        ]
 
     def latest(self) -> FlowRun:
         pass

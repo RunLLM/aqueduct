@@ -1,9 +1,11 @@
 from typing import Optional, Dict, List
 import uuid
-from datetime import datetime
 from pydantic import BaseModel
 
+from aqueduct.artifact import Artifact
+from aqueduct.dag import Metadata
 from aqueduct.enums import ExecutionStatus
+from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 
 
@@ -91,7 +93,7 @@ class RegisterWorkflowResponse(BaseModel):
     id: uuid.UUID
 
 
-class WorkflowResponse(BaseModel):
+class ListWorkflowResponseEntry(BaseModel):
     """TODO: docstring"""
 
     id: uuid.UUID
@@ -103,10 +105,39 @@ class WorkflowResponse(BaseModel):
 
     def to_readable_dict(self) -> Dict[str, str]:
         return {
-            "id": str(self.id),
+            "flow_id": str(self.id),
             "name": self.name,
             "description": self.description,
             "created_at": human_readable_timestamp(self.created_at),
             "last_run_at": human_readable_timestamp(self.last_run_at),
-            "current_status": str(self.status),
+            "last_run_status": str(self.status),
         }
+
+
+class WorkflowDagResponse(BaseModel):
+    # TODO: docstring (MISSING: created_at, storage_config)
+    id: uuid.UUID
+    workflow_id: uuid.UUID
+    metadata: Metadata
+    operators: Dict[str, Operator]
+    artifacts: Dict[str, Artifact]
+
+
+class WorkflowDagResultResponse(BaseModel):
+    id: uuid.UUID
+    created_at: int
+    status: ExecutionStatus
+    workflow_dag_id: uuid.UUID
+
+    def to_readable_dict(self) -> Dict[str, str]:
+        return {
+            "run_id": str(self.id),
+            "created_at": human_readable_timestamp(self.created_at),
+            "status": str(self.status),
+        }
+
+
+class GetWorkflowResponse(BaseModel):
+    # TODO: docstring (MISSING: watcher_auth_ids)
+    workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
+    workflow_dag_results: List[WorkflowDagResultResponse]

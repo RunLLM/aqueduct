@@ -17,7 +17,7 @@ from aqueduct import utils
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse, WorkflowResponse
+from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse, ListWorkflowResponseEntry, GetWorkflowResponse
 
 
 def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -263,21 +263,21 @@ class APIClient:
         response = requests.post(url, headers=headers)
         utils.raise_errors(response)
 
-    def get_workflow(self, flow_id: str) -> Any:
+    def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
-        response = requests.get(url, headers=headers)
-        utils.raise_errors(response)
-        return response.json()
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        return GetWorkflowResponse(**resp.json())
 
-    def list_workflows(self) -> List[WorkflowResponse]:
+    def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(self.LIST_WORKFLOWS_ROUTE, self.use_https)
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
 
         return [
-            WorkflowResponse(**workflow) for workflow in response.json()
+            ListWorkflowResponseEntry(**workflow) for workflow in response.json()
         ]
 
     def get_node_positions(
