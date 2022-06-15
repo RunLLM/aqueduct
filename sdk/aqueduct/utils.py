@@ -209,8 +209,7 @@ def _package_files_and_requirements(
         if file_path in RESERVED_FILE_NAMES:
             # If the user uploads a `model.py` file as a dependency, we will error out.
             raise ReservedFileNameException(
-                "%s is a reserved file name in our system. Please rename your file. "
-                % file_path
+                "%s is a reserved file name in our system. Please rename your file. " % file_path
             )
         if not os.path.exists(file_path):
             raise InvalidFunctionException("File %s does not exist" % file_path)
