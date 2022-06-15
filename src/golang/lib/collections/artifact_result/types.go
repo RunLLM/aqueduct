@@ -7,8 +7,8 @@ import (
 )
 
 type Metadata struct {
-	Schema         []map[string]string // Table Schema from Pandas
-	SystemMetrics   map[string]string   // Metrics from the system regarding the op used to create the artifact result. A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
+	Schema        []map[string]string // Table Schema from Pandas
+	SystemMetrics map[string]string   // Metrics from the system regarding the op used to create the artifact result. A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
 }
 
 type NullMetadata struct {

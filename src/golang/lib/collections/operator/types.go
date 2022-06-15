@@ -38,13 +38,13 @@ const (
 )
 
 type specUnion struct {
-	Type         Type                       `json:"type"`
-	Function     *function.Function         `json:"function,omitempty"`
-	Check        *check.Check               `json:"check,omitempty"`
-	Metric       *metric.Metric             `json:"metric,omitempty"`
-	Extract      *connector.Extract         `json:"extract,omitempty"`
-	Load         *connector.Load            `json:"load,omitempty"`
-	Param        *param.Param               `json:"param,omitempty"`
+	Type         Type                        `json:"type"`
+	Function     *function.Function          `json:"function,omitempty"`
+	Check        *check.Check                `json:"check,omitempty"`
+	Metric       *metric.Metric              `json:"metric,omitempty"`
+	Extract      *connector.Extract          `json:"extract,omitempty"`
+	Load         *connector.Load             `json:"load,omitempty"`
+	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 }
 

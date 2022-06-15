@@ -189,7 +189,9 @@ def _write_numeric_output(
     storage.put(
         output_metadata_path,
         bytes(
-            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: system_metadata}),
+            json.dumps(
+                {_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: system_metadata}
+            ),
             encoding=_DEFAULT_ENCODING,
         ),
     )
@@ -205,7 +207,10 @@ def _write_bool_output(
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
     storage.put(
         output_metadata_path,
-        bytes(json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}), encoding=_DEFAULT_ENCODING),
+        bytes(
+            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}),
+            encoding=_DEFAULT_ENCODING,
+        ),
     )
 
 
@@ -219,7 +224,10 @@ def _write_json_output(
     storage.put(output_path, bytes(val, encoding=_DEFAULT_ENCODING))
     storage.put(
         output_metadata_path,
-        bytes(json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}), encoding=_DEFAULT_ENCODING),
+        bytes(
+            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}),
+            encoding=_DEFAULT_ENCODING,
+        ),
     )
 
 
