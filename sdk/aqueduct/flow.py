@@ -11,12 +11,14 @@ from aqueduct.integrations.integration import IntegrationInfo
 
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
-from aqueduct.dag import DAG
-from aqueduct.error import ArtifactNotFoundException
+from aqueduct.dag import DAG, construct_dag
+from aqueduct.error import ArtifactNotFoundException, AqueductError, InvalidUserArgumentException
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.enums import DisplayNodeType, OperatorType
 from .flow_run import FlowRun
 from .operators import Operator
+from .responses import GetWorkflowResponse, WorkflowDagResultResponse, WorkflowDagResponse
+from .utils import parse_user_supplied_id
 
 
 class Flow:
@@ -48,11 +50,54 @@ class Flow:
             for dag_result in reversed(resp.workflow_dag_results)
         ]
 
+    def _reconstruct_dag(self, workflow_dag: WorkflowDagResponse) -> DAG:
+        return DAG(
+            operators=workflow_dag.operators,
+            artifacts=workflow_dag.artifacts,
+            operator_by_name={
+                op.name: op for op in workflow_dag.operators.values()
+            },
+            metadata=workflow_dag.metadata,
+        )
+
     def latest(self) -> FlowRun:
-        pass
+        resp = self._api_client.get_workflow(self._id)
+        assert len(resp.workflow_dag_results) > 0, "Every flow must have at least one run attached to it."
+
+        latest_result = resp.workflow_dag_results[0]
+        workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        dag = self._reconstruct_dag(workflow_dag)
+        return FlowRun(
+            api_client=self._api_client,
+            run_id=str(latest_result.id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+            dag=dag,
+        )
 
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
-        pass
+        run_id = parse_user_supplied_id(run_id)
+
+        resp = self._api_client.get_workflow(self._id)
+        assert len(resp.workflow_dag_results) > 0, "Every flow must have at least one run attached to it."
+
+        result = None
+        for candidate_result in resp.workflow_dag_results:
+            if str(candidate_result.id) == run_id:
+                assert result is None, "Cannot have two runs with the same id."
+                result = candidate_result
+
+        if result is None:
+            raise InvalidUserArgumentException("Cannot find any run with id %s on this flow." % run_id)
+
+        workflow_dag = resp.workflow_dags[result.workflow_dag_id]
+        dag = self._reconstruct_dag(workflow_dag)
+        return FlowRun(
+            api_client=self._api_client,
+            run_id=str(result.id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+            dag=dag,
+        )
+
 
     # def describe(self) -> None:
     #     """

@@ -360,3 +360,13 @@ def get_description_for_metric(
 def human_readable_timestamp(ts: int) -> str:
     format = "%Y-%m-%d %H:%M:%S"
     return datetime.utcfromtimestamp(ts).strftime(format)
+
+
+def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
+    """Verifies that a user-defined id is of the expected types, returning the string version of the id."""
+    if not isinstance(id, str) and not isinstance(id, uuid.UUID):
+        raise InvalidUserArgumentException("Provided id must be either str or uuid.")
+
+    if isinstance(id, uuid.UUID):
+        return str(id)
+    return id

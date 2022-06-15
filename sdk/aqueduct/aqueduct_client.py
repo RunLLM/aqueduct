@@ -34,7 +34,7 @@ from .utils import (
     schedule_from_cron_string,
     retention_policy_from_latest_runs,
     generate_uuid,
-    artifact_name_from_op_name,
+    artifact_name_from_op_name, parse_user_supplied_id,
 )
 
 import __main__ as main
@@ -58,17 +58,6 @@ def get_apikey() -> str:
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
-
-
-def _parse_flow_id(flow_id: Union[str, uuid.UUID]) -> str:
-    """Verifies that a user-defined flow id is of the expected types, and returns the string id."""
-    if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-        raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
-
-    if isinstance(flow_id, uuid.UUID):
-        return str(flow_id)
-    return flow_id
-
 
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
@@ -250,7 +239,7 @@ class Client:
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
         # TODO: docstring
-        flow_id = _parse_flow_id(flow_id)
+        flow_id = parse_user_supplied_id(flow_id)
         return Flow(
             self._api_client,
             flow_id,
@@ -368,7 +357,7 @@ class Client:
                 {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
             )
 
-        flow_id = _parse_flow_id(flow_id)
+        flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
@@ -385,7 +374,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        flow_id = _parse_flow_id(flow_id)
+        flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
