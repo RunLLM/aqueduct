@@ -1,5 +1,6 @@
 import inspect
 from pathlib import Path
+from datetime import datetime
 import sys
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
@@ -354,3 +355,8 @@ def get_description_for_metric(
             for metric_op in get_metrics_for_op(metric, dag)
         ],
     }
+
+
+def human_readable_timestamp(ts: int) -> str:
+    format = "%Y-%m-%d %H:%M:%S"
+    return datetime.utcfromtimestamp(ts).strftime(format)

@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from aqueduct.enums import ExecutionStatus
+from aqueduct.utils import human_readable_timestamp
 
 
 class OperatorResult(BaseModel):
@@ -101,13 +102,11 @@ class WorkflowResponse(BaseModel):
     status: ExecutionStatus
 
     def to_readable_dict(self) -> Dict[str, str]:
-        time_format = "%Y-%m-%d %H:%M:%S"
-
         return {
             "id": str(self.id),
             "name": self.name,
             "description": self.description,
-            "created_at": datetime.utcfromtimestamp(self.created_at).strftime(time_format),
-            "last_run_at": datetime.utcfromtimestamp(self.created_at).strftime(time_format),
+            "created_at": human_readable_timestamp(self.created_at),
+            "last_run_at": human_readable_timestamp(self.last_run_at),
             "current_status": str(self.status),
         }
