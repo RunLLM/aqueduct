@@ -208,14 +208,10 @@ def _package_files_and_requirements(
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
             # If the user uploads a `model.py` file as a dependency, we will error out.
-            # This isn't an issue if the function is defined directly in a `model.py`, since
-            # this file is removed before loading the templated `model.py` file.
-
-            if not file_index == len(file_dependencies) - 1:
-                raise ReservedFileNameException(
-                    "%s is a reserved file name in our system. Please rename your file. "
-                    % file_path
-                )
+            raise ReservedFileNameException(
+                "%s is a reserved file name in our system. Please rename your file. "
+                % file_path
+            )
         if not os.path.exists(file_path):
             raise InvalidFunctionException("File %s does not exist" % file_path)
 
