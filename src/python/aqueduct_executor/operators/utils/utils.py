@@ -9,8 +9,10 @@ from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArt
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 _DEFAULT_ENCODING = "utf8"
-_RUNTIME_METRIC_NAME = "runtime"
-_MAX_MEMORY_METRIC_NAME = "max_memory"
+_RUNTIME_SEC_METRIC_NAME = "runtime"
+_MAX_MEMORY_MB_METRIC_NAME = "max_memory"
+_METADATA_SCHEMA_NAME = "schema"
+_METADATA_SYSTEM_METADATA_NAME = "systemmetadata"
 
 
 # Typing: all the possible artifact types to a function. Should be in sync with `InputArtifactType`.
@@ -168,7 +170,7 @@ def _write_tabular_output(
     # Create tabular output metadata
     schema = [{col: str(df[col].dtype)} for col in df]
     output_metadata_str = json.dumps(schema)
-    metadata = {"schema": schema, "SystemMetadata": system_metadata}
+    metadata = {_METADATA_SCHEMA_NAME: schema, _METADATA_SYSTEM_METADATA_NAME: system_metadata}
     output_metadata_str = json.dumps(metadata)
 
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
@@ -187,7 +189,7 @@ def _write_numeric_output(
     storage.put(
         output_metadata_path,
         bytes(
-            json.dumps({"schema": [], "SystemMetadata": system_metadata}),
+            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: system_metadata}),
             encoding=_DEFAULT_ENCODING,
         ),
     )
@@ -203,7 +205,7 @@ def _write_bool_output(
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
     storage.put(
         output_metadata_path,
-        bytes(json.dumps({"schema": [], "SystemMetadata": {}}), encoding=_DEFAULT_ENCODING),
+        bytes(json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}), encoding=_DEFAULT_ENCODING),
     )
 
 
@@ -217,7 +219,7 @@ def _write_json_output(
     storage.put(output_path, bytes(val, encoding=_DEFAULT_ENCODING))
     storage.put(
         output_metadata_path,
-        bytes(json.dumps({"schema": [], "SystemMetadata": {}}), encoding=_DEFAULT_ENCODING),
+        bytes(json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}), encoding=_DEFAULT_ENCODING),
     )
 
 

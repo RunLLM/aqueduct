@@ -18,7 +18,7 @@ def run(spec: spec.SystemMetricSpec) -> None:
         storage,
         spec.output_content_paths[0],
         spec.output_metadata_paths[0],
-        float(system_metadata[0]["SystemMetadata"][spec.metricname]),
+        float(system_metadata[0][utils._METADATA_SYSTEM_METADATA_NAME][spec.metricname]),
         {},
         enums.OutputArtifactType.FLOAT,
     )

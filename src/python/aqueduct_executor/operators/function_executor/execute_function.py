@@ -132,8 +132,8 @@ def _execute_function(
         elapsedTime = timer.stop()
         current, peak = tracemalloc.get_traced_memory()
         system_metadata = {
-            utils._RUNTIME_METRIC_NAME: str(elapsedTime),
-            utils._MAX_MEMORY_METRIC_NAME: str(peak / 10**6),
+            utils._RUNTIME_SEC_METRIC_NAME: str(elapsedTime),
+            utils._MAX_MEMORY_MB_METRIC_NAME: str(peak / 10**6),
         }
 
     except Exception as e:
