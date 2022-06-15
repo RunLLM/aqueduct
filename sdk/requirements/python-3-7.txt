@@ -9,3 +9,4 @@ pydantic
 ipynbname
 plotly
 pyyaml
+great_expectations

@@ -1,11 +1,25 @@
 from __future__ import annotations
 
 import json
-from typing import Callable, Any, List, Optional, Dict
+from typing import Callable, Any, Optional, Dict, Union, List
 import uuid
+
+from great_expectations.data_context.types.base import (
+    DataContextConfig,
+    DatasourceConfig,
+    FilesystemStoreBackendDefaults,
+)
+from great_expectations.data_context import BaseDataContext
+
+from great_expectations import DataContext
+from great_expectations.core import ExpectationSuite, ExpectationConfiguration
+from great_expectations.core.batch import RuntimeBatchRequest
+from great_expectations.validator.validator import Validator
 
 import pandas as pd
 import aqueduct
+import ruamel
+from ruamel import yaml
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
@@ -18,7 +32,7 @@ from aqueduct.dag import (
     RemoveCheckOperatorDelta,
     UpdateParametersDelta,
 )
-from aqueduct.enums import OperatorType, FunctionType, FunctionGranularity
+from aqueduct.enums import CheckSeverity, OperatorType, FunctionType, FunctionGranularity
 from aqueduct.error import (
     InvalidIntegrationException,
     AqueductError,
@@ -31,6 +45,7 @@ from aqueduct.operators import (
     FunctionSpec,
     MetricSpec,
     SystemMetricSpec,
+    CheckSpec,
 )
 from aqueduct.utils import (
     serialize_function,
@@ -43,6 +58,9 @@ from aqueduct.utils import (
 
 from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.check_artifact import CheckArtifact
+
+OutputArtifact = Union[MetricArtifact, CheckArtifact]
 
 
 class TableArtifact(Artifact):
@@ -169,6 +187,98 @@ class TableArtifact(Artifact):
         """
         return self.PRESET_METRIC_LIST
 
+    def validate_with_expectation(
+        self,
+        expectation_name: str,
+        expectation_args: Optional[Dict[str, Any]] = None,
+        severity: CheckSeverity = CheckSeverity.WARNING,
+    ) -> CheckArtifact:
+        """Creates a check that validates with the table with great_expectations and its set of internal expectations.
+        The expectations supported can be found here:
+        https://great-expectations.readthedocs.io/en/latest/reference/glossary_of_expectations.html
+        The expectations supported are only those that can support Pandas on the great_expectations backend.
+        E.g. Use a expectation to check all column values are unique.
+        ge_check = table.validate_with_expectation("expect_column_values_to_be_unique", {"column": "fixed_acidity"})
+        ge_check.get() // True or False based on expectation passing
+
+        Args:
+            expectation_name:
+                Name of built-in expectation to run with great_expectations
+            expectation_args:
+                Dictionary of args to pass into the expectation suite for the expectation being run.
+            severity:
+                Optional severity associated with the check created with this expectations
+
+        Returns:
+            A check artifact that represent the validation result of running the expectation provided on the table.
+        """
+
+        def great_expectations_check_method(table: pd.DataFrame) -> bool:
+            data_context_config = DataContextConfig(
+                datasources={
+                    "my_pandas_datasource": DatasourceConfig(
+                        class_name="PandasDatasource",
+                    )
+                },
+                store_backend_defaults=FilesystemStoreBackendDefaults(root_directory="/tmp"),
+            )
+
+            context = BaseDataContext(project_config=data_context_config)
+
+            # Create and load Expectation Suite
+            expectation_suite_name = "aq_check_expectation"
+            suite = context.create_expectation_suite(
+                expectation_suite_name=expectation_suite_name, overwrite_existing=True
+            )
+            expectation_config = ExpectationConfiguration(expectation_name, expectation_args)
+            suite.add_expectation(expectation_config)
+
+            # We create a custom datasource that will allow us to load a in-memory dataframe to validate the expectation quite
+            datasource_yaml = f"""
+            name: my_pandas_datasource
+            class_name: Datasource
+            module_name: great_expectations.datasource
+            execution_engine:
+                module_name: great_expectations.execution_engine
+                class_name: PandasExecutionEngine
+            data_connectors:
+                aq_runtime_dataconnecter:
+                    class_name: RuntimeDataConnector
+                    batch_identifiers:
+                        - default_identifier_name
+            """
+            context.add_datasource(**yaml.load(datasource_yaml, Loader=ruamel.yaml.Loader))
+
+            df: pd.DataFrame = table
+            runtime_batch_request = RuntimeBatchRequest(
+                datasource_name="my_pandas_datasource",
+                data_connector_name="aq_runtime_dataconnecter",
+                data_asset_name="aq_table_check",
+                runtime_parameters={"batch_data": df},
+                batch_identifiers={"default_identifier_name": "aq_table_check"},
+            )
+
+            # Constructing Validator by passing in RuntimeBatchRequest
+            my_validator: Validator = context.get_validator(
+                batch_request=runtime_batch_request,
+                expectation_suite=suite,
+            )
+
+            # Run validation to return the result
+            result = my_validator.validate()
+            return bool(result.success)
+
+        zip_file = serialize_function(great_expectations_check_method)
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        check_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
+        check_name = "ge_table_check: {%s}" % expectation_name
+        check_description = "Check table with built in expectations from great expectations"
+        return self._apply_operator_to_table(check_spec, check_name, check_description)
+
     def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> MetricArtifact:
         """Creates a metric that represents the number of missing values over a given column or row.
 
@@ -215,7 +325,15 @@ class TableArtifact(Artifact):
                 table_artifact.name,
             )
 
-        return self._apply_metric_to_table(metric_func, metric_name, metric_description)
+        zip_file = serialize_function(metric_func)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
     def number_of_rows(self) -> MetricArtifact:
         """Creates a metric that represents the number of rows of this table
@@ -232,9 +350,15 @@ class TableArtifact(Artifact):
 
         metric_name = "num_rows"
         metric_description = "compute number of rows for table %s" % table_artifact.name
-        return self._apply_metric_to_table(
-            internal_num_rows_metric, metric_name, metric_description
+        zip_file = serialize_function(internal_num_rows_metric)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
         )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
     def max(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the maximum value over the given column
@@ -258,7 +382,15 @@ class TableArtifact(Artifact):
             column_id,
             table_artifact.name,
         )
-        return self._apply_metric_to_table(internal_max_metric, metric_name, metric_description)
+        zip_file = serialize_function(internal_max_metric)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
     def min(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the minimum value over the given column
@@ -282,7 +414,15 @@ class TableArtifact(Artifact):
             column_id,
             table_artifact.name,
         )
-        return self._apply_metric_to_table(internal_min_metric, metric_name, metric_description)
+        zip_file = serialize_function(internal_min_metric)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
     def mean(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the mean value over the given column
@@ -306,7 +446,15 @@ class TableArtifact(Artifact):
             column_id,
             table_artifact.name,
         )
-        return self._apply_metric_to_table(internal_mean_metric, metric_name, metric_description)
+        zip_file = serialize_function(internal_mean_metric)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
     def std(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the standard deviation value over the given column
@@ -332,8 +480,8 @@ class TableArtifact(Artifact):
             column_id,
             table_artifact.name,
         )
-        return self._apply_metric_to_table(internal_std_metric, metric_name, metric_description)
 
+<<<<<<< HEAD
     def system_metric(self, metric_name: str) -> MetricArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
 
@@ -398,38 +546,56 @@ class TableArtifact(Artifact):
         metric_description: str,
     ) -> MetricArtifact:
         zip_file = serialize_function(metric_function)
+=======
+        zip_file = serialize_function(internal_std_metric)
+>>>>>>> changes made
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
             granularity=FunctionGranularity.TABLE,
             file=zip_file,
         )
-        metric_spec = MetricSpec(function=function_spec)
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
 
-        dag = self._dag
-        api_client = self._api_client
-
+    def _apply_operator_to_table(
+        self,
+        op_spec: OperatorSpec,
+        op_name: str,
+        op_description: str,
+    ) -> OutputArtifact:
+        output_artifact: OutputArtifact
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-
-        artifact_spec = ArtifactSpec(float={})
+        if op_spec.metric:
+            artifact_spec = ArtifactSpec(float={})
+            output_artifact = MetricArtifact(
+                api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
+            )
+        elif op_spec.check:
+            artifact_spec = ArtifactSpec(bool={})
+            output_artifact = CheckArtifact(
+                api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
+            )
+        else:
+            raise AqueductError("Operator spec not supported.")
 
         apply_deltas_to_dag(
-            dag,
+            self._dag,
             deltas=[
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=metric_name,
-                        description=metric_description,
-                        spec=OperatorSpec(metric=metric_spec),
+                        name=op_name,
+                        description=op_description,
+                        spec=op_spec,
                         inputs=[self._artifact_id],
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
                         aqueduct.artifact.Artifact(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(metric_name),
+                            name=artifact_name_from_op_name(op_name),
                             spec=artifact_spec,
                         )
                     ],
@@ -437,7 +603,7 @@ class TableArtifact(Artifact):
             ],
         )
 
-        return MetricArtifact(api_client=api_client, dag=dag, artifact_id=output_artifact_id)
+        return output_artifact
 
     def _get_table_operator(self) -> Operator:
         table_artifact = self._dag.get_operator(with_output_artifact_id=self._artifact_id)

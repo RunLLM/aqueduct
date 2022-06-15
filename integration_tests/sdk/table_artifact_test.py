@@ -7,6 +7,22 @@ from utils import get_integration_name
 from aqueduct import op
 
 
+def test_great_expectations_check(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=WINE_SQL_QUERY)
+    ge_check = table.validate_with_expectation(
+        "expect_column_values_to_be_unique", {"column": "fixed_acidity"}
+    )
+
+    assert ge_check.get() == False
+
+    ge_check = table.validate_with_expectation(
+        "expect_column_values_to_not_be_null", {"column": "fixed_acidity"}
+    )
+
+    assert ge_check.get() == True
+
+
 @op
 def corrupt_table_data(table: pd.DataFrame) -> pd.DataFrame:
     index_list = table.index.values.tolist()
