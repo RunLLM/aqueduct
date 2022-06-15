@@ -186,14 +186,6 @@ def _package_files_and_requirements(
             file the function is defined in.
 
     """
-    # pickle function directly
-    func_path = os.path.join(dir_path, func.__name__)
-    dstfolder = os.path.dirname(os.path.join(dir_path, func.__name__))
-    if not os.path.exists(dstfolder):
-        os.makedirs(dstfolder)
-    with open(func_path, "wb") as f:
-        f.write(cp.dumps(func))
-
     if not file_dependencies:
         file_dependencies = []
 
