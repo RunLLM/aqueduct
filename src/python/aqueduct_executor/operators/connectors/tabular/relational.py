@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import re
 from datetime import date
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
@@ -26,10 +27,13 @@ class RelationalConnector(connector.TabularConnector):
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         query = params.query
-        if "{{today}}" in query:
-            today_python = date.today()
-            today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
-            query = query.replace("{{today}}", today_sql)
+        matches = re.findall(r"{{[\s+]*\w+[\s+]*}}",query)
+        for match in matches:
+            key_word = match.strip(" " "{}")
+            if(key_word == "today"):
+                today_python = date.today()
+                today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
+                query = query.replace("{{today}}",today_sql)
         df = pd.read_sql(query, con=self.engine)
         return df
 
