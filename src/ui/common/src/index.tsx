@@ -48,6 +48,7 @@ import AqueductSidebar, {
 } from './components/layouts/sidebar/AqueductSidebar';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
+import AccountPage from './components/pages/AccountPage';
 import DataPage from './components/pages/data';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
@@ -206,6 +207,7 @@ import {
 } from './utils/workflows';
 
 export {
+  AccountPage,
   AddIntegrations,
   addTable,
   AddTableDialog,

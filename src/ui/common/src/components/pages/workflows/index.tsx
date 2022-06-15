@@ -42,7 +42,7 @@ const WorkflowsPage: React.FC<Props> = ({ user }) => {
   const heading = (
     <Box mb={2}>
       <Typography variant="h2" gutterBottom component="div">
-        Workflows
+        Workflowsssss
       </Typography>
     </Box>
   );
