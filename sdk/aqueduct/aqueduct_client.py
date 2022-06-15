@@ -306,7 +306,7 @@ class Client:
     def trigger(
         self,
         flow_id: Union[str, uuid.UUID],
-        parameters: Optional[Dict[str, Any]],
+        parameters: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Immediately triggers another run of the provided flow.
 

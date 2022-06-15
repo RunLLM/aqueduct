@@ -198,9 +198,7 @@ class APIClient:
     ) -> RegisterWorkflowResponse:
         assert dag.workflow_id is None, "Unexpected internal field set when registering a workflow."
 
-        headers = {
-            **utils.generate_auth_headers(self.api_key),
-        }
+        headers = utils.generate_auth_headers(self.api_key)
         body = {
             "dag": dag.json(exclude_none=True),
         }

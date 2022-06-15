@@ -124,19 +124,26 @@ def test_edit_param_for_flow(client):
     assert flow_id == flow.id()
 
 
-# TODO(ENG-1241): Once we are able to fetch flow results, Need to verify that the actual
+@metric
+def add_numbers(sql, num1, num2):
+    if not isinstance(num1, int) or not isinstance(num2, int):
+        raise Exception("Expected an integer input.")
+    return num1 + num2
+
+
 @pytest.mark.publish
 def test_trigger_flow_with_different_param(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
-    num_param = client.create_param(name="num", default=5)
-    output = double_number_input(sql_artifact, num_param)
+    num1 = client.create_param(name="num1", default=5)
+    num2 = client.create_param(name="num2", default=5)
+    output = add_numbers(sql_artifact, num1, num2)
 
     flow_name = generate_new_flow_name()
     flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
 
     try:
-        client.trigger(flow.id(), parameters={"num": 10})
+        client.trigger(flow.id(), parameters={"num1": 10})
     finally:
         client.delete_flow(flow.id())
