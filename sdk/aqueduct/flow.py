@@ -15,6 +15,7 @@ from aqueduct.dag import DAG
 from aqueduct.error import ArtifactNotFoundException
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.enums import DisplayNodeType, OperatorType
+from .flow_run import FlowRun
 from .operators import Operator
 
 
@@ -43,10 +44,10 @@ class Flow:
         # TODO: docstring
         pass
 
-    def latest(self):
+    def latest(self) -> FlowRun:
         pass
 
-    def checkout(self, run_id: Union[str, uuid.UUID]):
+    def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         pass
 
     # def describe(self) -> None:

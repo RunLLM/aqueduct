@@ -1,6 +1,6 @@
 
 
-class FlowVersion:
+class FlowRun:
     """This class is a read-only handle corresponding to a single workflow run in the system."""
 
     # assert (
