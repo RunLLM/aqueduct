@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/system_metric"
@@ -20,11 +19,9 @@ func ScheduleSystemMetric(
 	ctx context.Context,
 	spec system_metric.SystemMetric,
 	metadataPath string,
-	inputContentPaths []string,
 	inputMetadataPaths []string,
 	outputContentPaths []string,
 	outputMetadataPaths []string,
-	outputArtifactTypes []artifact.Type,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 ) (string, error) {
@@ -35,11 +32,9 @@ func ScheduleSystemMetric(
 		storageConfig,
 		metadataPath,
 		spec.MetricName,
-		inputContentPaths,
 		inputMetadataPaths,
 		outputContentPaths,
 		outputMetadataPaths,
-		outputArtifactTypes,
 	)
 	err := jobManager.Launch(ctx, jobName, jobSpec)
 	if err != nil {

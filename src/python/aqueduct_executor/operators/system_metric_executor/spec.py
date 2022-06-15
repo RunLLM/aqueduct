@@ -19,11 +19,9 @@ class SystemMetricSpec(BaseModel):
     storage_config: config.StorageConfig
     metadata_path: str
     metricname: str
-    input_content_paths: List[str]
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    output_artifact_types: List[enums.OutputArtifactType]
 
 
 def parse_spec(spec_json: str) -> SystemMetricSpec:

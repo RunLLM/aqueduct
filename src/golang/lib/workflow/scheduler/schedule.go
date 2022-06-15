@@ -19,6 +19,7 @@ const systemInternalErrMsg = "Aqueduct Internal Error"
 var (
 	ErrWrongNumInputs                = errors.New("Wrong number of operator inputs")
 	ErrWrongNumOutputs               = errors.New("Wrong number of operator outputs")
+	ErrWrongNumMetadataInputs        = errors.New("Wrong number of input metadata paths for operator")
 	ErrWrongNumArtifactContentPaths  = errors.New("Wrong number of artifact content paths.")
 	ErrWrongNumArtifactMetadataPaths = errors.New("Wrong number of artifact metadata paths.")
 )
@@ -243,17 +244,17 @@ func ScheduleOperator(
 		if len(outputMetadataPaths) != 1 {
 			return "", ErrWrongNumArtifactMetadataPaths
 		}
+		if len(inputMetadataPaths) != 1 {
+			return "", ErrWrongNumMetadataInputs
+		}
 
-		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 		return ScheduleSystemMetric(
 			ctx,
 			*opSpec.SystemMetric(),
 			metadataPath,
-			inputContentPaths,
 			inputMetadataPaths,
 			outputContentPaths,
 			outputMetadataPaths,
-			outputArtifactTypes,
 			storageConfig,
 			jobManager,
 		)
