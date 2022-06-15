@@ -12,7 +12,7 @@ import (
 )
 
 func generateSystemMetricJobName() string {
-	return fmt.Sprintf("systemmetric-operator-%s", uuid.New().String())
+	return fmt.Sprintf("system_metric-operator-%s", uuid.New().String())
 }
 
 func ScheduleSystemMetric(
