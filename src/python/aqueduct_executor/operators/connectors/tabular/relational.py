@@ -8,10 +8,11 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 
-# Regular Expression that matches any string with "{{ }}" 
+# Regular Expression that matches any string with "{{ }}"
 # and a word inside with optional space in front or after
 # Potential Matches: "{{today}}", "{{ today  }}""
 TAG_PATTERN = r"{{[\s+]*\w+[\s+]*}}"
+
 
 class RelationalConnector(connector.TabularConnector):
     def __init__(self, conn_engine: engine.Engine):
