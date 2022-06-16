@@ -9,7 +9,7 @@ from aqueduct.error import InvalidUserArgumentException
 from .enums import ArtifactType
 
 from .flow_run import FlowRun
-from .responses import WorkflowDagResponse
+from .responses import WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import parse_user_supplied_id, format_header_for_print
 
 
@@ -42,7 +42,7 @@ class Flow:
             for dag_result in reversed(resp.workflow_dag_results)
         ]
 
-    def _reconstruct_dag(self, dag_result_id: uuid.UUID, dag_resp: WorkflowDagResponse) -> DAG:
+    def _construct_flow_run(self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse) -> FlowRun:
         """TODO: docstring"""
         dag = DAG(
             operators=dag_resp.operators,
@@ -59,7 +59,7 @@ class Flow:
             assert param_artifact.spec.jsonable is not None
 
             param_val = self._api_client.get_artifact_result_data(
-                str(dag_result_id),
+                str(dag_result.id),
                 str(param_artifact.id),
             )
 
@@ -71,7 +71,15 @@ class Flow:
             param_op = dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             param_op.spec.param.val = param_val
             dag.update_operator(param_op)
-        return dag
+
+        return FlowRun(
+            api_client=self._api_client,
+            run_id=str(dag_result.id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+            dag=dag,
+            created_at=dag_result.created_at,
+            status=dag_result.status,
+        )
 
     def latest(self) -> FlowRun:
         resp = self._api_client.get_workflow(self._id)
@@ -79,14 +87,7 @@ class Flow:
 
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
-        return FlowRun(
-            api_client=self._api_client,
-            run_id=str(latest_result.id),
-            in_notebook_or_console_context=self._in_notebook_or_console_context,
-            dag=self._reconstruct_dag(latest_workflow_dag),
-            created_at=latest_result.created_at,
-            status=latest_result.status,
-        )
+        return self._construct_flow_run(latest_result, latest_workflow_dag)
 
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         run_id = parse_user_supplied_id(run_id)
@@ -104,14 +105,7 @@ class Flow:
             raise InvalidUserArgumentException("Cannot find any run with id %s on this flow." % run_id)
 
         workflow_dag = resp.workflow_dags[result.workflow_dag_id]
-        return FlowRun(
-            api_client=self._api_client,
-            run_id=str(result.id),
-            in_notebook_or_console_context=self._in_notebook_or_console_context,
-            dag=self._reconstruct_dag(workflow_dag),
-            created_at=result.created_at,
-            status=result.status,
-        )
+        return self._construct_flow_run(result, workflow_dag)
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""

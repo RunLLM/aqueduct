@@ -139,16 +139,13 @@ class Client:
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
 
-        # Instead of naming the artifact "{name} artifact", it makes more sense in this case
-        # to name the artifact "{name}", and the no-op operator "{name} operator", since the
-        # latter will never be seen by the user.
         apply_deltas_to_dag(
             self._dag,
             deltas=[
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=name + " operator",
+                        name=name,
                         description=description,
                         spec=OperatorSpec(param=ParamSpec(val=val)),
                         inputs=[],
