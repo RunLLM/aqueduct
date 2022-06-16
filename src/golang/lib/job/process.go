@@ -154,7 +154,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			logFilePath,
 		)
 	} else if spec.Type() == WorkflowRetentionType {
-		workflowRetentionSpec, ok := spec.(*WorkflowSpec)
+		workflowRetentionSpec, ok := spec.(*WorkflowRetentionSpec)
 		if !ok {
 			return nil, errors.New("Unable to cast job spec to workflowRetentionSpec.")
 		}
