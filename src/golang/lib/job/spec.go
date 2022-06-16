@@ -112,10 +112,10 @@ type ParamSpec struct {
 
 type SystemMetricSpec struct {
 	basePythonSpec
-	MetricName          string   `json:"metric_name"  yaml:"metric_name"`
-	InputMetadataPaths  []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	MetricName         string   `json:"metric_name"  yaml:"metric_name"`
+	InputMetadataPaths []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type ExtractSpec struct {
@@ -310,10 +310,10 @@ func NewSystemMetricSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		InputMetadataPaths:  inputMetadataPaths,
+		InputMetadataPaths: inputMetadataPaths,
 		OutputContentPath:  outputContentPath,
 		OutputMetadataPath: outputMetadataPath,
-		MetricName:          metricName,
+		MetricName:         metricName,
 	}
 }
 
