@@ -5,7 +5,13 @@ from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
 from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
-from aqueduct.operators import Operator, OperatorSpec, FunctionSpec, MetricSpec, CheckSpec
+from aqueduct.operators import (
+    Operator,
+    OperatorSpec,
+    FunctionSpec,
+    MetricSpec,
+    CheckSpec,
+)
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.metric_artifact import MetricArtifact
