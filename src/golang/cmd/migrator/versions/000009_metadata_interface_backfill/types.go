@@ -9,7 +9,7 @@ import (
 type OldMetadata []map[string]string
 
 type Metadata struct {
-	Schema         []map[string]string // Table Schema from Pandas
+	Schema        []map[string]string // Table Schema from Pandas
 	SystemMetrics map[string]string   // Metadata from the system
 }
 

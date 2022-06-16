@@ -47,7 +47,7 @@ func updateArtifactResultAsNewMetadata(
 	db database.Database,
 ) error {
 	newMetadata := &Metadata{
-		Schema:         metadata,
+		Schema:        metadata,
 		SystemMetrics: make(map[string]string),
 	}
 
