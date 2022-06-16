@@ -158,7 +158,7 @@ class TableArtifact(Artifact):
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 
-    def list_preset_metric(self) -> List[str]:
+    def list_preset_metrics(self) -> List[str]:
         """Returns a list of all preset metrics available on the table artifact.
         These preset metrics can be set via the invoking the preset method on a artifact.
 
