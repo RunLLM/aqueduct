@@ -13,7 +13,6 @@ def run(spec: spec.SystemMetricSpec) -> None:
     Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
-    print(spec.metric_name)
     try:
         system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
         utils.write_artifact(
