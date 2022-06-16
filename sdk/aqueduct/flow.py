@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserArgumentException
+from .enums import ArtifactType
 
 from .flow_run import FlowRun
 from .responses import WorkflowDagResponse
@@ -41,15 +42,36 @@ class Flow:
             for dag_result in reversed(resp.workflow_dag_results)
         ]
 
-    def _reconstruct_dag(self, workflow_dag: WorkflowDagResponse) -> DAG:
-        return DAG(
-            operators=workflow_dag.operators,
-            artifacts=workflow_dag.artifacts,
+    def _reconstruct_dag(self, dag_result_id: uuid.UUID, dag_resp: WorkflowDagResponse) -> DAG:
+        """TODO: docstring"""
+        dag = DAG(
+            operators=dag_resp.operators,
+            artifacts=dag_resp.artifacts,
             operator_by_name={
-                op.name: op for op in workflow_dag.operators.values()
+                op.name: op for op in dag_resp.operators.values()
             },
-            metadata=workflow_dag.metadata,
+            metadata=dag_resp.metadata,
         )
+
+        # Update all parameter artifacts to the
+        param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
+        for param_artifact in param_artifacts:
+            assert param_artifact.spec.jsonable is not None
+
+            param_val = self._api_client.get_artifact_result_data(
+                str(dag_result_id),
+                str(param_artifact.id),
+            )
+
+            # Skip parameter update if the parameter was never computed.
+            # TODO(this is bug):
+            if len(param_val) == 0:
+                continue
+
+            param_op = dag.must_get_operator(with_output_artifact_id=param_artifact.id)
+            param_op.spec.param.val = param_val
+            dag.update_operator(param_op)
+        return dag
 
     def latest(self) -> FlowRun:
         resp = self._api_client.get_workflow(self._id)
