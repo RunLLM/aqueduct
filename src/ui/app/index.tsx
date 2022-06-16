@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { Thing } from '../.';
-import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage } from '@aqueducthq/common';
+import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
@@ -33,6 +33,7 @@ const App = () => {
       <Route path="/integration/:id" element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
       <Route path="/workflows" element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
       <Route path="/login" element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/account" element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
       <Route path="/workflow/:id" element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
     </Routes>
   );
