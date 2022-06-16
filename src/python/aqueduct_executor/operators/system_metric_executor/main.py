@@ -4,24 +4,26 @@ import traceback
 import sys
 
 from aqueduct_executor.operators.utils import enums, utils
-from aqueduct_executor.operators.param_executor import spec
+from aqueduct_executor.operators.system_metric_executor import spec
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
-def run(spec: spec.ParamSpec) -> None:
+def run(spec: spec.SystemMetricSpec) -> None:
     """
-    Executes a parameter operator by storing the parameter value in the output content path.
+    Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
     try:
+        system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
         utils.write_artifact(
             storage,
             spec.output_content_path,
             spec.output_metadata_path,
-            spec.val,
+            float(system_metadata[0][utils._METADATA_SYSTEM_METADATA_NAME][spec.metric_name]),
             {},
-            enums.OutputArtifactType.JSON,
+            enums.OutputArtifactType.FLOAT,
         )
+
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})
     except Exception as e:
         utils.write_operator_metadata(storage, spec.metadata_path, str(e), {})
