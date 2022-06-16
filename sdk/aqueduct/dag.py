@@ -11,8 +11,8 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 
-from aqueduct.artifact import Artifact
-from aqueduct.enums import OperatorType, TriggerType
+from aqueduct.artifact import Artifact, get_artifact_type
+from aqueduct.enums import OperatorType, TriggerType, ArtifactType
 from aqueduct.operators import Operator, get_operator_type, serialize_parameter_value
 
 
@@ -171,20 +171,26 @@ class DAG(BaseModel):
     def list_artifacts(
         self,
         on_op_ids: Optional[List[uuid.UUID]] = None,
+        filter_to: Optional[List[ArtifactType]] = None,
     ) -> List[Artifact]:
         """Returns all artifacts in the DAG with the following optional filters:
 
         Args:
             `on_op_ids`: only artifacts that are the outputs of these operators are included.
         """
+        artifacts = [artifact for artifact in self.artifacts.values()]
+
         if on_op_ids is not None:
             operators = [self.must_get_operator(op_id) for op_id in on_op_ids]
             artifact_ids = set()
             for op in operators:
                 artifact_ids.update(op.outputs)
-            return self.must_get_artifacts(list(artifact_ids))
+            artifacts = self.must_get_artifacts(list(artifact_ids))
 
-        return [artifact for artifact in self.artifacts.values()]
+        if filter_to is not None:
+            artifacts = [artifact for artifact in artifacts if get_artifact_type(artifact) in filter_to]
+
+        return artifacts
 
     ######################## DAG WRITES #############################
 

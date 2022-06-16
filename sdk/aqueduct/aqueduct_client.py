@@ -21,7 +21,8 @@ from .error import (
     IncompleteFlowException,
     InvalidUserArgumentException,
 )
-from .flow import Flow, _show_dag
+from .flow import Flow
+from .flow_run import _show_dag
 from .github import Github
 from .integrations.integration import IntegrationInfo
 from .integrations.sql_integration import RelationalDBIntegration
@@ -58,6 +59,7 @@ def get_apikey() -> str:
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
+
 
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
@@ -136,13 +138,17 @@ class Client:
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
+
+        # Instead of naming the artifact "{name} artifact", it makes more sense in this case
+        # to name the artifact "{name}", and the no-op operator "{name} operator", since the
+        # latter will never be seen by the user.
         apply_deltas_to_dag(
             self._dag,
             deltas=[
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=name,
+                        name=name + " operator",
                         description=description,
                         spec=OperatorSpec(param=ParamSpec(val=val)),
                         inputs=[],
@@ -151,7 +157,7 @@ class Client:
                     output_artifacts=[
                         Artifact(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(name),
+                            name=name,
                             spec=ArtifactSpec(jsonable={}),
                         ),
                     ],

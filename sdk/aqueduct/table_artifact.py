@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from typing import Callable, Any, Optional, Dict, Union, List
+import textwrap
+from typing import Callable, Any, List, Optional, Dict
 import uuid
 
 from great_expectations.data_context.types.base import (
@@ -53,7 +55,7 @@ from aqueduct.utils import (
     get_checks_for_op,
     get_description_for_check,
     get_description_for_metric,
-    artifact_name_from_op_name,
+    artifact_name_from_op_name, format_header_for_print
 )
 
 from aqueduct.generic_artifact import Artifact
@@ -583,7 +585,7 @@ class TableArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the table artifact."""
-        print("==================== TABLE ARTIFACT =============================")
+
 
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         load_operators = self._dag.list_operators(
@@ -614,6 +616,7 @@ class TableArtifact(Artifact):
                 ],
             }
         )
+        print(format_header_for_print(f"'{input_operator.name}' Table Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))
 
     def remove_check(self, name: str) -> None:

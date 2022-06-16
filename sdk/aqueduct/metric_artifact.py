@@ -4,7 +4,7 @@ import json
 from typing import Any, Callable, Dict, Optional, List
 import uuid
 
-from aqueduct.utils import get_description_for_metric
+from aqueduct.utils import get_description_for_metric, format_header_for_print
 import aqueduct
 
 from aqueduct.api_client import APIClient
@@ -283,5 +283,6 @@ class MetricArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the metric artifact."""
-        print("==================== METRIC ARTIFACT =============================")
+        input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        print(format_header_for_print(f"'{input_operator.name}' Metric Artifact"))
         print(json.dumps(self._describe(), sort_keys=False, indent=4))

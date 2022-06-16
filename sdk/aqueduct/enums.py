@@ -120,3 +120,10 @@ class GithubRepoConfigContentType(str, Enum, metaclass=MetaEnum):
 class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     OPERATOR = "OPERATOR"
     ARTIFACT = "ARTIFACT"
+
+
+class ArtifactType(Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    NUMBER = "number"
+    BOOL = "boolean"
+    PARAM = "param"
