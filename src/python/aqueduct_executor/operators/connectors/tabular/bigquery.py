@@ -24,27 +24,23 @@ class BigQueryConnector(connector.TabularConnector):
         all_tables = []
         for dataset in self.client.list_datasets():
             tables = self.client.list_tables(dataset.dataset_id)
-            all_tables.extend([f"{table.project_id}.{table.dataset_id}.{table.table_id}" for table in tables])
+            all_tables.extend([table.full_table_id.split(":")[-1] for table in tables])
         return all_tables
-        #TODO ADD TEST
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         query = self.client.query(params.query)
-        df = query.result()
+        df = query.result().to_dataframe()
         return df
-        #TODO FIX
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode.value
-        write_disposition = common.UpdateMode.REPLACE # Default
-        if update_mode == common.UpdateMode.APPEND:
+        write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE # Default
+        if update_mode == common.UpdateMode.APPEND.value:
             write_disposition = bigquery.WriteDisposition.WRITE_APPEND
-        if update_mode == common.UpdateMode.REPLACE:
+        if update_mode == common.UpdateMode.REPLACE.value:
             write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
-        if update_mode == common.UpdateMode.FAIL:
+        if update_mode == common.UpdateMode.FAIL.value:
             write_disposition = bigquery.WriteDisposition.WRITE_EMPTY
-        print(update_mode)
-        print(write_disposition)
         # Since string columns use the "object" dtype, pass in a (partial) schema
         # to ensure the correct BigQuery data type.
         partial_schema = []
