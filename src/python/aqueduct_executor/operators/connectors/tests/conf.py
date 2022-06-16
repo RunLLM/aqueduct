@@ -78,7 +78,7 @@ SKIP_SQLITE = True
 # }
 
 """BIGQUERY CONFIG"""
-BIGQUERY_CONF = BigQueryConfig(project_id = "", service_account_credentials = "")
+BIGQUERY_CONF = BigQueryConfig(project_id="", service_account_credentials="")
 
 # """SQLITE CONFIG"""
 # SQLITE_CONF = {

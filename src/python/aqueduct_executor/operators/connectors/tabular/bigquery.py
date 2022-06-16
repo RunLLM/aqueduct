@@ -34,7 +34,7 @@ class BigQueryConnector(connector.TabularConnector):
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode.value
-        write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE # Default
+        write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default
         if update_mode == common.UpdateMode.APPEND.value:
             write_disposition = bigquery.WriteDisposition.WRITE_APPEND
         if update_mode == common.UpdateMode.REPLACE.value:
@@ -49,12 +49,9 @@ class BigQueryConnector(connector.TabularConnector):
                 partial_schema.append(bigquery.SchemaField(column, "STRING"))
 
         job_config = bigquery.LoadJobConfig(
-            schema=partial_schema,
-            write_disposition=write_disposition
+            schema=partial_schema, write_disposition=write_disposition
         )
-        job = self.client.load_table_from_dataframe(
-            df, params.table, job_config=job_config
-        )
+        job = self.client.load_table_from_dataframe(df, params.table, job_config=job_config)
 
         # Wait for the load job to complete.
         job.result()

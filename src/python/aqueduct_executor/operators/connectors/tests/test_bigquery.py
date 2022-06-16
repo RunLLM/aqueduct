@@ -37,12 +37,12 @@ class TestBigQuery:
 
     @pytest.mark.dependency()
     def test_load(self):
-        params = LoadParam(table = _TABLE)
+        params = LoadParam(table=_TABLE)
         utils.load_test(self.conn, params, self.test_df)
 
     @pytest.mark.dependency(depends=["TestBigQuery::test_load"])
     def test_extract(self):
-        params = ExtractParam(query = "SELECT * FROM {};".format(_TABLE))
+        params = ExtractParam(query="SELECT * FROM {};".format(_TABLE))
         utils.extract_test(self.conn, params, expected_df=self.test_df)
 
     @pytest.mark.dependency()
@@ -50,9 +50,8 @@ class TestBigQuery:
         tables = set()
         for i in range(2):
             table = f"{_DATASET}.table{i}"
-            params = LoadParam(table = table)
+            params = LoadParam(table=table)
             utils.load_test(self.conn, params, self.test_df)
             tables.add(table)
             discover = self.conn.discover()
             assert len(tables.difference(discover)) == 0
-
