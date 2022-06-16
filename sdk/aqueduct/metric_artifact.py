@@ -104,7 +104,6 @@ class MetricArtifact(Artifact):
             A list of available preset checks on a metric
         """
         return [self.BOUND_LOWER, self.BOUND_UPPER, self.BOUND_EQUAL, self.BOUND_NOTEQUAL]
-        
 
     def bound(
         self,
