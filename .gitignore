@@ -1,6 +1,7 @@
 ### SRC ###
-# Ignore the build directory, which has compile Golang executables.
+# Ignore the build directory, which has compile Golang executables and Python packages.
 src/build/
+src/python/build/
 
 # Ignore any IDE configuration files
 *.idea/

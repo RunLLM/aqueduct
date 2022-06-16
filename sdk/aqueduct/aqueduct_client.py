@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Dict, List, Union, Optional
 
 from aqueduct.generic_artifact import Artifact as GenericArtifact
+import yaml
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
@@ -21,7 +22,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.s3_integration import S3Integration
-from .operators import Operator, ParamSpec, OperatorSpec
+from .operators import Operator, ParamSpec, OperatorSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
     schedule_from_cron_string,
@@ -32,6 +33,26 @@ from .utils import (
 
 import __main__ as main
 import os
+
+
+def get_apikey() -> str:
+    """
+    Get the API key if the server is running locally.
+
+    Returns:
+        The API key.
+    """
+    server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
+    config_file = os.path.join(server_directory, "config", "config.yml")
+    with open(config_file, "r") as f:
+        try:
+            return str(yaml.safe_load(f)["apiKey"])
+        except yaml.YAMLError as exc:
+            print(exec)
+            print(
+                "This API works only when you are running the server and the SDK on the same machine."
+            )
+            exit(1)
 
 
 class Client:
@@ -107,13 +128,7 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
-        # Check that the supplied value is JSON-able.
-        try:
-            serialized_default = str(json.dumps(default))
-        except Exception as e:
-            raise InvalidUserArgumentException(
-                "Provided parameter must be able to be converted into a JSON object: %s" % str(e)
-            )
+        val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -125,7 +140,7 @@ class Client:
                         id=operator_id,
                         name=name,
                         description=description,
-                        spec=OperatorSpec(param=ParamSpec(val=serialized_default)),
+                        spec=OperatorSpec(param=ParamSpec(val=val)),
                         inputs=[],
                         outputs=[output_artifact_id],
                     ),
@@ -288,12 +303,21 @@ class Client:
             in_notebook_or_console_context=self._in_notebook_or_console_context,
         )
 
-    def trigger(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def trigger(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Immediately triggers another run of the provided flow.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            parameters:
+                A map containing custom values to use for the designated parameters. The mapping
+                is expected to be from parameter name to the custom value. These custom values
+                are not persisted to the workflow. To actually change the default parameter values
+                edit the workflow itself through `client.publish_flow()`.
 
         Raises:
             InvalidRequestError:
@@ -302,12 +326,24 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        # TODO(ENG-1144): If there the provided parameters dict is not valid, throw an error
+        #  earlier, before getting to execution.
+
+        serialized_params = None
+        if parameters is not None:
+            if any(not isinstance(name, str) for name in parameters):
+                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
+            serialized_params = json.dumps(
+                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
+            )
+
         if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
             raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
 
         if isinstance(flow_id, uuid.UUID):
             flow_id = str(flow_id)
-        self._api_client.refresh_workflow(flow_id)
+        self._api_client.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.

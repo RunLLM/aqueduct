@@ -1,6 +1,6 @@
-
 from setuptools import find_packages, setup
 from pathlib import Path
+import os
 
 install_requires = open("requirements.txt").read().strip().split("\n")
 
@@ -11,7 +11,7 @@ setup(
     name="aqueduct-ml",
     version="0.0.2",
     install_requires=install_requires,
-    scripts=['bin/aqueduct'],
+    scripts=["bin/aqueduct"],
     packages=find_packages(),
     description="Prediction Infrastructure for Data Scientists",
     long_description=long_description,

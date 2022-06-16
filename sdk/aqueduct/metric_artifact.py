@@ -12,6 +12,7 @@ from aqueduct.dag import (
     DAG,
     SubgraphDAGDelta,
     RemoveCheckOperatorDelta,
+    UpdateParametersDelta,
 )
 from aqueduct.error import AqueductError
 
@@ -56,7 +57,7 @@ class MetricArtifact(Artifact):
         self._dag = dag
         self._artifact_id = artifact_id
 
-    def get(self) -> float:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> float:
         """Materializes a MetricArtifact into its immediate float value.
 
         Returns:
@@ -74,7 +75,10 @@ class MetricArtifact(Artifact):
                 SubgraphDAGDelta(
                     artifact_ids=[self._artifact_id],
                     include_load_operators=False,
-                )
+                ),
+                UpdateParametersDelta(
+                    parameters=parameters,
+                ),
             ],
             make_copy=True,
         )

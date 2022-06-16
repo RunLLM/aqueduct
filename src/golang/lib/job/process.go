@@ -23,7 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
-	exectuorBinary               = "executor"
+	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
 	processRunningStatus = "R"
@@ -147,7 +147,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
 		cmd = exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
@@ -168,7 +168,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
 
 		cmd = exec.Command(
-			fmt.Sprintf("%s/%s", j.conf.BinaryDir, exectuorBinary),
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
 			"--spec",
 			specStr,
 			"--logs-path",
@@ -204,7 +204,11 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
-	} else {
+	} else if spec.Type() == AuthenticateJobType ||
+		spec.Type() == LoadJobType ||
+		spec.Type() == ExtractJobType ||
+		spec.Type() == LoadTableJobType ||
+		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
@@ -217,6 +221,8 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
+	} else {
+		return nil, errors.New("Unsupported JobType was passed in.")
 	}
 	log.Infof("Running job with command: %s", cmd.String())
 	return cmd, nil
@@ -249,10 +255,10 @@ func (j *ProcessJobManager) Launch(
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
-	cmd.Env = os.Environ()
 	if err != nil {
 		return err
 	}
+	cmd.Env = os.Environ()
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -295,13 +301,13 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	// collect the entry in j.cmds.
 	defer j.deleteCmd(name)
 	if err != nil {
-		log.Errorf("Unexpected error occured while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
+		log.Errorf("Unexpected error occurred while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
 			name,
 			err,
 			command.stdout.String(),
 			command.stderr.String(),
 		)
-		return shared.FailedExecutionStatus, nil
+		return shared.FailedExecutionStatus, nil // nolint:nilerr // Poll() should not error on command execution issues.
 	}
 
 	log.Infof("Job %s Stdout:\n %s \n Stderr: \n %s",

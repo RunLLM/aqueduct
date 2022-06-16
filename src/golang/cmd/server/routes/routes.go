@@ -12,10 +12,11 @@ const (
 	ListIntegrationsRoute   = "/api/integrations"
 	ConnectIntegrationRoute = "/api/integration/connect"
 	DeleteIntegrationRoute  = "/api/integration/{integrationId}/delete"
+	CreateTableRoute        = "/api/integration/{integrationId}/create"
 	PreviewTableRoute       = "/api/integration/{integrationId}/preview_table"
 	DiscoverRoute           = "/api/integration/{integrationId}/discover"
 
-	ResetApiKeyRoute = "/api/keys/reset"
+	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 
 	ListNotificationsRoute   = "/api/notifications"
 	ArchiveNotificationRoute = "/api/notifications/{notificationId}/archive"

@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,6 +20,10 @@ type WorkflowExecutor struct {
 
 	WorkflowId    uuid.UUID
 	GithubManager github.Manager
+
+	// The parameters to execute this workflow job with. If nil, then only default parameters
+	// will be used. These values not persisted to the db.
+	Parameters map[string]string
 }
 
 func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowExecutor, error) {
@@ -36,6 +41,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		BaseExecutor:  base,
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		Parameters:    spec.Parameters,
 	}, nil
 }
 
@@ -79,6 +85,23 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Overwrite the "default" values in the operator spec for this workflowDag.
+	// Because this workflowDag is never written to the database, we will not contaminate
+	// the default in the db.
+	if ex.Parameters != nil {
+		for name, newVal := range ex.Parameters {
+			op := workflowDag.GetOperatorByName(name)
+			if op == nil {
+				continue
+			}
+
+			if !op.Spec.IsParam() {
+				return errors.Newf("Cannot set parameters on a non-parameter operator %s", name)
+			}
+			workflowDag.Operators[op.Id].Spec.Param().Val = newVal
+		}
+	}
+
 	workflowStoragePaths := utils.GenerateWorkflowStoragePaths(workflowDag)
 
 	// Do not clean up artifact contents.
@@ -106,6 +129,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	log.WithFields(log.Fields{
 		"WorkflowId":    workflowDag.WorkflowId,
 		"WorkflowDagId": workflowDag.Id,
+		"Parameters":    ex.Parameters,
 	}).Infof("Workflow run completed with status: %v", status)
 
 	return nil

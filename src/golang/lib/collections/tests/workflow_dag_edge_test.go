@@ -11,7 +11,7 @@ import (
 
 // seedWorkflowDagEdgeWithDagId populates the workflow_dag_edge table with the edges from
 // edgesMap for the workflow dag specified.
-func seedWorkflowDagEdgeWithDagId(t *testing.T, edgesMap map[uuid.UUID]uuid.UUID, workflowDagId uuid.UUID) []workflow_dag_edge.WorkflowDagEdge {
+func seedWorkflowDagEdgeWithDagId(t *testing.T, edgesMap map[uuid.UUID]uuid.UUID, workflowDagId uuid.UUID) {
 	edges := make([]workflow_dag_edge.WorkflowDagEdge, 0, len(edgesMap))
 
 	for fromId, toId := range edgesMap {
@@ -28,8 +28,5 @@ func seedWorkflowDagEdgeWithDagId(t *testing.T, edgesMap map[uuid.UUID]uuid.UUID
 
 		edges = append(edges, *testEdge)
 	}
-
 	require.Len(t, edges, len(edgesMap))
-
-	return edges
 }

@@ -129,7 +129,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		dagSummary.Dag,
 	); err != nil {
 		if _, ok := dag_utils.ValidationErrors[err]; !ok {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occured while validating the DAG.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Internal system error occurred while validating the DAG.")
 		} else {
 			return nil, http.StatusBadRequest, err
 		}
@@ -156,7 +156,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
-	defer txn.Rollback(ctx)
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
@@ -275,6 +275,7 @@ func CreateWorkflowCronJob(
 		vaultObject.Config(),
 		jobManager.Config(),
 		githubManager.Config(),
+		nil, /* parameters */
 	)
 
 	err := jobManager.DeployCronJob(

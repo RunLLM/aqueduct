@@ -18,6 +18,6 @@ func TestVerifySdkRequest(t *testing.T) {
 	require.Equal(t, responseCode, http.StatusForbidden)
 
 	responseCode, reason = verification.VerifySdkRequest("log(0)")
-	require.Equal(t, reason, "Could not recognize the recieved sdk client version as an integer")
+	require.Equal(t, reason, "Could not recognize the received sdk client version as an integer")
 	require.Equal(t, responseCode, http.StatusBadRequest)
 }

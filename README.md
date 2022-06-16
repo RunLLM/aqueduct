@@ -1,4 +1,4 @@
-[<img src="https://uploads-ssl.webflow.com/62336685e5efee770a9c69b6/624b700d8164e226ea67f495_aqueduct%20logo-p-500.jpeg" width="35%"/>](https://www.aqueducthq.com)
+[<img src="https://user-images.githubusercontent.com/867892/172955552-f1f29c80-713f-41e9-af0c-7d7c8ee622f0.jpg" width= "35%" />](https://www.aqueducthq.com)
 
 ## Aqueduct: Prediction Infrastructure for Data Scientists
 
@@ -40,24 +40,49 @@ import torch
 
 client = aq.Client("YOUR_API_KEY", "localhost:8080")
 
-demo_db = client.integration("aqueduct_demo")
-reviews_table = demo_db.sql("select * from hotel_reviews;")
-
+# This function takes in a DataFrame with the text of user review of
+# hotels and returns a DataFrame that has the sentiment of the review.
+# This function users the `pipeline` interface from HuggingFace's 
+# Transformers package. 
 @op()
 def sentiment_prediction(reviews):
     model = pipeline("sentiment-analysis")
-    return reviews.join(pd.DataFrame(model(list(reviews['review']))))
+    return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
 
+# Load a connection to a database -- here, we use the `aqueduct_demo`
+# database, for which you can find the documentation here:
+# https://docs.aqueducthq.com/example-workflows/demo-data-warehouse
+demo_db = client.integration("aqueduct_demo")
+
+# Once we have a connection to a database, we can run a SQL query against it.
+reviews_table = demo_db.sql("select * from hotel_reviews;")
+
+# Next, we apply our annotated function to our data -- this tells Aqueduct 
+# to create a workflow spec that applied `sentiment_prediction` to `reviews_table`.
 sentiment_table = sentiment_prediction(reviews_table)
-sentiment_table.save(demo_db.config(table='sentiment_pred', update_mode='replace'))
 
+# When we call `.save()`, Aqueduct will take the data in `sentiment_table` and 
+# write the results back to any database you specify -- in this case, back to the 
+# `aqueduct_demo` DB.
+sentiment_table.save(demo_db.config(table="sentiment_pred", update_mode="replace"))
+
+# In Aqueduct, a metric is a numerical measurement of a some predictions. Here, 
+# we calculate the average sentiment score returned by our machine learning 
+# model, which is something we can track over time.
 @metric
 def average_sentiment(reviews_with_sent):
-    return reviews_with_sent['review'].mean()
+    return reviews_with_sent["score"].mean()
+
 avg_sent = average_sentiment(sentiment_table)
+
+# Once we compute a metric, we can set upper and lower bounds on it -- if 
+# the metric exceeds one of those bounds, an error will be raised.
 avg_sent.bound(lower=0.5)
 
-client.publish_flow(name="hotel_sentiment", artifacts=[sentiment_table])
+# And we're done! With a call to `publish_flow`, we've created a full workflow
+# that calculates the sentiment of hotel reviews, creates a metric over those
+# predictions, and sets a bound on that metric.
+client.publish_flow(name="hotel_sentiment", artifacts=[sentiment_table, avg_sent])
 ```
 
 ## Why Aqueduct?

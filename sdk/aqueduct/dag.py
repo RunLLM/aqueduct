@@ -1,6 +1,6 @@
 import copy
 import uuid
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
@@ -8,11 +8,12 @@ from aqueduct.error import (
     InternalAqueductError,
     InvalidUserActionException,
     ArtifactNotFoundException,
+    InvalidUserArgumentException,
 )
 
 from aqueduct.artifact import Artifact
 from aqueduct.enums import OperatorType, TriggerType
-from aqueduct.operators import Operator, get_operator_type
+from aqueduct.operators import Operator, get_operator_type, serialize_parameter_value
 
 
 class Schedule(BaseModel):
@@ -190,7 +191,8 @@ class DAG(BaseModel):
 
         return [artifact for artifact in self.artifacts.values()]
 
-    # DAG WRITES
+    ######################## DAG WRITES #############################
+
     def add_operator(self, op: Operator) -> None:
         self.add_operators([op])
 
@@ -202,6 +204,11 @@ class DAG(BaseModel):
     def add_artifacts(self, artifacts: List[Artifact]) -> None:
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
+
+    def update_operator(self, op: Operator) -> None:
+        """Blind replace of an operator in the dag."""
+        self.operators[str(op.id)] = op
+        self.operator_by_name[op.name] = op
 
     def remove_operator(
         self,
@@ -428,6 +435,43 @@ class RemoveCheckOperatorDelta(DAGDelta):
             raise InvalidUserActionException(
                 "No check with name %s exists on artifact!" % self.check_name
             )
+
+
+class UpdateParametersDelta(DAGDelta):
+    """Updates the values of the given parameters in the DAG to the given values. No-ops if no parameters provided."""
+
+    def __init__(
+        self,
+        parameters: Optional[Dict[str, Any]],
+    ):
+        self.parameters = parameters
+
+    def apply(self, dag: DAG) -> None:
+        if self.parameters is None:
+            return
+
+        if any(not isinstance(name, str) for name in self.parameters):
+            raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
+        for param_name, new_val in self.parameters.items():
+            param_op = dag.get_operator(with_name=param_name)
+            if param_op is None:
+                raise InvalidUserArgumentException(
+                    "Parameter %s cannot be found, or is not utilized in the current computation."
+                    % param_name
+                )
+            if get_operator_type(param_op) != OperatorType.PARAM:
+                raise InvalidUserArgumentException(
+                    "Parameter %s must refer to a parameter, but instead refers to a: %s"
+                    % (param_name, get_operator_type(param_op))
+                )
+
+            # Update the parameter value and update the dag.
+            assert param_op.spec.param  # for mypy
+            param_op.spec.param.val = serialize_parameter_value(
+                param_name, self.parameters[param_name]
+            )
+            dag.update_operator(param_op)
 
 
 def apply_deltas_to_dag(dag: DAG, deltas: List[DAGDelta], make_copy: bool = False) -> DAG:

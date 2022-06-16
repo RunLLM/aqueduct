@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import random
+import socket
 import string
 import subprocess
 import sys
@@ -17,12 +18,13 @@ server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
 package_version = "0.0.2"
+default_server_port = 8080
 
 welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI and the backend server are accessible at: http://%s:8080
+The Web UI and the backend server are accessible at: http://%s:%d
 ***************************************************
 """
 
@@ -90,7 +92,11 @@ def update_ui_version():
         execute_command(["rm", "-rf", ui_directory])
         exit(1)
 
-def download_golang_binaries(s3_prefix):
+def download_server_binaries():
+    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
+    execute_command(["rm", "-rf", os.path.join(server_directory, "bin")])
+    os.mkdir(os.path.join(server_directory, "bin"))
+
     system = platform.system()
     arch = platform.machine()
     if system == "Linux" and arch == "x86_64":
@@ -110,6 +116,9 @@ def download_golang_binaries(s3_prefix):
         execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
     else:
         raise Exception("Unsupported operating system and architecture combination: %s, %s" % (system, arch))
+    
+    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
+    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
 
 def update_server_version():
     print("Updating server version to %s" % package_version)
@@ -117,24 +126,24 @@ def update_server_version():
         execute_command(["rm", os.path.join(server_directory, "__version__")])
     generate_version_file(os.path.join(server_directory, "__version__"))
 
-    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-    download_golang_binaries(s3_prefix)
+    download_server_binaries()
     update_executable_permissions()
-
-    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
-    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
 
     execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "8"])
 
-def generate_welcome_message(expose):
+def generate_welcome_message(expose, port):
     if not expose:
         expose_ip = "localhost"
     else:
         expose_ip = "<IP_ADDRESS>"
     apikey = get_apikey()
-    return welcome_message % (apikey, expose_ip)
+    return welcome_message % (apikey, expose_ip, port)
 
-def start(expose):
+def is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("localhost", port)) == 0
+
+def start(expose, port):
     if not os.path.isdir(ui_directory):
         update_ui_version()
 
@@ -179,11 +188,40 @@ def start(expose):
                 execute_command(["rm", os.path.join(server_directory, "__version__")])
             exit(1)
 
-    if expose:
-        popen_handle = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml"), "--expose"], ui_directory)
+    if port is None:
+        server_port = default_server_port
+        while is_port_in_use(server_port):
+            server_port += 1
+        if not server_port == default_server_port:
+            print("Default port %d is occupied. Next available port is %d" % (default_server_port, server_port))
     else:
-        popen_handle = execute_command_nonblocking([os.path.join(server_directory, "bin", "server"), "--config", os.path.join(server_directory, "config", "config.yml")], ui_directory)
-    return popen_handle
+        server_port = int(port)
+        print("Server will use the user-specified port %d" % server_port)
+
+    if expose:
+        popen_handle = execute_command_nonblocking(
+            [
+                os.path.join(server_directory, "bin", "server"), 
+                "--config", 
+                os.path.join(server_directory, "config", "config.yml"), 
+                "--expose",
+                "--port",
+                str(server_port),
+            ], 
+            ui_directory,
+        )
+    else:
+        popen_handle = execute_command_nonblocking(
+            [
+                os.path.join(server_directory, "bin", "server"), 
+                "--config", 
+                os.path.join(server_directory, "config", "config.yml"),
+                "--port",
+                str(server_port),
+            ], 
+            ui_directory,
+        )
+    return popen_handle, server_port
 
 def install_postgres():
     execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
@@ -293,14 +331,15 @@ if __name__ == "__main__":
                                ''')
     start_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
+    start_args.add_argument('--port', dest="port", help="Specify the port on which the Aqueduct server runs.")
     server_args = subparsers.add_parser('server', help=
-                                   '''This starts the Aqueduct server in a
+                                   '''[DEPRECATED] This starts the Aqueduct server in a
                                    blocking fashion. To background the process,
                                    run aqueduct server &.''')
     server_args.add_argument('--expose', default=False, action='store_true',
                     help="Use this option to expose the server to the public.")
     ui_args = subparsers.add_parser('ui', help=
-                               '''This starts the Aqueduct UI in a blocking
+                               '''[DEPRECATED] This starts the Aqueduct UI in a blocking
                                fashion. To background the process run aqueduct
                                ui &.
 
@@ -327,10 +366,14 @@ if __name__ == "__main__":
     
     if args.command == "start":
         try:
-            popen_handle = start(args.expose)
-            time.sleep(2)
-            print(generate_welcome_message(args.expose))
-            popen_handle.wait()
+            popen_handle, server_port = start(args.expose, args.port)
+            time.sleep(1)
+            terminated = popen_handle.poll()
+            if terminated:
+                print("Server terminated due to an error.")
+            else:
+                print(generate_welcome_message(args.expose, server_port))
+                popen_handle.wait()
         except (Exception, KeyboardInterrupt) as e:
             print(e)
             print('\nTerminating Aqueduct service...')
