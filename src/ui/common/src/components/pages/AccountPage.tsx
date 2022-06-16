@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 
 import UserProfile from '../../utils/auth';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
+import CodeBlock from '../layouts/codeblock';
 import DefaultLayout from '../layouts/default';
 
 type AccountPageProps = {
@@ -48,9 +49,7 @@ client = aqueduct.Client(
         <Typography variant="body1" sx={{ fontWeight: 'bold', mr: '8px' }}>
           Python SDK Connection Snippet
         </Typography>
-        <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-          {apiConnectionSnippet}
-        </Typography>
+        <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
       </Box>
     </DefaultLayout>
   );
