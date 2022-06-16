@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Callable, Any, Optional, Dict
+from typing import Callable, Any, List, Optional, Dict
 import uuid
 
 import pandas as pd
@@ -155,6 +155,16 @@ class TableArtifact(Artifact):
                 )
             ],
         )
+
+    PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
+    def list_preset_metric(self) -> List[str]:
+        """Returns a list of all preset metrics available on the table artifact.
+        These preset metrics can be set via the invoking the preset method on a artifact.
+
+        Returns:
+            A list of available preset metrics on a table
+        """
+        return self.PRESET_METRIC_LIST
 
     def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> MetricArtifact:
         """Creates a metric that represents the number of missing values over a given column or row.

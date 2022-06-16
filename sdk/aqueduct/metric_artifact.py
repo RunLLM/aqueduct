@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, List
 import uuid
 
 from aqueduct.utils import get_description_for_metric
@@ -95,6 +95,16 @@ class MetricArtifact(Artifact):
     BOUND_UPPER = "upper"
     BOUND_EQUAL = "equal"
     BOUND_NOTEQUAL = "notequal"
+
+    def list_preset_checks(self) -> List[str]:
+        """Returns a list of all preset checks available on the metric artifact.
+        These preset checks can be set via the bound() method on a artifact.
+
+        Returns:
+            A list of available preset checks on a metric
+        """
+        return [self.BOUND_LOWER, self.BOUND_UPPER, self.BOUND_EQUAL, self.BOUND_NOTEQUAL]
+        
 
     def bound(
         self,
