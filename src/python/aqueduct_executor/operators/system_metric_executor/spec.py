@@ -18,10 +18,10 @@ class SystemMetricSpec(BaseModel):
     type: Literal[enums.JobType.SYSTEM_METRIC]
     storage_config: config.StorageConfig
     metadata_path: str
-    metricname: str
+    metric_name: str
     input_metadata_paths: List[str]
-    output_content_paths: List[str]
-    output_metadata_paths: List[str]
+    output_content_path: str
+    output_metadata_path: str
 
 
 def parse_spec(spec_json: str) -> SystemMetricSpec:

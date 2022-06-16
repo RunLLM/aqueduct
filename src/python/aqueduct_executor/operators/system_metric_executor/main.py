@@ -13,16 +13,24 @@ def run(spec: spec.SystemMetricSpec) -> None:
     Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
-    system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
-    utils.write_artifact(
-        storage,
-        spec.output_content_paths[0],
-        spec.output_metadata_paths[0],
-        float(system_metadata[0][utils._METADATA_SYSTEM_METADATA_NAME][spec.metricname]),
-        {},
-        enums.OutputArtifactType.FLOAT,
-    )
-    utils.write_operator_metadata(storage, spec.metadata_path, "", {})
+    print(spec.metric_name)
+    try:
+        system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
+        utils.write_artifact(
+            storage,
+            spec.output_content_path,
+            spec.output_metadata_path,
+            float(system_metadata[0][utils._METADATA_SYSTEM_METADATA_NAME][spec.metric_name]),
+            {},
+            enums.OutputArtifactType.FLOAT,
+        )
+
+        utils.write_operator_metadata(storage, spec.metadata_path, "", {})
+    except Exception as e:
+        utils.write_operator_metadata(storage, spec.metadata_path, str(e), {})
+        print("Exception Raised: ", e)
+        traceback.print_tb(e.__traceback__)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

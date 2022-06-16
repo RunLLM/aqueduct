@@ -20,8 +20,8 @@ func ScheduleSystemMetric(
 	spec system_metric.SystemMetric,
 	metadataPath string,
 	inputMetadataPaths []string,
-	outputContentPaths []string,
-	outputMetadataPaths []string,
+	outputContentPath string,
+	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 ) (string, error) {
@@ -33,8 +33,8 @@ func ScheduleSystemMetric(
 		metadataPath,
 		spec.MetricName,
 		inputMetadataPaths,
-		outputContentPaths,
-		outputMetadataPaths,
+		outputContentPath,
+		outputMetadataPath,
 	)
 	err := jobManager.Launch(ctx, jobName, jobSpec)
 	if err != nil {

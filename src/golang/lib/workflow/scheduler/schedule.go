@@ -255,8 +255,8 @@ func ScheduleOperator(
 			*opSpec.SystemMetric(),
 			metadataPath,
 			inputMetadataPaths,
-			outputContentPaths,
-			outputMetadataPaths,
+			outputContentPaths[0],
+			outputMetadataPaths[0],
 			storageConfig,
 			jobManager,
 		)

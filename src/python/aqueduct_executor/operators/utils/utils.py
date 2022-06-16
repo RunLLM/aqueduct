@@ -12,7 +12,7 @@ _DEFAULT_ENCODING = "utf8"
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
 _METADATA_SCHEMA_NAME = "schema"
-_METADATA_SYSTEM_METADATA_NAME = "systemmetadata"
+_METADATA_SYSTEM_METADATA_NAME = "system_metadata"
 
 
 # Typing: all the possible artifact types to a function. Should be in sync with `InputArtifactType`.
@@ -53,8 +53,8 @@ def read_system_metadata(
     input_metadata_paths: List[str],
 ):
     # We currently allow the spec to contain multiple input_metadata paths.
-    # A system metric currently spans over a single operator
-    # The scheduler enforces this requirement before the executor is run
+    # A system metric currently spans over a single operator.
+    # The scheduler enforces this requirement before the executor is run.
     inputs: List[InputArtifact] = []
     for input_path in input_metadata_paths:
         inputs.append(_read_json_input(storage, input_path))
