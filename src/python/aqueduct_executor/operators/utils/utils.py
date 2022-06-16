@@ -55,9 +55,7 @@ def read_system_metadata(
     # We currently allow the spec to contain multiple input_metadata paths.
     # A system metric currently spans over a single operator.
     # The scheduler enforces this requirement before the executor is run.
-    return [
-        _read_json_input(storage, input_path) for input_path in input_metadata_paths
-    ]
+    return [_read_json_input(storage, input_path) for input_path in input_metadata_paths]
 
 
 # TODO: Can also the input metadata here if we wanted to use it.
