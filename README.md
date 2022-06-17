@@ -35,6 +35,8 @@ Once you have the Aqueduct server running, this 25-line code snippet is all you 
 import aqueduct as aq
 from aqueduct import op, metric
 import pandas as pd
+# Need to install torch and transformers
+#!pip install torch transformers
 from transformers import pipeline
 import torch
 
@@ -47,7 +49,8 @@ client = aq.Client("YOUR_API_KEY", "localhost:8080")
 @op()
 def sentiment_prediction(reviews):
     model = pipeline("sentiment-analysis")
-    return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
+    predicted_sentiment = model(list(reviews["review"]))
+    return reviews.join(pd.DataFrame(predicted_sentiment))
 
 # Load a connection to a database -- here, we use the `aqueduct_demo`
 # database, for which you can find the documentation here:
@@ -69,9 +72,14 @@ sentiment_table.save(demo_db.config(table="sentiment_pred", update_mode="replace
 # In Aqueduct, a metric is a numerical measurement of a some predictions. Here, 
 # we calculate the average sentiment score returned by our machine learning 
 # model, which is something we can track over time.
+
+
+# In Aqueduct, a metric is a numerical measurement of a some predictions. Here, 
+# we calculate the average sentiment score returned by our machine learning 
+# model, which is something we can track over time.
 @metric
 def average_sentiment(reviews_with_sent):
-    return reviews_with_sent["score"].mean()
+    return (reviews_with_sent["label"] == "POSITIVE").mean()
 
 avg_sent = average_sentiment(sentiment_table)
 
