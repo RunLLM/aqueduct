@@ -55,6 +55,8 @@ class APIClient:
     """
     Internal client class used to send requests to the aqueduct cluster.
     """
+    HTTP_PREFIX = "http://"
+    HTTPS_PREFIX = "https://"
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
@@ -73,44 +75,65 @@ class APIClient:
 
         # If a dummy client is initialized, don't perform validation.
         if self.api_key == "" and self.aqueduct_address == "":
+            Logger.logger.info("Neither api key or server address were specified. This is a dummy client.")
             return
 
-        # This should be initialized after all the fields.
-        self.use_https = self._test_connection_protocol()
+        # Check that the connection with the backend is working.
+        if self.aqueduct_address.startswith(self.HTTP_PREFIX):
+            self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
+        elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
+            self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
+        else:
+            self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
 
-    def _test_connection_protocol(self) -> bool:
+    def _construct_full_url(self, route_suffix: str, use_https: bool) -> str:
+        protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
+        return "%s%s%s" % (protocol_prefix, self.aqueduct_address, route_suffix)
+
+    def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
 
         First tries https, then falls back to http.
         """
-        try:
-            _ = self._list_integrations(use_https=True)
-            return True
-        except Exception as e:
-            Logger.logger.info(
-                "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
-            )
+        assert try_http or try_https, "Must test at least one of http or https protocols."
 
-        try:
-            _ = self._list_integrations(use_https=False)
-        except Exception as e:
-            Logger.logger.info(
-                "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
-            )
-            raise ClientValidationError(
-                "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
-                % (self.api_key, self.aqueduct_address),
-            )
-        return False
+        if try_https:
+            try:
+                url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=True)
+                self._test_url(url)
+                return True
+            except Exception as e:
+                Logger.logger.info(
+                    "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
+                )
 
-    def _construct_full_url(self, route_suffix: str, use_https: bool) -> str:
-        protocol = "https" if use_https else "http"
-        return "%s://%s%s" % (protocol, self.aqueduct_address, route_suffix)
+        if try_http:
+            try:
+                url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=False)
+                self._test_url(url)
+                return False
+            except Exception as e:
+                Logger.logger.info(
+                    "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
+                )
 
-    def _list_integrations(self, use_https: bool) -> Dict[str, IntegrationInfo]:
-        url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https)
+        raise ClientValidationError(
+            "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
+            % (self.api_key, self.aqueduct_address),
+        )
+
+    def _test_url(self, url: str) -> None:
+        """Perform a get on the url with default headers, raising an error if anything goes wrong.
+
+        We don't are about the value of the response, as long as the request succeeds.
+        """
         headers = utils.generate_auth_headers(self.api_key)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
 
+    def list_integrations(self) -> Dict[str, IntegrationInfo]:
+        url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
+        headers = utils.generate_auth_headers(self.api_key)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
         if len(resp.json()) == 0:
@@ -122,9 +145,6 @@ class APIClient:
             integration_info["name"]: IntegrationInfo(**integration_info)
             for integration_info in resp.json()
         }
-
-    def list_integrations(self) -> Dict[str, IntegrationInfo]:
-        return self._list_integrations(self.use_https)
 
     def list_github_repos(self) -> List[str]:
         url = self._construct_full_url(self.LIST_GITHUB_REPO_ROUTE, self.use_https)
