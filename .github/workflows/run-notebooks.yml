@@ -83,3 +83,16 @@ jobs:
         with:
           name: Server Logs
           path: server_logs
+
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ''
+          message_format: '{emoji} *{workflow}* has {status_message}'
+          footer: '{run_url}'
+          notify_when: 'failure,warnings'
+          mention_users: 'U025MDH5KS6,U01JEUX1J2Y,U01J8Q1HUBC'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

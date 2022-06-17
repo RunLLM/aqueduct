@@ -109,14 +109,13 @@ jobs:
           name: Server Logs
           path: logs/
 
-      # TODO(ENG-686): Instead of tagging @kenxu on every failure, tag the offending author.
       - name: Report to Slack on Failure
         if: always()
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
           notification_title: ''
-          message_format: '{emoji} *{workflow}* for recent push has {status_message}'
+          message_format: '{emoji} *{workflow}* has {status_message}'
           footer: '{run_url}'
           notify_when: 'failure,warnings'
           mention_users: 'U025MDH5KS6'
