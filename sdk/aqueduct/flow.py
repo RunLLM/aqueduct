@@ -82,7 +82,7 @@ class Flow:
             if len(param_val) == 0:
                 Logger.logger.error(
                     "The parameter %s was not successfully computed. If you triggered this flow run with custom "
-                    "parameters, those parameters will not be reflected in `FlowRun.describe()."
+                    "parameters, those parameter values will not be reflected in `FlowRun.describe()."
                 )
                 continue
 
