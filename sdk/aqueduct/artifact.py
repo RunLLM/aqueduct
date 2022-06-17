@@ -19,6 +19,7 @@ class Artifact(BaseModel):
     name: str
     spec: ArtifactSpec
 
+
 def get_artifact_type(artifact: Artifact) -> ArtifactType:
     if artifact.spec.table is not None:
         return ArtifactType.TABLE
