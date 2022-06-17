@@ -27,6 +27,7 @@ class RetentionPolicy(BaseModel):
 
 
 class Metadata(BaseModel):
+    """These fields should always set when writing/reading from the backend."""
     name: Optional[str]
     description: Optional[str]
     schedule: Optional[Schedule]
@@ -41,7 +42,7 @@ class DAG(BaseModel):
     # Is excluded from json serialization.
     operator_by_name: Dict[str, Operator] = {}
 
-    # These fields only need to be set when publishing the workflow
+    # These fields must be set when publishing the workflow
     metadata: Metadata
 
     class Config:
@@ -188,7 +189,9 @@ class DAG(BaseModel):
             artifacts = self.must_get_artifacts(list(artifact_ids))
 
         if filter_to is not None:
-            artifacts = [artifact for artifact in artifacts if get_artifact_type(artifact) in filter_to]
+            artifacts = [
+                artifact for artifact in artifacts if get_artifact_type(artifact) in filter_to
+            ]
 
         return artifacts
 

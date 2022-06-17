@@ -35,7 +35,8 @@ from .utils import (
     schedule_from_cron_string,
     retention_policy_from_latest_runs,
     generate_uuid,
-    artifact_name_from_op_name, parse_user_supplied_id,
+    artifact_name_from_op_name,
+    parse_user_supplied_id,
 )
 
 import __main__ as main
@@ -241,9 +242,7 @@ class Client:
             the flow further in the UI or SDK.
         """
         return [
-            workflow_resp.to_readable_dict()
-            for workflow_resp
-            in self._api_client.list_workflows()
+            workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
         ]
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
@@ -260,7 +259,7 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
 
         if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
-            raise InvalidUserArgumentException("Unable to find a flow with id %s", flow_id)
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
         return Flow(
             self._api_client,

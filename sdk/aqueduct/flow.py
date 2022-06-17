@@ -55,14 +55,14 @@ class Flow:
             for dag_result in reversed(resp.workflow_dag_results[:limit])
         ]
 
-    def _construct_flow_run(self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse) -> FlowRun:
+    def _construct_flow_run(
+        self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse
+    ) -> FlowRun:
         """Constructs a flow run from a GetWorkflowResponse."""
         dag = DAG(
             operators=dag_resp.operators,
             artifacts=dag_resp.artifacts,
-            operator_by_name={
-                op.name: op for op in dag_resp.operators.values()
-            },
+            operator_by_name={op.name: op for op in dag_resp.operators.values()},
             metadata=dag_resp.metadata,
         )
 
@@ -100,7 +100,9 @@ class Flow:
 
     def latest(self) -> FlowRun:
         resp = self._api_client.get_workflow(self._id)
-        assert len(resp.workflow_dag_results) > 0, "Every flow must have at least one run attached to it."
+        assert (
+            len(resp.workflow_dag_results) > 0
+        ), "Every flow must have at least one run attached to it."
 
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
@@ -110,7 +112,9 @@ class Flow:
         run_id = parse_user_supplied_id(run_id)
 
         resp = self._api_client.get_workflow(self._id)
-        assert len(resp.workflow_dag_results) > 0, "Every flow must have at least one run attached to it."
+        assert (
+            len(resp.workflow_dag_results) > 0
+        ), "Every flow must have at least one run attached to it."
 
         result = None
         for candidate_result in resp.workflow_dag_results:
@@ -119,7 +123,9 @@ class Flow:
                 result = candidate_result
 
         if result is None:
-            raise InvalidUserArgumentException("Cannot find any run with id %s on this flow." % run_id)
+            raise InvalidUserArgumentException(
+                "Cannot find any run with id %s on this flow." % run_id
+            )
 
         workflow_dag = resp.workflow_dags[result.workflow_dag_id]
         return self._construct_flow_run(result, workflow_dag)
@@ -131,13 +137,18 @@ class Flow:
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
 
         latest_metadata = latest_workflow_dag.metadata
-        print(textwrap.dedent(
-            f"""
+        assert latest_metadata.schedule is not None, "A flow must have a schedule."
+        assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
+
+        print(
+            textwrap.dedent(
+                f"""
             {format_header_for_print(f"'{latest_metadata.name}' Flow")}
             ID: {self._id}
             Description: '{latest_metadata.description}'
             Schedule: {latest_metadata.schedule.json(exclude_none=True)}
             RetentionPolicy: {latest_metadata.retention_policy.json(exclude_none=True)}
             """
-        ))
+            )
+        )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))

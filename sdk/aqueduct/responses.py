@@ -144,6 +144,7 @@ class WorkflowDagResponse(BaseModel):
     Excluded Attributes:
         created_at, storage_config
     """
+
     id: uuid.UUID
     workflow_id: uuid.UUID
     metadata: Metadata
@@ -165,6 +166,7 @@ class WorkflowDagResultResponse(BaseModel):
         workflow_dag_id:
             This id can be used to find the corresponding workflow dag version.
     """
+
     id: uuid.UUID
     created_at: int
     status: ExecutionStatus
@@ -190,5 +192,6 @@ class GetWorkflowResponse(BaseModel):
     Excluded Attributes:
         watcher_auth_ids
     """
+
     workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
     workflow_dag_results: List[WorkflowDagResultResponse]

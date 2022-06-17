@@ -37,24 +37,28 @@ class FlowRun:
         """Returns the id for this flow run."""
         return uuid.UUID(self._id)
 
-    def describe(self):
+    def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
         if self._in_notebook_or_console_context:
             _show_dag(self._api_client, self._dag)
 
-        print(textwrap.dedent(
-            f"""
+        print(
+            textwrap.dedent(
+                f"""
             {format_header_for_print(f"'{self._dag.metadata.name}' Run")}
             ID: {self._id}
             Created At: {human_readable_timestamp(self._created_at)}
             Status: {str(self._status)}
             """
-        ))
+            )
+        )
 
         param_artifacts = self._dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
             ParamArtifact(
-                api_client=self._api_client, dag=self._dag, artifact_id=param_artifact.id,
+                api_client=self._api_client,
+                dag=self._dag,
+                artifact_id=param_artifact.id,
             ).describe()
 
 
@@ -62,12 +66,12 @@ class FlowRun:
 #  a circular dependency with `api_client.py`. We should move `api_client.py` to an
 #  internal directory.
 def _show_dag(
-        api_client: APIClient,
-        dag: DAG,
-        label_width: int = 20,
-        markersize: int = 50,
-        operator_color: str = "#6aa2cc",
-        artifact_color: str = "#aecfe8",
+    api_client: APIClient,
+    dag: DAG,
+    label_width: int = 20,
+    markersize: int = 50,
+    operator_color: str = "#6aa2cc",
+    artifact_color: str = "#aecfe8",
 ) -> None:
     """Show the DAG visually.
 
@@ -109,11 +113,11 @@ def _show_dag(
 
     class NodeProperties:
         def __init__(
-                self,
-                node_type: str,
-                positions: Mapping[str, Mapping[str, float]],
-                mapping: Union[Mapping[str, Operator], Mapping[str, Artifact]],
-                color: str,
+            self,
+            node_type: str,
+            positions: Mapping[str, Mapping[str, float]],
+            mapping: Union[Mapping[str, Operator], Mapping[str, Artifact]],
+            color: str,
         ) -> None:
             self.node_type = node_type
             self.positions = positions

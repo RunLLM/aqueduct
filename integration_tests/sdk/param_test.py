@@ -164,7 +164,7 @@ def test_trigger_flow_with_different_param(client):
 
     try:
         client.trigger(flow.id(), parameters={"num1": 10})
-        assert(wait_for_flow_runs(client, flow.id(), num_runs=2) == 2)
+        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
 
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()

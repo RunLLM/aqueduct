@@ -17,7 +17,12 @@ from aqueduct import utils
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse, ListWorkflowResponseEntry, GetWorkflowResponse
+from aqueduct.responses import (
+    PreviewResponse,
+    RegisterWorkflowResponse,
+    ListWorkflowResponseEntry,
+    GetWorkflowResponse,
+)
 
 
 def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -277,20 +282,20 @@ class APIClient:
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
 
-        return [
-            ListWorkflowResponseEntry(**workflow) for workflow in response.json()
-        ]
+        return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
     def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
         """Returns an empty string if the artifact failed to be computed."""
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id), self.use_https)
+        url = self._construct_full_url(
+            self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id), self.use_https
+        )
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
         if resp.json()["status"] != ExecutionStatus.SUCCEEDED:
             return ""
-        return resp.json()["data"]
+        return str(resp.json()["data"])
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]

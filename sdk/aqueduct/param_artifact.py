@@ -35,9 +35,11 @@ class ParamArtifact(Artifact):
         return json.loads(param_op.spec.param.val)
 
     def describe(self) -> None:
-        print(textwrap.dedent(
-            f"""
+        print(
+            textwrap.dedent(
+                f"""
             {format_header_for_print(f"'{self.name()}' Parameter")}
             Value: {self.get()}
             """
-        ))
+            )
+        )
