@@ -410,7 +410,7 @@ class Client:
 
         Args:
             artifacts:
-                If specified, the subgraph terminating at these artifacts will be specified.
+                If specified the subgraph terminating at these artifacts will be specified.
                 Otherwise, the entire graph is printed.
         """
         dag = self._dag
@@ -437,9 +437,3 @@ class Client:
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)
-
-    def _get_flow_info(self, flow_id: str) -> Any:
-        """WARNING: this is only meant for our SDK integration tests to use. We do not publicly
-        support fetching an existing flow through the SDK yet.
-        """
-        return self._api_client.get_workflow(flow_id)

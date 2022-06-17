@@ -1,10 +1,12 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 
+import json
 import pytest
 
+from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from utils import get_integration_name, run_flow_test, generate_new_flow_name
+from utils import get_integration_name, run_flow_test, generate_new_flow_name, wait_for_flow_runs
 from aqueduct import metric, op
 import pandas as pd
 
@@ -95,6 +97,16 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
+def _check_param_vals(dag, expected_vals: List[Any]):
+    """Check that all parameter artifacts have a one-to-one correspondence with `expected_vals`."""
+    artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
+    for artifact in artifacts:
+        op = dag.must_get_operator(with_output_artifact_id=artifact.id)
+        param_val = json.loads(op.spec.param.val)
+        assert param_val in expected_vals
+        expected_vals.remove(param_val)
+
+
 @pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
@@ -109,8 +121,8 @@ def test_edit_param_for_flow(client):
 
     try:
         # Edit the flow with a different row to append and re-publish
-        row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
-        new_row_param = client.create_param(name="new row", default=row_to_add)
+        new_row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
+        new_row_param = client.create_param(name="new row", default=new_row_to_add)
         output = append_row_to_df(sql_artifact, new_row_param)
 
         # Wait for the first run, then refresh the workflow and verify that it runs at least
@@ -118,6 +130,13 @@ def test_edit_param_for_flow(client):
         flow = run_flow_test(
             client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=False
         )
+
+        # Verify that the parameters were edited as expected.
+        flow_runs = flow.list_runs()
+        assert len(flow_runs) == 2
+        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [row_to_add])
+        _check_param_vals(flow.latest()._dag, [new_row_to_add])
+
     finally:
         client.delete_flow(flow.id())
 
@@ -145,5 +164,12 @@ def test_trigger_flow_with_different_param(client):
 
     try:
         client.trigger(flow.id(), parameters={"num1": 10})
+        assert(wait_for_flow_runs(client, flow.id(), num_runs=2) == 2)
+
+        # Verify the parameters were configured as expected.
+        flow_runs = flow.list_runs()
+        assert len(flow_runs) == 2
+        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [5, 5])
+        _check_param_vals(flow.latest()._dag, [5, 10])
     finally:
         client.delete_flow(flow.id())

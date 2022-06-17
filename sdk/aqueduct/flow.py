@@ -35,26 +35,24 @@ class Flow:
         """Returns the id of the flow."""
         return uuid.UUID(self._id)
 
-    def list_runs(self, limit: int = -1) -> List[Dict[str, str]]:
+    def list_runs(self, limit: int = 10) -> List[Dict[str, str]]:
         """Lists the historical runs associated with this flow, sorted chronologically from most to least recent.
 
         Args:
             limit:
-                If set, we return only a limit number of historical runs.
+                If set, we return only a limit number of historical runs. Defaults to 10.
 
         Returns:
             A list of dictionaries, each of which corresponds to a single flow run.
             Each dictionary contains essential information about the run (eg. id, status, etc.).
         """
-        resp = self._api_client.get_workflow(self._id)
-        if limit < 0:
-            limit = len(resp.workflow_dag_results)
-        else:
-            limit = min(limit, len(resp.workflow_dag_results))
+        if not isinstance(limit, int) or limit < 0:
+            raise InvalidUserArgumentException("Limit must be a positive integer.")
 
+        resp = self._api_client.get_workflow(self._id)
         return [
             dag_result.to_readable_dict()
-            for dag_result in reversed(resp.workflow_dag_results)[:limit]
+            for dag_result in reversed(resp.workflow_dag_results[:limit])
         ]
 
     def _construct_flow_run(self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse) -> FlowRun:
