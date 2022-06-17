@@ -83,7 +83,7 @@ class PreviewResponse(BaseModel):
 
 
 class RegisterWorkflowResponse(BaseModel):
-    """The is the response object returned by api_client.register_workflow().
+    """This is the response object returned by api_client.register_workflow().
 
     Attributes:
         id:
@@ -94,7 +94,19 @@ class RegisterWorkflowResponse(BaseModel):
 
 
 class ListWorkflowResponseEntry(BaseModel):
-    """TODO: docstring"""
+    """A list of these response objects is returned by api_client.list_workflows()
+    and corresponds with a single workflow.
+
+    Attributes:
+        id, name, description:
+            The id, name, and description of the workflow.
+        created_at:
+            The unix timestamp in seconds that the workflow was first created at.
+        last_run_at:
+            The unit timestamp in seconds that the last workflow run was started.
+        status:
+            The execution status of the latest run of this workflow.
+    """
 
     id: uuid.UUID
     name: str
@@ -115,7 +127,23 @@ class ListWorkflowResponseEntry(BaseModel):
 
 
 class WorkflowDagResponse(BaseModel):
-    # TODO: docstring (MISSING: created_at, storage_config)
+    """Represents a dag structure that could have been executed multiple times.
+
+    It is an essentially a "version" of a flow.
+
+    Attributes:
+        id:
+            The id of the workflow dag. This is not useful to the user.
+        workflow_id:
+            The id of the workflow that this dag belongs to.
+        metadata:
+            This workflow version's metadata like description, schedule, etc.
+        operators, artifacts:
+            Describes this workflow version's dag structure.
+
+    Excluded Attributes:
+        created_at, storage_config
+    """
     id: uuid.UUID
     workflow_id: uuid.UUID
     metadata: Metadata
@@ -124,6 +152,19 @@ class WorkflowDagResponse(BaseModel):
 
 
 class WorkflowDagResultResponse(BaseModel):
+    """Represents the result of a single workflwo run.
+
+    Attributes:
+        id:
+            The id of the workflow run. This is the same id users can use to fetch
+            FlowRuns.
+        created_at:
+            The unix timestamp in seconds that this workflow run was started at.
+        status:
+            The execution status of this workflow run.
+        workflow_dag_id:
+            This id can be used to find the corresponding workflow dag version.
+    """
     id: uuid.UUID
     created_at: int
     status: ExecutionStatus
@@ -138,6 +179,16 @@ class WorkflowDagResultResponse(BaseModel):
 
 
 class GetWorkflowResponse(BaseModel):
-    # TODO: docstring (MISSING: watcher_auth_ids)
+    """This is the response object returned by api_client.get_workflow().
+
+    Attributes:
+        workflow_dags:
+            All the historical workflow dags.
+        workflow_dag_results:
+            All the historical workflow results.
+
+    Excluded Attributes:
+        watcher_auth_ids
+    """
     workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
     workflow_dag_results: List[WorkflowDagResultResponse]

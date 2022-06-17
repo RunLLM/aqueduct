@@ -138,7 +138,6 @@ class Client:
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-
         apply_deltas_to_dag(
             self._dag,
             deltas=[
@@ -234,6 +233,13 @@ class Client:
             )
 
     def list_flows(self) -> List[Dict[str, str]]:
+        """Lists the flows that are accessible by this client.
+
+        Returns:
+            A list of flows, each represented as a dictionary providing essential
+            information (eg. name, id, etc.), which the user can use to inspect
+            the flow further in the UI or SDK.
+        """
         return [
             workflow_resp.to_readable_dict()
             for workflow_resp
@@ -241,8 +247,21 @@ class Client:
         ]
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
-        # TODO: docstring
+        """Fetches a flow corresponding to the given flow id.
+
+        Args:
+             flow_id:
+                Used to identify the flow to fetch from the system.
+
+        Raises:
+            InvalidUserArgumentException:
+                If the provided flow id does not correspond to a flow the client knows about.
+        """
         flow_id = parse_user_supplied_id(flow_id)
+
+        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s", flow_id)
+
         return Flow(
             self._api_client,
             flow_id,

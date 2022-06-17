@@ -31,8 +31,6 @@ API_KEY_HEADER = "api-key"
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
 
-
-# TODO: docstring
 def format_header_for_print(header: str) -> str:
     prefix_len = 20
     full_len = 80

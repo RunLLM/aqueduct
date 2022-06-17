@@ -9,14 +9,15 @@ from aqueduct.error import InvalidUserArgumentException
 from .enums import ArtifactType
 
 from .flow_run import FlowRun
+from .logger import Logger
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import parse_user_supplied_id, format_header_for_print
 
 
 class Flow:
-    """This class is a read-only handle to a workflow that in the system.
+    """This class is a read-only handle to flow already in the system.
 
-    A flow can have multiple runs within it.
+    Flows can have at multiple corresponding runs, and must have at least one.
     """
 
     def __init__(
@@ -34,16 +35,30 @@ class Flow:
         """Returns the id of the flow."""
         return uuid.UUID(self._id)
 
-    def list_runs(self) -> List[Dict[str, str]]:
-        # TODO: docstring (note that this is in reverse order)
+    def list_runs(self, limit: int = -1) -> List[Dict[str, str]]:
+        """Lists the historical runs associated with this flow, sorted chronologically from most to least recent.
+
+        Args:
+            limit:
+                If set, we return only a limit number of historical runs.
+
+        Returns:
+            A list of dictionaries, each of which corresponds to a single flow run.
+            Each dictionary contains essential information about the run (eg. id, status, etc.).
+        """
         resp = self._api_client.get_workflow(self._id)
+        if limit < 0:
+            limit = len(resp.workflow_dag_results)
+        else:
+            limit = min(limit, len(resp.workflow_dag_results))
+
         return [
             dag_result.to_readable_dict()
-            for dag_result in reversed(resp.workflow_dag_results)
+            for dag_result in reversed(resp.workflow_dag_results)[:limit]
         ]
 
     def _construct_flow_run(self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse) -> FlowRun:
-        """TODO: docstring"""
+        """Constructs a flow run from a GetWorkflowResponse."""
         dag = DAG(
             operators=dag_resp.operators,
             artifacts=dag_resp.artifacts,
@@ -53,22 +68,26 @@ class Flow:
             metadata=dag_resp.metadata,
         )
 
-        # Update all parameter artifacts to the
+        # Because parameters are not stored in the db, we cannot trust its value in the operator spec.
+        # Instead, we'll need to fetch the parameter's value from the parameter operator's output.
         param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
-            assert param_artifact.spec.jsonable is not None
+            param_op = dag.must_get_operator(with_output_artifact_id=param_artifact.id)
+            assert param_op.spec.param is not None
 
             param_val = self._api_client.get_artifact_result_data(
                 str(dag_result.id),
                 str(param_artifact.id),
             )
 
-            # Skip parameter update if the parameter was never computed.
-            # TODO(this is bug):
+            # Skip the parameter update if the parameter was never computed.
             if len(param_val) == 0:
+                Logger.logger.error(
+                    "The parameter %s was not successfully computed. If you triggered this flow run with custom "
+                    "parameters, those parameters will not be reflected in `FlowRun.describe()."
+                )
                 continue
 
-            param_op = dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             param_op.spec.param.val = param_val
             dag.update_operator(param_op)
 
