@@ -43,7 +43,7 @@ def timed_function(table: pd.DataFrame) -> pd.DataFrame:
 def mem_intensive_function(table: pd.DataFrame) -> pd.DataFrame:
     a = [0] * 1000
     b = a * 100
-    c = b * 100
+    b * 100
     return table
 
 

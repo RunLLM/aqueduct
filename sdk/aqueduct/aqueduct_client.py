@@ -35,7 +35,6 @@ from .utils import (
     schedule_from_cron_string,
     retention_policy_from_latest_runs,
     generate_uuid,
-    artifact_name_from_op_name,
     parse_user_supplied_id,
 )
 
