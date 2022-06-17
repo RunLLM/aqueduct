@@ -20,7 +20,7 @@ import {
   AddTableDialog,
   IntegrationDialog,
 } from './components/integrations/dialogs/dialog';
-import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
+import { FileEventTarget, IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
 import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
@@ -33,7 +33,7 @@ import CodeBlock from './components/layouts/codeblock';
 import DataPreviewer from './components/layouts/data_previewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
-  MenuSidebarWidth,
+  MenuSidebarWidth, SidebarButtonProps,
 } from './components/layouts/menuSidebar';
 import AqueductSidebar, {
   BottomSidebarHeaderHeightInPx,
@@ -91,7 +91,7 @@ import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import Status from './components/workflows/workflowStatus';
+import { Status } from './components/workflows/workflowStatus';
 import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
@@ -119,6 +119,7 @@ import nodeSelection, {
   NodeType,
   OperatorTypeToNodeTypeMap,
   resetSelectedNode,
+  SelectedNode,
   selectNode,
 } from './reducers/nodeSelection';
 import notifications, {
@@ -136,15 +137,19 @@ import openSideSheet, {
   setWorkflowStatusBarOpenState,
 } from './reducers/openSideSheet';
 import workflow, {
+  ArtifactResult,
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  OperatorResult,
   selectResultIdx,
   workflowSlice,
+  WorkflowState,
 } from './reducers/workflow';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
-import { ArtifactType, getUpstreamOperator } from './utils/artifacts';
+import { Artifact, ArtifactType, GetArtifactResultResponse, getUpstreamOperator, Schema, Spec } from './utils/artifacts';
+import UserProfile from './utils/auth';
 import {
   createCronString,
   DayOfWeek,
@@ -152,40 +157,74 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from './utils/cron';
-import { DataColumnTypeNames } from './utils/data';
+import { Data, DataColumn, DataColumnType, DataColumnTypeNames, DataPreview, DataPreviewInfo, DataPreviewLoadSpec, DataPreviewVersion, DataSchema } from './utils/data';
 import fetchUser from './utils/fetchUser';
 import {
   addTable,
+  AqueductDemoConfig,
+  BigQueryConfig,
   connectIntegration,
   CSVConfig,
   fetchBranches,
   fetchRepos,
   FileData,
   formatService,
+  GithubConfig,
+  GoogleSheetsConfig,
+  Integration,
+  IntegrationConfig,
+  MariaDbConfig,
+  MySqlConfig,
+  PostgresConfig,
+  RedshiftConfig,
+  S3Config,
+  SalesforceConfig,
+  Service,
+  ServiceInfoMap,
+  SnowflakeConfig,
+  SqlServerConfig,
   SupportedIntegrations,
 } from './utils/integrations';
-import { dateString } from './utils/metadata';
+import { dateString, Member } from './utils/metadata';
 import {
+  Notification,
   archiveNotification,
   listNotifications,
   NotificationAssociation,
   NotificationLogLevel,
   NotificationStatus,
+  NotificationWorkflowMetadata,
 } from './utils/notifications';
 import {
+  Check,
   CheckLevel,
   exportFunction,
+  ExtractParameters,
   FunctionGranularity,
+  FunctionOp,
   FunctionType,
+  GithubMetadata,
+  GoogleSheetsExtractParams,
   handleExportFunction,
   normalizeOperator,
   OperatorType,
+  RelationalDBExtractParams,
   ServiceType,
+  Extract,
+  ExportFunctionStatus,
+  GoogleSheetsLoadParams,
+  Load,
+  LoadParameters,
+  Operator,
+  OperatorSpec,
+  RelationalDBLoadParams,
+  Metric
 } from './utils/operators';
 import { exportCsv } from './utils/preview';
 import {
   EdgeTypes,
   getDagLayoutElements,
+  ReactFlowNodeData,
   ReactflowNodeType,
 } from './utils/reactflow';
 import ExecutionStatus, {
@@ -201,9 +240,15 @@ import ExecutionStatus, {
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
   computeTopologicalOrder,
+  GetWorkflowResponse,
+  ListWorkflowResponse,
   ListWorkflowSummary,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
+  Workflow,
+  WorkflowDag,
+  WorkflowDagResultSummary,
+  WorkflowSchedule,
   WorkflowUpdateTrigger,
 } from './utils/workflows';
 
@@ -219,10 +264,12 @@ export {
   AqueductSidebar,
   AqueductStraight,
   archiveNotification,
+  Artifact,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
   BaseNode,
   BigQueryCard,
+  BigQueryConfig,
   BigQueryDialog,
   BoolArtifactNode,
   BottomSidebarHeaderHeightInPx,
@@ -248,6 +295,14 @@ export {
   DataCard,
   dataCardName,
   DataColumnTypeNames,
+  DataColumnType,
+  DataColumn,
+  DataSchema,
+  Data,
+  DataPreviewLoadSpec,
+  DataPreviewVersion,
+  DataPreview,
+  DataPreviewInfo,
   DataPage,
   dataPreview,
   DataPreviewer,
@@ -271,6 +326,9 @@ export {
   FunctionGranularity,
   FunctionOperatorNode,
   FunctionType,
+  GetArtifactResultResponse,
+  GoogleSheetsConfig,
+  GithubConfig,
   getBottomSidesheetOffset,
   getBottomSideSheetWidth,
   getDagLayoutElements,
@@ -295,7 +353,9 @@ export {
   HeightTransition,
   HomePage,
   IconButton,
+  Integration,
   IntegrationCard,
+  IntegrationConfig,
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
@@ -319,12 +379,14 @@ export {
   LoginPage,
   LogViewer,
   MariaDbCard,
+  MariaDbConfig,
   MariaDbDialog,
   MenuSidebar,
   MenuSidebarOffset,
   MenuSidebarWidth,
   MetricOperatorNode,
   MySqlCard,
+  MySqlConfig,
   MysqlDialog,
   Node,
   nodeSelection,
@@ -333,7 +395,9 @@ export {
   normalizeGetWorkflowResponse,
   normalizeOperator,
   normalizeWorkflowDag,
+  Notification,
   NotificationAssociation,
+  NotificationWorkflowMetadata,
   NotificationListItem,
   NotificationLogLevel,
   notifications,
@@ -347,12 +411,18 @@ export {
   OperatorTypeToNodeTypeMap,
   PeriodUnit,
   PostgresCard,
+  PostgresConfig,
   PostgresDialog,
   ReactFlowCanvas,
   ReactflowNodeType,
   RedshiftCard,
+  RedshiftConfig,
   RedshiftDialog,
   resetSelectedNode,
+  SalesforceConfig,
+  S3Config,
+  AqueductDemoConfig,
+  Schema,
   S3Card,
   S3Dialog,
   selectNode,
@@ -366,7 +436,10 @@ export {
   SidebarPosition,
   sideSheetSwitcher,
   SnowflakeCard,
+  SnowflakeConfig,
   SnowflakeDialog,
+  Spec,
+  SqlServerConfig,
   Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
@@ -380,6 +453,7 @@ export {
   TransitionLengthInMs,
   useAqueductConsts,
   useUser,
+  UserProfile,
   VersionSelector,
   VerticalSidebarWidths,
   VerticalSidebarWidthsFloats,
@@ -394,4 +468,35 @@ export {
   WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,
+  Service,
+  ServiceInfoMap,
+  Member,
+  GithubMetadata,
+  FunctionOp,
+  Check,
+  ExtractParameters,
+  RelationalDBExtractParams,
+  GoogleSheetsExtractParams,
+  Extract,
+  LoadParameters,
+  RelationalDBLoadParams,
+  GoogleSheetsLoadParams,
+  Load,
+  OperatorSpec,
+  Operator,
+  ExportFunctionStatus,
+  ReactFlowNodeData,
+  FileEventTarget,
+  SidebarButtonProps,
+  SelectedNode,
+  ArtifactResult,
+  OperatorResult,
+  WorkflowState,
+  Metric,
+  WorkflowSchedule,
+  WorkflowDagResultSummary,
+  Workflow,
+  WorkflowDag,
+  GetWorkflowResponse,
+  ListWorkflowResponse,
 };
