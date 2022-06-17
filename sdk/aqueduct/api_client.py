@@ -55,6 +55,7 @@ class APIClient:
     """
     Internal client class used to send requests to the aqueduct cluster.
     """
+
     HTTP_PREFIX = "http://"
     HTTPS_PREFIX = "https://"
 
@@ -75,13 +76,17 @@ class APIClient:
 
         # If a dummy client is initialized, don't perform validation.
         if self.api_key == "" and self.aqueduct_address == "":
-            Logger.logger.info("Neither api key or server address were specified. This is a dummy client.")
+            Logger.logger.info(
+                "Neither api key or server address were specified. This is a dummy client."
+            )
             return
 
         # Check that the connection with the backend is working.
         if self.aqueduct_address.startswith(self.HTTP_PREFIX):
+            self.aqueduct_address = self.aqueduct_address[len(self.HTTP_PREFIX) :]
             self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
         elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
+            self.aqueduct_address = self.aqueduct_address[len(self.HTTPS_PREFIX) :]
             self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
         else:
             self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
