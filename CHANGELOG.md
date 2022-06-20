@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.0.3
+Released on 6/21/2022
+
+### Key Features
+* View what tables are present in an integration by clicking on the integration in the UI.
+* View all data artifacts created by Aqueduct on the `/data` page on the UI.
+* Add support for pre-defined metrics and checks, including lower & upper bounds and equality checks.
+* Implement support for capturing low-level metrics, such as compute time, CPU usage, and memory usage, on a per-operator basis. 
+
+### Enhancements
+* API keys can now be retrieved from the SDK if running on the same machine as the Aqueduct server with `aqueduct.get_apikey()`.
+* Add feature to automatically search for next available port when port 8080 is occupied.
+* Users can upload custom data to the Aqueduct demo DB — navigate to the integrations page, click on the Aqueduct Demo database, and hit “Add CSV”.
+* Allow users to optionally specify HTTP/S prefix when creating Aqueduct API client.
+
+### Bugfixes
+* Fix bug where logs directory didn’t exist on upgraded installations. 
+* Fix bug where account page wasn’t previously being displayed.
+
+### Contributors
+
+* [Kenneth Xu](https://github.com/kenxu95)
+* [Vikram Sreekanti](https://github.com/vsreekanti)
+* [Chenggang Wu](https://github.com/cw75)
+* [Fanjia Yan](https://github.com/Fanjia-Yang)
+* [Haris Choudhary](https://github.com/HarisChoudhary)
+* [Andre Giron](https://github.com/agiron123)
+* [Hari Subbaraj](https://github.com/hsubbaraj-spiral)
+* [Eunice Chan](https://github.com/eunice-chan)
+* [Saurav Chhatrapati](https://github.com/saurav-c)
+
 ## 0.0.2
 Released on 6/9/2022
 
