@@ -1,7 +1,6 @@
 import inspect
 from pathlib import Path
 import sys
-
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
