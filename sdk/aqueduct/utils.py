@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import datetime
 import sys
 
-from pkg_resources import Requirement
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
