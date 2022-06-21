@@ -240,23 +240,27 @@ def _package_files_and_requirements(
         if not os.path.exists(dstfolder):
             os.makedirs(dstfolder)
         shutil.copy(file_path, os.path.join(dir_path, file_path))
-    if os.path.exists(reqs):
-        Logger.logger.info(
-            "%s: requirements.txt file detected in provided directory %s, will not self0generate by inferring package dependencies."
-            % func.__name__
-        )
-        shutil.copy(reqs, os.path.join(dir_path, REQUIREMENTS_FILE))
-    elif os.path.exists(REQUIREMENTS_FILE):
-        Logger.logger.info(
-            "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-            % (os.getcwd(), func.__name__)
-        )
-        shutil.copy(REQUIREMENTS_FILE, os.path.join(dir_path, REQUIREMENTS_FILE))
+    if reqs:
+        if os.path.exists(reqs):
+            Logger.logger.info(
+                "%s: requirements.txt file detected in user-provided directory, will not self-generate by inferring package dependencies."
+                % func.__name__
+            )
+            shutil.copy(reqs, os.path.join(dir_path, REQUIREMENTS_FILE))
+        else:
+            raise FileNotFoundError("Requirement file provided does not exist.")
     else:
-        Logger.logger.info(
-            "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
-            % func.__name__
-        )
+        if os.path.exists(REQUIREMENTS_FILE):
+            Logger.logger.info(
+                "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
+                % (os.getcwd(), func.__name__)
+            )
+            shutil.copy(REQUIREMENTS_FILE, os.path.join(dir_path, REQUIREMENTS_FILE))
+        else:
+            Logger.logger.info(
+                "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
+                % func.__name__
+            )
     # Figure out the python version
     python_version = ".".join((str(x) for x in sys.version_info[:2]))
     with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
