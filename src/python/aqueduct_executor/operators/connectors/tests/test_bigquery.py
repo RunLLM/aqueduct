@@ -45,7 +45,6 @@ class TestBigQuery:
         params = ExtractParam(query="SELECT * FROM {};".format(_TABLE))
         utils.extract_test(self.conn, params, expected_df=self.test_df)
 
-    @pytest.mark.dependency()
     def test_discover(self):
         tables = set()
         for i in range(2):
