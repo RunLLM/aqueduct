@@ -521,7 +521,9 @@ class TableArtifact(Artifact):
         system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
         system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
         op_spec = OperatorSpec(system_metric=SystemMetricSpec(metric_name=metric_name))
-        new_artifact = self._apply_operator_to_table(op_spec, system_metric_name, system_metric_description)
+        new_artifact = self._apply_operator_to_table(
+            op_spec, system_metric_name, system_metric_description
+        )
         assert isinstance(new_artifact, MetricArtifact)
         return new_artifact
 
