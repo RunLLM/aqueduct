@@ -54,6 +54,7 @@ if __name__ == "__main__":
     # Build and replace backend binaries.
     execute_command(["make", "server"], cwd=join(cwd, "src"))
     execute_command(["make", "executor"], cwd=join(cwd, "src"))
+    execute_command(["make", "migrator"], cwd=join(cwd, "src"))
     if isfile(join(server_directory, "bin/server")):
         execute_command(["rm", join(server_directory, "bin/server")])
     if isfile(join(server_directory, "bin/executor")):
