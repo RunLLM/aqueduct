@@ -3,11 +3,11 @@ package logging
 import (
 	"context"
 	"encoding/json"
-	"github.com/dropbox/godropbox/errors"
 	"net/http"
 	"strings"
 
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
+	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -97,7 +97,7 @@ func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []st
 	newIntegrationConfigString, err := json.Marshal(integrationConfig)
 
 	if err != nil {
-		errors.Wrap(err, "Unable to marshal integration config after password obfuscation attempt")
+		return errors.Wrap(err, "Unable to marshal integration config after password obfuscation attempt")
 	}
 
 	return []string{string(newIntegrationConfigString)}
