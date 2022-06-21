@@ -33,13 +33,13 @@ class BigQueryConnector(connector.TabularConnector):
         return df
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
-        update_mode = params.update_mode.value
+        update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default
-        if update_mode == common.UpdateMode.APPEND.value:
+        if update_mode == common.UpdateMode.APPEND:
             write_disposition = bigquery.WriteDisposition.WRITE_APPEND
-        if update_mode == common.UpdateMode.REPLACE.value:
+        if update_mode == common.UpdateMode.REPLACE:
             write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
-        if update_mode == common.UpdateMode.FAIL.value:
+        if update_mode == common.UpdateMode.FAIL:
             write_disposition = bigquery.WriteDisposition.WRITE_EMPTY
         # Since string columns use the "object" dtype, pass in a (partial) schema
         # to ensure the correct BigQuery data type.
