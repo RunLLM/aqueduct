@@ -277,7 +277,9 @@ class TableArtifact(Artifact):
         check_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
         check_name = "ge_table_check: {%s}" % expectation_name
         check_description = "Check table with built in expectations from great expectations"
-        return self._apply_operator_to_table(check_spec, check_name, check_description)
+        new_artifact = self._apply_operator_to_table(check_spec, check_name, check_description)
+        assert isinstance(new_artifact, CheckArtifact)
+        return new_artifact
 
     def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> MetricArtifact:
         """Creates a metric that represents the number of missing values over a given column or row.
@@ -333,7 +335,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def number_of_rows(self) -> MetricArtifact:
         """Creates a metric that represents the number of rows of this table
@@ -358,7 +362,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def max(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the maximum value over the given column
@@ -390,7 +396,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def min(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the minimum value over the given column
@@ -422,7 +430,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def mean(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the mean value over the given column
@@ -454,7 +464,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def std(self, column_id: Any) -> MetricArtifact:
         """Creates a metric that represents the standard deviation value over the given column
@@ -488,7 +500,9 @@ class TableArtifact(Artifact):
             file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def system_metric(self, metric_name: str) -> MetricArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
@@ -507,7 +521,9 @@ class TableArtifact(Artifact):
         system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
         system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
         op_spec = OperatorSpec(system_metric=SystemMetricSpec(metric_name=metric_name))
-        return self._apply_operator_to_table(op_spec, system_metric_name, system_metric_description)
+        new_artifact = self._apply_operator_to_table(op_spec, system_metric_name, system_metric_description)
+        assert isinstance(new_artifact, MetricArtifact)
+        return new_artifact
 
     def _apply_operator_to_table(
         self,
