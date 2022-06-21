@@ -140,6 +140,7 @@ def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
+    reqs: Optional[str] = None,
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -195,7 +196,7 @@ def op(
              - <any file dependencies>
             """
             assert isinstance(name, str)
-            zip_file = serialize_function(func, file_dependencies)
+            zip_file = serialize_function(func, file_dependencies, reqs)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
