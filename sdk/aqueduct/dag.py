@@ -28,6 +28,7 @@ class RetentionPolicy(BaseModel):
 
 class Metadata(BaseModel):
     """These fields should always set when writing/reading from the backend."""
+
     name: Optional[str]
     description: Optional[str]
     schedule: Optional[Schedule]

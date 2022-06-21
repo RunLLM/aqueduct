@@ -47,19 +47,18 @@ class FlowRun:
                 f"""
             {format_header_for_print(f"'{self._dag.metadata.name}' Run")}
             ID: {self._id}
-            Created At: {human_readable_timestamp(self._created_at)}
+            Created At (UTC): {human_readable_timestamp(self._created_at)}
             Status: {str(self._status)}
             """
             )
         )
 
         param_artifacts = self._dag.list_artifacts(filter_to=[ArtifactType.PARAM])
+        print(format_header_for_print("Parameters "))
         for param_artifact in param_artifacts:
-            ParamArtifact(
-                api_client=self._api_client,
-                dag=self._dag,
-                artifact_id=param_artifact.id,
-            ).describe()
+            param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
+            assert param_op.spec.param is not None, "Artifact is not a parameter."
+            print("* " + param_op.name + ": " + param_op.spec.param.val)
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of

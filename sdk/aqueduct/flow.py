@@ -148,6 +148,7 @@ class Flow:
             Description: '{latest_metadata.description}'
             Schedule: {latest_metadata.schedule.json(exclude_none=True)}
             RetentionPolicy: {latest_metadata.retention_policy.json(exclude_none=True)}
+            Runs:
             """
             )
         )
