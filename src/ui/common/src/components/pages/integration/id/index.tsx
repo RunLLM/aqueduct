@@ -228,7 +228,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                     columns={dataTable.cols}
                     pageSize={50}
                     rowsPerPageOptions={[50]}
-                    checkboxSelection
                     disableSelectionOnClick
                   />
                 </div>
