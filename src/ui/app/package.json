@@ -5,6 +5,7 @@
   "scripts": {
     "start": "parcel --no-cache --no-hmr index.html",
     "build": "parcel build index.html",
+    "build:dist": "parcel build index.html --public-url dist",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
