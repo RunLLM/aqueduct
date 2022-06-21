@@ -1,6 +1,8 @@
 import inspect
 from pathlib import Path
 import sys
+
+from pkg_resources import Requirement
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
@@ -129,6 +131,7 @@ def make_zip_dir() -> str:
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     file_dependencies: Optional[List[str]] = None,
+    reqs: Optional[str] = None,
 ) -> bytes:
     """
     Takes a user-defined function and packages it into a zip file structure expected by the backend.
@@ -148,9 +151,7 @@ def serialize_function(
         zip_file_path = get_zip_file_path(dir_path)
 
         _package_files_and_requirements(
-            func,
-            os.path.join(os.getcwd(), dir_path),
-            file_dependencies,
+            func, os.path.join(os.getcwd(), dir_path), file_dependencies, reqs
         )
 
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
@@ -171,6 +172,7 @@ def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
     file_dependencies: Optional[List[str]] = None,
+    reqs: Optional[str] = None,
 ) -> None:
     """
     Creates the temporary directory for the function with all file dependencies and
@@ -223,7 +225,13 @@ def _package_files_and_requirements(
         if not os.path.exists(dstfolder):
             os.makedirs(dstfolder)
         shutil.copy(file_path, os.path.join(dir_path, file_path))
-    if os.path.exists(REQUIREMENTS_FILE):
+    if os.path.exists(reqs):
+        Logger.logger.info(
+            "%s: requirements.txt file detected in provided directory %s, will not self0generate by inferring package dependencies."
+            % func.__name__
+        )
+        shutil.copy(reqs, os.path.join(dir_path, REQUIREMENTS_FILE))
+    elif os.path.exists(REQUIREMENTS_FILE):
         Logger.logger.info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
             % (os.getcwd(), func.__name__)
