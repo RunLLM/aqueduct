@@ -3,9 +3,9 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"github.com/dropbox/godropbox/errors"
 	"net/http"
 	"strings"
-	"github.com/dropbox/godropbox/errors"
 
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +19,7 @@ const (
 
 // We register an obfuscation function to alter the header value before logging it
 // the key is the header name whose value is the func to apply to the header value.
-var HeaderObfuscationFunctionMap map[string](func([]string)[]string) = map[string](func([]string)[]string) {
+var HeaderObfuscationFunctionMap map[string](func([]string) []string) = map[string](func([]string) []string){
 	"Integration-Config": ObscurePasswordFromIntegrationConfig,
 }
 
@@ -39,7 +39,7 @@ func LogRoute(
 			if obfuscateFunction, obfuscate := HeaderObfuscationFunctionMap[k]; obfuscate {
 				headers[k] = obfuscateFunction(v)
 			} else {
-				headers[k] = v	
+				headers[k] = v
 			}
 		}
 	}
@@ -96,9 +96,9 @@ func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []st
 	integrationConfig["password"] = strings.Repeat("*", passwordLength)
 	newIntegrationConfigString, err := json.Marshal(integrationConfig)
 
-	if (err != nil) {
+	if err != nil {
 		errors.Wrap(err, "Unable to marshal integration config after password obfuscation attempt")
 	}
 
-	return []string {string(newIntegrationConfigString)}
+	return []string{string(newIntegrationConfigString)}
 }
