@@ -9,7 +9,7 @@ from aqueduct import op
 def invalid_path_operator(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
-@op(reqs="/home/ubuntu/aqueduct/integration_tests/requirement_test.py")
+@op(reqs="/home/ubuntu/aqueduct/sdk/examples/sentiment_analysis/requirements.txt")
 def valid_path_operator(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
