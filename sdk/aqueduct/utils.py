@@ -2,7 +2,6 @@ import inspect
 from pathlib import Path
 import sys
 
-from pkg_resources import Requirement
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
