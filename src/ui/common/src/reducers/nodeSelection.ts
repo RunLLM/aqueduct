@@ -13,7 +13,7 @@ export enum NodeType {
   FunctionOp = 'functionOp',
   MetricOp = 'metricOp',
   CheckOp = 'checkOp',
-  ParamOp = 'paramOp', // param operators are hidden from the user.
+  ParamOp = 'paramOp', // These operators are hidden from the user.
   None = '', // No node is currently selected.
 }
 
