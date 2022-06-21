@@ -29,6 +29,6 @@ dist:
 	# context to use the `/dist` prefix, which we use for routing purposes in the
 	# Go server.
 	# The `.original` suffix is necessary for macOS. It specifies the file extension
-	# of the original `index.html` file.
+	# for the copy created of the original `index.html` file.
 	cd app/dist && sed -i'.original' "s|src=\"|src=\"/dist|g" index.html
 	cd app/dist &&  sed -i'.original' "s|href=\"|href=\"/dist|g" index.html
