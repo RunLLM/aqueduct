@@ -23,6 +23,9 @@ base_directory = join(os.environ["HOME"], ".aqueduct")
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
+# Make sure to update this if there is any schema change we want to include in the upgrade.
+SCHEMA_VERSION = "9"
+
 
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
@@ -59,9 +62,15 @@ if __name__ == "__main__":
         execute_command(["rm", join(server_directory, "bin/server")])
     if isfile(join(server_directory, "bin/executor")):
         execute_command(["rm", join(server_directory, "bin/executor")])
+    if isfile(join(server_directory, "bin/migrator")):
+        execute_command(["rm", join(server_directory, "bin/migrator")])
 
     execute_command(["cp", "./src/build/server", join(server_directory, "bin/server")])
     execute_command(["cp", "./src/build/executor", join(server_directory, "bin/executor")])
+    execute_command(["cp", "./src/build/migrator", join(server_directory, "bin/migrator")])
+
+    # Run the migrator to update to the latest schema
+    execute_command([join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION])
 
     # Build and replace UI files.
     if args.update_ui:
