@@ -2,7 +2,6 @@ import inspect
 from pathlib import Path
 from datetime import datetime
 import sys
-
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
