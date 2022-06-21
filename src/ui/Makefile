@@ -27,7 +27,7 @@ dist:
 
 	# These are bad hacks that allow us to replace the path in the production
 	# context to use the `/dist` prefix, which we use for routing purposes in the
-	# Go serer.
+	# Go server.
 	# The `.original` suffix is necessary for macOS. It specifies the file extension
 	# of the original `index.html` file.
 	cd app/dist && sed -i'.original' "s|src=\"|src=\"/dist|g" index.html
