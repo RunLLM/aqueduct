@@ -39,6 +39,7 @@ const (
 	WorkflowJobType       JobType = "workflow"
 	FunctionJobType       JobType = "function"
 	ParamJobType          JobType = "param"
+	SystemMetricJobType   JobType = "system_metric"
 	AuthenticateJobType   JobType = "authenticate"
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
@@ -111,6 +112,14 @@ type ParamSpec struct {
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
+type SystemMetricSpec struct {
+	basePythonSpec
+	MetricName         string   `json:"metric_name"  yaml:"metric_name"`
+	InputMetadataPaths []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
+}
+
 type ExtractSpec struct {
 	basePythonSpec
 	ConnectorName      integration.Service     `json:"connector_name"  yaml:"connector_name"`
@@ -168,6 +177,10 @@ func (*ParamSpec) Type() JobType {
 
 func (*AuthenticateSpec) Type() JobType {
 	return AuthenticateJobType
+}
+
+func (*SystemMetricSpec) Type() JobType {
+	return SystemMetricJobType
 }
 
 func (*ExtractSpec) Type() JobType {
@@ -292,6 +305,31 @@ func NewParamSpec(
 		Val:                val,
 		OutputMetadataPath: outputMetadataPath,
 		OutputContentPath:  outputContentPath,
+	}
+}
+
+func NewSystemMetricSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	metricName string,
+	inputMetadataPaths []string,
+	outputContentPath string,
+	outputMetadataPath string,
+) Spec {
+	return &SystemMetricSpec{
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type: SystemMetricJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		InputMetadataPaths: inputMetadataPaths,
+		OutputContentPath:  outputContentPath,
+		OutputMetadataPath: outputMetadataPath,
+		MetricName:         metricName,
 	}
 }
 

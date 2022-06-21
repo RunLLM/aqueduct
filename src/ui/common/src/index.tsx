@@ -29,6 +29,7 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
+import CodeBlock from './components/layouts/codeblock';
 import DataPreviewer from './components/layouts/data_previewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
@@ -48,6 +49,7 @@ import AqueductSidebar, {
 } from './components/layouts/sidebar/AqueductSidebar';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
+import AccountPage from './components/pages/AccountPage';
 import DataPage from './components/pages/data';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
@@ -206,6 +208,7 @@ import {
 } from './utils/workflows';
 
 export {
+  AccountPage,
   AddIntegrations,
   addTable,
   AddTableDialog,
@@ -230,6 +233,7 @@ export {
   CheckLevel,
   CheckOperatorNode,
   CheckStatus,
+  CodeBlock,
   CollapsedSidebarHeightInPx,
   CollapsedSidebarWidthInPx,
   CollapsedStatusBarWidthInPx,

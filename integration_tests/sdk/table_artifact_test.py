@@ -1,9 +1,26 @@
 import pandas as pd
 import math
+import time
 
 from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 from utils import get_integration_name
 from aqueduct import op
+
+
+def test_great_expectations_check(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=WINE_SQL_QUERY)
+    ge_check = table.validate_with_expectation(
+        "expect_column_values_to_be_unique", {"column": "fixed_acidity"}
+    )
+
+    assert ge_check.get() == False
+
+    ge_check = table.validate_with_expectation(
+        "expect_column_values_to_not_be_null", {"column": "fixed_acidity"}
+    )
+
+    assert ge_check.get() == True
 
 
 @op
@@ -11,6 +28,43 @@ def corrupt_table_data(table: pd.DataFrame) -> pd.DataFrame:
     index_list = table.index.values.tolist()
     index_list.append(index_list[-1] + 1)
     return table.reindex(index_list)
+
+
+SLEEP_TIME = 1.1
+
+
+@op
+def timed_function(table: pd.DataFrame) -> pd.DataFrame:
+    time.sleep(SLEEP_TIME)
+    return table
+
+
+@op
+def mem_intensive_function(table: pd.DataFrame) -> pd.DataFrame:
+    a = [0] * 1000
+    b = a * 100
+    c = b * 100
+    return table
+
+
+def test_system_runtime_metric(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    timed_table = timed_function(table)
+
+    runtime_metric = timed_table.system_metric("runtime")
+    runtime = runtime_metric.get()
+    assert runtime > SLEEP_TIME
+
+
+def test_system_max_memory_metric(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    timed_table = mem_intensive_function(table)
+
+    max_mem_metric = timed_table.system_metric("max_memory")
+    max_mem = max_mem_metric.get()
+    assert max_mem > 10
 
 
 def test_number_of_missing_values(client):
