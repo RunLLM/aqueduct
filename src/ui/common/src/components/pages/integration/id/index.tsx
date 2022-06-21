@@ -1,4 +1,4 @@
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faUpload, faRefresh } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   Alert,
@@ -27,6 +27,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
+import styles from './integration-detail-styles.module.css';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -92,6 +93,20 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   );
 
+  const loading = tableListStatus === ExecutionStatus.Pending;
+
+  const forceLoadTableList = async () => {
+    if (!loading) {
+      dispatch(
+        handleLoadIntegrationTables({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+          forceLoad: true,
+        })
+      );
+    }
+  }
+
   // ENG-1052: We should update the route handler to give us the data in the format we want rather than needing to do post-processing in the FE side.
   const dataTable = {
     cols: [],
@@ -135,7 +150,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     setTable(newValue);
   };
 
-  const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
 
   useEffect(() => {
@@ -178,29 +192,36 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           <Typography variant="h4" gutterBottom component="div">
             Preview
           </Typography>
-          <Autocomplete
-            sx={{ width: '35ch' }}
-            disablePortal
-            value={table}
-            onChange={handleChange}
-            options={integrationTables}
-            loading={loading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Base Table"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <React.Fragment>
-                      {loading ? <CircularProgress size={30} /> : null}
-                      {params.InputProps.endAdornment}
-                    </React.Fragment>
-                  ),
-                }}
-              />
-            )}
-          />
+          <Box>
+            <Autocomplete
+              sx={{ width: '35ch' }}
+              disablePortal
+              value={table}
+              className={styles['inline-dropdown']}
+              onChange={handleChange}
+              options={integrationTables}
+              loading={loading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Base Table"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <React.Fragment>
+                        {params.InputProps.endAdornment}
+                      </React.Fragment>
+                    ),
+                  }}
+                />
+              )}
+            />
+            <FontAwesomeIcon
+              className={loading? `${styles['icon']} ${styles['not-clickable']} fa-spin`:`${styles['icon']} ${styles['clickable']}`}
+              icon={faRefresh}
+              onClick={forceLoadTableList}
+            />
+          </Box>
 
           <Box sx={{ mt: 3 }}>
             {hasTable && tableDataStatus === ExecutionStatus.Pending && (
