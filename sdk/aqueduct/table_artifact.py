@@ -480,8 +480,16 @@ class TableArtifact(Artifact):
             column_id,
             table_artifact.name,
         )
+        zip_file = serialize_function(internal_std_metric)
 
-<<<<<<< HEAD
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
+        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+
     def system_metric(self, metric_name: str) -> MetricArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
 
@@ -495,68 +503,11 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the requested system metric
         """
-        if metric_name not in SYSTEM_METRICS_INFO:
-            raise AqueductError(
-                "Invalid metric requested: %s. Please choose a valid metric from: %s"
-                % (metric_name, ",".join(list(SYSTEM_METRICS_INFO.keys())))
-            )
-
         operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-        system_operator_id = generate_uuid()
-        system_output_artifact_id = generate_uuid()
         system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
         system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
-        metric_spec = SystemMetricSpec(metric_name=metric_name)
-        print(metric_spec.metric_name)
-        metric_artifact_spec = ArtifactSpec(float={})
-
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=system_operator_id,
-                        name=system_metric_name,
-                        description=system_metric_description,
-                        spec=OperatorSpec(system_metric=metric_spec),
-                        inputs=[self._artifact_id],
-                        outputs=[system_output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        aqueduct.artifact.Artifact(
-                            id=system_output_artifact_id,
-                            name=artifact_name_from_op_name(system_metric_name),
-                            spec=metric_artifact_spec,
-                        )
-                    ],
-                ),
-            ],
-        )
-
-        return MetricArtifact(
-            api_client=self._api_client,
-            dag=self._dag,
-            artifact_id=system_output_artifact_id,
-        )
-
-    def _apply_metric_to_table(
-        self,
-        metric_function: Callable[..., float],
-        metric_name: str,
-        metric_description: str,
-    ) -> MetricArtifact:
-        zip_file = serialize_function(metric_function)
-=======
-        zip_file = serialize_function(internal_std_metric)
->>>>>>> changes made
-
-        function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
-        )
-        op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
-        return self._apply_operator_to_table(op_spec, metric_name, metric_description)
+        op_spec = OperatorSpec(system_metric=SystemMetricSpec(metric_name=metric_name))
+        return self._apply_operator_to_table(op_spec, system_metric_name, system_metric_description)
 
     def _apply_operator_to_table(
         self,
@@ -567,7 +518,7 @@ class TableArtifact(Artifact):
         output_artifact: OutputArtifact
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-        if op_spec.metric:
+        if op_spec.metric or op_spec.system_metric:
             artifact_spec = ArtifactSpec(float={})
             output_artifact = MetricArtifact(
                 api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
