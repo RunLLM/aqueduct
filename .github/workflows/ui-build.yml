@@ -26,7 +26,7 @@ jobs:
 
       - name: Link @aqueducthq/common
         working-directory: ./src/ui/common
-        run: npm run link
+        run: npm link
 
       - name: Install OSS app dependencies
         working-directory: ./src/ui/app
