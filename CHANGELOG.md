@@ -14,6 +14,8 @@ Released on 6/21/2022
 * Add feature to automatically search for next available port when port 8080 is occupied.
 * Users can upload custom data to the Aqueduct demo DB — navigate to the integrations page, click on the Aqueduct Demo database, and hit “Add CSV”.
 * Allow users to optionally specify HTTP/S prefix when creating Aqueduct API client.
+* Implements support for creating checks via [Great Expectations](https://greatexpectations.io/).
+* Simplifies notifications interface by reducing redundant text.
 
 ### Bugfixes
 * Fix bug where logs directory didn’t exist on upgraded installations. 
@@ -30,6 +32,7 @@ Released on 6/21/2022
 * [Hari Subbaraj](https://github.com/hsubbaraj-spiral)
 * [Eunice Chan](https://github.com/eunice-chan)
 * [Saurav Chhatrapati](https://github.com/saurav-c)
+* [Boyuan Deng](https://github.com/Boyuan-Deng)
 
 ## 0.0.2
 Released on 6/9/2022
