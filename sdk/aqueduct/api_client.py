@@ -17,7 +17,12 @@ from aqueduct import utils
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.responses import PreviewResponse, RegisterWorkflowResponse
+from aqueduct.responses import (
+    PreviewResponse,
+    RegisterWorkflowResponse,
+    ListWorkflowResponseEntry,
+    GetWorkflowResponse,
+)
 
 
 def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -64,6 +69,8 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
+    LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
     LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
@@ -189,7 +196,6 @@ class APIClient:
         Returns:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
-        assert dag.workflow_id is None, "Unexpected internal field set when previewing a workflow."
         headers = {
             **utils.generate_auth_headers(self.api_key),
         }
@@ -221,8 +227,6 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
-        assert dag.workflow_id is None, "Unexpected internal field set when registering a workflow."
-
         headers = utils.generate_auth_headers(self.api_key)
         body = {
             "dag": dag.json(exclude_none=True),
@@ -265,12 +269,33 @@ class APIClient:
         response = requests.post(url, headers=headers)
         utils.raise_errors(response)
 
-    def get_workflow(self, flow_id: str) -> Any:
+    def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        return GetWorkflowResponse(**resp.json())
+
+    def list_workflows(self) -> List[ListWorkflowResponseEntry]:
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self._construct_full_url(self.LIST_WORKFLOWS_ROUTE, self.use_https)
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
-        return response.json()
+
+        return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
+
+    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
+        """Returns an empty string if the artifact failed to be computed."""
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self._construct_full_url(
+            self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id), self.use_https
+        )
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+
+        if resp.json()["status"] != ExecutionStatus.SUCCEEDED:
+            return ""
+        return str(resp.json()["data"])
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]

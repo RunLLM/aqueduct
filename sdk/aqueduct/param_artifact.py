@@ -1,4 +1,5 @@
 import json
+import textwrap
 import uuid
 from typing import Any, Dict, Optional
 
@@ -6,6 +7,7 @@ from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.generic_artifact import Artifact
+from aqueduct.utils import format_header_for_print
 
 
 class ParamArtifact(Artifact):
@@ -34,9 +36,10 @@ class ParamArtifact(Artifact):
 
     def describe(self) -> None:
         print(
-            f"""
-            ==================== PARAMETER ARTIFACT =============================
-            Name: '{self.name()}'
+            textwrap.dedent(
+                f"""
+            {format_header_for_print(f"'{self.name()}' Parameter")}
             Value: {self.get()}
             """
+            )
         )

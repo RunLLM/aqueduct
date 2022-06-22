@@ -81,16 +81,17 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		}
 
 		for _, dbWorkflow := range dbWorkflows {
-			workflowResponse := workflowResponse{
-				Id:              dbWorkflow.Id,
-				Name:            dbWorkflow.Name,
-				Description:     dbWorkflow.Description,
-				CreatedAt:       dbWorkflow.CreatedAt.Unix(),
-				LastRunAt:       dbWorkflow.LastRunAt.Unix(),
-				Status:          dbWorkflow.Status,
-				WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
-			}
-			workflows = append(workflows, workflowResponse)
+			workflows = append(workflows,
+				workflowResponse{
+					Id:              dbWorkflow.Id,
+					Name:            dbWorkflow.Name,
+					Description:     dbWorkflow.Description,
+					CreatedAt:       dbWorkflow.CreatedAt.Unix(),
+					LastRunAt:       dbWorkflow.LastRunAt.Unix(),
+					Status:          dbWorkflow.Status,
+					WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
+				},
+			)
 		}
 	}
 

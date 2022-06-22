@@ -247,12 +247,12 @@ func ReadWorkflowDagFromDatabase(
 		return nil, errors.Wrap(err, "Unable to read workflow dag from the database.")
 	}
 
-	workflow, err := workflowReader.GetWorkflow(ctx, workflowDag.WorkflowId, db)
+	dbWorkflow, err := workflowReader.GetWorkflow(ctx, workflowDag.WorkflowId, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow from the database.")
 	}
 
-	workflowDag.Metadata = workflow
+	workflowDag.Metadata = dbWorkflow
 
 	workflowDag.Operators = make(map[uuid.UUID]operator.Operator)
 	workflowDag.Artifacts = make(map[uuid.UUID]artifact.Artifact)
@@ -263,8 +263,15 @@ func ReadWorkflowDagFromDatabase(
 		return nil, errors.Wrap(err, "Unable to read operators from the database.")
 	}
 
-	for _, operator := range operators {
-		workflowDag.Operators[operator.Id] = operator
+	for _, op := range operators {
+		// The 'Pydantic' library on the SDK expects to receive empty lists instead of nil.
+		if op.Inputs == nil {
+			op.Inputs = []uuid.UUID{}
+		}
+		if op.Outputs == nil {
+			op.Outputs = []uuid.UUID{}
+		}
+		workflowDag.Operators[op.Id] = op
 	}
 
 	artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, workflowDag.Id, db)
