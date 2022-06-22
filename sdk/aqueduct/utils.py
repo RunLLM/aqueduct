@@ -154,6 +154,8 @@ def serialize_function(
             The function to package
         file_dependencies:
             List of file dependencies the function uses
+        reqs:
+            A path to file that specify requirements
 
     Returns:
         filepath of zip file in string format
@@ -199,6 +201,8 @@ def _package_files_and_requirements(
         file_dependencies:
             Paths of file dependencies the function uses. Note that the paths are relative to the
             file the function is defined in.
+        reqs:
+            An absolute path of file that specify the requirements of the operator.
 
     """
     if not file_dependencies:
