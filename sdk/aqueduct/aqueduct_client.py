@@ -8,7 +8,13 @@ import yaml
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
-from .dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta, Metadata, AddOrReplaceOperatorDelta
+from .dag import (
+    DAG,
+    apply_deltas_to_dag,
+    SubgraphDAGDelta,
+    Metadata,
+    AddOrReplaceOperatorDelta,
+)
 from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
@@ -48,7 +54,9 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print("This API works only when you are running the server and the SDK on the same machine.")
+            print(
+                "This API works only when you are running the server and the SDK on the same machine."
+            )
             exit(1)
 
 
@@ -105,7 +113,9 @@ class Client:
         """
         return Github(client=self._api_client, repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> ParamArtifact:
+    def create_param(
+        self, name: str, default: Any, description: str = ""
+    ) -> ParamArtifact:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -123,7 +133,9 @@ class Client:
             A parameter artifact.
         """
         if default is None:
-            raise InvalidUserArgumentException("Parameter default value cannot be None.")
+            raise InvalidUserArgumentException(
+                "Parameter default value cannot be None."
+            )
 
         val = serialize_parameter_value(name, default)
 
@@ -329,14 +341,21 @@ class Client:
         serialized_params = None
         if parameters is not None:
             if any(not isinstance(name, str) for name in parameters):
-                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+                raise InvalidUserArgumentException(
+                    "Parameters must be keyed by strings."
+                )
 
             serialized_params = json.dumps(
-                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
+                {
+                    name: serialize_parameter_value(name, val)
+                    for name, val in parameters.items()
+                }
             )
 
         if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
+            raise InvalidUserArgumentException(
+                "Provided flow id must be either str or uuid."
+            )
 
         if isinstance(flow_id, uuid.UUID):
             flow_id = str(flow_id)
@@ -357,7 +376,9 @@ class Client:
                 An unexpected error occurred within the Aqueduct cluster.
         """
         if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
+            raise InvalidUserArgumentException(
+                "Provided flow id must be either str or uuid."
+            )
 
         if isinstance(flow_id, uuid.UUID):
             flow_id = str(flow_id)
@@ -394,7 +415,9 @@ class Client:
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
-        print("============================= Aqueduct Client =============================")
+        print(
+            "============================= Aqueduct Client ============================="
+        )
         print("Connected endpoint: %s" % self._api_client.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
         self._connected_integrations = self._api_client.list_integrations()
