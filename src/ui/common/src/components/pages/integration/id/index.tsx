@@ -1,4 +1,4 @@
-import { faUpload, faRefresh } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   Alert,
@@ -105,7 +105,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         })
       );
     }
-  }
+  };
 
   // ENG-1052: We should update the route handler to give us the data in the format we want rather than needing to do post-processing in the FE side.
   const dataTable = {
@@ -185,6 +185,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             onCloseDialog={() => setShowDialog(false)}
+            onConnect={() => forceLoadTableList()}
           />
         )}
 
@@ -217,7 +218,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               )}
             />
             <FontAwesomeIcon
-              className={loading? `${styles['icon']} ${styles['not-clickable']} fa-spin`:`${styles['icon']} ${styles['clickable']}`}
+              className={
+                loading
+                  ? `${styles['icon']} ${styles['not-clickable']} fa-spin`
+                  : `${styles['icon']} ${styles['clickable']}`
+              }
               icon={faRefresh}
               onClick={forceLoadTableList}
             />

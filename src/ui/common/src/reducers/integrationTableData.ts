@@ -46,9 +46,10 @@ export const handleLoadIntegrationTable = createAsyncThunk<
     const state = thunkAPI.getState();
     const tableKey = tableKeyFn(table);
     if (
-      !args.forceLoad && (table === '' ||
-      (state.integrationTableDataReducer.hasOwnProperty(tableKey) &&
-        state.integrationTableDataReducer[tableKey].data))
+      !args.forceLoad &&
+      (table === '' ||
+        (state.integrationTableDataReducer.hasOwnProperty(tableKey) &&
+          state.integrationTableDataReducer[tableKey].data))
     ) {
       return state.integrationTableDataReducer[tableKey].data;
     }
@@ -78,19 +79,15 @@ export const integrationTableDataSlice = createSlice({
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(
-      handleLoadIntegrationTable.pending,
-      (state, { meta }) => {
-        const table = meta.arg.table;
-        const tableKey = tableKeyFn(table);
-        state[tableKey] = {
-          data: null,
-          err: null,
-          status: ExecutionStatus.Pending,
-
-        };
-      }
-    );
+    builder.addCase(handleLoadIntegrationTable.pending, (state, { meta }) => {
+      const table = meta.arg.table;
+      const tableKey = tableKeyFn(table);
+      state[tableKey] = {
+        data: null,
+        err: null,
+        status: ExecutionStatus.Pending,
+      };
+    });
     builder.addCase(
       handleLoadIntegrationTable.rejected,
       (state, { meta, payload }) => {
