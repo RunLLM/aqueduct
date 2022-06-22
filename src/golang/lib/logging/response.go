@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
-	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -88,17 +87,17 @@ func LogAsyncEvent(
 	}).Info()
 }
 
+// Replaces the password in an integration config string into the equivalent * string.
 func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []string {
 	integrationConfigString := integrationConfigHeader[0]
 	integrationConfig := map[string]string{}
 	json.Unmarshal([]byte(integrationConfigString), &integrationConfig)
-	passwordLength := len(integrationConfig["password"])
-	integrationConfig["password"] = strings.Repeat("*", passwordLength)
-	newIntegrationConfigString, err := json.Marshal(integrationConfig)
-
-	if err != nil {
-		return errors.Wrap(err, "Unable to marshal integration config after password obfuscation attempt")
+	if _, exists := integrationConfig["password"]; exists {
+		return integrationConfigHeader
 	}
 
+	passwordLength := len(integrationConfig["password"])
+	integrationConfig["password"] = strings.Repeat("*", passwordLength)
+	newIntegrationConfigString, _ := json.Marshal(integrationConfig)
 	return []string{string(newIntegrationConfigString)}
 }
