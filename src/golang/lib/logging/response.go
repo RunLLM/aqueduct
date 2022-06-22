@@ -91,7 +91,11 @@ func LogAsyncEvent(
 func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []string {
 	integrationConfigString := integrationConfigHeader[0]
 	integrationConfig := map[string]string{}
-	json.Unmarshal([]byte(integrationConfigString), &integrationConfig)
+	err := json.Unmarshal([]byte(integrationConfigString), &integrationConfig)
+	if err != nil {
+		return integrationConfigHeader
+	}
+
 	if _, exists := integrationConfig["password"]; exists {
 		return integrationConfigHeader
 	}
