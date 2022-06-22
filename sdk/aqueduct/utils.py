@@ -129,7 +129,7 @@ def make_zip_dir() -> str:
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     file_dependencies: Optional[List[str]] = None,
-    reqs: Optional[str] = None,
+    reqs_path: Optional[str] = None,
 ) -> bytes:
     """
     Takes a user-defined function and packages it into a zip file structure expected by the backend.
@@ -139,7 +139,7 @@ def serialize_function(
             The function to package
         file_dependencies:
             List of file dependencies the function uses
-        reqs:
+        reqs_path:
             A path to file that specify requirements
 
     Returns:
@@ -151,7 +151,7 @@ def serialize_function(
         zip_file_path = get_zip_file_path(dir_path)
 
         _package_files_and_requirements(
-            func, os.path.join(os.getcwd(), dir_path), file_dependencies, reqs
+            func, os.path.join(os.getcwd(), dir_path), file_dependencies, reqs_path
         )
 
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
@@ -172,7 +172,7 @@ def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
     file_dependencies: Optional[List[str]] = None,
-    reqs: Optional[str] = None,
+    reqs_path: Optional[str] = None,
 ) -> None:
     """
     Creates the temporary directory for the function with all file dependencies and
@@ -186,8 +186,9 @@ def _package_files_and_requirements(
         file_dependencies:
             Paths of file dependencies the function uses. Note that the paths are relative to the
             file the function is defined in.
-        reqs:
-            An absolute path of file that specify the requirements of the operator.
+        reqs_path:
+            A path of file that specifies the requirements of the operator.
+            Default path: /requirements.txt in the folder where the function is located 
 
     """
     if not file_dependencies:
@@ -227,13 +228,12 @@ def _package_files_and_requirements(
         if not os.path.exists(dstfolder):
             os.makedirs(dstfolder)
         shutil.copy(file_path, os.path.join(dir_path, file_path))
-    if reqs:
-        if os.path.exists(reqs):
+    if reqs_path:
+        if os.path.exists(reqs_path):
             Logger.logger.info(
-                "%s: requirements.txt file detected in user-provided directory, will not self-generate by inferring package dependencies."
-                % func.__name__
+                "Installing requirements found at {path}".format(path=reqs_path)
             )
-            shutil.copy(reqs, os.path.join(dir_path, REQUIREMENTS_FILE))
+            shutil.copy(reqs_path, os.path.join(dir_path, REQUIREMENTS_FILE))
         else:
             raise FileNotFoundError("Requirement file provided does not exist.")
     else:
