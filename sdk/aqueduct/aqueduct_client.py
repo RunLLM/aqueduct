@@ -8,7 +8,13 @@ import yaml
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
-from .dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta, Metadata, AddOrReplaceOperatorDelta
+from .dag import (
+    DAG,
+    apply_deltas_to_dag,
+    SubgraphDAGDelta,
+    Metadata,
+    AddOrReplaceOperatorDelta,
+)
 from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
@@ -48,7 +54,6 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print(exec)
             print(
                 "This API works only when you are running the server and the SDK on the same machine."
             )
