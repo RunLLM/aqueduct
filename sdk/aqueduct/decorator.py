@@ -162,7 +162,7 @@ def op(
             Python classes/methods already imported within the function's file
             need not be included.
         reqs:
-            An absolute path to file that specify requirements for the specific 
+            An absolute path to file that specify requirements for the specific
             operator.
 
     Examples:
