@@ -142,26 +142,28 @@ def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: in
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         time.sleep(poll_threshold)
-        flow_resp = client._get_flow_info(str(flow_id))
 
         # A flow has been successfully published if it makes at least one workflow run, and
         # all its workflow runs have executed successfully.
-        results = flow_resp["workflow_dag_results"]
-        if len(results) < num_runs:
+        flow = client.flow(flow_id)
+        flow_runs = flow.list_runs()
+        if len(flow_runs) == 0:
             continue
 
-        assert all(
-            result["status"] != "failed" for result in results
-        ), "At least one workflow run failed!"
+        statuses = [flow_run["status"] for flow_run in flow_runs]
+        assert all(status != "failed" for status in statuses), "At least one workflow run failed!"
+
+        if len(flow_runs) < num_runs:
+            continue
 
         # Continue checking as long as there are still runs pending.
-        if any(result["status"] == "pending" for result in results):
+        if any(status == "pending" for status in statuses):
             continue
 
         print(
-            "Workflow %s was created and ran successfully at least %s times!" % (flow_id, num_runs)
+            "Workflow %s was created and ran successfully at %s times!" % (flow_id, len(flow_runs))
         )
-        return len(results)
+        return len(flow_runs)
     return -1
 
 

@@ -14,8 +14,6 @@ type Props = {
   setDialogConfig: (config: IntegrationConfig) => void;
 };
 
-export type FileEventTarget = EventTarget & { files: FileList };
-
 export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [projectId, setProjectId] = useState<string>(null);
   const [file, setFile] = useState(null);
