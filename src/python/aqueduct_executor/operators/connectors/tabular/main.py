@@ -8,6 +8,7 @@ from pydantic import parse_obj_as
 
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec
 from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils.logging import ExecutionStatus, Logs, Error, TIP_INTEGRATION_CONNECTION, TIP_DEMO_CONNECTION
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -55,7 +56,9 @@ def run(spec: spec.Spec, storage: Storage):
 
 
 def run_authenticate(op: connector.TabularConnector):
-    op.authenticate()
+    try:
+        op.authenticate()
+    catch:
 
 
 def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):

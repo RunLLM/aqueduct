@@ -12,6 +12,11 @@ class MetaEnum(EnumMeta):
     def __contains__(cls, item: Any) -> Any:
         return item in [v.value for v in cast(Iterable[Enum], cls.__members__.values())]
 
+class ExecutionCode(str, Enum, metaclass=MetaEnum):
+    UNKNOWN = 'unknown'
+    SUCCEEDED = 'succeeded'
+    USER_FAILURE = 'user_failure'
+    SYSTEM_FAILURE = 'system_failure'
 
 class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
