@@ -161,6 +161,9 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
+        reqs:
+            An absolute path to file that specify requirements for the specific 
+            operator.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
