@@ -23,5 +23,11 @@ dist:
 	# do this because we run the UI and the backend on the same Go server, so we
 	# don't need to specify an address when making a request.
 	cd app && echo "SERVER_ADDRESS=" > .env
-	cd app && npm run build:dist
+	cd app && npm run build
+
+	# These are bad hacks that allow us to replace the path in the production
+	# context to use the `/dist` prefix, which we use for routing purposes in the
+	# Go serer.
+	cd app/dist && sed -i'.original' "s|src=\"|src=\"/dist|g" index.html
+	cd app/dist &&  sed -i'.original' "s|href=\"|href=\"/dist|g" index.html
 
