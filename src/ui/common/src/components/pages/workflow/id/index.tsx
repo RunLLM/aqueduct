@@ -74,6 +74,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
+      const parsed = parse(window.location.search);
+      if (!parsed.workflowDagResultId) {
+        navigate(`?workflowDagResultId=${encodeURI(
+          workflow.selectedDag.id
+        )}`)
+      }
     }
   }, [workflow.selectedDag]);
 
