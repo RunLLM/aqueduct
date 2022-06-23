@@ -36,13 +36,13 @@ class Error(BaseModel):
 class Logs(BaseModel):
     stdout: str = ""
     stderr: str = ""
-    error: Optional[Error] = None
-
 class Logger(BaseModel):
-    all_logs: Dict[str, Logs]
+    system_logs: Logs
+    user_logs: Logs
+    error: Optional[Error] = None
     code: ExecutionCode
 
-def _fetch_redirected_logs(
+def fetch_redirected_logs(
     stdout: io.StringIO,
     stderr: io.StringIO,
     logs: Logs,
@@ -64,11 +64,14 @@ def _fetch_redirected_logs(
         logs.stderr = stderr_contents
     return
 
-def _user_fn_traceback(offset: int = 0) -> str:
+def stack_traceback(offset: int = 0) -> str:
     """
     Captures the stack traceback and returns it as a string. If offset is positive,
     it will extract the traceback starting at OFFSET frames from the top (e.g. most recent frame).
     An offset of 1 means the most recent frame will be excluded.
+    
+    This is typically used for user function traceback so that we throw away
+    unnecessary stack frames.
     """
     file = io.StringIO()
 
@@ -84,68 +87,10 @@ def _user_fn_traceback(offset: int = 0) -> str:
     file.seek(0)
     return file.read()
 
-"""
-@logged is a decorator which can be used to explictly redirect stdout and stderr
-to a `logger` object. When the decorated funciton throws an error, it will also
-generate the error message and stack trace.
+def exception_traceback(exception: Exception) -> str:
+    """
+    `exception_traceback` prints the traceback of the entire exception.
 
-Args:
-logger: the logger object to store stdout, stderr, and error messages.
-        Typically, each operator execution pod should have exactly one logger.
-is_user_fn: whether the fn is a user fn. This flag controls how stack trace is obtained.
-failure_code:
-
-Usage:
-@logged(
-    logger=logger,
-    is_user_fn=True,
-)
-def f(x, y, z):
-    print(x)
-    raise Exception("intentional")
-
-f(x, y, z)
-"""
-def logged(
-    logger: Logger,
-    key: str,
-    failure_code: ExecutionCode,
-    failure_tip: str,
-    is_user_fn: bool,
-    mark_success: bool = False,
-    upload_logs_path: str = "",
-    storage: Optional[Storage] = None,
-):
-    def wrapper(fn: Callable) -> Callable:
-        def inner(*args, **kwargs):
-            stdout_log = io.StringIO()
-            stderr_log = io.StringIO()
-            result = None
-            try:
-                with redirect_stdout(stdout_log), redirect_stderr(stderr_log):
-                    result = fn(*args, **kwargs)
-                logs = logger.user_logs if is_user_fn else logger.system_logs
-                _fetch_redirected_logs(stdout_log, stderr_log, logs)
-                if mark_success:
-                    logger.code = ExecutionCode.SUCCEEDED
-                
-                if storage and upload_logs_path:
-                    utils.write_operator_metadata(storage, upload_logs_path, logger)
-                return result
-            except Exception as e:
-                logs = logger.user_logs if is_user_fn else logger.system_logs
-                logger.code = failure_code
-                _fetch_redirected_logs(stdout_log, stderr_log, logs)
-                ctx = _user_fn_traceback(offset=1) if is_user_fn else ''.join(traceback.format_tb(e.__traceback__))
-                logs.error = Error(
-                    context=ctx,
-                    tip=failure_tip,
-                )
-                
-                if storage and upload_logs_path:
-                    utils.write_operator_metadata(storage, upload_logs_path, logger)
-                    sys.exit(1)
-            return result
-        return inner
-    return wrapper
-
+    This is typically used for system error so that the full trace is captured.
+    """
+    return ''.join(traceback.format_tb(exception.__traceback__))

@@ -1,14 +1,23 @@
 import argparse
 import base64
+import io
 import json
 import sys
 import traceback
 
+from contextlib import redirect_stderr, redirect_stdout
 from pydantic import parse_obj_as
 
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec
 from aqueduct_executor.operators.utils import enums, utils
-from aqueduct_executor.operators.utils.logging import ExecutionStatus, Logs, Error, TIP_INTEGRATION_CONNECTION, TIP_DEMO_CONNECTION
+from aqueduct_executor.operators.utils.logging import (
+    Logger,
+    Logs,
+    Error,
+    TIP_INTEGRATION_CONNECTION,
+    TIP_DEMO_CONNECTION,
+    fetch_redirected_logs,
+)
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -55,10 +64,15 @@ def run(spec: spec.Spec, storage: Storage):
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector):
+def run_authenticate(op: connector.TabularConnector, logger):
+    stdout_log = io.StringIO()
+    stderr_log = io.StringIO()
     try:
-        op.authenticate()
+        with redirect_stdout(stdout_log), redirect_stderr(stderr_log):
+            op.authenticate()
     catch:
+    fetch_redirected_logs(stdout_log, stderr_log, logger.user_logs)
+
 
 
 def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
