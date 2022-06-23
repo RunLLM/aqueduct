@@ -70,22 +70,22 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
-  const [urlSearchParams, setUrlSearchParams] = useState<string>('');
-
-  useEffect(() => {
-    setUrlSearchParams(window.location.search)
-  }, [window.location.search])
 
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
-      if (!parse(urlSearchParams).workflowDagResultId) {
-        navigate(`?workflowDagResultId=${encodeURI(
-          workflow.selectedDag.id
-        )}`)
-      }
     }
   }, [workflow.selectedDag]);
+
+  useEffect(() => {
+    const urlSearchParams = parse(window.location.search);
+    if (
+      workflow.selectedResult !== undefined &&
+      !urlSearchParams.workflowDagResultId
+    ) {
+      navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
+    }
+  }, [workflow.selectedResult]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -95,7 +95,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = parse(urlSearchParams);
+      const { workflowDagResultId } = parse(window.location.search);
       for (let i = 0; i < workflow.dagResults.length; i++) {
         if (workflow.dagResults[i].id === workflowDagResultId) {
           workflowDagResultIndex = i;
@@ -106,7 +106,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults]);
+  }, [workflow.dagResults, window.location.search]);
 
   /**
    * This function dispatches calls to fetch artifact results and contents.
