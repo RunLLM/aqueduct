@@ -139,7 +139,7 @@ export const NotificationListItem: React.FC<Props> = ({
       underline="none"
       color="inherit"
       href={`/workflow/${notification.workflowMetadata.id
-        }/?workflowDagResultId=${encodeURI(
+        }?workflowDagResultId=${encodeURI(
           notification.workflowMetadata.dag_result_id
         )}`}
     >

@@ -70,12 +70,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
+  const [urlSearchParams, setUrlSearchParams] = useState<string>('');
+
+  useEffect(() => {
+    setUrlSearchParams(window.location.search)
+  }, [window.location.search])
 
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
-      const parsed = parse(window.location.search);
-      if (!parsed.workflowDagResultId) {
+      if (!parse(urlSearchParams).workflowDagResultId) {
         navigate(`?workflowDagResultId=${encodeURI(
           workflow.selectedDag.id
         )}`)
@@ -90,10 +94,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
 
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
-      const parsed = parse(window.location.search);
-
       let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = parsed;
+      const { workflowDagResultId } = parse(urlSearchParams);
       for (let i = 0; i < workflow.dagResults.length; i++) {
         if (workflow.dagResults[i].id === workflowDagResultId) {
           workflowDagResultIndex = i;
