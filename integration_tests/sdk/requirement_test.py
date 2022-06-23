@@ -1,24 +1,40 @@
 import pandas as pd
-import pytest 
-import transformers
+import pytest
+from aqueduct.error import AqueductError
 
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
 from aqueduct import op
 
+
+def check_if_transformers_exist():
+    try:
+        import transformers
+    except ImportError:
+        return False
+    return True
+
+
 @op(reqs_path="~/random.txt")
 def error_valid_path_operator(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
+
 @op(reqs_path="requirements/requirements.txt")
 def valid_sentiment_prediction(reviews: pd.DataFrame) -> pd.DataFrame:
+    import transformers
+
     model = transformers.pipeline("sentiment-analysis")
-    return reviews.join(pd.DataFrame(model(list(reviews['review']))))
+    return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
+
 
 @op()
-def invalid_sentiment_prediction(reviews: pd.DataFrame) -> pd.DataFrame:
+def default_sentiment_prediction(reviews: pd.DataFrame) -> pd.DataFrame:
+    import transformers
+
     model = transformers.pipeline("sentiment-analysis")
-    return reviews.join(pd.DataFrame(model(list(reviews['review']))))
+    return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
+
 
 def test_invalid_path_operator(client):
     db = client.integration(name=get_integration_name())
@@ -26,6 +42,20 @@ def test_invalid_path_operator(client):
     with pytest.raises(FileNotFoundError):
         invalid_path_table = error_valid_path_operator(table)
 
+
+@pytest.mark.skipif(
+    condition=check_if_transformers_exist(),
+    reason="the transformers package already exists so the error can't be triggered.",
+)
+def test_default_path_operator(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    default_path_table = default_sentiment_prediction(table)
+    with pytest.raises(AqueductError):
+        default_path_table.get()
+
+
+@pytest.mark.last
 def test_valid_path_operator_with_requirement(client):
     db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
