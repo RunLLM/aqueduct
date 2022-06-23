@@ -3,7 +3,6 @@ name: Pull request
 about: Create a pull request to contribute new features or bug fixes
 title: "[PULL REQUEST]"
 labels: pull_request
-assignees: ''
 
 ---
 
