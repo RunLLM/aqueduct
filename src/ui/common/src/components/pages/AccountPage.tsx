@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
+import { CopyBlock, monoBlue } from 'react-code-blocks';
 
 import UserProfile from '../../utils/auth';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
-import CodeBlock from '../layouts/codeblock';
 import DefaultLayout from '../layouts/default';
 
 type AccountPageProps = {
@@ -49,7 +49,13 @@ client = aqueduct.Client(
         <Typography variant="body1" sx={{ fontWeight: 'bold', mr: '8px' }}>
           Python SDK Connection Snippet
         </Typography>
-        <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
+        <CopyBlock
+          text={apiConnectionSnippet}
+          language="python"
+          showLineNumbers={false}
+          theme={monoBlue}
+          highlight="1-5"
+        />
       </Box>
     </DefaultLayout>
   );
