@@ -1,12 +1,6 @@
 import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  Alert,
-  Autocomplete,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { Button } from '../../../primitives/Button.styles';
+import { Alert, Autocomplete, TextField, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
@@ -27,7 +21,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
-import styles from './integration-detail-styles.module.css';
+import { Button } from '../../../primitives/Button.styles';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -195,10 +189,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Typography>
           <Box>
             <Autocomplete
-              sx={{ width: '35ch' }}
               disablePortal
               value={table}
-              className={styles['inline-dropdown']}
+              sx={{
+                verticalAlign: 'middle',
+                display: 'inline-block',
+                width: '35ch',
+              }}
               onChange={handleChange}
               options={integrationTables}
               loading={loading}
@@ -218,11 +215,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               )}
             />
             <FontAwesomeIcon
-              className={
-                loading
-                  ? `${styles['icon']} ${styles['not-clickable']} fa-spin`
-                  : `${styles['icon']} ${styles['clickable']}`
-              }
+              className={loading ? 'fa-spin' : ''}
+              style={{
+                marginLeft: '15px',
+                fontSize: '2em',
+                verticalAlign: 'middle',
+                display: 'inline-block',
+                color: loading ? 'grey' : 'black',
+                cursor: loading ? 'default' : 'pointer',
+              }}
               icon={faRefresh}
               onClick={forceLoadTableList}
             />
