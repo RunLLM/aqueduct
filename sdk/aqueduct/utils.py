@@ -1,5 +1,6 @@
 import inspect
 from pathlib import Path
+from datetime import datetime
 import sys
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
@@ -29,6 +30,20 @@ API_KEY_HEADER = "api-key"
 
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
+
+
+def format_header_for_print(header: str) -> str:
+    """Used to print the header of a section in "describe()" with a consistent length.
+
+    Sandwiches the "header" argument with a repeating sequence of "="s. Eg.
+
+    ============================ "predict" artifact ==========================
+    [       prefix len          ]
+    [                              full_len                                   ]
+    """
+    prefix_len = 20
+    full_len = 80
+    return f"{'=' * prefix_len} {header} {'=' * max(0, full_len - prefix_len - len(header))}"
 
 
 def generate_auth_headers(api_key: str) -> Dict[str, str]:
@@ -205,19 +220,12 @@ def _package_files_and_requirements(
 
     os.chdir(func_dirpath)
 
-    file_dependencies.append(func_file)
-
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
             # If the user uploads a `model.py` file as a dependency, we will error out.
-            # This isn't an issue if the function is defined directly in a `model.py`, since
-            # this file is removed before loading the templated `model.py` file.
-
-            if not file_index == len(file_dependencies) - 1:
-                raise ReservedFileNameException(
-                    "%s is a reserved file name in our system. Please rename your file. "
-                    % file_path
-                )
+            raise ReservedFileNameException(
+                "%s is a reserved file name in our system. Please rename your file. " % file_path
+            )
         if not os.path.exists(file_path):
             raise InvalidFunctionException("File %s does not exist" % file_path)
 
@@ -361,3 +369,18 @@ def get_description_for_metric(
             for metric_op in get_metrics_for_op(metric, dag)
         ],
     }
+
+
+def human_readable_timestamp(ts: int) -> str:
+    format = "%Y-%m-%d %H:%M:%S"
+    return datetime.utcfromtimestamp(ts).strftime(format)
+
+
+def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
+    """Verifies that a user-defined id is of the expected types, returning the string version of the id."""
+    if not isinstance(id, str) and not isinstance(id, uuid.UUID):
+        raise InvalidUserArgumentException("Provided id must be either str or uuid.")
+
+    if isinstance(id, uuid.UUID):
+        return str(id)
+    return id

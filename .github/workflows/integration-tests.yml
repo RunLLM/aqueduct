@@ -64,13 +64,8 @@ jobs:
         with:
           go-version: 1.16.3
       
-      - name: Install aqueduct-sdk
-        working-directory: sdk
-        run: pip3 install .
-
       - name: Install aqueduct-ml
-        working-directory: src/python
-        run: pip3 install .
+        run: pip3 install aqueduct-ml
 
       - name: Start the server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
@@ -109,8 +104,20 @@ jobs:
         run: pytest . -rP --publish -n 5
 
       - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+        if: always()
         with:
           name: Server Logs
           path: logs/
 
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ''
+          message_format: '{emoji} *{workflow}* has {status_message}'
+          footer: '{run_url}'
+          notify_when: 'failure,warnings'
+          mention_users: 'U025MDH5KS6'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

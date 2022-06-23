@@ -2,10 +2,12 @@ from __future__ import annotations
 import json
 
 import uuid
-from aqueduct.utils import get_description_for_check
+from typing import Optional, Dict, Any
+
+from aqueduct.utils import get_description_for_check, format_header_for_print
 
 from aqueduct.api_client import APIClient
-from aqueduct.dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta
+from aqueduct.dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta, UpdateParametersDelta
 from aqueduct.error import AqueductError
 
 from aqueduct.generic_artifact import Artifact
@@ -40,7 +42,7 @@ class CheckArtifact(Artifact):
         self._dag = dag
         self._artifact_id = artifact_id
 
-    def get(self) -> bool:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
         """Materializes a CheckArtifact into a boolean.
 
         Returns:
@@ -58,7 +60,10 @@ class CheckArtifact(Artifact):
                 SubgraphDAGDelta(
                     artifact_ids=[self._artifact_id],
                     include_load_operators=False,
-                )
+                ),
+                UpdateParametersDelta(
+                    parameters=parameters,
+                ),
             ],
             make_copy=True,
         )
@@ -72,7 +77,6 @@ class CheckArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""
-        print("==================== CHECK ARTIFACT =============================")
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
 
         general_dict = get_description_for_check(input_operator)
@@ -87,4 +91,5 @@ class CheckArtifact(Artifact):
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]
 
+        print(format_header_for_print(f"'{input_operator.name}' Check Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))

@@ -44,6 +44,7 @@ class OperatorType(Enum, metaclass=MetaEnum):
     METRIC = "metric"
     CHECK = "check"
     PARAM = "param"
+    SYSTEM_METRIC = "system_metric"
 
 
 class TriggerType(Enum, metaclass=MetaEnum):
@@ -119,3 +120,10 @@ class GithubRepoConfigContentType(str, Enum, metaclass=MetaEnum):
 class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     OPERATOR = "OPERATOR"
     ARTIFACT = "ARTIFACT"
+
+
+class ArtifactType(Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    NUMBER = "number"
+    BOOL = "boolean"
+    PARAM = "param"

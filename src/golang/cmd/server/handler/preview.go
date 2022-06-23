@@ -66,8 +66,8 @@ type previewParamArtifactResponse struct {
 }
 
 type previewTableArtifactResponse struct {
-	TableSchema artifact_result.Metadata `json:"table_schema"`
-	Data        string                   `json:"data"`
+	TableSchema []map[string]string `json:"table_schema"`
+	Data        string              `json:"data"`
 }
 
 type previewArtifactResponse struct {
@@ -283,7 +283,7 @@ func deserializeArtifactResponses(
 
 			responses[id] = previewArtifactResponse{
 				Table: &previewTableArtifactResponse{
-					TableSchema: metadata,
+					TableSchema: metadata.Schema,
 					Data:        string(content),
 				},
 			}

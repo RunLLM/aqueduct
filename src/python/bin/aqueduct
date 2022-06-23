@@ -17,7 +17,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.2"
+package_version = "0.0.3"
 default_server_port = 8080
 
 welcome_message = """
@@ -129,7 +129,7 @@ def update_server_version():
     download_server_binaries()
     update_executable_permissions()
 
-    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "8"])
+    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"])
 
 def generate_welcome_message(expose, port):
     if not expose:
@@ -227,7 +227,7 @@ def install_postgres():
     execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
 
 def install_bigquery():
-    execute_command([sys.executable, "-m", "pip", "install", "pandas-gbq"])
+    execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery"])
 
 def install_snowflake():
     execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy"])

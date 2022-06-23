@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+import json
+from typing import List, Optional, Union, Any
 import uuid
 
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ from aqueduct.enums import (
     LoadUpdateMode,
     CheckSeverity,
 )
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
 
 
@@ -134,6 +135,10 @@ class MetricSpec(BaseModel):
     function: FunctionSpec
 
 
+class SystemMetricSpec(BaseModel):
+    metric_name: str
+
+
 class CheckSpec(BaseModel):
     level: CheckSeverity
     function: FunctionSpec
@@ -150,6 +155,7 @@ class OperatorSpec(BaseModel):
     metric: Optional[MetricSpec]
     check: Optional[CheckSpec]
     param: Optional[ParamSpec]
+    system_metric: Optional[SystemMetricSpec]
 
 
 class Operator(BaseModel):
@@ -184,5 +190,18 @@ def get_operator_type(operator: Operator) -> OperatorType:
         return OperatorType.CHECK
     if operator.spec.param is not None:
         return OperatorType.PARAM
+    if operator.spec.system_metric is not None:
+        return OperatorType.SYSTEM_METRIC
     else:
         raise AqueductError("Invalid operator type")
+
+
+def serialize_parameter_value(name: str, val: Any) -> str:
+    """A parameter must be JSON serializable."""
+    try:
+        return str(json.dumps(val))
+    except Exception as e:
+        raise InvalidUserArgumentException(
+            "Provided parameter %s must be able to be converted into a JSON object: %s"
+            % (name, str(e))
+        )

@@ -1,0 +1,29 @@
+name: SDK Unit Tests
+
+on:
+  pull_request:
+    paths:
+      - 'sdk/aqueduct/**'
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install Dependencies
+        working-directory: ./sdk
+        run: pip3 install .
+
+      - name: Install pytest
+        run: pip3 install pytest
+
+      - name: Run Tests
+        working-directory: ./sdk
+        run: pytest . -rP -vv

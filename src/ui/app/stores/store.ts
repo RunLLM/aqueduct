@@ -1,6 +1,8 @@
 import { dataPreview as dataPreviewReducer } from '@aqueducthq/common';
 import { integrations as integrationsReducer } from '@aqueducthq/common';
 import { workflowSummaries as listWorkflowReducer } from '@aqueducthq/common';
+import { integrationTableData as integrationTableDataReducer } from '@aqueducthq/common';
+import { integrationTables as integrationTablesReducer } from '@aqueducthq/common';
 import { nodeSelection as nodeSelectionReducer } from '@aqueducthq/common';
 import { notifications as notificationsReducer } from '@aqueducthq/common';
 import { openSideSheet as openSideSheetReducer } from '@aqueducthq/common';
@@ -14,6 +16,8 @@ export const store = configureStore({
         notificationsReducer,
         listWorkflowReducer,
         dataPreviewReducer,
+        integrationTablesReducer,
+        integrationTableDataReducer,
         integrationsReducer,
         workflowReducer,
     },

@@ -1,7 +1,7 @@
 import os
 import sys
 
-_REQUIREMENTS_FILE = "./python/operators/connectors/tests/requirements.txt"
+_REQUIREMENTS_FILE = "./python/aqueduct_executor/operators/connectors/tests/requirements.txt"
 
 
 def pytest_configure(config):

@@ -107,6 +107,7 @@ export type Service =
   | 'MySQL'
   | 'MariaDB'
   | 'S3'
+  | 'CSV'
   | 'Aqueduct Demo';
 
 type Info = {
@@ -117,6 +118,38 @@ type Info = {
 export type ServiceInfoMap = {
   [key: string]: Info;
 };
+
+export type FileData = {
+  name: string;
+  data: string;
+};
+
+export type CSVConfig = {
+  name: string;
+  csv: FileData;
+};
+
+export async function addTable(
+  user: UserProfile,
+  integrationId: string,
+  config: CSVConfig
+): Promise<void> {
+  const res = await fetch(
+    `${apiAddress}/api/integration/${integrationId}/create`,
+    {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+        'table-name': config.name,
+      },
+      body: config.csv.data,
+    }
+  );
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message);
+  }
+}
 
 export async function fetchRepos(
   user: UserProfile

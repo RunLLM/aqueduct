@@ -23,6 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
+	systemMetricPythonPath       = "operators.system_metric_executor.main"
 	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
@@ -154,7 +155,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			logFilePath,
 		)
 	} else if spec.Type() == WorkflowRetentionType {
-		workflowRetentionSpec, ok := spec.(*WorkflowSpec)
+		workflowRetentionSpec, ok := spec.(*WorkflowRetentionSpec)
 		if !ok {
 			return nil, errors.New("Unable to cast job spec to workflowRetentionSpec.")
 		}
@@ -207,6 +208,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 	} else if spec.Type() == AuthenticateJobType ||
 		spec.Type() == LoadJobType ||
 		spec.Type() == ExtractJobType ||
+		spec.Type() == LoadTableJobType ||
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
@@ -220,6 +222,19 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
+	} else if spec.Type() == SystemMetricJobType {
+		specStr, err := EncodeSpec(spec, JsonSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		return exec.Command(
+			"python3",
+			"-m",
+			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, systemMetricPythonPath),
+			"--spec",
+			specStr,
+		), nil
 	} else {
 		return nil, errors.New("Unsupported JobType was passed in.")
 	}
@@ -254,10 +269,10 @@ func (j *ProcessJobManager) Launch(
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
-	cmd.Env = os.Environ()
 	if err != nil {
 		return err
 	}
+	cmd.Env = os.Environ()
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

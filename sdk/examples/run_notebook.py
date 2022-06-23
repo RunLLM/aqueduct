@@ -7,6 +7,8 @@ import argparse
 from aqueduct import Client
 import time
 
+from aqueduct.error import InvalidUserArgumentException
+
 """
 See README.md for details about this script.
 """
@@ -92,8 +94,8 @@ def infer_flow_ids_from_stdout(
         validated_flow_ids = []
         for candidate_flow_id in candidate_flow_ids:
             try:
-                _ = client._get_flow_info(candidate_flow_id)
-            except Exception:
+                _ = client.flow(candidate_flow_id)
+            except InvalidUserArgumentException:
                 pass
             else:
                 print("Flow %s corresponds to an actual workflow." % candidate_flow_id)
@@ -207,20 +209,20 @@ while True:
         if flow_id in successful_flow_ids:
             continue
 
-        flow_resp = client._get_flow_info(str(flow_id))
+        flow = client.flow(str(flow_id))
 
         # A flow has been successfully published if it makes at least one successful workflow run since start_time,
-        all_results = flow_resp["workflow_dag_results"]
-        results = [result for result in all_results if result["created_at"] > start_time]
-        if len(results) == 0:
+        flow_runs = [flow.fetch(flow_run_dict["run_id"]) for flow_run_dict in flow.list_runs()]
+        flow_runs = [flow_run for flow_run in flow_runs if float(flow_run._created_at) > start_time]
+        if len(flow_runs) == 0:
             continue
 
         assert all(
-            result["status"] != "failed" for result in results
+            flow_run.status() != "failed" for flow_run in flow_runs
         ), "At least one workflow run failed!"
 
         # Continue checking as long as there are still runs pending.
-        if any(result["status"] == "pending" for result in results):
+        if any(flow_run.status() == "pending" for flow_run in flow_runs):
             continue
 
         print("Flow %s has completed a full run!" % flow_id)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import uuid
 from aqueduct.dag import DAG
 
@@ -34,5 +34,5 @@ class Artifact(ABC):
         pass
 
     @abstractmethod
-    def get(self) -> Any:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass

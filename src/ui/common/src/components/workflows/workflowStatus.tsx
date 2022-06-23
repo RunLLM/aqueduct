@@ -8,7 +8,7 @@ type Props = {
   status: ExecutionStatus;
 };
 
-const Status: React.FC<Props> = ({ status }) => {
+export const Status: React.FC<Props> = ({ status }) => {
   const statusIcons = [];
   const runStatus = status.toLowerCase();
 

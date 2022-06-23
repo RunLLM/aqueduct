@@ -6,7 +6,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 )
 
-type Metadata []map[string]string // Table Schema from Pandas
+type Metadata struct {
+	Schema []map[string]string // Table Schema from Pandas
+	// Metrics from the system regarding the op used to create the artifact result.
+	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
+	SystemMetrics map[string]string
+}
 
 type NullMetadata struct {
 	Metadata

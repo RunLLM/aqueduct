@@ -8,27 +8,34 @@ import yaml
 
 from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
-from .dag import DAG, apply_deltas_to_dag, SubgraphDAGDelta, Metadata, AddOrReplaceOperatorDelta
+from .dag import (
+    DAG,
+    apply_deltas_to_dag,
+    SubgraphDAGDelta,
+    Metadata,
+    AddOrReplaceOperatorDelta,
+)
 from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
     IncompleteFlowException,
     InvalidUserArgumentException,
 )
-from .flow import Flow, _show_dag
+from .flow import Flow
+from .flow_run import _show_dag
 from .github import Github
 from .integrations.integration import IntegrationInfo
 from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.s3_integration import S3Integration
-from .operators import Operator, ParamSpec, OperatorSpec
+from .operators import Operator, ParamSpec, OperatorSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
     schedule_from_cron_string,
     retention_policy_from_latest_runs,
     generate_uuid,
-    artifact_name_from_op_name,
+    parse_user_supplied_id,
 )
 
 import __main__ as main
@@ -48,7 +55,6 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print(exec)
             print(
                 "This API works only when you are running the server and the SDK on the same machine."
             )
@@ -128,13 +134,7 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
-        # Check that the supplied value is JSON-able.
-        try:
-            serialized_default = str(json.dumps(default))
-        except Exception as e:
-            raise InvalidUserArgumentException(
-                "Provided parameter must be able to be converted into a JSON object: %s" % str(e)
-            )
+        val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -146,14 +146,14 @@ class Client:
                         id=operator_id,
                         name=name,
                         description=description,
-                        spec=OperatorSpec(param=ParamSpec(val=serialized_default)),
+                        spec=OperatorSpec(param=ParamSpec(val=val)),
                         inputs=[],
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
                         Artifact(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(name),
+                            name=name,
                             spec=ArtifactSpec(jsonable={}),
                         ),
                     ],
@@ -232,6 +232,40 @@ class Client:
                 % integration_info.service
             )
 
+    def list_flows(self) -> List[Dict[str, str]]:
+        """Lists the flows that are accessible by this client.
+
+        Returns:
+            A list of flows, each represented as a dictionary providing essential
+            information (eg. name, id, etc.), which the user can use to inspect
+            the flow further in the UI or SDK.
+        """
+        return [
+            workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
+        ]
+
+    def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
+        """Fetches a flow corresponding to the given flow id.
+
+        Args:
+             flow_id:
+                Used to identify the flow to fetch from the system.
+
+        Raises:
+            InvalidUserArgumentException:
+                If the provided flow id does not correspond to a flow the client knows about.
+        """
+        flow_id = parse_user_supplied_id(flow_id)
+
+        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+
+        return Flow(
+            self._api_client,
+            flow_id,
+            self._in_notebook_or_console_context,
+        )
+
     def publish_flow(
         self,
         name: str,
@@ -301,20 +335,28 @@ class Client:
         if self._in_notebook_or_console_context:
             _show_dag(self._api_client, dag)
 
-        dag.workflow_id = self._api_client.register_workflow(dag).id
+        flow_id = self._api_client.register_workflow(dag).id
         return Flow(
             self._api_client,
-            connected_integrations=self._connected_integrations,
-            dag=dag,
-            in_notebook_or_console_context=self._in_notebook_or_console_context,
+            str(flow_id),
+            self._in_notebook_or_console_context,
         )
 
-    def trigger(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def trigger(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Immediately triggers another run of the provided flow.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            parameters:
+                A map containing custom values to use for the designated parameters. The mapping
+                is expected to be from parameter name to the custom value. These custom values
+                are not persisted to the workflow. To actually change the default parameter values
+                edit the workflow itself through `client.publish_flow()`.
 
         Raises:
             InvalidRequestError:
@@ -323,12 +365,20 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
+        # TODO(ENG-1144): If there the provided parameters dict is not valid, throw an error
+        #  earlier, before getting to execution.
 
-        if isinstance(flow_id, uuid.UUID):
-            flow_id = str(flow_id)
-        self._api_client.refresh_workflow(flow_id)
+        serialized_params = None
+        if parameters is not None:
+            if any(not isinstance(name, str) for name in parameters):
+                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
+            serialized_params = json.dumps(
+                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
+            )
+
+        flow_id = parse_user_supplied_id(flow_id)
+        self._api_client.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.
@@ -344,11 +394,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        if not isinstance(flow_id, str) and not isinstance(flow_id, uuid.UUID):
-            raise InvalidUserArgumentException("Provided flow id must be either str or uuid.")
-
-        if isinstance(flow_id, uuid.UUID):
-            flow_id = str(flow_id)
+        flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
@@ -362,7 +408,7 @@ class Client:
 
         Args:
             artifacts:
-                If specified, the subgraph terminating at these artifacts will be specified.
+                If specified the subgraph terminating at these artifacts will be specified.
                 Otherwise, the entire graph is printed.
         """
         dag = self._dag
@@ -389,9 +435,3 @@ class Client:
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)
-
-    def _get_flow_info(self, flow_id: str) -> Any:
-        """WARNING: this is only meant for our SDK integration tests to use. We do not publicly
-        support fetching an existing flow through the SDK yet.
-        """
-        return self._api_client.get_workflow(flow_id)

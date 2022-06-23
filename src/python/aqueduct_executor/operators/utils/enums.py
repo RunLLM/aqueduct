@@ -18,8 +18,10 @@ class JobType(str, Enum, metaclass=MetaEnum):
     AUTHENTICATE = "authenticate"
     EXTRACT = "extract"
     LOAD = "load"
+    LOADTABLE = "load-table"
     DISCOVER = "discover"
     PARAM = "param"
+    SYSTEM_METRIC = "system_metric"
 
 
 class InputArtifactType(str, Enum, metaclass=MetaEnum):
