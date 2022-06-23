@@ -87,6 +87,15 @@ avg_sent = average_sentiment(sentiment_table)
 # the metric exceeds one of those bounds, an error will be raised.
 avg_sent.bound(lower=0.5)
 
+# We can also request system level metrics such as runtime.
+# These can be instiated from a table artifact and represent the runtime of the previous @op that ran on it
+sentiment_runtime_metric = sentiment_table.system_metric("runtime")
+
+# Now we can request for the runtime.
+# We can also apply bounds on this metric just as any other.
+sentiment_runtime_metric.get()
+
+
 # And we're done! With a call to `publish_flow`, we've created a full workflow
 # that calculates the sentiment of hotel reviews, creates a metric over those
 # predictions, and sets a bound on that metric.
