@@ -203,7 +203,7 @@ def _package_files_and_requirements(
             file the function is defined in.
         reqs_path:
             A path of file that specifies the requirements of the operator.
-            Default path: /requirements.txt in the folder where the function is located 
+            Default path: /requirements.txt in the folder where the function is located
 
     """
     if not file_dependencies:
@@ -245,9 +245,7 @@ def _package_files_and_requirements(
         shutil.copy(file_path, os.path.join(dir_path, file_path))
     if reqs_path:
         if os.path.exists(reqs_path):
-            Logger.logger.info(
-                "Installing requirements found at {path}".format(path=reqs_path)
-            )
+            Logger.logger.info("Installing requirements found at {path}".format(path=reqs_path))
             shutil.copy(reqs_path, os.path.join(dir_path, REQUIREMENTS_FILE))
         else:
             raise FileNotFoundError("Requirement file provided does not exist.")
