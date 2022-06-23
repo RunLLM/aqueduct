@@ -6,6 +6,9 @@ from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
 from aqueduct import op
 
+INVALID_REQUIREMENTS_PATH = "~/random.txt"
+VALID_REQUIREMENTS_PATH = "requirements/requirements.txt"
+
 
 def check_if_transformers_exist():
     try:
@@ -15,12 +18,12 @@ def check_if_transformers_exist():
     return True
 
 
-@op(reqs_path="~/random.txt")
-def error_valid_path_operator(table: pd.DataFrame) -> pd.DataFrame:
+@op(reqs_path=INVALID_REQUIREMENTS_PATH)
+def invalid_valid_path_operator(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-@op(reqs_path="requirements/requirements.txt")
+@op(reqs_path=VALID_REQUIREMENTS_PATH)
 def valid_sentiment_prediction(reviews: pd.DataFrame) -> pd.DataFrame:
     import transformers
 
@@ -40,7 +43,7 @@ def test_invalid_path_operator(client):
     db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     with pytest.raises(FileNotFoundError):
-        invalid_path_table = error_valid_path_operator(table)
+        invalid_path_table = invalid_valid_path_operator(table)
 
 
 @pytest.mark.skipif(
