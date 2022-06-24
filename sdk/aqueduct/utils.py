@@ -212,7 +212,7 @@ def _package_files_and_requirements(
     # so we need the line below to get the absolute path.
     func_filepath = os.path.abspath(func_filepath)
     if "JPY_PARENT_PID" in os.environ:
-        func_filepath = str(ipynbname.path())
+        func_filepath = "/home/ubuntu/aqueduct/sdk/examples/sentiment_analysis/Sentiment Model.ipynb"
 
     current_directory_path = os.getcwd()
     func_dirpath = os.path.dirname(func_filepath)

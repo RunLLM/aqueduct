@@ -138,8 +138,11 @@ class TableArtifact(Artifact):
         original_sql_query = original_sql_query.rstrip()
         if(original_sql_query[-1] == ';'):
             original_sql_query = original_sql_query[:-1]
+        string_spilt = original_sql_query.split()
+        if(str.isnumeric(string_spilt[-1]) and string_spilt[-2] == "limit"):
+            original_sql_query = " ".join(string_spilt[:-2])
         new_sql_query = original_sql_query + " limit {limit};".format(limit = n)
-
+        
         integration_dict = self._api_client.list_integrations_id()
         integration_name = integration_dict.get(str(operator.spec.extract.integration_id)).name
 

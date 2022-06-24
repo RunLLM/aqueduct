@@ -130,3 +130,16 @@ def test_std(client):
 
     missing_metric = table.std(column_id="total_sulfur_dioxide")
     assert math.isclose(missing_metric.get(), 56.5218, rel_tol=1e-3)
+
+def test_head_standard(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    assert table.get().shape[0] == 100
+
+    table_head = table.head()
+    assert table_head.shape[0] == 5
+
+def test_head_if_query_has_limit(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query= (SENTIMENT_SQL_QUERY + " limit 10"))
+    assert table.head().shape[0] == 5
