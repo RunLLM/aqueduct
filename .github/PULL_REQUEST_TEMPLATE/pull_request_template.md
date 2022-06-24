@@ -14,4 +14,4 @@ labels: pull_request
 - [ ] I have performed a self-review of my code.
 - [ ] If this is a new feature, I have added unit tests and integration tests.
 - [ ] I have manually run the integration tests and they are passing.
-- [ ] If this is a UI-related feature, the UI still works after adding in the new feature.
+- [ ] All features on the UI continue to work correctly.
