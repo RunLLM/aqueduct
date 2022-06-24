@@ -37,6 +37,10 @@ class FlowRun:
         """Returns the id for this flow run."""
         return uuid.UUID(self._id)
 
+    def status(self) -> ExecutionStatus:
+        """Returns the status of the flow run."""
+        return self._status
+
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
         if self._in_notebook_or_console_context:

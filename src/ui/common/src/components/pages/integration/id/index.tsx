@@ -1,12 +1,6 @@
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  Alert,
-  Autocomplete,
-  Button,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Alert, Autocomplete, TextField, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
@@ -27,6 +21,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
+import { Button } from '../../../primitives/Button.styles';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -92,6 +87,20 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   );
 
+  const loading = tableListStatus === ExecutionStatus.Pending;
+
+  const forceLoadTableList = async () => {
+    if (!loading) {
+      dispatch(
+        handleLoadIntegrationTables({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+          forceLoad: true,
+        })
+      );
+    }
+  };
+
   // ENG-1052: We should update the route handler to give us the data in the format we want rather than needing to do post-processing in the FE side.
   const dataTable = {
     cols: [],
@@ -135,7 +144,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     setTable(newValue);
   };
 
-  const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
 
   useEffect(() => {
@@ -171,6 +179,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             onCloseDialog={() => setShowDialog(false)}
+            onConnect={() => forceLoadTableList()}
           />
         )}
 
@@ -178,29 +187,47 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           <Typography variant="h4" gutterBottom component="div">
             Preview
           </Typography>
-          <Autocomplete
-            sx={{ width: '35ch' }}
-            disablePortal
-            value={table}
-            onChange={handleChange}
-            options={integrationTables}
-            loading={loading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Base Table"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <React.Fragment>
-                      {loading ? <CircularProgress size={30} /> : null}
-                      {params.InputProps.endAdornment}
-                    </React.Fragment>
-                  ),
-                }}
-              />
-            )}
-          />
+          <Box>
+            <Autocomplete
+              disablePortal
+              value={table}
+              sx={{
+                verticalAlign: 'middle',
+                display: 'inline-block',
+                width: '35ch',
+              }}
+              onChange={handleChange}
+              options={integrationTables}
+              loading={loading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Base Table"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <React.Fragment>
+                        {params.InputProps.endAdornment}
+                      </React.Fragment>
+                    ),
+                  }}
+                />
+              )}
+            />
+            <FontAwesomeIcon
+              className={loading ? 'fa-spin' : ''}
+              style={{
+                marginLeft: '15px',
+                fontSize: '2em',
+                verticalAlign: 'middle',
+                display: 'inline-block',
+                color: loading ? 'grey' : 'black',
+                cursor: loading ? 'default' : 'pointer',
+              }}
+              icon={faRefresh}
+              onClick={forceLoadTableList}
+            />
+          </Box>
 
           <Box sx={{ mt: 3 }}>
             {hasTable && tableDataStatus === ExecutionStatus.Pending && (

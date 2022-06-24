@@ -188,6 +188,15 @@ class TableArtifact(Artifact):
         """
         return self.PRESET_METRIC_LIST
 
+    def list_system_metrics(self) -> List[str]:
+        """Returns a list of all system metrics available on the table artifact.
+        These system metrics can be set via the invoking the system_metric() method the table.
+
+        Returns:
+            A list of available system metrics on a table
+        """
+        return list(SYSTEM_METRICS_INFO.keys())
+
     def validate_with_expectation(
         self,
         expectation_name: str,
