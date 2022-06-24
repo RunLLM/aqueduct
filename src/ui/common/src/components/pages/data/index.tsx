@@ -22,25 +22,25 @@ type Props = {
 
 const SearchBar = (
   options: DataPreviewInfo[],
-  onChangeFn: (v: string) => void,
+  onChangeFn: (v: string) => void
 ) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}
       options={options}
       onInputChange={(_, val, reason) => {
-        if (reason === "clear") {
-          onChangeFn("")
+        if (reason === 'clear') {
+          onChangeFn('');
         }
 
-        onChangeFn(val)
+        onChangeFn(val);
       }}
       freeSolo
       getOptionLabel={(option) => {
         // When option string is invalid, non of 'options' will be selected
         // and the component will try to directly render the input string.
         // This check prevents applying `dataCardName` to the string.
-        if(typeof option === 'string') {
+        if (typeof option === 'string') {
           return option;
         }
         return dataCardName(option);
@@ -131,9 +131,8 @@ const DataPage: React.FC<Props> = ({ user }) => {
         <Typography variant="h2" gutterBottom component="div">
           Data
         </Typography>
-        {SearchBar(
-          Object.values(dataCardsInfo.data.latest_versions),
-          (v) => setFilterText(v),
+        {SearchBar(Object.values(dataCardsInfo.data.latest_versions), (v) =>
+          setFilterText(v)
         )}
 
         <Box sx={{ my: 3, ml: 1 }}>

@@ -8,7 +8,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { handleArchiveAllNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
-import { NotificationAssociation, NotificationLogLevel} from '../../utils/notifications';
+import {
+  NotificationAssociation,
+  NotificationLogLevel,
+} from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
 import { Tab, Tabs } from '../primitives/Tabs.styles';
 import NotificationListItem from './NotificationListItem';
@@ -54,7 +57,7 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
   const filteredNotifications: Notification[] = notifications
     .filter((notification: Notification) => {
       if (notification.level === NotificationLogLevel.Success) {
-        return false
+        return false;
       }
       const association = notification.association.object;
       if (activeTab === NotificationsTabs.All) {
