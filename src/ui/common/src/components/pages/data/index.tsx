@@ -20,13 +20,31 @@ type Props = {
   user: UserProfile;
 };
 
-const SearchBar = (options: DataPreviewInfo[], onChangeFn: (any) => void) => {
+const SearchBar = (
+  options: DataPreviewInfo[],
+  onChangeFn: (v: string) => void,
+) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}
       options={options}
+      onInputChange={(_, val, reason) => {
+        if (reason === "clear") {
+          onChangeFn("")
+        }
+
+        onChangeFn(val)
+      }}
       freeSolo
-      getOptionLabel={dataCardName}
+      getOptionLabel={(option) => {
+        // When option string is invalid, non of 'options' will be selected
+        // and the component will try to directly render the input string.
+        // This check prevents applying `dataCardName` to the string.
+        if(typeof option === 'string') {
+          return option;
+        }
+        return dataCardName(option);
+      }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">
@@ -38,7 +56,7 @@ const SearchBar = (options: DataPreviewInfo[], onChangeFn: (any) => void) => {
             {...params}
             label="Search"
             variant="standard"
-            onChange={onChangeFn}
+            onChange={(e) => onChangeFn(e.target.value)}
           />
         );
       }}
@@ -113,8 +131,9 @@ const DataPage: React.FC<Props> = ({ user }) => {
         <Typography variant="h2" gutterBottom component="div">
           Data
         </Typography>
-        {SearchBar(Object.values(dataCardsInfo.data.latest_versions), (e) =>
-          setFilterText(e.target.value)
+        {SearchBar(
+          Object.values(dataCardsInfo.data.latest_versions),
+          (v) => setFilterText(v),
         )}
 
         <Box sx={{ my: 3, ml: 1 }}>
@@ -126,8 +145,7 @@ const DataPage: React.FC<Props> = ({ user }) => {
               my: 1,
             }}
           >
-            {dataCards.length === 0 && noDataText}
-            {dataCards}
+            {dataCards.length === 0 ? noDataText : dataCards}
           </Box>
         </Box>
       </Box>
