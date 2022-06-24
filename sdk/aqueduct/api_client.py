@@ -157,6 +157,21 @@ class APIClient:
             integration_info["name"]: IntegrationInfo(**integration_info)
             for integration_info in resp.json()
         }
+    
+    def list_integrations_id(self) -> Dict[str, IntegrationInfo]:
+        url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
+        headers = utils.generate_auth_headers(self.api_key)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        if len(resp.json()) == 0:
+            raise NoConnectedIntegrationsException(
+                "Unable to create flow. Must be connected to at least one integration!"
+            )
+
+        return {
+            integration_info["id"]: IntegrationInfo(**integration_info)
+            for integration_info in resp.json()
+        }
 
     def list_github_repos(self) -> List[str]:
         url = self._construct_full_url(self.LIST_GITHUB_REPO_ROUTE, self.use_https)

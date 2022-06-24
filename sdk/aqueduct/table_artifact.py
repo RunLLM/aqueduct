@@ -21,6 +21,8 @@ import aqueduct
 import ruamel
 from ruamel import yaml
 
+from aqueduct import aqueduct_client
+from aqueduct import api_client
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
@@ -129,6 +131,24 @@ class TableArtifact(Artifact):
             return pd.DataFrame(json.loads(artifact_result.table.data)["data"])
         else:
             raise AqueductError("Artifact does not have table.")
+
+    def head(self, n : int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+        operator = self._dag.get_operator(with_output_artifact_id=self._artifact_id)
+        original_sql_query = operator.spec.extract.parameters.query
+        original_sql_query = original_sql_query.rstrip()
+        if(original_sql_query[-1] == ';'):
+            original_sql_query = original_sql_query[:-1]
+        new_sql_query = original_sql_query + " limit {limit};".format(limit = n)
+
+        integration_dict = self._api_client.list_integrations_id()
+        integration_name = integration_dict.get(str(operator.spec.extract.integration_id)).name
+
+        local_client = aqueduct_client.Client(self._api_client.api_key,self._api_client.aqueduct_address)
+        warehouse = local_client.integration(integration_name)
+        head_table = warehouse.sql(new_sql_query)
+        head_table_df = head_table.get()
+
+        return head_table_df
 
     def save(self, config: SaveConfig) -> None:
         """Configure this artifact to be written to a specific integration after its computed.
