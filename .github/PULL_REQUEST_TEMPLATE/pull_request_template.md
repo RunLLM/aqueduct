@@ -6,11 +6,12 @@ labels: pull_request
 
 ---
 
-## Describe your changes
+## Describe your changes and why you are making these changes
 
 ## Related issue number (if any)
 
 ## Checklist before requesting a review
 - [ ] I have performed a self-review of my code.
-- [ ] If it is a core feature, I have added thorough tests.
-- [ ] All tests are passing.
+- [ ] If this is a new feature, I have added unit tests and integration tests.
+- [ ] I have manually run the integration tests and they are passing.
+- [ ] If this is a UI-related feature, the UI still works after adding in the new feature.
