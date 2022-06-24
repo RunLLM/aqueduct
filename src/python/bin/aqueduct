@@ -17,7 +17,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.3"
+package_version = "0.0.2"
 default_server_port = 8080
 
 welcome_message = """
@@ -396,4 +396,3 @@ if __name__ == "__main__":
     else:
         print("Unsupported command:", args.command)
         sys.exit(1)
-123

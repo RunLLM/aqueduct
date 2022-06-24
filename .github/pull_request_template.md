@@ -1,11 +1,3 @@
----
-name: Pull request
-about: Create a pull request to contribute new features or bug fixes
-title: "[PULL REQUEST]"
-labels: pull_request
-
----
-
 ## Describe your changes and why you are making these changes
 
 ## Related issue number (if any)
