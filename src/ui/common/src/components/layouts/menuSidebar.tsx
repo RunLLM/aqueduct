@@ -18,7 +18,10 @@ import { useLocation } from 'react-router-dom';
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
-import { NotificationStatus, NotificationLogLevel } from '../../utils/notifications';
+import {
+  NotificationLogLevel,
+  NotificationStatus,
+} from '../../utils/notifications';
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 
@@ -115,8 +118,9 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const numUnreadNotifications = useSelector(
     (state: RootState) =>
       state.notificationsReducer.notifications.filter(
-        (notification) => notification.level !== NotificationLogLevel.Success && 
-        notification.status === NotificationStatus.Unread
+        (notification) =>
+          notification.level !== NotificationLogLevel.Success &&
+          notification.status === NotificationStatus.Unread
       ).length
   );
 
