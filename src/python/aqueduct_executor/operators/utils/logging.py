@@ -3,11 +3,9 @@ import sys
 import traceback
 
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 from pydantic import BaseModel
 from aqueduct_executor.operators.utils.enums import ExecutionCode
-from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
 _GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
@@ -29,18 +27,55 @@ TIP_EXTRACT = "We couldn't execute the provided query. Please double check your 
 TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
+
 class Error(BaseModel):
     context: str = ""
     tip: str = ""
 
+
 class Logs(BaseModel):
     stdout: str = ""
     stderr: str = ""
+
+
 class Logger(BaseModel):
-    system_logs: Logs
     user_logs: Logs
-    error: Optional[Error] = None
     code: ExecutionCode
+    error: Optional[Error] = None
+
+    def failed(self) -> bool:
+        return self.code in [ExecutionCode.USER_FAILURE, ExecutionCode.SYSTEM_FAILURE]
+
+    def user_fn_redirected(self, failure_tip: str) -> Callable:
+        def wrapper(user_fn: Callable) -> Callable:
+            def inner(*args, **kwargs):
+                stdout_log = io.StringIO()
+                stderr_log = io.StringIO()
+                try:
+                    with redirect_stdout(stdout_log), redirect_stderr(stderr_log):
+                        result = user_fn(*args, **kwargs)
+                except Exception:
+                    # Include the stack trace within the user's code.
+                    fetch_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                    self.code = ExecutionCode.USER_FAILURE
+                    self.error = Error(
+                        context=stack_traceback(
+                            offset=1
+                        ),  # traceback the first stack frame, which belongs to user
+                        tip=failure_tip,
+                    )
+                    print(f"User failure. Full log: {self.json()}")
+                    return None
+
+                # Include the stack trace within the user's code.
+                fetch_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                print(f"User execution succeeded. Full log: {self.json()}")
+                return result
+
+            return inner
+
+        return wrapper
+
 
 def fetch_redirected_logs(
     stdout: io.StringIO,
@@ -64,12 +99,13 @@ def fetch_redirected_logs(
         logs.stderr = stderr_contents
     return
 
+
 def stack_traceback(offset: int = 0) -> str:
     """
     Captures the stack traceback and returns it as a string. If offset is positive,
     it will extract the traceback starting at OFFSET frames from the top (e.g. most recent frame).
     An offset of 1 means the most recent frame will be excluded.
-    
+
     This is typically used for user function traceback so that we throw away
     unnecessary stack frames.
     """
@@ -87,10 +123,11 @@ def stack_traceback(offset: int = 0) -> str:
     file.seek(0)
     return file.read()
 
+
 def exception_traceback(exception: Exception) -> str:
     """
     `exception_traceback` prints the traceback of the entire exception.
 
     This is typically used for system error so that the full trace is captured.
     """
-    return ''.join(traceback.format_tb(exception.__traceback__))
+    return "".join(traceback.format_tb(exception.__traceback__))

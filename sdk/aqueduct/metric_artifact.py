@@ -1,10 +1,10 @@
 from __future__ import annotations
 import json
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, List
 import uuid
 
-from aqueduct.utils import get_description_for_metric
+from aqueduct.utils import get_description_for_metric, format_header_for_print
 import aqueduct
 
 from aqueduct.api_client import APIClient
@@ -95,6 +95,15 @@ class MetricArtifact(Artifact):
     BOUND_UPPER = "upper"
     BOUND_EQUAL = "equal"
     BOUND_NOTEQUAL = "notequal"
+
+    def list_preset_checks(self) -> List[str]:
+        """Returns a list of all preset checks available on the metric artifact.
+        These preset checks can be set via the bound() method on a artifact.
+
+        Returns:
+            A list of available preset checks on a metric
+        """
+        return [self.BOUND_LOWER, self.BOUND_UPPER, self.BOUND_EQUAL, self.BOUND_NOTEQUAL]
 
     def bound(
         self,
@@ -274,5 +283,6 @@ class MetricArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the metric artifact."""
-        print("==================== METRIC ARTIFACT =============================")
+        input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        print(format_header_for_print(f"'{input_operator.name}' Metric Artifact"))
         print(json.dumps(self._describe(), sort_keys=False, indent=4))

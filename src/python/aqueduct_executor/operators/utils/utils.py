@@ -10,6 +10,10 @@ from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArt
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 _DEFAULT_ENCODING = "utf8"
+_RUNTIME_SEC_METRIC_NAME = "runtime"
+_MAX_MEMORY_MB_METRIC_NAME = "max_memory"
+_METADATA_SCHEMA_NAME = "schema"
+_METADATA_SYSTEM_METADATA_NAME = "system_metadata"
 
 
 # Typing: all the possible artifact types to a function. Should be in sync with `InputArtifactType`.
@@ -50,6 +54,16 @@ def read_artifacts(
     return inputs
 
 
+def read_system_metadata(
+    storage: Storage,
+    input_metadata_paths: List[str],
+):
+    # We currently allow the spec to contain multiple input_metadata paths.
+    # A system metric currently spans over a single operator.
+    # The scheduler enforces this requirement before the executor is run.
+    return [_read_json_input(storage, input_path) for input_path in input_metadata_paths]
+
+
 # TODO: Can also the input metadata here if we wanted to use it.
 def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
     input_bytes = storage.get(path)
@@ -78,6 +92,7 @@ def write_artifacts(
     output_paths: List[str],
     output_metadata_paths: List[str],
     contents: List[Any],
+    system_metadata: Dict[str, str],
     artifact_types: List[OutputArtifactType],
 ) -> None:
     if (
@@ -98,7 +113,9 @@ def write_artifacts(
     for (artifact_type, output_path, output_metadata_path, content) in zip(
         artifact_types, output_paths, output_metadata_paths, contents
     ):
-        write_artifact(storage, output_path, output_metadata_path, content, artifact_type)
+        write_artifact(
+            storage, output_path, output_metadata_path, content, system_metadata, artifact_type
+        )
 
 
 def write_artifact(
@@ -106,6 +123,7 @@ def write_artifact(
     output_path: str,
     output_metadata_path: str,
     content: Any,
+    system_metadata: Dict[str, str],
     artifact_type: OutputArtifactType,
 ) -> None:
     if artifact_type == OutputArtifactType.TABLE:
@@ -114,13 +132,13 @@ def write_artifact(
                 "Expected output type to be Pandas Dataframe, but instead got %s"
                 % type(content).__name__
             )
-        _write_tabular_output(storage, output_path, output_metadata_path, content)
+        _write_tabular_output(storage, output_path, output_metadata_path, content, system_metadata)
     elif artifact_type == OutputArtifactType.FLOAT:
         if not isinstance(content, float) and not isinstance(content, int):
             raise Exception(
                 "Expected output type to be float or int, instead got %s" % type(content).__name__
             )
-        _write_numeric_output(storage, output_path, output_metadata_path, content)
+        _write_numeric_output(storage, output_path, output_metadata_path, content, system_metadata)
     elif artifact_type == OutputArtifactType.BOOL:
         if isinstance(content, bool) or isinstance(content, np.bool_):
             _write_bool_output(storage, output_path, output_metadata_path, bool(content))
@@ -149,12 +167,15 @@ def _write_tabular_output(
     output_path: str,
     output_metadata_path: str,
     df: pd.DataFrame,
+    system_metadata: Dict[str, str],
 ) -> None:
     output_str = df.to_json(orient="table", date_format="iso", index=False)
 
     # Create tabular output metadata
     schema = [{col: str(df[col].dtype)} for col in df]
     output_metadata_str = json.dumps(schema)
+    metadata = {_METADATA_SCHEMA_NAME: schema, _METADATA_SYSTEM_METADATA_NAME: system_metadata}
+    output_metadata_str = json.dumps(metadata)
 
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
     storage.put(output_metadata_path, bytes(output_metadata_str, encoding=_DEFAULT_ENCODING))
@@ -165,10 +186,19 @@ def _write_numeric_output(
     output_path: str,
     output_metadata_path: str,
     val: Union[float, int],
+    system_metadata: Dict[str, Any],
 ) -> None:
     """Used for metrics."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
+    storage.put(
+        output_metadata_path,
+        bytes(
+            json.dumps(
+                {_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: system_metadata}
+            ),
+            encoding=_DEFAULT_ENCODING,
+        ),
+    )
 
 
 def _write_bool_output(
@@ -179,7 +209,13 @@ def _write_bool_output(
 ) -> None:
     """Used for checks."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
+    storage.put(
+        output_metadata_path,
+        bytes(
+            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}),
+            encoding=_DEFAULT_ENCODING,
+        ),
+    )
 
 
 def _write_json_output(
@@ -190,7 +226,13 @@ def _write_json_output(
 ) -> None:
     """Used for parameters."""
     storage.put(output_path, bytes(val, encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
+    storage.put(
+        output_metadata_path,
+        bytes(
+            json.dumps({_METADATA_SCHEMA_NAME: [], _METADATA_SYSTEM_METADATA_NAME: {}}),
+            encoding=_DEFAULT_ENCODING,
+        ),
+    )
 
 
 def write_logs(

@@ -12,6 +12,8 @@ from aqueduct_executor.operators.connectors.tabular import common, config, extra
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
 
+AQUEDUCT_DEMO_NAME = "aqueduct_demo"
+
 
 def unwrap_connector_config(cls, connector_config, values):
     """

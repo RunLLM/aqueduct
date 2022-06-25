@@ -146,14 +146,12 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	workflowDagResults := make([]workflowDagResult, 0, len(dbWorkflowDagResults))
 	for _, dbWorkflowDagResult := range dbWorkflowDagResults {
-		workflowDagResult := workflowDagResult{
+		workflowDagResults = append(workflowDagResults, workflowDagResult{
 			Id:            dbWorkflowDagResult.Id,
 			CreatedAt:     dbWorkflowDagResult.CreatedAt.Unix(),
 			Status:        dbWorkflowDagResult.Status,
 			WorkflowDagId: dbWorkflowDagResult.WorkflowDagId,
-		}
-
-		workflowDagResults = append(workflowDagResults, workflowDagResult)
+		})
 	}
 
 	workflowWatcherUsers, err := h.UserReader.GetWatchersByWorkflowId(ctx, args.workflowId, h.Database)

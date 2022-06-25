@@ -49,7 +49,7 @@ export const NotificationListItem: React.FC<Props> = ({
             flexDirection: 'row',
           }}
         >
-          <Typography variant="body1" sx={{ color: 'gray800' }}>
+          <Typography variant="body1" sx={{ color: 'gray.800' }}>
             <Typography
               variant="body1"
               gutterBottom
@@ -60,10 +60,6 @@ export const NotificationListItem: React.FC<Props> = ({
             >
               {notification.workflowMetadata.name}
             </Typography>
-
-            {notification.level === NotificationLogLevel.Success
-              ? ' succeeded'
-              : ' failed'}
           </Typography>
         </Box>
       ) : (
@@ -92,7 +88,16 @@ export const NotificationListItem: React.FC<Props> = ({
           width: '100%',
         }}
       >
-        {title}
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{
+            fontFamily: 'Monospace',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
+          {notification.content}
+        </Typography>
         <FontAwesomeIcon
           icon={faXmark}
           style={{
@@ -105,43 +110,21 @@ export const NotificationListItem: React.FC<Props> = ({
         />
       </Box>
 
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{
-          fontFamily: 'Monospace',
-          '&:hover': { textDecoration: 'underline' },
-        }}
-      >
-        {notification.content}
-      </Typography>
-
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
         }}
       >
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 'medium', color: 'gray600' }}
-          >
-            {/* Show notification associated with 'workflow_run' as 'workflow' category */}
-            {association.object === NotificationAssociation.WorkflowDagResult
-              ? NotificationAssociation.Workflow
-              : association.object}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 'light', color: 'gray600' }}
-          >
-            {`${dateString(notification.createdAt)}`}
-          </Typography>
-        </Box>
+        <Typography
+          variant="body1"
+          sx={{
+            fontWeight: 'light',
+            color: 'gray.600',
+          }}
+        >
+          {`${dateString(notification.createdAt)}`}
+        </Typography>
       </Box>
     </Box>
   );
@@ -157,7 +140,7 @@ export const NotificationListItem: React.FC<Props> = ({
       color="inherit"
       href={`/workflow/${
         notification.workflowMetadata.id
-      }/?workflowDagResultId=${encodeURI(
+      }?workflowDagResultId=${encodeURI(
         notification.workflowMetadata.dag_result_id
       )}`}
     >

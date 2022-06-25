@@ -2,7 +2,8 @@ import pytest
 from google.cloud import bigquery
 
 from aqueduct_executor.operators.connectors.tabular import bigquery as bq
-from aqueduct_executor.operators.connectors.tabular import dataframe
+from aqueduct_executor.operators.connectors.tabular.load import RelationalParams as LoadParam
+from aqueduct_executor.operators.connectors.tabular.extract import RelationalParams as ExtractParam
 
 from aqueduct_executor.operators.connectors.tests import conf
 from aqueduct_executor.operators.connectors.tests import utils
@@ -29,18 +30,27 @@ class TestBigQuery:
 
     @classmethod
     def teardown_class(cls):
-        cls.client.delete_table(_TABLE)
-        cls.client.delete_dataset(_DATASET)
+        cls.client.delete_dataset(_DATASET, delete_contents=True)
 
     def test_authenticate(self):
         utils.authenticate_test(self.conn)
 
     @pytest.mark.dependency()
     def test_load(self):
-        params = {dataframe.LOAD_PARAMS_TABLE_KEY: _TABLE}
+        params = LoadParam(table=_TABLE)
         utils.load_test(self.conn, params, self.test_df)
 
     @pytest.mark.dependency(depends=["TestBigQuery::test_load"])
     def test_extract(self):
-        params = {dataframe.EXTRACT_PARAMS_QUERY_KEY: "SELECT * FROM {};".format(_TABLE)}
+        params = ExtractParam(query="SELECT * FROM {};".format(_TABLE))
         utils.extract_test(self.conn, params, expected_df=self.test_df)
+
+    def test_discover(self):
+        tables = set()
+        for i in range(2):
+            table = f"{_DATASET}.table{i}"
+            params = LoadParam(table=table)
+            utils.load_test(self.conn, params, self.test_df)
+            tables.add(table)
+            discover = self.conn.discover()
+            assert len(tables.difference(discover)) == 0
