@@ -39,9 +39,11 @@ const (
 	WorkflowJobType       JobType = "workflow"
 	FunctionJobType       JobType = "function"
 	ParamJobType          JobType = "param"
+	SystemMetricJobType   JobType = "system_metric"
 	AuthenticateJobType   JobType = "authenticate"
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
+	LoadTableJobType      JobType = "load-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -74,6 +76,7 @@ type WorkflowSpec struct {
 	baseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
 	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -109,6 +112,14 @@ type ParamSpec struct {
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
+type SystemMetricSpec struct {
+	basePythonSpec
+	MetricName         string   `json:"metric_name"  yaml:"metric_name"`
+	InputMetadataPaths []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
+}
+
 type ExtractSpec struct {
 	basePythonSpec
 	ConnectorName      integration.Service     `json:"connector_name"  yaml:"connector_name"`
@@ -125,6 +136,14 @@ type LoadSpec struct {
 	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
 	InputContentPath  string               `json:"input_content_path"  yaml:"input_content_path"`
 	InputMetadataPath string               `json:"input_metadata_path"  yaml:"input_metadata_path"`
+}
+
+type LoadTableSpec struct {
+	basePythonSpec
+	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	CSV             string              `json:"csv"  yaml:"csv"`
+	LoadParameters  LoadSpec            `json:"load_parameters"  yaml:"load_parameters"`
 }
 
 type AuthenticateSpec struct {
@@ -160,12 +179,20 @@ func (*AuthenticateSpec) Type() JobType {
 	return AuthenticateJobType
 }
 
+func (*SystemMetricSpec) Type() JobType {
+	return SystemMetricJobType
+}
+
 func (*ExtractSpec) Type() JobType {
 	return ExtractJobType
 }
 
 func (*LoadSpec) Type() JobType {
 	return LoadJobType
+}
+
+func (*LoadTableSpec) Type() JobType {
+	return LoadTableJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -200,6 +227,7 @@ func NewWorkflowSpec(
 	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
+	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
 		baseSpec: baseSpec{
@@ -208,6 +236,7 @@ func NewWorkflowSpec(
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
 			Vault:      vault,
@@ -276,6 +305,31 @@ func NewParamSpec(
 		Val:                val,
 		OutputMetadataPath: outputMetadataPath,
 		OutputContentPath:  outputContentPath,
+	}
+}
+
+func NewSystemMetricSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	metricName string,
+	inputMetadataPaths []string,
+	outputContentPath string,
+	outputMetadataPath string,
+) Spec {
+	return &SystemMetricSpec{
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type: SystemMetricJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		InputMetadataPaths: inputMetadataPaths,
+		OutputContentPath:  outputContentPath,
+		OutputMetadataPath: outputMetadataPath,
+		MetricName:         metricName,
 	}
 }
 
@@ -356,6 +410,48 @@ func NewLoadSpec(
 	}
 }
 
+// NewLoadTableSpec constructs a Spec for a LoadTableJob.
+func NewLoadTableSpec(
+	name string,
+	csv string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	connectorName integration.Service,
+	connectorConfig auth.Config,
+	parameters connector.LoadParams,
+	inputContentPath string,
+	inputMetadataPath string,
+) Spec {
+	return &LoadTableSpec{
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type: LoadTableJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		ConnectorName:   connectorName,
+		ConnectorConfig: connectorConfig,
+		CSV:             csv,
+		LoadParameters: LoadSpec{
+			basePythonSpec: basePythonSpec{
+				baseSpec: baseSpec{
+					Type: LoadJobType,
+					Name: name,
+				},
+				StorageConfig: *storageConfig,
+				MetadataPath:  metadataPath,
+			},
+			ConnectorName:     connectorName,
+			ConnectorConfig:   connectorConfig,
+			Parameters:        parameters,
+			InputContentPath:  inputContentPath,
+			InputMetadataPath: inputMetadataPath,
+		},
+	}
+}
+
 // NewDiscoverSpec constructs a Spec for a DiscoverJob.
 func NewDiscoverSpec(
 	name string,
@@ -430,6 +526,8 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 			spec = &ExtractSpec{}
 		case LoadJobType:
 			spec = &LoadSpec{}
+		case LoadTableJobType:
+			spec = &LoadTableSpec{}
 		case DiscoverJobType:
 			spec = &DiscoverSpec{}
 		default:

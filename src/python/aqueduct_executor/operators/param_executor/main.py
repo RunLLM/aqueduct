@@ -19,6 +19,7 @@ def run(spec: spec.ParamSpec) -> None:
             spec.output_content_path,
             spec.output_metadata_path,
             spec.val,
+            {},
             enums.OutputArtifactType.JSON,
         )
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})

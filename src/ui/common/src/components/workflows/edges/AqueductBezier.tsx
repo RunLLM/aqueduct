@@ -3,7 +3,7 @@ import { EdgeProps, getBezierPath } from 'react-flow-renderer';
 
 import { theme } from '../../../styles/theme/theme';
 
-const AqueductBezier: React.FC<EdgeProps> = ({
+export const AqueductBezier: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,

@@ -121,7 +121,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {
-		response.Schema = dbArtifactResult.Metadata.Metadata
+		response.Schema = dbArtifactResult.Metadata.Schema
 	}
 
 	if dbArtifactResult.Status == shared.SucceededExecutionStatus {

@@ -1,9 +1,12 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 
+import json
 import pytest
 
+from aqueduct.enums import ArtifactType
+from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from utils import get_integration_name, run_flow_test
+from utils import get_integration_name, run_flow_test, generate_new_flow_name, wait_for_flow_runs
 from aqueduct import metric, op
 import pandas as pd
 
@@ -51,6 +54,28 @@ def test_basic_param_creation(client):
     assert kv_df.get().equals(pd.DataFrame(data=kv))
 
 
+def test_non_jsonable_parameter(client):
+    with pytest.raises(InvalidUserArgumentException):
+        _ = client.create_param(name="bad param", default=b"cant serialize me")
+
+    param = client.create_param(name="number", default=8)
+    param_doubled = double_number_input(param)
+    with pytest.raises(InvalidUserArgumentException):
+        _ = param_doubled.get(parameters={"number": b"cant serialize me"})
+
+
+def test_get_with_custom_parameter(client):
+    param = client.create_param(name="number", default=8)
+    assert param.get() == 8
+
+    param_doubled = double_number_input(param)
+    assert param_doubled.get(parameters={"number": 20}) == 40
+    assert param_doubled.get() == 2 * 8
+
+    with pytest.raises(InvalidUserArgumentException):
+        param_doubled.get(parameters={"non-existant param": 10})
+
+
 @op
 def append_row_to_df(df, row):
     """`row` is a list of values to append to the input dataframe."""
@@ -72,6 +97,16 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
+def _check_param_vals(dag, expected_vals: List[Any]):
+    """Check that all parameter artifacts have a one-to-one correspondence with `expected_vals`."""
+    artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
+    for artifact in artifacts:
+        op = dag.must_get_operator(with_output_artifact_id=artifact.id)
+        param_val = json.loads(op.spec.param.val)
+        assert param_val in expected_vals
+        expected_vals.remove(param_val)
+
+
 @pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
@@ -86,17 +121,55 @@ def test_edit_param_for_flow(client):
 
     try:
         # Edit the flow with a different row to append and re-publish
-        row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
-        new_row_param = client.create_param(name="new row", default=row_to_add)
+        new_row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
+        new_row_param = client.create_param(name="new row", default=new_row_to_add)
         output = append_row_to_df(sql_artifact, new_row_param)
 
         # Wait for the first run, then refresh the workflow and verify that it runs at least
         # one more time (two runs total, since the original was manually triggered).
         flow = run_flow_test(
-            client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=True
+            client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=False
         )
-    except Exception:
+
+        # Verify that the parameters were edited as expected.
+        flow_runs = flow.list_runs()
+        assert len(flow_runs) == 2
+        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [row_to_add])
+        _check_param_vals(flow.latest()._dag, [new_row_to_add])
+
+    finally:
         client.delete_flow(flow.id())
-        raise
 
     assert flow_id == flow.id()
+
+
+@metric
+def add_numbers(sql, num1, num2):
+    if not isinstance(num1, int) or not isinstance(num2, int):
+        raise Exception("Expected an integer input.")
+    return num1 + num2
+
+
+@pytest.mark.publish
+def test_trigger_flow_with_different_param(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    num1 = client.create_param(name="num1", default=5)
+    num2 = client.create_param(name="num2", default=5)
+    output = add_numbers(sql_artifact, num1, num2)
+
+    flow_name = generate_new_flow_name()
+    flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+
+    try:
+        client.trigger(flow.id(), parameters={"num1": 10})
+        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+
+        # Verify the parameters were configured as expected.
+        flow_runs = flow.list_runs()
+        assert len(flow_runs) == 2
+        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [5, 5])
+        _check_param_vals(flow.latest()._dag, [5, 10])
+    finally:
+        client.delete_flow(flow.id())

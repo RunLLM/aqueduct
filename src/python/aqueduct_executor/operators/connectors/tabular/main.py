@@ -12,25 +12,40 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
+try:
+    from typing import Literal
+except ImportError:
+    # Python 3.7 does not support typing.Literal
+    from typing_extensions import Literal
+
+from pydantic import validator
+
+from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.storage import config as sconfig
+
+
 def run(spec: spec.Spec, storage: Storage):
     """
     Runs one of the following connector operations:
     - authenticate
     - extract
     - load
+    - load-table
     - discover
 
     Arguments:
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
-
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
         run_authenticate(op)
     elif spec.type == enums.JobType.EXTRACT:
         run_extract(spec, op, storage)
+    elif spec.type == enums.JobType.LOADTABLE:
+        run_load_table(spec, op, storage)
     elif spec.type == enums.JobType.LOAD:
         run_load(spec, op, storage)
     elif spec.type == enums.JobType.DISCOVER:
@@ -50,6 +65,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         [spec.output_content_path],
         [spec.output_metadata_path],
         [df],
+        {},
         [utils.OutputArtifactType.TABLE],
     )
 
@@ -64,6 +80,11 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
     op.load(spec.parameters, inputs[0])
+
+
+def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
+    df = utils._read_csv(storage, spec.csv)
+    op.load(spec.load_parameters.parameters, df)
 
 
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):

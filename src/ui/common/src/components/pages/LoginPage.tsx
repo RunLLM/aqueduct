@@ -8,7 +8,7 @@ import { Button } from '../primitives/Button.styles';
 
 export const LoginPage: React.FC = () => {
   useEffect(() => {
-    document.title = 'Login | Aquedudct';
+    document.title = 'Login | Aqueduct';
   }, []);
 
   const [cookies, setCookie, removeCookie] = useCookies(['aqueduct-api-key']);
