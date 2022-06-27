@@ -57,5 +57,20 @@
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "typescript": "^3.9.10"
+  },
+  "targets": {
+    "sagemaker": {
+      "publicUrl": "/proxy/8080"
+    },
+    "modern": {
+      "engines": {
+        "browsers": "Chrome 80"
+      }
+    },
+    "legacy": {
+      "engines": {
+        "browsers": "> 0.5%, last 2 versions, not dead"
+      }
+    }
   }
 }
