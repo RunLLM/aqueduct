@@ -7,8 +7,13 @@ The code here is organized into two directories -- a component library in
 `common/` that is published to npm as a package called `@aqueducthq/common`, and an application server in `app/`
 that consumes `@aqueducthq/common`.
 
-If you're actively developing the UI, you will need to copy the `.env.local` file 
-to `/app` from `~/.aqueduct/ui/app`. If you are exposing the ui at a public IP, make
+If you're actively developing the UI, you will need create a file called ```.env.local``` in the root of `src/ui/app/`.
+
+This file should contain the following:
+
+```SERVER_ADDRESS=http://localhost:8080```
+
+If you are exposing the ui at a public IP, make
 sure to update the `SERVER_ADDRESS` field accordingly (e.g. 
 `SERVER_ADDRESS=3.142.105.48:8080`). 
 
