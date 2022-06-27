@@ -18,7 +18,7 @@ const (
 
 // We register an obfuscation function to alter the header value before logging it
 // the key is the header name whose value is the func to apply to the header value.
-var HeaderObfuscationFunctionMap map[string](func([]string) []string) = map[string](func([]string) []string){
+var HeaderObfuscationFunctionMap map[string](func([]string) ([]string, error)) = map[string](func([]string) ([]string, error)){
 	"Integration-Config": ObscurePasswordFromIntegrationConfig,
 }
 
@@ -100,9 +100,8 @@ func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) ([]s
 	if err != nil {
 		return nil, err
 	}
-
-	if _, exists := integrationConfig["password"]; exists {
-		return integrationConfigHeader
+	if _, exists := integrationConfig["password"]; !exists {
+		return integrationConfigHeader, nil
 	}
 
 	passwordLength := len(integrationConfig["password"])
@@ -112,5 +111,5 @@ func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) ([]s
 		return nil, err
 	}
 
-	return []string{string(newIntegrationConfigString)}
+	return []string{string(newIntegrationConfigString)}, nil
 }
