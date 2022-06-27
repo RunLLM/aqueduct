@@ -1,7 +1,7 @@
 # Aqueduct UI
 
 The Aqueduct UI is implemented in Next.js. Once you've installed the Aqueduct
-package, you can start the UI by running `aqueduct ui`.
+package, you can start the UI by running `aqueduct start`.
 
 The code here is organized into two directories -- a component library in
 `common/` that is published to npm as a package called `@aqueducthq/common`, and an application server in `app/`
