@@ -20,7 +20,11 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def extract(self, params: extract.Params) -> pd.DataFrame:
+    def extract(
+        self,
+        # TODO: https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
+        params,  # extract.Params
+    ) -> pd.DataFrame:
         """Extracts data from source into a DataFrame.
 
         Args:
@@ -31,7 +35,12 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def load(self, params: load.Params, df: pd.DataFrame) -> None:
+    def load(
+        self,
+        # TODO: https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
+        params,  # load.Params
+        df: pd.DataFrame,
+    ) -> None:
         """Loads DataFrame into destination.
 
         Args:

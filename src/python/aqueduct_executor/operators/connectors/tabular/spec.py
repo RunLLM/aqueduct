@@ -4,7 +4,7 @@ try:
     from typing import Literal
 except ImportError:
     # Python 3.7 does not support typing.Literal
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # type: ignore
 
 from pydantic import validator
 
