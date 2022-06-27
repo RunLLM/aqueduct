@@ -40,7 +40,7 @@ class Logs(BaseModel):
 
 class Logger(BaseModel):
     user_logs: Logs
-    code: ExecutionCode
+    code: ExecutionCode = ExecutionCode.UNKNOWN
     error: Optional[Error] = None
 
     def failed(self) -> bool:

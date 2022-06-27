@@ -178,7 +178,7 @@ if __name__ == "__main__":
     print("Started %s job: %s" % (spec.type, spec.name))
 
     storage = parse_storage(spec.storage_config)
-    logger = Logger(user_logs=Logs(), code=enums.ExecutionCode.UNKNOWN)
+    logger = Logger(user_logs=Logs())
 
     try:
         run(spec, storage, logger)
@@ -189,5 +189,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.code = enums.ExecutionCode.SYSTEM_FAILURE
         logger.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{logger.json()}")
         utils.write_logs(storage, spec.metadata_path, logger)
         sys.exit(1)
