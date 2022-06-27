@@ -132,21 +132,23 @@ class TableArtifact(Artifact):
         else:
             raise AqueductError("Artifact does not have table.")
 
-    def head(self, n : int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         operator = self._dag.get_operator(with_output_artifact_id=self._artifact_id)
         original_sql_query = operator.spec.extract.parameters.query
         original_sql_query = original_sql_query.rstrip()
-        if(original_sql_query[-1] == ';'):
+        if original_sql_query[-1] == ";":
             original_sql_query = original_sql_query[:-1]
         string_spilt = original_sql_query.split()
-        if(str.isnumeric(string_spilt[-1]) and string_spilt[-2] == "limit"):
+        if str.isnumeric(string_spilt[-1]) and string_spilt[-2] == "limit":
             original_sql_query = " ".join(string_spilt[:-2])
-        new_sql_query = original_sql_query + " limit {limit};".format(limit = n)
-        
+        new_sql_query = original_sql_query + " limit {limit};".format(limit=n)
+
         integration_dict = self._api_client.list_integrations_id()
         integration_name = integration_dict.get(str(operator.spec.extract.integration_id)).name
 
-        local_client = aqueduct_client.Client(self._api_client.api_key,self._api_client.aqueduct_address)
+        local_client = aqueduct_client.Client(
+            self._api_client.api_key, self._api_client.aqueduct_address
+        )
         warehouse = local_client.integration(integration_name)
         head_table = warehouse.sql(new_sql_query)
         head_table_df = head_table.get()

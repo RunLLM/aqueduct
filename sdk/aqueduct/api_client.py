@@ -157,7 +157,7 @@ class APIClient:
             integration_info["name"]: IntegrationInfo(**integration_info)
             for integration_info in resp.json()
         }
-    
+
     def list_integrations_id(self) -> Dict[str, IntegrationInfo]:
         url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
         headers = utils.generate_auth_headers(self.api_key)
