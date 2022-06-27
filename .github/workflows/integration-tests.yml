@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        python-version: ['3.8']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -103,25 +103,6 @@ jobs:
           INTEGRATION: aqueduct_demo
         run: pytest . -rP --publish -n 5
 
-      
-      - name: check if dir exists
-        run: ls $GOPATH/.aqueduct/server
-      
-      - name: check if dir exists
-        run: ls $GOPATH/.aqueduct/server/logs
-
-      - name: check if dir exists
-        run: pwd
-      
-      - name: Print the logs directory
-        run: ls ../../../.aqueduct/server/logs/*
-      
-      - name: Print the logs directory
-        run: echo $HOME
-
-      - name: Print the logs directory
-        run: echo $GOPATH
-
       - uses: actions/upload-artifact@v3
         if: always()
         with:
@@ -132,7 +113,7 @@ jobs:
         if: always()
         with:
           name: Executor Logs
-          path: ../../../.aqueduct/server/logs/*
+          path: ~/.aqueduct/server/logs/*
 
       - name: Report to Slack on Failure
         if: always()
