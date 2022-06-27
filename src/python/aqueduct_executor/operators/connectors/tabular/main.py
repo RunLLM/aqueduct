@@ -172,7 +172,8 @@ def _parse_spec(spec_json: bytes) -> Spec:
 
     print("Job Spec: \n{}".format(json.dumps(data, indent=4)))
 
-    # TODO: The following line is working, but mypy complains:
+    # TODO (ENG-1286): https://linear.app/aqueducthq/issue/ENG-1286/investigate-why-mypy-is-complaining-about-object-parsing
+    # The following line is working, but mypy complains:
     # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
     # We ignore the error for now.
     return parse_obj_as(Spec, data)  # type: ignore

@@ -22,7 +22,8 @@ class TabularConnector(ABC):
     @abstractmethod
     def extract(
         self,
-        # TODO: https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        # https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
         params,  # extract.Params
     ) -> pd.DataFrame:
         """Extracts data from source into a DataFrame.
@@ -37,7 +38,8 @@ class TabularConnector(ABC):
     @abstractmethod
     def load(
         self,
-        # TODO: https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        # https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
         params,  # load.Params
         df: pd.DataFrame,
     ) -> None:
