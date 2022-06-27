@@ -7,7 +7,7 @@ export enum NodeType {
   TableArtifact = 'tableArtifact',
   FloatArtifact = 'floatArtifact',
   BoolArtifact = 'boolArtifact',
-  JsonArtifact= 'jsonArtifact',
+  JsonArtifact = 'jsonArtifact',
   ExtractOp = 'extractOp',
   LoadOp = 'loadOp',
   FunctionOp = 'functionOp',
