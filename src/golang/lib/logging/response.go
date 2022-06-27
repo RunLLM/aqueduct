@@ -36,7 +36,12 @@ func LogRoute(
 	for k, v := range r.Header {
 		if _, ok := excludedHeaderFields[k]; !ok {
 			if obfuscateFunction, obfuscate := HeaderObfuscationFunctionMap[k]; obfuscate {
-				headers[k] = obfuscateFunction(v)
+				headers[k], err = obfuscateFunction(v)
+				if err != nil {
+					log.Errorf("Unable to obfuscate header for: "+k+"%v", err)
+					// Since this is a logging route, we drop headers we cant obfuscate
+					continue
+				}
 			} else {
 				headers[k] = v
 			}
@@ -88,12 +93,12 @@ func LogAsyncEvent(
 }
 
 // Replaces the password in an integration config string into the equivalent * string.
-func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []string {
+func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) ([]string, error) {
 	integrationConfigString := integrationConfigHeader[0]
 	integrationConfig := map[string]string{}
 	err := json.Unmarshal([]byte(integrationConfigString), &integrationConfig)
 	if err != nil {
-		return integrationConfigHeader
+		return nil, err
 	}
 
 	if _, exists := integrationConfig["password"]; exists {
@@ -102,6 +107,10 @@ func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) []st
 
 	passwordLength := len(integrationConfig["password"])
 	integrationConfig["password"] = strings.Repeat("*", passwordLength)
-	newIntegrationConfigString, _ := json.Marshal(integrationConfig)
+	newIntegrationConfigString, err := json.Marshal(integrationConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return []string{string(newIntegrationConfigString)}
 }
