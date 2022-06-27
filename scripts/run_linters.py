@@ -29,7 +29,8 @@ def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
-    execute_command(["mypy", "-m", "aqueduct", "--ignore-missing-imports", "--strict"], join(cwd, "sdk"))
+    execute_command(["mypy", ".", "--ignore-missing-imports", "--strict", "--exclude", "aqueduct/tests", "--implicit-reexport"], join(cwd, "sdk"))
+    execute_command(["mypy", ".", "--ignore-missing-imports", "--strict", "--exclude", "tests", "--implicit-reexport"], join(cwd, "src/python"))
 
 def lint_golang(cwd):
     execute_command(["golangci-lint", "run", "--concurrency=4", "--fix"], join(cwd, "src/golang"))
