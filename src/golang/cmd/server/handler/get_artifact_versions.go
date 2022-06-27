@@ -213,7 +213,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	// We now fill in the validation test result. We can join the validation test result with the correct
+	// We now fill in the check test result. We can join the validation test result with the correct
 	// artifact version by the workflow dag result id.
 	for _, checkResult := range checkResults {
 		checkResultObject := CheckResult{

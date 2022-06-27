@@ -107,6 +107,7 @@ func (r *standardReaderImpl) GetCheckResultsByArtifactIds(
 	if len(artifactIds) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
 	}
+
 	query := fmt.Sprintf(
 		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, operator.name AS name, operator_result.status, 
 		 operator_result.metadata, operator_result.workflow_dag_result_id 
@@ -116,7 +117,9 @@ func (r *standardReaderImpl) GetCheckResultsByArtifactIds(
 		stmt_preparers.GenerateArgsList(len(artifactIds), 1),
 		operator.CheckType,
 	)
+
 	args := stmt_preparers.CastIdsListToInterfaceList(artifactIds)
+
 	var response []ArtifactCheckResponse
 	err := db.Query(ctx, &response, query, args...)
 	return response, err
