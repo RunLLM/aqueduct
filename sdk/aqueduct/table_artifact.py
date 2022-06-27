@@ -133,27 +133,27 @@ class TableArtifact(Artifact):
             raise AqueductError("Artifact does not have table.")
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
-        operator = self._dag.get_operator(with_output_artifact_id=self._artifact_id)
-        original_sql_query = operator.spec.extract.parameters.query
-        original_sql_query = original_sql_query.rstrip()
-        if original_sql_query[-1] == ";":
-            original_sql_query = original_sql_query[:-1]
-        string_spilt = original_sql_query.split()
-        if str.isnumeric(string_spilt[-1]) and string_spilt[-2] == "limit":
-            original_sql_query = " ".join(string_spilt[:-2])
-        new_sql_query = original_sql_query + " limit {limit};".format(limit=n)
+        """Previews TableArtifact as a actual dataframe.
 
-        integration_dict = self._api_client.list_integrations_id()
-        integration_name = integration_dict.get(str(operator.spec.extract.integration_id)).name
+        >>> db = client.integration(name="demo/")
+        >>> customer_data = db.sql("SELECT * from customers")
+        >>> churn_predictions = predict_churn(customer_data)
+        >>> churn_predictions.head()
 
-        local_client = aqueduct_client.Client(
-            self._api_client.api_key, self._api_client.aqueduct_address
-        )
-        warehouse = local_client.integration(integration_name)
-        head_table = warehouse.sql(new_sql_query)
-        head_table_df = head_table.get()
+        Args:
+            n:
+                the number of row previewed. Default to 5.
+        Returns:
+            A dataframe containing the tabular contents of this artifact.
 
-        return head_table_df
+        Raises:
+            InvalidRequestError:
+                An error occurred because of an issue with the user's code or inputs.
+            InternalServerError:
+                An unexpected error occurred within the Aqueduct cluster.
+        """
+        df = self.get()
+        return df.head(n)
 
     def save(self, config: SaveConfig) -> None:
         """Configure this artifact to be written to a specific integration after its computed.

@@ -139,9 +139,3 @@ def test_head_standard(client):
 
     table_head = table.head()
     assert table_head.shape[0] == 5
-
-
-def test_head_if_query_has_limit(client):
-    db = client.integration(name=get_integration_name())
-    table = db.sql(query=(SENTIMENT_SQL_QUERY + " limit 10"))
-    assert table.head().shape[0] == 5
