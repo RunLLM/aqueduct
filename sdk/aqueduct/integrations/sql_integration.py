@@ -40,7 +40,7 @@ LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
 #
 # Duplicated in the Python operators at `src/python/aqueduct_executor/operators/connectors/tabular/extract.py`
 # Make sure the two are in sync.
-TAG_PATTERN = r"{{\s*\w+\s*}}"
+TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 # A dictionary of built-in tags to their replacement0 string functions.
 #
