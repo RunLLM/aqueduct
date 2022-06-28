@@ -2,14 +2,16 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/aqueducthq/aqueduct/src/golang/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -266,14 +268,6 @@ func ScheduleOperator(
 	return "", errors.Newf("Unsupported operator opSpec with type %s", opSpec.Type())
 }
 
-type FailureType int64
-
-const (
-	SystemFailure FailureType = 0
-	UserFailure   FailureType = 1
-	NoFailure     FailureType = 2
-)
-
 // CheckOperatorExecutionStatus returns the operator metadata (if it exists) and the operator status
 // of a completed job.
 func CheckOperatorExecutionStatus(
@@ -281,13 +275,13 @@ func CheckOperatorExecutionStatus(
 	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
-) (*operator_result.Metadata, shared.ExecutionStatus, FailureType) {
-	var operatorResultMetadata operator_result.Metadata
+) *logging.ExecutionLogs {
+	var logs logging.ExecutionLogs
 	err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		operatorMetadataPath,
-		&operatorResultMetadata,
+		&logs,
 	)
 	if err != nil {
 		// Treat this as a system internal error since operator metadata was not found
@@ -295,18 +289,15 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
-		return &operator_result.Metadata{Error: systemInternalErrMsg}, shared.FailedExecutionStatus, SystemFailure
+		return &logging.ExecutionLogs{
+			Code:        shared.FailedExecutionStatus,
+			FailureType: shared.SystemFailure,
+			Error: &logging.Error{
+				Context: fmt.Sprintf("%v", err),
+				Tip:     logging.TipUnknownInternalError,
+			},
+		}
 	}
 
-	if len(operatorResultMetadata.Error) != 0 {
-		// Operator wrote metadata (including an error) to storage
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	if jobStatus == shared.FailedExecutionStatus {
-		// Operator wrote metadata (without an error) to storage, but k8s marked the job as failed
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	return &operatorResultMetadata, shared.SucceededExecutionStatus, NoFailure
+	return &logs
 }

@@ -14,6 +14,7 @@ const (
 	ServerComponent Component = "Server"
 )
 
+// Server route loggings
 func LogRoute(
 	ctx context.Context,
 	routeName string,

@@ -4,45 +4,34 @@ import (
 	"database/sql/driver"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/logging"
+	"github.com/aqueducthq/enterprise/src/golang/lib/collections/utils"
 )
 
-type Metadata struct {
-	Error string            `json:"error"`
-	Logs  map[string]string `json:"logs"`
-}
-
-type NullMetadata struct {
-	Metadata
+type NullExecutionLogs struct {
+	logging.ExecutionLogs
 	IsNull bool
 }
 
-func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
-}
-
-func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
-}
-
-func (n *NullMetadata) Value() (driver.Value, error) {
+func (n *NullExecutionLogs) Value() (driver.Value, error) {
 	if n.IsNull {
 		return nil, nil
 	}
 
-	return (&n.Metadata).Value()
+	return utils.ValueJsonB(n.ExecutionLogs)
 }
 
-func (n *NullMetadata) Scan(value interface{}) error {
+func (n *NullExecutionLogs) Scan(value interface{}) error {
 	if value == nil {
 		n.IsNull = true
 		return nil
 	}
 
-	metadata := &Metadata{}
-	if err := metadata.Scan(value); err != nil {
+	logs := &logging.ExecutionLogs{}
+	if err := utils.ScanJsonB(value, logs); err != nil {
 		return err
 	}
 
-	n.Metadata, n.IsNull = *metadata, false
+	n.ExecutionLogs, n.IsNull = *logs, false
 	return nil
 }

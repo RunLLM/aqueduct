@@ -14,3 +14,11 @@ const (
 	PendingExecutionStatus   ExecutionStatus = "pending"
 	UnknownExecutionStatus   ExecutionStatus = "unknown"
 )
+
+type FailureType int64
+
+const (
+	SystemFailure FailureType = 0
+	UserFailure   FailureType = 1
+	NoFailure     FailureType = 2
+)
