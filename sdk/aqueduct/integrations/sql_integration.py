@@ -148,30 +148,31 @@ class RelationalDBIntegration(Integration):
         # Find any tags that need to be expanded in the query, and add the parameters that correspond
         # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
         sql_input_artifact_ids = []
-        matches = re.findall(TAG_PATTERN, extract_params.query)
-        for match in matches:
-            param_name = match.strip(" {}")
+        if extract_params.query is not None:
+            matches = re.findall(TAG_PATTERN, extract_params.query)
+            for match in matches:
+                param_name = match.strip(" {}")
 
-            # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
-            if param_name in BUILT_IN_EXPANSIONS:
-                continue
+                # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
+                if param_name in BUILT_IN_EXPANSIONS:
+                    continue
 
-            param_op = self._dag.get_operator(with_name=param_name)
-            if param_op is None:
-                raise InvalidUserArgumentException(
-                    "There is no parameter defined with name `%s`." % param_name,
-                )
+                param_op = self._dag.get_operator(with_name=param_name)
+                if param_op is None:
+                    raise InvalidUserArgumentException(
+                        "There is no parameter defined with name `%s`." % param_name,
+                    )
 
-            # Check that the parameter corresponds to a string value.
-            assert param_op.spec.param is not None
-            param_val = json.loads(param_op.spec.param.val)
-            if not isinstance(param_val, str):
-                raise InvalidUserArgumentException(
-                    "The parameter `%s` must be defined as a string. Instead, got type %s"
-                    % (param_name, type(param_val).__name__)
-                )
-            assert len(param_op.outputs) == 1
-            sql_input_artifact_ids.append(param_op.outputs[0])
+                # Check that the parameter corresponds to a string value.
+                assert param_op.spec.param is not None
+                param_val = json.loads(param_op.spec.param.val)
+                if not isinstance(param_val, str):
+                    raise InvalidUserArgumentException(
+                        "The parameter `%s` must be defined as a string. Instead, got type %s"
+                        % (param_name, type(param_val).__name__)
+                    )
+                assert len(param_op.outputs) == 1
+                sql_input_artifact_ids.append(param_op.outputs[0])
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()
