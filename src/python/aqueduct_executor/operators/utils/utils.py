@@ -14,6 +14,7 @@ _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
 _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 
+
 def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
     input_bytes = storage.get(path)
     return pd.read_csv(io.BytesIO(input_bytes))
@@ -55,6 +56,7 @@ def read_system_metadata(
     input_metadata_paths: List[str],
 ) -> List[Dict[str, Any]]:
     return _read_metadata_key(storage, input_metadata_paths, _METADATA_SYSTEM_METADATA_KEY)
+
 
 def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str

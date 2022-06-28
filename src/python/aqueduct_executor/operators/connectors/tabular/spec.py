@@ -79,7 +79,7 @@ class ExtractSpec(models.BaseSpec):
     # The tags in the queries will be expanded into the parameter values.
     input_param_names: List[str]
     input_content_paths: List[str]
-    input_metadata_paths: List[str] # This field is ignored and is only here for completeness.
+    input_metadata_paths: List[str]  # This field is ignored and is only here for completeness.
     output_content_path: str
     output_metadata_path: str
 
