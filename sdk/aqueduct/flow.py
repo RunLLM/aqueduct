@@ -3,8 +3,6 @@ import textwrap
 import uuid
 from typing import Dict, List, Union
 
-from aqueduct import artifact
-
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
