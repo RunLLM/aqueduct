@@ -51,6 +51,7 @@ def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
     else:
         return dummy_sentiment_model(artifact)
 
+
 def get_artifact_name() -> str:
     if should_run_complex_models():
         return "sentiment_model artifact"

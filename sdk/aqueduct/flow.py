@@ -163,9 +163,10 @@ class Flow:
         ), "Every flow must have at least one run attached to it."
         latest_result = resp.workflow_dag_results[-1]
         result = resp.workflow_dags.get(latest_result.workflow_dag_id)
-        assert result != None, "Can't fetch workflow from the server."
+        assert isinstance(result, WorkflowDagResponse)
 
         for artifact_from_workflow in list(result.artifacts.values()):
             if artifact_from_workflow.name == artifact_name:
+                assert isinstance(artifact_from_workflow, Artifact)
                 return artifact_from_workflow
         raise ArtifactNotFoundException("The artifact name provided does not exist.")
