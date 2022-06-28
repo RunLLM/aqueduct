@@ -5,7 +5,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/logging"
-	"github.com/aqueducthq/enterprise/src/golang/lib/collections/utils"
 )
 
 type NullExecutionLogs struct {

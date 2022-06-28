@@ -2,16 +2,16 @@
 package logging
 
 import (
-	"github.com/aqueducthq/aqueduct/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 )
 
 const (
 	githubIssueLink    = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
-	tipCreateBugReport = "We are sorry to see this :(." +
-		"You could send over a bug report through github issue" +
+	TipCreateBugReport = "We are sorry to see this :(. " +
+		"You could send over a bug report through github issue: " +
 		githubIssueLink +
-		"or in our slack channel. We will get back to you as soon as we can."
-	TipUnknownInternalError = "An unexpected error occurred. " + tipCreateBugReport
+		" , or in our slack channel. We will get back to you as soon as we can."
+	TipUnknownInternalError = "An unexpected error occurred. " + TipCreateBugReport
 )
 
 type Logs struct {
@@ -25,8 +25,8 @@ type Error struct {
 }
 
 type ExecutionLogs struct {
-	UserLogs    *Logs                  `json:"user_logs"`
-	Code        shared.ExecutionStatus `json:"code"`
-	FailureType shared.FailureType     `json:"failure_type"`
-	Error       *Error                 `json:"error"`
+	UserLogs      *Logs                  `json:"user_logs"`
+	Code          shared.ExecutionStatus `json:"code"`
+	FailureReason shared.FailureType     `json:"failure_reason"`
+	Error         *Error                 `json:"error"`
 }

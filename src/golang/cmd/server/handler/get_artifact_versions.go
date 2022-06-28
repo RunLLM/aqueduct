@@ -214,11 +214,17 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		for _, failedOperatorResult := range failedOperatorResults {
 			if _, ok := latestVersions[failedOperatorResult.ArtifactId]; ok {
 				artifactVersionObject := latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				artifactVersionObject.Error = failedOperatorResult.Metadata.Error
+				if failedOperatorResult.Metadata.Error != nil {
+					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+				}
+
 				latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
 			} else {
 				artifactVersionObject := historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				artifactVersionObject.Error = failedOperatorResult.Metadata.Error
+				if failedOperatorResult.Metadata.Error != nil {
+					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+				}
+
 				historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
 			}
 		}

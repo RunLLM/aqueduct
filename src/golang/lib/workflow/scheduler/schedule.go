@@ -11,12 +11,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/aqueducthq/aqueduct/src/golang/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-const systemInternalErrMsg = "Aqueduct Internal Error"
 
 var (
 	ErrWrongNumInputs                = errors.New("Wrong number of operator inputs")
@@ -290,8 +287,8 @@ func CheckOperatorExecutionStatus(
 			err,
 		)
 		return &logging.ExecutionLogs{
-			Code:        shared.FailedExecutionStatus,
-			FailureType: shared.SystemFailure,
+			Code:          shared.FailedExecutionStatus,
+			FailureReason: shared.SystemFailure,
 			Error: &logging.Error{
 				Context: fmt.Sprintf("%v", err),
 				Tip:     logging.TipUnknownInternalError,

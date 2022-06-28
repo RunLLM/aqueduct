@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/google/uuid"
 )
 
@@ -37,9 +37,9 @@ type ArtifactResponse struct {
 }
 
 type ArtifactOperatorResponse struct {
-	ArtifactId          uuid.UUID                `db:"artifact_id" json:"artifact_id"`
-	Metadata            operator_result.Metadata `db:"metadata" json:"metadata"`
-	WorkflowDagResultId uuid.UUID                `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
+	Metadata            logging.ExecutionLogs `db:"metadata" json:"metadata"`
+	WorkflowDagResultId uuid.UUID             `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 }
 
 type WorkflowLastRunResponse struct {

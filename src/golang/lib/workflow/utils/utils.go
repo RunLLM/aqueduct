@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -461,8 +462,7 @@ func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
 	storageConfig *shared.StorageConfig,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
+	operatorResultMetadata *logging.ExecutionLogs,
 	artifactMetadataPaths map[uuid.UUID]string,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
 	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
@@ -478,7 +478,7 @@ func UpdateOperatorAndArtifactResults(
 		artifactIdToArtifactMetadata[artifactId] = nil
 	}
 
-	if operatorStatus == shared.SucceededExecutionStatus {
+	if operatorResultMetadata.Code == shared.SucceededExecutionStatus {
 		for _, artifactId := range operator.Outputs {
 			var artifactResultMetadata artifact_result.Metadata
 			err := ReadFromStorage(
@@ -500,7 +500,6 @@ func UpdateOperatorAndArtifactResults(
 	updateOperatorAndArtifactResults(
 		ctx,
 		operator,
-		operatorStatus,
 		operatorResultMetadata,
 		artifactStatuses,
 		artifactIdToArtifactMetadata,
@@ -515,8 +514,7 @@ func UpdateOperatorAndArtifactResults(
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
+	operatorResultMetadata *logging.ExecutionLogs,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
@@ -526,11 +524,10 @@ func updateOperatorAndArtifactResults(
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		operator_result.StatusColumn: operatorStatus,
+		operator_result.StatusColumn: operatorResultMetadata.Code,
 	}
-	if operatorResultMetadata != nil {
-		changes[operator_result.MetadataColumn] = operatorResultMetadata
-	}
+
+	changes[operator_result.MetadataColumn] = operatorResultMetadata
 
 	_, err := operatorResultWriter.UpdateOperatorResult(
 		ctx,

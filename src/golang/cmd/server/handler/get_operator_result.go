@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -31,12 +31,6 @@ type getOperatorResultArgs struct {
 	*aq_context.AqContext
 	workflowDagResultId uuid.UUID
 	operatorId          uuid.UUID
-}
-
-type getOperatorResultResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Error  string                 `json:"error"`
-	Logs   map[string]string      `json:"logs"`
 }
 
 type GetOperatorResultHandler struct {
@@ -92,7 +86,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
-	emptyResp := getOperatorResultResponse{}
+	emptyResp := logging.ExecutionLogs{}
 
 	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
 		ctx,
@@ -104,13 +98,14 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 	}
 
-	response := getOperatorResultResponse{
-		Status: dbOperatorResult.Status,
+	response := logging.ExecutionLogs{
+		Code: dbOperatorResult.Status,
 	}
 
 	if !dbOperatorResult.Metadata.IsNull {
+		response.FailureReason = dbOperatorResult.Metadata.FailureReason
 		response.Error = dbOperatorResult.Metadata.Error
-		response.Logs = dbOperatorResult.Metadata.Logs
+		response.UserLogs = dbOperatorResult.Metadata.UserLogs
 	}
 
 	return response, http.StatusOK, nil

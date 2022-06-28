@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,11 +10,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -47,12 +48,6 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-type previewOperatorResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Logs   map[string]string      `json:"logs"`
-	ErrMsg string                 `json:"err_msg"`
-}
-
 type previewFloatArtifactResponse struct {
 	Val float64 `json:"val"`
 }
@@ -79,7 +74,7 @@ type previewArtifactResponse struct {
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]previewOperatorResponse `json:"operator_results"`
+	OperatorResults map[uuid.UUID]logging.ExecutionLogs   `json:"operator_results"`
 	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
 }
 
@@ -169,8 +164,15 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.JobManager,
 		h.Vault,
 	)
-	if err != nil {
+	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
+	}
+
+	statusCode := http.StatusOK
+	if err == orchestrator.ErrOpExecSystemFailure {
+		statusCode = http.StatusInternalServerError
+	} else if err == orchestrator.ErrOpExecBlockingUserFailure {
+		statusCode = http.StatusBadRequest
 	}
 
 	operatorResults := deserializeOperatorResponses(ctx, workflowPaths, h.StorageConfig)
@@ -178,7 +180,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	// We should not include artifact results for operators that failed.
 	artifactsToSkipFetch := map[uuid.UUID]bool{}
 	for opId, opResult := range operatorResults {
-		if opResult.Status == shared.FailedExecutionStatus {
+		if opResult.Code == shared.FailedExecutionStatus {
 			for _, artifactId := range dagSummary.Dag.Operators[opId].Outputs {
 				artifactsToSkipFetch[artifactId] = true
 			}
@@ -192,36 +194,31 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		Status:          status,
 		OperatorResults: operatorResults,
 		ArtifactResults: artifactResults,
-	}, http.StatusOK, nil
+	}, statusCode, nil
 }
 
 func deserializeOperatorResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-) map[uuid.UUID]previewOperatorResponse {
-	responses := make(map[uuid.UUID]previewOperatorResponse, len(workflowStoragePaths.OperatorMetadataPaths))
+) map[uuid.UUID]logging.ExecutionLogs {
+	responses := make(map[uuid.UUID]logging.ExecutionLogs, len(workflowStoragePaths.OperatorMetadataPaths))
 	for id, path := range workflowStoragePaths.OperatorMetadataPaths {
-		var operatorMetadata operator_result.Metadata
+		var operatorMetadata logging.ExecutionLogs
 		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
 		if err != nil {
-			responses[id] = previewOperatorResponse{
-				Status: shared.FailedExecutionStatus,
-				ErrMsg: "Unable to retrieve metadata for this operator. The workflow might have failed before executing this operator.",
+			responses[id] = logging.ExecutionLogs{
+				Code:          shared.FailedExecutionStatus,
+				FailureReason: shared.SystemFailure,
+				Error: &logging.Error{
+					Context: fmt.Sprintf("%v", err),
+					Tip:     "Failed to read logs for this operator. " + logging.TipCreateBugReport,
+				},
 			}
 			continue
 		}
 
-		status := shared.FailedExecutionStatus
-		if len(operatorMetadata.Error) == 0 {
-			status = shared.SucceededExecutionStatus
-		}
-
-		responses[id] = previewOperatorResponse{
-			Status: status,
-			Logs:   operatorMetadata.Logs,
-			ErrMsg: operatorMetadata.Error,
-		}
+		responses[id] = operatorMetadata
 	}
 	return responses
 }

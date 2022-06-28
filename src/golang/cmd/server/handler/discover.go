@@ -9,11 +9,11 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -149,7 +149,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing tables.")
 	}
 
-	var metadata operator_result.Metadata
+	var metadata logging.ExecutionLogs
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,
@@ -159,8 +159,8 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operator metadata from storage.")
 	}
 
-	if len(metadata.Error) > 0 {
-		return nil, http.StatusBadRequest, errors.Newf("Unable to list tables: %v", metadata.Error)
+	if metadata.Error != nil {
+		return nil, http.StatusBadRequest, errors.Newf("Unable to list tables: %v", metadata.Error.Context)
 	}
 
 	var tableNames []string
