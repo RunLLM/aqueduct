@@ -15,10 +15,14 @@ class MetaEnum(EnumMeta):
 
 class ExecutionCode(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
+    PENDING = "pending"
     SUCCEEDED = "succeeded"
-    USER_FAILURE = "user_failure"
-    SYSTEM_FAILURE = "system_failure"
+    FAILED = "failed"
 
+
+class FailureReason(Enum, metaclass=MetaEnum):
+    SYSTEM = 0
+    USER = 1
 
 class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
