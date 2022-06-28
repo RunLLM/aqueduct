@@ -3,9 +3,12 @@ import textwrap
 import uuid
 from typing import Dict, List, Union
 
+from aqueduct import artifact
+
 from aqueduct.api_client import APIClient
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.error import ArtifactNotFoundException, InvalidUserArgumentException
 from .enums import ArtifactType
 
 from .flow_run import FlowRun
@@ -153,3 +156,13 @@ class Flow:
             )
         )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
+
+    def get(self, artifact_name : str) -> Artifact:
+        resp = self._api_client.get_workflow(self._id)
+        result = resp.workflow_dags.get(self.id())
+        artifact = result.artifacts.get(artifact_name)
+        if(artifact == None):
+            raise ArtifactNotFoundException
+        else:
+            return artifact
+
