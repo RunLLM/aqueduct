@@ -5,7 +5,7 @@ import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Callable, Optional
 from pydantic import BaseModel
-from aqueduct_executor.operators.utils.enums import ExecutionCode
+from aqueduct_executor.operators.utils.enums import ExecutionCode, FailureReason
 
 
 _GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
@@ -38,13 +38,11 @@ class Logs(BaseModel):
     stderr: str = ""
 
 
-class Logger(BaseModel):
+class ExecutionLogs(BaseModel):
     user_logs: Logs
-    code: ExecutionCode = ExecutionCode.UNKNOWN
+    code: ExecutionCode = ExecutionCode.PENDING
+    failure_reason: FailureReason = FailureReason.NO_FAILURE
     error: Optional[Error] = None
-
-    def failed(self) -> bool:
-        return self.code in [ExecutionCode.USER_FAILURE, ExecutionCode.SYSTEM_FAILURE]
 
     def user_fn_redirected(self, failure_tip: str) -> Callable:
         def wrapper(user_fn: Callable) -> Callable:
@@ -57,7 +55,8 @@ class Logger(BaseModel):
                 except Exception:
                     # Include the stack trace within the user's code.
                     fetch_redirected_logs(stdout_log, stderr_log, self.user_logs)
-                    self.code = ExecutionCode.USER_FAILURE
+                    self.code = ExecutionCode.FAILED
+                    self.failure_reason = FailureReason.USER
                     self.error = Error(
                         context=stack_traceback(
                             offset=1
