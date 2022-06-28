@@ -13,6 +13,7 @@ from aqueduct_executor.operators.utils.storage import config
 
 class ParamSpec(BaseModel):
     name: str
+    param_name: str
     type: Literal[enums.JobType.PARAM]
     storage_config: config.StorageConfig
     metadata_path: str

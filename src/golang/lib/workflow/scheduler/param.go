@@ -18,6 +18,7 @@ func generateParamJobName() string {
 func ScheduleParam(
 	ctx context.Context,
 	spec param.Param,
+	paramName string,
 	metadataPath string,
 	outputContentPath string,
 	outputMetadataPath string,
@@ -28,6 +29,7 @@ func ScheduleParam(
 
 	jobSpec := job.NewParamSpec(
 		jobName,
+		paramName,
 		storageConfig,
 		metadataPath,
 		spec.Val,

@@ -21,6 +21,8 @@ func ScheduleExtract(
 	ctx context.Context,
 	spec connector.Extract,
 	metadataPath string,
+	inputContentPaths []string,
+	inputMetadataPaths []string,
 	outputContentPath string,
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
@@ -33,7 +35,6 @@ func ScheduleExtract(
 	}
 
 	jobName := generateExtractJobName()
-
 	jobSpec := job.NewExtractSpec(
 		jobName,
 		storageConfig,
@@ -41,6 +42,8 @@ func ScheduleExtract(
 		spec.Service,
 		config,
 		spec.Parameters,
+		inputContentPaths,
+		inputMetadataPaths,
 		outputContentPath,
 		outputMetadataPath,
 	)

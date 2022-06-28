@@ -107,6 +107,7 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	basePythonSpec
+	ParamName          string `json:"param_name" yaml:"param_name"`
 	Val                string `json:"val"  yaml:"val"`
 	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
@@ -122,11 +123,15 @@ type SystemMetricSpec struct {
 
 type ExtractSpec struct {
 	basePythonSpec
-	ConnectorName      integration.Service     `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig    auth.Config             `json:"connector_config"  yaml:"connector_config"`
-	Parameters         connector.ExtractParams `json:"parameters"  yaml:"parameters"`
-	OutputContentPath  string                  `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string                  `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ConnectorName   integration.Service     `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
+	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
+
+	// Inputs can only be parameters.
+	InputContentPaths  []string `json:"input_content_paths" yaml:"input_content_paths"`
+	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type LoadSpec struct {
@@ -287,6 +292,7 @@ func NewFunctionSpec(
 
 func NewParamSpec(
 	name string,
+	paramName string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 	val string,
@@ -302,6 +308,8 @@ func NewParamSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		// This name gets written to the output metadata path.
+		ParamName:          paramName,
 		Val:                val,
 		OutputMetadataPath: outputMetadataPath,
 		OutputContentPath:  outputContentPath,
@@ -362,6 +370,8 @@ func NewExtractSpec(
 	connectorName integration.Service,
 	connectorConfig auth.Config,
 	parameters connector.ExtractParams,
+	inputContentPaths []string,
+	inputMetadataPaths []string,
 	outputContentPath string,
 	outputMetadataPath string,
 ) Spec {
@@ -374,6 +384,8 @@ func NewExtractSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		InputContentPaths:  inputContentPaths,
+		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      connectorName,
 		ConnectorConfig:    connectorConfig,
 		Parameters:         parameters,

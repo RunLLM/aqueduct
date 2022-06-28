@@ -26,7 +26,7 @@ var (
 
 // ScheduleOperator executes an operator based on its spec.
 // Inputs:
-//	spec: the operator spec consisting its type, and more metadata based on the type
+//	op: the operator to execute
 //	inputs: a list of input artifacts
 //	outputs: a list of output artifacts
 //	artifactPaths: a pre-generated map of `artifactId -> storage paths`. It must cover all artifacts in the workflow
@@ -49,7 +49,7 @@ var (
 //
 func ScheduleOperator(
 	ctx context.Context,
-	opSpec operator.Spec,
+	op operator.Operator,
 	inputArtifactSpecs []artifact.Spec,
 	outputArtifactSpecs []artifact.Spec,
 	metadataPath string,
@@ -62,7 +62,7 @@ func ScheduleOperator(
 	vaultObject vault.Vault,
 ) (string, error) {
 	// Append to this switch for newly supported operator types
-	if opSpec.IsFunction() {
+	if op.Spec.IsFunction() {
 		// A function operator takes any number of dataframes as input and outputs
 		// any number of dataframes.
 		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
@@ -82,7 +82,7 @@ func ScheduleOperator(
 
 		return ScheduleFunction(
 			ctx,
-			*opSpec.Function(),
+			*op.Spec.Function(),
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -95,7 +95,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsMetric() {
+	if op.Spec.IsMetric() {
 		if len(outputArtifactSpecs) != 1 {
 			return "", ErrWrongNumOutputs
 		}
@@ -113,7 +113,7 @@ func ScheduleOperator(
 
 		return ScheduleFunction(
 			ctx,
-			opSpec.Metric().Function,
+			op.Spec.Metric().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -126,7 +126,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsCheck() {
+	if op.Spec.IsCheck() {
 		if len(outputArtifactSpecs) != 1 {
 			return "", ErrWrongNumOutputs
 		}
@@ -145,7 +145,7 @@ func ScheduleOperator(
 
 		return ScheduleFunction(
 			ctx,
-			opSpec.Check().Function,
+			op.Spec.Check().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -158,10 +158,13 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsExtract() {
-		if len(inputArtifactSpecs) != 0 {
-			return "", ErrWrongNumInputs
+	if op.Spec.IsExtract() {
+		for _, inputArtifactSpec := range inputArtifactSpecs {
+			if inputArtifactSpec.Type() != artifact.JsonType {
+				return "", errors.New("Only parameters can be used as inputs to extract operators.")
+			}
 		}
+
 		if len(outputArtifactSpecs) != 1 {
 			return "", ErrWrongNumOutputs
 		}
@@ -174,8 +177,10 @@ func ScheduleOperator(
 
 		return ScheduleExtract(
 			ctx,
-			*opSpec.Extract(),
+			*op.Spec.Extract(),
 			metadataPath,
+			inputContentPaths,
+			inputMetadataPaths,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
 			storageConfig,
@@ -184,7 +189,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsLoad() {
+	if op.Spec.IsLoad() {
 		if len(inputArtifactSpecs) != 1 {
 			return "", ErrWrongNumInputs
 		}
@@ -199,7 +204,7 @@ func ScheduleOperator(
 		}
 		return ScheduleLoad(
 			ctx,
-			*opSpec.Load(),
+			*op.Spec.Load(),
 			metadataPath,
 			inputContentPaths[0],
 			inputMetadataPaths[0],
@@ -209,7 +214,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsParam() {
+	if op.Spec.IsParam() {
 		if len(inputArtifactSpecs) != 0 {
 			return "", ErrWrongNumInputs
 		}
@@ -228,7 +233,8 @@ func ScheduleOperator(
 
 		return ScheduleParam(
 			ctx,
-			*opSpec.Param(),
+			*op.Spec.Param(),
+			op.Name,
 			metadataPath,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
@@ -237,7 +243,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsSystemMetric() {
+	if op.Spec.IsSystemMetric() {
 		if len(outputContentPaths) != 1 {
 			return "", ErrWrongNumArtifactContentPaths
 		}
@@ -252,7 +258,7 @@ func ScheduleOperator(
 
 		return ScheduleSystemMetric(
 			ctx,
-			*opSpec.SystemMetric(),
+			*op.Spec.SystemMetric(),
 			metadataPath,
 			inputMetadataPaths,
 			outputContentPaths[0],
@@ -263,7 +269,7 @@ func ScheduleOperator(
 	}
 
 	// If we reach here, the operator opSpec type is not supported.
-	return "", errors.Newf("Unsupported operator opSpec with type %s", opSpec.Type())
+	return "", errors.Newf("Unsupported operator opSpec with type %s", op.Spec.Type())
 }
 
 type FailureType int64

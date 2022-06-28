@@ -221,7 +221,7 @@ func scheduleOperators(
 
 		jobId, err := scheduler.ScheduleOperator(
 			ctx,
-			op.Spec,
+			op,
 			inputArtifactSpecs,
 			outputArtifactSpecs,
 			operatorMetadataPath,

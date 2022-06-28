@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 
 try:
     from typing import Literal
@@ -74,6 +74,10 @@ class ExtractSpec(models.BaseSpec):
     connector_name: common.Name
     connector_config: config.Config
     parameters: extract.Params
+
+    # Inputs can only be parameters.
+    input_content_paths: List[str]
+    input_metadata_paths: List[str]
     output_content_path: str
     output_metadata_path: str
 

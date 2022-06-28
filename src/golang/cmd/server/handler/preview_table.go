@@ -142,6 +142,8 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 			},
 		},
 		operatorMetadataPath,
+		[]string{}, /* inputContentPaths */
+		[]string{}, /* inputMetadataPaths */
 		artifactContentPath,
 		artifactMetadataPath,
 		h.StorageConfig,
