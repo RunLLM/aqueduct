@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 
+
 class RelationalConnector(connector.TabularConnector):
     def __init__(self, conn_engine: engine.Engine):
         self.engine = conn_engine

@@ -70,13 +70,14 @@ def read_user_defined_metadata(
     return _read_metadata_key(storage, input_metadata_paths, _METADATA_USER_DEFINED_KEY)
 
 
-def _read_metadata_key(storage: Storage, input_metadata_paths: List[str], key_name: str) -> List[Dict[str, Any]]:
+def _read_metadata_key(
+    storage: Storage, input_metadata_paths: List[str], key_name: str
+) -> List[Dict[str, Any]]:
     metadata_inputs = [_read_json_input(storage, input_path) for input_path in input_metadata_paths]
     if any(key_name not in metadata for metadata in metadata_inputs):
         raise Exception(key_name + " does not exist in input metadata.")
-    return [
-        metadata[key_name] for metadata in metadata_inputs
-    ]
+    return [metadata[key_name] for metadata in metadata_inputs]
+
 
 # TODO: Can also the input metadata here if we wanted to use it.
 def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
@@ -161,7 +162,9 @@ def write_artifact(
                 "Expected output type to be Pandas Dataframe, but instead got %s"
                 % type(content).__name__
             )
-        output_metadata[_METADATA_SCHEMA_KEY] = json.dumps([{col: str(content[col].dtype)} for col in content])
+        output_metadata[_METADATA_SCHEMA_KEY] = json.dumps(
+            [{col: str(content[col].dtype)} for col in content]
+        )
         _write_tabular_output(storage, output_path, output_metadata_path, content, output_metadata)
 
     elif artifact_type == OutputArtifactType.FLOAT:
@@ -173,12 +176,16 @@ def write_artifact(
 
     elif artifact_type == OutputArtifactType.BOOL:
         if isinstance(content, bool) or isinstance(content, np.bool_):
-            _write_bool_output(storage, output_path, output_metadata_path, bool(content), output_metadata)
+            _write_bool_output(
+                storage, output_path, output_metadata_path, bool(content), output_metadata
+            )
         elif isinstance(content, pd.Series) and content.dtype == "bool":
             # We only write True if every boolean in the series is True.
             series = pd.Series(content)
             all_true = series.size - series.sum().item() == 0
-            _write_bool_output(storage, output_path, output_metadata_path, all_true, output_metadata)
+            _write_bool_output(
+                storage, output_path, output_metadata_path, all_true, output_metadata
+            )
         else:
             raise Exception(
                 "Expected output type to either a bool or a series of booleans, "
@@ -204,7 +211,9 @@ def _write_tabular_output(
 ) -> None:
     output_str = df.to_json(orient="table", date_format="iso", index=False)
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING))
+    storage.put(
+        output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING)
+    )
 
 
 def _write_numeric_output(

@@ -35,7 +35,9 @@ class RelationalParams(models.BaseParams):
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
     github_metadata: Optional[Any]
 
-    def expand_placeholders(self, input_metadata: List[Dict[str, Any]], input_artifacts: List[Any]) -> None:
+    def expand_placeholders(
+        self, input_metadata: List[Dict[str, Any]], input_artifacts: List[Any]
+    ) -> None:
         """Expands any tags found in the raw query, eg. {{ today }}.
 
         Relational queries can be arbitrarily parameterized the same way operators are. The only
@@ -46,8 +48,12 @@ class RelationalParams(models.BaseParams):
         though there is a a built-in expansion.
         """
         param_names = [metadata[constants.PARAM_NAME_KEY] for metadata in input_metadata]
-        assert all(isinstance(param_name, str) for param_name in param_names), "Parameter name must be a string."
-        assert all(isinstance(param_val, str) for param_val in input_artifacts), "Parameter value must be a string."
+        assert all(
+            isinstance(param_name, str) for param_name in param_names
+        ), "Parameter name must be a string."
+        assert all(
+            isinstance(param_val, str) for param_val in input_artifacts
+        ), "Parameter value must be a string."
         param_vals = [str(param_val) for param_val in input_artifacts]
         param_name_to_val = dict(zip(param_names, param_vals))
 
@@ -63,7 +69,9 @@ class RelationalParams(models.BaseParams):
                 self.query = self.query.replace(match, expansion_func())
             else:
                 # If there's a tag in the query for which no expansion value is available, we error here.
-                raise Exception("Unable to expand tag `%s` for query `%s`." % (tag_name, orig_query))
+                raise Exception(
+                    "Unable to expand tag `%s` for query `%s`." % (tag_name, orig_query)
+                )
 
         print("Expanded query is `%s`." % self.query)
         self.query_is_usable = True
