@@ -36,6 +36,14 @@ type ArtifactResponse struct {
 	Timestamp           time.Time              `db:"timestamp" json:"timestamp"`
 }
 
+type ArtifactCheckResponse struct {
+	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
+	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	Status              shared.ExecutionStatus `db:"status" json:"status"`
+	Name                string                 `db:"name" json:"name"`
+	Metadata            logging.ExecutionLogs  `db:"metadata" json:"metadata"`
+}
+
 type ArtifactOperatorResponse struct {
 	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
 	Metadata            logging.ExecutionLogs `db:"metadata" json:"metadata"`
@@ -70,6 +78,11 @@ type Reader interface {
 		artifactIds []uuid.UUID,
 		db database.Database,
 	) ([]ArtifactResponse, error)
+	GetCheckResultsByArtifactIds(
+		ctx context.Context,
+		artifactIds []uuid.UUID,
+		db database.Database,
+	) ([]ArtifactCheckResponse, error)
 	GetOperatorResultsByArtifactIdsAndWorkflowDagResultIds(
 		ctx context.Context,
 		artifactIds, workflowDagResultIds []uuid.UUID,
