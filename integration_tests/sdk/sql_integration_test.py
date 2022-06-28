@@ -116,12 +116,16 @@ def test_sql_query_user_vs_builtin_precedence(client):
     """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
     db = client.integration(name=get_integration_name())
 
+    sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    builtin_result = sql_artifact.get()
+
     datestring = "'2016-01-01'"
     _ = client.create_param("today", datestring)
     sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
-    assert not sql_artifact.get().empty
+    user_param_result = sql_artifact.get()
+    assert not builtin_result.equals(user_param_result)
 
     expected_sql_artifact = db.sql(
         query="select * from hotel_reviews where review_date > %s" % datestring
     )
-    assert sql_artifact.get().equals(expected_sql_artifact.get())
+    assert user_param_result.equals(expected_sql_artifact.get())
