@@ -152,13 +152,12 @@ class RelationalDBIntegration(Integration):
             matches = re.findall(TAG_PATTERN, extract_params.query)
             for match in matches:
                 param_name = match.strip(" {}")
-
-                # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
-                if param_name in BUILT_IN_EXPANSIONS:
-                    continue
-
                 param_op = self._dag.get_operator(with_name=param_name)
                 if param_op is None:
+                    # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
+                    if param_name in BUILT_IN_EXPANSIONS:
+                        continue
+
                     raise InvalidUserArgumentException(
                         "There is no parameter defined with name `%s`." % param_name,
                     )
