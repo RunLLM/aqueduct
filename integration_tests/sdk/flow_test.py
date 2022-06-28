@@ -170,7 +170,7 @@ def test_refresh_flow(client):
     finally:
         client.delete_flow(flow.id())
 
-
+@pytest.mark.publish
 def test_get_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
