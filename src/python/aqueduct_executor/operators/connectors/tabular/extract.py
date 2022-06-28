@@ -1,7 +1,7 @@
 import re
-from typing import Any, Optional, Union, List, Dict
+from typing import Any, Optional, Union, Dict
 from datetime import date
-from aqueduct_executor.operators.connectors.tabular import common, models, spec
+from aqueduct_executor.operators.connectors.tabular import common, models
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
