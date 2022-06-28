@@ -25,6 +25,7 @@ class FailureReason(Enum, metaclass=MetaEnum):
     USER = 1
     NO_FAILURE = 2
 
+
 class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
     AUTHENTICATE = "authenticate"

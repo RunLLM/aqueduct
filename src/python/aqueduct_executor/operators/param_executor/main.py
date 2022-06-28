@@ -23,11 +23,11 @@ def run(spec: ParamSpec) -> None:
     try:
         utils.write_artifact(
             storage,
+            enums.OutputArtifactType.JSON,
             spec.output_content_path,
             spec.output_metadata_path,
             spec.val,
-            {},
-            enums.OutputArtifactType.JSON,
+            system_metadata={},
         )
         exec_logs.code = enums.ExecutionCode.SUCCEEDED
         utils.write_logs(storage, spec.metadata_path, exec_logs)
