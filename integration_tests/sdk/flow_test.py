@@ -169,3 +169,21 @@ def test_refresh_flow(client):
         wait_for_flow_runs(client, flow.id(), num_runs=num_initial_runs + 1)
     finally:
         client.delete_flow(flow.id())
+
+
+def test_get_flow(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact.save(
+        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
+    )
+    flow = client.publish_flow(
+        name=generate_new_flow_name(),
+        artifacts=[output_artifact],
+        schedule=aqueduct.hourly(),
+    )
+    wait_for_flow_runs(client, flow.id(), num_runs=1)
+    artifact_return = flow.get("dummy_sentiment_model artifact")
+    assert artifact_return.name == "dummy_sentiment_model artifact"
+    client.delete_flow(flow.id())
