@@ -166,10 +166,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }
 
   let preview = (
-    <Alert severity="error" sx={{ width: '80%' }}>
+    <Alert severity="warning" sx={{ width: '80%' }}>
         <>
           We currently do not support listing data in an S3 bucket. But
-          don&apos;t worry--we&apos;re working on adding this feature! If you
+          don&apos;t worry&mdash;we&apos;re working on adding this feature! If you
           have questions, comments or would like to learn more about what
           we&apos;re building, please{' '}
         </>
