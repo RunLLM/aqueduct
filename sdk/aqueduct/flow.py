@@ -156,12 +156,14 @@ class Flow:
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
 
     def get(self, artifact_name: str) -> Artifact:
+        """Gets the Artifact from the flow based on artifact_name"""
         resp = self._api_client.get_workflow(self._id)
         assert (
             len(resp.workflow_dag_results) > 0
         ), "Every flow must have at least one run attached to it."
         latest_result = resp.workflow_dag_results[-1]
         result = resp.workflow_dags.get(latest_result.workflow_dag_id)
+
         for artifact_from_workflow in list(result.artifacts.values()):
             if artifact_from_workflow.name == artifact_name:
                 return artifact_from_workflow
