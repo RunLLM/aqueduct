@@ -5,7 +5,13 @@ import sys
 
 from pydantic import parse_obj_as
 
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec
+from aqueduct_executor.operators.connectors.tabular import (
+    common,
+    config,
+    connector,
+    extract,
+    spec,
+)
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.logging import (
     Error,
@@ -63,22 +69,38 @@ def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, i
 
     _authenticate()
 
+def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
+    extract_params = spec.parameters
 
-def run_extract(
-    spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
-):
+    # Search for user-defined placeholder if this is a relational query, and replace them with
+    # the appropriate values.
+    if isinstance(extract_params, extract.RelationalParams):
+        assert len(spec.input_param_names) == len(spec.input_content_paths)
+        input_vals = utils.read_artifacts(
+            storage,
+            spec.input_content_paths,
+            spec.input_metadata_paths,
+            [utils.InputArtifactType.JSON] * len(spec.input_content_paths),
+        )
+        assert all(
+            isinstance(param_val, str) for param_val in input_vals
+        ), "Parameter value must be a string."
+
+        parameters = dict(zip(spec.input_param_names, input_vals))
+        extract_params.expand_placeholders(parameters)
+
     @exec_logs.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract():
         return op.extract(spec.parameters)
-
+    
     df = _extract()
     utils.write_artifacts(
         storage,
+        [utils.OutputArtifactType.TABLE],
         [spec.output_content_path],
         [spec.output_metadata_path],
         [df],
-        {},
-        [utils.OutputArtifactType.TABLE],
+        system_metadata={},
     )
 
 

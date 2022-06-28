@@ -70,7 +70,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 
 def _execute_function(
     spec: spec.FunctionSpec,
-    inputs: List[utils.InputArtifact],
+    inputs: List[Any],
     exec_logs: ExecutionLogs,
 ) -> Tuple[Any, Dict[str, str]]:
     """
@@ -130,11 +130,11 @@ def run(spec: spec.FunctionSpec) -> None:
 
         utils.write_artifacts(
             storage,
+            spec.output_artifact_types,
             spec.output_content_paths,
             spec.output_metadata_paths,
             results,
-            system_metadata,
-            spec.output_artifact_types,
+            system_metadata=system_metadata,
         )
 
         exec_logs.code = ExecutionCode.SUCCEEDED
