@@ -9,6 +9,7 @@ from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from utils import (
     generate_new_flow_name,
+    get_artifact_name,
     get_integration_name,
     run_flow_test,
     run_sentiment_model_multiple_input,
@@ -184,6 +185,6 @@ def test_get_flow(client):
         schedule=aqueduct.hourly(),
     )
     wait_for_flow_runs(client, flow.id(), num_runs=1)
-    artifact_return = flow.get("dummy_sentiment_model artifact")
-    assert artifact_return.name == "dummy_sentiment_model artifact"
+    artifact_return = flow.get(get_artifact_name())
+    assert artifact_return.name == get_artifact_name()
     client.delete_flow(flow.id())
