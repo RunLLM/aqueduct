@@ -10,7 +10,7 @@ from aqueduct_executor.operators.utils import constants
 #
 # Duplicated in the SDK at `sdk/aqueduct/integrations/sql_integration.py`.
 # Make sure the two are in sync.
-TAG_PATTERN = r"{{\s*\w+\s*}}"
+TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 
 def replace_today() -> str:
