@@ -44,7 +44,8 @@ from aqueduct.operators import (
     FunctionSpec,
     MetricSpec,
     SystemMetricSpec,
-    CheckSpec, get_operator_type,
+    CheckSpec,
+    get_operator_type,
 )
 from aqueduct.utils import (
     serialize_function,

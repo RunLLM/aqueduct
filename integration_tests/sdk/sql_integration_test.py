@@ -6,7 +6,8 @@ from constants import SENTIMENT_SQL_QUERY
 from utils import (
     get_integration_name,
     run_sentiment_model,
-    generate_table_name, run_flow_test,
+    generate_table_name,
+    run_flow_test,
 )
 
 
@@ -67,7 +68,9 @@ def test_sql_query_with_parameter(client):
     expected_sql_artifact = db.sql(query="select * from hotel_reviews")
     assert sql_artifact.get().equals(expected_sql_artifact.get())
     expected_sql_artifact = db.sql(query="select * from customer_activity")
-    assert sql_artifact.get(parameters={"table_name": "customer_activity"}).equals(expected_sql_artifact.get())
+    assert sql_artifact.get(parameters={"table_name": "customer_activity"}).equals(
+        expected_sql_artifact.get()
+    )
 
     # Trigger the parameter with invalid values.
     with pytest.raises(InvalidUserArgumentException):
@@ -84,10 +87,16 @@ def test_sql_query_with_multiple_parameters(client):
     sql_artifact = db.sql(
         query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer_nationality }}' and review_date < {{ today}}"
     )
-    expected_sql_artifact = db.sql("select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}")
+    expected_sql_artifact = db.sql(
+        "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
+    )
     assert sql_artifact.get().equals(expected_sql_artifact.get())
-    expected_sql_artifact = db.sql("select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}")
-    assert sql_artifact.get(parameters={"reviewer_nationality": "Australia"}).equals(expected_sql_artifact.get())
+    expected_sql_artifact = db.sql(
+        "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
+    )
+    assert sql_artifact.get(parameters={"reviewer_nationality": "Australia"}).equals(
+        expected_sql_artifact.get()
+    )
 
     # Use the parameters in another operator.
     @metric

@@ -482,7 +482,6 @@ class UpdateParametersDelta(DAGDelta):
                         % (param_name, type(new_val).__name__)
                     )
 
-
             # Update the parameter value and update the dag.
             assert param_op.spec.param  # for mypy
             param_op.spec.param.val = serialize_parameter_value(

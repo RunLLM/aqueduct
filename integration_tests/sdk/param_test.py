@@ -196,4 +196,3 @@ def test_trigger_flow_with_different_sql_param(client):
         _check_param_vals(flow.latest()._dag, expected_vals=["customer_activity"])
     finally:
         client.delete_flow(flow.id())
-

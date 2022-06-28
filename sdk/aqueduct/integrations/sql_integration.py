@@ -167,7 +167,8 @@ class RelationalDBIntegration(Integration):
             param_val = json.loads(param_op.spec.param.val)
             if not isinstance(param_val, str):
                 raise InvalidUserArgumentException(
-                    "The parameter `%s` must be defined as a string. Instead, got type %s" % (param_name, type(param_val).__name__)
+                    "The parameter `%s` must be defined as a string. Instead, got type %s"
+                    % (param_name, type(param_val).__name__)
                 )
             assert len(param_op.outputs) == 1
             sql_input_artifact_ids.append(param_op.outputs[0])
