@@ -60,17 +60,19 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
     # Search for user-defined placeholder if this is a relational query, and replace them with
     # the appropriate values.
     if isinstance(extract_params, extract.RelationalParams):
-        input_metadata = utils.read_user_defined_metadata(storage, spec.input_metadata_paths)
-        input_artifacts = utils.read_artifacts(
+        assert len(spec.input_param_names) == len(spec.input_content_paths)
+        input_vals = utils.read_artifacts(
             storage,
             spec.input_content_paths,
             spec.input_metadata_paths,
             [utils.InputArtifactType.JSON] * len(spec.input_content_paths),
         )
-        extract_params.expand_placeholders(
-            input_metadata,
-            input_artifacts,
-        )
+        assert all(
+            isinstance(param_val, str) for param_val in input_vals
+        ), "Parameter value must be a string."
+
+        parameters = dict(zip(spec.input_param_names, input_vals))
+        extract_params.expand_placeholders(parameters)
 
     df = op.extract(extract_params)
     utils.write_artifacts(
@@ -80,7 +82,6 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         [spec.output_metadata_path],
         [df],
         system_metadata={},
-        user_defined_metadata={},
     )
 
 

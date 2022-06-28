@@ -1,8 +1,7 @@
 import re
 from typing import Any, Optional, Union, List, Dict
 from datetime import date
-from aqueduct_executor.operators.connectors.tabular import common, models
-from aqueduct_executor.operators.utils import constants
+from aqueduct_executor.operators.connectors.tabular import common, models, spec
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
@@ -36,7 +35,8 @@ class RelationalParams(models.BaseParams):
     github_metadata: Optional[Any]
 
     def expand_placeholders(
-        self, input_metadata: List[Dict[str, Any]], input_artifacts: List[Any]
+        self,
+        parameters: Dict[str, str],
     ) -> None:
         """Expands any tags found in the raw query, eg. {{ today }}.
 
@@ -47,23 +47,13 @@ class RelationalParams(models.BaseParams):
         named "today" that they set with value "1234", the "{{today}}" will be expanded as "1234", even
         though there is a a built-in expansion.
         """
-        param_names = [metadata[constants.PARAM_NAME_KEY] for metadata in input_metadata]
-        assert all(
-            isinstance(param_name, str) for param_name in param_names
-        ), "Parameter name must be a string."
-        assert all(
-            isinstance(param_val, str) for param_val in input_artifacts
-        ), "Parameter value must be a string."
-        param_vals = [str(param_val) for param_val in input_artifacts]
-        param_name_to_val = dict(zip(param_names, param_vals))
-
         orig_query = self.query
         matches = re.findall(TAG_PATTERN, self.query)
         for match in matches:
             tag_name = match.strip(" {}")
 
-            if tag_name in param_name_to_val:
-                self.query = self.query.replace(match, param_name_to_val[tag_name])
+            if tag_name in parameters:
+                self.query = self.query.replace(match, parameters[tag_name])
             elif tag_name in BUILT_IN_EXPANSIONS:
                 expansion_func = BUILT_IN_EXPANSIONS[tag_name]
                 self.query = self.query.replace(match, expansion_func())

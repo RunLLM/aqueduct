@@ -14,14 +14,6 @@ _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
 _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 
-# Unlike the other types of metadata, which are inferred from output content,
-# this metadata are defined directly by the user (eg. parameter names).
-_METADATA_USER_DEFINED_KEY = "user"
-
-# Typing: all the possible artifact types to a function. Should be in sync with `InputArtifactType`.
-InputArtifact = Union[pd.DataFrame, float, int]
-
-
 def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
     input_bytes = storage.get(path)
     return pd.read_csv(io.BytesIO(input_bytes))
@@ -33,6 +25,8 @@ def read_artifacts(
     input_metadata_paths: List[str],
     artifact_types: List[InputArtifactType],
 ) -> List[Any]:
+    """Returns an `Any` type because a parameters can be any jsonable, user-defined value."""
+
     if len(input_paths) != len(artifact_types):
         raise Exception(
             "Found inconsistent number of input paths (%d) and artifact types (%d)"
@@ -42,7 +36,7 @@ def read_artifacts(
             )
         )
 
-    inputs: List[InputArtifact] = []
+    inputs: List[Any] = []
     for (input_path, artifact_type) in zip(input_paths, artifact_types):
         if artifact_type == InputArtifactType.TABLE:
             inputs.append(_read_tabular_input(storage, input_path))
@@ -61,14 +55,6 @@ def read_system_metadata(
     input_metadata_paths: List[str],
 ) -> List[Dict[str, Any]]:
     return _read_metadata_key(storage, input_metadata_paths, _METADATA_SYSTEM_METADATA_KEY)
-
-
-def read_user_defined_metadata(
-    storage: Storage,
-    input_metadata_paths: List[str],
-) -> List[Dict[str, Any]]:
-    return _read_metadata_key(storage, input_metadata_paths, _METADATA_USER_DEFINED_KEY)
-
 
 def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str
@@ -109,7 +95,6 @@ def write_artifacts(
     output_metadata_paths: List[str],
     contents: List[Any],
     system_metadata: Dict[str, str],
-    user_defined_metadata: Dict[str, str],
 ) -> None:
     """The same system and user-defined metadata is written for each artifact."""
     if (
@@ -137,7 +122,6 @@ def write_artifacts(
             output_metadata_path,
             content,
             system_metadata,
-            user_defined_metadata,
         )
 
 
@@ -148,12 +132,10 @@ def write_artifact(
     output_metadata_path: str,
     content: Any,
     system_metadata: Dict[str, str],
-    user_defined_metadata: Dict[str, str],
 ) -> None:
     output_metadata = {
         _METADATA_SCHEMA_KEY: [],
         _METADATA_SYSTEM_METADATA_KEY: system_metadata,
-        _METADATA_USER_DEFINED_KEY: user_defined_metadata,
     }
 
     if artifact_type == OutputArtifactType.TABLE:

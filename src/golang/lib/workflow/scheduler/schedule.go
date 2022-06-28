@@ -50,8 +50,8 @@ var (
 func ScheduleOperator(
 	ctx context.Context,
 	op operator.Operator,
-	inputArtifactSpecs []artifact.Spec,
-	outputArtifactSpecs []artifact.Spec,
+	inputArtifacts []artifact.Artifact,
+	outputArtifacts []artifact.Artifact,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -65,19 +65,19 @@ func ScheduleOperator(
 	if op.Spec.IsFunction() {
 		// A function operator takes any number of dataframes as input and outputs
 		// any number of dataframes.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType && inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType && inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
-		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifactSpecs))
-		for _, outputArtifactSpec := range outputArtifactSpecs {
-			if outputArtifactSpec.Type() != artifact.TableType {
+		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifacts))
+		for _, outputArtifact := range outputArtifacts {
+			if outputArtifact.Spec.Type() != artifact.TableType {
 				return "", errors.New("Outputs of function operator must be Table Artifacts.")
 			}
-			outputArtifactTypes = append(outputArtifactTypes, outputArtifactSpec.Type())
+			outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Spec.Type())
 		}
 
 		return ScheduleFunction(
@@ -96,18 +96,18 @@ func ScheduleOperator(
 	}
 
 	if op.Spec.IsMetric() {
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 
@@ -127,19 +127,19 @@ func ScheduleOperator(
 	}
 
 	if op.Spec.IsCheck() {
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 
 		// Checks can be computed on tables and metrics.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.BoolType}
 
@@ -159,13 +159,15 @@ func ScheduleOperator(
 	}
 
 	if op.Spec.IsExtract() {
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.JsonType {
+		inputParamNames := make([]string, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Only parameters can be used as inputs to extract operators.")
 			}
+			inputParamNames = append(inputParamNames, inputArtifact.Name)
 		}
 
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 		if len(outputContentPaths) != 1 {
@@ -179,6 +181,7 @@ func ScheduleOperator(
 			ctx,
 			*op.Spec.Extract(),
 			metadataPath,
+			inputParamNames,
 			inputContentPaths,
 			inputMetadataPaths,
 			outputContentPaths[0],
@@ -190,10 +193,10 @@ func ScheduleOperator(
 	}
 
 	if op.Spec.IsLoad() {
-		if len(inputArtifactSpecs) != 1 {
+		if len(inputArtifacts) != 1 {
 			return "", ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 0 {
+		if len(outputArtifacts) != 0 {
 			return "", ErrWrongNumOutputs
 		}
 		if len(inputContentPaths) != 1 {
@@ -215,13 +218,13 @@ func ScheduleOperator(
 	}
 
 	if op.Spec.IsParam() {
-		if len(inputArtifactSpecs) != 0 {
+		if len(inputArtifacts) != 0 {
 			return "", ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
-		if !outputArtifactSpecs[0].IsJson() {
+		if !outputArtifacts[0].Spec.IsJson() {
 			return "", errors.Newf("Internal Error: parameter must output a JSON artifact.")
 		}
 		if len(outputContentPaths) != 1 {
@@ -234,7 +237,6 @@ func ScheduleOperator(
 		return ScheduleParam(
 			ctx,
 			*op.Spec.Param(),
-			op.Name,
 			metadataPath,
 			outputContentPaths[0],
 			outputMetadataPaths[0],

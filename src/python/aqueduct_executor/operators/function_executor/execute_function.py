@@ -181,7 +181,6 @@ def run(spec: spec.FunctionSpec) -> None:
             spec.output_metadata_paths,
             results,
             system_metadata=system_metadata,
-            user_defined_metadata={},
         )
 
         utils.write_operator_metadata(storage, spec.metadata_path, "", logs)

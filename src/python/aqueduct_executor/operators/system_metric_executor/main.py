@@ -25,7 +25,6 @@ def run(spec: spec.SystemMetricSpec) -> None:
             spec.output_metadata_path,
             float(system_metadata[0][spec.metric_name]),
             system_metadata={},
-            user_defined_metadata={},
         )
 
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})

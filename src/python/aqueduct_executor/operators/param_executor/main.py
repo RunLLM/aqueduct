@@ -3,7 +3,7 @@ import base64
 import traceback
 import sys
 
-from aqueduct_executor.operators.utils import enums, utils, constants
+from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.param_executor import spec
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
@@ -21,9 +21,6 @@ def run(spec: spec.ParamSpec) -> None:
             spec.output_metadata_path,
             spec.val,
             system_metadata={},
-            user_defined_metadata={
-                constants.PARAM_NAME_KEY: spec.param_name,
-            },
         )
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})
     except Exception as e:
