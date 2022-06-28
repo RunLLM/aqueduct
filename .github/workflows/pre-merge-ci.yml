@@ -6,5 +6,5 @@ on:
 
 jobs:
   trigger-integration-tests:
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-1024-block-prs-from-merging-unless
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
