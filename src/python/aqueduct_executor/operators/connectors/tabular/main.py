@@ -9,7 +9,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config, conne
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.logging import (
     Error,
-    Logger,
+    ExecutionLogs,
     Logs,
     TIP_EXTRACT,
     TIP_INTEGRATION_CONNECTION,
@@ -25,7 +25,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
 
 
-def run(spec: spec.Spec, storage: Storage, logger: Logger):
+def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionLogs):
     """
     Runs one of the following connector operations:
     - authenticate
@@ -41,21 +41,21 @@ def run(spec: spec.Spec, storage: Storage, logger: Logger):
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
-        run_authenticate(op, logger, is_demo=(spec.name == spec.AQUEDUCT_DEMO_NAME))
+        run_authenticate(op, exec_logs, is_demo=(spec.name == spec.AQUEDUCT_DEMO_NAME))
     elif spec.type == enums.JobType.EXTRACT:
-        run_extract(spec, op, storage, logger)
+        run_extract(spec, op, storage, exec_logs)
     elif spec.type == enums.JobType.LOADTABLE:
         run_load_table(spec, op, storage)
     elif spec.type == enums.JobType.LOAD:
-        run_load(spec, op, storage, logger)
+        run_load(spec, op, storage, exec_logs)
     elif spec.type == enums.JobType.DISCOVER:
         run_discover(spec, op, storage)
     else:
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector, logger: Logger, is_demo: bool):
-    @logger.user_fn_redirected(
+def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, is_demo: bool):
+    @exec_logs.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
     def _authenticate():
@@ -65,9 +65,9 @@ def run_authenticate(op: connector.TabularConnector, logger: Logger, is_demo: bo
 
 
 def run_extract(
-    spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage, logger: Logger
+    spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
 ):
-    @logger.user_fn_redirected(failure_tip=TIP_EXTRACT)
+    @exec_logs.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract():
         return op.extract(spec.parameters)
 
@@ -82,7 +82,7 @@ def run_extract(
     )
 
 
-def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, logger: Logger):
+def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs):
     inputs = utils.read_artifacts(
         storage,
         [spec.input_content_path],
@@ -92,7 +92,7 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
-    @logger.user_fn_redirected(failure_tip=TIP_LOAD)
+    @exec_logs.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load():
         op.load(spec.parameters, inputs[0])
 
@@ -178,17 +178,18 @@ if __name__ == "__main__":
     print("Started %s job: %s" % (spec.type, spec.name))
 
     storage = parse_storage(spec.storage_config)
-    logger = Logger(user_logs=Logs())
+    exec_logs = ExecutionLogs(user_logs=Logs())
 
     try:
-        run(spec, storage, logger)
+        run(spec, storage, exec_logs)
         # Write operator execution metadata
-        if not logger.failed():
-            logger.code = enums.ExecutionCode.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, logger)
+        if not exec_logs.failed():
+            exec_logs.code = enums.ExecutionCode.SUCCEEDED
+        utils.write_logs(storage, spec.metadata_path, exec_logs)
     except Exception as e:
-        logger.code = enums.ExecutionCode.SYSTEM_FAILURE
-        logger.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{logger.json()}")
-        utils.write_logs(storage, spec.metadata_path, logger)
+        exec_logs.code = enums.ExecutionCode.FAILED
+        exec_logs.failure_reason = enums.FailureReason.SYSTEM
+        exec_logs.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
+        utils.write_logs(storage, spec.metadata_path, exec_logs)
         sys.exit(1)

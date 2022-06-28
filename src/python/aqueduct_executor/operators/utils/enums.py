@@ -23,6 +23,7 @@ class ExecutionCode(str, Enum, metaclass=MetaEnum):
 class FailureReason(Enum, metaclass=MetaEnum):
     SYSTEM = 0
     USER = 1
+    NO_FAILURE = 2
 
 class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
