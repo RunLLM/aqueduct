@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Snackbar from '@mui/material/Snackbar';
 import { DataGrid } from '@mui/x-data-grid';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -167,22 +166,22 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   let preview = (
     <Alert severity="warning" sx={{ width: '80%' }}>
-        <>
-          We currently do not support listing data in an S3 bucket. But
-          don&apos;t worry&mdash;we&apos;re working on adding this feature! If you
-          have questions, comments or would like to learn more about what
-          we&apos;re building, please{' '}
-        </>
-        <Link href="mailto:hello@aqueducthq.com">reach out</Link>
-        <>,{' '}</>
-        <Link href="https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A">
-          join our Slack channel
-        </Link>
-        <>, or{' '}</>
-        <Link href="https://github.com/aqueducthq/aqueduct/issues/new">
-          start a conversation on GitHub channel
-        </Link>
-        <>.</>
+      <>
+        We currently do not support listing data in an S3 bucket. But don&apos;t
+        worry&mdash;we&apos;re working on adding this feature! If you have
+        questions, comments or would like to learn more about what we&apos;re
+        building, please{' '}
+      </>
+      <Link href="mailto:hello@aqueducthq.com">reach out</Link>
+      <>, </>
+      <Link href="https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A">
+        join our Slack channel
+      </Link>
+      <>, or </>
+      <Link href="https://github.com/aqueducthq/aqueduct/issues/new">
+        start a conversation on GitHub channel
+      </Link>
+      <>.</>
     </Alert>
   );
 
