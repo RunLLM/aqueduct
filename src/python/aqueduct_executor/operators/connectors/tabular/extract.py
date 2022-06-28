@@ -45,7 +45,7 @@ class RelationalParams(models.BaseParams):
 
         User-defined parameters are prioritized over built-in ones. Eg. if the user defines a parameter
         named "today" that they set with value "1234", the "{{today}}" will be expanded as "1234", even
-        though there is a a built-in expansion.
+        though there already is a built-in expansion.
         """
         orig_query = self.query
         matches = re.findall(TAG_PATTERN, self.query)
