@@ -4,9 +4,19 @@ from pydantic import BaseModel
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus
+from aqueduct.enums import ExecutionStatus, FailureReason
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
+
+
+class Logs(BaseModel):
+    stdout: str
+    stderr: str
+
+
+class Error(BaseModel):
+    context: str
+    tip: str
 
 
 class OperatorResult(BaseModel):
@@ -22,8 +32,10 @@ class OperatorResult(BaseModel):
             Only set if this operator represents a unit test on an artifact.
     """
 
-    logs: Optional[Dict[str, str]]
-    err_msg: Optional[str]
+    user_logs: Optional[Logs] = None
+    error: Optional[Error] = None
+    code: ExecutionStatus
+    failure_reason: FailureReason
 
 
 class TableArtifactResult(BaseModel):
