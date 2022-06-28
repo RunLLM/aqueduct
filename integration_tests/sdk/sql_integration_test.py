@@ -83,9 +83,11 @@ def test_sql_query_with_multiple_parameters(client):
     db = client.integration(name=get_integration_name())
 
     _ = client.create_param("table_name", default="hotel_reviews")
-    nationality = client.create_param("reviewer_nationality", default="United Kingdom")
+    nationality = client.create_param(
+        "reviewer-nationality", default="United Kingdom"
+    )  # check that dashes work.
     sql_artifact = db.sql(
-        query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer_nationality }}' and review_date < {{ today}}"
+        query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer-nationality }}' and review_date < {{ today}}"
     )
     expected_sql_artifact = db.sql(
         "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
@@ -94,7 +96,7 @@ def test_sql_query_with_multiple_parameters(client):
     expected_sql_artifact = db.sql(
         "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
     )
-    assert sql_artifact.get(parameters={"reviewer_nationality": "Australia"}).equals(
+    assert sql_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(
         expected_sql_artifact.get()
     )
 
@@ -105,6 +107,6 @@ def test_sql_query_with_multiple_parameters(client):
 
     result = noop(sql_artifact, nationality)
     assert result.get() == len(nationality.get())
-    assert result.get(parameters={"reviewer_nationality": "Australia"}) == len("Australia")
+    assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
     run_flow_test(client, artifacts=[result])

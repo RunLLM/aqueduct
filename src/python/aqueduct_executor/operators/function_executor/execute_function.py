@@ -105,7 +105,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 
 def _execute_function(
     spec: spec.FunctionSpec,
-    inputs: List[utils.InputArtifact],
+    inputs: List[Any],
 ) -> Tuple[Any, Dict[str, str], str, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
