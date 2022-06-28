@@ -183,7 +183,7 @@ if __name__ == "__main__":
     try:
         run(spec, storage, exec_logs)
         # Write operator execution metadata
-        if not exec_logs.failed():
+        if exec_logs.code != enums.ExecutionCode.FAILED:
             exec_logs.code = enums.ExecutionCode.SUCCEEDED
         utils.write_logs(storage, spec.metadata_path, exec_logs)
     except Exception as e:
