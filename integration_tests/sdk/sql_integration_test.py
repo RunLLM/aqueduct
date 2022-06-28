@@ -110,3 +110,18 @@ def test_sql_query_with_multiple_parameters(client):
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
     run_flow_test(client, artifacts=[result])
+
+
+def test_sql_query_user_vs_builtin_precedence(client):
+    """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
+    db = client.integration(name=get_integration_name())
+
+    datestring = "'2016-01-01'"
+    _ = client.create_param("today", datestring)
+    sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    assert not sql_artifact.get().empty
+
+    expected_sql_artifact = db.sql(
+        query="select * from hotel_reviews where review_date > %s" % datestring
+    )
+    assert sql_artifact.get().equals(expected_sql_artifact.get())
