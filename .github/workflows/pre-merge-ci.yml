@@ -5,15 +5,6 @@ on:
     types: [ labeled, opened, synchronize, reopened ]
 
 jobs:
-  pre-merge-integration-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Not labeled - Don't run integration test
-        if: contains(github.event.pull_request.labels.*.name, 'run_integration_test') == false
-        run: |
-          exit 1
-        env:
-          NUMBER: ${{ github.event.issue.number }}
-      - name: Run integration test
-        if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-        uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+  trigger-integration-tests:
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+    if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
