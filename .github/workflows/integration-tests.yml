@@ -107,7 +107,7 @@ jobs:
         if: always()
         with:
           name: Server Logs
-          path: logs
+          path: logs/
 
       - uses: actions/upload-artifact@v3
         if: always()
