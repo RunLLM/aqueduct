@@ -15,6 +15,14 @@ class Logs(BaseModel):
 
     def is_empty(self):
         return self.stdout == "" and self.stderr == ""
+    
+    def __str__(self):
+        return f"""stdout:
+{self.stdout}
+--------------------------
+stderr:
+{self.stderr}
+"""
 
 
 class Error(BaseModel):

@@ -36,11 +36,11 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
             if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
-                print(f"Operator {curr_op.name} Logs:\n")
-                print(curr_op_result.user_logs.json())
+                print(f"Operator {curr_op.name} Logs:")
+                print(curr_op_result.user_logs)
+                print("")
 
             if curr_op_result.error is not None:
-                print(f"Operator {curr_op.name} Failed! ")
                 print(curr_op_result.error.tip)
                 print(curr_op_result.error.context)
 
