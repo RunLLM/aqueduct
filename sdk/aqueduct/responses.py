@@ -13,10 +13,10 @@ class Logs(BaseModel):
     stdout: str = ""
     stderr: str = ""
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return self.stdout == "" and self.stderr == ""
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""stdout:
 {self.stdout}
 --------------------------
