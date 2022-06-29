@@ -76,9 +76,9 @@ if __name__ == "__main__":
         args.lint_golang = True
         args.lint_ui = True
 
-    print("Current directory should be the root directory of the aqueduct repo.")
     cwd = os.getcwd()
     if not cwd.endswith("aqueduct"):
+        print("Current directory should be the root directory of the aqueduct repo.")
         print("Your working directory is %s" % cwd)
         exit(1)
 
