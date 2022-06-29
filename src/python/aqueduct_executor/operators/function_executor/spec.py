@@ -34,7 +34,9 @@ class FunctionSpec(BaseModel):
         extra = Extra.forbid
 
     @validator("output_artifact_types")
-    def check_metric_outputs(cls, output_artifact_types):
+    def check_metric_outputs(
+        cls, output_artifact_types: List[enums.OutputArtifactType]
+    ) -> List[enums.OutputArtifactType]:
         if (
             len(output_artifact_types) > 1
             and enums.OutputArtifactType.FLOAT in output_artifact_types

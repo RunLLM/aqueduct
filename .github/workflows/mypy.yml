@@ -37,4 +37,4 @@ jobs:
       - name: mypy executor
         working-directory: src/python
         run: |
-          mypy aqueduct_executor --ignore-missing-imports --exclude tests
+          mypy aqueduct_executor --ignore-missing-imports --strict --implicit-reexport --exclude tests
