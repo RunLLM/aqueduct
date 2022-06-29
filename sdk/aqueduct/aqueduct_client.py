@@ -13,13 +13,15 @@ from .dag import (
     apply_deltas_to_dag,
     SubgraphDAGDelta,
     Metadata,
-    AddOrReplaceOperatorDelta, check_overwriting_parameters_are_valid,
+    AddOrReplaceOperatorDelta,
+    check_overwriting_parameters_are_valid,
 )
 from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
     IncompleteFlowException,
     InvalidUserArgumentException,
+    InvalidUserActionException,
 )
 from .flow import Flow
 from .flow_run import _show_dag
@@ -367,7 +369,12 @@ class Client:
         """
         if parameters is not None:
             flow = self.flow(flow_id)
-            check_overwriting_parameters_are_valid(flow._latest_dag_from_flow(), parameters)
+            runs = flow.list_runs(limit=1)
+            if len(runs) == 0:
+                raise InvalidUserActionException(
+                    "Cannot trigger a workflow that hasn't already run at least once."
+                )
+            check_overwriting_parameters_are_valid(flow.latest()._dag, parameters)
 
         serialized_params = None
         if parameters is not None:

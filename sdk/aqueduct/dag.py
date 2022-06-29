@@ -13,8 +13,14 @@ from aqueduct.error import (
 
 from aqueduct.artifact import Artifact, get_artifact_type
 from aqueduct.enums import OperatorType, TriggerType, ArtifactType
-from aqueduct.operators import Operator, get_operator_type, serialize_parameter_value, OperatorSpec, \
-    get_operator_type_from_spec, ParamSpec
+from aqueduct.operators import (
+    Operator,
+    get_operator_type,
+    serialize_parameter_value,
+    OperatorSpec,
+    get_operator_type_from_spec,
+    ParamSpec,
+)
 
 
 class Schedule(BaseModel):
@@ -219,7 +225,9 @@ class DAG(BaseModel):
         """
         assert name in self.operator_by_name, "Operator %s does not exist." % name
         op = self.operator_by_name[name]
-        assert get_operator_type(op) == get_operator_type_from_spec(spec), "New spec has a different type."
+        assert get_operator_type(op) == get_operator_type_from_spec(
+            spec
+        ), "New spec has a different type."
 
         self.operators[str(op.id)].spec = spec
         self.operator_by_name[op.name].spec = spec
@@ -451,7 +459,7 @@ class RemoveCheckOperatorDelta(DAGDelta):
             )
 
 
-def check_overwriting_parameters_are_valid(dag: DAG, parameters: Dict[str, Any] = None) -> None:
+def check_overwriting_parameters_are_valid(dag: DAG, parameters: Dict[str, Any]) -> None:
     """Validates any parameters the user supplies that override the default value.
 
     The following checks are performed:
@@ -463,9 +471,6 @@ def check_overwriting_parameters_are_valid(dag: DAG, parameters: Dict[str, Any] 
         InvalidUserArgumentException:
             If any of the above checks are violated.
     """
-    if parameters is None:
-        return
-
     if any(not isinstance(name, str) for name in parameters):
         raise InvalidUserArgumentException("Parameters must be keyed by strings.")
 
@@ -504,6 +509,8 @@ class UpdateParametersDelta(DAGDelta):
         self.parameters = parameters
 
     def apply(self, dag: DAG) -> None:
+        if self.parameters is None:
+            return
         check_overwriting_parameters_are_valid(dag, self.parameters)
 
         for param_name, new_val in self.parameters.items():
@@ -511,11 +518,9 @@ class UpdateParametersDelta(DAGDelta):
                 param_name,
                 OperatorSpec(
                     param=ParamSpec(
-                        val=serialize_parameter_value(
-                            param_name, self.parameters[param_name]
-                        )
+                        val=serialize_parameter_value(param_name, self.parameters[param_name])
                     )
-                )
+                ),
             )
 
 

@@ -14,7 +14,6 @@ from aqueduct_executor.operators.function_executor import spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 from pandas import DataFrame

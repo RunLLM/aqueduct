@@ -12,10 +12,10 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 try:
-    from typing import Literal
+    pass
 except ImportError:
     # Python 3.7 does not support typing.Literal
-    from typing_extensions import Literal
+    pass
 
 from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums

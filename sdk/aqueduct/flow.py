@@ -1,7 +1,7 @@
 import json
 import textwrap
 import uuid
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
@@ -85,7 +85,7 @@ class Flow:
                 continue
 
             dag.update_operator_spec(
-                param_artifact.name, # this works because the parameter op and artifact currently share the same name.
+                param_artifact.name,  # this works because the parameter op and artifact currently share the same name.
                 OperatorSpec(
                     param=ParamSpec(
                         val=param_val,
@@ -101,29 +101,6 @@ class Flow:
             created_at=dag_result.created_at,
             status=dag_result.status,
         )
-
-    def _latest_dag_from_flow(self) -> DAG:
-        """"""
-        dag: Optional[DAG] = None
-        try:
-            dag = self.latest()._dag
-        except InvalidUserActionException:
-            flow_resp = self._api_client.get_workflow(self._id)
-            assert len(flow_resp.workflow_dag_results) == 0
-            assert len(flow_resp.workflow_dags) == 1
-            for _, dag_resp in flow_resp.workflow_dags:
-                dag = DAG(
-                    operators=dag_resp.operators,
-                    artifacts=dag_resp.artifacts,
-                    operator_by_name={op.name: op for op in dag_resp.operators.values()},
-                    metadata=dag_resp.metadata,
-                )
-
-        assert dag is not None # mypy
-        return dag
-
-
-
 
     def latest(self) -> FlowRun:
         resp = self._api_client.get_workflow(self._id)
