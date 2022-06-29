@@ -1,3 +1,4 @@
+import copy
 import textwrap
 import uuid
 from textwrap import wrap

@@ -13,7 +13,7 @@ from .dag import (
     apply_deltas_to_dag,
     SubgraphDAGDelta,
     Metadata,
-    AddOrReplaceOperatorDelta,
+    AddOrReplaceOperatorDelta, check_overwriting_parameters_are_valid,
 )
 from .enums import RelationalDBServices, ServiceType
 from .error import (
@@ -365,8 +365,9 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        # TODO(ENG-1144): If there the provided parameters dict is not valid, throw an error
-        #  earlier, before getting to execution.
+        if parameters is not None:
+            flow = self.flow(flow_id)
+            check_overwriting_parameters_are_valid(flow._latest_dag_from_flow(), parameters)
 
         serialized_params = None
         if parameters is not None:
