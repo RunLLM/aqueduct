@@ -45,7 +45,7 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         onChange={(event) => setHost(event.target.value)}
         value={host}
       />
-      
+
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
