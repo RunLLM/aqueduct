@@ -15,6 +15,7 @@ import {
   NotificationLogLevel,
 } from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 
 type Props = {
   user: UserProfile;
@@ -138,7 +139,7 @@ export const NotificationListItem: React.FC<Props> = ({
     <Link
       underline="none"
       color="inherit"
-      href={`/workflow/${
+      href={`${getPathPrefix()}/workflow/${
         notification.workflowMetadata.id
       }?workflowDagResultId=${encodeURI(
         notification.workflowMetadata.dag_result_id

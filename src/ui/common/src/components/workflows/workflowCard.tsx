@@ -8,6 +8,7 @@ import style from '../../styles/markdown.module.css';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { Card } from '../layouts/card';
 import WorkflowStatus from './workflowStatus';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 
 type Props = {
   workflow: ListWorkflowSummary;
@@ -76,7 +77,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
   // been run.
   if (workflow['last_run_at']) {
     return (
-      <Link underline="none" color="inherit" href={`/${process.env.URL_PREFIX}/workflow/${workflow.id}`}>
+      <Link underline="none" color="inherit" href={`${getPathPrefix()}/workflow/${workflow.id}`}>
         {cardContent}
       </Link>
     );
