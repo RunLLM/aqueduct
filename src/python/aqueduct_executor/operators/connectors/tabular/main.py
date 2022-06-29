@@ -69,6 +69,7 @@ def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, i
 
     _authenticate()
 
+
 def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
     extract_params = spec.parameters
 
@@ -92,7 +93,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
     @exec_logs.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract():
         return op.extract(spec.parameters)
-    
+
     df = _extract()
     if exec_logs.code != enums.ExecutionCode.FAILED:
         utils.write_artifacts(
@@ -105,7 +106,9 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         )
 
 
-def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs):
+def run_load(
+    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
+):
     inputs = utils.read_artifacts(
         storage,
         [spec.input_content_path],

@@ -108,7 +108,7 @@ def run(spec: spec.FunctionSpec) -> None:
     Executes a function operator.
     """
 
-    exec_logs =ExecutionLogs(user_logs=Logs())
+    exec_logs = ExecutionLogs(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
         # Read the input data from intermediate storage.
