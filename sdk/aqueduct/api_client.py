@@ -35,7 +35,7 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
         if curr_op.id in preview_resp.operator_results:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
-            if curr_op_result.user_logs is not None:
+            if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
                 print(f"Operator {curr_op.name} Logs:\n")
                 print(curr_op_result.user_logs.json())
 

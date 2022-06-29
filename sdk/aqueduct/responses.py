@@ -10,8 +10,11 @@ from aqueduct.utils import human_readable_timestamp
 
 
 class Logs(BaseModel):
-    stdout: str
-    stderr: str
+    stdout: str = ""
+    stderr: str = ""
+
+    def is_empty(self):
+        return self.stdout == "" and self.stderr == ""
 
 
 class Error(BaseModel):
@@ -34,8 +37,8 @@ class OperatorResult(BaseModel):
 
     user_logs: Optional[Logs] = None
     error: Optional[Error] = None
-    code: ExecutionStatus
-    failure_reason: FailureReason
+    code: ExecutionStatus = ExecutionStatus.UNKNOWN
+    failure_reason: FailureReason = FailureReason.NO_FAILURE
 
 
 class TableArtifactResult(BaseModel):
