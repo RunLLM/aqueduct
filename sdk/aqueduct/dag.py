@@ -459,7 +459,7 @@ class RemoveCheckOperatorDelta(DAGDelta):
             )
 
 
-def check_overwriting_parameters_are_valid(dag: DAG, parameters: Dict[str, Any]) -> None:
+def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> None:
     """Validates any parameters the user supplies that override the default value.
 
     The following checks are performed:
@@ -511,7 +511,7 @@ class UpdateParametersDelta(DAGDelta):
     def apply(self, dag: DAG) -> None:
         if self.parameters is None:
             return
-        check_overwriting_parameters_are_valid(dag, self.parameters)
+        validate_overwriting_parameters(dag, self.parameters)
 
         for param_name, new_val in self.parameters.items():
             dag.update_operator_spec(

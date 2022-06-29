@@ -14,7 +14,7 @@ from .dag import (
     SubgraphDAGDelta,
     Metadata,
     AddOrReplaceOperatorDelta,
-    check_overwriting_parameters_are_valid,
+    validate_overwriting_parameters,
 )
 from .enums import RelationalDBServices, ServiceType
 from .error import (
@@ -377,7 +377,7 @@ class Client:
                 raise InvalidUserActionException(
                     "Cannot trigger a workflow that hasn't already run at least once."
                 )
-            check_overwriting_parameters_are_valid(flow.latest()._dag, parameters)
+            validate_overwriting_parameters(flow.latest()._dag, parameters)
 
         serialized_params = None
         if parameters is not None:
