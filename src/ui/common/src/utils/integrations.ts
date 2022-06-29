@@ -14,6 +14,7 @@ export type Integration = {
 
 export type PostgresConfig = {
   host: string;
+  port: string;
   database: string;
   username: string;
   password?: string;
