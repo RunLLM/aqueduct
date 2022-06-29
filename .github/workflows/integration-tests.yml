@@ -3,16 +3,6 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
-  issue_comment:
-    types: [ created ]
 
 jobs:
   run-tests:
