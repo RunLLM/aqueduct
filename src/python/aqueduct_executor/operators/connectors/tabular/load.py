@@ -13,7 +13,7 @@ class RelationalParams(models.BaseParams):
         validate_assignment = True
 
     @validator("update_mode")
-    def set_update_mode(cls, update_mode):
+    def set_update_mode(cls, update_mode):  # type: ignore
         if update_mode == "":
             return common.UpdateMode.REPLACE
         return update_mode

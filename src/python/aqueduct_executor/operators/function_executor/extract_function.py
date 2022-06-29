@@ -32,7 +32,7 @@ def _unzip_function_contents(function_in_bytes: bytes, extract_path: str) -> Non
         shutil.rmtree(nested_path)
 
 
-def _extract_folder_name(zip_ref):
+def _extract_folder_name(zip_ref: zipfile.ZipFile) -> str:
     """
     Given a zip file, return the name of the top-level folder.
 
