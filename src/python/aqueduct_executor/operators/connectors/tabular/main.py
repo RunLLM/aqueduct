@@ -94,14 +94,15 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         return op.extract(spec.parameters)
     
     df = _extract()
-    utils.write_artifacts(
-        storage,
-        [utils.OutputArtifactType.TABLE],
-        [spec.output_content_path],
-        [spec.output_metadata_path],
-        [df],
-        system_metadata={},
-    )
+    if exec_logs.code != enums.ExecutionCode.FAILED:
+        utils.write_artifacts(
+            storage,
+            [utils.OutputArtifactType.TABLE],
+            [spec.output_content_path],
+            [spec.output_metadata_path],
+            [df],
+            system_metadata={},
+        )
 
 
 def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs):
