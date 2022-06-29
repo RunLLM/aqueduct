@@ -13,7 +13,6 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -149,7 +148,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing tables.")
 	}
 
-	var metadata logging.ExecutionLogs
+	var metadata shared.ExecutionLogs
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,
