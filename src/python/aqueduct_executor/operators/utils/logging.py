@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 from pydantic import BaseModel
 from aqueduct_executor.operators.utils.enums import ExecutionCode, FailureReason
 
@@ -44,9 +44,9 @@ class ExecutionLogs(BaseModel):
     failure_reason: FailureReason = FailureReason.NO_FAILURE
     error: Optional[Error] = None
 
-    def user_fn_redirected(self, failure_tip: str) -> Callable:
-        def wrapper(user_fn: Callable) -> Callable:
-            def inner(*args, **kwargs):
+    def user_fn_redirected(self, failure_tip: str) -> Callable[..., Any]:
+        def wrapper(user_fn: Callable[..., Any]) -> Callable[..., Any]:
+            def inner(*args: Any, **kwargs: Any) -> Any:
                 stdout_log = io.StringIO()
                 stderr_log = io.StringIO()
                 try:

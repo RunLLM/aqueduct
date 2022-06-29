@@ -259,7 +259,7 @@ def write_logs(
     storage.put(metadata_path, bytes(exec_logs.json(), encoding=_DEFAULT_ENCODING))
 
 
-def write_discover_results(storage: Storage, path: str, tables: List[str]):
+def write_discover_results(storage: Storage, path: str, tables: List[str]) -> None:
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))

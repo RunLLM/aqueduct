@@ -56,7 +56,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     # Invoke the function and parse out the result object.
     module = importlib.import_module(import_path)
     if not class_name:
-        return getattr(module, method_name)
+        return getattr(module, method_name)  # type: ignore
 
     fn_class = getattr(module, class_name)
     function = fn_class()
@@ -65,7 +65,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
         custom_args = json.loads(custom_args_str)
         function.set_args(custom_args)
 
-    return getattr(function, method_name)
+    return getattr(function, method_name)  # type: ignore
 
 
 def _execute_function(

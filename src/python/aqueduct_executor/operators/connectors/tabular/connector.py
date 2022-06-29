@@ -20,7 +20,7 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def extract(
+    def extract(  # type: ignore
         self,
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
         # https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
@@ -36,7 +36,7 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def load(
+    def load(  # type: ignore
         self,
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
         # https://linear.app/aqueducthq/issue/ENG-1285/revisit-python-typings-for-connector-code
