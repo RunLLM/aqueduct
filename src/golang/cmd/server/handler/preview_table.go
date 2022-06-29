@@ -12,7 +12,6 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
@@ -164,7 +163,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while previewing table.")
 	}
 
-	var metadata logging.ExecutionLogs
+	var metadata shared.ExecutionLogs
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,

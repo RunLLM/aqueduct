@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -280,8 +279,8 @@ func CheckOperatorExecutionStatus(
 	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
-) *logging.ExecutionLogs {
-	var logs logging.ExecutionLogs
+) *shared.ExecutionLogs {
+	var logs shared.ExecutionLogs
 	err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
@@ -294,12 +293,12 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
-		return &logging.ExecutionLogs{
+		return &shared.ExecutionLogs{
 			Code:          shared.FailedExecutionStatus,
 			FailureReason: shared.SystemFailure,
-			Error: &logging.Error{
+			Error: &shared.Error{
 				Context: fmt.Sprintf("%v", err),
-				Tip:     logging.TipUnknownInternalError,
+				Tip:     shared.TipUnknownInternalError,
 			},
 		}
 	}
