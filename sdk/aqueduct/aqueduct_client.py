@@ -370,6 +370,9 @@ class Client:
         if parameters is not None:
             flow = self.flow(flow_id)
             runs = flow.list_runs(limit=1)
+
+            # NOTE: this is a defense check against triggering runs that haven't run yet.
+            # We may want to revisit this in the future if more nuanced constraints are necessary.
             if len(runs) == 0:
                 raise InvalidUserActionException(
                     "Cannot trigger a workflow that hasn't already run at least once."
