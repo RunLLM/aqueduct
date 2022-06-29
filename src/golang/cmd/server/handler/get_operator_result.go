@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -86,7 +86,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
-	emptyResp := logging.ExecutionLogs{}
+	emptyResp := shared.ExecutionLogs{}
 
 	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
 		ctx,
@@ -98,7 +98,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 	}
 
-	response := logging.ExecutionLogs{
+	response := shared.ExecutionLogs{
 		Code: dbOperatorResult.Status,
 	}
 

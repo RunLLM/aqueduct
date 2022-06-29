@@ -14,7 +14,6 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -199,7 +198,7 @@ func ValidateConfig(
 	}
 
 	// Authentication failed, so we need to fetch the error message from storage
-	var metadata logging.ExecutionLogs
+	var metadata shared.ExecutionLogs
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,

@@ -14,7 +14,6 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -74,7 +73,7 @@ type previewArtifactResponse struct {
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]logging.ExecutionLogs   `json:"operator_results"`
+	OperatorResults map[uuid.UUID]shared.ExecutionLogs    `json:"operator_results"`
 	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
 }
 
@@ -201,18 +200,18 @@ func deserializeOperatorResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-) map[uuid.UUID]logging.ExecutionLogs {
-	responses := make(map[uuid.UUID]logging.ExecutionLogs, len(workflowStoragePaths.OperatorMetadataPaths))
+) map[uuid.UUID]shared.ExecutionLogs {
+	responses := make(map[uuid.UUID]shared.ExecutionLogs, len(workflowStoragePaths.OperatorMetadataPaths))
 	for id, path := range workflowStoragePaths.OperatorMetadataPaths {
-		var operatorMetadata logging.ExecutionLogs
+		var operatorMetadata shared.ExecutionLogs
 		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
 		if err != nil {
-			responses[id] = logging.ExecutionLogs{
+			responses[id] = shared.ExecutionLogs{
 				Code:          shared.FailedExecutionStatus,
 				FailureReason: shared.SystemFailure,
-				Error: &logging.Error{
+				Error: &shared.Error{
 					Context: fmt.Sprintf("%v", err),
-					Tip:     "Failed to read logs for this operator. " + logging.TipCreateBugReport,
+					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,
 				},
 			}
 			continue

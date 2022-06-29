@@ -16,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -462,7 +461,7 @@ func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
 	storageConfig *shared.StorageConfig,
-	operatorResultMetadata *logging.ExecutionLogs,
+	operatorResultMetadata *shared.ExecutionLogs,
 	artifactMetadataPaths map[uuid.UUID]string,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
 	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
@@ -514,7 +513,7 @@ func UpdateOperatorAndArtifactResults(
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
-	operatorResultMetadata *logging.ExecutionLogs,
+	operatorResultMetadata *shared.ExecutionLogs,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,

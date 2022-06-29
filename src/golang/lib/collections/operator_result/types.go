@@ -3,12 +3,11 @@ package operator_result
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/logging"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 )
 
 type NullExecutionLogs struct {
-	logging.ExecutionLogs
+	shared.ExecutionLogs
 	IsNull bool
 }
 
@@ -17,7 +16,7 @@ func (n *NullExecutionLogs) Value() (driver.Value, error) {
 		return nil, nil
 	}
 
-	return utils.ValueJsonB(n.ExecutionLogs)
+	return (&n.ExecutionLogs).Value()
 }
 
 func (n *NullExecutionLogs) Scan(value interface{}) error {
@@ -26,8 +25,8 @@ func (n *NullExecutionLogs) Scan(value interface{}) error {
 		return nil
 	}
 
-	logs := &logging.ExecutionLogs{}
-	if err := utils.ScanJsonB(value, logs); err != nil {
+	logs := &shared.ExecutionLogs{}
+	if err := logs.Scan(value); err != nil {
 		return err
 	}
 
