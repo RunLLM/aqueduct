@@ -16,11 +16,11 @@ def run(spec: spec.ParamSpec) -> None:
     try:
         utils.write_artifact(
             storage,
+            enums.OutputArtifactType.JSON,
             spec.output_content_path,
             spec.output_metadata_path,
             spec.val,
-            {},
-            enums.OutputArtifactType.JSON,
+            system_metadata={},
         )
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})
     except Exception as e:

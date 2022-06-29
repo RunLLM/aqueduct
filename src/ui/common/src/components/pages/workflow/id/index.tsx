@@ -80,16 +80,24 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   }, [workflow.selectedDag]);
 
   useEffect(() => {
+    const urlSearchParams = parse(window.location.search);
+    if (
+      workflow.selectedResult !== undefined &&
+      !urlSearchParams.workflowDagResultId
+    ) {
+      navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
+    }
+  }, [workflow.selectedResult]);
+
+  useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, []);
 
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
-      const parsed = parse(window.location.search);
-
       let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = parsed;
+      const { workflowDagResultId } = parse(window.location.search);
       for (let i = 0; i < workflow.dagResults.length; i++) {
         if (workflow.dagResults[i].id === workflowDagResultId) {
           workflowDagResultIndex = i;
@@ -100,7 +108,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults]);
+  }, [workflow.dagResults, window.location.search]);
 
   useEffect(() => {
     if (workflow.selectedDag) {
@@ -264,7 +272,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     if (
       currentNode.type === NodeType.TableArtifact ||
       currentNode.type === NodeType.FloatArtifact ||
-      currentNode.type === NodeType.BoolArtifact
+      currentNode.type === NodeType.BoolArtifact ||
+      currentNode.type === NodeType.JsonArtifact
     ) {
       return selectedDag.artifacts[currentNode.id].name;
     } else {

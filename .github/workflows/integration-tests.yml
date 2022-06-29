@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -14,28 +15,9 @@ on:
     types: [ created ]
 
 jobs:
-  check-comment-trigger:
-    name: Check Comment Trigger
-    runs-on: ubuntu-latest
-    outputs:
-      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
-    timeout-minutes: 5
-    steps:
-      - name: Check for Comment triggers
-        if: ${{ github.event_name == 'issue_comment' }}
-        uses: khan/pull-request-comment-trigger@master
-        id: check_comment
-        with:
-          trigger: 'ci'
-          prefix_only: 'true'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: check-comment-trigger
-    if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
@@ -108,6 +90,12 @@ jobs:
         with:
           name: Server Logs
           path: logs/
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Executor Logs
+          path: ~/.aqueduct/server/logs/*
 
       - name: Report to Slack on Failure
         if: always()

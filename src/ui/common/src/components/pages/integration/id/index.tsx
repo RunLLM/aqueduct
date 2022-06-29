@@ -1,9 +1,9 @@
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   Alert,
   Autocomplete,
-  Button,
+  Link,
   TextField,
   Typography,
 } from '@mui/material';
@@ -27,6 +27,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
+import { Button } from '../../../primitives/Button.styles';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -92,6 +93,20 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   );
 
+  const loading = tableListStatus === ExecutionStatus.Pending;
+
+  const forceLoadTableList = async () => {
+    if (!loading) {
+      dispatch(
+        handleLoadIntegrationTables({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+          forceLoad: true,
+        })
+      );
+    }
+  };
+
   // ENG-1052: We should update the route handler to give us the data in the format we want rather than needing to do post-processing in the FE side.
   const dataTable = {
     cols: [],
@@ -135,7 +150,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     setTable(newValue);
   };
 
-  const loading = tableListStatus === ExecutionStatus.Pending;
   const hasTable = table != null && table !== '';
 
   useEffect(() => {
@@ -148,6 +162,110 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   if (!integrations || !selectedIntegration) {
     return null;
+  }
+
+  let preview = (
+    <Alert severity="warning" sx={{ width: '80%' }}>
+      <>
+        We currently do not support listing data in an S3 bucket. But don&apos;t
+        worry&mdash;we&apos;re working on adding this feature! If you have
+        questions, comments or would like to learn more about what we&apos;re
+        building, please{' '}
+      </>
+      <Link href="mailto:hello@aqueducthq.com">reach out</Link>
+      <>, </>
+      <Link href="https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A">
+        join our Slack channel
+      </Link>
+      <>, or </>
+      <Link href="https://github.com/aqueducthq/aqueduct/issues/new">
+        start a conversation on GitHub channel
+      </Link>
+      <>.</>
+    </Alert>
+  );
+
+  if (selectedIntegration.service !== 'S3') {
+    preview = (
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h4" gutterBottom component="div">
+          Preview
+        </Typography>
+        <Box>
+          <Autocomplete
+            disablePortal
+            value={table}
+            sx={{
+              verticalAlign: 'middle',
+              display: 'inline-block',
+              width: '35ch',
+            }}
+            onChange={handleChange}
+            options={integrationTables}
+            loading={loading}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Base Table"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <React.Fragment>
+                      {params.InputProps.endAdornment}
+                    </React.Fragment>
+                  ),
+                }}
+              />
+            )}
+          />
+          <FontAwesomeIcon
+            className={loading ? 'fa-spin' : ''}
+            style={{
+              marginLeft: '15px',
+              fontSize: '2em',
+              verticalAlign: 'middle',
+              display: 'inline-block',
+              color: loading ? 'grey' : 'black',
+              cursor: loading ? 'default' : 'pointer',
+            }}
+            icon={faRefresh}
+            onClick={forceLoadTableList}
+          />
+        </Box>
+
+        <Box sx={{ mt: 3 }}>
+          {hasTable && tableDataStatus === ExecutionStatus.Pending && (
+            <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
+              <CircularProgress size={30} />
+              <Typography sx={{ ml: 2 }}>
+                Loading table <b>{table}</b>...
+              </Typography>
+            </Box>
+          )}
+          {hasTable && tableDataStatus === ExecutionStatus.Failed && (
+            <Alert style={{ marginTop: '10px' }} severity="error">
+              Table <b>{table}</b> failed to load. Try refreshing the page.{' '}
+              <br />
+              Error: {retrievedTableData}
+            </Alert>
+          )}
+          {hasTable &&
+            tableDataStatus === ExecutionStatus.Succeeded &&
+            retrievedTableData !== '' && (
+              <div style={{ height: '50vh', width: 'calc(100% - 25px)' }}>
+                <DataGrid
+                  getRowId={(row) => row._id}
+                  rows={dataTable.rows}
+                  columns={dataTable.cols}
+                  pageSize={50}
+                  rowsPerPageOptions={[50]}
+                  disableSelectionOnClick
+                />
+              </div>
+            )}
+        </Box>
+      </Box>
+    );
   }
 
   return (
@@ -171,70 +289,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             onCloseDialog={() => setShowDialog(false)}
+            onConnect={() => forceLoadTableList()}
           />
         )}
-
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h4" gutterBottom component="div">
-            Preview
-          </Typography>
-          <Autocomplete
-            sx={{ width: '35ch' }}
-            disablePortal
-            value={table}
-            onChange={handleChange}
-            options={integrationTables}
-            loading={loading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Base Table"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <React.Fragment>
-                      {loading ? <CircularProgress size={30} /> : null}
-                      {params.InputProps.endAdornment}
-                    </React.Fragment>
-                  ),
-                }}
-              />
-            )}
-          />
-
-          <Box sx={{ mt: 3 }}>
-            {hasTable && tableDataStatus === ExecutionStatus.Pending && (
-              <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
-                <CircularProgress size={30} />
-                <Typography sx={{ ml: 2 }}>
-                  Loading table <b>{table}</b>...
-                </Typography>
-              </Box>
-            )}
-            {hasTable && tableDataStatus === ExecutionStatus.Failed && (
-              <Alert style={{ marginTop: '10px' }} severity="error">
-                Table <b>{table}</b> failed to load. Try refreshing the page.{' '}
-                <br />
-                Error: {retrievedTableData}
-              </Alert>
-            )}
-            {hasTable &&
-              tableDataStatus === ExecutionStatus.Succeeded &&
-              retrievedTableData !== '' && (
-                <div style={{ height: '50vh', width: 'calc(100% - 25px)' }}>
-                  <DataGrid
-                    getRowId={(row) => row._id}
-                    rows={dataTable.rows}
-                    columns={dataTable.cols}
-                    pageSize={50}
-                    rowsPerPageOptions={[50]}
-                    disableSelectionOnClick
-                  />
-                </div>
-              )}
-          </Box>
-        </Box>
       </Box>
+      {preview}
     </DefaultLayout>
   );
 };
