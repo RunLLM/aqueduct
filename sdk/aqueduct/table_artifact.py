@@ -17,7 +17,6 @@ from great_expectations.validator.validator import Validator
 
 import pandas as pd
 import aqueduct
-import ruamel
 from ruamel import yaml
 
 from aqueduct.api_client import APIClient
@@ -262,7 +261,7 @@ class TableArtifact(Artifact):
                     batch_identifiers:
                         - default_identifier_name
             """
-            context.add_datasource(**yaml.load(datasource_yaml, Loader=ruamel.yaml.Loader))
+            context.add_datasource(**yaml.load(datasource_yaml, Loader=yaml.Loader))
 
             df: pd.DataFrame = table
             runtime_batch_request = RuntimeBatchRequest(
