@@ -13,9 +13,16 @@ export type LoadingStatus = {
 };
 
 export enum ExecutionStatus {
+  Unknown = 'unknown',
   Succeeded = 'succeeded',
   Failed = 'failed',
   Pending = 'pending',
+}
+
+export enum FailureReason {
+  System = 0,
+  User = 1,
+  NoFailure = 2,
 }
 
 export enum CheckStatus {
@@ -29,3 +36,13 @@ export const TransitionLengthInMs = 200;
 export const WidthTransition = `width ${TransitionLengthInMs}ms ease-in-out`;
 export const HeightTransition = `height ${TransitionLengthInMs}ms ease-in-out`;
 export const AllTransition = `all ${TransitionLengthInMs}ms ease-in-out`;
+
+export type Logs = {
+  stdout?: string;
+  stderr?: string;
+};
+
+export type Error = {
+  context?: string;
+  tip?: string;
+};

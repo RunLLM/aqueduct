@@ -419,25 +419,20 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
-      if (operatorResult.result?.status === ExecutionStatus.Failed) {
+      if (operatorResult.result?.code === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
-        if (
-          operatorResult.result.error &&
-          operatorResult.result.error.length > 0
-        ) {
+        if (!!operatorResult.result.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
-          let msg = operatorResult.result.error;
-          if (!msg.includes('Aqueduct Internal Error')) {
-            // this is not a system internal error
-            msg = 'Error: ' + msg;
-          }
-          newWorkflowStatusItem.message = msg;
+          const err = operatorResult.result.error;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
+            err.context ?? ''
+          }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
         }
-      } else if (operatorResult.result?.status === ExecutionStatus.Succeeded) {
+      } else if (operatorResult.result?.code === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `${operatorName} succeeded`;
         newWorkflowStatusItem.message = `Operator successfully executed`;
@@ -450,46 +445,35 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       normalizedWorkflowStatusItems.push(newWorkflowStatusItem);
 
       // LEFT off here, see the normalize logs function and work from there :)
-      if (operatorResult.result?.logs) {
-        const logs = operatorResult.result.logs;
-        Object.keys(logs).map((key) => {
-          // Get log and add to logs list.
-          const log = logs[key];
-          const splitLogs = log.split('\n');
-          if (key === 'stdout') {
-            // when splitting by \n, the last index will just be "" so we can skip it.
-            for (let i = 0; i < splitLogs.length - 1; i++) {
-              const stdOutLog = {
-                id: `${operatorId}-stdout-${key}-${i}`,
-                level: WorkflowStatusTabs.Logs,
-                title: `${operatorName} stdout`,
-                message: splitLogs[i],
-                nodeId: operatorId,
-                type: OperatorTypeToNodeTypeMap[
-                  operators[operatorId].spec.type
-                ].toString(),
-              };
+      if (!!operatorResult.result?.user_logs) {
+        const logs = operatorResult.result.user_logs;
+        const stdoutLines = (logs.stdout ?? '').split('\n');
+        for (let i = 0; i < stdoutLines.length - 1; i++) {
+          normalizedWorkflowStatusItems.push({
+            id: `${operatorId}-stdout-${i}`,
+            level: WorkflowStatusTabs.Logs,
+            title: `${operatorName} stdout`,
+            message: stdoutLines[i],
+            nodeId: operatorId,
+            type: OperatorTypeToNodeTypeMap[
+              operators[operatorId].spec.type
+            ].toString(),
+          });
+        }
 
-              normalizedWorkflowStatusItems.push(stdOutLog);
-            }
-          } else if (key === 'stderr') {
-            // Get logs and add to errors list.
-            for (let i = 0; i < splitLogs.length - 1; i++) {
-              const stdErrLog = {
-                id: `${operatorId}-stderr-${key}-${i}`,
-                level: WorkflowStatusTabs.Logs,
-                title: `${operatorName} stderr`,
-                message: splitLogs[i],
-                nodeId: operatorId,
-                type: OperatorTypeToNodeTypeMap[
-                  operators[operatorId].spec.type
-                ].toString(),
-              };
-
-              normalizedWorkflowStatusItems.push(stdErrLog);
-            }
-          }
-        });
+        const stderrLines = (logs.stderr ?? '').split('\n');
+        for (let i = 0; i < stderrLines.length - 1; i++) {
+          normalizedWorkflowStatusItems.push({
+            id: `${operatorId}-stderr-${i}`,
+            level: WorkflowStatusTabs.Logs,
+            title: `${operatorName} stderr`,
+            message: stderrLines[i],
+            nodeId: operatorId,
+            type: OperatorTypeToNodeTypeMap[
+              operators[operatorId].spec.type
+            ].toString(),
+          });
+        }
       }
     });
 
