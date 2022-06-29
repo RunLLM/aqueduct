@@ -33,6 +33,29 @@ jobs:
         working-directory: sdk
         run: |
           mypy -m aqueduct --ignore-missing-imports --strict
+
+  executor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+
+    name: Run Mypy
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          pip install mypy pydantic
+
+      - name: Install Type Stub Libraries
+        run : |
+          python3 -m pip install types-croniter types-requests types-PyYAML
       
       - name: mypy executor
         working-directory: src/python
