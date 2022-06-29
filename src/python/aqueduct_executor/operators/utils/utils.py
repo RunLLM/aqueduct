@@ -136,7 +136,7 @@ def write_artifact(
     content: Any,
     system_metadata: Dict[str, str],
 ) -> None:
-    output_metadata = {
+    output_metadata: Dict[str, Any] = {
         _METADATA_SCHEMA_KEY: [],
         _METADATA_SYSTEM_METADATA_KEY: system_metadata,
     }
