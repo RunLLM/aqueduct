@@ -88,7 +88,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
                 <li>
                   <Typography variant="body1">
                     First go to the{' '}
-                    <Link href="/integrations">integrations</Link> page and
+                    <Link href=`/${process.env.URL_PREFIX}/integrations`>integrations</Link> page and
                     connect a database. (If you don&apos;t have a database
                     handy, you can use the <code>aqueduct_demo</code> database
                     -- see the documentation{' '}
@@ -122,7 +122,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
 
                 <li>
                   <Typography variant="body1">
-                    Go to the <Link href="/workflows">workflows</Link> page to
+                    Go to the <Link href=`/${process.env.URL_PREFIX}/workflows`>workflows</Link> page to
                     see a visualization of the workflow you just created.
                   </Typography>
                 </li>

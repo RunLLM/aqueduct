@@ -26,14 +26,14 @@ const App = () => {
   let routesContent: React.ReactElement;
   routesContent = (
     <Routes>
-      <Route path="/" element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
-      <Route path="/data" element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
-      <Route path="/integrations" element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
-      <Route path="/integration/:id" element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
-      <Route path="/workflows" element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
-      <Route path="/login" element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/account" element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
-      <Route path="/workflow/:id" element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
+      <Route path={`${ process.env.URL_PREFIX ?? "/" }`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/workflows`} element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/login`} element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path={`/${process.env.URL_PREFIX}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
+      <Route path={`/${process.env.URL_PREFIX}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
     </Routes>
   );
 

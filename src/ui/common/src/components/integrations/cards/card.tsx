@@ -39,7 +39,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
     });
     const workflowId = dataPreviewInfo.workflow_id;
     return (
-      <Link underline="none" color="inherit" href={`/workflow/${workflowId}`}>
+      <Link underline="none" color="inherit" href={`/${process.env.URL_PREFIX}/workflow/${workflowId}`}>
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
           <Box
             sx={{

@@ -76,7 +76,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
   // been run.
   if (workflow['last_run_at']) {
     return (
-      <Link underline="none" color="inherit" href={`/workflow/${workflow.id}`}>
+      <Link underline="none" color="inherit" href={`/${process.env.URL_PREFIX}/workflow/${workflow.id}`}>
         {cardContent}
       </Link>
     );

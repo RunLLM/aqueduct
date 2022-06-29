@@ -47,7 +47,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
               <Link
                 underline="none"
                 color="inherit"
-                href={`/integration/${integration.id}`}
+                href={`/${process.env.URL_PREFIX}/integration/${integration.id}`}
               >
                 <Card>
                   <IntegrationCard integration={integration} />
