@@ -3,6 +3,8 @@ import base64
 import json
 import sys
 
+import pandas as pd
+
 from pydantic import parse_obj_as
 
 from aqueduct_executor.operators.connectors.tabular import (
@@ -38,7 +40,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
 
 
-def run(spec: Spec, storage: Storage, exec_logs: ExecutionLogs):
+def run(spec: Spec, storage: Storage, exec_logs: ExecutionLogs) -> None:
     """
     Runs one of the following connector operations:
     - authenticate
@@ -67,11 +69,13 @@ def run(spec: Spec, storage: Storage, exec_logs: ExecutionLogs):
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, is_demo: bool):
+def run_authenticate(
+    op: connector.TabularConnector, exec_logs: ExecutionLogs, is_demo: bool
+) -> None:
     @exec_logs.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
-    def _authenticate():
+    def _authenticate() -> None:
         op.authenticate()
 
     _authenticate()
@@ -79,7 +83,7 @@ def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, i
 
 def run_extract(
     spec: ExtractSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
-):
+) -> None:
     extract_params = spec.parameters
 
     # Search for user-defined placeholder if this is a relational query, and replace them with
@@ -100,7 +104,7 @@ def run_extract(
         extract_params.expand_placeholders(parameters)
 
     @exec_logs.user_fn_redirected(failure_tip=TIP_EXTRACT)
-    def _extract():
+    def _extract() -> pd.DataFrame:
         return op.extract(spec.parameters)
 
     df = _extract()
@@ -117,7 +121,7 @@ def run_extract(
 
 def run_load(
     spec: LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
-):
+) -> None:
     inputs = utils.read_artifacts(
         storage,
         [spec.input_content_path],
@@ -128,18 +132,18 @@ def run_load(
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
     @exec_logs.user_fn_redirected(failure_tip=TIP_LOAD)
-    def _load():
+    def _load() -> None:
         op.load(spec.parameters, inputs[0])
 
     _load()
 
 
-def run_load_table(spec: LoadTableSpec, op: connector.TabularConnector, storage: Storage):
+def run_load_table(spec: LoadTableSpec, op: connector.TabularConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
 
 
-def run_discover(spec: DiscoverSpec, op: connector.TabularConnector, storage: Storage):
+def run_discover(spec: DiscoverSpec, op: connector.TabularConnector, storage: Storage) -> None:
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)
 
