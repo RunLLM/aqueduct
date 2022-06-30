@@ -3,6 +3,16 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+      - '.github/workflows/integration-tests.yml'
+  issue_comment:
+    types: [ created ]
 
 jobs:
   run-tests:
@@ -73,7 +83,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 5
+        run: pytest . -rP --publish -n 1
 
       - uses: actions/upload-artifact@v3
         if: always()
