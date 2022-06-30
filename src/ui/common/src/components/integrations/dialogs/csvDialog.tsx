@@ -24,6 +24,37 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     setDialogConfig(config);
   }, [name, csv]);
 
+  const displayFileFn = (file: FileData) => {
+    const allRows = file.data.split(/\r?\n/);
+    const parsedHeader = ['id'];
+    parsedHeader.push(...allRows[0].split(/,/));
+    const width = 25;
+    const parsedColumns = parsedHeader.map((headerName) => {
+      return {
+        field: headerName,
+        headerName: headerName,
+        width: width * headerName.length,
+      };
+    });
+    const parsedRows = allRows.slice(1).map((line, id) => {
+      const row = line.split(/,/);
+      const parsedRow = { id: id };
+      parsedHeader.forEach(
+        (headerName, i) => (parsedRow[headerName] = row[i])
+      );
+      return parsedRow;
+    });
+
+    return (
+      <DataGrid
+        rows={parsedRows}
+        columns={parsedColumns}
+        pageSize={5}
+        rowsPerPageOptions={[5]}
+        disableSelectionOnClick
+      />
+    );
+  };
   return (
     <Box sx={{ mt: 2 }}>
       <Typography>Upload a CSV file to the demo database.</Typography>
@@ -60,37 +91,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
             }
           }
         }}
-        displayFile={(file: FileData) => {
-          const allRows = file.data.split(/\r?\n/);
-          const parsedHeader = ['id'];
-          parsedHeader.push(...allRows[0].split(/,/));
-          const width = 25;
-          const parsedColumns = parsedHeader.map((headerName) => {
-            return {
-              field: headerName,
-              headerName: headerName,
-              width: width * headerName.length,
-            };
-          });
-          const parsedRows = allRows.slice(1).map((line, id) => {
-            const row = line.split(/,/);
-            const parsedRow = { id: id };
-            parsedHeader.forEach(
-              (headerName, i) => (parsedRow[headerName] = row[i])
-            );
-            return parsedRow;
-          });
-
-          return (
-            <DataGrid
-              rows={parsedRows}
-              columns={parsedColumns}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
-              disableSelectionOnClick
-            />
-          );
-        }}
+        displayFile={displayFileFn}
         onReset={(_) => {
           setName('');
           setCSV(null);
