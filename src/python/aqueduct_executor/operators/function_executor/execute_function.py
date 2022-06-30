@@ -10,10 +10,10 @@ from typing import Any, Callable, Dict, List, Tuple
 from aqueduct_executor.operators.function_executor import spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import ExecutionCode, FailureReason
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from aqueduct_executor.operators.utils.logging import (
     Error,
-    ExecutionLogs,
+    ExecutionState,
     Logs,
     exception_traceback,
     TIP_OP_EXECUTION,
@@ -71,7 +71,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 def _execute_function(
     spec: spec.FunctionSpec,
     inputs: List[Any],
-    exec_logs: ExecutionLogs,
+    exec_logs: ExecutionState,
 ) -> Tuple[Any, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
@@ -108,7 +108,7 @@ def run(spec: spec.FunctionSpec) -> None:
     Executes a function operator.
     """
 
-    exec_logs = ExecutionLogs(user_logs=Logs())
+    exec_logs = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
         # Read the input data from intermediate storage.
@@ -118,7 +118,7 @@ def run(spec: spec.FunctionSpec) -> None:
 
         print("Invoking the function...")
         results, system_metadata = _execute_function(spec, inputs, exec_logs)
-        if exec_logs.code == ExecutionCode.FAILED:
+        if exec_logs.code == ExecutionStatus.FAILED:
             # user failure
             utils.write_logs(storage, spec.metadata_path, exec_logs)
             sys.exit(1)
@@ -137,13 +137,13 @@ def run(spec: spec.FunctionSpec) -> None:
             system_metadata=system_metadata,
         )
 
-        exec_logs.code = ExecutionCode.SUCCEEDED
+        exec_logs.code = ExecutionStatus.SUCCEEDED
         utils.write_logs(storage, spec.metadata_path, exec_logs)
         print(f"Succeeded! Full logs: {exec_logs.json()}")
 
     except Exception as e:
-        exec_logs.code = ExecutionCode.FAILED
-        exec_logs.failure_reason = FailureReason.SYSTEM
+        exec_logs.code = ExecutionStatus.FAILED
+        exec_logs.failure_type = FailureType.SYSTEM
         exec_logs.error = Error(
             context=exception_traceback(e),
             tip=TIP_UNKNOWN_ERROR,

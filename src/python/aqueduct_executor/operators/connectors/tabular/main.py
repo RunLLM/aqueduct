@@ -15,7 +15,7 @@ from aqueduct_executor.operators.connectors.tabular import (
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.logging import (
     Error,
-    ExecutionLogs,
+    ExecutionState,
     Logs,
     TIP_EXTRACT,
     TIP_INTEGRATION_CONNECTION,
@@ -31,7 +31,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
 
 
-def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionLogs):
+def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionState):
     """
     Runs one of the following connector operations:
     - authenticate
@@ -60,7 +60,7 @@ def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionLogs):
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionLogs, is_demo: bool):
+def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionState, is_demo: bool):
     @exec_logs.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
@@ -95,7 +95,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         return op.extract(spec.parameters)
 
     df = _extract()
-    if exec_logs.code != enums.ExecutionCode.FAILED:
+    if exec_logs.code != enums.ExecutionStatus.FAILED:
         utils.write_artifacts(
             storage,
             [utils.OutputArtifactType.TABLE],
@@ -107,7 +107,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
 
 
 def run_load(
-    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionLogs
+    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionState
 ):
     inputs = utils.read_artifacts(
         storage,
@@ -204,17 +204,17 @@ if __name__ == "__main__":
     print("Started %s job: %s" % (spec.type, spec.name))
 
     storage = parse_storage(spec.storage_config)
-    exec_logs = ExecutionLogs(user_logs=Logs())
+    exec_logs = ExecutionState(user_logs=Logs())
 
     try:
         run(spec, storage, exec_logs)
         # Write operator execution metadata
-        if exec_logs.code != enums.ExecutionCode.FAILED:
-            exec_logs.code = enums.ExecutionCode.SUCCEEDED
+        if exec_logs.code != enums.ExecutionStatus.FAILED:
+            exec_logs.code = enums.ExecutionStatus.SUCCEEDED
         utils.write_logs(storage, spec.metadata_path, exec_logs)
     except Exception as e:
-        exec_logs.code = enums.ExecutionCode.FAILED
-        exec_logs.failure_reason = enums.FailureReason.SYSTEM
+        exec_logs.code = enums.ExecutionStatus.FAILED
+        exec_logs.failure_type = enums.FailureType.SYSTEM
         exec_logs.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
         print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
         utils.write_logs(storage, spec.metadata_path, exec_logs)

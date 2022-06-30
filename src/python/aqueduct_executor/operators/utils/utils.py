@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import pandas as pd
 
-from aqueduct_executor.operators.utils.logging import ExecutionLogs
+from aqueduct_executor.operators.utils.logging import ExecutionState
 from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -247,7 +247,7 @@ def _write_json_output(
 def write_logs(
     storage: Storage,
     metadata_path: str,
-    exec_logs: ExecutionLogs,
+    exec_logs: ExecutionState,
 ) -> None:
     """
     Writes operator execution logs to storage.
