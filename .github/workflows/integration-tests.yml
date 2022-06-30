@@ -24,7 +24,15 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we support.
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7']
+        # python-version: ['3.7', '3.8', '3.9', '3.10']
+    
+    outputs:
+      test_3_7: ${{ steps.deploy-url.outputs.3.7 }}
+      # test_3_8: ${{ steps.deploy-url.outputs.3.8 }}
+      # test_3_9: ${{ steps.deploy-url.outputs.3.9 }}
+      # test_3_10: ${{ steps.deploy-url.outputs.3.10 }}
+
 
     # name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -80,7 +88,8 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Run the Integration Tests
+      - id: execute_test
+        name: Run the Integration Tests
         timeout-minutes: 10
         working-directory: integration_tests/sdk
         env:
@@ -99,3 +108,15 @@ jobs:
         with:
           name: Executor Logs
           path: ~/.aqueduct/server/logs/*
+      
+      - name: Collect Integration Test Result
+        run: echo '::set-output name=${{ matrix.python_version }}::${{ job.status }}'
+  
+  tests_passed:
+    runs-on: ubuntu-latest
+    needs: 
+      - run-tests
+    steps:
+      - name: Print test results
+        run: |
+          echo ${{ toJSON(needs) }}
