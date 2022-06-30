@@ -3,7 +3,7 @@ import base64
 import sys
 
 from aqueduct_executor.operators.utils import enums, utils
-from aqueduct_executor.operators.utils.logging import (
+from aqueduct_executor.operators.utils.execution import (
     Error,
     ExecutionState,
     Logs,

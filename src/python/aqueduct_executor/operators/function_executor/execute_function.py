@@ -11,7 +11,7 @@ from aqueduct_executor.operators.function_executor.spec import FunctionSpec, par
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
-from aqueduct_executor.operators.utils.logging import (
+from aqueduct_executor.operators.utils.execution import (
     Error,
     ExecutionState,
     Logs,
