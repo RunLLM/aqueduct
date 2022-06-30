@@ -55,6 +55,7 @@ quick overview:
 4. Merge the latest commits from `main` branch on aqueducthq/aqueduct (or
    rebase your branch against `main`). 
 5. Open a new pull request to merge your changes into `main`.
+6. Run the integration tests by adding the `run_integration_test` label to your PR.
 
 ### Verifying your changes
 
