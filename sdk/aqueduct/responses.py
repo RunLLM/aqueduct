@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureReason
+from aqueduct.enums import ExecutionStatus, FailureType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 
@@ -15,7 +15,7 @@ class Logs(BaseModel):
 
     def is_empty(self) -> bool:
         return self.stdout == "" and self.stderr == ""
-    
+
     def __str__(self) -> str:
         return f"""stdout:
 {self.stdout}
@@ -26,8 +26,8 @@ stderr:
 
 
 class Error(BaseModel):
-    context: str
-    tip: str
+    context: str = ""
+    tip: str = ""
 
 
 class OperatorResult(BaseModel):
@@ -45,8 +45,8 @@ class OperatorResult(BaseModel):
 
     user_logs: Optional[Logs] = None
     error: Optional[Error] = None
-    code: ExecutionStatus = ExecutionStatus.UNKNOWN
-    failure_reason: FailureReason = FailureReason.NO_FAILURE
+    status: ExecutionStatus = ExecutionStatus.UNKNOWN
+    failure_type: FailureType = FailureType.SUCCESS
 
 
 class TableArtifactResult(BaseModel):

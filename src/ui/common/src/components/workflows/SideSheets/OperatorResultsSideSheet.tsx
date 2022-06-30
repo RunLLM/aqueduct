@@ -52,7 +52,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   };
 
   const operatorSpec = operator.spec;
-  const status = workflow.operatorResults[currentNode.id]?.result?.code;
+  const status = workflow.operatorResults[currentNode.id]?.result?.status;
 
   let spec, integration, actions;
 

@@ -148,7 +148,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing tables.")
 	}
 
-	var metadata shared.ExecutionLogs
+	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,

@@ -73,7 +73,7 @@ type previewArtifactResponse struct {
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionLogs    `json:"operator_results"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
 	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
 }
 
@@ -179,7 +179,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	// We should not include artifact results for operators that failed.
 	artifactsToSkipFetch := map[uuid.UUID]bool{}
 	for opId, opResult := range operatorResults {
-		if opResult.Code == shared.FailedExecutionStatus {
+		if opResult.Status == shared.FailedExecutionStatus {
 			for _, artifactId := range dagSummary.Dag.Operators[opId].Outputs {
 				artifactsToSkipFetch[artifactId] = true
 			}
@@ -200,15 +200,15 @@ func deserializeOperatorResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-) map[uuid.UUID]shared.ExecutionLogs {
-	responses := make(map[uuid.UUID]shared.ExecutionLogs, len(workflowStoragePaths.OperatorMetadataPaths))
+) map[uuid.UUID]shared.ExecutionState {
+	responses := make(map[uuid.UUID]shared.ExecutionState, len(workflowStoragePaths.OperatorMetadataPaths))
 	for id, path := range workflowStoragePaths.OperatorMetadataPaths {
-		var operatorMetadata shared.ExecutionLogs
+		var operatorMetadata shared.ExecutionState
 		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
 		if err != nil {
-			responses[id] = shared.ExecutionLogs{
-				Code:          shared.FailedExecutionStatus,
-				FailureReason: shared.SystemFailure,
+			responses[id] = shared.ExecutionState{
+				Status:      shared.FailedExecutionStatus,
+				FailureType: shared.SystemFailure,
 				Error: &shared.Error{
 					Context: fmt.Sprintf("%v", err),
 					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,

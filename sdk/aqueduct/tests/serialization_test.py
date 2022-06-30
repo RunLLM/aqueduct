@@ -91,7 +91,7 @@ def test_operator_serialization():
 def test_preview_response_loading():
     op_id = uuid.uuid4()
     op_result = OperatorResult(
-        code=ExecutionStatus.SUCCEEDED,
+        status=ExecutionStatus.SUCCEEDED,
         user_logs=Logs(stdout="These are the operator logs"),
     )
     artifact_id = uuid.uuid4()
