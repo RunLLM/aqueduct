@@ -107,7 +107,10 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
 
 
 def run_load(
-    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
+    spec: spec.LoadSpec,
+    op: connector.TabularConnector,
+    storage: Storage,
+    exec_state: ExecutionState,
 ):
     inputs = utils.read_artifacts(
         storage,
