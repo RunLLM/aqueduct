@@ -13,17 +13,17 @@ class MetaEnum(EnumMeta):
         return item in [v.value for v in cast(Iterable[Enum], cls.__members__.values())]
 
 
-class ExecutionCode(str, Enum, metaclass=MetaEnum):
+class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     PENDING = "pending"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
 
 
-class FailureReason(Enum, metaclass=MetaEnum):
-    SYSTEM = 0
-    USER = 1
-    NO_FAILURE = 2
+class FailureType(Enum, metaclass=MetaEnum):
+    SUCCESS = 0
+    SYSTEM = 1
+    USER = 2
 
 
 class JobType(str, Enum, metaclass=MetaEnum):
