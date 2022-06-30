@@ -18,7 +18,7 @@ on:
 
 jobs:
   run-tests:
-    if: ${{ inputs.username }}
+    if: ${{ inputs.run-integration-test }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

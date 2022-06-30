@@ -11,7 +11,7 @@ on:
 
 jobs:
   trigger-integration-tests:
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-1306-remove-need-to-run-tests-on-non-code
     with:
       run-integration-test: false
     
