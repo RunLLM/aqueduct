@@ -3,18 +3,19 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
-  pull_request:
-    types: [ labeled, opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
     paths:
-       - 'src/golang/**'
-       - 'src/python/**'
-       - 'integration_tests/**'
-       - 'sdk/aqueduct/**'
-       - '.github/workflows/integration-tests.yml'
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+      - '.github/workflows/integration-tests.yml'
+  issue_comment:
+    types: [ created ]
 
 jobs:
   run-tests:
-    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run_integration_test') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
