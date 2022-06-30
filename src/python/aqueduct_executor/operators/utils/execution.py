@@ -5,23 +5,22 @@ import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Any, Callable, Optional
 from pydantic import BaseModel
-from aqueduct_executor.operators.utils.enums import ExecutionCode, FailureReason
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 
 
 _GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
 TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace for fix."
 _TIP_CREATE_BUG_REPORT = (
-    "We are sorry to see this :(. "
-    f"You could send over a bug report through github issue {_GITHUB_ISSUE_LINK} "
-    " or in our slack channel. We will get back to you as soon as we can."
+    f"Please create bug report in github: {_GITHUB_ISSUE_LINK} . "
+    "We will get back to you as soon as we can."
 )
-TIP_UNKNOWN_ERROR = f"An unexpected error occurred. {_TIP_CREATE_BUG_REPORT}"
+TIP_UNKNOWN_ERROR = f"Sorry, we've run into an unexpected error! {_TIP_CREATE_BUG_REPORT}"
 TIP_INTEGRATION_CONNECTION = (
     "We have trouble connecting to the integration. "
-    "Please check your credentials or your integraiton provider."
+    "Please check your credentials or contact your integraiton provider."
 )
-TIP_DEMO_CONNECTION = "We have trouble connecting to demo DB. {_TIP_CREATE_BUG_REPORT}"
+TIP_DEMO_CONNECTION = f"We have trouble connecting to demo DB. {_TIP_CREATE_BUG_REPORT}"
 
 TIP_EXTRACT = "We couldn't execute the provided query. Please double check your query is correct."
 TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
@@ -38,10 +37,10 @@ class Logs(BaseModel):
     stderr: str = ""
 
 
-class ExecutionLogs(BaseModel):
+class ExecutionState(BaseModel):
     user_logs: Logs
-    code: ExecutionCode = ExecutionCode.PENDING
-    failure_reason: FailureReason = FailureReason.NO_FAILURE
+    status: ExecutionStatus = ExecutionStatus.PENDING
+    failure_type: FailureType = FailureType.SUCCESS
     error: Optional[Error] = None
 
     def user_fn_redirected(self, failure_tip: str) -> Callable[..., Any]:
@@ -55,8 +54,8 @@ class ExecutionLogs(BaseModel):
                 except Exception:
                     # Include the stack trace within the user's code.
                     fetch_redirected_logs(stdout_log, stderr_log, self.user_logs)
-                    self.code = ExecutionCode.FAILED
-                    self.failure_reason = FailureReason.USER
+                    self.code = ExecutionStatus.FAILED
+                    self.failure_type = FailureType.USER
                     self.error = Error(
                         context=stack_traceback(
                             offset=1
