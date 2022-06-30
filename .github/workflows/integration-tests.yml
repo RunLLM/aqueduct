@@ -2,20 +2,23 @@ name: Integration Tests
 
 on:
   workflow_call:
+    inputs:
+      run-integration-test:
+        description: 'Run the integration test'
+        default: true
+        required: true
+        type: boolean
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
-  issue_comment:
-    types: [ created ]
+    inputs:
+      run-integration-test:
+        description: 'Run the integration test'
+        default: true
+        required: true
+        type: boolean
 
 jobs:
   run-tests:
+    if: ${{ inputs.username }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
