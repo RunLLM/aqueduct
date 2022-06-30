@@ -83,7 +83,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 2
+        run: pytest . -rP --publish -n 1
 
       - uses: actions/upload-artifact@v3
         if: always()
