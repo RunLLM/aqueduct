@@ -37,7 +37,7 @@ export const Node: React.FC<Props> = ({
 
   let status: CheckStatus | ExecutionStatus;
   if (data.nodeType === ReactflowNodeType.Operator) {
-    status = workflowState.operatorResults[data.nodeId]?.result?.code;
+    status = workflowState.operatorResults[data.nodeId]?.result?.status;
   } else {
     const artifactResult = workflowState.artifactResults[data.nodeId];
     if (
