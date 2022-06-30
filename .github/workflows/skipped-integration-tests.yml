@@ -1,0 +1,21 @@
+# This is a workaround due to Github Actions limitations on aggregating results from a job matrix.
+
+name: Skipped Integration Tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        # These are all the Python versions that we support.
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+    
+    name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
+    steps:
+      - run: |
+          exit 0

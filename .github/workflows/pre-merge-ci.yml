@@ -8,7 +8,6 @@ on:
       - 'src/python/**'
       - 'integration_tests/**'
       - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
 
 jobs:
   trigger-integration-tests:

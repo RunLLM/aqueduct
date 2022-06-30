@@ -8,11 +8,10 @@ on:
       - 'src/python/**'
       - 'integration_tests/**'
       - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
 
 jobs:
   trigger-integration-tests:
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-1306-remove-need-to-run-tests-on-non-code
+    uses: aqueducthq/aqueduct/.github/workflows/skipped-integration-tests.yml@eng-1306-remove-need-to-run-tests-on-non-code
     with:
       run-integration-test: false
     
