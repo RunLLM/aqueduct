@@ -2,7 +2,11 @@ import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useEffect, useState } from 'react';
 
-import { BigQueryConfig, IntegrationConfig } from '../../../utils/integrations';
+import {
+  BigQueryConfig,
+  FileData,
+  IntegrationConfig,
+} from '../../../utils/integrations';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -17,15 +21,18 @@ type Props = {
 export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [projectId, setProjectId] = useState<string>(null);
   const [file, setFile] = useState(null);
-  const [credentials, setCredentials] = useState<string>(null);
 
   useEffect(() => {
+    let contents = null;
+    if (file) {
+      contents = file.data;
+    }
     const config: BigQueryConfig = {
       project_id: projectId,
-      service_account_credentials: credentials,
+      service_account_credentials: contents,
     };
     setDialogConfig(config);
-  }, [projectId, credentials]);
+  }, [projectId, file]);
 
   const fileUploadDescription = (
     <>
@@ -61,12 +68,11 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         placeholder={'Upload your service account key file.'}
         onFiles={(files) => {
           const file = files[0];
-          setFile(file);
-          readCredentialsFile(file, setCredentials);
+          readCredentialsFile(file, setFile);
         }}
+        displayFile={null}
         onReset={(_) => {
           setFile(null);
-          setCredentials(null);
         }}
       />
     </Box>
@@ -75,12 +81,12 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
 
 function readCredentialsFile(
   file: File,
-  setCredentials: (credentials: string) => void
+  setFile: (credentials: FileData) => void
 ) {
   const reader = new FileReader();
   reader.onloadend = function (event) {
     const content = event.target.result as string;
-    setCredentials(content);
+    setFile({ name: file.name, data: content });
   };
   reader.readAsText(file);
 }

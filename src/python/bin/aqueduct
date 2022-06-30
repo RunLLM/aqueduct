@@ -68,7 +68,6 @@ def start(expose, port):
                 "--port",
                 str(server_port),
             ], 
-            ui_directory,
         )
     else:
         popen_handle = execute_command_nonblocking(
@@ -79,7 +78,6 @@ def start(expose, port):
                 "--port",
                 str(server_port),
             ], 
-            ui_directory,
         )
     return popen_handle, server_port
 
