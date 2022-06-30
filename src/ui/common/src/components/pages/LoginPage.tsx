@@ -5,6 +5,7 @@ import { useCookies } from 'react-cookie';
 
 import fetchUser from '../../utils/fetchUser';
 import { Button } from '../primitives/Button.styles';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 
 export const LoginPage: React.FC = () => {
   useEffect(() => {
@@ -50,7 +51,7 @@ export const LoginPage: React.FC = () => {
       // doesn't give us an easy way to read the cookie state once it's
       // changed, so even though we've updated the cookie, the App will still
       // think that the user isn't logged in and will show the login page.
-      window.location.reload();
+      window.location.assign(getPathPrefix());
     }
   };
 

@@ -11,8 +11,11 @@ import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
 
 function RequireAuth({ children, user }): { children: JSX.Element, user: UserProfile | undefined } {
+  const pathPrefix = getPathPrefix();
+  let routesContent: React.ReactElement;
+
   if (!user || !user.apiKey) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={`${pathPrefix}/login`} replace />;
   }
 
   return children;
