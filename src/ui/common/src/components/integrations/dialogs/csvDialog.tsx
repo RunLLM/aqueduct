@@ -39,9 +39,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     const parsedRows = allRows.slice(1).map((line, id) => {
       const row = line.split(/,/);
       const parsedRow = { id: id };
-      parsedHeader.forEach(
-        (headerName, i) => (parsedRow[headerName] = row[i])
-      );
+      parsedHeader.forEach((headerName, i) => (parsedRow[headerName] = row[i]));
       return parsedRow;
     });
 
