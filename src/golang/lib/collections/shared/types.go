@@ -9,11 +9,10 @@ import (
 
 const (
 	githubIssueLink    = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
-	TipCreateBugReport = "We are sorry to see this :(. " +
-		"You could send over a bug report through github issue: " +
-		githubIssueLink +
-		" , or in our slack channel. We will get back to you as soon as we can."
-	TipUnknownInternalError = "An unexpected error occurred. " + TipCreateBugReport
+	TipCreateBugReport = "Please create bug report in github: " +
+		githubIssueLink + " . " +
+		"We will get back to you as soon as we can."
+	TipUnknownInternalError = "Sorry, we've run into an unexpected error! " + TipCreateBugReport
 )
 
 var ErrInvalidStorageConfig = errors.New("Invalid Storage Config")
