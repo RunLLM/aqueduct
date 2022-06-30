@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Callable, Any, Optional, Dict, Union, List
+from typing import Any, Optional, Dict, Union, List
 import uuid
 
 from great_expectations.data_context.types.base import (
@@ -11,14 +11,12 @@ from great_expectations.data_context.types.base import (
 )
 from great_expectations.data_context import BaseDataContext
 
-from great_expectations import DataContext
-from great_expectations.core import ExpectationSuite, ExpectationConfiguration
+from great_expectations.core import ExpectationConfiguration
 from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.validator.validator import Validator
 
 import pandas as pd
 import aqueduct
-import ruamel
 from ruamel import yaml
 
 from aqueduct.api_client import APIClient
@@ -97,6 +95,11 @@ class TableArtifact(Artifact):
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
+
+        Args:
+            parameters:
+                A map from parameter name to its custom value, to be used when evaluating
+                this artifact.
 
         Returns:
             A dataframe containing the tabular contents of this artifact.
@@ -188,6 +191,15 @@ class TableArtifact(Artifact):
         """
         return self.PRESET_METRIC_LIST
 
+    def list_system_metrics(self) -> List[str]:
+        """Returns a list of all system metrics available on the table artifact.
+        These system metrics can be set via the invoking the system_metric() method the table.
+
+        Returns:
+            A list of available system metrics on a table
+        """
+        return list(SYSTEM_METRICS_INFO.keys())
+
     def validate_with_expectation(
         self,
         expectation_name: str,
@@ -248,7 +260,7 @@ class TableArtifact(Artifact):
                     batch_identifiers:
                         - default_identifier_name
             """
-            context.add_datasource(**yaml.load(datasource_yaml, Loader=ruamel.yaml.Loader))
+            context.add_datasource(**yaml.load(datasource_yaml, Loader=yaml.Loader))
 
             df: pd.DataFrame = table
             runtime_batch_request = RuntimeBatchRequest(

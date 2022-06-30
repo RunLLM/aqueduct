@@ -37,12 +37,14 @@ type AddTableDialogProps = {
   user: UserProfile;
   integrationId: string;
   onCloseDialog: () => void;
+  onConnect: () => void;
 };
 
 export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   user,
   integrationId,
   onCloseDialog,
+  onConnect,
 }) => {
   const [config, setConfig] = useState<CSVConfig>({
     name: '',
@@ -94,6 +96,7 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
         const successMessage =
           'Successfully uploaded CSV file to the demo database!';
         setSuccessMessage(successMessage);
+        onConnect();
         setIsConnecting(false);
       })
       .catch((err) => {

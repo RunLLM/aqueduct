@@ -140,6 +140,7 @@ def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
+    reqs_path: Optional[str] = None,
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -160,6 +161,8 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
+        reqs_path:
+            A path to file that specifies requirements for this specific operator.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -195,7 +198,7 @@ def op(
              - <any file dependencies>
             """
             assert isinstance(name, str)
-            zip_file = serialize_function(func, file_dependencies)
+            zip_file = serialize_function(func, file_dependencies, reqs_path)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
