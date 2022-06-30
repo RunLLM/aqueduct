@@ -46,7 +46,7 @@ type artifactVersion struct {
 type CheckResult struct {
 	Name     string                 `json:"name"`
 	Status   shared.ExecutionStatus `json:"status"`
-	Metadata shared.ExecutionLogs   `json:"metadata"`
+	Metadata shared.ExecutionState  `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
