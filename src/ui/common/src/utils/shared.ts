@@ -19,10 +19,10 @@ export enum ExecutionStatus {
   Pending = 'pending',
 }
 
-export enum FailureReason {
-  System = 0,
-  User = 1,
-  NoFailure = 2,
+export enum FailureType {
+  Success = 0,
+  System = 1,
+  User = 2,
 }
 
 export enum CheckStatus {
