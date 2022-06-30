@@ -1,7 +1,6 @@
 import { Edge, Node } from 'react-flow-renderer';
 import { Position } from 'react-flow-renderer';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import AqueductBezier from '../components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from '../components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from '../components/workflows/edges/AqueductStraight';
@@ -10,9 +9,7 @@ import {
   OperatorTypeToNodeTypeMap,
 } from '../reducers/nodeSelection';
 import { Artifact } from './artifacts';
-import { Operator, OperatorType } from './operators';
-
-const { apiAddress } = useAqueductConsts();
+import { Operator } from './operators';
 
 export const EdgeTypes = {
   quadratic: AqueductQuadratic,
@@ -42,7 +39,7 @@ export type GetPositionResponse = {
 // These are generic dag supports
 type NodePos = { x: number; y: number };
 
-function getOperatorNode(
+export function getOperatorNode(
   op: Operator,
   pos: NodePos,
   onChange: () => void,
@@ -63,7 +60,7 @@ function getOperatorNode(
   };
 }
 
-function getArtifactNode(
+export function getArtifactNode(
   artf: Artifact,
   pos: NodePos,
   onChange: () => void,
@@ -84,7 +81,7 @@ function getArtifactNode(
   };
 }
 
-function getEdges(operators: { [id: string]: Operator }): Edge[] {
+export function getEdges(operators: { [id: string]: Operator }): Edge[] {
   const results = [];
   Object.values(operators).forEach((op) => {
     op.inputs.forEach((artfId) => {
@@ -106,45 +103,3 @@ function getEdges(operators: { [id: string]: Operator }): Edge[] {
   });
   return results;
 }
-
-async function getPositions(
-  operators: { [id: string]: Operator },
-  apiKey: string
-): Promise<[{ [opId: string]: NodePos }, { [artfId: string]: NodePos }]> {
-  try {
-    const response = await fetch(`${apiAddress}/api/positioning`, {
-      method: 'POST',
-      headers: {
-        'api-key': apiKey,
-      },
-      body: JSON.stringify(operators),
-    });
-    const json = await response.json();
-    return [json['operator_positions'], json['artifact_positions']];
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-export const getDagLayoutElements = (
-  operators: { [id: string]: Operator },
-  artifacts: { [id: string]: Artifact },
-  position: GetPositionResponse,
-  onChange: () => void,
-  onConnect: (any) => void,
-  apiKey: string
-): { nodes: Node<ReactFlowNodeData>[]; edges: Edge[] } => {
-  const opPositions = position.operator_positions;
-  const artfPositions = position.artifact_positions;
-  const opNodes = Object.values(operators)
-  .filter((op) => {
-    return op.spec.type != OperatorType.Param;
-  })
-  .map((op) => getOperatorNode(op, opPositions[op.id], onChange, onConnect));
-  const artfNodes = Object.values(artifacts).map((artf) =>
-    getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
-  );
-
-  const edges = getEdges(operators);
-  return { nodes: opNodes.concat(artfNodes), edges: edges };
-};
