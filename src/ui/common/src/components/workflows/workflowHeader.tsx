@@ -72,6 +72,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     );
   }
 
+
   const triggerWorkflowRun = () => {
     setShowRunWorkflowDialog(false);
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
@@ -95,6 +96,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       });
   };
 
+  const paramNames = ["param1", "param2"]
+
   const runWorkflowDialog = (
     <Dialog
       open={showRunWorkflowDialog}
@@ -107,22 +110,20 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         </Box>
 
         <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold'}}> Parameters </Typography>
-        <Box>
-          <Typography><small>Parameter Name</small></Typography>
-          <TextField
-              fullWidth
-              placeholder="Default parameter here"
-              size="small"
-          />
-        </Box>
-        <Box>
-          <Typography><small>Parameter Name</small></Typography>
-          <TextField
-              fullWidth
-              placeholder="Default parameter here"
-              size="small"
-          />
-        </Box>
+        {
+          paramNames.map((paramName) => {
+            return (
+              <Box>
+                <Typography><small>Parameter Name</small></Typography>
+                <TextField
+                    fullWidth
+                    placeholder="Default parameter here"
+                    size="small"
+                />
+              </Box>
+            )
+          })
+        }
 
       </DialogContent>
       <DialogActions>
