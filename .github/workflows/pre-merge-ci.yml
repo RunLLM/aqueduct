@@ -1,0 +1,10 @@
+name: Pre-Merge Integration tests
+
+on: 
+  pull_request:
+    types: [ labeled, opened, synchronize, reopened ]
+
+jobs:
+  trigger-integration-tests:
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+    if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')

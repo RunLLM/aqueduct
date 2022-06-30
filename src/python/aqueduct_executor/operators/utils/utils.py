@@ -146,9 +146,7 @@ def write_artifact(
                 "Expected output type to be Pandas Dataframe, but instead got %s"
                 % type(content).__name__
             )
-        output_metadata[_METADATA_SCHEMA_KEY] = json.dumps(
-            [{col: str(content[col].dtype)} for col in content]
-        )
+        output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
         _write_tabular_output(storage, output_path, output_metadata_path, content, output_metadata)
 
     elif artifact_type == OutputArtifactType.FLOAT:
@@ -191,7 +189,7 @@ def _write_tabular_output(
     output_path: str,
     output_metadata_path: str,
     df: pd.DataFrame,
-    output_metadata: Dict[str, str],
+    output_metadata: Dict[str, Any],
 ) -> None:
     output_str = df.to_json(orient="table", date_format="iso", index=False)
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))

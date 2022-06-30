@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -33,6 +34,8 @@ const (
 
 	accountOrganizationId = "aqueduct"
 )
+
+var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
 
 type AqServer struct {
 	Router *chi.Mux
@@ -244,7 +247,7 @@ func (s *AqServer) Run(expose bool, port int) {
 		ip = "localhost"
 	}
 
-	static := http.FileServer(http.Dir("."))
+	static := http.FileServer(http.Dir(uiDir))
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
@@ -254,7 +257,7 @@ func (s *AqServer) Run(expose bool, port int) {
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./index.html")
+		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", uiDir))
 	}
 
 	return http.HandlerFunc(fn)
