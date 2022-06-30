@@ -163,7 +163,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while previewing table.")
 	}
 
-	var metadata shared.ExecutionLogs
+	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,

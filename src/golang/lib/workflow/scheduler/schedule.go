@@ -279,8 +279,8 @@ func CheckOperatorExecutionStatus(
 	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
-) *shared.ExecutionLogs {
-	var logs shared.ExecutionLogs
+) *shared.ExecutionState {
+	var logs shared.ExecutionState
 	err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
@@ -293,9 +293,9 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
-		return &shared.ExecutionLogs{
-			Code:          shared.FailedExecutionStatus,
-			FailureReason: shared.SystemFailure,
+		return &shared.ExecutionState{
+			Status:      shared.FailedExecutionStatus,
+			FailureType: shared.SystemFailure,
 			Error: &shared.Error{
 				Context: fmt.Sprintf("%v", err),
 				Tip:     shared.TipUnknownInternalError,

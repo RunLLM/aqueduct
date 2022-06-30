@@ -87,10 +87,10 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     PENDING = "pending"
 
 
-class FailureReason(Enum, metaclass=MetaEnum):
-    SYSTEM = 0
-    USER = 1
-    NO_FAILURE = 2
+class FailureType(Enum, metaclass=MetaEnum):
+    SUCCESS = 0
+    SYSTEM = 1
+    USER = 2
 
 
 class SalesforceExtractType(str, Enum, metaclass=MetaEnum):

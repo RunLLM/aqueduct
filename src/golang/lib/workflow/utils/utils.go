@@ -461,7 +461,7 @@ func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
 	storageConfig *shared.StorageConfig,
-	operatorResultMetadata *shared.ExecutionLogs,
+	operatorState *shared.ExecutionState,
 	artifactMetadataPaths map[uuid.UUID]string,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
 	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
@@ -477,7 +477,7 @@ func UpdateOperatorAndArtifactResults(
 		artifactIdToArtifactMetadata[artifactId] = nil
 	}
 
-	if operatorResultMetadata.Code == shared.SucceededExecutionStatus {
+	if operatorState.Status == shared.SucceededExecutionStatus {
 		for _, artifactId := range operator.Outputs {
 			var artifactResultMetadata artifact_result.Metadata
 			err := ReadFromStorage(
@@ -499,7 +499,7 @@ func UpdateOperatorAndArtifactResults(
 	updateOperatorAndArtifactResults(
 		ctx,
 		operator,
-		operatorResultMetadata,
+		operatorState,
 		artifactStatuses,
 		artifactIdToArtifactMetadata,
 		operatorToOperatorResult,
@@ -513,7 +513,7 @@ func UpdateOperatorAndArtifactResults(
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
-	operatorResultMetadata *shared.ExecutionLogs,
+	operatorState *shared.ExecutionState,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
@@ -523,10 +523,10 @@ func updateOperatorAndArtifactResults(
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		operator_result.StatusColumn: operatorResultMetadata.Code,
+		operator_result.StatusColumn: operatorState.Status,
 	}
 
-	changes[operator_result.MetadataColumn] = operatorResultMetadata
+	changes[operator_result.StateColumn] = operatorState
 
 	_, err := operatorResultWriter.UpdateOperatorResult(
 		ctx,
