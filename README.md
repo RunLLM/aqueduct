@@ -33,9 +33,9 @@ client.publish_flow(name="review_strlen", artifacts=[strlen_table])
 
 Here's a few, more detailed prediction pipelines:
 
-* [Churn Ensemble]("examples/churn_prediction/Build\ and\ Deploy\ Churn\ Ensemble.ipynb")
-* [Sentiment Analysis](/examples/sentiment_analysis/Sentiment\ Model.ipynb)
-* [Impute Missing Wine Data](/examples/training_and_inference/Training\ and\ Inference\ in\ a\ Single\ Workflow.ipynb)
+* [Churn Ensemble](examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
+* [Sentiment Analysis](examples/sentiment_analysis/Sentiment%20Model.ipynb)
+* [Impute Missing Wine Data](examples/training_and_inference/Training%20and%20Inference%20in%20a%20Single%20Workflow.ipynb)
 * more coming soon!
 
 
