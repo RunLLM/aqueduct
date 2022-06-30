@@ -12,6 +12,6 @@ on:
 jobs:
   trigger-integration-tests:
     uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
-      with:
-        run-integration-test: false
+    with:
+      run-integration-test: false
     
