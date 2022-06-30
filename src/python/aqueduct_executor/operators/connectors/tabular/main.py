@@ -6,11 +6,10 @@ import traceback
 
 from pydantic import parse_obj_as
 
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec
-from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.connectors.tabular import connector, extract, spec
+from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-
 
 try:
     from typing import Literal
@@ -18,11 +17,8 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
 
-from pydantic import validator
-
-from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
+from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
-from aqueduct_executor.operators.utils.storage import config as sconfig
 
 
 def run(spec: spec.Spec, storage: Storage):
@@ -59,14 +55,33 @@ def run_authenticate(op: connector.TabularConnector):
 
 
 def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
-    df = op.extract(spec.parameters)
+    extract_params = spec.parameters
+
+    # Search for user-defined placeholder if this is a relational query, and replace them with
+    # the appropriate values.
+    if isinstance(extract_params, extract.RelationalParams):
+        assert len(spec.input_param_names) == len(spec.input_content_paths)
+        input_vals = utils.read_artifacts(
+            storage,
+            spec.input_content_paths,
+            spec.input_metadata_paths,
+            [utils.InputArtifactType.JSON] * len(spec.input_content_paths),
+        )
+        assert all(
+            isinstance(param_val, str) for param_val in input_vals
+        ), "Parameter value must be a string."
+
+        parameters = dict(zip(spec.input_param_names, input_vals))
+        extract_params.expand_placeholders(parameters)
+
+    df = op.extract(extract_params)
     utils.write_artifacts(
         storage,
+        [utils.OutputArtifactType.TABLE],
         [spec.output_content_path],
         [spec.output_metadata_path],
         [df],
-        {},
-        [utils.OutputArtifactType.TABLE],
+        system_metadata={},
     )
 
 

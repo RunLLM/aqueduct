@@ -11,15 +11,15 @@ import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-import { setAllSideSheetState } from '../../reducers/openSideSheet';
-import { selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { dateString } from '../../utils/metadata';
 import ExecutionStatus from '../../utils/shared';
 
 export const VersionSelector: React.FC = () => {
+  const navigate = useNavigate();
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const results = workflow.dagResults;
   const selectedResult = workflow.selectedResult;
@@ -61,10 +61,9 @@ export const VersionSelector: React.FC = () => {
     return (
       <MenuItem
         value={idx}
-        key={idx}
+        key={r.id}
         onClick={() => {
-          dispatch(setAllSideSheetState(false));
-          dispatch(selectResultIdx(idx));
+          navigate(`?workflowDagResultId=${encodeURI(r.id)}`);
         }}
         sx={{ backgroundColor: selected ? 'blueTint' : null }}
       >
