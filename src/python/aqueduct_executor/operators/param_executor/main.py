@@ -19,7 +19,7 @@ def run(spec: spec.ParamSpec) -> None:
     Executes a parameter operator by storing the parameter value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
-    exec_logs = ExecutionState(user_logs=Logs())
+    exec_state = ExecutionState(user_logs=Logs())
     try:
         utils.write_artifact(
             storage,
@@ -29,14 +29,14 @@ def run(spec: spec.ParamSpec) -> None:
             spec.val,
             system_metadata={},
         )
-        exec_logs.code = enums.ExecutionStatus.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_logs(storage, spec.metadata_path, exec_state)
     except Exception as e:
-        exec_logs.code = enums.ExecutionStatus.FAILED
-        exec_logs.failure_type = enums.FailureType.SYSTEM
-        exec_logs.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        exec_state.status = enums.ExecutionStatus.FAILED
+        exec_state.failure_type = enums.FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        utils.write_logs(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 

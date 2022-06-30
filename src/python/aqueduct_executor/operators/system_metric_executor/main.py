@@ -19,7 +19,7 @@ def run(spec: spec.SystemMetricSpec) -> None:
     Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
-    exec_logs = ExecutionState(user_logs=Logs())
+    exec_state = ExecutionState(user_logs=Logs())
     try:
         # We currently allow the spec to contain multiple input_metadata paths.
         # A system metric currently spans over a single operator.
@@ -33,14 +33,14 @@ def run(spec: spec.SystemMetricSpec) -> None:
             float(system_metadata[0][spec.metric_name]),
             system_metadata={},
         )
-        exec_logs.code = enums.ExecutionStatus.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_logs(storage, spec.metadata_path, exec_state)
     except Exception as e:
-        exec_logs.code = enums.ExecutionStatus.FAILED
-        exec_logs.failure_type = enums.FailureType.SYSTEM
-        exec_logs.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        exec_state.status = enums.ExecutionStatus.FAILED
+        exec_state.failure_type = enums.FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        utils.write_logs(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 

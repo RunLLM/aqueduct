@@ -31,7 +31,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
 
 
-def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionState):
+def run(spec: spec.Spec, storage: Storage, exec_state: ExecutionState):
     """
     Runs one of the following connector operations:
     - authenticate
@@ -47,21 +47,21 @@ def run(spec: spec.Spec, storage: Storage, exec_logs: ExecutionState):
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
-        run_authenticate(op, exec_logs, is_demo=(spec.name == spec.AQUEDUCT_DEMO_NAME))
+        run_authenticate(op, exec_state, is_demo=(spec.name == spec.AQUEDUCT_DEMO_NAME))
     elif spec.type == enums.JobType.EXTRACT:
-        run_extract(spec, op, storage, exec_logs)
+        run_extract(spec, op, storage, exec_state)
     elif spec.type == enums.JobType.LOADTABLE:
         run_load_table(spec, op, storage)
     elif spec.type == enums.JobType.LOAD:
-        run_load(spec, op, storage, exec_logs)
+        run_load(spec, op, storage, exec_state)
     elif spec.type == enums.JobType.DISCOVER:
         run_discover(spec, op, storage)
     else:
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector, exec_logs: ExecutionState, is_demo: bool):
-    @exec_logs.user_fn_redirected(
+def run_authenticate(op: connector.TabularConnector, exec_state: ExecutionState, is_demo: bool):
+    @exec_state.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
     def _authenticate():
@@ -90,12 +90,12 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         parameters = dict(zip(spec.input_param_names, input_vals))
         extract_params.expand_placeholders(parameters)
 
-    @exec_logs.user_fn_redirected(failure_tip=TIP_EXTRACT)
+    @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract():
         return op.extract(spec.parameters)
 
     df = _extract()
-    if exec_logs.code != enums.ExecutionStatus.FAILED:
+    if exec_state.status != enums.ExecutionStatus.FAILED:
         utils.write_artifacts(
             storage,
             [utils.OutputArtifactType.TABLE],
@@ -107,7 +107,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
 
 
 def run_load(
-    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_logs: ExecutionState
+    spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
 ):
     inputs = utils.read_artifacts(
         storage,
@@ -118,7 +118,7 @@ def run_load(
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
-    @exec_logs.user_fn_redirected(failure_tip=TIP_LOAD)
+    @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load():
         op.load(spec.parameters, inputs[0])
 
@@ -204,18 +204,18 @@ if __name__ == "__main__":
     print("Started %s job: %s" % (spec.type, spec.name))
 
     storage = parse_storage(spec.storage_config)
-    exec_logs = ExecutionState(user_logs=Logs())
+    exec_state = ExecutionState(user_logs=Logs())
 
     try:
-        run(spec, storage, exec_logs)
+        run(spec, storage, exec_state)
         # Write operator execution metadata
-        if exec_logs.code != enums.ExecutionStatus.FAILED:
-            exec_logs.code = enums.ExecutionStatus.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        if exec_state.status != enums.ExecutionStatus.FAILED:
+            exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_logs(storage, spec.metadata_path, exec_state)
     except Exception as e:
-        exec_logs.code = enums.ExecutionStatus.FAILED
-        exec_logs.failure_type = enums.FailureType.SYSTEM
-        exec_logs.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        exec_state.status = enums.ExecutionStatus.FAILED
+        exec_state.failure_type = enums.FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        utils.write_logs(storage, spec.metadata_path, exec_state)
         sys.exit(1)

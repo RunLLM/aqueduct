@@ -71,7 +71,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 def _execute_function(
     spec: spec.FunctionSpec,
     inputs: List[Any],
-    exec_logs: ExecutionState,
+    exec_state: ExecutionState,
 ) -> Tuple[Any, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
@@ -86,7 +86,7 @@ def _execute_function(
     timer.start()
     tracemalloc.start()
 
-    @exec_logs.user_fn_redirected(failure_tip=TIP_OP_EXECUTION)
+    @exec_state.user_fn_redirected(failure_tip=TIP_OP_EXECUTION)
     def _invoke() -> Any:
         return invoke(*inputs)
 
@@ -108,7 +108,7 @@ def run(spec: spec.FunctionSpec) -> None:
     Executes a function operator.
     """
 
-    exec_logs = ExecutionState(user_logs=Logs())
+    exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
         # Read the input data from intermediate storage.
@@ -117,10 +117,10 @@ def run(spec: spec.FunctionSpec) -> None:
         )
 
         print("Invoking the function...")
-        results, system_metadata = _execute_function(spec, inputs, exec_logs)
-        if exec_logs.code == ExecutionStatus.FAILED:
+        results, system_metadata = _execute_function(spec, inputs, exec_state)
+        if exec_state.status == ExecutionStatus.FAILED:
             # user failure
-            utils.write_logs(storage, spec.metadata_path, exec_logs)
+            utils.write_logs(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
@@ -137,19 +137,19 @@ def run(spec: spec.FunctionSpec) -> None:
             system_metadata=system_metadata,
         )
 
-        exec_logs.code = ExecutionStatus.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
-        print(f"Succeeded! Full logs: {exec_logs.json()}")
+        exec_state.status = ExecutionStatus.SUCCEEDED
+        utils.write_logs(storage, spec.metadata_path, exec_state)
+        print(f"Succeeded! Full logs: {exec_state.json()}")
 
     except Exception as e:
-        exec_logs.code = ExecutionStatus.FAILED
-        exec_logs.failure_type = FailureType.SYSTEM
-        exec_logs.error = Error(
+        exec_state.status = ExecutionStatus.FAILED
+        exec_state.failure_type = FailureType.SYSTEM
+        exec_state.error = Error(
             context=exception_traceback(e),
             tip=TIP_UNKNOWN_ERROR,
         )
-        print(f"Failed with system error. Full Logs:\n{exec_logs.json()}")
-        utils.write_logs(storage, spec.metadata_path, exec_logs)
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        utils.write_logs(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 
