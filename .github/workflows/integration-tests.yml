@@ -3,16 +3,6 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
-  issue_comment:
-    types: [ created ]
 
 jobs:
   run-tests:
@@ -96,16 +86,3 @@ jobs:
         with:
           name: Executor Logs
           path: ~/.aqueduct/server/logs/*
-
-      - name: Report to Slack on Failure
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
