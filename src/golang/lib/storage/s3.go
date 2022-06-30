@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -22,7 +23,7 @@ func newS3Storage(s3Config *shared.S3Config) *s3Storage {
 }
 
 func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
-	sess, err := CreateS3Session(s.s3Config.Region)
+	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
-	sess, err := CreateS3Session(s.s3Config.Region)
+	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
 		return err
 	}
@@ -65,7 +66,7 @@ func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
 }
 
 func (s *s3Storage) Delete(ctx context.Context, key string) error {
-	sess, err := CreateS3Session(s.s3Config.Region)
+	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
 		return err
 	}
@@ -81,9 +82,13 @@ func (s *s3Storage) Delete(ctx context.Context, key string) error {
 	return err
 }
 
-func CreateS3Session(awsRegion string) (*session.Session, error) {
+func CreateS3Session(s3Config *shared.S3Config) (*session.Session, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(awsRegion),
+		Region: aws.String(s3Config.Region),
+		Credentials: credentials.NewSharedCredentials(
+			s3Config.CredentialsPath,
+			s3Config.CredentialsProfile,
+		),
 	})
 	if err != nil {
 		return nil, err
