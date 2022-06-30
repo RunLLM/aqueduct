@@ -174,7 +174,7 @@ func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string,
 	}
 
 	// Table creation failed, so we need to fetch the error message from storage
-	var metadata shared.ExecutionLogs
+	var metadata shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,

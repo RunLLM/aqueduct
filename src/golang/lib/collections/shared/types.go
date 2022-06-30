@@ -30,9 +30,9 @@ const (
 type FailureType int64
 
 const (
-	SystemFailure FailureType = 0
-	UserFailure   FailureType = 1
-	NoFailure     FailureType = 2
+	Success       FailureType = 0
+	SystemFailure FailureType = 1
+	UserFailure   FailureType = 2
 )
 
 type Logs struct {
@@ -45,17 +45,45 @@ type Error struct {
 	Tip     string `json:"tip"`
 }
 
-type ExecutionLogs struct {
-	UserLogs      *Logs           `json:"user_logs"`
-	Code          ExecutionStatus `json:"code"`
-	FailureReason FailureType     `json:"failure_reason"`
-	Error         *Error          `json:"error"`
+type ExecutionState struct {
+	UserLogs    *Logs           `json:"user_logs"`
+	Status      ExecutionStatus `json:"status"`
+	FailureType FailureType     `json:"failure_type"`
+	Error       *Error          `json:"error"`
 }
 
-func (e *ExecutionLogs) Value() (driver.Value, error) {
+func (e *ExecutionState) Value() (driver.Value, error) {
 	return utils.ValueJsonB(*e)
 }
 
-func (e *ExecutionLogs) Scan(value interface{}) error {
+func (e *ExecutionState) Scan(value interface{}) error {
 	return utils.ScanJsonB(value, e)
+}
+
+type NullExecutionState struct {
+	ExecutionState
+	IsNull bool
+}
+
+func (n *NullExecutionState) Value() (driver.Value, error) {
+	if n.IsNull {
+		return nil, nil
+	}
+
+	return (&n.ExecutionState).Value()
+}
+
+func (n *NullExecutionState) Scan(value interface{}) error {
+	if value == nil {
+		n.IsNull = true
+		return nil
+	}
+
+	logs := &ExecutionState{}
+	if err := logs.Scan(value); err != nil {
+		return err
+	}
+
+	n.ExecutionState, n.IsNull = *logs, false
+	return nil
 }

@@ -86,7 +86,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
-	emptyResp := shared.ExecutionLogs{}
+	emptyResp := shared.ExecutionState{}
 
 	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
 		ctx,
@@ -98,14 +98,14 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 	}
 
-	response := shared.ExecutionLogs{
-		Code: dbOperatorResult.Status,
+	response := shared.ExecutionState{
+		Status: dbOperatorResult.Status,
 	}
 
-	if !dbOperatorResult.Metadata.IsNull {
-		response.FailureReason = dbOperatorResult.Metadata.FailureReason
-		response.Error = dbOperatorResult.Metadata.Error
-		response.UserLogs = dbOperatorResult.Metadata.UserLogs
+	if !dbOperatorResult.State.IsNull {
+		response.FailureType = dbOperatorResult.State.FailureType
+		response.Error = dbOperatorResult.State.Error
+		response.UserLogs = dbOperatorResult.State.UserLogs
 	}
 
 	return response, http.StatusOK, nil

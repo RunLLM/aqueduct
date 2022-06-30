@@ -105,7 +105,7 @@ func updateCompletedOp(
 				return errors.Newf("Error during exeuction, invalid operator ID %s", id)
 			}
 
-			execLogs := scheduler.CheckOperatorExecutionStatus(
+			execStatus := scheduler.CheckOperatorExecutionStatus(
 				ctx,
 				jobStatus,
 				storageConfig,
@@ -117,7 +117,7 @@ func updateCompletedOp(
 					ctx,
 					&op,
 					storageConfig,
-					execLogs,
+					execStatus,
 					artifactMetadataPaths,
 					operatorToOperatorResult,
 					artifactToArtifactResult,
@@ -127,11 +127,11 @@ func updateCompletedOp(
 				)
 			}
 
-			if execLogs.Code == shared.FailedExecutionStatus && execLogs.FailureReason == shared.SystemFailure {
+			if execStatus.Status == shared.FailedExecutionStatus && execStatus.FailureType == shared.SystemFailure {
 				return ErrOpExecSystemFailure
 			}
 
-			if execLogs.Code == shared.FailedExecutionStatus && execLogs.FailureReason == shared.UserFailure {
+			if execStatus.Status == shared.FailedExecutionStatus && execStatus.FailureType == shared.UserFailure {
 				// There is an user error when executing the operator.
 				log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name, op.Id)
 				return ErrOpExecBlockingUserFailure

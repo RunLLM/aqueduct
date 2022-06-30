@@ -9,11 +9,11 @@ import (
 )
 
 type OperatorResult struct {
-	Id                  uuid.UUID              `db:"id" json:"id"`
-	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	OperatorId          uuid.UUID              `db:"operator_id" json:"operator_id"`
-	Status              shared.ExecutionStatus `db:"status" json:"status"`
-	Metadata            NullExecutionLogs      `db:"metadata" json:"metadata"`
+	Id                  uuid.UUID                 `db:"id" json:"id"`
+	WorkflowDagResultId uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	OperatorId          uuid.UUID                 `db:"operator_id" json:"operator_id"`
+	Status              shared.ExecutionStatus    `db:"status" json:"status"`
+	State               shared.NullExecutionState `db:"state" json:"state"`
 }
 
 type Reader interface {
