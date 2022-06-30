@@ -19,6 +19,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
+import TextField from "@mui/material/TextField";
 
 type Props = {
   user: UserProfile;
@@ -101,8 +102,27 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     >
       <DialogTitle>Trigger a Workflow Run?</DialogTitle>
       <DialogContent>
-        This will a run of <code>{name}</code> immediately.
+        <Box sx={{ mb: 2 }}>
+          This will a run of <code>{name}</code> immediately.
+        </Box>
 
+        <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold'}}> Parameters </Typography>
+        <Box>
+          <Typography><small>Parameter Name</small></Typography>
+          <TextField
+              fullWidth
+              placeholder="Default parameter here"
+              size="small"
+          />
+        </Box>
+        <Box>
+          <Typography><small>Parameter Name</small></Typography>
+          <TextField
+              fullWidth
+              placeholder="Default parameter here"
+              size="small"
+          />
+        </Box>
 
       </DialogContent>
       <DialogActions>
