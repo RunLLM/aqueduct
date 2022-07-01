@@ -5,7 +5,6 @@ import sys
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
-import ipynbname
 import cloudpickle as cp
 import tempfile
 import os
@@ -13,7 +12,7 @@ import shutil
 import json
 import uuid
 import pandas as pd
-from typing import Any, Dict, List, Callable, Mapping, Optional, Union
+from typing import Any, Dict, List, Callable, Mapping, Optional, Tuple, Union
 
 import requests
 from croniter import croniter
@@ -183,6 +182,20 @@ def serialize_function(
             delete_zip_folder_and_file(dir_path)
 
 
+def _check_file_existence(
+    file_dependencies: Optional[List[str]] = None,
+    reqs_path: Optional[str] = None,
+) -> Tuple[bool, str]:
+    """
+    """
+    for _, file_path in enumerate(file_dependencies):
+        if not os.path.exists(file_path):
+            return (False, file_path)
+    if reqs_path and not os.path.exists(reqs_path):
+        return (False, reqs_path)
+    return (True, None)
+
+
 def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
@@ -209,21 +222,23 @@ def _package_files_and_requirements(
     if not file_dependencies:
         file_dependencies = []
 
-    func_filepath = inspect.getsourcefile(func)
-    if not func_filepath:
-        raise Exception("Unable to find source file of function.")
+    current_directory_path = os.getcwd()
 
     # In Python3.8, `inspect.getsourcefile` only returns the file's relative path,
     # so we need the line below to get the absolute path.
-    func_filepath = os.path.abspath(func_filepath)
-    if "JPY_PARENT_PID" in os.environ:
-        func_filepath = str(ipynbname.path())
-
-    current_directory_path = os.getcwd()
+    func_filepath = os.path.abspath(inspect.getsourcefile(func))
     func_dirpath = os.path.dirname(func_filepath)
-    func_file = os.path.basename(func_filepath)
 
-    os.chdir(func_dirpath)
+    if os.path.isdir(func_dirpath):
+        os.chdir(func_dirpath)
+    '''ok, nonexistent_file_name = _check_file_existence(file_dependencies, reqs_path)
+    if not ok:
+        os.chdir(current_directory_path)
+        ok, nonexistent_file_name = _check_file_existence(file_dependencies, reqs_path)
+        if not ok:
+            raise InvalidDependencyFilePath(
+                "Dependency file %s does not exist" % nonexistent_file_name
+            )'''
 
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
@@ -264,8 +279,6 @@ def _package_files_and_requirements(
     python_version = ".".join((str(x) for x in sys.version_info[:2]))
     with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
         f.write(python_version)
-    if os.path.exists(os.path.join(dir_path, func_file)):
-        os.remove(os.path.join(dir_path, func_file))
 
     os.chdir(current_directory_path)
 
