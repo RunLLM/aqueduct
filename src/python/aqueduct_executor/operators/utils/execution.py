@@ -54,7 +54,7 @@ class ExecutionState(BaseModel):
                 except Exception:
                     # Include the stack trace within the user's code.
                     fetch_redirected_logs(stdout_log, stderr_log, self.user_logs)
-                    self.code = ExecutionStatus.FAILED
+                    self.status = ExecutionStatus.FAILED
                     self.failure_type = FailureType.USER
                     self.error = Error(
                         context=stack_traceback(
