@@ -1,5 +1,4 @@
 import pytest
-from yarg import get
 import aqueduct
 from aqueduct.table_artifact import TableArtifact
 from test_metrics.constant.model import constant_metric

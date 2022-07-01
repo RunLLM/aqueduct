@@ -15,7 +15,7 @@ from aqueduct.error import (
 
 from aqueduct import utils
 from aqueduct.logger import Logger
-from aqueduct.operators import FunctionSpec, Operator
+from aqueduct.operators import Operator
 from aqueduct.integrations.integration import IntegrationInfo
 from aqueduct.responses import (
     PreviewResponse,
