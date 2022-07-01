@@ -1,5 +1,7 @@
 import pytest
+from yarg import get
 import aqueduct
+from aqueduct.table_artifact import TableArtifact
 from test_metrics.constant.model import constant_metric
 from aqueduct import LoadUpdateMode, check
 from aqueduct.error import IncompleteFlowException
@@ -173,7 +175,7 @@ def test_refresh_flow(client):
 
 
 @pytest.mark.publish
-def test_get_flow(client):
+def test_get_artifact_from_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = run_sentiment_model(sql_artifact)
@@ -183,9 +185,9 @@ def test_get_flow(client):
     flow = client.publish_flow(
         name=generate_new_flow_name(),
         artifacts=[output_artifact],
-        schedule=aqueduct.hourly(),
     )
     wait_for_flow_runs(client, flow.id(), num_runs=1)
-    artifact_return = flow.get(get_artifact_name())
-    assert artifact_return.name == get_artifact_name()
+    artifact_return = flow.artifact(get_artifact_name())
+    assert artifact_return.name() == output_artifact.name()
+    assert artifact_return.get().equals(output_artifact.get())
     client.delete_flow(flow.id())

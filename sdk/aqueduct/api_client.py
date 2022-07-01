@@ -15,7 +15,7 @@ from aqueduct.error import (
 
 from aqueduct import utils
 from aqueduct.logger import Logger
-from aqueduct.operators import Operator
+from aqueduct.operators import FunctionSpec, Operator
 from aqueduct.integrations.integration import IntegrationInfo
 from aqueduct.responses import (
     PreviewResponse,
@@ -76,6 +76,7 @@ class APIClient:
     LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
     LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
     NODE_POSITION_ROUTE = "/api/positioning"
+    EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
@@ -274,7 +275,17 @@ class APIClient:
         url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        return GetWorkflowResponse(**resp.json())
+
+        workflow_response = GetWorkflowResponse(**resp.json())
+        for work_flow_dag in list(workflow_response.workflow_dags.values()):
+            for operator in list(work_flow_dag.operators.values()):
+                if operator.spec.function is not None:
+                    operator_url = self._construct_full_url(
+                        self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
+                    )
+                    operator_resp = requests.get(operator_url, headers=headers)
+                    operator.spec.function.file = operator_resp.content
+        return workflow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)

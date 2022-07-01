@@ -5,8 +5,12 @@ from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact
+from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.error import ArtifactNotFoundException, InvalidUserArgumentException
+from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.param_artifact import ParamArtifact
+from aqueduct.table_artifact import TableArtifact
 from .enums import ArtifactType
 
 from .flow_run import FlowRun
@@ -155,18 +159,23 @@ class Flow:
         )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
 
-    def get(self, artifact_name: str) -> Artifact:
+    def artifact(self, artifact_name: str) -> Artifact:
         """Gets the Artifact from the flow based on artifact_name"""
-        resp = self._api_client.get_workflow(self._id)
-        assert (
-            len(resp.workflow_dag_results) > 0
-        ), "Every flow must have at least one run attached to it."
-        latest_result = resp.workflow_dag_results[-1]
-        result = resp.workflow_dags.get(latest_result.workflow_dag_id)
-        assert isinstance(result, WorkflowDagResponse)
+        flow_run = self.latest()
+        flow_run_dag = flow_run._dag
 
-        for artifact_from_workflow in list(result.artifacts.values()):
+        for artifact_from_workflow in list(flow_run_dag.artifacts.values()):
             if artifact_from_workflow.name == artifact_name:
                 assert isinstance(artifact_from_workflow, Artifact)
-                return artifact_from_workflow
-        raise ArtifactNotFoundException("The artifact name provided does not exist.")
+                artifact_DAG = artifact_from_workflow
+        print(flow_run._dag.artifacts)
+        if artifact_DAG is None:
+            raise ArtifactNotFoundException("The artifact name provided does not exist.")
+        if artifact_DAG.spec.table is not None:
+            return TableArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.float is not None:
+            return MetricArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.bool is not None:
+            return CheckArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.jsonable is not None:
+            return ParamArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
