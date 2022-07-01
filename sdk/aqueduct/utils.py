@@ -210,9 +210,12 @@ def _package_files_and_requirements(
 
     current_directory_path = os.getcwd()
 
+    func_filepath = inspect.getsourcefile(func)
+    if not func_filepath:
+        raise Exception("Unable to find source file of function.")
     # In Python3.8, `inspect.getsourcefile` only returns the file's relative path,
     # so we need the line below to get the absolute path.
-    func_filepath = os.path.abspath(inspect.getsourcefile(func))
+    func_filepath = os.path.abspath(func_filepath)
     func_dirpath = os.path.dirname(func_filepath)
 
     # We check if the directory `func_dirpath` exists. If not, this means `func` is from within a
