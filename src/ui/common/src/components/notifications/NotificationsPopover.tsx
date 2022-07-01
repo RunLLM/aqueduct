@@ -153,9 +153,13 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
           alignItems: 'center',
           borderTop: `1px solid`,
           borderColor: 'gray.700',
+          position: 'sticky',
+          bottom: '0',
           width: '100%',
           height: '36px',
           color: 'gray.700',
+          backgroundColor: 'white',
+          opacity: '1',
           '&:hover': { backgroundColor: 'blueTint' },
           '&:active': { backgroundColor: 'blue.100' },
         }}
