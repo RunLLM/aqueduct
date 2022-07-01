@@ -182,20 +182,6 @@ def serialize_function(
             delete_zip_folder_and_file(dir_path)
 
 
-def _check_file_existence(
-    file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
-) -> Tuple[bool, str]:
-    """
-    """
-    for _, file_path in enumerate(file_dependencies):
-        if not os.path.exists(file_path):
-            return (False, file_path)
-    if reqs_path and not os.path.exists(reqs_path):
-        return (False, reqs_path)
-    return (True, None)
-
-
 def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
@@ -229,16 +215,13 @@ def _package_files_and_requirements(
     func_filepath = os.path.abspath(inspect.getsourcefile(func))
     func_dirpath = os.path.dirname(func_filepath)
 
+    # We check if the directory `func_dirpath` exists. If not, this means `func` is from within a
+    # Jupyter notebook that the user is currently running, so we don't switch the working directory.
+    # The goal of switching the working directory is that if a user specifies relative paths
+    # in `file_dependencies` and if `func` is imported from a Python script located in another
+    # directory, we can locate them.
     if os.path.isdir(func_dirpath):
         os.chdir(func_dirpath)
-    '''ok, nonexistent_file_name = _check_file_existence(file_dependencies, reqs_path)
-    if not ok:
-        os.chdir(current_directory_path)
-        ok, nonexistent_file_name = _check_file_existence(file_dependencies, reqs_path)
-        if not ok:
-            raise InvalidDependencyFilePath(
-                "Dependency file %s does not exist" % nonexistent_file_name
-            )'''
 
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
