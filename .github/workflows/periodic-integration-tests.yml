@@ -4,7 +4,6 @@ on:
   schedule:
      - cron: '0 15 * * 1-5' # Run at 7AM PST on every weekday
   workflow_dispatch:
-  pull_request:
 
 jobs:
   run-tests:
