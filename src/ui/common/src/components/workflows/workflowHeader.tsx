@@ -122,7 +122,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           This will a run of <code>{name}</code> immediately.
         </Box>
 
-        {paramNameToDefault.length > 0 && <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold'}}> Parameters </Typography>}
+        {Object.keys(paramNameToDefault).length > 0 && <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold'}}> Parameters </Typography>}
         {Object.keys(paramNameToDefault).map((paramName, idx) => {
             return (
               <Box>
