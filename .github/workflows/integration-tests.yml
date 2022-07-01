@@ -3,16 +3,6 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
-  issue_comment:
-    types: [ created ]
 
 jobs:
   run-tests:
@@ -22,7 +12,7 @@ jobs:
       matrix:
         # These are all the Python versions that we support.
         python-version: ['3.7', '3.8', '3.9', '3.10']
-
+    
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
