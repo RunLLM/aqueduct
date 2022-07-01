@@ -50,9 +50,9 @@ jobs:
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
 
-      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
+      # install_local.py requires ~/.aqueduct to exist.
       - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py
+        run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)

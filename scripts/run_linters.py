@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--lint-python",
+        "--python",
         dest="lint_python",
         default=False,
         action="store_true",
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--lint-golang",
+        "--golang",
         dest="lint_golang",
         default=False,
         action="store_true",
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--lint-ui",
+        "--ui",
         dest="lint_ui",
         default=False,
         action="store_true",
