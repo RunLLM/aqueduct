@@ -86,4 +86,3 @@ jobs:
         with:
           name: Executor Logs
           path: ~/.aqueduct/server/logs/*
-

@@ -13,4 +13,3 @@ jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
     uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-1306-remove-need-to-run-tests-on-non-code
-    
