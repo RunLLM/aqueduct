@@ -82,16 +82,16 @@ def update_executable_permissions():
 
 def download_server_binaries(architecture):
     with open(os.path.join(server_directory, "bin/server"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/server")).text)
+        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/server")).content)
     with open(os.path.join(server_directory, "bin/executor"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/executor")).text)
+        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/executor")).content)
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/migrator")).text)
+        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator")).content)
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).text)
+        f.write(requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).content)
     with open(os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh"), "wb") as f:
         f.write(
-            requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).text
+            requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).content
         )
 
 
@@ -126,7 +126,7 @@ def update_ui_version():
         generate_version_file(os.path.join(ui_directory, "__version__"))
         ui_zip_path = os.path.join(ui_directory, "ui.zip")
         with open(ui_zip_path, "wb") as f:
-            f.write(requests.get(os.path.join(s3_ui_prefix, "ui.zip")).text)
+            f.write(requests.get(os.path.join(s3_ui_prefix, "ui.zip")).content)
         with zipfile.ZipFile(ui_zip_path, "r") as zip:
             zip.extractall(ui_directory)
         os.remove(ui_zip_path)
@@ -178,12 +178,12 @@ def update():
             update_server_version()
 
             with open(os.path.join(server_directory, "config/config.yml"), "wb") as f:
-                f.write(requests.get(os.path.join(s3_server_prefix, "config/config.yml")).text)
+                f.write(requests.get(os.path.join(s3_server_prefix, "config/config.yml")).content)
 
             update_config_yaml(os.path.join(server_directory, "config", "config.yml"))
 
             with open(os.path.join(server_directory, "db/demo.db"), "wb") as f:
-                f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).text)
+                f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).content)
 
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
