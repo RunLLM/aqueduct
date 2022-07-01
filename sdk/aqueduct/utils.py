@@ -12,7 +12,7 @@ import shutil
 import json
 import uuid
 import pandas as pd
-from typing import Any, Dict, List, Callable, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Callable, Mapping, Optional, Union
 
 import requests
 from croniter import croniter
