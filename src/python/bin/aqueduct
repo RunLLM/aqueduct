@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import yaml
+import shutil
 
 import distro
 
@@ -154,7 +155,7 @@ def apikey():
     print(get_apikey())
 
 def clear():
-    execute_command(["rm", "-rf", base_directory])
+    shutil.rmtree(base_directory, ignore_errors=True)
 
 def version():
     print(package_version)

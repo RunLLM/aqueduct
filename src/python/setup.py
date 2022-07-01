@@ -9,17 +9,25 @@ import random
 import subprocess
 import sys
 import platform
+import shutil
+import requests
+import zipfile
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
 package_version = "0.0.3"
+s3_server_prefix = (
+    "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
+)
+s3_ui_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
+
 
 def update_config_yaml(file):
-    s=string.ascii_uppercase+string.digits
-    encryption_key = ''.join(random.sample(s,32))
-    api_key = ''.join(random.sample(s,32))
+    s = string.ascii_uppercase + string.digits
+    encryption_key = "".join(random.sample(s, 32))
+    api_key = "".join(random.sample(s, 32))
 
     with open(file, "r") as sources:
         lines = sources.readlines()
@@ -35,97 +43,122 @@ def update_config_yaml(file):
                 sources.write(line)
     print("Updated configurations.")
 
+
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
         proc.communicate()
         if proc.returncode != 0:
             raise Exception("Error executing command: %s" % args)
 
+
 def generate_version_file(file_path):
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.write(package_version)
     print("Wrote version to file.")
+
 
 # Returns a bool indicating whether we need to perform a version upgrade.
 def require_update(file_path):
     if not os.path.isfile(file_path):
         return True
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         current_version = f.read()
         if package_version < current_version:
-            raise Exception("Attempting to install an older version %s but found existing newer version %s" % (package_version, current_version))
+            raise Exception(
+                "Attempting to install an older version %s but found existing newer version %s"
+                % (package_version, current_version)
+            )
         elif package_version == current_version:
             return False
         else:
             return True
 
-def update_executable_permissions():
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "server")])
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "executor")])
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "migrator")])
 
-def download_server_binaries():
+def update_executable_permissions():
+    os.chmod(os.path.join(server_directory, "bin", "server"), 0o755)
+    os.chmod(os.path.join(server_directory, "bin", "executor"), 0o755)
+    os.chmod(os.path.join(server_directory, "bin", "migrator"), 0o755)
+
+
+def download_server_binaries(architecture):
+    with open(os.path.join(server_directory, "bin/server"), "wb") as f:
+        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/server")).text)
+    with open(os.path.join(server_directory, "bin/executor"), "wb") as f:
+        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/executor")).text)
+    with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
+        f.write(requests.get(os.path.join(s3_server_prefix, "bin/{architecture}/migrator")).text)
+    with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
+        f.write(requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).text)
+    with open(os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh"), "wb") as f:
+        f.write(
+            requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).text
+        )
+
+
+def setup_server_binaries():
     print("Downloading server binaries.")
-    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-    execute_command(["rm", "-rf", os.path.join(server_directory, "bin")])
-    os.mkdir(os.path.join(server_directory, "bin"))
+    server_bin_path = os.path.join(server_directory, "bin")
+    shutil.rmtree(server_bin_path, ignore_errors=True)
+    os.mkdir(server_bin_path)
 
     system = platform.system()
     arch = platform.machine()
     if system == "Linux" and arch == "x86_64":
         print("Operating system is Linux with architecture amd64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
+        download_server_binaries("linux_amd64")
     elif system == "Darwin" and arch == "x86_64":
         print("Operating system is Mac with architecture amd64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
+        download_server_binaries("darwin_amd64")
     elif system == "Darwin" and arch == "arm64":
         print("Operating system is Mac with architecture arm64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
+        download_server_binaries("darwin_arm64")
     else:
-        raise Exception("Unsupported operating system and architecture combination: %s, %s" % (system, arch))
-    
-    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
-    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
+        raise Exception(
+            "Unsupported operating system and architecture combination: %s, %s" % (system, arch)
+        )
+
 
 def update_ui_version():
     print("Updating UI version to %s" % package_version)
     try:
-        execute_command(["rm", "-rf", ui_directory])
+        shutil.rmtree(ui_directory, ignore_errors=True)
         os.mkdir(ui_directory)
         generate_version_file(os.path.join(ui_directory, "__version__"))
-        s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
-        execute_command(["curl", os.path.join(s3_prefix, "ui.zip"), "--output", os.path.join(ui_directory, "ui.zip")])
-        execute_command(["unzip", os.path.join(ui_directory, "ui.zip"), "-d", ui_directory])
-        execute_command(["rm", os.path.join(ui_directory, "ui.zip")])
+        ui_zip_path = os.path.join(ui_directory, "ui.zip")
+        with open(ui_zip_path, "wb") as f:
+            f.write(requests.get(os.path.join(s3_ui_prefix, "ui.zip")).text)
+        with zipfile.ZipFile(ui_zip_path, "r") as zip:
+            zip.extractall(ui_directory)
+        os.remove(ui_zip_path)
     except Exception as e:
         print(e)
-        execute_command(["rm", "-rf", ui_directory])
+        shutil.rmtree(ui_directory, ignore_errors=True)
         exit(1)
+
 
 def update_server_version():
     print("Updating server version to %s" % package_version)
-    if os.path.isfile(os.path.join(server_directory, "__version__")):
-        execute_command(["rm", os.path.join(server_directory, "__version__")])
-    generate_version_file(os.path.join(server_directory, "__version__"))
 
-    download_server_binaries()
+    version_file = os.path.join(server_directory, "__version__")
+    if os.path.isfile(version_file):
+        os.remove(version_file)
+    generate_version_file(version_file)
+
+    setup_server_binaries()
     update_executable_permissions()
 
-    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"])
+    execute_command(
+        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"]
+    )
 
-def updates():
+
+def update():
     if not os.path.isdir(base_directory):
         os.mkdir(base_directory)
 
     if not os.path.isdir(ui_directory) or require_update(os.path.join(ui_directory, "__version__")):
         update_ui_version()
-    
+
     if not os.path.isdir(server_directory):
         try:
             directories = [
@@ -144,43 +177,54 @@ def updates():
 
             update_server_version()
 
-            s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-            execute_command(["curl", os.path.join(s3_prefix, "config/config.yml"), "--output", os.path.join(server_directory, "config/config.yml")])
+            with open(os.path.join(server_directory, "config/config.yml"), "wb") as f:
+                f.write(requests.get(os.path.join(s3_server_prefix, "config/config.yml")).text)
+
             update_config_yaml(os.path.join(server_directory, "config", "config.yml"))
-            execute_command(["curl", os.path.join(s3_prefix, "db/demo.db"), "--output", os.path.join(server_directory, "db/demo.db")])
+
+            with open(os.path.join(server_directory, "db/demo.db"), "wb") as f:
+                f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).text)
 
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
             print(e)
-            execute_command(["rm", "-rf", server_directory])
+            shutil.rmtree(server_directory, ignore_errors=True)
             exit(1)
 
-    if require_update(os.path.join(server_directory, "__version__")):
+    version_file = os.path.join(server_directory, "__version__")
+    if require_update(version_file):
         try:
             update_server_version()
         except Exception as e:
             print(e)
-            if os.path.isfile(os.path.join(server_directory, "__version__")):
-                execute_command(["rm", os.path.join(server_directory, "__version__")])
+            if os.path.isfile(version_file):
+                os.remove(version_file)
             exit(1)
+
 
 class DevelopCommand(develop):
     """Post-installation for development mode."""
+
     def run(self):
         develop.run(self)
-        updates()
+        update()
+
 
 class InstallCommand(install):
     """Post-installation for installation mode."""
+
     def run(self):
         install.run(self)
-        updates()
+        update()
+
 
 class EggInfoCommand(egg_info):
     """Post-installation for egg info mode."""
+
     def run(self):
         egg_info.run(self)
-        updates()
+        update()
+
 
 install_requires = open("requirements.txt").read().strip().split("\n")
 
@@ -204,9 +248,9 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     cmdclass={
-        'develop': DevelopCommand,
-        'install': InstallCommand,
-        'egg_info': EggInfoCommand,
+        "develop": DevelopCommand,
+        "install": InstallCommand,
+        "egg_info": EggInfoCommand,
     },
     python_requires=">=3.7",
 )
