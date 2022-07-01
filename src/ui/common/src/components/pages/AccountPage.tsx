@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
-import { CopyBlock, monoBlue } from 'react-code-blocks';
+import { CopyBlock, github } from 'react-code-blocks';
 
 import UserProfile from '../../utils/auth';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
@@ -58,7 +58,7 @@ client = aqueduct.Client(
             text={apiConnectionSnippet}
             language="python"
             showLineNumbers={false}
-            theme={monoBlue}
+            theme={github}
           />
         </Box>
       </Box>
