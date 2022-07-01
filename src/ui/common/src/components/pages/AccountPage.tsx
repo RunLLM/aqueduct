@@ -49,13 +49,18 @@ client = aqueduct.Client(
         <Typography variant="body1" sx={{ fontWeight: 'bold', mr: '8px' }}>
           Python SDK Connection Snippet
         </Typography>
-        <CopyBlock
-          text={apiConnectionSnippet}
-          language="python"
-          showLineNumbers={false}
-          theme={monoBlue}
-          highlight="1-5"
-        />
+        <Box
+          sx={{
+            span: { padding: '0 !important' },
+          }}
+        >
+          <CopyBlock
+            text={apiConnectionSnippet}
+            language="python"
+            showLineNumbers={false}
+            theme={monoBlue}
+          />
+        </Box>
       </Box>
     </DefaultLayout>
   );
