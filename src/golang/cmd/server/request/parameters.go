@@ -2,8 +2,9 @@ package request
 
 import (
 	"encoding/json"
-	"github.com/dropbox/godropbox/errors"
 	"net/http"
+
+	"github.com/dropbox/godropbox/errors"
 )
 
 const (

@@ -115,7 +115,7 @@ export type OperatorSpec = {
   extract?: Extract;
   load?: Load;
   check?: Check;
-  param?: Param,
+  param?: Param;
 };
 
 export type Operator = {

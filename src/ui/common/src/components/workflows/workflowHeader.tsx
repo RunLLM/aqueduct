@@ -6,6 +6,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
@@ -19,7 +20,6 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
-import TextField from "@mui/material/TextField";
 
 type Props = {
   user: UserProfile;
@@ -72,18 +72,25 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     );
   }
 
-  const paramNameToDefault = Object.assign({}, ...Object.values(workflowDag.operators).filter((operator) =>{
-    return operator.spec.param !== undefined;
-  }).map((operator) => {
-    return {[operator.name]: operator.spec.param.val};
-  }));
+  const paramNameToDefault = Object.assign(
+    {},
+    ...Object.values(workflowDag.operators)
+      .filter((operator) => {
+        return operator.spec.param !== undefined;
+      })
+      .map((operator) => {
+        return { [operator.name]: operator.spec.param.val };
+      })
+  );
 
   // This records all the parameters and values that the user wants to overwrite with.
-  const [paramNameToValMap, setParamNameToValMap] = useState<{[key: string]: string}>({});
+  const [paramNameToValMap, setParamNameToValMap] = useState<{
+    [key: string]: string;
+  }>({});
 
   const triggerWorkflowRun = () => {
-    const parameters = new FormData()
-    parameters.append("parameters", JSON.stringify(paramNameToValMap))
+    const parameters = new FormData();
+    parameters.append('parameters', JSON.stringify(paramNameToValMap));
 
     setShowRunWorkflowDialog(false);
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
@@ -108,7 +115,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       });
 
     // Reset the overriding parameters map on dialog close.
-    setParamNameToValMap({})
+    setParamNameToValMap({});
   };
 
   const runWorkflowDialog = (
@@ -122,25 +129,30 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           This will a run of <code>{name}</code> immediately.
         </Box>
 
-        {Object.keys(paramNameToDefault).length > 0 && <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold'}}> Parameters </Typography>}
-        {Object.keys(paramNameToDefault).map((paramName, idx) => {
-            return (
-              <Box>
-                <Typography><small>{paramName}</small></Typography>
-                <TextField
-                    fullWidth
-                    placeholder={paramNameToDefault[paramName]}
-                    onChange={(e) => {
-                      paramNameToValMap[paramName] = e.target.value;
-                      setParamNameToValMap(paramNameToValMap);
-                    }}
-                    size="small"
-                />
-              </Box>
-            )
-          })
-        }
-
+        {Object.keys(paramNameToDefault).length > 0 && (
+          <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
+            {' '}
+            Parameters{' '}
+          </Typography>
+        )}
+        {Object.keys(paramNameToDefault).map((paramName) => {
+          return (
+            <Box key={paramName}>
+              <Typography>
+                <small>{paramName}</small>
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder={paramNameToDefault[paramName]}
+                onChange={(e) => {
+                  paramNameToValMap[paramName] = e.target.value;
+                  setParamNameToValMap(paramNameToValMap);
+                }}
+                size="small"
+              />
+            </Box>
+          );
+        })}
       </DialogContent>
       <DialogActions>
         <Button
