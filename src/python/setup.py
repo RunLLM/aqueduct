@@ -84,11 +84,17 @@ def download_server_binaries(architecture):
     with open(os.path.join(server_directory, "bin/server"), "wb") as f:
         f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/server")).content)
     with open(os.path.join(server_directory, "bin/executor"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/executor")).content)
+        f.write(
+            requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/executor")).content
+        )
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator")).content)
+        f.write(
+            requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator")).content
+        )
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).content)
+        f.write(
+            requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).content
+        )
     with open(os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh"), "wb") as f:
         f.write(
             requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).content
