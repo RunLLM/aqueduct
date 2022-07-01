@@ -3,13 +3,12 @@
 import argparse
 import os
 import platform
-import random
 import socket
-import string
 import subprocess
 import sys
 import time
 import yaml
+import shutil
 
 import distro
 
@@ -28,24 +27,6 @@ The Web UI and the backend server are accessible at: http://%s:%d
 ***************************************************
 """
 
-def update_config_yaml(file):
-    s=string.ascii_uppercase+string.digits
-    encryption_key = ''.join(random.sample(s,32))
-    api_key = ''.join(random.sample(s,32))
-
-    with open(file, "r") as sources:
-        lines = sources.readlines()
-    with open(file, "w") as sources:
-        for line in lines:
-            if "<BASE_PATH>" in line:
-                sources.write(line.replace("<BASE_PATH>", server_directory))
-            elif "<ENCRYPTION_KEY>" in line:
-                sources.write(line.replace("<ENCRYPTION_KEY>", encryption_key))
-            elif "<API_KEY>" in line:
-                sources.write(line.replace("<API_KEY>", api_key))
-            else:
-                sources.write(line)
-
 def execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
         proc.communicate()
@@ -54,82 +35,6 @@ def execute_command(args, cwd=None):
 
 def execute_command_nonblocking(args, cwd=None):
     return subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd)
-
-def update_executable_permissions():
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "server")])
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "executor")])
-    execute_command(["chmod", "755", os.path.join(server_directory, "bin", "migrator")])
-
-def generate_version_file(file_path):
-    with open(file_path, 'w') as f:
-        f.write(package_version)
-
-# Returns a bool indicating whether we need to perform a version upgrade.
-def require_update(file_path):
-    if not os.path.isfile(file_path):
-        return True
-    with open(file_path, 'r') as f:
-        current_version = f.read()
-        if package_version < current_version:
-            raise Exception("Attempting to install an older version %s but found existing newer version %s" % (package_version, current_version))
-        elif package_version == current_version:
-            return False
-        else:
-            return True
-
-def update_ui_version():
-    print("Updating UI version to %s" % package_version)
-    try:
-        execute_command(["rm", "-rf", ui_directory])
-        os.mkdir(ui_directory)
-        generate_version_file(os.path.join(ui_directory, "__version__"))
-        s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
-        execute_command(["curl", os.path.join(s3_prefix, "ui.zip"), "--output", os.path.join(ui_directory, "ui.zip")])
-        execute_command(["unzip", os.path.join(ui_directory, "ui.zip"), "-d", ui_directory])
-        execute_command(["rm", os.path.join(ui_directory, "ui.zip")])
-    except Exception as e:
-        print(e)
-        execute_command(["rm", "-rf", ui_directory])
-        exit(1)
-
-def download_server_binaries():
-    s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-    execute_command(["rm", "-rf", os.path.join(server_directory, "bin")])
-    os.mkdir(os.path.join(server_directory, "bin"))
-
-    system = platform.system()
-    arch = platform.machine()
-    if system == "Linux" and arch == "x86_64":
-        print("Operating system is Linux with architecture amd64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/linux_amd64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
-    elif system == "Darwin" and arch == "x86_64":
-        print("Operating system is Mac with architecture amd64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_amd64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
-    elif system == "Darwin" and arch == "arm64":
-        print("Operating system is Mac with architecture arm64.")
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/server"), "--output", os.path.join(server_directory, "bin/server")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/executor"), "--output", os.path.join(server_directory, "bin/executor")])
-        execute_command(["curl", os.path.join(s3_prefix, "bin/darwin_arm64/migrator"), "--output", os.path.join(server_directory, "bin/migrator")])
-    else:
-        raise Exception("Unsupported operating system and architecture combination: %s, %s" % (system, arch))
-    
-    execute_command(["curl", os.path.join(s3_prefix, "bin/start-function-executor.sh"), "--output", os.path.join(server_directory, "bin/start-function-executor.sh")])
-    execute_command(["curl", os.path.join(s3_prefix, "bin/install_sqlserver_ubuntu.sh"), "--output", os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh")])
-
-def update_server_version():
-    print("Updating server version to %s" % package_version)
-    if os.path.isfile(os.path.join(server_directory, "__version__")):
-        execute_command(["rm", os.path.join(server_directory, "__version__")])
-    generate_version_file(os.path.join(server_directory, "__version__"))
-
-    download_server_binaries()
-    update_executable_permissions()
-
-    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"])
 
 def generate_welcome_message(expose, port):
     if not expose:
@@ -143,51 +48,7 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("localhost", port)) == 0
 
-def start(expose, port):
-    if not os.path.isdir(ui_directory):
-        update_ui_version()
-
-    if require_update(os.path.join(ui_directory, "__version__")):
-        update_ui_version()
-    
-    if not os.path.isdir(server_directory):
-        try:
-            directories = [
-                server_directory,
-                os.path.join(server_directory, "db"),
-                os.path.join(server_directory, "storage"),
-                os.path.join(server_directory, "storage", "operators"),
-                os.path.join(server_directory, "vault"),
-                os.path.join(server_directory, "bin"),
-                os.path.join(server_directory, "config"),
-                os.path.join(server_directory, "logs"),
-            ]
-
-            for directory in directories:
-                os.mkdir(directory)
-
-            update_server_version()
-
-            s3_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
-            execute_command(["curl", os.path.join(s3_prefix, "config/config.yml"), "--output", os.path.join(server_directory, "config/config.yml")])
-            update_config_yaml(os.path.join(server_directory, "config", "config.yml"))
-            execute_command(["curl", os.path.join(s3_prefix, "db/demo.db"), "--output", os.path.join(server_directory, "db/demo.db")])
-
-            print("Finished initializing Aqueduct base directory.")
-        except Exception as e:
-            print(e)
-            execute_command(["rm", "-rf", server_directory])
-            exit(1)
-
-    if require_update(os.path.join(server_directory, "__version__")):
-        try:
-            update_server_version()
-        except Exception as e:
-            print(e)
-            if os.path.isfile(os.path.join(server_directory, "__version__")):
-                execute_command(["rm", os.path.join(server_directory, "__version__")])
-            exit(1)
-
+def start(expose, port): 
     if port is None:
         server_port = default_server_port
         while is_port_in_use(server_port):
@@ -281,22 +142,6 @@ def install(system):
     else:
         raise Exception("Unsupported system: %s" % system)
 
-def ui(expose_ip):
-    if not os.path.isdir(ui_directory):
-        update_ui_version()
-
-    if require_update(os.path.join(ui_directory, "__version__")):
-        update_ui_version()
-
-    if expose_ip:
-        server_ip = expose_ip
-        print("The Aqueduct server at " + server_ip + " will be externally accessible.")
-    else:
-        server_ip = "localhost"
-
-    generate_env_local(server_ip)
-    return execute_command_nonblocking(["npm", "run", "start"], os.path.join(ui_directory, "app"))
-
 def get_apikey():
     config_file = os.path.join(server_directory, "config", "config.yml")
     with open(config_file, "r") as f:
@@ -310,7 +155,7 @@ def apikey():
     print(get_apikey())
 
 def clear():
-    execute_command(["rm", "-rf", base_directory])
+    shutil.rmtree(base_directory, ignore_errors=True)
 
 def version():
     print(package_version)
@@ -360,7 +205,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not os.path.isdir(base_directory):
-        os.mkdir(base_directory)
+        print("Please install or update aqueduct-ml with `pip install aqueduct-ml`.")
+        sys.exit(1)
     
     if args.command == "start":
         try:

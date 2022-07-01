@@ -25,15 +25,40 @@ def execute_command(args, cwd=None):
         if proc.returncode != 0:
             raise Exception("Error executing command: %s" % args)
 
+
 def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
-    execute_command(["mypy", ".", "--ignore-missing-imports", "--strict", "--exclude", "aqueduct/tests", "--implicit-reexport"], join(cwd, "sdk"))
-    execute_command(["mypy", ".", "--ignore-missing-imports", "--strict", "--exclude", "tests", "--implicit-reexport"], join(cwd, "src/python"))
+    execute_command(
+        [
+            "mypy",
+            ".",
+            "--ignore-missing-imports",
+            "--strict",
+            "--exclude",
+            "aqueduct/tests",
+            "--implicit-reexport",
+        ],
+        join(cwd, "sdk"),
+    )
+    execute_command(
+        [
+            "mypy",
+            ".",
+            "--ignore-missing-imports",
+            "--strict",
+            "--exclude",
+            "tests",
+            "--implicit-reexport",
+        ],
+        join(cwd, "src/python"),
+    )
+
 
 def lint_golang(cwd):
     execute_command(["golangci-lint", "run", "--concurrency=4", "--fix"], join(cwd, "src/golang"))
+
 
 def lint_ui(cwd):
     execute_command(["npm", "install"], join(cwd, "src/ui/common"))
@@ -41,6 +66,7 @@ def lint_ui(cwd):
     execute_command(["npm", "link"], join(cwd, "src/ui/common"))
     execute_command(["npm", "link", "@aqueducthq/common"], join(cwd, "src/ui/app"))
     execute_command(["npm", "run", "lint", "--", "--fix"], join(cwd, "src/ui/app"))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
