@@ -11,8 +11,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/run-notebooks.yml'
-      - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
-      - "sdk/examples/sentiment_analysis/Sentiment Model.ipynb"
+      - "examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+      - "examples/sentiment_analysis/Sentiment Model.ipynb"
 
 jobs:
   run-notebooks:
@@ -69,12 +69,12 @@ jobs:
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
       - name: Run Sentiment Notebook
-        working-directory: sdk/examples
+        working-directory: examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
 
       - name: Run Churn Notebook
-        working-directory: sdk/examples
+        working-directory: examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
 
