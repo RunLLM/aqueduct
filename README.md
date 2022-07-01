@@ -31,7 +31,7 @@ client.publish_flow(name="review_strlen", artifacts=[strlen_table])
 
 <img width="2160" alt="image" src="https://user-images.githubusercontent.com/867892/176579763-6f77fcc0-8b12-446b-ab9a-96095c6d1b5f.png">
 
-Here's a few, more detailed prediction pipelines:
+You can run the full Aqueduct server in a Google Colab notebook [here](https://colab.research.google.com/drive/1EyKTF9tXjgnlBHVQzgt5Yr79e_8ef27M). Our [`examples`](examples/) directory has a few, more detailed prediction pipelines:
 
 * [Churn Ensemble](examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
 * [Sentiment Analysis](examples/sentiment_analysis/Sentiment%20Model.ipynb)
