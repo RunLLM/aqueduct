@@ -134,8 +134,7 @@ class Client:
             A parameter artifact.
         """
         if default is None:
-            raise InvalidUserArgumentException(
-                "Parameter default value cannot be None.")
+            raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
         val = serialize_parameter_value(name, default)
 
@@ -202,8 +201,7 @@ class Client:
                 incompatible type.
         """
         if name not in self._connected_integrations.keys():
-            raise InvalidIntegrationException(
-                "Not connected to integration %s!" % name)
+            raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
         integration_info = self._connected_integrations[name]
         if integration_info.service in RelationalDBServices:
@@ -262,8 +260,7 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
 
         if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
-            raise InvalidUserArgumentException(
-                "Unable to find a flow with id %s" % flow_id)
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
         return Flow(
             self._api_client,
@@ -339,7 +336,7 @@ class Client:
 
         flow_id = self._api_client.register_workflow(dag).id
 
-        url = 'http://' + self._api_client.aqueduct_address + '/workflow/' + str(flow_id)
+        url = "http://" + self._api_client.aqueduct_address + "/workflow/" + str(flow_id)
         print("UI: ", url)
 
         return Flow(
@@ -386,12 +383,10 @@ class Client:
         serialized_params = None
         if parameters is not None:
             if any(not isinstance(name, str) for name in parameters):
-                raise InvalidUserArgumentException(
-                    "Parameters must be keyed by strings.")
+                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
 
             serialized_params = json.dumps(
-                {name: serialize_parameter_value(
-                    name, val) for name, val in parameters.items()}
+                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
             )
 
         flow_id = parse_user_supplied_id(flow_id)

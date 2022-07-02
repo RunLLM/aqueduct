@@ -46,9 +46,8 @@ class FlowRun:
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
 
-        url = 'http://' + self._api_client.aqueduct_address + '/workflow/' + \
-            self._flow_id + '?'
-        params = {'workflowDagResultId': self._id}
+        url = "http://" + self._api_client.aqueduct_address + "/workflow/" + self._flow_id + "?"
+        params = {"workflowDagResultId": self._id}
 
         print(
             textwrap.dedent(
@@ -62,12 +61,10 @@ class FlowRun:
             )
         )
 
-        param_artifacts = self._dag.list_artifacts(
-            filter_to=[ArtifactType.PARAM])
+        param_artifacts = self._dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         print(format_header_for_print("Parameters "))
         for param_artifact in param_artifacts:
-            param_op = self._dag.must_get_operator(
-                with_output_artifact_id=param_artifact.id)
+            param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
 
@@ -110,8 +107,7 @@ def _show_dag(
         artifact_by_id[str(artifact_uuid.id)] = artifact_uuid
 
     # Mapping of operator/artifact UUID to X, Y coordinates on the graph.
-    operator_positions, artifact_positions = api_client.get_node_positions(
-        operator_mapping)
+    operator_positions, artifact_positions = api_client.get_node_positions(operator_mapping)
 
     # Remove any parameter operators, since we don't want those being displayed to the user.
     for param_op in dag.list_operators(filter_to=[OperatorType.PARAM]):
@@ -193,8 +189,7 @@ def _show_dag(
 
             node_details = node_properties.mapping[str(node)]
             node_type = node_properties.node_type.title()
-            node_label = "<br>".join(
-                wrap(node_details.name, width=label_width))
+            node_label = "<br>".join(wrap(node_details.name, width=label_width))
             if isinstance(node_details, Operator):
                 node_descr.append(
                     [
@@ -217,8 +212,7 @@ def _show_dag(
             y=node_y,
             mode="markers+text",
             customdata=node_descr,
-            text=[label[: label_width - 3] +
-                  "..." for _, label, _ in node_descr],
+            text=[label[: label_width - 3] + "..." for _, label, _ in node_descr],
             textposition="bottom center",
             marker_symbol="square",
             marker={
@@ -240,10 +234,8 @@ def _show_dag(
             margin={"b": 20, "l": 50, "r": 50, "t": 40},
             showlegend=False,
             hovermode="closest",
-            xaxis={"showgrid": False, "zeroline": False,
-                   "showticklabels": False},
-            yaxis={"showgrid": False, "zeroline": False,
-                   "showticklabels": False},
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
         ),
     )
     # Show figure
