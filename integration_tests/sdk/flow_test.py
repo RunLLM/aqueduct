@@ -186,7 +186,7 @@ def test_get_artifact_from_flow(client):
         artifacts=[output_artifact],
     )
     wait_for_flow_runs(client, flow.id(), num_runs=1)
-    artifact_return = flow.artifact(get_artifact_name())
+    artifact_return = flow.artifact(output_artifact.name())
     assert artifact_return.name() == output_artifact.name()
     assert artifact_return.get().equals(output_artifact.get())
     client.delete_flow(flow.id())

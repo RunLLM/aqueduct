@@ -52,13 +52,6 @@ def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
         return dummy_sentiment_model(artifact)
 
 
-def get_artifact_name() -> str:
-    if should_run_complex_models():
-        return "sentiment_model artifact"
-    else:
-        return "dummy_sentiment_model artifact"
-
-
 def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
     """
     Run sentiment model locally using .local() method. Calls the full sentiment model
