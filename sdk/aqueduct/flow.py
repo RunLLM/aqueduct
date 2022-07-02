@@ -159,23 +159,27 @@ class Flow:
         )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
 
-    def artifact(self, artifact_name: str) -> Artifact:
+    def artifact(
+        self, artifact_name: str
+    ) -> Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact, None]:
         """Gets the Artifact from the flow based on artifact_name"""
         flow_run = self.latest()
-        flow_run_dag =flow_run._dag
+        flow_run_dag = flow_run._dag
 
         for artifact_from_workflow in list(flow_run_dag.artifacts.values()):
             if artifact_from_workflow.name == artifact_name:
                 assert isinstance(artifact_from_workflow, Artifact)
                 artifact_DAG = artifact_from_workflow
-                
-        if(artifact_DAG is None):
+
+        if artifact_DAG is None:
             raise ArtifactNotFoundException("The artifact name provided does not exist.")
-        if(artifact_DAG.spec.table is not None):
-            return TableArtifact(flow_run._api_client,flow_run._dag,artifact_DAG.id)
-        if(artifact_DAG.spec.float is not None):
-            return MetricArtifact(flow_run._api_client,flow_run._dag,artifact_DAG.id)
-        if(artifact_DAG.spec.bool is not None):
-            return CheckArtifact(flow_run._api_client,flow_run._dag,artifact_DAG.id)
-        if(artifact_DAG.spec.jsonable is not None):
-            return ParamArtifact(flow_run._api_client,flow_run._dag,artifact_DAG.id)
+        if artifact_DAG.spec.table is not None:
+            return TableArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.float is not None:
+            return MetricArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.bool is not None:
+            return CheckArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+        if artifact_DAG.spec.jsonable is not None:
+            return ParamArtifact(flow_run._api_client, flow_run._dag, artifact_DAG.id)
+
+        return None

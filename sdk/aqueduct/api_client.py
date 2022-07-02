@@ -279,12 +279,11 @@ class APIClient:
         workflow_response = GetWorkflowResponse(**resp.json())
         for work_flow_dag in list(workflow_response.workflow_dags.values()):
             for operator in list(work_flow_dag.operators.values()):
-                if operator.spec.function is not None:
-                    operator_url = self._construct_full_url(
-                        self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
-                    )
-                    operator_resp = requests.get(operator_url, headers=headers)
-                    operator.spec.function.file = operator_resp.content
+                operator_url = self._construct_full_url(
+                    self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
+                )
+                operator_resp = requests.get(operator_url, headers=headers)
+                operator.change_file(operator_resp.content)
         return workflow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
