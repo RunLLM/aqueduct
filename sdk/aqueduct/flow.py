@@ -95,6 +95,7 @@ class Flow:
 
         return FlowRun(
             api_client=self._api_client,
+            flow_id=self._id,
             run_id=str(dag_result.id),
             in_notebook_or_console_context=self._in_notebook_or_console_context,
             dag=dag,
@@ -143,12 +144,15 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
+        url = 'http://localhost:8080/workflow/' + self._id
+
         print(
             textwrap.dedent(
                 f"""
             {format_header_for_print(f"'{latest_metadata.name}' Flow")}
             ID: {self._id}
             Description: '{latest_metadata.description}'
+            UI: {url}
             Schedule: {latest_metadata.schedule.json(exclude_none=True)}
             RetentionPolicy: {latest_metadata.retention_policy.json(exclude_none=True)}
             Runs:

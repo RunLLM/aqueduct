@@ -1,5 +1,6 @@
 import textwrap
 import uuid
+import urllib.parse
 from textwrap import wrap
 from typing import Dict, Any, Mapping, Union, List
 
@@ -18,6 +19,7 @@ class FlowRun:
     def __init__(
         self,
         api_client: APIClient,
+        flow_id: str,
         run_id: str,
         in_notebook_or_console_context: bool,
         dag: DAG,
@@ -26,6 +28,7 @@ class FlowRun:
     ):
         assert run_id is not None
         self._api_client = api_client
+        self._flow_id = flow_id
         self._id = run_id
         self._in_notebook_or_console_context = in_notebook_or_console_context
         self._dag = dag
@@ -42,8 +45,9 @@ class FlowRun:
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
-        if self._in_notebook_or_console_context:
-            _show_dag(self._api_client, self._dag)
+
+        url = 'http://localhost:8080/workflow/' + self._flow_id + '?'
+        params = {'workflowDagResultId': self._id}
 
         print(
             textwrap.dedent(
@@ -52,6 +56,7 @@ class FlowRun:
             ID: {self._id}
             Created At (UTC): {human_readable_timestamp(self._created_at)}
             Status: {str(self._status)}
+            UI: {url + urllib.parse.urlencode(params)}
             """
             )
         )

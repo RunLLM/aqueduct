@@ -334,10 +334,12 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        if self._in_notebook_or_console_context:
-            _show_dag(self._api_client, dag)
 
         flow_id = self._api_client.register_workflow(dag).id
+
+        url = 'http://localhost:8080/workflow/' + str(flow_id)
+        print("UI: ", url)
+
         return Flow(
             self._api_client,
             str(flow_id),
