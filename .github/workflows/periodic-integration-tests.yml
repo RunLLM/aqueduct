@@ -75,11 +75,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-<<<<<<< HEAD
         run: pytest . -rP --publish --complex-models -n ${{ matrix.concurrency }}
-=======
-        run: pytest . -rP --publish -n ${{ matrix.concurrency }}
->>>>>>> added periodic-integration-tests
 
       - uses: actions/upload-artifact@v3
         if: always()
