@@ -75,7 +75,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish --complex-models -n ${{ matrix.concurrency }}
+        run: pytest . -rP --publish --complex_models -n ${{ matrix.concurrency }}
 
       - uses: actions/upload-artifact@v3
         if: always()
