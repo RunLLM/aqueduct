@@ -28,8 +28,8 @@ TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your
 
 
 class Error(BaseModel):
-    tip: str = "" # Information about how the user could fix the error.
-    context: str = "" # More details about the error. Typically a stack trace.
+    tip: str = ""  # Information about how the user could fix the error.
+    context: str = ""  # More details about the error. Typically a stack trace.
 
 
 class Logs(BaseModel):
@@ -47,6 +47,7 @@ class ExecutionState(BaseModel):
     `failure_type`: more detailed failure reason. Available only if status is `failed`.
     `error`:  structured error message. Available only if status is `failed`.
     """
+
     user_logs: Logs
     status: ExecutionStatus = ExecutionStatus.PENDING
     failure_type: Optional[FailureType] = None
@@ -59,15 +60,16 @@ class ExecutionState(BaseModel):
         @exec_state.user_fn_redirected(failure_tip="some message when decorated fn failed")
         def user_fn():
             # run some fn user specified
-        
+
         user_fn()
         ```
         When decorated with `user_fn_redirected`, the stdout and stderr will be redirected
         to `user_logs`.
-        
+
         When the decorated fn failed, the `exec_state` will be 'failed' with type 'user'.
         The `error` object will contain the first frame of stack together with the tip provided.
         """
+
         def wrapper(user_fn: Callable) -> Callable:
             def inner(*args, **kwargs):
                 stdout_log = io.StringIO()
