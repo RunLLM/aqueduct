@@ -5,11 +5,12 @@ from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.error import InvalidUserArgumentException, InvalidUserActionException
 from .enums import ArtifactType
 
 from .flow_run import FlowRun
 from .logger import Logger
+from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import parse_user_supplied_id, format_header_for_print
 
@@ -40,7 +41,7 @@ class Flow:
 
         Args:
             limit:
-                If set, we return only a limit number of historical runs. Defaults to 10.
+                If set, we return only a limit number of the latest runs. Defaults to 10.
 
         Returns:
             A list of dictionaries, each of which corresponds to a single flow run.
@@ -52,7 +53,7 @@ class Flow:
         resp = self._api_client.get_workflow(self._id)
         return [
             dag_result.to_readable_dict()
-            for dag_result in reversed(resp.workflow_dag_results[:limit])
+            for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
         ]
 
     def _construct_flow_run(
@@ -70,9 +71,6 @@ class Flow:
         # Instead, we'll need to fetch the parameter's value from the parameter operator's output.
         param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
-            param_op = dag.must_get_operator(with_output_artifact_id=param_artifact.id)
-            assert param_op.spec.param is not None
-
             param_val = self._api_client.get_artifact_result_data(
                 str(dag_result.id),
                 str(param_artifact.id),
@@ -86,8 +84,14 @@ class Flow:
                 )
                 continue
 
-            param_op.spec.param.val = param_val
-            dag.update_operator(param_op)
+            dag.update_operator_spec(
+                param_artifact.name,  # this works because the parameter op and artifact currently share the same name.
+                OperatorSpec(
+                    param=ParamSpec(
+                        val=param_val,
+                    ),
+                ),
+            )
 
         return FlowRun(
             api_client=self._api_client,
@@ -100,9 +104,8 @@ class Flow:
 
     def latest(self) -> FlowRun:
         resp = self._api_client.get_workflow(self._id)
-        assert (
-            len(resp.workflow_dag_results) > 0
-        ), "Every flow must have at least one run attached to it."
+        if len(resp.workflow_dag_results) == 0:
+            raise InvalidUserActionException("This flow has not been run yet.")
 
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]

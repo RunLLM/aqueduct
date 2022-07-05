@@ -1,7 +1,7 @@
 import { Box, Button, Input, Typography } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
 import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
+import CodeBlock from '../../../components/layouts/codeblock';
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
 
@@ -14,12 +14,22 @@ type IntegrationFileUploadFieldProps = {
   file: FileData;
   placeholder: string;
   onFiles: (files: FileList) => void;
+  displayFile: null | ((file: FileData) => JSX.Element);
   onReset: MouseEventHandler<HTMLAnchorElement>;
 };
 
 export const IntegrationFileUploadField: React.FC<
   IntegrationFileUploadFieldProps
-> = ({ label, description, required, file, placeholder, onFiles, onReset }) => {
+> = ({
+  label,
+  description,
+  required,
+  file,
+  placeholder,
+  onFiles,
+  displayFile,
+  onReset,
+}) => {
   let header, contents;
   const drop = useRef(undefined);
   const [dragging, setDragging] = React.useState(false);
@@ -94,24 +104,6 @@ export const IntegrationFileUploadField: React.FC<
       </Box>
     );
 
-    const allRows = file.data.split(/\r?\n/);
-    const parsedHeader = ['id'];
-    parsedHeader.push(...allRows[0].split(/,/));
-    const width = 25;
-    const parsedColumns = parsedHeader.map((headerName) => {
-      return {
-        field: headerName,
-        headerName: headerName,
-        width: width * headerName.length,
-      };
-    });
-    const parsedRows = allRows.slice(1).map((line, id) => {
-      const row = line.split(/,/);
-      const parsedRow = { id: id };
-      parsedHeader.forEach((headerName, i) => (parsedRow[headerName] = row[i]));
-      return parsedRow;
-    });
-
     const styling = {
       margin: '16px',
       height: '25vh',
@@ -120,13 +112,11 @@ export const IntegrationFileUploadField: React.FC<
 
     contents = (
       <Box sx={styling}>
-        <DataGrid
-          rows={parsedRows}
-          columns={parsedColumns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-        />
+        {displayFile ? (
+          displayFile(file)
+        ) : (
+          <CodeBlock language="">{file.data}</CodeBlock>
+        )}
       </Box>
     );
   } else {

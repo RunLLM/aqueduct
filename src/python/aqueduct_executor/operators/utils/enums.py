@@ -14,14 +14,12 @@ class MetaEnum(EnumMeta):
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
-    UNKNOWN = "unknown"
     PENDING = "pending"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
 
 
 class FailureType(Enum, metaclass=MetaEnum):
-    SUCCESS = 0
     SYSTEM = 1
     USER = 2
 
