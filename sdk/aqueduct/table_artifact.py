@@ -21,8 +21,6 @@ import aqueduct
 import ruamel
 from ruamel import yaml
 
-from aqueduct import aqueduct_client
-from aqueduct import api_client
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
