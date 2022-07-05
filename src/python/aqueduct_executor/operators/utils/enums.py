@@ -14,7 +14,6 @@ class MetaEnum(EnumMeta):
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
-    UNKNOWN = "unknown"
     PENDING = "pending"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
