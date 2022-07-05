@@ -39,6 +39,13 @@ class Logs(BaseModel):
 
 class ExecutionState(BaseModel):
     """
+    The state to track operator execution. In the future, we may extend this
+    to track arbitrary execution.
+
+    `status`: the status of execution, one of 'pending', 'succeeded', or 'failed'.
+    `user_logs`: the stderr and stdout of 'user' part of execution. Available regardless of status.
+    `failure_type`: more detailed failure reason. Available only if status is `failed`.
+    `error`:  structured error message. Available only if status is `failed`.
     """
     user_logs: Logs
     status: ExecutionStatus = ExecutionStatus.PENDING
@@ -46,6 +53,21 @@ class ExecutionState(BaseModel):
     error: Optional[Error] = None
 
     def user_fn_redirected(self, failure_tip: str) -> Callable:
+        """
+        Usage:
+        ```
+        @exec_state.user_fn_redirected(failure_tip="some message when decorated fn failed")
+        def user_fn():
+            # run some fn user specified
+        
+        user_fn()
+        ```
+        When decorated with `user_fn_redirected`, the stdout and stderr will be redirected
+        to `user_logs`.
+        
+        When the decorated fn failed, the `exec_state` will be 'failed' with type 'user'.
+        The `error` object will contain the first frame of stack together with the tip provided.
+        """
         def wrapper(user_fn: Callable) -> Callable:
             def inner(*args, **kwargs):
                 stdout_log = io.StringIO()
