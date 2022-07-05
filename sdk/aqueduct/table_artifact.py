@@ -143,12 +143,6 @@ class TableArtifact(Artifact):
                 the number of row previewed. Default to 5.
         Returns:
             A dataframe containing the tabular contents of this artifact.
-
-        Raises:
-            InvalidRequestError:
-                An error occurred because of an issue with the user's code or inputs.
-            InternalServerError:
-                An unexpected error occurred within the Aqueduct cluster.
         """
         df = self.get()
         return df.head(n)
