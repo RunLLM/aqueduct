@@ -78,6 +78,11 @@ jobs:
         timeout-minutes: 10
         run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
 
+      - name: Run Parameterization Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "parameterization/Using Workflow Parameters.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
