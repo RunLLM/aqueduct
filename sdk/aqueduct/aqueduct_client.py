@@ -14,12 +14,14 @@ from .dag import (
     SubgraphDAGDelta,
     Metadata,
     AddOrReplaceOperatorDelta,
+    validate_overwriting_parameters,
 )
 from .enums import RelationalDBServices, ServiceType
 from .error import (
     InvalidIntegrationException,
     IncompleteFlowException,
     InvalidUserArgumentException,
+    InvalidUserActionException,
 )
 from .flow import Flow
 from .flow_run import _show_dag
@@ -365,8 +367,17 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        # TODO(ENG-1144): If there the provided parameters dict is not valid, throw an error
-        #  earlier, before getting to execution.
+        if parameters is not None:
+            flow = self.flow(flow_id)
+            runs = flow.list_runs(limit=1)
+
+            # NOTE: this is a defense check against triggering runs that haven't run yet.
+            # We may want to revisit this in the future if more nuanced constraints are necessary.
+            if len(runs) == 0:
+                raise InvalidUserActionException(
+                    "Cannot trigger a workflow that hasn't already run at least once."
+                )
+            validate_overwriting_parameters(flow.latest()._dag, parameters)
 
         serialized_params = None
         if parameters is not None:

@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { parse } from 'query-string';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -18,16 +18,14 @@ import {
 import {
   handleGetArtifactResults,
   handleGetOperatorResults,
+  handleGetSelectDagPosition,
   handleGetWorkflow,
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
-import { Artifact } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
-import { Operator } from '../../../../utils/operators';
 import { exportCsv } from '../../../../utils/preview';
-import { getDagLayoutElements } from '../../../../utils/reactflow';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
@@ -59,16 +57,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     (state: RootState) => state.nodeSelectionReducer.selected
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const [dagLayoutElements, setDagLayoutElements] = useState({
-    nodes: [],
-    edges: [],
-  });
+
   const switchSideSheet = sideSheetSwitcher(dispatch);
   const openSideSheetState = useSelector(
     (state: RootState) => state.openSideSheetReducer
   );
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
+  );
+  const dagPosition = useSelector(
+    (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
   useEffect(() => {
@@ -107,6 +105,18 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
       }
     }
   }, [workflow.dagResults, window.location.search]);
+
+  useEffect(() => {
+    if (workflow.selectedDag) {
+      dispatch(
+        handleGetSelectDagPosition({
+          apiKey: user.apiKey,
+          operators: workflow.selectedDag?.operators,
+          artifacts: workflow.selectedDag?.artifacts,
+        })
+      );
+    }
+  }, [workflow.selectedDag]);
 
   /**
    * This function dispatches calls to fetch artifact results and contents.
@@ -172,13 +182,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     updateArtifactDetails(currentNode.id);
   }, [currentNode.id, workflow.selectedResult?.id]);
 
-  const selectedDag = workflow.selectedDag;
-  const onChange = () => {
-    setDagLayoutElements((els) => {
-      return els;
-    });
-  };
-
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
     dispatch(setBottomSideSheetOpenState(false));
@@ -187,37 +190,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
     dispatch(resetSelectedNode());
   };
 
-  const asyncSetDagLayoutElements = async (
-    operators: { [id: string]: Operator },
-    artifacts: { [id: string]: Artifact },
-    apiKey: string
-  ) => {
-    const elem = await getDagLayoutElements(
-      operators,
-      artifacts,
-      onChange,
-      () => {
-        // Do nothing.
-      },
-      apiKey
-    );
-
-    setDagLayoutElements(elem);
-  };
-
-  const updateLayout = () => {
-    if (
-      workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      !!selectedDag
-    ) {
-      asyncSetDagLayoutElements(
-        selectedDag.operators,
-        selectedDag.artifacts,
-        user.apiKey
-      );
-    }
-  };
-
+  const selectedDag = workflow.selectedDag;
   const getDagDetails = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
@@ -232,16 +205,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   };
 
   useEffect(getDagDetails, [workflow.selectedDag]);
-
-  useEffect(updateLayout, [
-    user.apiKey,
-    workflow.selectedDag,
-    workflow.selectedResult,
-    workflow.loadingStatus.loading,
-    openSideSheetState.bottomSideSheetOpen,
-    openSideSheetState.workflowStatusBarOpen,
-    currentNode,
-  ]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
@@ -337,8 +300,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
         >
           <ReactFlowProvider>
             <ReactFlowCanvas
-              nodes={dagLayoutElements.nodes}
-              edges={dagLayoutElements.edges}
+              nodes={dagPosition.result?.nodes}
+              edges={dagPosition.result?.edges}
               switchSideSheet={switchSideSheet}
               onPaneClicked={onPaneClicked}
             />

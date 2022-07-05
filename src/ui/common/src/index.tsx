@@ -245,7 +245,6 @@ import {
 import { exportCsv } from './utils/preview';
 import {
   EdgeTypes,
-  getDagLayoutElements,
   ReactFlowNodeData,
   ReactflowNodeType,
 } from './utils/reactflow';
@@ -359,7 +358,6 @@ export {
   GetArtifactResultResponse,
   getBottomSidesheetOffset,
   getBottomSideSheetWidth,
-  getDagLayoutElements,
   getDataArtifactPreview,
   getDataSideSheetContent,
   getNextUpdateTime,
