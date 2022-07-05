@@ -244,7 +244,7 @@ def _write_json_output(
     )
 
 
-def write_logs(
+def write_exec_state(
     storage: Storage,
     metadata_path: str,
     exec_state: ExecutionState,

@@ -28,8 +28,8 @@ TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your
 
 
 class Error(BaseModel):
-    context: str = ""
-    tip: str = ""
+    tip: str = "" # Information about how the user could fix the error.
+    context: str = "" # More details about the error. Typically a stack trace.
 
 
 class Logs(BaseModel):
@@ -38,9 +38,11 @@ class Logs(BaseModel):
 
 
 class ExecutionState(BaseModel):
+    """
+    """
     user_logs: Logs
     status: ExecutionStatus = ExecutionStatus.PENDING
-    failure_type: FailureType = FailureType.SUCCESS
+    failure_type: Optional[FailureType] = None
     error: Optional[Error] = None
 
     def user_fn_redirected(self, failure_tip: str) -> Callable:

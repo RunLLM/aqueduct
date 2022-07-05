@@ -120,7 +120,7 @@ def run(spec: spec.FunctionSpec) -> None:
         results, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
-            utils.write_logs(storage, spec.metadata_path, exec_state)
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
@@ -138,7 +138,7 @@ def run(spec: spec.FunctionSpec) -> None:
         )
 
         exec_state.status = ExecutionStatus.SUCCEEDED
-        utils.write_logs(storage, spec.metadata_path, exec_state)
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
         print(f"Succeeded! Full logs: {exec_state.json()}")
 
     except Exception as e:
@@ -149,7 +149,7 @@ def run(spec: spec.FunctionSpec) -> None:
             tip=TIP_UNKNOWN_ERROR,
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
-        utils.write_logs(storage, spec.metadata_path, exec_state)
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 
