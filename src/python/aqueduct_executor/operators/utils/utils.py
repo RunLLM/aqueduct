@@ -150,12 +150,12 @@ def write_artifact(
         _write_tabular_output(storage, output_path, output_metadata_path, content, output_metadata)
 
     elif artifact_type == OutputArtifactType.FLOAT:
-        if not isinstance(content, float) and not isinstance(content, int):
+        try:
+            _write_numeric_output(storage, output_path, output_metadata_path, float(content), output_metadata)
+        except ValueError:
             raise Exception(
-                "Expected output type to be float or int, instead got %s" % type(content).__name__
+                "Expected output type to be numeric, instead got %s" % type(content).__name__
             )
-        _write_numeric_output(storage, output_path, output_metadata_path, content, output_metadata)
-
     elif artifact_type == OutputArtifactType.BOOL:
         if isinstance(content, bool) or isinstance(content, np.bool_):
             _write_bool_output(
