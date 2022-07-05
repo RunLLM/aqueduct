@@ -4,15 +4,20 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 type ServerConfiguration struct {
-	AqPath             string `yaml:"aqPath" json:"aq_path"`
-	EncryptionKey      string `yaml:"encryptionKey" json:"encryption_key"`
-	RetentionJobPeriod string `yaml:"retentionJobPeriod"`
-	ApiKey             string `yaml:"apiKey"`
+	AqPath             string                `yaml:"aqPath" json:"aq_path"`
+	EncryptionKey      string                `yaml:"encryptionKey" json:"encryption_key"`
+	RetentionJobPeriod string                `yaml:"retentionJobPeriod"`
+	ApiKey             string                `yaml:"apiKey"`
+	StorageConfig      *shared.StorageConfig `yaml:"storageConfig"`
+}
+
+type Storage struct {
 }
 
 func ParseServerConfiguration(confPath string) *ServerConfiguration {
