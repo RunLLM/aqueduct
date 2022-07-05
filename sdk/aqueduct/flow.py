@@ -41,7 +41,7 @@ class Flow:
 
         Args:
             limit:
-                If set, we return only a limit number of historical runs. Defaults to 10.
+                If set, we return only a limit number of the latest runs. Defaults to 10.
 
         Returns:
             A list of dictionaries, each of which corresponds to a single flow run.
@@ -53,7 +53,7 @@ class Flow:
         resp = self._api_client.get_workflow(self._id)
         return [
             dag_result.to_readable_dict()
-            for dag_result in reversed(resp.workflow_dag_results[:limit])
+            for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
         ]
 
     def _construct_flow_run(
