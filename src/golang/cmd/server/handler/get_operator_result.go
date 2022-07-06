@@ -102,10 +102,10 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		Status: dbOperatorResult.Status,
 	}
 
-	if !dbOperatorResult.State.IsNull {
-		response.FailureType = dbOperatorResult.State.FailureType
-		response.Error = dbOperatorResult.State.Error
-		response.UserLogs = dbOperatorResult.State.UserLogs
+	if !dbOperatorResult.ExecState.IsNull {
+		response.FailureType = dbOperatorResult.ExecState.FailureType
+		response.Error = dbOperatorResult.ExecState.Error
+		response.UserLogs = dbOperatorResult.ExecState.UserLogs
 	}
 
 	return response, http.StatusOK, nil

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -210,7 +209,7 @@ func deserializeOperatorResponses(
 				Status:      shared.FailedExecutionStatus,
 				FailureType: shared.SystemFailure,
 				Error: &shared.Error{
-					Context: fmt.Sprintf("%v", err),
+					Context: err.Error(),
 					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,
 				},
 			}

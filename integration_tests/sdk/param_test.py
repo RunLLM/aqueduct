@@ -162,6 +162,10 @@ def test_trigger_flow_with_different_param(client):
     flow_name = generate_new_flow_name()
     flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
 
+    # First, check that triggering the flow with a non-existant parameter will error.
+    with pytest.raises(InvalidUserArgumentException):
+        client.trigger(flow.id(), parameters={"non-existant": 10})
+
     try:
         client.trigger(flow.id(), parameters={"num1": 10})
         assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
