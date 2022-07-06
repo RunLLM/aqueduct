@@ -174,19 +174,25 @@ func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string,
 	}
 
 	// Table creation failed, so we need to fetch the error message from storage
-	var metadata shared.ExecutionState
+	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		jobMetadataPath,
-		&metadata,
+		&execState,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
 	}
 
-	errMsg := ""
-	if metadata.Error != nil {
-		errMsg = metadata.Error.Context
+	if execState.Error != nil {
+		return http.StatusBadRequest, errors.Newf(
+			"Unable to create table.\n%s\n%s",
+			execState.Error.Tip,
+			execState.Error.Context,
+		)
 	}
-	return http.StatusBadRequest, errors.Newf("Unable to create table: %v", errMsg)
+
+	return http.StatusInternalServerError, errors.New(
+		"Unable to create table, we couldn't obtain more context at this point.",
+	)
 }
