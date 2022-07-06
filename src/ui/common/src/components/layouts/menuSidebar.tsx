@@ -18,13 +18,13 @@ import { useLocation } from 'react-router-dom';
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   NotificationLogLevel,
   NotificationStatus,
 } from '../../utils/notifications';
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
-import { getPathPrefix } from '../../utils/getPathPrefix';
 
 export const MenuSidebarWidth = '200px';
 
@@ -173,7 +173,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const sidebarContent = (
     <>
       <Box className={styles['menu-sidebar-popover-container']}>
-        <Link href={`${ getPathPrefix() ?? '/' }`} underline="none">
+        <Link href={`${getPathPrefix() ?? '/'}`} underline="none">
           <Typography variant="h3" sx={{ color: 'white' }}>
             Aqueduct
           </Typography>
@@ -220,7 +220,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           onClose={handleCloseUserPopover}
           open={userPopoverOpen}
         >
-          <Link href={`${getPathPrefix()}/account`} underline="none" sx={{ color: 'blue.800' }}>
+          <Link
+            href={`${getPathPrefix()}/account`}
+            underline="none"
+            sx={{ color: 'blue.800' }}
+          >
             <MenuItem sx={{ width: '190px' }} disableRipple>
               <Box sx={{ fontSize: '20px', mr: 1 }}>
                 <FontAwesomeIcon icon={faCircleUser} />

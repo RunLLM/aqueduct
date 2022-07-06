@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { DataPreviewInfo } from '../../../utils/data';
+import { getPathPrefix } from '../../../utils/getPathPrefix';
 import {
   Integration,
   SupportedIntegrations,
@@ -18,7 +19,6 @@ import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SnowflakeCard } from './snowflakeCard';
-import { getPathPrefix } from '../../../utils/getPathPrefix';
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -40,7 +40,11 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
     });
     const workflowId = dataPreviewInfo.workflow_id;
     return (
-      <Link underline="none" color="inherit" href={`/${getPathPrefix()}/workflow/${workflowId}`}>
+      <Link
+        underline="none"
+        color="inherit"
+        href={`/${getPathPrefix()}/workflow/${workflowId}`}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
           <Box
             sx={{

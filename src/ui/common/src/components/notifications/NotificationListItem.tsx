@@ -9,13 +9,13 @@ import { handleArchiveNotification } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import { dateString } from '../../utils/metadata';
 import {
   NotificationAssociation,
   NotificationLogLevel,
 } from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
-import { getPathPrefix } from '../../utils/getPathPrefix';
 
 type Props = {
   user: UserProfile;

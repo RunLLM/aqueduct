@@ -8,8 +8,8 @@ import { IntegrationCard } from '../../components/integrations/cards/card';
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
-import { Card } from '../layouts/card';
 import { getPathPrefix } from '../../utils/getPathPrefix';
+import { Card } from '../layouts/card';
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;

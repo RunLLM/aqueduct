@@ -4,8 +4,8 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 
 import fetchUser from '../../utils/fetchUser';
-import { Button } from '../primitives/Button.styles';
 import { getPathPrefix } from '../../utils/getPathPrefix';
+import { Button } from '../primitives/Button.styles';
 
 export const LoginPage: React.FC = () => {
   useEffect(() => {
