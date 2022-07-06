@@ -6,10 +6,14 @@ from typing import Dict, Any, Mapping, Union, List
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact
+from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
+from aqueduct.error import ArtifactNotFoundException
+from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
 from aqueduct.param_artifact import ParamArtifact
+from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import human_readable_timestamp, format_header_for_print
 
 
@@ -63,6 +67,30 @@ class FlowRun:
             param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
+    
+    def artifact(
+        self, artifact_name: str
+    ) -> Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact, None]:
+        """Gets the Artifact from the flow based on artifact_name"""
+        flow_run_dag = self._dag
+
+        for artifact_from_workflow in list(flow_run_dag.artifacts.values()):
+            if artifact_from_workflow.name == artifact_name:
+                assert isinstance(artifact_from_workflow, Artifact)
+                artifact_DAG = artifact_from_workflow
+
+        if artifact_DAG is None:
+            raise ArtifactNotFoundException("The artifact name provided does not exist.")
+        elif artifact_DAG.spec.table is not None:
+            return TableArtifact(self._api_client, self._dag, artifact_DAG.id)
+        elif artifact_DAG.spec.float is not None:
+            return MetricArtifact(self._api_client, self._dag, artifact_DAG.id)
+        elif artifact_DAG.spec.bool is not None:
+            return CheckArtifact(self._api_client, self._dag, artifact_DAG.id)
+        elif artifact_DAG.spec.jsonable is not None:
+            return ParamArtifact(self._api_client, self._dag, artifact_DAG.id)
+
+        return None
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of

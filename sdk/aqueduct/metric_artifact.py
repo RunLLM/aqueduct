@@ -52,10 +52,12 @@ class MetricArtifact(Artifact):
         api_client: APIClient,
         dag: DAG,
         artifact_id: uuid.UUID,
+        from_flow_run: bool = False
     ):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
+        self._from_flow_run = from_flow_run
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> float:
         """Materializes a MetricArtifact into its immediate float value.

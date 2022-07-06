@@ -1,6 +1,7 @@
 from typing import Optional, Dict, List
 import uuid
 from pydantic import BaseModel
+from requests import Response
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
@@ -150,6 +151,10 @@ class WorkflowDagResponse(BaseModel):
     metadata: Metadata
     operators: Dict[str, Operator]
     artifacts: Dict[str, Artifact]
+
+    def update_operator_spec(self,operator : Operator, resp : Response) -> None:
+        if operator in list(self.operators.values()):
+            operator.change_file(resp.content)
 
 
 class WorkflowDagResultResponse(BaseModel):

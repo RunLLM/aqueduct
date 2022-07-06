@@ -276,15 +276,9 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
-        workflow_response = GetWorkflowResponse(**resp.json())
-        for work_flow_dag in list(workflow_response.workflow_dags.values()):
-            for operator in list(work_flow_dag.operators.values()):
-                operator_url = self._construct_full_url(
-                    self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
-                )
-                operator_resp = requests.get(operator_url, headers=headers)
-                operator.change_file(operator_resp.content)
-        return workflow_response
+        work_flow_response = GetWorkflowResponse(**resp.json())
+        self.export_serialized_function(work_flow_response)
+        return work_flow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
@@ -335,3 +329,13 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
+    
+    def export_serialized_function(self,work_flow_response : GetWorkflowResponse) -> None:
+        headers = utils.generate_auth_headers(self.api_key)
+        for work_flow_dag in list(work_flow_response.workflow_dags.values()):
+            for operator in list(work_flow_dag.operators.values()):
+                operator_url = self._construct_full_url(
+                    self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
+                )
+                operator_resp = requests.get(operator_url, headers=headers)
+                work_flow_dag.update_operator_spec(operator,operator_resp)

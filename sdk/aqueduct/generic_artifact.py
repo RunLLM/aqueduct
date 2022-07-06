@@ -9,6 +9,7 @@ class Artifact(ABC):
 
     _artifact_id: uuid.UUID
     _dag: DAG
+    _from_flow_run: bool
 
     def id(self) -> uuid.UUID:
         """Fetch the id associated with this artifact.

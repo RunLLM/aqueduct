@@ -37,10 +37,12 @@ class CheckArtifact(Artifact):
         api_client: APIClient,
         dag: DAG,
         artifact_id: uuid.UUID,
+        from_flow_run: bool
     ):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
+        self._from_flow_run = from_flow_run
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
         """Materializes a CheckArtifact into a boolean.

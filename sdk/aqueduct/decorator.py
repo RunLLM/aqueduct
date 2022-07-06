@@ -79,7 +79,11 @@ def wrap_spec(
     """
     if len(input_artifacts) < 1:
         raise Exception("Transformation requires at least one input artifact.")
-
+    
+    for artifact in input_artifacts:
+        if(artifact._from_flow_run):
+            raise Exception("Artifact fetched from flow run can not be reused for computation")
+            
     dag = input_artifacts[0]._dag
     api_client = input_artifacts[0]._api_client
 
