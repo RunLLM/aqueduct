@@ -77,7 +77,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	latestVersions := make(map[uuid.UUID]artifactVersions)
 	historicalVersions := make(map[uuid.UUID]artifactVersions)
 
-	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
+	loadStatus, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
 		ctx,
 		args.OrganizationId,
 		h.Database,
@@ -95,10 +95,10 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	loadOperatorIds := make([]uuid.UUID, 0, len(loadOperatorMetadata))
+	loadOperatorIds := make([]uuid.UUID, 0, len(loadStatus))
 	latestWorkflowDagIds := make([]uuid.UUID, 0, len(latestWorkflowDagIdObjects))
 
-	for _, loadOperator := range loadOperatorMetadata {
+	for _, loadOperator := range loadStatus {
 		loadOperatorIds = append(loadOperatorIds, loadOperator.LoadOperatorId)
 	}
 
@@ -132,7 +132,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	allArtifactIds := make([]uuid.UUID, 0, len(loadOperatorIds))
 
-	for _, loadOperator := range loadOperatorMetadata {
+	for _, loadOperator := range loadStatus {
 		if _, ok := latestArtifactIds[loadOperator.ArtifactId]; ok {
 			// If we reach here, it means this load operator corresponds to an artifact that belongs
 			// to the latest workflow dag of a workflow.
