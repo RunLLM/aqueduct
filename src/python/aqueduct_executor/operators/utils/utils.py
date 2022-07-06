@@ -153,7 +153,9 @@ def write_artifact(
         try:
             float(content)
             print("IM HERE")
-            _write_numeric_output(storage, output_path, output_metadata_path, content, output_metadata)
+            _write_numeric_output(
+                storage, output_path, output_metadata_path, content, output_metadata
+            )
         except ValueError:
             raise Exception(
                 "Expected output type to be numeric, instead got %s" % type(content).__name__
