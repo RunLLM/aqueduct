@@ -152,7 +152,6 @@ def write_artifact(
     elif artifact_type == OutputArtifactType.FLOAT:
         try:
             float(content)
-            print("IM HERE")
             _write_numeric_output(
                 storage, output_path, output_metadata_path, content, output_metadata
             )
