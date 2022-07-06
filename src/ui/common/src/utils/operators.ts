@@ -141,7 +141,7 @@ export function normalizeOperator(op): Operator {
 
 export type GetOperatorResultResponse = {
   status: ExecutionStatus;
-  failure_type: FailureType;
+  failure_type?: FailureType;
   error?: Error;
   user_logs?: Logs;
 };
