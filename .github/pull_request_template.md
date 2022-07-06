@@ -9,4 +9,8 @@
 - [ ] If this is a new feature, I have added unit tests and integration tests.
 - [ ] I have run the integration tests locally and they are passing.
 - [ ] All features on the UI continue to work correctly.
-- [ ] I have added the appropriate CI label to the PR.
+- [ ] Added one of the following CI labels:
+    - `run_integration_test`: Runs integration tests
+    - `skip_integration_test`: Skips integration tests (Should be used when changes are ONLY documentation/UI)
+
+
