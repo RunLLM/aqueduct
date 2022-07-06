@@ -10,7 +10,6 @@ from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from utils import (
     generate_new_flow_name,
-    get_artifact_name,
     get_integration_name,
     run_flow_test,
     run_sentiment_model_multiple_input,
@@ -185,8 +184,31 @@ def test_get_artifact_from_flow(client):
         name=generate_new_flow_name(),
         artifacts=[output_artifact],
     )
-    wait_for_flow_runs(client, flow.id(), num_runs=1)
-    artifact_return = flow.artifact(output_artifact.name())
-    assert artifact_return.name() == output_artifact.name()
-    assert artifact_return.get().equals(output_artifact.get())
-    client.delete_flow(flow.id())
+    try:
+        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        artifact_return = flow.latest().artifact(output_artifact.name())
+        assert artifact_return.name() == output_artifact.name()
+        assert artifact_return.get().equals(output_artifact.get())
+    finally:
+        client.delete_flow(flow.id())
+
+
+@pytest.mark.publish
+def test_get_artifact_reuse_for_computation(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact.save(
+        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
+    )
+    flow = client.publish_flow(
+        name=generate_new_flow_name(),
+        artifacts=[output_artifact],
+    )
+    try:
+        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        artifact_return = flow.latest().artifact(output_artifact.name())
+        with pytest.raises(Exception):
+            output_artifact = run_sentiment_model(artifact_return)
+    finally:
+        client.delete_flow(flow.id())

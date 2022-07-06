@@ -67,7 +67,7 @@ class FlowRun:
             param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
-    
+
     def artifact(
         self, artifact_name: str
     ) -> Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact, None]:
@@ -82,13 +82,13 @@ class FlowRun:
         if artifact_DAG is None:
             raise ArtifactNotFoundException("The artifact name provided does not exist.")
         elif artifact_DAG.spec.table is not None:
-            return TableArtifact(self._api_client, self._dag, artifact_DAG.id)
+            return TableArtifact(self._api_client, self._dag, artifact_DAG.id, True)
         elif artifact_DAG.spec.float is not None:
-            return MetricArtifact(self._api_client, self._dag, artifact_DAG.id)
+            return MetricArtifact(self._api_client, self._dag, artifact_DAG.id, True)
         elif artifact_DAG.spec.bool is not None:
-            return CheckArtifact(self._api_client, self._dag, artifact_DAG.id)
+            return CheckArtifact(self._api_client, self._dag, artifact_DAG.id, True)
         elif artifact_DAG.spec.jsonable is not None:
-            return ParamArtifact(self._api_client, self._dag, artifact_DAG.id)
+            return ParamArtifact(self._api_client, self._dag, artifact_DAG.id, True)
 
         return None
 

@@ -329,8 +329,8 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
-    
-    def export_serialized_function(self,work_flow_response : GetWorkflowResponse) -> None:
+
+    def export_serialized_function(self, work_flow_response: GetWorkflowResponse) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         for work_flow_dag in list(work_flow_response.workflow_dags.values()):
             for operator in list(work_flow_dag.operators.values()):
@@ -338,4 +338,4 @@ class APIClient:
                     self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
                 )
                 operator_resp = requests.get(operator_url, headers=headers)
-                work_flow_dag.update_operator_spec(operator,operator_resp)
+                work_flow_dag.update_operator_spec(operator, operator_resp)

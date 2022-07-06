@@ -152,7 +152,7 @@ class WorkflowDagResponse(BaseModel):
     operators: Dict[str, Operator]
     artifacts: Dict[str, Artifact]
 
-    def update_operator_spec(self,operator : Operator, resp : Response) -> None:
+    def update_operator_spec(self, operator: Operator, resp: Response) -> None:
         if operator in list(self.operators.values()):
             operator.change_file(resp.content)
 

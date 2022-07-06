@@ -48,11 +48,7 @@ class MetricArtifact(Artifact):
     """
 
     def __init__(
-        self,
-        api_client: APIClient,
-        dag: DAG,
-        artifact_id: uuid.UUID,
-        from_flow_run: bool = False
+        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
     ):
         self._api_client = api_client
         self._dag = dag
