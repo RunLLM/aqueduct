@@ -33,7 +33,7 @@ jobs:
       - name: mypy sdk
         working-directory: sdk
         run: |
-          mypy aqueduct --ignore-missing-imports --strict --implicit-reexport
+          mypy aqueduct --ignore-missing-imports --strict --implicit-reexport --exclude tests
 
   executor:
     runs-on: ubuntu-latest
