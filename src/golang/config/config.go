@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	log "github.com/sirupsen/logrus"
@@ -17,9 +18,6 @@ type ServerConfiguration struct {
 	StorageConfig      *shared.StorageConfig `yaml:"storageConfig"`
 }
 
-type Storage struct {
-}
-
 func ParseServerConfiguration(confPath string) *ServerConfiguration {
 	bts, err := ioutil.ReadFile(confPath)
 	if err != nil {
@@ -32,6 +30,18 @@ func ParseServerConfiguration(confPath string) *ServerConfiguration {
 	if err != nil {
 		log.Fatal("Unable to correctly parse server config.yml. Please check the config file and retry: ", err)
 		os.Exit(1)
+	}
+
+	if config.StorageConfig == nil {
+		// StorageConfig was not provided so the FileStorage is used by default
+		defaultStoragePath := path.Join(os.Getenv("HOME"), ".aqueduct", "server", "storage")
+
+		config.StorageConfig = &shared.StorageConfig{
+			Type: shared.FileStorageType,
+			FileConfig: &shared.FileConfig{
+				Directory: defaultStoragePath,
+			},
+		}
 	}
 
 	return &config
