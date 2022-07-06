@@ -17,7 +17,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.3"
+package_version = "0.0.4"
 s3_server_prefix = (
     "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/server" % package_version
 )
@@ -245,7 +245,7 @@ long_description = open(readme_path).read()
 
 setup(
     name="aqueduct-ml",
-    version="0.0.3",
+    version="0.0.4",
     install_requires=install_requires,
     scripts=["bin/aqueduct"],
     packages=find_packages(),
