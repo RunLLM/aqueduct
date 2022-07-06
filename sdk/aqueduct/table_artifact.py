@@ -131,7 +131,7 @@ class TableArtifact(Artifact):
             raise AqueductError("Artifact does not have table.")
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
-        """Previews TableArtifact as a actual dataframe.
+        """Returns a preview of the table artifact.
 
         >>> db = client.integration(name="demo/")
         >>> customer_data = db.sql("SELECT * from customers")
