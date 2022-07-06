@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 import boto3
@@ -11,6 +12,10 @@ class S3Storage(Storage):
     _config: S3StorageConfig
 
     def __init__(self, config: S3StorageConfig):
+        # Boto3 uses an environment variable to determine the credentials filepath and profile
+        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = self._config.credentials_path
+        os.environ["AWS_PROFILE"] = self._config.credentials_profile
+
         self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
         self._config = config
 
