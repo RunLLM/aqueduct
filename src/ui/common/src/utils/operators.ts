@@ -104,6 +104,10 @@ export type Load = {
   parameters: LoadParameters;
 };
 
+export type Param = {
+  val: string;
+};
+
 export type OperatorSpec = {
   type: OperatorType;
   function?: FunctionOp;
@@ -111,6 +115,7 @@ export type OperatorSpec = {
   extract?: Extract;
   load?: Load;
   check?: Check;
+  param?: Param;
 };
 
 export type Operator = {

@@ -1,3 +1,4 @@
+import textwrap
 from typing import Optional, Dict, List
 import uuid
 from pydantic import BaseModel
@@ -17,12 +18,13 @@ class Logs(BaseModel):
         return self.stdout == "" and self.stderr == ""
 
     def __str__(self) -> str:
-        return f"""stdout:
-{self.stdout}
---------------------------
-stderr:
-{self.stderr}
-"""
+        return textwrap.dedent(
+            f"""stdout:
+            {self.stdout}
+            --------------------------
+            stderr:
+            {self.stderr}""",
+        )
 
 
 class Error(BaseModel):
@@ -46,7 +48,7 @@ class OperatorResult(BaseModel):
     user_logs: Optional[Logs] = None
     error: Optional[Error] = None
     status: ExecutionStatus = ExecutionStatus.UNKNOWN
-    failure_type: FailureType = FailureType.SUCCESS
+    failure_type: Optional[FailureType] = None
 
 
 class TableArtifactResult(BaseModel):

@@ -12,7 +12,7 @@ const (
 	WorkflowDagResultIdColumn = "workflow_dag_result_id"
 	OperatorIdColumn          = "operator_id"
 	StatusColumn              = "status"
-	StateColumn               = "statue"
+	ExecStateColumn           = "exec_state"
 )
 
 // Returns a joined string of all OperatorResult columns.
@@ -23,7 +23,7 @@ func allColumns() string {
 			WorkflowDagResultIdColumn,
 			OperatorIdColumn,
 			StatusColumn,
-			StateColumn,
+			ExecStateColumn,
 		},
 		",",
 	)

@@ -526,7 +526,7 @@ func updateOperatorAndArtifactResults(
 		operator_result.StatusColumn: operatorState.Status,
 	}
 
-	changes[operator_result.StateColumn] = operatorState
+	changes[operator_result.ExecStateColumn] = operatorState
 
 	_, err := operatorResultWriter.UpdateOperatorResult(
 		ctx,
@@ -539,7 +539,7 @@ func updateOperatorAndArtifactResults(
 			log.Fields{
 				"changes": changes,
 			},
-		).Errorf("Unable to update operator result metadata: %v", err)
+		).Errorf("Unable to update operator exec state: %v", err)
 	}
 
 	// Write the artifact results.

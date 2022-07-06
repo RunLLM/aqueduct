@@ -88,7 +88,6 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
 
 
 class FailureType(Enum, metaclass=MetaEnum):
-    SUCCESS = 0
     SYSTEM = 1
     USER = 2
 

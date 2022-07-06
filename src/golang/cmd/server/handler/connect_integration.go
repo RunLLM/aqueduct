@@ -198,19 +198,25 @@ func ValidateConfig(
 	}
 
 	// Authentication failed, so we need to fetch the error message from storage
-	var metadata shared.ExecutionState
+	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		jobMetadataPath,
-		&metadata,
+		&execState,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	errMsg := ""
-	if metadata.Error != nil {
-		errMsg = metadata.Error.Context
+	if execState.Error != nil {
+		return http.StatusBadRequest, errors.Newf(
+			"Unable to authenticate.\n%s\n%s",
+			execState.Error.Tip,
+			execState.Error.Context,
+		)
 	}
-	return http.StatusBadRequest, errors.Newf("Unable to authenticate credentials: %v", errMsg)
+
+	return http.StatusBadRequest, errors.New(
+		"Unable to authenticate credentials, we couldn't obtain more context at this point.",
+	)
 }

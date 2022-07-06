@@ -11,7 +11,7 @@ from great_expectations.data_context.types.base import (
 )
 from great_expectations.data_context import BaseDataContext
 
-from great_expectations.core import ExpectationSuite, ExpectationConfiguration
+from great_expectations.core import ExpectationConfiguration
 from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.validator.validator import Validator
 
@@ -44,7 +44,6 @@ from aqueduct.operators import (
     MetricSpec,
     SystemMetricSpec,
     CheckSpec,
-    get_operator_type,
 )
 from aqueduct.utils import (
     serialize_function,
