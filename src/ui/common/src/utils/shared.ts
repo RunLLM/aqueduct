@@ -20,7 +20,6 @@ export enum ExecutionStatus {
 }
 
 export enum FailureType {
-  Success = 0,
   System = 1,
   User = 2,
 }

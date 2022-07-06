@@ -3,6 +3,8 @@ package request
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/dropbox/godropbox/errors"
 )
 
 const (
@@ -25,5 +27,16 @@ func ExtractParamsfromRequest(r *http.Request) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for param_name, param_val := range params {
+		if !IsJSON(param_val) {
+			return nil, errors.Newf("The value %s provided for parameter %s is not in a valid json format.", param_val, param_name)
+		}
+	}
 	return params, nil
+}
+
+func IsJSON(str string) bool {
+	var js json.RawMessage
+	return json.Unmarshal([]byte(str), &js) == nil
 }
