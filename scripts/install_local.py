@@ -62,7 +62,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether to build and replace the Python SDK.",
     )
-    
+
     parser.add_argument(
         "--executor",
         dest="update_executor",
@@ -107,7 +107,9 @@ if __name__ == "__main__":
         execute_command(["cp", "./src/build/migrator", join(server_directory, "bin/migrator")])
 
         # Run the migrator to update to the latest schema
-        execute_command([join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION])
+        execute_command(
+            [join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
+        )
 
     # Build and replace UI files.
     if args.update_ui:
