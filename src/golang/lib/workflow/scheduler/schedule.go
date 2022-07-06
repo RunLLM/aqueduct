@@ -2,7 +2,9 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/check"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -90,6 +92,7 @@ func ScheduleOperator(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
+			[]string{}, /* BlacklistedOutputs */
 		)
 	}
 
@@ -121,6 +124,7 @@ func ScheduleOperator(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
+			[]string{}, /* BlacklistedOutputs */
 		)
 	}
 
@@ -141,6 +145,16 @@ func ScheduleOperator(
 		}
 		outputArtifactTypes := []artifact.Type{artifact.BoolType}
 
+		// Fail the workflow if the check has error severity and does not pass (returns False).
+		blacklistedOutputs := []string{}
+		if op.Spec.Check().Level == check.ErrorLevel {
+			falseInJSONBytes, err := json.Marshal(false)
+			if err != nil {
+				return "", errors.Wrap(err, "Internal error: unable to JSON marshal 'false' boolean.")
+			}
+			blacklistedOutputs = append(blacklistedOutputs, string(falseInJSONBytes))
+		}
+
 		return ScheduleFunction(
 			ctx,
 			op.Spec.Check().Function,
@@ -153,6 +167,7 @@ func ScheduleOperator(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
+			blacklistedOutputs,
 		)
 	}
 

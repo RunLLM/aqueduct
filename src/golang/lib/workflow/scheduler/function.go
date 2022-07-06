@@ -34,6 +34,7 @@ func ScheduleFunction(
 	outputArtifactTypes []artifact.Type,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
+	blacklistedOutputs []string,
 ) (string, error) {
 	entryPoint := fn.EntryPoint
 	if entryPoint == nil {
@@ -61,6 +62,7 @@ func ScheduleFunction(
 		outputMetadataPaths,
 		inputArtifactTypes,
 		outputArtifactTypes,
+		blacklistedOutputs,
 	)
 
 	err := jobManager.Launch(ctx, jobName, jobSpec)
