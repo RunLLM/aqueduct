@@ -216,7 +216,7 @@ func ValidateConfig(
 		)
 	}
 
-	return http.StatusBadRequest, errors.New(
+	return http.StatusInternalServerError, errors.New(
 		"Unable to authenticate credentials, we couldn't obtain more context at this point.",
 	)
 }
