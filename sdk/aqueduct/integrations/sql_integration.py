@@ -107,7 +107,7 @@ class RelationalDBIntegration(Integration):
         description: str = "",
     ) -> TableArtifact:
         """
-        Runs a SQL query against the RealtionalDB integration.
+        Runs a SQL query against the RelationalDB integration.
 
         Args:
             query:
