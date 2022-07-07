@@ -115,6 +115,7 @@ def download_server_binaries(architecture):
         f.write(
             requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).content
         )
+    print("Downloaded server binaries.")
 
 
 def setup_server_binaries():
