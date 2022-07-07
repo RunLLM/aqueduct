@@ -30,6 +30,8 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 		}
 	}
 
+	r.Header.Set("Content-Length", "785")
+	r.Header.Set("Accept-Encoding:", "gzip, deflate, br")
 	log.Info(r.ContentLength)
 
 	err := json.NewDecoder(r.Body).Decode(&operator_mapping)
