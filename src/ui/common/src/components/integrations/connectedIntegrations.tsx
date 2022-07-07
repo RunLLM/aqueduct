@@ -8,6 +8,7 @@ import { IntegrationCard } from '../../components/integrations/cards/card';
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import { Card } from '../layouts/card';
 
 type ConnectedIntegrationsProps = {
@@ -47,7 +48,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
               <Link
                 underline="none"
                 color="inherit"
-                href={`/integration/${integration.id}`}
+                href={`${getPathPrefix()}/integration/${integration.id}`}
               >
                 <Card>
                   <IntegrationCard integration={integration} />

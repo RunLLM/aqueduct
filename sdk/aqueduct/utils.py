@@ -5,7 +5,6 @@ import sys
 from aqueduct.operators import Operator
 from aqueduct.enums import OperatorType
 
-import ipynbname
 import cloudpickle as cp
 import tempfile
 import os
@@ -209,21 +208,23 @@ def _package_files_and_requirements(
     if not file_dependencies:
         file_dependencies = []
 
+    current_directory_path = os.getcwd()
+
     func_filepath = inspect.getsourcefile(func)
     if not func_filepath:
         raise Exception("Unable to find source file of function.")
-
     # In Python3.8, `inspect.getsourcefile` only returns the file's relative path,
     # so we need the line below to get the absolute path.
     func_filepath = os.path.abspath(func_filepath)
-    if "JPY_PARENT_PID" in os.environ:
-        func_filepath = str(ipynbname.path())
-
-    current_directory_path = os.getcwd()
     func_dirpath = os.path.dirname(func_filepath)
-    func_file = os.path.basename(func_filepath)
 
-    os.chdir(func_dirpath)
+    # We check if the directory `func_dirpath` exists. If not, this means `func` is from within a
+    # Jupyter notebook that the user is currently running, so we don't switch the working directory.
+    # The goal of switching the working directory is that if a user specifies relative paths
+    # in `file_dependencies` and if `func` is imported from a Python script located in another
+    # directory, we can locate them.
+    if os.path.isdir(func_dirpath):
+        os.chdir(func_dirpath)
 
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
@@ -264,8 +265,6 @@ def _package_files_and_requirements(
     python_version = ".".join((str(x) for x in sys.version_info[:2]))
     with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
         f.write(python_version)
-    if os.path.exists(os.path.join(dir_path, func_file)):
-        os.remove(os.path.join(dir_path, func_file))
 
     os.chdir(current_directory_path)
 
