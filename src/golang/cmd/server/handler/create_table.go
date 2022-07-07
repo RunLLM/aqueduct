@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -22,6 +23,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /integration/{integrationId}/create
@@ -61,6 +63,16 @@ type CreateTableArgs struct {
 
 type CreateTableResponse struct{}
 
+var usefulHeaders = map[string]bool{
+	"accept-encoding":    true,
+	"accept":             true,
+	"connection":         true,
+	"api-key":            true,
+	"sdk-client-version": true,
+	"content-length":     true,
+	"user-agent":         true,
+}
+
 func (*CreateTableHandler) Name() string {
 	return "CreateTable"
 }
@@ -75,6 +87,28 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+	}
+
+	log.Info("logging headers...")
+	for name := range r.Header {
+		log.Infof("%s: %s", name, r.Header[name])
+	}
+
+	toRemove := []string{}
+	// Loop over header names
+	for name := range r.Header {
+		if _, ok := usefulHeaders[strings.ToLower(name)]; !ok {
+			log.Infof("removing header: %s", name)
+			toRemove = append(toRemove, name)
+		}
+	}
+
+	for _, header := range toRemove {
+		r.Header.Del(header)
+	}
+
+	for name := range r.Header {
+		log.Infof("%s: %s", name, r.Header[name])
 	}
 
 	csv, err := io.ReadAll(r.Body)
