@@ -118,8 +118,6 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	}
 
 	log.Info(r.ContentLength)
-	r.ContentLength = 1929
-	log.Info(r.ContentLength)
 
 	csv, err := io.ReadAll(r.Body)
 	if err != nil {
