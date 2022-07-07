@@ -29,9 +29,6 @@ var usefulHeaders = map[string]bool{
 func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMapping, int, error) {
 	operator_mapping := map[uuid.UUID]OperatorMapping{}
 
-	r.Header.Set("Content-Length", "785")
-	r.Header.Set("Accept-Encoding", "gzip, deflate, br")
-
 	log.Info("logging headers...")
 
 	toRemove := []string{}
@@ -51,8 +48,6 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 		log.Info(name)
 		log.Info(r.Header[name])
 	}
-
-	r.ContentLength = 785
 
 	log.Info(r.ContentLength)
 
