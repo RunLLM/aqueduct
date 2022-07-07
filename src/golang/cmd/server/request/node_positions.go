@@ -3,7 +3,9 @@ package request
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +24,10 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 	for name := range r.Header {
 		log.Info(name)
 		log.Info(r.Header[name])
+		if strings.ToLower(name) == routes.ContentTypeHeader {
+			log.Infof("Setting header %s to application/json", name)
+			r.Header.Set(name, "application/json")
+		}
 	}
 
 	log.Info(r.ContentLength)
