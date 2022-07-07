@@ -71,6 +71,8 @@ var usefulHeaders = map[string]bool{
 	"sdk-client-version": true,
 	"content-length":     true,
 	"user-agent":         true,
+	"content-type":       true,
+	"table-name":         true,
 }
 
 func (*CreateTableHandler) Name() string {
@@ -110,6 +112,8 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	for name := range r.Header {
 		log.Infof("%s: %s", name, r.Header[name])
 	}
+
+	log.Info(r.ContentLength)
 
 	csv, err := io.ReadAll(r.Body)
 	if err != nil {
