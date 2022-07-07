@@ -35,7 +35,7 @@ func getOpResultsWithMetadata(
 func updateExecState(
 	ctx context.Context,
 	id uuid.UUID,
-	execState shared.ExecutionState,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{
@@ -58,7 +58,7 @@ func getOpResultsWithExecState(
 func updateMetadata(
 	ctx context.Context,
 	id uuid.UUID,
-	metadata Metadata,
+	metadata *Metadata,
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{

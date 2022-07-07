@@ -34,7 +34,7 @@ func Up(ctx context.Context, db database.Database) error {
 				UserLogs: &userLogs,
 			}
 
-			err = updateExecState(ctx, opResult.Id, execState, db)
+			err = updateExecState(ctx, opResult.Id, &execState, db)
 			if err != nil {
 				return err
 			}
@@ -65,7 +65,7 @@ func Down(ctx context.Context, db database.Database) error {
 
 			metadata := Metadata{Logs: Logs, Error: errStr}
 
-			err = updateMetadata(ctx, opResult.Id, metadata, db)
+			err = updateMetadata(ctx, opResult.Id, &metadata, db)
 			if err != nil {
 				return err
 			}
