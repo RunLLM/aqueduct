@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	log "github.com/sirupsen/logrus"
 )
 
 var usefulHeaders = map[string]bool{
@@ -23,6 +24,7 @@ func StripHeader() func(http.Handler) http.Handler {
 			// Loop over header names
 			for name := range r.Header {
 				if _, ok := usefulHeaders[name]; !ok {
+					log.Infof("removing header: %s", name)
 					toRemove = append(toRemove, name)
 				}
 			}
