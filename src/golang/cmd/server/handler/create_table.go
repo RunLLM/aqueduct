@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -118,15 +118,15 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	log.Info(r.ContentLength)
 
-	csv, err := request.ExtractHttpPayload("multipart/form-data", "table", true, r)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
-	}
-
-	/*csv, err := io.ReadAll(r.Body)
+	/*csv, err := request.ExtractHttpPayload("multipart/form-data", "table", true, r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
 	}*/
+
+	csv, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
+	}
 
 	return &CreateTableArgs{
 		AqContext:     aqContext,
