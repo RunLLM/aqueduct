@@ -177,7 +177,7 @@ def update_server_version():
 
 def update():
     if not os.path.isdir(base_directory):
-        os.mkdir(base_directory)
+        os.makedirs(base_directory)
 
     if not os.path.isdir(ui_directory) or require_update(os.path.join(ui_directory, "__version__")):
         update_ui_version()
@@ -403,9 +403,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if not os.path.isdir(base_directory):
-        os.makedirs(base_directory)
-    
     if args.command == "start":
         try:
             popen_handle, server_port = start(args.expose, args.port)
