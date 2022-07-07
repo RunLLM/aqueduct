@@ -2,7 +2,6 @@ package request
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/dropbox/godropbox/errors"
@@ -24,14 +23,11 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 		log.Info(name)
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	log.Info(r.ContentLength)
+
+	err := json.NewDecoder(r.Body).Decode(&operator_mapping)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read request body.")
-	}
-
-	err = json.Unmarshal(body, &operator_mapping)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse request body.")
 	}
 
 	return operator_mapping, http.StatusOK, nil
