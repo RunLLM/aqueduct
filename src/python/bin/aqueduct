@@ -71,7 +71,6 @@ def execute_command(args, cwd=None):
 def generate_version_file(file_path):
     with open(file_path, "w") as f:
         f.write(package_version)
-    print("Wrote version to file.")
 
 
 # Returns a bool indicating whether we need to perform a version upgrade.
@@ -245,9 +244,9 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("localhost", port)) == 0
 
-def start(expose, port): 
+def start(expose, port):
     update()
-    
+
     if port is None:
         server_port = default_server_port
         while is_port_in_use(server_port):
@@ -404,8 +403,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not os.path.isdir(base_directory):
-        print("Please install or update aqueduct-ml with `pip install aqueduct-ml`.")
-        sys.exit(1)
+        os.makedirs(base_directory)
     
     if args.command == "start":
         try:
