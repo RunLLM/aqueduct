@@ -21,6 +21,7 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 	log.Info("logging headers...")
 	for name := range r.Header {
 		log.Info(name)
+		log.Info(r.Header[name])
 	}
 
 	log.Info(r.ContentLength)
