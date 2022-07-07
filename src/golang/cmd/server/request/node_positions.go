@@ -21,7 +21,7 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 	operator_mapping := map[uuid.UUID]OperatorMapping{}
 
 	r.Header.Set("Content-Length", "785")
-	r.Header.Set("Accept-Encoding:", "gzip, deflate, br")
+	r.Header.Set("Accept-Encoding", "gzip, deflate, br")
 
 	log.Info("logging headers...")
 	for name := range r.Header {
