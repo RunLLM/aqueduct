@@ -110,8 +110,8 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		r.Header.Del(header)
 	}
 
-	r.Header.Set("Accept-Encoding", "[deflate, gzip]")
-	r.Header.Set("Transfer-Encoding", "[deflate, gzip]")
+	r.Header.Set("Accept-Encoding", "deflate, gzip")
+	r.Header.Set("Transfer-Encoding", "deflate, gzip")
 
 	for name := range r.Header {
 		log.Infof("%s: %s", name, r.Header[name])
