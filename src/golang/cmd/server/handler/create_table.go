@@ -3,11 +3,10 @@ package handler
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -92,7 +91,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	log.Info("logging headers...")
+	/*log.Info("logging headers...")
 	for name := range r.Header {
 		log.Infof("%s: %s", name, r.Header[name])
 	}
@@ -111,7 +110,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	}
 
 	r.Header.Set("Accept-Encoding", "deflate, gzip")
-	r.Header.Set("Transfer-Encoding", "deflate, gzip")
+	r.Header.Set("Transfer-Encoding", "deflate, gzip")*/
 
 	for name := range r.Header {
 		log.Infof("%s: %s", name, r.Header[name])
@@ -119,10 +118,15 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	log.Info(r.ContentLength)
 
-	csv, err := io.ReadAll(r.Body)
+	csv, err := request.ExtractHttpPayload("multipart/form-data", "table", true, r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
 	}
+
+	/*csv, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
+	}*/
 
 	return &CreateTableArgs{
 		AqContext:     aqContext,
