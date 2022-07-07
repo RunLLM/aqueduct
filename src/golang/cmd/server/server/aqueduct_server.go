@@ -10,7 +10,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
-	"github.com/aqueducthq/aqueduct/cmd/server/middleware/header_stripping"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
@@ -204,7 +203,6 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 			verification.VerifyRequest(),
-			header_stripping.StripHeader(),
 		)
 	} else {
 		panic(handler.ErrUnsupportedAuthMethod)
