@@ -20,6 +20,9 @@ type OperatorMapping struct {
 func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMapping, int, error) {
 	operator_mapping := map[uuid.UUID]OperatorMapping{}
 
+	r.Header.Set("Content-Length", "785")
+	r.Header.Set("Accept-Encoding:", "gzip, deflate, br")
+
 	log.Info("logging headers...")
 	for name := range r.Header {
 		log.Info(name)
@@ -30,8 +33,8 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 		}
 	}
 
-	r.Header.Set("Content-Length", "785")
-	r.Header.Set("Accept-Encoding:", "gzip, deflate, br")
+	r.ContentLength = 785
+
 	log.Info(r.ContentLength)
 
 	err := json.NewDecoder(r.Body).Decode(&operator_mapping)
