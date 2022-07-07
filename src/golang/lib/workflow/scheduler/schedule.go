@@ -293,9 +293,11 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
+
+		failureType := shared.SystemFailure
 		return &shared.ExecutionState{
 			Status:      shared.FailedExecutionStatus,
-			FailureType: shared.SystemFailure,
+			FailureType: &failureType,
 			Error: &shared.Error{
 				Context: fmt.Sprintf("%v", err),
 				Tip:     shared.TipUnknownInternalError,
