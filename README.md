@@ -12,9 +12,9 @@
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into everything from inference latency to model accuracy -- all with Python. 
 
 ```python
-from aqueduct import Client, op, metric
+from aqueduct import Client, op, metric, get_apikey
 
-client = Client(aqueduct.get_apikey(), "localhost:8080")
+client = Client(get_apikey(), "localhost:8080")
 
 @op
 def transform_data(reviews):
@@ -24,7 +24,7 @@ demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
 
 strlen_table = transform_data(reviews_table)
-sentiment_table.save(demo_db.config(table="strlen_table", update_mode="replace")) 
+strlen_table.save(demo_db.config(table="strlen_table", update_mode="replace")) 
 
 client.publish_flow(name="review_strlen", artifacts=[strlen_table])
 ```
