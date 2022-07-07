@@ -51,6 +51,10 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 
 	log.Info(r.ContentLength)
 
+	byteBuffer := []byte{}
+	r.Body.Read(byteBuffer)
+	log.Info(string(byteBuffer))
+
 	err := json.NewDecoder(r.Body).Decode(&operator_mapping)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read request body.")
