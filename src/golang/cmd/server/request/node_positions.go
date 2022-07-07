@@ -51,7 +51,8 @@ func ParseOperatorMappingFromRequest(r *http.Request) (map[uuid.UUID]OperatorMap
 
 	log.Info(r.ContentLength)
 
-	byteBuffer := make([]byte, 4096)
+	byteBuffer := make([]byte, 8192)
+	log.Info(string(byteBuffer))
 	r.Body.Read(byteBuffer)
 	log.Info(string(byteBuffer))
 
