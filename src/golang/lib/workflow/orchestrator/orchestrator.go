@@ -127,11 +127,11 @@ func updateCompletedOp(
 				)
 			}
 
-			if execStatus.Status == shared.FailedExecutionStatus && execStatus.FailureType == shared.SystemFailure {
+			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.SystemFailure {
 				return ErrOpExecSystemFailure
 			}
 
-			if execStatus.Status == shared.FailedExecutionStatus && execStatus.FailureType == shared.UserFailure {
+			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.UserFailure {
 				// There is an user error when executing the operator.
 				log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name, op.Id)
 				return ErrOpExecBlockingUserFailure

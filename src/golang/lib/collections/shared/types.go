@@ -47,7 +47,7 @@ type Error struct {
 type ExecutionState struct {
 	UserLogs    *Logs           `json:"user_logs"`
 	Status      ExecutionStatus `json:"status"`
-	FailureType FailureType     `json:"failure_type"`
+	FailureType *FailureType    `json:"failure_type"`
 	Error       *Error          `json:"error"`
 }
 
