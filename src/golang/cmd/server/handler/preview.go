@@ -205,9 +205,10 @@ func deserializeOperatorResponses(
 		var operatorMetadata shared.ExecutionState
 		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
 		if err != nil {
+			failureType := shared.SystemFailure
 			responses[id] = shared.ExecutionState{
 				Status:      shared.FailedExecutionStatus,
-				FailureType: shared.SystemFailure,
+				FailureType: &failureType,
 				Error: &shared.Error{
 					Context: err.Error(),
 					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,
