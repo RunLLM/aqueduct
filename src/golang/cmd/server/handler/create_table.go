@@ -73,6 +73,7 @@ var usefulHeaders = map[string]bool{
 	"user-agent":         true,
 	"content-type":       true,
 	"table-name":         true,
+	"transfer-encoding":  true,
 }
 
 func (*CreateTableHandler) Name() string {
@@ -108,6 +109,9 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	for _, header := range toRemove {
 		r.Header.Del(header)
 	}
+
+	r.Header.Set("Accept-Encoding", "[deflate, gzip]")
+	r.Header.Set("Transfer-Encoding", "[deflate, gzip]")
 
 	for name := range r.Header {
 		log.Infof("%s: %s", name, r.Header[name])
