@@ -4,15 +4,7 @@ import json
 import sys
 
 import pandas as pd
-
-from pydantic import parse_obj_as
-
-from aqueduct_executor.operators.connectors.tabular import (
-    common,
-    config,
-    connector,
-    extract,
-)
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract
 from aqueduct_executor.operators.connectors.tabular.spec import (
     AQUEDUCT_DEMO_NAME,
     DiscoverSpec,
@@ -23,22 +15,19 @@ from aqueduct_executor.operators.connectors.tabular.spec import (
 )
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
+    TIP_DEMO_CONNECTION,
+    TIP_EXTRACT,
+    TIP_INTEGRATION_CONNECTION,
+    TIP_LOAD,
+    TIP_UNKNOWN_ERROR,
     Error,
     ExecutionState,
     Logs,
-    TIP_EXTRACT,
-    TIP_INTEGRATION_CONNECTION,
-    TIP_DEMO_CONNECTION,
-    TIP_LOAD,
-    TIP_UNKNOWN_ERROR,
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from pydantic import parse_obj_as
-
-from aqueduct_executor.operators.connectors.tabular import common, config
-from aqueduct_executor.operators.utils import enums
 
 
 def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
@@ -154,6 +143,8 @@ def run_discover(spec: DiscoverSpec, op: connector.TabularConnector, storage: St
 def setup_connector(
     connector_name: common.Name, connector_config: config.Config
 ) -> connector.TabularConnector:
+    # prevent isort from moving around type: ignore comments which will cause mypy issues.
+    # isort: off
     if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:
         from aqueduct_executor.operators.connectors.tabular.postgres import (
             PostgresConnector as OpConnector,
@@ -187,7 +178,9 @@ def setup_connector(
             AzureSqlConnector as OpConnector,
         )
     elif connector_name == common.Name.S3:
-        from aqueduct_executor.operators.connectors.tabular.s3 import S3Connector as OpConnector  # type: ignore
+        from aqueduct_executor.operators.connectors.tabular.s3 import (  # type: ignore
+            S3Connector as OpConnector,
+        )
     elif connector_name == common.Name.SQLITE:
         from aqueduct_executor.operators.connectors.tabular.sqlite import (  # type: ignore
             SqliteConnector as OpConnector,
@@ -195,6 +188,7 @@ def setup_connector(
     else:
         raise Exception("Unknown connector name: %s" % connector_name)
 
+    # isort: on
     return OpConnector(config=connector_config)  # type: ignore
 
 

@@ -2,13 +2,13 @@ import argparse
 import base64
 import sys
 
-from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.param_executor.spec import ParamSpec, parse_spec
+from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
     Error,
     ExecutionState,
     Logs,
-    TIP_UNKNOWN_ERROR,
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage

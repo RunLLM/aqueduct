@@ -1,10 +1,11 @@
 import io
-import pytest
 from contextlib import redirect_stdout
 
-import aqueduct
-from utils import get_integration_name
+import pytest
 from aqueduct.error import AqueductError
+from utils import get_integration_name
+
+import aqueduct
 
 
 @aqueduct.op()

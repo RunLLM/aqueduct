@@ -28,16 +28,8 @@ from aqueduct.operators import (
     S3LoadParams,
     SalesforceExtractParams,
     SalesforceLoadParams,
-    LoadSpec,
-    RelationalDBLoadParams,
 )
-from aqueduct.responses import (
-    OperatorResult,
-    TableArtifactResult,
-    PreviewResponse,
-    Logs,
-)
-from aqueduct.responses import OperatorResult, PreviewResponse, TableArtifactResult
+from aqueduct.responses import Logs, OperatorResult, PreviewResponse, TableArtifactResult
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 

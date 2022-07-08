@@ -1,12 +1,11 @@
 import io
 import sys
 import traceback
-
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Any, Callable, Optional
-from pydantic import BaseModel
-from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
+from pydantic import BaseModel
 
 _GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 

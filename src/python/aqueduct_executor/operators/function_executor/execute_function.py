@@ -12,16 +12,15 @@ from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from aqueduct_executor.operators.utils.execution import (
+    TIP_OP_EXECUTION,
+    TIP_UNKNOWN_ERROR,
     Error,
     ExecutionState,
     Logs,
     exception_traceback,
-    TIP_OP_EXECUTION,
-    TIP_UNKNOWN_ERROR,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-
 from pandas import DataFrame
 
 

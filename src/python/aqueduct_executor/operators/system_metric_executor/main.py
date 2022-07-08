@@ -3,15 +3,15 @@ import base64
 import sys
 import traceback
 
+from aqueduct_executor.operators.system_metric_executor.spec import SystemMetricSpec, parse_spec
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
     Error,
     ExecutionState,
     Logs,
-    TIP_UNKNOWN_ERROR,
     exception_traceback,
 )
-from aqueduct_executor.operators.system_metric_executor.spec import SystemMetricSpec, parse_spec
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
