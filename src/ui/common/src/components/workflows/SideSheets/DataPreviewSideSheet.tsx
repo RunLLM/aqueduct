@@ -28,7 +28,10 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
 
   return (
     <Box p={1} sx={{ height: '75%', overflow: 'auto' }}>
-      <DataPreviewer previewData={artifactResult} error={operatorResult?.result?.error} />
+      <DataPreviewer
+        previewData={artifactResult}
+        error={operatorResult?.result?.error}
+      />
     </Box>
   );
 };
