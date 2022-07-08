@@ -3,8 +3,6 @@ name: Python Linter
 # We use the Python Black linter.
 
 on:
-  push:
-    branches: [ eng-1294-improve-the-linter-script-to ]
   pull_request:
     branches: [ main ]
     paths:
