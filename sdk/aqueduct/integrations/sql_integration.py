@@ -233,4 +233,8 @@ class RelationalDBIntegration(Integration):
         Prints out a human-readable description of the SQL integration.
         """
         print("==================== SQL Integration =============================")
+        print("Integration Information:")
         self._metadata.describe()
+        print("Integration Table List Preview:")
+        print(self.list_tables()["name"].head().to_string())
+        print("(only first 5 tables are shown)")
