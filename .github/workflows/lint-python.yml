@@ -38,7 +38,7 @@ jobs:
           src: "./integration_tests"
           options: "--check --line-length=100"
 
-  sort-inport:
+  sort-imports:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
