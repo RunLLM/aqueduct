@@ -13,7 +13,7 @@ type OperatorResult struct {
 	WorkflowDagResultId uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	OperatorId          uuid.UUID                 `db:"operator_id" json:"operator_id"`
 	Status              shared.ExecutionStatus    `db:"status" json:"status"`
-	ExecState           shared.NullExecutionState `db:"exec_state" json:"exec_state"`
+	ExecState           shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 
 type Reader interface {

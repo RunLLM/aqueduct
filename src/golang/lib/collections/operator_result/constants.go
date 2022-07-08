@@ -12,7 +12,7 @@ const (
 	WorkflowDagResultIdColumn = "workflow_dag_result_id"
 	OperatorIdColumn          = "operator_id"
 	StatusColumn              = "status"
-	ExecStateColumn           = "exec_state"
+	ExecStateColumn           = "execution_state"
 )
 
 // Returns a joined string of all OperatorResult columns.
