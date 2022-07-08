@@ -3,7 +3,7 @@ Lints the code for various components. Run with `python3 scripts/run_linters.py`
 
 Requirements:
 - For the Python code linting, please install the following:
-`pip3 install --upgrade black mypy pydantic types-croniter types-requests types-PyYAML`
+`pip3 install --upgrade black mypy pydantic types-croniter types-requests types-PyYAML isort`
 - For the Golang linter, please install `golangci-lint` following the instruction here: https://golangci-lint.run/usage/install/
 - For the UI linter, please install node with the version suggested by running `nvm use` from `src/ui`.
 
@@ -29,6 +29,7 @@ def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
+    execute_command(["isort", "."])
     execute_command(
         [
             "mypy",
