@@ -340,7 +340,7 @@ class Client:
             self._api_client.aqueduct_address,
             str(self._api_client.register_workflow(dag).id),
         )
-        logging.info("url: %s", url)
+        print("Url: ", url)
 
         return Flow(
             self._api_client,
