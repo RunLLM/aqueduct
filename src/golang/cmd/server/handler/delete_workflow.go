@@ -30,7 +30,13 @@ import (
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
+	tables []string
 }
+
+type deleteWorkflowInput struct {
+	tables        []string             `json:"tables"`
+}
+
 
 type deleteWorkflowResponse struct{}
 
@@ -74,6 +80,12 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
+	var input deleteWorkflowInput 
+	err = json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
+	}
+
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
@@ -90,10 +102,16 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
+		tables:		input.tables,
 	}, http.StatusOK, nil
 }
 
 func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+
+	// TODO: Check each table is associated with the workflow. Else, return early.
+
+	// TODO: Delete associated tables.
+
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	emptyResp := deleteWorkflowResponse{}
