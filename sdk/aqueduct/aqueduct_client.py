@@ -335,16 +335,18 @@ class Client:
             retention_policy=retention_policy,
         )
 
+        flow_id = self._api_client.register_workflow(dag).id
+
         url = generate_url(
             self._api_client.url_prefix,
             self._api_client.aqueduct_address,
-            str(self._api_client.register_workflow(dag).id),
+            str(flow_id),
         )
         print("Url: ", url)
 
         return Flow(
             self._api_client,
-            str(self._api_client.register_workflow(dag).id),
+            str(flow_id),
             self._in_notebook_or_console_context,
         )
 
