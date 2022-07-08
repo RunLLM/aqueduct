@@ -16,9 +16,9 @@ type opResultWithMetadata struct {
 }
 
 type opResultWithExecState struct {
-	Id        uuid.UUID                 `db:"id" json:"id"`
-	Status    shared.ExecutionStatus    `db:"status" json:"status"`
-	ExecState shared.NullExecutionState `db:"exec_state" json:"exec_state"`
+	Id        uuid.UUID              `db:"id" json:"id"`
+	Status    shared.ExecutionStatus `db:"status" json:"status"`
+	ExecState NullExecutionState     `db:"exec_state" json:"exec_state"`
 }
 
 func getOpResultsWithMetadata(
@@ -35,7 +35,7 @@ func getOpResultsWithMetadata(
 func updateExecState(
 	ctx context.Context,
 	id uuid.UUID,
-	execState *shared.ExecutionState,
+	execState *ExecutionState,
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{

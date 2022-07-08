@@ -3,7 +3,6 @@ package _000011_exec_state_column_backfill
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -15,7 +14,7 @@ func Up(ctx context.Context, db database.Database) error {
 
 	for _, opResult := range opResults {
 		if !opResult.Metadata.IsNull {
-			userLogs := shared.Logs{}
+			userLogs := Logs{}
 			stdout, ok := opResult.Metadata.Logs["stdout"]
 			if ok {
 				(&userLogs).Stdout = stdout
@@ -26,9 +25,9 @@ func Up(ctx context.Context, db database.Database) error {
 				(&userLogs).StdErr = stderr
 			}
 
-			execState := shared.ExecutionState{
+			execState := ExecutionState{
 				Status: opResult.Status,
-				Error: &shared.Error{
+				Error: &Error{
 					Context: opResult.Metadata.Error,
 				},
 				UserLogs: &userLogs,
