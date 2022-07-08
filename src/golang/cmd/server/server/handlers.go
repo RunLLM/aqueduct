@@ -70,6 +70,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorResultReader: s.OperatorResultReader,
 		},
 		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
+		routes.GetWorkflowTablesRoute: &handler.GetWorkflowHandler{
+		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database:                s.Database,
 			ArtifactReader:          s.ArtifactReader,
