@@ -455,18 +455,16 @@ if __name__ == "__main__":
                                 choices=["local", "s3"], required=True,
                                 help="The following storage locations are supported: local, s3"
                             )
-    storage_args.add_argument('--path', dest="storage_local_path", default='storage', 
+    storage_args.add_argument('--path', dest="storage_path", required=True, 
                                 help=
-                                '''The filepath of the local storage directory.
+                                '''For local storage this is the filepath of the storage directory.
                                 This should be relative to the Aqueduct installation path.
-                                It defaults to storage/.
+                                For S3 storage this is the S3 path, which should be of the form:
+                                s3://bucket/path/to/folder
                                 '''
                             )
     storage_args.add_argument('--region', dest="storage_s3_region", 
                                 help="The AWS S3 region where the bucket is located."
-                            )
-    storage_args.add_argument('--bucket', dest="storage_s3_bucket", 
-                                help="The AWS S3 bucket to use for storage."
                             )
     storage_args.add_argument('--credentials', dest="storage_s3_creds", 
                                 default=aws_credentials_path,
@@ -480,6 +478,7 @@ if __name__ == "__main__":
                             )
 
     args = parser.parse_args()
+    sysargs = sys.argv
 
     if args.command == "start":
         try:
@@ -510,11 +509,17 @@ if __name__ == "__main__":
         version()
     elif args.command == "storage":
         if args.storage_use == "local":
-            use_local_storage(args.storage_local_path)
+            # Ensure that S3 args are not provided for local storage
+            s3_args = ["--region", "--credentials", "--profile"]
+            for s3_arg in s3_args:
+                if s3_arg in sysargs:
+                    print("{} should not be used with local storage".format(s3_arg))
+                    sys.exit(1)
+            use_local_storage(args.storage_path)
         elif args.storage_use == "s3":
             use_s3_storage(
                 args.storage_s3_region, 
-                args.storage_s3_bucket, 
+                args.storage_path, 
                 args.storage_s3_creds, 
                 args.storage_s3_profile,
             )
