@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.0.4
+Released on 7/7/2022
+
+### Key Features
+* Workflows can now have custom parameters! A workflow can have any numbers of parameters which can be used in Python operators or
+  SQL queries. See [here](https://docs.aqueducthq.com/workflows/parameterizing-a-workflow) for more details.
+
+### Enhancements
+* Add SDK support for fetching and pretty-printing workflow and workflow run metadata.
+* Hide success notifications by default to avoid repetitive notifications.
+* Allow for custom port selection for the Postgres integration.
+* Allow requirements.txt to be set on an operator-by-operator basis.
+* Add ability to copy SDK initialization snippet from account page.
+* Allows metrics to be integers in addition to floats.
+* Adds syntax candy for `head` on `TableArtifact`s.
+
+### Bugfixes
+* Fix bug that showed undefined in search bar when data search returned empty results.
+* Fix bug where integration passwords were shown in plaintext on request headers.
+* Fix bug where schema metadata was improperly persisted.
+* Fix bug that disallowed non-CSV file uploads.
+* Fix bug that caused unnecessary repetitive calls to the DAG render API.
+* Fix a number of minor UI bugs -- margins, button placement, etc.
+* Deprecates use of ipynbname in the SDK, which prevented the SDK from running in some notebook environments.
+
 ## 0.0.3
 Released on 6/21/2022
 

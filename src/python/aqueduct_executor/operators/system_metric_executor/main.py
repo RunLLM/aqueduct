@@ -1,6 +1,7 @@
 import argparse
 import base64
 import sys
+import traceback
 
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (

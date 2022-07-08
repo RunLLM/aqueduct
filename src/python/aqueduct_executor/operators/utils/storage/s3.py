@@ -1,12 +1,9 @@
 from typing import Any
 
 import boto3
-from botocore.config import Config as BotoConfig
-
-from typing import Any
-
 from aqueduct_executor.operators.utils.storage.config import S3StorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from botocore.config import Config as BotoConfig
 
 
 class S3Storage(Storage):

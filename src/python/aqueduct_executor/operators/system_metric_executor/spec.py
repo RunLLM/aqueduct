@@ -1,7 +1,7 @@
 import json
-from pydantic import BaseModel, parse_obj_as
 from typing import List
 
+from pydantic import BaseModel, parse_obj_as
 
 try:
     from typing import Literal

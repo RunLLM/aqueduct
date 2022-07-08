@@ -1,63 +1,57 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional, Dict, Union, List
 import uuid
+from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
+from aqueduct.api_client import APIClient
+from aqueduct.artifact import ArtifactSpec
+from aqueduct.check_artifact import CheckArtifact
+from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
+from aqueduct.dag import (
+    DAG,
+    AddOrReplaceOperatorDelta,
+    RemoveCheckOperatorDelta,
+    SubgraphDAGDelta,
+    UpdateParametersDelta,
+    apply_deltas_to_dag,
+)
+from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType, OperatorType
+from aqueduct.error import AqueductError, InvalidIntegrationException
+from aqueduct.generic_artifact import Artifact
+from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.operators import (
+    CheckSpec,
+    FunctionSpec,
+    LoadSpec,
+    MetricSpec,
+    Operator,
+    OperatorSpec,
+    SaveConfig,
+    SystemMetricSpec,
+)
+from aqueduct.utils import (
+    artifact_name_from_op_name,
+    format_header_for_print,
+    generate_uuid,
+    get_checks_for_op,
+    get_description_for_check,
+    get_description_for_metric,
+    serialize_function,
+)
+from great_expectations.core import ExpectationConfiguration
+from great_expectations.core.batch import RuntimeBatchRequest
+from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     DatasourceConfig,
     FilesystemStoreBackendDefaults,
 )
-from great_expectations.data_context import BaseDataContext
-
-from great_expectations.core import ExpectationConfiguration
-from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.validator.validator import Validator
-
-import pandas as pd
-import aqueduct
 from ruamel import yaml
 
-from aqueduct.api_client import APIClient
-from aqueduct.artifact import ArtifactSpec
-from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
-from aqueduct.dag import (
-    DAG,
-    apply_deltas_to_dag,
-    AddOrReplaceOperatorDelta,
-    SubgraphDAGDelta,
-    RemoveCheckOperatorDelta,
-    UpdateParametersDelta,
-)
-from aqueduct.enums import CheckSeverity, OperatorType, FunctionType, FunctionGranularity
-from aqueduct.error import (
-    InvalidIntegrationException,
-    AqueductError,
-)
-from aqueduct.operators import (
-    SaveConfig,
-    Operator,
-    OperatorSpec,
-    LoadSpec,
-    FunctionSpec,
-    MetricSpec,
-    SystemMetricSpec,
-    CheckSpec,
-)
-from aqueduct.utils import (
-    serialize_function,
-    generate_uuid,
-    get_checks_for_op,
-    get_description_for_check,
-    get_description_for_metric,
-    artifact_name_from_op_name,
-    format_header_for_print,
-)
-
-from aqueduct.generic_artifact import Artifact
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.check_artifact import CheckArtifact
+import aqueduct
 
 OutputArtifact = Union[MetricArtifact, CheckArtifact]
 
@@ -132,6 +126,23 @@ class TableArtifact(Artifact):
             return pd.DataFrame(json.loads(artifact_result.table.data)["data"])
         else:
             raise AqueductError("Artifact does not have table.")
+
+    def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+        """Returns a preview of the table artifact.
+
+        >>> db = client.integration(name="demo/")
+        >>> customer_data = db.sql("SELECT * from customers")
+        >>> churn_predictions = predict_churn(customer_data)
+        >>> churn_predictions.head()
+
+        Args:
+            n:
+                the number of row previewed. Default to 5.
+        Returns:
+            A dataframe containing the tabular contents of this artifact.
+        """
+        df = self.get()
+        return df.head(n)
 
     def save(self, config: SaveConfig) -> None:
         """Configure this artifact to be written to a specific integration after its computed.

@@ -1,10 +1,9 @@
 from typing import List
 
 import pandas as pd
+from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
-
-from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 
 
 class RelationalConnector(connector.TabularConnector):

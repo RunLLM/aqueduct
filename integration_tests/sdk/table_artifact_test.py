@@ -1,9 +1,10 @@
-import pandas as pd
 import math
 import time
 
+import pandas as pd
 from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 from utils import get_integration_name
+
 from aqueduct import op
 
 
@@ -130,3 +131,12 @@ def test_std(client):
 
     missing_metric = table.std(column_id="total_sulfur_dioxide")
     assert math.isclose(missing_metric.get(), 56.5218, rel_tol=1e-3)
+
+
+def test_head_standard(client):
+    db = client.integration(name=get_integration_name())
+    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    assert table.get().shape[0] == 100
+
+    table_head = table.head()
+    assert table_head.shape[0] == 5

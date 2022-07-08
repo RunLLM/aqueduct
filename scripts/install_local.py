@@ -17,9 +17,8 @@ import os
 import shutil
 import subprocess
 import sys
-
 from os import listdir
-from os.path import isfile, join, isdir
+from os.path import isdir, isfile, join
 
 base_directory = join(os.environ["HOME"], ".aqueduct")
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")
@@ -62,7 +61,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether to build and replace the Python SDK.",
     )
-    
+
     parser.add_argument(
         "--executor",
         dest="update_executor",
@@ -107,7 +106,9 @@ if __name__ == "__main__":
         execute_command(["cp", "./src/build/migrator", join(server_directory, "bin/migrator")])
 
         # Run the migrator to update to the latest schema
-        execute_command([join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION])
+        execute_command(
+            [join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
+        )
 
     # Build and replace UI files.
     if args.update_ui:
@@ -124,7 +125,13 @@ if __name__ == "__main__":
             if not f == "__version__":
                 execute_command(["rm", f], cwd=ui_directory)
 
-        shutil.copytree(join(cwd, "src/ui/app/dist"), ui_directory, dirs_exist_ok=True)
+        # We detect whether the server is running on a SageMaker instance by checking if the
+        # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
+        # solution at the moment.
+        if isdir(join(os.sep, "home", "ec2-user", "SageMaker")):
+            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "sagemaker"), ui_directory, dirs_exist_ok=True)
+        else:
+            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "default"), ui_directory, dirs_exist_ok=True)
 
     # Install the local SDK.
     if args.update_sdk:

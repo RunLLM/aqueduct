@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
-
+from aqueduct.error import AqueductError
 from constants import SENTIMENT_SQL_QUERY
 from test_metrics.constant.model import constant_metric
 from utils import get_integration_name, run_flow_test
+
 from aqueduct import metric
-from aqueduct.error import AqueductError
 
 
 def test_basic_metric(client):

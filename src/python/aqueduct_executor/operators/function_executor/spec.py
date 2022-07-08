@@ -7,9 +7,9 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal  # type: ignore
 
-from pydantic import BaseModel, Extra, parse_obj_as, validator
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
+from pydantic import BaseModel, Extra, parse_obj_as, validator
 
 
 class FunctionSpec(BaseModel):

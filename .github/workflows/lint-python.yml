@@ -37,3 +37,11 @@ jobs:
         with:
           src: "./integration_tests"
           options: "--check --line-length=100"
+
+  sort-imports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: isort/isort-action@master
+        with:
+            configuration: "-l 100 --profile black"

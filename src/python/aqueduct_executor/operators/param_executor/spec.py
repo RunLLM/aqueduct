@@ -1,4 +1,5 @@
 import json
+
 from pydantic import BaseModel, parse_obj_as
 
 try:
