@@ -5,8 +5,6 @@ import os
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.function_executor.spec import parse_spec
 
-from . import spec
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--spec", required=True)
