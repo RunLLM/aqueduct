@@ -204,6 +204,11 @@ export async function connectIntegration(
   name: string,
   config: IntegrationConfig
 ): Promise<void> {
+  Object.keys(config).forEach((k) => {
+    if (config[k] === undefined) {
+      config[k] = '';
+    }
+  });
   const res = await fetch(`${apiAddress}/api/integration/connect`, {
     method: 'POST',
     headers: {
