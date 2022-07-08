@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
-
 from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
 from aqueduct_executor.operators.utils.storage.storage import Storage
 

@@ -4,12 +4,11 @@ import json
 import sys
 import traceback
 
-from pydantic import parse_obj_as
-
 from aqueduct_executor.operators.connectors.tabular import connector, extract, spec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pydantic import parse_obj_as
 
 try:
     from typing import Literal

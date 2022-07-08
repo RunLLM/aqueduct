@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError
-
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
+
 from aqueduct import op
 
 INVALID_REQUIREMENTS_PATH = "~/random.txt"

@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import List, Union
 
 try:
     from typing import Literal
@@ -6,11 +6,10 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
 
-from pydantic import validator
-
 from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
+from pydantic import validator
 
 
 def unwrap_connector_config(cls, connector_config, values):

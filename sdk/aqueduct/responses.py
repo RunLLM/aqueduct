@@ -1,12 +1,12 @@
-from typing import Optional, Dict, List
 import uuid
-from pydantic import BaseModel
+from typing import Dict, List, Optional
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
 from aqueduct.enums import ExecutionStatus
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
+from pydantic import BaseModel
 
 
 class OperatorResult(BaseModel):

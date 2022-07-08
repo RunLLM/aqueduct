@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Optional
 
 from aqueduct_executor.operators.utils.enums import MetaEnum
-
 from pydantic import BaseModel
 
 
