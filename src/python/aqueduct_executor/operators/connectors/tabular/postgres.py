@@ -12,7 +12,7 @@ class PostgresConnector(relational.RelationalConnector):
 def _create_engine(config: config.PostgresConfig) -> engine.Engine:
     # Postgres Dialect:
     # https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg2
-    if password:
+    if config.password:
         url = "postgresql://{username}:{password}@{host}:{port}/{database}".format(
             username=config.username,
             password=config.password,

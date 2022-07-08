@@ -29,11 +29,13 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
       port: port,
       database: database,
       username: username,
+      password: undefined,
     };
 
     if (password && password !== '') {
       config['password'] = password
     }
+    
     setDialogConfig(config);
   }, [host, port, database, username, password]);
 
