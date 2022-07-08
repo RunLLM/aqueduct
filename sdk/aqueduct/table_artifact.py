@@ -9,45 +9,26 @@ from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
-from aqueduct.dag import (
-    DAG,
-    AddOrReplaceOperatorDelta,
-    RemoveCheckOperatorDelta,
-    SubgraphDAGDelta,
-    UpdateParametersDelta,
-    apply_deltas_to_dag,
-)
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType, OperatorType
+from aqueduct.dag import (DAG, AddOrReplaceOperatorDelta,
+                          RemoveCheckOperatorDelta, SubgraphDAGDelta,
+                          UpdateParametersDelta, apply_deltas_to_dag)
+from aqueduct.enums import (CheckSeverity, FunctionGranularity, FunctionType,
+                            OperatorType)
 from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.operators import (
-    CheckSpec,
-    FunctionSpec,
-    LoadSpec,
-    MetricSpec,
-    Operator,
-    OperatorSpec,
-    SaveConfig,
-    SystemMetricSpec,
-)
-from aqueduct.utils import (
-    artifact_name_from_op_name,
-    format_header_for_print,
-    generate_uuid,
-    get_checks_for_op,
-    get_description_for_check,
-    get_description_for_metric,
-    serialize_function,
-)
+from aqueduct.operators import (CheckSpec, FunctionSpec, LoadSpec, MetricSpec,
+                                Operator, OperatorSpec, SaveConfig,
+                                SystemMetricSpec)
+from aqueduct.utils import (artifact_name_from_op_name,
+                            format_header_for_print, generate_uuid,
+                            get_checks_for_op, get_description_for_check,
+                            get_description_for_metric, serialize_function)
 from great_expectations.core import ExpectationConfiguration
 from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    DatasourceConfig,
-    FilesystemStoreBackendDefaults,
-)
+    DataContextConfig, DatasourceConfig, FilesystemStoreBackendDefaults)
 from great_expectations.validator.validator import Validator
 from ruamel import yaml
 

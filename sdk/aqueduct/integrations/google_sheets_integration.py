@@ -5,16 +5,12 @@ from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import GoogleSheetsSaveMode
 from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.operators import (
-    ExtractSpec,
-    GoogleSheetsExtractParams,
-    GoogleSheetsLoadParams,
-    Operator,
-    OperatorSpec,
-    SaveConfig,
-)
+from aqueduct.operators import (ExtractSpec, GoogleSheetsExtractParams,
+                                GoogleSheetsLoadParams, Operator, OperatorSpec,
+                                SaveConfig)
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils import (artifact_name_from_op_name,
+                            generate_extract_op_name, generate_uuid)
 
 
 class GoogleSheetsIntegration(Integration):

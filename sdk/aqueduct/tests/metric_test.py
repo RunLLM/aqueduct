@@ -7,7 +7,8 @@ from aqueduct.api_client import APIClient
 from aqueduct.decorator import check, metric
 from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.responses import ArtifactResult, MetricArtifactResult, OperatorResult, PreviewResponse
+from aqueduct.responses import (ArtifactResult, MetricArtifactResult,
+                                OperatorResult, PreviewResponse)
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
 

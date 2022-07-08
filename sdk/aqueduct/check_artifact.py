@@ -5,7 +5,8 @@ import uuid
 from typing import Any, Dict, Optional
 
 from aqueduct.api_client import APIClient
-from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
+from aqueduct.dag import (DAG, SubgraphDAGDelta, UpdateParametersDelta,
+                          apply_deltas_to_dag)
 from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check

@@ -2,13 +2,10 @@ from checks_test import success_on_single_table_input
 from constants import SENTIMENT_SQL_QUERY
 from pandas import DataFrame
 from test_metrics.constant.model import constant_metric
-from utils import (
-    get_integration_name,
-    run_sentiment_model,
-    run_sentiment_model_local,
-    run_sentiment_model_local_multiple_input,
-    run_sentiment_model_multiple_input,
-)
+from utils import (get_integration_name, run_sentiment_model,
+                   run_sentiment_model_local,
+                   run_sentiment_model_local_multiple_input,
+                   run_sentiment_model_multiple_input)
 
 
 def test_local_operator(client):

@@ -5,7 +5,8 @@ from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
-from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.error import (InvalidUserActionException,
+                            InvalidUserArgumentException)
 
 from .enums import ArtifactType
 from .flow_run import FlowRun
