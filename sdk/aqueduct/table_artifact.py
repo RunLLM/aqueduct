@@ -133,6 +133,23 @@ class TableArtifact(Artifact):
         else:
             raise AqueductError("Artifact does not have table.")
 
+    def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+        """Returns a preview of the table artifact.
+
+        >>> db = client.integration(name="demo/")
+        >>> customer_data = db.sql("SELECT * from customers")
+        >>> churn_predictions = predict_churn(customer_data)
+        >>> churn_predictions.head()
+
+        Args:
+            n:
+                the number of row previewed. Default to 5.
+        Returns:
+            A dataframe containing the tabular contents of this artifact.
+        """
+        df = self.get()
+        return df.head(n)
+
     def save(self, config: SaveConfig) -> None:
         """Configure this artifact to be written to a specific integration after its computed.
 

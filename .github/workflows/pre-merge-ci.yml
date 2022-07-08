@@ -3,13 +3,8 @@ name: Pre-Merge Integration tests
 on: 
   pull_request:
     types: [ labeled, opened, synchronize, reopened ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
 
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-1306-remove-need-to-run-tests-on-non-code
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main

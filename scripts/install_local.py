@@ -1,13 +1,15 @@
 """
-Installs aqueduct from the local repo. Run with `python3 scripts/install_local.py`.
+Installs aqueduct from the local repo. Run with `python3 scripts/install_local.py` from the root directory of the aqueduct repo.
 
 Requirements:
 - `aqueduct-ml` must already be installed.
-- `aqueduct start` must have been run at least once since the last `aqueduct clear`. (~/.aqueduct/server must exist)
+- `aqueduct start` must have been run at least once since the last `aqueduct clear`. (~/.aqueduct must exist)
 - The aqueduct server must not be running.
 
-After this script completes, running `aqueduct start` will start the backend with the local changes.
-The sdk will also be updated with any local changes.
+After this script completes, running `aqueduct start` will start with the local changes.
+
+If you don't specify any component flag, the script will update all components. Keep in mind that UI
+takes longer to update.
 """
 
 import argparse
@@ -36,14 +38,46 @@ def execute_command(args, cwd=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
-        "--update-ui",
+        "--ui",
         dest="update_ui",
         default=False,
         action="store_true",
         help="Whether to build and replace UI files.",
     )
+
+    parser.add_argument(
+        "--gobinary",
+        dest="update_go_binary",
+        default=False,
+        action="store_true",
+        help="Whether to build and replace Golang binaries.",
+    )
+
+    parser.add_argument(
+        "--sdk",
+        dest="update_sdk",
+        default=False,
+        action="store_true",
+        help="Whether to build and replace the Python SDK.",
+    )
+
+    parser.add_argument(
+        "--executor",
+        dest="update_executor",
+        default=False,
+        action="store_true",
+        help="Whether to build and replace the Python executor.",
+    )
+
     args = parser.parse_args()
+
+    if not (args.update_ui or args.update_go_binary or args.update_sdk or args.update_executor):
+        args.update_ui = True
+        args.update_go_binary = True
+        args.update_sdk = True
+        args.update_executor = True
 
     cwd = os.getcwd()
     if not cwd.endswith("aqueduct"):
@@ -51,32 +85,35 @@ if __name__ == "__main__":
         print("Your working directory is %s" % cwd)
         exit(1)
 
-    if not isdir(server_directory):
-        print("~/.aqueduct/server must exist.")
+    if not isdir(base_directory):
+        print("~/.aqueduct must exist.")
         exit(1)
 
     # Build and replace backend binaries.
-    execute_command(["make", "server"], cwd=join(cwd, "src"))
-    execute_command(["make", "executor"], cwd=join(cwd, "src"))
-    execute_command(["make", "migrator"], cwd=join(cwd, "src"))
-    if isfile(join(server_directory, "bin/server")):
-        execute_command(["rm", join(server_directory, "bin/server")])
-    if isfile(join(server_directory, "bin/executor")):
-        execute_command(["rm", join(server_directory, "bin/executor")])
-    if isfile(join(server_directory, "bin/migrator")):
-        execute_command(["rm", join(server_directory, "bin/migrator")])
+    if args.update_go_binary:
+        print("Updating Golang binaries...")
+        execute_command(["make", "server"], cwd=join(cwd, "src"))
+        execute_command(["make", "executor"], cwd=join(cwd, "src"))
+        execute_command(["make", "migrator"], cwd=join(cwd, "src"))
+        if isfile(join(server_directory, "bin/server")):
+            execute_command(["rm", join(server_directory, "bin/server")])
+        if isfile(join(server_directory, "bin/executor")):
+            execute_command(["rm", join(server_directory, "bin/executor")])
+        if isfile(join(server_directory, "bin/migrator")):
+            execute_command(["rm", join(server_directory, "bin/migrator")])
 
-    execute_command(["cp", "./src/build/server", join(server_directory, "bin/server")])
-    execute_command(["cp", "./src/build/executor", join(server_directory, "bin/executor")])
-    execute_command(["cp", "./src/build/migrator", join(server_directory, "bin/migrator")])
+        execute_command(["cp", "./src/build/server", join(server_directory, "bin/server")])
+        execute_command(["cp", "./src/build/executor", join(server_directory, "bin/executor")])
+        execute_command(["cp", "./src/build/migrator", join(server_directory, "bin/migrator")])
 
-    # Run the migrator to update to the latest schema
-    execute_command(
-        [join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
-    )
+        # Run the migrator to update to the latest schema
+        execute_command(
+            [join(server_directory, "bin/migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
+        )
 
     # Build and replace UI files.
     if args.update_ui:
+        print("Updating UI files...")
         execute_command(["npm", "install"], cwd=join(cwd, "src/ui/common"))
         execute_command(["npm", "run", "build"], cwd=join(cwd, "src/ui/common"))
         execute_command(["sudo", "npm", "link"], cwd=join(cwd, "src/ui/common"))
@@ -89,14 +126,28 @@ if __name__ == "__main__":
             if not f == "__version__":
                 execute_command(["rm", f], cwd=ui_directory)
 
-        shutil.copytree(join(cwd, "src/ui/app/dist"), ui_directory, dirs_exist_ok=True)
+        # We detect whether the server is running on a SageMaker instance by checking if the
+        # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
+        # solution at the moment.
+        if isdir(join(os.sep, "home", "ec2-user", "SageMaker")):
+            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "sagemaker"), ui_directory, dirs_exist_ok=True)
+        else:
+            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "default"), ui_directory, dirs_exist_ok=True)
 
     # Install the local SDK.
-    os.environ["PWD"] = join(os.environ["PWD"], "sdk")
-    execute_command(["pip", "install", "."], cwd=join(cwd, "sdk"))
+    if args.update_sdk:
+        print("Updating the Python SDK...")
+        prev_pwd = os.environ["PWD"]
+        os.environ["PWD"] = join(os.environ["PWD"], "sdk")
+        execute_command(["pip", "install", "."], cwd=join(cwd, "sdk"))
+        os.environ["PWD"] = prev_pwd
 
     # Install the local python operators.
-    os.environ["PWD"] = join(os.environ["PWD"], "../src/python")
-    execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
+    if args.update_executor:
+        print("Updating the Python executor...")
+        prev_pwd = os.environ["PWD"]
+        os.environ["PWD"] = join(os.environ["PWD"], "src/python")
+        execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
+        os.environ["PWD"] = prev_pwd
 
     print("Successfully installed aqueduct from local repo!")

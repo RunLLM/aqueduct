@@ -6,6 +6,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
@@ -32,9 +33,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const successMessage =
-    'Successfully triggered a manual update for this worfklow!';
+    'Successfully triggered a manual update for this workflow!';
   const [errorMessage, setErrorMessage] = useState(
-    'Unable to update this worfklow.'
+    'Unable to update this workflow.'
   );
 
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -71,20 +72,40 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     );
   }
 
+  const paramNameToDefault = Object.assign(
+    {},
+    ...Object.values(workflowDag.operators)
+      .filter((operator) => {
+        return operator.spec.param !== undefined;
+      })
+      .map((operator) => {
+        return { [operator.name]: operator.spec.param.val };
+      })
+  );
+
+  // This records all the parameters and values that the user wants to overwrite with.
+  const [paramNameToValMap, setParamNameToValMap] = useState<{
+    [key: string]: string;
+  }>({});
+
   const triggerWorkflowRun = () => {
+    const parameters = new FormData();
+    parameters.append('parameters', JSON.stringify(paramNameToValMap));
+
     setShowRunWorkflowDialog(false);
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
       method: 'POST',
       headers: {
         'api-key': user.apiKey,
       },
+      body: parameters,
     })
       .then((res) => {
         res.json().then((body) => {
           if (res.ok) {
             setShowSuccessToast(true);
           } else {
-            setErrorMessage(`Unable to update this worfklow: ${body.error}`);
+            setErrorMessage(`Unable to run this workflow: ${body.error}`);
             setShowErrorToast(true);
           }
         });
@@ -92,6 +113,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       .catch(() => {
         setShowErrorToast(true);
       });
+
+    // Reset the overriding parameters map on dialog close.
+    setParamNameToValMap({});
   };
 
   const runWorkflowDialog = (
@@ -101,7 +125,34 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     >
       <DialogTitle>Trigger a Workflow Run?</DialogTitle>
       <DialogContent>
-        Do you want to trigger a run of <code>{name}</code> immediately?
+        <Box sx={{ mb: 2 }}>
+          This will a run of <code>{name}</code> immediately.
+        </Box>
+
+        {Object.keys(paramNameToDefault).length > 0 && (
+          <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
+            {' '}
+            Parameters{' '}
+          </Typography>
+        )}
+        {Object.keys(paramNameToDefault).map((paramName) => {
+          return (
+            <Box key={paramName}>
+              <Typography>
+                <small>{paramName}</small>
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder={paramNameToDefault[paramName]}
+                onChange={(e) => {
+                  paramNameToValMap[paramName] = e.target.value;
+                  setParamNameToValMap(paramNameToValMap);
+                }}
+                size="small"
+              />
+            </Box>
+          );
+        })}
       </DialogContent>
       <DialogActions>
         <Button
