@@ -46,4 +46,4 @@ jobs:
       - uses: actions/checkout@v2
       - uses: isort/isort-action@master
         with:
-            configuration: "--profile black"
+            configuration: "-l 100 --profile black"

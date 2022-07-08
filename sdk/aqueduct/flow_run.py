@@ -7,8 +7,7 @@ import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
-from aqueduct.enums import (ArtifactType, DisplayNodeType, ExecutionStatus,
-                            OperatorType)
+from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.operators import Operator
 from aqueduct.utils import format_header_for_print, human_readable_timestamp
 

@@ -5,12 +5,20 @@ from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
 from aqueduct.enums import ArtifactType, OperatorType, TriggerType
-from aqueduct.error import (ArtifactNotFoundException, InternalAqueductError,
-                            InvalidUserActionException,
-                            InvalidUserArgumentException)
-from aqueduct.operators import (Operator, OperatorSpec, ParamSpec,
-                                get_operator_type, get_operator_type_from_spec,
-                                serialize_parameter_value)
+from aqueduct.error import (
+    ArtifactNotFoundException,
+    InternalAqueductError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
+from aqueduct.operators import (
+    Operator,
+    OperatorSpec,
+    ParamSpec,
+    get_operator_type,
+    get_operator_type_from_spec,
+    serialize_parameter_value,
+)
 from pydantic import BaseModel
 
 

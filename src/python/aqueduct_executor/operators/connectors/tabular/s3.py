@@ -3,9 +3,7 @@ from typing import List
 
 import boto3
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import (common, config,
-                                                            connector, extract,
-                                                            load)
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 
 
 class S3Connector(connector.TabularConnector):

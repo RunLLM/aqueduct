@@ -1,11 +1,8 @@
 import pytest
-from aqueduct.error import (ArtifactNotFoundException,
-                            InvalidUserActionException)
+from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 from constants import SENTIMENT_SQL_QUERY
-from test_functions.simple.model import (dummy_model, dummy_model_2,
-                                         dummy_sentiment_model)
-from utils import (get_integration_name, run_sentiment_model,
-                   run_sentiment_model_multiple_input)
+from test_functions.simple.model import dummy_model, dummy_model_2, dummy_sentiment_model
+from utils import get_integration_name, run_sentiment_model, run_sentiment_model_multiple_input
 
 
 def test_extract_with_default_name_collision(client):

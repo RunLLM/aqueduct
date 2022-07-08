@@ -2,10 +2,18 @@ import json
 import uuid
 from typing import Any, List, Optional, Union
 
-from aqueduct.enums import (CheckSeverity, FunctionGranularity, FunctionType,
-                            GithubRepoConfigContentType, GoogleSheetsSaveMode,
-                            LoadUpdateMode, OperatorType, S3FileFormat,
-                            SalesforceExtractType, ServiceType)
+from aqueduct.enums import (
+    CheckSeverity,
+    FunctionGranularity,
+    FunctionType,
+    GithubRepoConfigContentType,
+    GoogleSheetsSaveMode,
+    LoadUpdateMode,
+    OperatorType,
+    S3FileFormat,
+    SalesforceExtractType,
+    ServiceType,
+)
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
 from pydantic import BaseModel
