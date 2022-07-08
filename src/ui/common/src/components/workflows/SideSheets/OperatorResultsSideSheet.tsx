@@ -38,9 +38,9 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
     (state: RootState) => state.workflowReducer.artifactResults
   );
   const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
-  const logs = workflow.operatorResults[currentNode.id]?.result?.logs ?? {};
-  const operatorError =
-    workflow.operatorResults[currentNode.id]?.result?.error ?? '';
+  const logs =
+    workflow.operatorResults[currentNode.id]?.result?.user_logs ?? {};
+  const operatorError = workflow.operatorResults[currentNode.id]?.result?.error;
   const integrations = useSelector(
     (state: RootState) => state.integrationsReducer
   );
