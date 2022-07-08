@@ -29,11 +29,11 @@ def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
-    execute_command(["isort", ".", "-l 100", "--profile black"])
+    execute_command(["isort", ".", "-l", "100", "--profile", "black"])
     execute_command(
         [
             "mypy",
-            ".",
+            "aqueduct",
             "--ignore-missing-imports",
             "--strict",
             "--exclude",
@@ -45,14 +45,14 @@ def lint_python(cwd):
     execute_command(
         [
             "mypy",
-            ".",
+            "aqueduct_executor",
             "--ignore-missing-imports",
             "--strict",
             "--exclude",
             "tests",
             "--implicit-reexport",
         ],
-        join(cwd, "src/python"),
+        join(cwd, "src", "python"),
     )
 
 
