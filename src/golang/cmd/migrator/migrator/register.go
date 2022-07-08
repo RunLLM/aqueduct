@@ -12,6 +12,9 @@ import (
 	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000007_workflow_dag_edge_pk"
 	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000008_delete_s3_config"
 	_000009 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000009_metadata_interface_backfill"
+	_000010 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000010_add_exec_state_column"
+	_000011 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000011_exec_state_column_backfill"
+	_000012 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000012_drop_metadata_column"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -72,5 +75,23 @@ func init() {
 		upPostgres: _000009.Up, upSqlite: _000009.Up,
 		downPostgres: _000009.Down,
 		name:         "backfill metadata in artifact_results",
+	}
+
+	registeredMigrations[10] = &migration{
+		upPostgres: _000010.UpPostgres, upSqlite: _000010.UpSqlite,
+		downPostgres: _000010.DownPostgres,
+		name:         "add exec state column to operator_result",
+	}
+
+	registeredMigrations[11] = &migration{
+		upPostgres: _000011.Up, upSqlite: _000011.Up,
+		downPostgres: _000011.Down,
+		name:         "backfill exec state column in operator_result",
+	}
+
+	registeredMigrations[12] = &migration{
+		upPostgres: _000012.UpPostgres, upSqlite: _000012.UpSqlite,
+		downPostgres: _000012.DownPostgres,
+		name:         "remove metadata in operator_result",
 	}
 }

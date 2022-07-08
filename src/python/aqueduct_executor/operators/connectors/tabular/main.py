@@ -3,6 +3,8 @@ import base64
 import json
 import sys
 
+import pandas as pd
+
 from pydantic import parse_obj_as
 
 from aqueduct_executor.operators.connectors.tabular import (
@@ -10,7 +12,14 @@ from aqueduct_executor.operators.connectors.tabular import (
     config,
     connector,
     extract,
-    spec,
+)
+from aqueduct_executor.operators.connectors.tabular.spec import (
+    AQUEDUCT_DEMO_NAME,
+    DiscoverSpec,
+    ExtractSpec,
+    LoadSpec,
+    LoadTableSpec,
+    Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
@@ -31,7 +40,7 @@ from aqueduct_executor.operators.connectors.tabular import common, config
 from aqueduct_executor.operators.utils import enums
 
 
-def run(spec: spec.Spec, storage: Storage, exec_state: ExecutionState):
+def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     """
     Runs one of the following connector operations:
     - authenticate
@@ -47,7 +56,7 @@ def run(spec: spec.Spec, storage: Storage, exec_state: ExecutionState):
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
-        run_authenticate(op, exec_state, is_demo=(spec.name == spec.AQUEDUCT_DEMO_NAME))
+        run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
     elif spec.type == enums.JobType.EXTRACT:
         run_extract(spec, op, storage, exec_state)
     elif spec.type == enums.JobType.LOADTABLE:
@@ -60,17 +69,23 @@ def run(spec: spec.Spec, storage: Storage, exec_state: ExecutionState):
         raise Exception("Unknown job: %s" % spec.type)
 
 
-def run_authenticate(op: connector.TabularConnector, exec_state: ExecutionState, is_demo: bool):
+def run_authenticate(
+    op: connector.TabularConnector,
+    exec_state: ExecutionState,
+    is_demo: bool,
+) -> None:
     @exec_state.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
-    def _authenticate():
+    def _authenticate() -> None:
         op.authenticate()
 
     _authenticate()
 
 
-def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
+def run_extract(
+    spec: ExtractSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
+) -> None:
     extract_params = spec.parameters
 
     # Search for user-defined placeholder if this is a relational query, and replace them with
@@ -91,7 +106,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         extract_params.expand_placeholders(parameters)
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
-    def _extract():
+    def _extract() -> pd.DataFrame:
         return op.extract(spec.parameters)
 
     df = _extract()
@@ -107,11 +122,8 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
 
 
 def run_load(
-    spec: spec.LoadSpec,
-    op: connector.TabularConnector,
-    storage: Storage,
-    exec_state: ExecutionState,
-):
+    spec: LoadSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
+) -> None:
     inputs = utils.read_artifacts(
         storage,
         [spec.input_content_path],
@@ -122,18 +134,18 @@ def run_load(
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
-    def _load():
+    def _load() -> None:
         op.load(spec.parameters, inputs[0])
 
     _load()
 
 
-def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
+def run_load_table(spec: LoadTableSpec, op: connector.TabularConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
 
 
-def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):
+def run_discover(spec: DiscoverSpec, op: connector.TabularConnector, storage: Storage) -> None:
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)
 
@@ -146,46 +158,46 @@ def setup_connector(
             PostgresConnector as OpConnector,
         )
     elif connector_name == common.Name.SNOWFLAKE:
-        from aqueduct_executor.operators.connectors.tabular.snowflake import (
+        from aqueduct_executor.operators.connectors.tabular.snowflake import (  # type: ignore
             SnowflakeConnector as OpConnector,
         )
     elif connector_name == common.Name.BIG_QUERY:
-        from aqueduct_executor.operators.connectors.tabular.bigquery import (
+        from aqueduct_executor.operators.connectors.tabular.bigquery import (  # type: ignore
             BigQueryConnector as OpConnector,
         )
     elif connector_name == common.Name.REDSHIFT:
-        from aqueduct_executor.operators.connectors.tabular.redshift import (
+        from aqueduct_executor.operators.connectors.tabular.redshift import (  # type: ignore
             RedshiftConnector as OpConnector,
         )
     elif connector_name == common.Name.SQL_SERVER:
-        from aqueduct_executor.operators.connectors.tabular.sql_server import (
+        from aqueduct_executor.operators.connectors.tabular.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
     elif connector_name == common.Name.MYSQL:
-        from aqueduct_executor.operators.connectors.tabular.mysql import (
+        from aqueduct_executor.operators.connectors.tabular.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
         )
     elif connector_name == common.Name.MARIA_DB:
-        from aqueduct_executor.operators.connectors.tabular.maria_db import (
+        from aqueduct_executor.operators.connectors.tabular.maria_db import (  # type: ignore
             MariaDbConnector as OpConnector,
         )
     elif connector_name == common.Name.AZURE_SQL:
-        from aqueduct_executor.operators.connectors.tabular.azure_sql import (
+        from aqueduct_executor.operators.connectors.tabular.azure_sql import (  # type: ignore
             AzureSqlConnector as OpConnector,
         )
     elif connector_name == common.Name.S3:
-        from aqueduct_executor.operators.connectors.tabular.s3 import S3Connector as OpConnector
+        from aqueduct_executor.operators.connectors.tabular.s3 import S3Connector as OpConnector  # type: ignore
     elif connector_name == common.Name.SQLITE:
-        from aqueduct_executor.operators.connectors.tabular.sqlite import (
+        from aqueduct_executor.operators.connectors.tabular.sqlite import (  # type: ignore
             SqliteConnector as OpConnector,
         )
     else:
         raise Exception("Unknown connector name: %s" % connector_name)
 
-    return OpConnector(config=connector_config)
+    return OpConnector(config=connector_config)  # type: ignore
 
 
-def _parse_spec(spec_json: str) -> spec.Spec:
+def _parse_spec(spec_json: bytes) -> Spec:
     """
     Parses a JSON string into a spec.Spec.
     """
@@ -193,7 +205,11 @@ def _parse_spec(spec_json: str) -> spec.Spec:
 
     print("Job Spec: \n{}".format(json.dumps(data, indent=4)))
 
-    return parse_obj_as(spec.Spec, data)
+    # TODO (ENG-1286): https://linear.app/aqueducthq/issue/ENG-1286/investigate-why-mypy-is-complaining-about-object-parsing
+    # The following line is working, but mypy complains:
+    # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
+    # We ignore the error for now.
+    return parse_obj_as(Spec, data)  # type: ignore
 
 
 if __name__ == "__main__":

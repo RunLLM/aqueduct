@@ -9,3 +9,4 @@ def parse_storage(storage_config: StorageConfig) -> Storage:
         return S3Storage(storage_config.s3_config)
     if storage_config.file_config:
         return FileStorage(storage_config.file_config)
+    raise Exception("Unknown storage type")

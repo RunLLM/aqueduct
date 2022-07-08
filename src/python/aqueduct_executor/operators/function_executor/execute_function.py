@@ -7,7 +7,7 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-from aqueduct_executor.operators.function_executor import spec
+from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
@@ -25,7 +25,7 @@ from aqueduct_executor.operators.utils.timer import Timer
 from pandas import DataFrame
 
 
-def _get_py_import_path(spec: spec.FunctionSpec) -> str:
+def _get_py_import_path(spec: FunctionSpec) -> str:
     """
     Generates the import path based on fixed function dir and
     FUNCTION_ENTRY_POINT_FILE env var.
@@ -45,7 +45,7 @@ def _get_py_import_path(spec: spec.FunctionSpec) -> str:
     return ".".join([OP_DIR, file_path.replace("/", ".")])
 
 
-def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
+def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     fn_path = spec.function_extract_path
     os.chdir(os.path.join(fn_path, OP_DIR))
     sys.path.append(fn_path)
@@ -56,7 +56,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
     # Invoke the function and parse out the result object.
     module = importlib.import_module(import_path)
     if not class_name:
-        return getattr(module, method_name)
+        return getattr(module, method_name)  # type: ignore
 
     fn_class = getattr(module, class_name)
     function = fn_class()
@@ -65,11 +65,11 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
         custom_args = json.loads(custom_args_str)
         function.set_args(custom_args)
 
-    return getattr(function, method_name)
+    return getattr(function, method_name)  # type: ignore
 
 
 def _execute_function(
-    spec: spec.FunctionSpec,
+    spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
 ) -> Tuple[Any, Dict[str, str]]:
@@ -103,7 +103,7 @@ def _execute_function(
     return result, system_metadata
 
 
-def run(spec: spec.FunctionSpec) -> None:
+def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     spec_json = base64.b64decode(args.spec)
-    spec = spec.parse_spec(spec_json)
+    spec = parse_spec(spec_json)
 
     print("Started %s job: %s" % (spec.type, spec.name))
 

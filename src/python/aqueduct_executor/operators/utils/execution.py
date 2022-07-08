@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 from pydantic import BaseModel
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 
@@ -53,7 +53,7 @@ class ExecutionState(BaseModel):
     failure_type: Optional[FailureType] = None
     error: Optional[Error] = None
 
-    def user_fn_redirected(self, failure_tip: str) -> Callable:
+    def user_fn_redirected(self, failure_tip: str) -> Callable[..., Any]:
         """
         Usage:
         ```
@@ -70,8 +70,8 @@ class ExecutionState(BaseModel):
         The `error` object will contain the first frame of stack together with the tip provided.
         """
 
-        def wrapper(user_fn: Callable) -> Callable:
-            def inner(*args, **kwargs):
+        def wrapper(user_fn: Callable[..., Any]) -> Callable[..., Any]:
+            def inner(*args: Any, **kwargs: Any) -> Any:
                 stdout_log = io.StringIO()
                 stderr_log = io.StringIO()
                 try:

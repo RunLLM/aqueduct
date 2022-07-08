@@ -3,7 +3,7 @@ import base64
 import sys
 
 from aqueduct_executor.operators.utils import enums, utils
-from aqueduct_executor.operators.param_executor import spec
+from aqueduct_executor.operators.param_executor.spec import ParamSpec, parse_spec
 from aqueduct_executor.operators.utils.execution import (
     Error,
     ExecutionState,
@@ -14,7 +14,7 @@ from aqueduct_executor.operators.utils.execution import (
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
-def run(spec: spec.ParamSpec) -> None:
+def run(spec: ParamSpec) -> None:
     """
     Executes a parameter operator by storing the parameter value in the output content path.
     """
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     spec_json = base64.b64decode(args.spec)
-    spec = spec.parse_spec(spec_json)
+    spec = parse_spec(spec_json)
 
     print("Job Spec: \n{}".format(spec.json()))
     run(spec)

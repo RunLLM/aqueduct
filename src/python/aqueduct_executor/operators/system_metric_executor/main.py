@@ -10,11 +10,11 @@ from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     exception_traceback,
 )
-from aqueduct_executor.operators.system_metric_executor import spec
+from aqueduct_executor.operators.system_metric_executor.spec import SystemMetricSpec, parse_spec
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
-def run(spec: spec.SystemMetricSpec) -> None:
+def run(spec: SystemMetricSpec) -> None:
     """
     Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     spec_json = base64.b64decode(args.spec)
-    spec = spec.parse_spec(spec_json)
+    spec = parse_spec(spec_json)
 
     print("Job Spec: \n{}".format(spec.json()))
     run(spec)

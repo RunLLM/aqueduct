@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -35,18 +34,19 @@ type ArtifactResponse struct {
 	Status              shared.ExecutionStatus `db:"status" json:"status"`
 	Timestamp           time.Time              `db:"timestamp" json:"timestamp"`
 }
+
 type ArtifactCheckResponse struct {
-	ArtifactId          uuid.UUID                `db:"artifact_id" json:"artifact_id"`
-	WorkflowDagResultId uuid.UUID                `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	Status              shared.ExecutionStatus   `db:"status" json:"status"`
-	Name                string                   `db:"name" json:"name"`
-	Metadata            operator_result.Metadata `db:"metadata" json:"metadata"`
+	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
+	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	Status              shared.ExecutionStatus `db:"status" json:"status"`
+	Name                string                 `db:"name" json:"name"`
+	Metadata            shared.ExecutionState  `db:"metadata" json:"metadata"`
 }
 
 type ArtifactOperatorResponse struct {
-	ArtifactId          uuid.UUID                `db:"artifact_id" json:"artifact_id"`
-	Metadata            operator_result.Metadata `db:"metadata" json:"metadata"`
-	WorkflowDagResultId uuid.UUID                `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
+	Metadata            shared.ExecutionState `db:"metadata" json:"metadata"`
+	WorkflowDagResultId uuid.UUID             `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 }
 
 type WorkflowLastRunResponse struct {

@@ -4,7 +4,7 @@ try:
     from typing import Literal
 except ImportError:
     # Python 3.7 does not support typing.Literal
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # type: ignore
 
 from pydantic import validator
 
@@ -15,7 +15,7 @@ from aqueduct_executor.operators.utils.storage import config as sconfig
 AQUEDUCT_DEMO_NAME = "aqueduct_demo"
 
 
-def unwrap_connector_config(cls, connector_config, values):
+def unwrap_connector_config(cls, connector_config, values):  # type: ignore
     """
     TODO ENG-937: Remove this validator once connector config serialization is fixed.
 

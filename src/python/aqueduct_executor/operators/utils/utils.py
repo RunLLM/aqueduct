@@ -136,7 +136,7 @@ def write_artifact(
     content: Any,
     system_metadata: Dict[str, str],
 ) -> None:
-    output_metadata = {
+    output_metadata: Dict[str, Any] = {
         _METADATA_SCHEMA_KEY: [],
         _METADATA_SYSTEM_METADATA_KEY: system_metadata,
     }
@@ -257,7 +257,7 @@ def write_exec_state(
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
 
-def write_discover_results(storage: Storage, path: str, tables: List[str]):
+def write_discover_results(storage: Storage, path: str, tables: List[str]) -> None:
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
