@@ -236,4 +236,4 @@ class RelationalDBIntegration(Integration):
         print("Integration Information:")
         self._metadata.describe()
         print("Integration Table List Preview:")
-        print(self.list_tables()["name"].head())
+        print(self.list_tables()["name"].head().to_string())
