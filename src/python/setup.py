@@ -13,6 +13,7 @@ import shutil
 import requests
 import zipfile
 
+SCHEMA_VERSION = "12"
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
@@ -154,7 +155,7 @@ def update_server_version():
     update_executable_permissions()
 
     execute_command(
-        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"]
+        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
     )
 
 
