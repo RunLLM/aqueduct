@@ -18,7 +18,7 @@ type opResultWithMetadata struct {
 type opResultWithExecState struct {
 	Id        uuid.UUID              `db:"id" json:"id"`
 	Status    shared.ExecutionStatus `db:"status" json:"status"`
-	ExecState NullExecutionState     `db:"exec_state" json:"exec_state"`
+	ExecState NullExecutionState     `db:"execution_state" json:"execution_state"`
 }
 
 func getOpResultsWithMetadata(
@@ -39,7 +39,7 @@ func updateExecState(
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{
-		"exec_state": execState,
+		"execution_state": execState,
 	}
 	return utils.UpdateRecord(ctx, changes, "operator_result", "id", id, db)
 }
@@ -48,7 +48,7 @@ func getOpResultsWithExecState(
 	ctx context.Context,
 	db database.Database,
 ) ([]opResultWithExecState, error) {
-	query := "SELECT id, status, exec_state FROM operator_result;"
+	query := "SELECT id, status, execution_state FROM operator_result;"
 
 	var response []opResultWithExecState
 	err := db.Query(ctx, &response, query)
