@@ -1,12 +1,35 @@
+import textwrap
 from typing import Optional, Dict, List
 import uuid
 from pydantic import BaseModel
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus
+from aqueduct.enums import ExecutionStatus, FailureType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
+
+
+class Logs(BaseModel):
+    stdout: str = ""
+    stderr: str = ""
+
+    def is_empty(self) -> bool:
+        return self.stdout == "" and self.stderr == ""
+
+    def __str__(self) -> str:
+        return textwrap.dedent(
+            f"""stdout:
+            {self.stdout}
+            --------------------------
+            stderr:
+            {self.stderr}""",
+        )
+
+
+class Error(BaseModel):
+    context: str = ""
+    tip: str = ""
 
 
 class OperatorResult(BaseModel):
@@ -22,8 +45,10 @@ class OperatorResult(BaseModel):
             Only set if this operator represents a unit test on an artifact.
     """
 
-    logs: Optional[Dict[str, str]]
-    err_msg: Optional[str]
+    user_logs: Optional[Logs] = None
+    error: Optional[Error] = None
+    status: ExecutionStatus = ExecutionStatus.UNKNOWN
+    failure_type: Optional[FailureType] = None
 
 
 class TableArtifactResult(BaseModel):

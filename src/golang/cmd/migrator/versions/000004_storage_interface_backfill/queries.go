@@ -47,7 +47,7 @@ func updateStorageConfig(
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{
-		"storage_config": storageConfig,
+		"storage_config": &storageConfig,
 	}
 	return utils.UpdateRecord(ctx, changes, "workflow_dag", "id", id, db)
 }
@@ -59,7 +59,7 @@ func updateOperatorSpec(
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{
-		"spec": spec,
+		"spec": &spec,
 	}
 	return utils.UpdateRecord(ctx, changes, "operator", "id", id, db)
 }
