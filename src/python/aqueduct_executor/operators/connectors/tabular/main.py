@@ -4,12 +4,12 @@ import json
 import sys
 import traceback
 
-from pydantic import parse_obj_as
-
-from aqueduct_executor.operators.connectors.tabular import connector, extract, spec
+from aqueduct_executor.operators.connectors.tabular import (connector, extract,
+                                                            spec)
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pydantic import parse_obj_as
 
 try:
     from typing import Literal
@@ -111,43 +111,35 @@ def setup_connector(
     connector_name: common.Name, connector_config: config.Config
 ) -> connector.TabularConnector:
     if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:
-        from aqueduct_executor.operators.connectors.tabular.postgres import (
-            PostgresConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.postgres import \
+            PostgresConnector as OpConnector
     elif connector_name == common.Name.SNOWFLAKE:
-        from aqueduct_executor.operators.connectors.tabular.snowflake import (
-            SnowflakeConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.snowflake import \
+            SnowflakeConnector as OpConnector
     elif connector_name == common.Name.BIG_QUERY:
-        from aqueduct_executor.operators.connectors.tabular.bigquery import (
-            BigQueryConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.bigquery import \
+            BigQueryConnector as OpConnector
     elif connector_name == common.Name.REDSHIFT:
-        from aqueduct_executor.operators.connectors.tabular.redshift import (
-            RedshiftConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.redshift import \
+            RedshiftConnector as OpConnector
     elif connector_name == common.Name.SQL_SERVER:
-        from aqueduct_executor.operators.connectors.tabular.sql_server import (
-            SqlServerConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.sql_server import \
+            SqlServerConnector as OpConnector
     elif connector_name == common.Name.MYSQL:
-        from aqueduct_executor.operators.connectors.tabular.mysql import (
-            MySqlConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.mysql import \
+            MySqlConnector as OpConnector
     elif connector_name == common.Name.MARIA_DB:
-        from aqueduct_executor.operators.connectors.tabular.maria_db import (
-            MariaDbConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.maria_db import \
+            MariaDbConnector as OpConnector
     elif connector_name == common.Name.AZURE_SQL:
-        from aqueduct_executor.operators.connectors.tabular.azure_sql import (
-            AzureSqlConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.azure_sql import \
+            AzureSqlConnector as OpConnector
     elif connector_name == common.Name.S3:
-        from aqueduct_executor.operators.connectors.tabular.s3 import S3Connector as OpConnector
+        from aqueduct_executor.operators.connectors.tabular.s3 import \
+            S3Connector as OpConnector
     elif connector_name == common.Name.SQLITE:
-        from aqueduct_executor.operators.connectors.tabular.sqlite import (
-            SqliteConnector as OpConnector,
-        )
+        from aqueduct_executor.operators.connectors.tabular.sqlite import \
+            SqliteConnector as OpConnector
     else:
         raise Exception("Unknown connector name: %s" % connector_name)
 

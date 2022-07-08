@@ -1,33 +1,24 @@
 from __future__ import annotations
+
 import json
-
-from typing import Any, Callable, Dict, Optional, List
 import uuid
-
-from aqueduct.utils import get_description_for_metric, format_header_for_print
-import aqueduct
+from typing import Any, Callable, Dict, List, Optional
 
 from aqueduct.api_client import APIClient
-from aqueduct.dag import (
-    DAG,
-    SubgraphDAGDelta,
-    RemoveCheckOperatorDelta,
-    UpdateParametersDelta,
-)
-from aqueduct.error import AqueductError
-
 from aqueduct.artifact import ArtifactSpec
-from aqueduct.generic_artifact import Artifact
-from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
-from aqueduct.utils import (
-    serialize_function,
-    generate_uuid,
-    artifact_name_from_op_name,
-)
-from aqueduct.operators import CheckSpec, FunctionSpec, OperatorSpec
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
-from aqueduct.operators import Operator
+from aqueduct.dag import (DAG, AddOrReplaceOperatorDelta,
+                          RemoveCheckOperatorDelta, SubgraphDAGDelta,
+                          UpdateParametersDelta, apply_deltas_to_dag)
+from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
+from aqueduct.error import AqueductError
+from aqueduct.generic_artifact import Artifact
+from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
+from aqueduct.utils import (artifact_name_from_op_name,
+                            format_header_for_print, generate_uuid,
+                            get_description_for_metric, serialize_function)
+
+import aqueduct
 
 
 class MetricArtifact(Artifact):

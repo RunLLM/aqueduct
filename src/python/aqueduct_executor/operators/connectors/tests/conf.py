@@ -4,13 +4,12 @@ CONFIG FILE FOR TABULAR CONNECTOR INTEGRATION TESTS
 - Set the `_CONF` dict for all connectors being tested.
 - Commented out config fields are optional.
 """
-from aqueduct_executor.operators.connectors.tabular.config import BigQueryConfig
-from aqueduct_executor.operators.connectors.tabular import postgres
-from aqueduct_executor.operators.connectors.tabular import snowflake
-from aqueduct_executor.operators.connectors.tabular import mysql
-from aqueduct_executor.operators.connectors.tabular import sql_server
-from aqueduct_executor.operators.connectors.tabular import bigquery
-from aqueduct_executor.operators.connectors.tabular import sqlite
+from aqueduct_executor.operators.connectors.tabular import (bigquery, mysql,
+                                                            postgres,
+                                                            snowflake,
+                                                            sql_server, sqlite)
+from aqueduct_executor.operators.connectors.tabular.config import \
+    BigQueryConfig
 
 """FLAGS TO SKIP TESTS"""
 SKIP_POSTGRES = True

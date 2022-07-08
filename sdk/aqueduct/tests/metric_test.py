@@ -1,23 +1,16 @@
 import json
-from unittest.mock import MagicMock
-from io import StringIO
 import sys
+from io import StringIO
+from unittest.mock import MagicMock
 
-from aqueduct.decorator import metric, check
 from aqueduct.api_client import APIClient
+from aqueduct.decorator import check, metric
 from aqueduct.enums import ExecutionStatus
-from aqueduct.responses import (
-    PreviewResponse,
-    OperatorResult,
-    ArtifactResult,
-    MetricArtifactResult,
-)
 from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.tests.utils import (
-    default_table_artifact,
-)
+from aqueduct.responses import (ArtifactResult, MetricArtifactResult,
+                                OperatorResult, PreviewResponse)
+from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
-
 
 metric_op_name = "metric_fn"
 description = f"{metric_op_name} description"

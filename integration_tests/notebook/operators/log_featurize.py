@@ -1,7 +1,9 @@
-from aqueduct import op
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
+
+from aqueduct import op
 
 
 @op(file_dependencies=["./data"])

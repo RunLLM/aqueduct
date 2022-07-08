@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from aqueduct_executor.operators.connectors.tabular import connector
 
 

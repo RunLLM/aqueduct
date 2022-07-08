@@ -17,9 +17,8 @@ import os
 import shutil
 import subprocess
 import sys
-
 from os import listdir
-from os.path import isfile, join, isdir
+from os.path import isdir, isfile, join
 
 base_directory = join(os.environ["HOME"], ".aqueduct")
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")

@@ -8,15 +8,14 @@ import sys
 import traceback
 import tracemalloc
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Any, Callable, List, Tuple, Dict
+from typing import Any, Callable, Dict, List, Tuple
 
 from aqueduct_executor.operators.function_executor import spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-
+from aqueduct_executor.operators.utils.storage.storage import Storage
+from aqueduct_executor.operators.utils.timer import Timer
 from pandas import DataFrame
 
 

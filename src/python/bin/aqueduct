@@ -2,23 +2,19 @@
 
 import argparse
 import os
-import string
+import platform
 import random
-import subprocess
-import sys
-import platform
 import shutil
-import requests
-import zipfile
-import platform
 import socket
+import string
 import subprocess
 import sys
 import time
-import yaml
-import shutil
+import zipfile
 
 import distro
+import requests
+import yaml
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")

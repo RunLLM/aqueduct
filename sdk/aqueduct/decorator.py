@@ -1,29 +1,19 @@
-from typing import Callable, List, Optional, Union, Any
 from functools import wraps
+from typing import Any, Callable, List, Optional, Union
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
-from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
-from aqueduct.operators import (
-    Operator,
-    OperatorSpec,
-    FunctionSpec,
-    MetricSpec,
-    CheckSpec,
-)
+from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
+from aqueduct.error import AqueductError
+from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.operators import (CheckSpec, FunctionSpec, MetricSpec, Operator,
+                                OperatorSpec)
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.utils import (
-    UserFunction,
-    MetricFunction,
-    CheckFunction,
-    serialize_function,
-    generate_uuid,
-    artifact_name_from_op_name,
-)
-from aqueduct.error import AqueductError
+from aqueduct.utils import (CheckFunction, MetricFunction, UserFunction,
+                            artifact_name_from_op_name, generate_uuid,
+                            serialize_function)
 from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.

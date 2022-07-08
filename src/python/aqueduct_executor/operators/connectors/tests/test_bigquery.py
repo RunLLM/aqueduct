@@ -1,12 +1,11 @@
 import pytest
-from google.cloud import bigquery
-
 from aqueduct_executor.operators.connectors.tabular import bigquery as bq
-from aqueduct_executor.operators.connectors.tabular.load import RelationalParams as LoadParam
-from aqueduct_executor.operators.connectors.tabular.extract import RelationalParams as ExtractParam
-
-from aqueduct_executor.operators.connectors.tests import conf
-from aqueduct_executor.operators.connectors.tests import utils
+from aqueduct_executor.operators.connectors.tabular.extract import \
+    RelationalParams as ExtractParam
+from aqueduct_executor.operators.connectors.tabular.load import \
+    RelationalParams as LoadParam
+from aqueduct_executor.operators.connectors.tests import conf, utils
+from google.cloud import bigquery
 
 _DATASET = "testdata"
 _TABLE = "testdata.bigquery"

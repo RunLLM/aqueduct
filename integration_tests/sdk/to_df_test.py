@@ -1,26 +1,14 @@
 import pytest
-from aqueduct.error import (
-    AqueductError,
-    InvalidFunctionException,
-    InvalidDependencyFilePath,
-)
-
-from constants import (
-    SENTIMENT_SQL_QUERY,
-)
+from aqueduct.error import (AqueductError, InvalidDependencyFilePath,
+                            InvalidFunctionException)
+from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.file_dependency_model import (
-    model_with_file_dependency,
-    model_with_invalid_dependencies,
-    model_with_missing_file_dependencies,
-    model_with_improper_dependency_path,
-    model_with_out_of_package_file_dependency,
-)
+    model_with_file_dependency, model_with_improper_dependency_path,
+    model_with_invalid_dependencies, model_with_missing_file_dependencies,
+    model_with_out_of_package_file_dependency)
 from test_functions.simple.model import dummy_model
-from utils import (
-    get_integration_name,
-    run_sentiment_model,
-    run_sentiment_model_multiple_input,
-)
+from utils import (get_integration_name, run_sentiment_model,
+                   run_sentiment_model_multiple_input)
 
 
 def test_basic_get(client):

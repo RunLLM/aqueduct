@@ -1,29 +1,16 @@
 import uuid
 from typing import List
-from aqueduct.api_client import APIClient
-from aqueduct.table_artifact import TableArtifact
 
+from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (
-    FunctionType,
-    FunctionGranularity,
-    ServiceType,
-    OperatorType,
-    LoadUpdateMode,
-    CheckSeverity,
-)
-from aqueduct.operators import (
-    OperatorSpec,
-    ExtractSpec,
-    RelationalDBExtractParams,
-    FunctionSpec,
-    LoadSpec,
-    RelationalDBLoadParams,
-    Operator,
-    CheckSpec,
-    MetricSpec,
-)
+from aqueduct.enums import (CheckSeverity, FunctionGranularity, FunctionType,
+                            LoadUpdateMode, OperatorType, ServiceType)
+from aqueduct.operators import (CheckSpec, ExtractSpec, FunctionSpec, LoadSpec,
+                                MetricSpec, Operator, OperatorSpec,
+                                RelationalDBExtractParams,
+                                RelationalDBLoadParams)
+from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid
 
 

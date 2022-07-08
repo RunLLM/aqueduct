@@ -1,18 +1,20 @@
 import time
-from typing import Dict, Optional, List, Union
-import aqueduct
 import uuid
+from typing import Dict, List, Optional, Union
 
-from aqueduct import Flow
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
 from pandas import DataFrame
-
 # Should be set before each test runs.
-from test_functions.sentiment.model import sentiment_model, sentiment_model_multiple_input
-from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
+from test_functions.sentiment.model import (sentiment_model,
+                                            sentiment_model_multiple_input)
+from test_functions.simple.model import (dummy_sentiment_model,
+                                         dummy_sentiment_model_multiple_input)
+
+import aqueduct
+from aqueduct import Flow
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None

@@ -1,10 +1,9 @@
 import uuid
-
-from pydantic import BaseModel
 from typing import Any, Dict, Optional
 
 from aqueduct.enums import ArtifactType
 from aqueduct.error import AqueductError
+from pydantic import BaseModel
 
 
 class ArtifactSpec(BaseModel):

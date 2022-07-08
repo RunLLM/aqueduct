@@ -1,10 +1,9 @@
+import json
 import uuid
 from abc import ABC
-import json
-
-from pydantic import BaseModel
 
 from aqueduct.enums import ServiceType
+from pydantic import BaseModel
 
 
 class IntegrationInfo(BaseModel):

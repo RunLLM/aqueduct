@@ -3,37 +3,18 @@ import uuid
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (
-    GoogleSheetsSaveMode,
-    S3FileFormat,
-    SalesforceExtractType,
-    ServiceType,
-    FunctionType,
-    FunctionGranularity,
-    OperatorType,
-    ExecutionStatus,
-    LoadUpdateMode,
-)
-from aqueduct.operators import (
-    GoogleSheetsExtractParams,
-    GoogleSheetsLoadParams,
-    OperatorSpec,
-    Operator,
-    FunctionSpec,
-    ExtractSpec,
-    S3ExtractParams,
-    S3LoadParams,
-    RelationalDBExtractParams,
-    SalesforceExtractParams,
-    SalesforceLoadParams,
-    LoadSpec,
-    RelationalDBLoadParams,
-)
-from aqueduct.responses import (
-    OperatorResult,
-    TableArtifactResult,
-    PreviewResponse,
-)
+from aqueduct.enums import (ExecutionStatus, FunctionGranularity, FunctionType,
+                            GoogleSheetsSaveMode, LoadUpdateMode, OperatorType,
+                            S3FileFormat, SalesforceExtractType, ServiceType)
+from aqueduct.operators import (ExtractSpec, FunctionSpec,
+                                GoogleSheetsExtractParams,
+                                GoogleSheetsLoadParams, LoadSpec, Operator,
+                                OperatorSpec, RelationalDBExtractParams,
+                                RelationalDBLoadParams, S3ExtractParams,
+                                S3LoadParams, SalesforceExtractParams,
+                                SalesforceLoadParams)
+from aqueduct.responses import (OperatorResult, PreviewResponse,
+                                TableArtifactResult)
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 

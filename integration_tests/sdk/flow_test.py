@@ -1,22 +1,16 @@
-import pytest
-import aqueduct
-from test_metrics.constant.model import constant_metric
-from aqueduct import LoadUpdateMode, check
-from aqueduct.error import IncompleteFlowException
 from datetime import datetime, timedelta
 
+import pytest
+from aqueduct.error import IncompleteFlowException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
-from utils import (
-    generate_new_flow_name,
-    get_integration_name,
-    run_flow_test,
-    run_sentiment_model_multiple_input,
-    run_sentiment_model,
-    generate_table_name,
-    delete_flow,
-    wait_for_flow_runs,
-)
+from test_metrics.constant.model import constant_metric
+from utils import (delete_flow, generate_new_flow_name, generate_table_name,
+                   get_integration_name, run_flow_test, run_sentiment_model,
+                   run_sentiment_model_multiple_input, wait_for_flow_runs)
+
+import aqueduct
+from aqueduct import LoadUpdateMode, check
 
 
 def test_basic_flow(client):

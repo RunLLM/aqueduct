@@ -5,14 +5,15 @@ from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
-from aqueduct.error import InvalidUserArgumentException, InvalidUserActionException
-from .enums import ArtifactType
+from aqueduct.error import (InvalidUserActionException,
+                            InvalidUserArgumentException)
 
+from .enums import ArtifactType
 from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import parse_user_supplied_id, format_header_for_print
+from .utils import format_header_for_print, parse_user_supplied_id
 
 
 class Flow:
