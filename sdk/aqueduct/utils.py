@@ -54,6 +54,23 @@ def generate_uuid() -> uuid.UUID:
     return uuid.uuid4()
 
 
+def generate_url(
+    url_prefix: str = "", aqueduct_address: str = "", flow_id: str = "", result_id: str = ""
+) -> str:
+    if result_id:
+        url = (
+            url_prefix
+            + aqueduct_address
+            + "/workflow/"
+            + flow_id
+            + "?workflowDagResultId="
+            + result_id
+        )
+    else:
+        url = url_prefix + aqueduct_address + "/workflow/" + flow_id
+    return url
+
+
 def raise_errors(response: requests.Response) -> None:
     def _extract_err_msg() -> str:
         resp_json = response.json()

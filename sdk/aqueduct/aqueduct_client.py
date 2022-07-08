@@ -34,6 +34,7 @@ from .integrations.s3_integration import S3Integration
 from .operators import Operator, ParamSpec, OperatorSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
+    generate_url,
     schedule_from_cron_string,
     retention_policy_from_latest_runs,
     generate_uuid,
@@ -334,14 +335,16 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = self._api_client.register_workflow(dag).id
-
-        url = "http://" + self._api_client.aqueduct_address + "/workflow/" + str(flow_id)
-        print("UI: ", url)
+        url = generate_url(
+            self._api_client.url_prefix,
+            self._api_client.aqueduct_address,
+            str(self._api_client.register_workflow(dag).id),
+        )
+        logging.info("url: %s", url)
 
         return Flow(
             self._api_client,
-            str(flow_id),
+            str(self._api_client.register_workflow(dag).id),
             self._in_notebook_or_console_context,
         )
 

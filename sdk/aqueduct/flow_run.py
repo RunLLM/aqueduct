@@ -1,6 +1,5 @@
 import textwrap
 import uuid
-import urllib.parse
 from textwrap import wrap
 from typing import Dict, Any, Mapping, Union, List
 
@@ -10,7 +9,7 @@ from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
 from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
 from aqueduct.operators import Operator
-from aqueduct.utils import human_readable_timestamp, format_header_for_print
+from aqueduct.utils import generate_url, human_readable_timestamp, format_header_for_print
 
 
 class FlowRun:
@@ -46,8 +45,9 @@ class FlowRun:
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
 
-        url = "http://" + self._api_client.aqueduct_address + "/workflow/" + self._flow_id + "?"
-        params = {"workflowDagResultId": self._id}
+        url = generate_url(
+            self._api_client.url_prefix, self._api_client.aqueduct_address, self._flow_id, self._id
+        )
 
         print(
             textwrap.dedent(
@@ -56,7 +56,7 @@ class FlowRun:
             ID: {self._id}
             Created At (UTC): {human_readable_timestamp(self._created_at)}
             Status: {str(self._status)}
-            UI: {url + urllib.parse.urlencode(params)}
+            UI: {url}
             """
             )
         )

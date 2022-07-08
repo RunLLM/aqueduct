@@ -12,7 +12,7 @@ from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import parse_user_supplied_id, format_header_for_print
+from .utils import generate_url, parse_user_supplied_id, format_header_for_print
 
 
 class Flow:
@@ -85,7 +85,8 @@ class Flow:
                 continue
 
             dag.update_operator_spec(
-                param_artifact.name,  # this works because the parameter op and artifact currently share the same name.
+                # this works because the parameter op and artifact currently share the same name.
+                param_artifact.name,
                 OperatorSpec(
                     param=ParamSpec(
                         val=param_val,
@@ -144,7 +145,7 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
-        url = "http://" + self._api_client.aqueduct_address + "/workflow/" + self._id
+        url = generate_url(self._api_client.url_prefix, self._api_client.aqueduct_address, self._id)
 
         print(
             textwrap.dedent(
