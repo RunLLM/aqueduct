@@ -237,3 +237,4 @@ class RelationalDBIntegration(Integration):
         self._metadata.describe()
         print("Integration Table List Preview:")
         print(self.list_tables()["name"].head().to_string())
+        print("(only first 5 tables are shown)")
