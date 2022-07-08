@@ -22,7 +22,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /integration/{integrationId}/create
@@ -62,19 +61,6 @@ type CreateTableArgs struct {
 
 type CreateTableResponse struct{}
 
-var usefulHeaders = map[string]bool{
-	"accept-encoding":    true,
-	"accept":             true,
-	"connection":         true,
-	"api-key":            true,
-	"sdk-client-version": true,
-	"content-length":     true,
-	"user-agent":         true,
-	"content-type":       true,
-	"table-name":         true,
-	"transfer-encoding":  true,
-}
-
 func (*CreateTableHandler) Name() string {
 	return "CreateTable"
 }
@@ -90,38 +76,6 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
-
-	/*log.Info("logging headers...")
-	for name := range r.Header {
-		log.Infof("%s: %s", name, r.Header[name])
-	}
-
-	toRemove := []string{}
-	// Loop over header names
-	for name := range r.Header {
-		if _, ok := usefulHeaders[strings.ToLower(name)]; !ok {
-			log.Infof("removing header: %s", name)
-			toRemove = append(toRemove, name)
-		}
-	}
-
-	for _, header := range toRemove {
-		r.Header.Del(header)
-	}
-
-	r.Header.Set("Accept-Encoding", "deflate, gzip")
-	r.Header.Set("Transfer-Encoding", "deflate, gzip")*/
-
-	for name := range r.Header {
-		log.Infof("%s: %s", name, r.Header[name])
-	}
-
-	log.Info(r.ContentLength)
-
-	/*csv, err := request.ExtractHttpPayload("multipart/form-data", "table", true, r)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to read CSV content.")
-	}*/
 
 	csv, err := io.ReadAll(r.Body)
 	if err != nil {
