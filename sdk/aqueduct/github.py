@@ -8,8 +8,13 @@ from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
 
 from .decorator import OutputArtifactFunction, wrap_spec
-from .operators import (EntryPoint, FunctionSpec, GithubMetadata, OperatorSpec,
-                        RelationalDBExtractParams)
+from .operators import (
+    EntryPoint,
+    FunctionSpec,
+    GithubMetadata,
+    OperatorSpec,
+    RelationalDBExtractParams,
+)
 
 
 def _get_operator_name(prefix: str, repo_url: str, branch: str, path: str) -> str:

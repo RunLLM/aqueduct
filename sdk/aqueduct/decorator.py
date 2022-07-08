@@ -10,8 +10,14 @@ from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import (CheckFunction, MetricFunction, UserFunction, artifact_name_from_op_name,
-                            generate_uuid, serialize_function)
+from aqueduct.utils import (
+    CheckFunction,
+    MetricFunction,
+    UserFunction,
+    artifact_name_from_op_name,
+    generate_uuid,
+    serialize_function,
+)
 from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.

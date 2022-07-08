@@ -9,8 +9,14 @@ from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.operators import (ExtractSpec, Operator, OperatorSpec, RelationalDBExtractParams,
-                                RelationalDBLoadParams, SaveConfig)
+from aqueduct.operators import (
+    ExtractSpec,
+    Operator,
+    OperatorSpec,
+    RelationalDBExtractParams,
+    RelationalDBLoadParams,
+    SaveConfig,
+)
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 
