@@ -3,6 +3,8 @@ package storage
 import (
 	"bytes"
 	"context"
+	"net/url"
+	"path"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aws/aws-sdk-go/aws"
@@ -22,6 +24,20 @@ func newS3Storage(s3Config *shared.S3Config) *s3Storage {
 	}
 }
 
+// parseBucketAndKey takes the bucket in the form of s3://bucket/path
+// and a key and parses the bucket name and the key.
+func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
+	u, err := url.Parse(s.s3Config.Bucket)
+	if err != nil {
+		return "", "", err
+	}
+
+	bucket := u.Host
+	key = path.Join(u.Path, key)
+
+	return bucket, key, nil
+}
+
 func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
@@ -30,11 +46,17 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 
 	buff := &aws.WriteAtBuffer{}
 	downloader := s3manager.NewDownloader(sess)
+
+	bucket, key, err := s.parseBucketAndKey(key)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = downloader.DownloadWithContext(
 		ctx,
 		buff,
 		&s3.GetObjectInput{
-			Bucket: aws.String(s.s3Config.Bucket),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		})
 	if err != nil {
@@ -52,10 +74,16 @@ func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
 	file := bytes.NewReader(value)
 
 	uploader := s3manager.NewUploader(sess)
+
+	bucket, key, err := s.parseBucketAndKey(key)
+	if err != nil {
+		return err
+	}
+
 	_, err = uploader.UploadWithContext(
 		ctx,
 		&s3manager.UploadInput{
-			Bucket: aws.String(s.s3Config.Bucket),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 			Body:   file,
 		})
@@ -72,10 +100,16 @@ func (s *s3Storage) Delete(ctx context.Context, key string) error {
 	}
 
 	s3Client := s3.New(sess)
+
+	bucket, key, err := s.parseBucketAndKey(key)
+	if err != nil {
+		return err
+	}
+
 	_, err = s3Client.DeleteObjectWithContext(
 		ctx,
 		&s3.DeleteObjectInput{
-			Bucket: aws.String(s.s3Config.Bucket),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		},
 	)
