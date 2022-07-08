@@ -24,7 +24,7 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [password, setPassword] = useState<string>(null);
 
   useEffect(() => {
-    let config: PostgresConfig = {
+    const config: PostgresConfig = {
       host: host,
       port: port,
       database: database,
@@ -33,9 +33,9 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
     };
 
     if (password && password !== '') {
-      config['password'] = password
+      config['password'] = password;
     }
-    
+
     setDialogConfig(config);
   }, [host, port, database, username, password]);
 
