@@ -1,6 +1,5 @@
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import (config, load,
-                                                            relational)
+from aqueduct_executor.operators.connectors.tabular import config, load, relational
 from sqlalchemy import create_engine, engine
 
 

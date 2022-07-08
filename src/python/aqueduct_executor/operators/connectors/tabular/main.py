@@ -4,8 +4,7 @@ import json
 import sys
 import traceback
 
-from aqueduct_executor.operators.connectors.tabular import (connector, extract,
-                                                            spec)
+from aqueduct_executor.operators.connectors.tabular import connector, extract, spec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
@@ -135,8 +134,7 @@ def setup_connector(
         from aqueduct_executor.operators.connectors.tabular.azure_sql import \
             AzureSqlConnector as OpConnector
     elif connector_name == common.Name.S3:
-        from aqueduct_executor.operators.connectors.tabular.s3 import \
-            S3Connector as OpConnector
+        from aqueduct_executor.operators.connectors.tabular.s3 import S3Connector as OpConnector
     elif connector_name == common.Name.SQLITE:
         from aqueduct_executor.operators.connectors.tabular.sqlite import \
             SqliteConnector as OpConnector

@@ -4,11 +4,10 @@ from typing import List
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (CheckSeverity, FunctionGranularity, FunctionType,
-                            LoadUpdateMode, OperatorType, ServiceType)
-from aqueduct.operators import (CheckSpec, ExtractSpec, FunctionSpec, LoadSpec,
-                                MetricSpec, Operator, OperatorSpec,
-                                RelationalDBExtractParams,
+from aqueduct.enums import (CheckSeverity, FunctionGranularity, FunctionType, LoadUpdateMode,
+                            OperatorType, ServiceType)
+from aqueduct.operators import (CheckSpec, ExtractSpec, FunctionSpec, LoadSpec, MetricSpec,
+                                Operator, OperatorSpec, RelationalDBExtractParams,
                                 RelationalDBLoadParams)
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid

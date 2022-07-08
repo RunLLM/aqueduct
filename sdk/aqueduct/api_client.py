@@ -5,14 +5,13 @@ from typing import IO, Any, Dict, List, Optional, Tuple
 import requests
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
-from aqueduct.error import (AqueductError, ClientValidationError,
-                            InternalAqueductError,
+from aqueduct.error import (AqueductError, ClientValidationError, InternalAqueductError,
                             NoConnectedIntegrationsException)
 from aqueduct.integrations.integration import IntegrationInfo
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
-from aqueduct.responses import (GetWorkflowResponse, ListWorkflowResponseEntry,
-                                PreviewResponse, RegisterWorkflowResponse)
+from aqueduct.responses import (GetWorkflowResponse, ListWorkflowResponseEntry, PreviewResponse,
+                                RegisterWorkflowResponse)
 
 from aqueduct import utils
 

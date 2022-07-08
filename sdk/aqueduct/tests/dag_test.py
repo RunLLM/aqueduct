@@ -1,6 +1,6 @@
 from aqueduct.enums import OperatorType
-from aqueduct.tests.utils import (_construct_dag, _construct_operator,
-                                  default_artifact, generate_uuids)
+from aqueduct.tests.utils import (_construct_dag, _construct_operator, default_artifact,
+                                  generate_uuids)
 
 
 def test_list_downstream_operators():
