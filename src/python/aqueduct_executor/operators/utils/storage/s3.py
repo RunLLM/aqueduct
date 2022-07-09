@@ -20,4 +20,4 @@ class S3Storage(Storage):
 
     def get(self, key: str) -> bytes:
         print(f"reading from s3: {key}")
-        return self._client.get_object(Bucket=self._config.bucket, Key=key)["Body"].read()
+        return self._client.get_object(Bucket=self._config.bucket, Key=key)["Body"].read()  # type: ignore

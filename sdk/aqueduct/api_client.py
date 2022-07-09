@@ -34,15 +34,15 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
         if curr_op.id in preview_resp.operator_results:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
-            if curr_op_result.logs is not None and len(curr_op_result.logs) > 0:
-                print('Operator "%s" Logs:\n' % curr_op.name)
-                print(json.dumps(curr_op_result.logs, sort_keys=False, indent=4))
+            if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
+                print(f"Operator {curr_op.name} Logs:")
+                print(curr_op_result.user_logs)
+                print("")
 
-            if curr_op_result.err_msg and len(curr_op_result.err_msg) > 0:
-                print(
-                    "Operator %s Failed! Error message: \n %s"
-                    % (curr_op.name, curr_op_result.err_msg)
-                )
+            if curr_op_result.error is not None:
+                print(curr_op_result.error.tip)
+                print(curr_op_result.error.context)
+
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
                 for output_artifact_id in curr_op.outputs:
