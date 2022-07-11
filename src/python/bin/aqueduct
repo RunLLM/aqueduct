@@ -388,7 +388,7 @@ def use_local_storage(path):
     write_config(config)
 
 def use_s3_storage(region, bucket, creds_path, creds_profile):
-    if bucket[:5] != "s3://":
+    if not bucket.startswith("s3://"):
         print('S3 path is malformed, it should be of the form s3://')
         sys.exit(1)
         
