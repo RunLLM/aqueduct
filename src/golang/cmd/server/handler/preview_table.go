@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
-	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"net/http"
 	"time"
 
@@ -133,10 +133,10 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
-		connector2.Extract{
+		connector.Extract{
 			Service:       integrationObject.Service,
 			IntegrationId: integrationObject.Id,
-			Parameters: &connector2.RelationalDBExtractParams{
+			Parameters: &connector.RelationalDBExtractParams{
 				Query: query,
 			},
 		},

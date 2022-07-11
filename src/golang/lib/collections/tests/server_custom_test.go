@@ -3,7 +3,7 @@ package tests
 import (
 	"context"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
-	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
@@ -36,10 +36,10 @@ func TestGetLoadOperatorSpecByOrganization(t *testing.T) {
 	require.Nil(t, err)
 
 	testOps := seedOperatorWithSpecs(t, 1, []operator.Spec{
-		*operator.NewSpecFromLoad(connector2.Load{
+		*operator.NewSpecFromLoad(connector.Load{
 			Service:       integration.Postgres,
 			IntegrationId: uuid.New(),
-			Parameters:    &connector2.PostgresLoadParams{connector2.RelationalDBLoadParams{Table: "test"}},
+			Parameters:    &connector.PostgresLoadParams{connector.RelationalDBLoadParams{Table: "test"}},
 		}),
 	})
 

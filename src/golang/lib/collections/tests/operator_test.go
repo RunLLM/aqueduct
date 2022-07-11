@@ -2,7 +2,7 @@ package tests
 
 import (
 	"context"
-	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"testing"
 
@@ -62,11 +62,11 @@ func TestCreateOperator(t *testing.T) {
 	expectedOperator := &operator.DBOperator{
 		Name:        "test-operator",
 		Description: "testing op",
-		Spec: *operator.NewSpecFromExtract(connector2.Extract{
+		Spec: *operator.NewSpecFromExtract(connector.Extract{
 			Service:       integration.Postgres,
 			IntegrationId: integrations[0].Id,
-			Parameters: &connector2.PostgresExtractParams{
-				connector2.RelationalDBExtractParams{
+			Parameters: &connector.PostgresExtractParams{
+				connector.RelationalDBExtractParams{
 					Query: "SELECT * FROM mpg;",
 				},
 			},
