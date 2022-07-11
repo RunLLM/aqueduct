@@ -18,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -93,13 +92,8 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 	}
 
 	s := &AqServer{
-		Router: chi.NewRouter(),
-		StorageConfig: &shared.StorageConfig{
-			Type: shared.FileStorageType,
-			FileConfig: &shared.FileConfig{
-				Directory: path.Join(aqPath, storage.DefaultFileStorageDir),
-			},
-		},
+		Router:        chi.NewRouter(),
+		StorageConfig: conf.StorageConfig,
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,

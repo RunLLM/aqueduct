@@ -17,6 +17,8 @@ class FileStorageConfig(BaseModel):
 class S3StorageConfig(BaseModel):
     region: str
     bucket: str
+    credentials_path: str
+    credentials_profile: str
 
 
 class StorageConfig(BaseModel):
