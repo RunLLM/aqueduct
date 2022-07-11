@@ -19,15 +19,15 @@ import (
 //						    |
 // extract_1 -> artifact_1 --
 func generateBasicDag(t *testing.T) *workflow_dag.WorkflowDag {
-	artifactZero := artifact.Artifact{
+	artifactZero := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
-	artifactOne := artifact.Artifact{
+	artifactOne := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
-	artifactTwo := artifact.Artifact{
+	artifactTwo := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
@@ -59,7 +59,7 @@ func generateBasicDag(t *testing.T) *workflow_dag.WorkflowDag {
 			functionZero.Id: functionZero,
 			loadZero.Id:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.Artifact{
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{
 			artifactZero.Id: artifactZero,
 			artifactOne.Id:  artifactOne,
 			artifactTwo.Id:  artifactTwo,
@@ -77,15 +77,15 @@ func generateBasicDag(t *testing.T) *workflow_dag.WorkflowDag {
 //							|
 // extract_1 -> artifact_1 --
 func generateCyclicDag(t *testing.T) *workflow_dag.WorkflowDag {
-	artifactZero := artifact.Artifact{
+	artifactZero := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
-	artifactOne := artifact.Artifact{
+	artifactOne := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
-	artifactTwo := artifact.Artifact{
+	artifactTwo := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
@@ -118,7 +118,7 @@ func generateCyclicDag(t *testing.T) *workflow_dag.WorkflowDag {
 			functionZero.Id: functionZero,
 			loadZero.Id:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.Artifact{
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{
 			artifactZero.Id: artifactZero,
 			artifactOne.Id:  artifactOne,
 			artifactTwo.Id:  artifactTwo,
@@ -132,7 +132,7 @@ func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.WorkflowDag {
 	validationOpId := uuid.New()
 	artifactId := uuid.New()
 
-	artifactObject := artifact.Artifact{
+	artifactObject := artifact.DBArtifact{
 		Id: artifactId,
 	}
 
@@ -143,7 +143,7 @@ func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.WorkflowDag {
 
 	return &workflow_dag.WorkflowDag{
 		Operators: map[uuid.UUID]operator.Operator{validationOpId: validationOperator},
-		Artifacts: map[uuid.UUID]artifact.Artifact{artifactId: artifactObject},
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactId: artifactObject},
 	}
 }
 
@@ -151,18 +151,18 @@ func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.WorkflowDag {
 func generateEmptyDag(t *testing.T) *workflow_dag.WorkflowDag {
 	return &workflow_dag.WorkflowDag{
 		Operators: map[uuid.UUID]operator.Operator{},
-		Artifacts: map[uuid.UUID]artifact.Artifact{},
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
 	}
 }
 
 // This manually creates a DAG with an unreachable artifract:
 // operator_0 -> artifact_0, artifact_1
 func generateUnreachableArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
-	artifactZero := artifact.Artifact{
+	artifactZero := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
-	artifactOne := artifact.Artifact{
+	artifactOne := artifact.DBArtifact{
 		Id: uuid.New(),
 	}
 
@@ -173,7 +173,7 @@ func generateUnreachableArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 
 	return &workflow_dag.WorkflowDag{
 		Operators: map[uuid.UUID]operator.Operator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.Artifact{artifactZero.Id: artifactZero, artifactOne.Id: artifactOne},
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactZero.Id: artifactZero, artifactOne.Id: artifactOne},
 	}
 }
 
@@ -189,7 +189,7 @@ func generateUndefinedArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 
 	return &workflow_dag.WorkflowDag{
 		Operators: map[uuid.UUID]operator.Operator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.Artifact{},
+		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
 	}
 }
 

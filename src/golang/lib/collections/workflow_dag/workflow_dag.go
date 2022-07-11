@@ -19,9 +19,9 @@ type WorkflowDag struct {
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
 
 	/* Field not stored in DB */
-	Metadata  *workflow.Workflow              `json:"metadata"`
-	Operators map[uuid.UUID]operator.Operator `json:"operators,omitempty"`
-	Artifacts map[uuid.UUID]artifact.Artifact `json:"artifacts,omitempty"`
+	Metadata  *workflow.Workflow                `json:"metadata"`
+	Operators map[uuid.UUID]operator.Operator   `json:"operators,omitempty"`
+	Artifacts map[uuid.UUID]artifact.DBArtifact `json:"artifacts,omitempty"`
 }
 
 func (dag *WorkflowDag) GetOperatorByName(name string) *operator.Operator {

@@ -13,7 +13,7 @@ import (
 func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	id := uuid.New()
 
-	atf := artifact.Artifact{
+	atf := artifact.DBArtifact{
 		Id:   id,
 		Name: "test",
 		Spec: *artifact.NewSpecFromTable(
@@ -24,7 +24,7 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	rawAtf, err := json.Marshal(atf)
 	require.Nil(t, err)
 
-	var reconstructedAtf artifact.Artifact
+	var reconstructedAtf artifact.DBArtifact
 	err = json.Unmarshal(rawAtf, &reconstructedAtf)
 	require.Nil(t, err)
 	require.True(t, reconstructedAtf.Spec.IsTable())

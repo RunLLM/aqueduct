@@ -255,7 +255,7 @@ func ReadWorkflowDagFromDatabase(
 	workflowDag.Metadata = dbWorkflow
 
 	workflowDag.Operators = make(map[uuid.UUID]operator.Operator)
-	workflowDag.Artifacts = make(map[uuid.UUID]artifact.Artifact)
+	workflowDag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
 
 	// Populate nodes for operators and artifacts.
 	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, workflowDag.Id, db)
