@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 )

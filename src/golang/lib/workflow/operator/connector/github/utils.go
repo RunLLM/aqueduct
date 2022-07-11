@@ -2,10 +2,10 @@ package github
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"

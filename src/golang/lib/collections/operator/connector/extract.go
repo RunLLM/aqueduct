@@ -2,6 +2,7 @@ package connector
 
 import (
 	"encoding/json"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"

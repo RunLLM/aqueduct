@@ -3,8 +3,8 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"

@@ -3,12 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"net/http"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"

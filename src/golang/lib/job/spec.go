@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"

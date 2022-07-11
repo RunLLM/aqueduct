@@ -3,11 +3,11 @@ package request
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"

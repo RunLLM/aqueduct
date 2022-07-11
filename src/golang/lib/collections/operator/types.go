@@ -4,13 +4,13 @@ package operator
 import (
 	"database/sql/driver"
 	"encoding/json"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/metric"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
-
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/dropbox/godropbox/errors"
 )
