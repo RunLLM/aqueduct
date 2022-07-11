@@ -276,7 +276,6 @@ func ScheduleOperator(
 // of a completed job.
 func CheckOperatorExecutionStatus(
 	ctx context.Context,
-	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
 ) *shared.ExecutionState {

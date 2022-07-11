@@ -22,6 +22,7 @@ type ExecutionStatus string
 const (
 	SucceededExecutionStatus ExecutionStatus = "succeeded"
 	FailedExecutionStatus    ExecutionStatus = "failed"
+	RunningExecutionStatus   ExecutionStatus = "running"
 	PendingExecutionStatus   ExecutionStatus = "pending"
 	UnknownExecutionStatus   ExecutionStatus = "unknown"
 )

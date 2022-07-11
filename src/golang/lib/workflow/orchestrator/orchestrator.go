@@ -2,6 +2,9 @@ package orchestrator
 
 import (
 	"context"
+	"fmt"
+	dag "github.com/aqueducthq/aqueduct/lib/workflow"
+	operator2 "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -287,7 +290,7 @@ func Preview(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 ) (shared.ExecutionStatus, error) {
-	return orchestrate(
+	return deprecatedOrchestrate(
 		ctx,
 		dag,
 		workflowStoragePaths,
@@ -320,7 +323,7 @@ func Execute(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 ) (shared.ExecutionStatus, error) {
-	return orchestrate(
+	return deprecatedOrchestrate(
 		ctx,
 		dag,
 		workflowStoragePaths,
@@ -338,7 +341,7 @@ func Execute(
 	)
 }
 
-func orchestrate(
+func deprecatedOrchestrate(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
@@ -504,4 +507,135 @@ func orchestrate(
 	status = shared.SucceededExecutionStatus
 
 	return status, nil
+}
+
+func waitForInProgressOperators(
+	ctx context.Context,
+	inProgressOps map[uuid.UUID]operator2.Operator,
+	pollInterval time.Duration,
+	timeout time.Duration,
+) {
+	start := time.Now()
+	for len(inProgressOps) > 0 {
+		if time.Since(start) > timeout {
+			return
+		}
+
+		for opID, op := range inProgressOps {
+			status, err := op.Status()
+			if err != nil {
+				// TODO(kenxu): move this to inside status().
+				// The job already finished somehow and was garbage-collected.
+				if err != job.ErrJobNotExist {
+					log.Errorf(
+						"Unexpected error occurred when checking the job status during failed workflow cleanup. %v",
+						err,
+					)
+					return
+				}
+			}
+
+			// Resolve any jobs that aren't actively running. We don't are if they succeeded or failed, since there already
+			// was a failing error.
+			if status != shared.RunningExecutionStatus {
+				delete(inProgressOps, opID)
+			}
+		}
+		time.Sleep(pollInterval)
+	}
+}
+
+func orchestrate(
+	ctx context.Context,
+	dag *dag.WorkflowDag,
+	pollInterval time.Duration,
+) (shared.ExecutionStatus, error) {
+	// These are the operators of immediate interest. They either need to be scheduled or polled on.
+	inProgressOps := make(map[uuid.UUID]operator2.Operator, len(dag.Operators))
+	completedOps := make(map[uuid.UUID]operator2.Operator, len(dag.Operators))
+
+	// Kick off execution by starting all operators that don't have any inputs.
+	for _, op := range dag.Operators {
+		if op.Ready() {
+			inProgressOps[op.ID()] = op
+		}
+	}
+
+	if len(inProgressOps) == 0 {
+		return shared.UnknownExecutionStatus, errors.Newf("No initial operators to schedule.")
+	}
+
+	// Wait a little bit for all active operators to finish before exiting on failure.
+	defer waitForInProgressOperators(ctx, inProgressOps, pollInterval, 5*time.Minute)
+
+	start := time.Now()
+
+	for len(inProgressOps) > 0 {
+		if time.Since(start) > defaultTimeout {
+			return shared.FailedExecutionStatus, errors.New("Reached timeout waiting for workflow to complete.")
+		}
+
+		for _, op := range inProgressOps {
+			execState, err := op.ExecState()
+			if err != nil {
+				return shared.FailedExecutionStatus, err
+			}
+
+			if execState.Status == shared.PendingExecutionStatus {
+				err := op.Schedule()
+				if err != nil {
+					return shared.FailedExecutionStatus, errors.Wrap(err, fmt.Sprintf("Unable to schedule operator %s.", op.Name()))
+				}
+			} else if execState.Status == shared.RunningExecutionStatus {
+				continue
+			} else if execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus {
+				err = op.Finish()
+				if err != nil {
+					return shared.FailedExecutionStatus, errors.Wrap(err, fmt.Sprintf("Error when finishing execution of operator %s", op.Name()))
+				}
+
+				if execState.Status == shared.FailedExecutionStatus {
+					if *execState.FailureType == shared.SystemFailure {
+						return shared.FailedExecutionStatus, ErrOpExecSystemFailure
+					} else if *execState.FailureType == shared.UserFailure {
+						log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name(), op.ID())
+						return shared.FailedExecutionStatus, ErrOpExecBlockingUserFailure
+					}
+					return shared.FailedExecutionStatus, errors.Newf("Internal error: Unsupported failure type %s", *execState.FailureType)
+				} else {
+					// Add the operator to the completed stack, and remove it from the in-progress one.
+					if _, ok := completedOps[op.ID()]; ok {
+						return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: operator %s was completed twice.", op.Name()))
+					}
+
+					completedOps[op.ID()] = op
+					delete(inProgressOps, op.ID())
+
+					for _, nextOp := range dag.ImmediateDownstreamOperators(op) {
+						// Before scheduling the next operator, check that all upstream artifacts to that operator
+						// have been computed.
+						if !nextOp.Ready() {
+							continue
+						}
+
+						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
+						// matter because we only keep and update a single copy an on operator.
+						if _, ok := inProgressOps[nextOp.ID()]; !ok {
+							inProgressOps[nextOp.ID()] = nextOp
+						}
+					}
+				}
+			} else {
+				return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: a scheduled operator has unsupported status %s", status))
+			}
+
+			time.Sleep(pollInterval)
+
+		}
+	}
+
+	if len(completedOps) != len(dag.Operators) {
+		return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators), len(completedOps)))
+	}
+	return shared.SucceededExecutionStatus, nil
 }
