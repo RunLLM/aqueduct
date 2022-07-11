@@ -28,7 +28,7 @@ var (
 )
 
 func Validate(
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 ) error {
 	if len(dag.Operators) == 0 {
 		return ErrNoOperator
@@ -116,7 +116,7 @@ func ValidateDagOperatorIntegrationOwnership(
 	return true, nil
 }
 
-func checkUnexecutableOperator(dag *workflow_dag.WorkflowDag) error {
+func checkUnexecutableOperator(dag *workflow_dag.DBWorkflowDag) error {
 	numOperators := len(dag.Operators)
 	operatorsExecuted := make(map[uuid.UUID]bool, numOperators)
 	for operatorId := range dag.Operators {

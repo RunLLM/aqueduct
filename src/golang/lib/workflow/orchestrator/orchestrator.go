@@ -281,7 +281,7 @@ func waitForActiveOperators(
 
 func Preview(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	jobManager job.JobManager,
@@ -307,7 +307,7 @@ func Preview(
 
 func Execute(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	workflowReader workflow.Reader,
@@ -340,7 +340,7 @@ func Execute(
 
 func orchestrate(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	workflowReader workflow.Reader,

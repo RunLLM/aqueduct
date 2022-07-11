@@ -31,7 +31,7 @@ func (w *sqliteWriterImpl) CreateWorkflowDag(
 	workflowId uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
-) (*WorkflowDag, error) {
+) (*DBWorkflowDag, error) {
 	insertColumns := []string{IdColumn, WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
@@ -42,7 +42,7 @@ func (w *sqliteWriterImpl) CreateWorkflowDag(
 
 	args := []interface{}{id, workflowId, time.Now(), storageConfig}
 
-	var workflowDag WorkflowDag
+	var workflowDag DBWorkflowDag
 	err = db.Query(ctx, &workflowDag, insertWorkflowDagStmt, args...)
 	return &workflowDag, err
 }

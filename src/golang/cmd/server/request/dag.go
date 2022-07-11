@@ -18,7 +18,7 @@ import (
 const dagKey = "dag"
 
 type DagSummary struct {
-	Dag *workflow_dag.WorkflowDag
+	Dag *workflow_dag.DBWorkflowDag
 
 	// Extract the operator contents from the request body
 	FileContentsByOperatorUUID map[uuid.UUID][]byte
@@ -40,7 +40,7 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Serialized dag object not available")
 	}
 
-	var workflowDag workflow_dag.WorkflowDag
+	var workflowDag workflow_dag.DBWorkflowDag
 	err = json.Unmarshal(serializedDAGBytes, &workflowDag)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid dag specification.")
