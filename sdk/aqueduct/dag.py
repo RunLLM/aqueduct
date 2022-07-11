@@ -223,7 +223,7 @@ class DAG(BaseModel):
 
     def update_operator_spec(self, operator: Operator, serialized_function: bytes) -> None:
         if operator in self.operators.values():
-            operator.change_file(serialized_function)
+            operator.update_serialized_function(serialized_function)
 
     def remove_operator(
         self,

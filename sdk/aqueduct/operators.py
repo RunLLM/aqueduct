@@ -176,7 +176,7 @@ class Operator(BaseModel):
 
         return None
 
-    def change_file(self, serialized_function: bytes) -> None:
+    def update_serialized_function(self, serialized_function: bytes) -> None:
         if self.spec.function:
             self.spec.function.file = serialized_function
         if self.spec.metric:
