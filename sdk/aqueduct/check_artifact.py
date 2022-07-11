@@ -38,7 +38,7 @@ class CheckArtifact(Artifact):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
-        # This parameter indicates whether the artifact is fetched from flow-run or not
+        # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
