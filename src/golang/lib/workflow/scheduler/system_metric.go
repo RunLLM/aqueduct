@@ -3,10 +3,10 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/system_metric"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )

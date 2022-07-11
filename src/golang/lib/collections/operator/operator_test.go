@@ -2,10 +2,10 @@ package operator_test
 
 import (
 	"encoding/json"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )

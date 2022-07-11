@@ -1,7 +1,7 @@
 package check
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 )
 
 type Level string

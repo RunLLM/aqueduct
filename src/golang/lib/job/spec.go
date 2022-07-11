@@ -5,13 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
+	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -122,9 +122,9 @@ type SystemMetricSpec struct {
 
 type ExtractSpec struct {
 	basePythonSpec
-	ConnectorName   integration.Service     `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
-	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
+	ConnectorName   integration.Service      `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config              `json:"connector_config"  yaml:"connector_config"`
+	Parameters      connector2.ExtractParams `json:"parameters"  yaml:"parameters"`
 
 	// These input fields are only used to record user-defined parameters for relational queries.
 	InputParamNames    []string `json:"input_param_names" yaml:"input_param_names"`
@@ -136,11 +136,11 @@ type ExtractSpec struct {
 
 type LoadSpec struct {
 	basePythonSpec
-	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
-	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
-	InputContentPath  string               `json:"input_content_path"  yaml:"input_content_path"`
-	InputMetadataPath string               `json:"input_metadata_path"  yaml:"input_metadata_path"`
+	ConnectorName     integration.Service   `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   auth.Config           `json:"connector_config"  yaml:"connector_config"`
+	Parameters        connector2.LoadParams `json:"parameters"  yaml:"parameters"`
+	InputContentPath  string                `json:"input_content_path"  yaml:"input_content_path"`
+	InputMetadataPath string                `json:"input_metadata_path"  yaml:"input_metadata_path"`
 }
 
 type LoadTableSpec struct {
@@ -366,7 +366,7 @@ func NewExtractSpec(
 	metadataPath string,
 	connectorName integration.Service,
 	connectorConfig auth.Config,
-	parameters connector.ExtractParams,
+	parameters connector2.ExtractParams,
 	inputParamNames []string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -400,7 +400,7 @@ func NewLoadSpec(
 	metadataPath string,
 	connectorName integration.Service,
 	connectorConfig auth.Config,
-	parameters connector.LoadParams,
+	parameters connector2.LoadParams,
 	inputContentPath string,
 	inputMetadataPath string,
 ) Spec {
@@ -429,7 +429,7 @@ func NewLoadTableSpec(
 	metadataPath string,
 	connectorName integration.Service,
 	connectorConfig auth.Config,
-	parameters connector.LoadParams,
+	parameters connector2.LoadParams,
 	inputContentPath string,
 	inputMetadataPath string,
 ) Spec {

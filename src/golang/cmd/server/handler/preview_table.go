@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"net/http"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -133,10 +133,10 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
-		connector.Extract{
+		connector2.Extract{
 			Service:       integrationObject.Service,
 			IntegrationId: integrationObject.Id,
-			Parameters: &connector.RelationalDBExtractParams{
+			Parameters: &connector2.RelationalDBExtractParams{
 				Query: query,
 			},
 		},

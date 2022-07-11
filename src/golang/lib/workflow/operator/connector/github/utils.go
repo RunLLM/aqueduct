@@ -2,12 +2,12 @@ package github
 
 import (
 	"context"
+	connector2 "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/storage"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -26,8 +26,8 @@ func IsFunctionFromGithub(spec *function.Function) (bool, error) {
 	return true, nil
 }
 
-func IsExtractFromGithub(spec *connector.Extract) bool {
-	relSpec, ok := connector.CastToRelationalDBExtractParams(spec.Parameters)
+func IsExtractFromGithub(spec *connector2.Extract) bool {
+	relSpec, ok := connector2.CastToRelationalDBExtractParams(spec.Parameters)
 	if !ok {
 		return false
 	}

@@ -1,6 +1,8 @@
 package connector
 
-import gh_types "github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github/types"
+import (
+	gh_types "github.com/aqueducthq/aqueduct/lib/collections/operator/connector/github"
+)
 
 type ExtractParams interface {
 	isExtractParams()
