@@ -65,7 +65,7 @@ func initializeOperatorResultInDatabase(
 	return operatorResult.Id, nil
 }
 
-type baseOperator struct {
+type baseOperatorFields struct {
 	ctx        context.Context
 	dbOperator *operator.DBOperator
 
@@ -92,27 +92,27 @@ type baseOperator struct {
 	jobName string
 }
 
-func (bo *baseOperator) Type() operator.Type {
+func (bo *baseOperatorFields) Type() operator.Type {
 	return bo.dbOperator.Spec.Type()
 }
 
-func (bo *baseOperator) Name() string {
+func (bo *baseOperatorFields) Name() string {
 	return bo.dbOperator.Name
 }
 
-func (bo *baseOperator) ID() uuid.UUID {
+func (bo *baseOperatorFields) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
-func (bo *baseOperator) Inputs() []artifact.Artifact {
+func (bo *baseOperatorFields) Inputs() []artifact.Artifact {
 	return bo.inputs
 }
 
-func (bo *baseOperator) Outputs() []artifact.Artifact {
+func (bo *baseOperatorFields) Outputs() []artifact.Artifact {
 	return bo.outputs
 }
 
-func (bo *baseOperator) Ready() bool {
+func (bo *baseOperatorFields) Ready() bool {
 	for _, inputArtifact := range bo.inputs {
 		if !inputArtifact.Computed() {
 			return false
@@ -121,7 +121,7 @@ func (bo *baseOperator) Ready() bool {
 	return true
 }
 
-func (bo *baseOperator) Finish() error {
+func (bo *baseOperatorFields) Finish() error {
 	if bo.isPreview {
 		return errors.Newf(fmt.Sprintf("Cannot persist the results of operator %s in preview-mode.", bo.Name()))
 	}
@@ -154,14 +154,14 @@ func (bo *baseOperator) Finish() error {
 	return nil
 }
 
-func (bo *baseOperator) Status() (shared.ExecutionStatus, error) {
+func (bo *baseOperatorFields) Status() (shared.ExecutionStatus, error) {
 	// TODO(kenxu): I think the stuff in `CheckOperatorExecutionStatus()` belongs here.
 
 	return bo.jobManager.Poll(bo.ctx, bo.jobName)
 }
 
 type functionOperatorImpl struct {
-	baseOperator
+	baseOperatorFields
 }
 
 func (fo *functionOperatorImpl) Schedule() error {
@@ -227,7 +227,7 @@ func NewOperator(
 		}
 	}
 
-	base := baseOperator{
+	base := baseOperatorFields{
 		dbOperator:          &dbOperator,
 		opResultWriter:      opResultWriter,
 		opResultID:          opResultID,
