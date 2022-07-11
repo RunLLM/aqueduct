@@ -25,12 +25,14 @@ class S3Storage(Storage):
         self._key_prefix = key_prefix
 
     def put(self, key: str, value: bytes) -> None:
+        key = self._key_prefix + "/" + key
         print(f"writing to s3: {key}")
-        self._client.put_object(Bucket=self._bucket, Key="/".join(self._key_prefix, key), Body=value)
+        self._client.put_object(Bucket=self._bucket, Key=key, Body=value)
 
     def get(self, key: str) -> bytes:
+        key = self._key_prefix + "/" + key
         print(f"reading from s3: {key}")
-        return self._client.get_object(Bucket=self._bucket, Key="/".join(self._key_prefix, key))["Body"].read()
+        return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()
     
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:
     path_parts=s3_path.replace("s3://","").split("/")
