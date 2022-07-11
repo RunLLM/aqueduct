@@ -521,6 +521,10 @@ if __name__ == "__main__":
                     sys.exit(1)
             use_local_storage(args.storage_path)
         elif args.storage_use == "s3":
+            # Ensure that required S3 args are provided
+            if "--region" not in sysargs:
+                print("--region is required when using S3 storage")
+                sys.exit(1)
             use_s3_storage(
                 args.storage_s3_region, 
                 args.storage_path, 
