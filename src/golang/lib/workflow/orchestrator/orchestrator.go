@@ -510,7 +510,6 @@ func deprecatedOrchestrate(
 }
 
 func waitForInProgressOperators(
-	ctx context.Context,
 	inProgressOps map[uuid.UUID]operator2.Operator,
 	pollInterval time.Duration,
 	timeout time.Duration,
@@ -522,7 +521,7 @@ func waitForInProgressOperators(
 		}
 
 		for opID, op := range inProgressOps {
-			status, err := op.Status()
+			execState, err := op.ExecState()
 			if err != nil {
 				// TODO(kenxu): move this to inside status().
 				// The job already finished somehow and was garbage-collected.
@@ -535,9 +534,9 @@ func waitForInProgressOperators(
 				}
 			}
 
-			// Resolve any jobs that aren't actively running. We don't are if they succeeded or failed, since there already
-			// was a failing error.
-			if status != shared.RunningExecutionStatus {
+			// Resolve any jobs that aren't actively running. We don't are if they succeeded or failed,
+			// since this is called after orchestration exits.
+			if execState.Status != shared.RunningExecutionStatus {
 				delete(inProgressOps, opID)
 			}
 		}
@@ -566,7 +565,7 @@ func orchestrate(
 	}
 
 	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, pollInterval, 5*time.Minute)
+	defer waitForInProgressOperators(inProgressOps, pollInterval, 5*time.Minute)
 
 	start := time.Now()
 

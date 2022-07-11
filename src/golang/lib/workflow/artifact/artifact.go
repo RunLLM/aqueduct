@@ -15,8 +15,6 @@ import (
 // This Artifact interface allows a caller to manage and inspect the lifecycle
 // of a single artifact in a workflow run.
 type Artifact interface {
-	// This is meant to be represent a single artifact in  a single run.
-	// TODO: the purpose of the artifact is to fetch computed information.
 	ID() uuid.UUID
 	Type() artifact.Type
 	Name() string
@@ -108,7 +106,7 @@ func NewArtifact(
 	dbArtifact artifact.DBArtifact,
 	contentPath string,
 	metadataPath string,
-// A nil value here means the artifact is not persisted.
+	// A nil value here means the artifact is not persisted.
 	artifactResultWriter artifact_result.Writer,
 	workflowDagResultID uuid.UUID,
 	db database.Database,
