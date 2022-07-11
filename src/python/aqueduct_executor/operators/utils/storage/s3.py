@@ -32,7 +32,7 @@ class S3Storage(Storage):
     def get(self, key: str) -> bytes:
         key = self._key_prefix + "/" + key
         print(f"reading from s3: {key}")
-        return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()
+        return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read() # type: ignore
     
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:
     path_parts=s3_path.replace("s3://","").split("/")
