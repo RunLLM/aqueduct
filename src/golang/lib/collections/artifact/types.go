@@ -3,12 +3,12 @@ package artifact
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/boolean"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/float"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/jsonable"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/boolean"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/float"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/jsonable"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/table"
 	"github.com/dropbox/godropbox/errors"
 )
 

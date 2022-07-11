@@ -2,10 +2,10 @@ package artifact_test
 
 import (
 	"encoding/json"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/table"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
