@@ -2,10 +2,9 @@ import os
 from typing import Any, Tuple
 
 import boto3
-from botocore.config import Config as BotoConfig
-
 from aqueduct_executor.operators.utils.storage.config import S3StorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from botocore.config import Config as BotoConfig
 
 
 class S3Storage(Storage):
@@ -32,10 +31,11 @@ class S3Storage(Storage):
     def get(self, key: str) -> bytes:
         key = self._key_prefix + "/" + key
         print(f"reading from s3: {key}")
-        return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read() # type: ignore
-    
+        return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
+
+
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:
-    path_parts=s3_path.replace("s3://","").split("/")
-    bucket=path_parts.pop(0)
-    key="/".join(path_parts)
+    path_parts = s3_path.replace("s3://", "").split("/")
+    bucket = path_parts.pop(0)
+    key = "/".join(path_parts)
     return bucket, key
