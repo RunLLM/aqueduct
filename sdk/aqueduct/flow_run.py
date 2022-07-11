@@ -1,11 +1,11 @@
 import textwrap
 import uuid
 from textwrap import wrap
-from typing import Dict, Any, Mapping, Union, List
+from typing import Dict, Any, Mapping, Optional, Union, List
 
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
-from aqueduct.artifact import Artifact
+from aqueduct.artifact import Artifact,get_artifact_type
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
@@ -69,26 +69,22 @@ class FlowRun:
             print("* " + param_op.name + ": " + param_op.spec.param.val)
 
     def artifact(
-        self, artifact_name: str
-    ) -> Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact, None]:
+        self, name: str
+    ) -> Optional[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
         """Gets the Artifact from the flow based on artifact_name"""
         flow_run_dag = self._dag
+        artifact_from_dag = flow_run_dag.get_artifacts_by_name(name)
 
-        for artifact_from_workflow in list(flow_run_dag.artifacts.values()):
-            if artifact_from_workflow.name == artifact_name:
-                assert isinstance(artifact_from_workflow, Artifact)
-                artifact_DAG = artifact_from_workflow
-
-        if artifact_DAG is None:
+        if artifact_from_dag is None:
             raise ArtifactNotFoundException("The artifact name provided does not exist.")
-        elif artifact_DAG.spec.table is not None:
-            return TableArtifact(self._api_client, self._dag, artifact_DAG.id, True)
-        elif artifact_DAG.spec.float is not None:
-            return MetricArtifact(self._api_client, self._dag, artifact_DAG.id, True)
-        elif artifact_DAG.spec.bool is not None:
-            return CheckArtifact(self._api_client, self._dag, artifact_DAG.id, True)
-        elif artifact_DAG.spec.jsonable is not None:
-            return ParamArtifact(self._api_client, self._dag, artifact_DAG.id, True)
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
+            return TableArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:
+            return MetricArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.BOOL:
+            return CheckArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.PARAM:
+            return ParamArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
 
         return None
 

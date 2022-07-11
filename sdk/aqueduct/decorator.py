@@ -23,7 +23,7 @@ from aqueduct.utils import (
     generate_uuid,
     artifact_name_from_op_name,
 )
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserActionException
 from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.
@@ -82,7 +82,7 @@ def wrap_spec(
 
     for artifact in input_artifacts:
         if artifact._from_flow_run:
-            raise Exception("Artifact fetched from flow run can not be reused for computation")
+            raise InvalidUserActionException("Artifact fetched from flow run can not be reused for computation")
 
     dag = input_artifacts[0]._dag
     api_client = input_artifacts[0]._api_client

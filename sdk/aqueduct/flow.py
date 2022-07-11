@@ -89,6 +89,12 @@ class Flow:
             param_op.spec.param.val = param_val
             dag.update_operator(param_op)
 
+        #Because the serialized functions are stored seperately from the dag, we need to fetch them
+        #to complete the construction of the dag.
+        for operator in dag.list_operators():
+            serialized_function = self._api_client.export_serialized_function(operator)
+            dag.update_operator_spec(operator,serialized_function)
+
         return FlowRun(
             api_client=self._api_client,
             run_id=str(dag_result.id),
