@@ -170,10 +170,11 @@ class DAG(BaseModel):
     def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[Artifact]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
 
-    def get_artifacts_by_name(self,name: str) -> Artifact:
+    def get_artifacts_by_name(self, name: str) -> Artifact:
         for artifact in self.list_artifacts():
-            if(artifact.name == name):
+            if artifact.name == name:
                 return artifact
+        raise ArtifactNotFoundException("Can't find artifact with provided name")
 
     def list_artifacts(
         self,
@@ -219,8 +220,8 @@ class DAG(BaseModel):
         """Blind replace of an operator in the dag."""
         self.operators[str(op.id)] = op
         self.operator_by_name[op.name] = op
-    
-    def update_operator_spec(self, operator:Operator, serialized_function:bytes) -> None:
+
+    def update_operator_spec(self, operator: Operator, serialized_function: bytes) -> None:
         if operator in self.operators.values():
             operator.change_file(serialized_function)
 

@@ -5,7 +5,7 @@ from typing import Dict, Any, Mapping, Optional, Union, List
 
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
-from aqueduct.artifact import Artifact,get_artifact_type
+from aqueduct.artifact import Artifact, get_artifact_type
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType

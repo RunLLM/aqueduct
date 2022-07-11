@@ -1,7 +1,6 @@
 from typing import Optional, Dict, List
 import uuid
 from pydantic import BaseModel
-from requests import Response
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
