@@ -81,7 +81,7 @@ func ParseDagSummaryFromRequest(
 // For github contents, retrieve zipball for files and update string contents like sql queries.
 func extractOperatorContentsFromRequest(
 	r *http.Request,
-	op *operator.Operator,
+	op *operator.DBOperator,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {

@@ -254,7 +254,7 @@ func ReadWorkflowDagFromDatabase(
 
 	workflowDag.Metadata = dbWorkflow
 
-	workflowDag.Operators = make(map[uuid.UUID]operator.Operator)
+	workflowDag.Operators = make(map[uuid.UUID]operator.DBOperator)
 	workflowDag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
 
 	// Populate nodes for operators and artifacts.
@@ -364,7 +364,7 @@ func UpdateWorkflowDagToLatest(
 	artifactWriter artifact.Writer,
 	db database.Database,
 ) (*workflow_dag.WorkflowDag, error) {
-	operatorsToReplace := make([]operator.Operator, 0, len(workflowDag.Operators))
+	operatorsToReplace := make([]operator.DBOperator, 0, len(workflowDag.Operators))
 	for _, op := range workflowDag.Operators {
 		opUpdated, err := github.PullOperator(
 			ctx,
@@ -459,7 +459,7 @@ func UpdateWorkflowDagResultMetadata(
 // It logs any error that occurs during these steps.
 func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
-	operator *operator.Operator,
+	operator *operator.DBOperator,
 	storageConfig *shared.StorageConfig,
 	operatorState *shared.ExecutionState,
 	artifactMetadataPaths map[uuid.UUID]string,
@@ -512,7 +512,7 @@ func UpdateOperatorAndArtifactResults(
 
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
-	operator *operator.Operator,
+	operator *operator.DBOperator,
 	operatorState *shared.ExecutionState,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,

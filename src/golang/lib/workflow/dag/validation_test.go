@@ -31,29 +31,29 @@ func generateBasicDag(t *testing.T) *workflow_dag.WorkflowDag {
 		Id: uuid.New(),
 	}
 
-	extractZero := operator.Operator{
+	extractZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Outputs: []uuid.UUID{artifactZero.Id},
 	}
 
-	extractOne := operator.Operator{
+	extractOne := operator.DBOperator{
 		Id:      uuid.New(),
 		Outputs: []uuid.UUID{artifactOne.Id},
 	}
 
-	functionZero := operator.Operator{
+	functionZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
 		Outputs: []uuid.UUID{artifactTwo.Id},
 	}
 
-	loadZero := operator.Operator{
+	loadZero := operator.DBOperator{
 		Id:     uuid.New(),
 		Inputs: []uuid.UUID{artifactTwo.Id},
 	}
 
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{
+		Operators: map[uuid.UUID]operator.DBOperator{
 			extractZero.Id:  extractZero,
 			extractOne.Id:   extractOne,
 			functionZero.Id: functionZero,
@@ -89,30 +89,30 @@ func generateCyclicDag(t *testing.T) *workflow_dag.WorkflowDag {
 		Id: uuid.New(),
 	}
 
-	extractZero := operator.Operator{
+	extractZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Inputs:  []uuid.UUID{artifactTwo.Id},
 		Outputs: []uuid.UUID{artifactZero.Id},
 	}
 
-	extractOne := operator.Operator{
+	extractOne := operator.DBOperator{
 		Id:      uuid.New(),
 		Outputs: []uuid.UUID{artifactOne.Id},
 	}
 
-	functionZero := operator.Operator{
+	functionZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
 		Outputs: []uuid.UUID{artifactTwo.Id},
 	}
 
-	loadZero := operator.Operator{
+	loadZero := operator.DBOperator{
 		Id:     uuid.New(),
 		Inputs: []uuid.UUID{artifactTwo.Id},
 	}
 
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{
+		Operators: map[uuid.UUID]operator.DBOperator{
 			extractZero.Id:  extractZero,
 			extractOne.Id:   extractOne,
 			functionZero.Id: functionZero,
@@ -136,13 +136,13 @@ func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.WorkflowDag {
 		Id: artifactId,
 	}
 
-	validationOperator := operator.Operator{
+	validationOperator := operator.DBOperator{
 		Id:     validationOpId,
 		Inputs: []uuid.UUID{artifactObject.Id},
 	}
 
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{validationOpId: validationOperator},
+		Operators: map[uuid.UUID]operator.DBOperator{validationOpId: validationOperator},
 		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactId: artifactObject},
 	}
 }
@@ -150,7 +150,7 @@ func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.WorkflowDag {
 // This manually creates a DAG with no operator.
 func generateEmptyDag(t *testing.T) *workflow_dag.WorkflowDag {
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{},
+		Operators: map[uuid.UUID]operator.DBOperator{},
 		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
 	}
 }
@@ -166,13 +166,13 @@ func generateUnreachableArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 		Id: uuid.New(),
 	}
 
-	operatorZero := operator.Operator{
+	operatorZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Outputs: []uuid.UUID{artifactZero.Id},
 	}
 
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{operatorZero.Id: operatorZero},
+		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
 		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactZero.Id: artifactZero, artifactOne.Id: artifactOne},
 	}
 }
@@ -182,13 +182,13 @@ func generateUnreachableArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 func generateUndefinedArtifactDag(t *testing.T) *workflow_dag.WorkflowDag {
 	artifactId := uuid.New()
 
-	operatorZero := operator.Operator{
+	operatorZero := operator.DBOperator{
 		Id:      uuid.New(),
 		Outputs: []uuid.UUID{artifactId},
 	}
 
 	return &workflow_dag.WorkflowDag{
-		Operators: map[uuid.UUID]operator.Operator{operatorZero.Id: operatorZero},
+		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
 		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
 	}
 }

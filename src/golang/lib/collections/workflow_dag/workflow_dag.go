@@ -20,11 +20,11 @@ type WorkflowDag struct {
 
 	/* Field not stored in DB */
 	Metadata  *workflow.Workflow                `json:"metadata"`
-	Operators map[uuid.UUID]operator.Operator   `json:"operators,omitempty"`
+	Operators map[uuid.UUID]operator.DBOperator `json:"operators,omitempty"`
 	Artifacts map[uuid.UUID]artifact.DBArtifact `json:"artifacts,omitempty"`
 }
 
-func (dag *WorkflowDag) GetOperatorByName(name string) *operator.Operator {
+func (dag *WorkflowDag) GetOperatorByName(name string) *operator.DBOperator {
 	for _, op := range dag.Operators {
 		if op.Name == name {
 			return &op

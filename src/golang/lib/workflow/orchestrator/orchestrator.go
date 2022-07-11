@@ -37,7 +37,7 @@ var (
 )
 
 func initializeOrchestration(
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	ready map[uuid.UUID]bool,
 	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
 	artifactToDownstreamOperatorIds map[uuid.UUID][]uuid.UUID,
@@ -75,7 +75,7 @@ func initializeOrchestration(
 // any internal system error occurred during the execution.
 func updateCompletedOp(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	ready map[uuid.UUID]bool,
 	active map[uuid.UUID]bool,
 	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
@@ -165,7 +165,7 @@ func updateCompletedOp(
 
 func scheduleOperators(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	artifacts map[uuid.UUID]artifact.DBArtifact,
 	ready map[uuid.UUID]bool,
 	active map[uuid.UUID]bool,

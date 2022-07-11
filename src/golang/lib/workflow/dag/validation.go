@@ -84,7 +84,7 @@ func Validate(
 
 func ValidateDagOperatorIntegrationOwnership(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	organizationId string,
 	integrationReader integration.Reader,
 	db database.Database,

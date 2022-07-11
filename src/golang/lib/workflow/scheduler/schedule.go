@@ -47,7 +47,7 @@ var (
 //
 func ScheduleOperator(
 	ctx context.Context,
-	op operator.Operator,
+	op operator.DBOperator,
 	inputArtifacts []artifact.DBArtifact,
 	outputArtifacts []artifact.DBArtifact,
 	metadataPath string,
