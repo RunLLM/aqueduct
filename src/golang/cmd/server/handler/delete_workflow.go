@@ -30,11 +30,11 @@ import (
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
-	tables []string
+	loadSpec []connector.Load `json:"table_specs"`
 }
 
 type deleteWorkflowInput struct {
-	tables        []string             `json:"tables"`
+	LoadSpec []connector.Load `json:"table_specs"`
 }
 
 
@@ -102,19 +102,23 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
-		tables:		input.tables,
+		loadSpec:		input.tables,
 	}, http.StatusOK, nil
 }
 
 func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 
-	// TODO: Check each table is associated with the workflow. Else, return early.
-
-	// TODO: Delete associated tables.
-
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	emptyResp := deleteWorkflowResponse{}
+
+	// TODO: Check each table is associated with the workflow. Else, return early with error.
+
+	// TODO: Delete associated tables.
+
+	// TODO: Give user an indication when a workflow fails to completely delete from the SDK -- this is already done?
+
+
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
