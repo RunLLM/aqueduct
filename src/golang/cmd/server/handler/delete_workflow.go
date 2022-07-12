@@ -118,7 +118,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	for _, spec := range args.loadSpec {
 		relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
 		
-		integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndOrganization(ctx, spec.ConnectorName, args.AqContext.OrganizationId, h.Database)
+		integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndUser(ctx, spec.ConnectorName, args.AqContext.UserId, h.Database)
 		if err {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")	
 		}

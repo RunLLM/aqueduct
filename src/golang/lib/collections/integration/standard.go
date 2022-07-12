@@ -132,22 +132,6 @@ func (r *standardReaderImpl) GetIntegrationsByUser(
 	return integrations, err
 }
 
-func (r *standardReaderImpl) GetIntegrationsByServiceAndOrganization(
-	ctx context.Context,
-	service string,
-	organizationId string,
-	db database.Database,
-) ([]Integration, error) {
-	getIntegrationsQuery := fmt.Sprintf(
-		"SELECT %s FROM integration WHERE name = $1 AND service = $2 AND organization_id = $3;",
-		allColumns(),
-	)
-	var integrations []Integration
-
-	err := db.Query(ctx, &integrations, getIntegrationsQuery, organizationId, userId)
-	return integrations, err
-}
-
 func (r *standardReaderImpl) GetIntegrationsByServiceAndUser(
 	ctx context.Context,
 	service Service,
