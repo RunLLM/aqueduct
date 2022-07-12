@@ -54,7 +54,7 @@ jobs:
 
       # install_local.py requires ~/.aqueduct/server scaffolding to exist.
       - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py
+        run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
@@ -75,7 +75,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish --complex-models -n ${{ matrix.concurrency }}
+        run: pytest . -rP --publish --complex_models -n ${{ matrix.concurrency }}
 
       - uses: actions/upload-artifact@v3
         if: always()

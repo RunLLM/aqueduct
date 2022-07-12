@@ -1,7 +1,7 @@
-from pandas import DataFrame
-from test_metrics.constant.model import constant_metric
 from checks_test import success_on_single_table_input
 from constants import SENTIMENT_SQL_QUERY
+from pandas import DataFrame
+from test_metrics.constant.model import constant_metric
 from utils import (
     get_integration_name,
     run_sentiment_model,

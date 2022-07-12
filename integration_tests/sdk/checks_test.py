@@ -1,15 +1,11 @@
 import pandas as pd
 import pytest
-
-from constants import SENTIMENT_SQL_QUERY, CHURN_SQL_QUERY
-from aqueduct import CheckSeverity, check
-from aqueduct.error import (
-    ArtifactNotFoundException,
-    InvalidUserActionException,
-    AqueductError,
-)
+from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUserActionException
+from constants import CHURN_SQL_QUERY, SENTIMENT_SQL_QUERY
 from test_metrics.constant.model import constant_metric
 from utils import get_integration_name, run_flow_test, run_sentiment_model
+
+from aqueduct import CheckSeverity, check
 
 
 @check()

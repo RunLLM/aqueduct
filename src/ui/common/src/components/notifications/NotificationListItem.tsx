@@ -9,6 +9,7 @@ import { handleArchiveNotification } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import { dateString } from '../../utils/metadata';
 import {
   NotificationAssociation,
@@ -138,7 +139,7 @@ export const NotificationListItem: React.FC<Props> = ({
     <Link
       underline="none"
       color="inherit"
-      href={`/workflow/${
+      href={`${getPathPrefix()}/workflow/${
         notification.workflowMetadata.id
       }?workflowDagResultId=${encodeURI(
         notification.workflowMetadata.dag_result_id

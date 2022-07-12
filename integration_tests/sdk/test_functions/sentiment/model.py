@@ -1,7 +1,7 @@
-from aqueduct import op
-
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+from aqueduct import op
 
 
 @op

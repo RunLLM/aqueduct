@@ -3,7 +3,7 @@ Lints the code for various components. Run with `python3 scripts/run_linters.py`
 
 Requirements:
 - For the Python code linting, please install the following:
-`pip3 install --upgrade black mypy pydantic types-croniter types-requests types-PyYAML`
+`pip3 install --upgrade black mypy pydantic types-croniter types-requests types-PyYAML isort`
 - For the Golang linter, please install `golangci-lint` following the instruction here: https://golangci-lint.run/usage/install/
 - For the UI linter, please install node with the version suggested by running `nvm use` from `src/ui`.
 
@@ -15,7 +15,6 @@ import argparse
 import os
 import subprocess
 import sys
-
 from os.path import join
 
 
@@ -30,10 +29,11 @@ def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
+    execute_command(["isort", ".", "-l", "100", "--profile", "black"])
     execute_command(
         [
             "mypy",
-            ".",
+            "aqueduct",
             "--ignore-missing-imports",
             "--strict",
             "--exclude",
@@ -45,14 +45,14 @@ def lint_python(cwd):
     execute_command(
         [
             "mypy",
-            ".",
+            "aqueduct_executor",
             "--ignore-missing-imports",
             "--strict",
             "--exclude",
             "tests",
             "--implicit-reexport",
         ],
-        join(cwd, "src/python"),
+        join(cwd, "src", "python"),
     )
 
 

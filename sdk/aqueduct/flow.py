@@ -5,14 +5,14 @@ from typing import Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
-from aqueduct.error import InvalidUserArgumentException, InvalidUserActionException
-from .enums import ArtifactType
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 
+from .enums import ArtifactType
 from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import parse_user_supplied_id, format_header_for_print
+from .utils import format_header_for_print, parse_user_supplied_id
 
 
 class Flow:
@@ -41,7 +41,7 @@ class Flow:
 
         Args:
             limit:
-                If set, we return only a limit number of historical runs. Defaults to 10.
+                If set, we return only a limit number of the latest runs. Defaults to 10.
 
         Returns:
             A list of dictionaries, each of which corresponds to a single flow run.
@@ -53,7 +53,7 @@ class Flow:
         resp = self._api_client.get_workflow(self._id)
         return [
             dag_result.to_readable_dict()
-            for dag_result in reversed(resp.workflow_dag_results[:limit])
+            for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
         ]
 
     def _construct_flow_run(

@@ -1,26 +1,25 @@
 import copy
 import uuid
-from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
-
-from pydantic import BaseModel
-from aqueduct.error import (
-    InternalAqueductError,
-    InvalidUserActionException,
-    ArtifactNotFoundException,
-    InvalidUserArgumentException,
-)
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import OperatorType, TriggerType, ArtifactType
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.error import (
+    ArtifactNotFoundException,
+    InternalAqueductError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.operators import (
     Operator,
-    get_operator_type,
-    serialize_parameter_value,
     OperatorSpec,
-    get_operator_type_from_spec,
     ParamSpec,
+    get_operator_type,
+    get_operator_type_from_spec,
+    serialize_parameter_value,
 )
+from pydantic import BaseModel
 
 
 class Schedule(BaseModel):

@@ -7,11 +7,15 @@ import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { theme } from '@aqueducthq/common/src/styles/theme/theme';
+import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
 
 function RequireAuth({ children, user }): { children: JSX.Element, user: UserProfile | undefined } {
+  const pathPrefix = getPathPrefix();
+  let routesContent: React.ReactElement;
+
   if (!user || !user.apiKey) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={`${pathPrefix}/login`} replace />;
   }
 
   return children;
@@ -23,17 +27,18 @@ const App = () => {
     return null;
   }
 
+  const pathPrefix = getPathPrefix();
   let routesContent: React.ReactElement;
   routesContent = (
     <Routes>
-      <Route path="/" element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
-      <Route path="/data" element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
-      <Route path="/integrations" element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
-      <Route path="/integration/:id" element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
-      <Route path="/workflows" element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
-      <Route path="/login" element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/account" element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
-      <Route path="/workflow/:id" element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
+      <Route path={`${ pathPrefix ?? "/" }`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflows`} element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/login`} element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
     </Routes>
   );
 

@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   NotificationLogLevel,
   NotificationStatus,
@@ -172,7 +173,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const sidebarContent = (
     <>
       <Box className={styles['menu-sidebar-popover-container']}>
-        <Link href={'/'} underline="none">
+        <Link href={`${getPathPrefix() ?? '/'}`} underline="none">
           <Typography variant="h3" sx={{ color: 'white' }}>
             Aqueduct
           </Typography>
@@ -219,7 +220,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           onClose={handleCloseUserPopover}
           open={userPopoverOpen}
         >
-          <Link href="/account" underline="none" sx={{ color: 'blue.800' }}>
+          <Link
+            href={`${getPathPrefix()}/account`}
+            underline="none"
+            sx={{ color: 'blue.800' }}
+          >
             <MenuItem sx={{ width: '190px' }} disableRipple>
               <Box sx={{ fontSize: '20px', mr: 1 }}>
                 <FontAwesomeIcon icon={faCircleUser} />
@@ -254,7 +259,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           />
 
           <Link
-            href="/workflows"
+            href={`${getPathPrefix()}/workflows`}
             className={styles['menu-sidebar-link']}
             underline="none"
           >
@@ -271,7 +276,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           </Link>
 
           <Link
-            href="/integrations"
+            href={`${getPathPrefix()}/integrations`}
             className={styles['menu-sidebar-link']}
             underline="none"
           >
@@ -288,7 +293,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           </Link>
 
           <Link
-            href="/data"
+            href={`${getPathPrefix()}/data`}
             className={styles['menu-sidebar-link']}
             underline="none"
           >

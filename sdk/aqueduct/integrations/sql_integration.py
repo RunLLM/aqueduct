@@ -1,28 +1,24 @@
 import json
-
-import pandas as pd
 import re
 from typing import Optional, Union
 
+import pandas as pd
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
-from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
-from aqueduct.enums import (
-    ServiceType,
-    LoadUpdateMode,
-)
+from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.enums import LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.integrations.integration import IntegrationInfo, Integration
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
+    ExtractSpec,
     Operator,
     OperatorSpec,
-    ExtractSpec,
     RelationalDBExtractParams,
     RelationalDBLoadParams,
     SaveConfig,
 )
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import generate_uuid, artifact_name_from_op_name
+from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -107,7 +103,7 @@ class RelationalDBIntegration(Integration):
         description: str = "",
     ) -> TableArtifact:
         """
-        Runs a SQL query against the RealtionalDB integration.
+        Runs a SQL query against the RelationalDB integration.
 
         Args:
             query:
@@ -233,4 +229,8 @@ class RelationalDBIntegration(Integration):
         Prints out a human-readable description of the SQL integration.
         """
         print("==================== SQL Integration =============================")
+        print("Integration Information:")
         self._metadata.describe()
+        print("Integration Table List Preview:")
+        print(self.list_tables()["name"].head().to_string())
+        print("(only first 5 tables are shown)")

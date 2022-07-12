@@ -6,7 +6,6 @@ pandas
 IPython
 croniter
 pydantic
-ipynbname
 plotly
 pyyaml
 great_expectations
