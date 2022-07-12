@@ -435,11 +435,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
         <DialogContent sx={{ width: '600px' }}>
           <Box sx={{ mb: 2 }}>
-            <Typography>
-              {' '}
-              <span style={{ fontWeight: 'bold' }}>ID:</span>{' '}
-              {workflowDag.workflow_id}{' '}
-            </Typography>
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontWeight: 'bold' }} component="span">
+                ID:
+              </Typography>
+              <Typography> {workflowDag.workflow_id}</Typography>
+            </Box>
           </Box>
 
           <Box sx={{ my: 2 }}>
