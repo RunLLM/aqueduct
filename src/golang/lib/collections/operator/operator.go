@@ -33,6 +33,11 @@ type Reader interface {
 		operatorId uuid.UUID,
 		db database.Database,
 	) (bool, error)
+	GetOperatorsByIntegrationId(
+		ctx context.Context,
+		integrationId uuid.UUID,
+		db database.Database,
+	) ([]Operator, error)
 }
 
 type Writer interface {

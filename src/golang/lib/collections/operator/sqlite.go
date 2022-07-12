@@ -2,9 +2,11 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/google/uuid"
 )
 
 type sqliteReaderImpl struct {
@@ -21,6 +23,30 @@ func newSqliteReader() Reader {
 
 func newSqliteWriter() Writer {
 	return &sqliteWriterImpl{standardWriterImpl{}}
+}
+
+func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
+	ctx context.Context,
+	integrationId uuid.UUID,
+	db database.Database,
+) ([]Operator, error) {
+	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
+		`SELET %s FROM %s
+		WHERE json(spec)->>'$.load.integration_id' = $1
+		AND json(spec)->>'$.extract.integration_id' = $2`,
+		allColumns(),
+		tableName,
+	)
+
+	var operators []Operator
+	err := db.Query(
+		ctx,
+		&operators,
+		getOperatorsByIntegrationIdQuery,
+		integrationId,
+		integrationId,
+	)
+	return operators, err
 }
 
 func (w *sqliteWriterImpl) CreateOperator(
