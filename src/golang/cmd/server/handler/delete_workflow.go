@@ -114,7 +114,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	emptyResp := deleteWorkflowResponse{}
 
-	// Check tables are valid
+	// Check tables in list are valid
 	for _, spec := range args.loadSpec {
 		relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
 		
@@ -122,7 +122,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		if err {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")	
 		}
-		
+
 		integrationId := nil
 		for _, integration := range integrations {
 			eq := reflect.DeepEqual(integration.Config, spec.ConnectorConfig)
