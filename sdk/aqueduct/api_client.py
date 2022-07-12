@@ -79,7 +79,6 @@ class APIClient:
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
         self.aqueduct_address = aqueduct_address
-        self.url_prefix = ""
 
         # If a dummy client is initialized, don't perform validation.
         if self.api_key == "" and self.aqueduct_address == "":
@@ -90,11 +89,9 @@ class APIClient:
 
         # Check that the connection with the backend is working.
         if self.aqueduct_address.startswith(self.HTTP_PREFIX):
-            self.url_prefix = self.HTTP_PREFIX
             self.aqueduct_address = self.aqueduct_address[len(self.HTTP_PREFIX) :]
             self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
         elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
-            self.url_prefix = self.HTTPS_PREFIX
             self.aqueduct_address = self.aqueduct_address[len(self.HTTPS_PREFIX) :]
             self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
         else:
@@ -115,7 +112,6 @@ class APIClient:
             try:
                 url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=True)
                 self._test_url(url)
-                self.url_prefix = self.HTTPS_PREFIX
                 return True
             except Exception as e:
                 Logger.logger.info(
@@ -126,7 +122,6 @@ class APIClient:
             try:
                 url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=False)
                 self._test_url(url)
-                self.url_prefix = self.HTTP_PREFIX
                 return False
             except Exception as e:
                 Logger.logger.info(
@@ -146,6 +141,9 @@ class APIClient:
         headers = utils.generate_auth_headers(self.api_key)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
+
+    def _url_prefix(self) -> str:
+        return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)

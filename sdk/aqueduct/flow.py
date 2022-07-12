@@ -12,7 +12,7 @@ from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import generate_url, parse_user_supplied_id, format_header_for_print
+from .utils import generate_ui_url, parse_user_supplied_id, format_header_for_print
 
 
 class Flow:
@@ -145,7 +145,9 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
-        url = generate_url(self._api_client.url_prefix, self._api_client.aqueduct_address, self._id)
+        url = generate_ui_url(
+            self._api_client._url_prefix(), self._api_client.aqueduct_address, self._id
+        )
 
         print(
             textwrap.dedent(

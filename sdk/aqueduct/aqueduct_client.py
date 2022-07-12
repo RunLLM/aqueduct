@@ -36,7 +36,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
-    generate_url,
+    generate_ui_url,
     generate_uuid,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
@@ -336,8 +336,8 @@ class Client:
 
         flow_id = self._api_client.register_workflow(dag).id
 
-        url = generate_url(
-            self._api_client.url_prefix,
+        url = generate_ui_url(
+            self._api_client._url_prefix(),
             self._api_client.aqueduct_address,
             str(flow_id),
         )

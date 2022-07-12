@@ -9,7 +9,7 @@ from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.operators import Operator
-from aqueduct.utils import generate_url, human_readable_timestamp, format_header_for_print
+from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
 
 
 class FlowRun:
@@ -45,8 +45,11 @@ class FlowRun:
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
 
-        url = generate_url(
-            self._api_client.url_prefix, self._api_client.aqueduct_address, self._flow_id, self._id
+        url = generate_ui_url(
+            self._api_client._url_prefix(),
+            self._api_client.aqueduct_address,
+            self._flow_id,
+            self._id,
         )
 
         print(
