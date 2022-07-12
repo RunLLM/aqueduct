@@ -28,16 +28,13 @@ const (
 	defaultTimeout = 15 * time.Minute
 )
 
-var ErrIncorrectOperatorsScheduled = errors.New("Incorrect number of operators scheduled.")
-
-func operatorExecutionError(operators map[uuid.UUID]operator.Operator, operatorId uuid.UUID) error {
-	op, ok := operators[operatorId]
-	if !ok {
-		return errors.Newf("Error during exeuction, invalid operator ID %s", operatorId)
-	}
-
-	return errors.Newf("Error during execution, operator ID %s, name %s", operatorId, op.Name)
-}
+var (
+	ErrIncorrectOperatorsScheduled = errors.New("Incorrect number of operators scheduled.")
+	ErrOpExecSystemFailure         = errors.New("Operator execution failed due to system error.")
+	ErrOpExecBlockingUserFailure   = errors.New("Operator execution failed due to user error.")
+	ErrInvalidOpId                 = errors.New("Invalid operator ID.")
+	ErrInvalidArtifactId           = errors.New("Invalid artifact ID.")
+)
 
 func initializeOrchestration(
 	operators map[uuid.UUID]operator.Operator,
@@ -94,21 +91,21 @@ func updateCompletedOp(
 	db database.Database,
 	jobManager job.JobManager,
 	isPreview bool,
-) (bool, error) {
+) error {
 	completedIds := make([]uuid.UUID, 0, len(active))
 	for id := range active {
 		jobStatus, err := jobManager.Poll(ctx, operatorIdToJobId[id])
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		if jobStatus != shared.PendingExecutionStatus {
 			op, ok := operators[id]
 			if !ok {
-				return false, operatorExecutionError(operators, id)
+				return errors.Newf("Error during exeuction, invalid operator ID %s", id)
 			}
 
-			operatorResultMetadata, operatorStatus, failureType := scheduler.CheckOperatorExecutionStatus(
+			execStatus := scheduler.CheckOperatorExecutionStatus(
 				ctx,
 				jobStatus,
 				storageConfig,
@@ -120,8 +117,7 @@ func updateCompletedOp(
 					ctx,
 					&op,
 					storageConfig,
-					operatorStatus,
-					operatorResultMetadata,
+					execStatus,
 					artifactMetadataPaths,
 					operatorToOperatorResult,
 					artifactToArtifactResult,
@@ -131,13 +127,14 @@ func updateCompletedOp(
 				)
 			}
 
-			if operatorStatus == shared.FailedExecutionStatus && failureType == scheduler.SystemFailure {
-				return false, operatorExecutionError(operators, id)
+			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.SystemFailure {
+				return ErrOpExecSystemFailure
 			}
 
-			if operatorStatus == shared.FailedExecutionStatus && failureType == scheduler.UserFailure {
+			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.UserFailure {
 				// There is an user error when executing the operator.
-				return true, nil
+				log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name, op.Id)
+				return ErrOpExecBlockingUserFailure
 			}
 
 			completedIds = append(completedIds, id)
@@ -146,7 +143,7 @@ func updateCompletedOp(
 				if downstreampOps, ok := artifactToDownstreamOperatorIds[artifactId]; ok {
 					for _, downstreamOpId := range downstreampOps {
 						if _, ok := operatorDependencies[downstreamOpId][artifactId]; !ok {
-							return false, operatorExecutionError(operators, downstreamOpId)
+							return ErrInvalidArtifactId
 						}
 
 						delete(operatorDependencies[downstreamOpId], artifactId)
@@ -163,7 +160,7 @@ func updateCompletedOp(
 		delete(active, id)
 	}
 
-	return false, nil
+	return nil
 }
 
 func scheduleOperators(
@@ -183,12 +180,12 @@ func scheduleOperators(
 	for id := range ready {
 		op, ok := operators[id]
 		if !ok {
-			return operatorExecutionError(operators, id)
+			return ErrInvalidOpId
 		}
 
 		operatorMetadataPath, ok := operatorMetadataPaths[id]
 		if !ok {
-			return operatorExecutionError(operators, id)
+			return ErrInvalidOpId
 		}
 
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
@@ -457,7 +454,7 @@ func orchestrate(
 			return shared.FailedExecutionStatus, errors.New("Reached timeout waiting for workflow to complete.")
 		}
 
-		stopWorkflowExecution, err := updateCompletedOp(
+		err := updateCompletedOp(
 			ctx,
 			dag.Operators,
 			ready,
@@ -477,13 +474,7 @@ func orchestrate(
 			isPreview,
 		)
 		if err != nil {
-			// There is an internal error in our system.
 			return shared.FailedExecutionStatus, err
-		}
-
-		if stopWorkflowExecution {
-			// There is an error in the user code.
-			return shared.FailedExecutionStatus, nil
 		}
 
 		// Schedule all operators in ready state.

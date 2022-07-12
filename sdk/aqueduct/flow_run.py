@@ -1,13 +1,13 @@
 import textwrap
 import uuid
 from textwrap import wrap
-from typing import Dict, Any, Mapping, Union, List
+from typing import Any, Dict, List, Mapping, Union
 
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
-from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
+from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.operators import Operator
 from aqueduct.utils import generate_url, human_readable_timestamp, format_header_for_print
 

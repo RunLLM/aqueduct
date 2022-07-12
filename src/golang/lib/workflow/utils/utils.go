@@ -461,8 +461,7 @@ func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
 	storageConfig *shared.StorageConfig,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
+	operatorState *shared.ExecutionState,
 	artifactMetadataPaths map[uuid.UUID]string,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
 	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
@@ -478,7 +477,7 @@ func UpdateOperatorAndArtifactResults(
 		artifactIdToArtifactMetadata[artifactId] = nil
 	}
 
-	if operatorStatus == shared.SucceededExecutionStatus {
+	if operatorState.Status == shared.SucceededExecutionStatus {
 		for _, artifactId := range operator.Outputs {
 			var artifactResultMetadata artifact_result.Metadata
 			err := ReadFromStorage(
@@ -500,8 +499,7 @@ func UpdateOperatorAndArtifactResults(
 	updateOperatorAndArtifactResults(
 		ctx,
 		operator,
-		operatorStatus,
-		operatorResultMetadata,
+		operatorState,
 		artifactStatuses,
 		artifactIdToArtifactMetadata,
 		operatorToOperatorResult,
@@ -515,8 +513,7 @@ func UpdateOperatorAndArtifactResults(
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
 	operator *operator.Operator,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
+	operatorState *shared.ExecutionState,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
 	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
@@ -526,11 +523,10 @@ func updateOperatorAndArtifactResults(
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		operator_result.StatusColumn: operatorStatus,
+		operator_result.StatusColumn: operatorState.Status,
 	}
-	if operatorResultMetadata != nil {
-		changes[operator_result.MetadataColumn] = operatorResultMetadata
-	}
+
+	changes[operator_result.ExecStateColumn] = operatorState
 
 	_, err := operatorResultWriter.UpdateOperatorResult(
 		ctx,
@@ -543,7 +539,7 @@ func updateOperatorAndArtifactResults(
 			log.Fields{
 				"changes": changes,
 			},
-		).Errorf("Unable to update operator result metadata: %v", err)
+		).Errorf("Unable to update operator exec state: %v", err)
 	}
 
 	// Write the artifact results.

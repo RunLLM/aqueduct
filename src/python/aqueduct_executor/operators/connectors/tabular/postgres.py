@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, engine
-
 from aqueduct_executor.operators.connectors.tabular import config, relational
+from sqlalchemy import create_engine, engine
 
 
 class PostgresConnector(relational.RelationalConnector):
@@ -12,11 +11,19 @@ class PostgresConnector(relational.RelationalConnector):
 def _create_engine(config: config.PostgresConfig) -> engine.Engine:
     # Postgres Dialect:
     # https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg2
-    url = "postgresql://{username}:{password}@{host}:{port}/{database}".format(
-        username=config.username,
-        password=config.password,
-        host=config.host,
-        port=config.port,
-        database=config.database,
-    )
+    if config.password:
+        url = "postgresql://{username}:{password}@{host}:{port}/{database}".format(
+            username=config.username,
+            password=config.password,
+            host=config.host,
+            port=config.port,
+            database=config.database,
+        )
+    else:
+        url = "postgresql://{username}@{host}:{port}/{database}".format(
+            username=config.username,
+            host=config.host,
+            port=config.port,
+            database=config.database,
+        )
     return create_engine(url)

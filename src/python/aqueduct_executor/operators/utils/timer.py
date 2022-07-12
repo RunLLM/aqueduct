@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 
 class TimerError(Exception):
@@ -6,10 +7,10 @@ class TimerError(Exception):
 
 
 class Timer:
-    def __init__(self):
-        self._start_time = None
+    def __init__(self) -> None:
+        self._start_time: Optional[float] = None
 
-    def start(self):
+    def start(self) -> None:
         """Start a new timer"""
         if self._start_time is not None:
             raise TimerError(f"Timer is running. Use .stop() to stop it")
@@ -18,9 +19,10 @@ class Timer:
 
     def stop(self) -> float:
         """Stop the timer, and report the elapsed time"""
-        if self._start_time is None:
+        start_time = self._start_time
+        if start_time is None:
             raise TimerError(f"Timer is not running. Use .start() to start it")
 
-        elapsed_time = time.perf_counter() - self._start_time
+        elapsed_time = time.perf_counter() - start_time
         self._start_time = None
         return elapsed_time

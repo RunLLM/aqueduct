@@ -1,6 +1,7 @@
 import re
-from typing import Any, Optional, Union, Dict
 from datetime import date
+from typing import Any, Dict, Optional, Union
+
 from aqueduct_executor.operators.connectors.tabular import common, models
 
 # Regular Expression that matches any substring appearance with

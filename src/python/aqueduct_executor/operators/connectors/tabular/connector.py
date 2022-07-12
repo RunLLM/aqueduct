@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import pandas as pd
-
 from aqueduct_executor.operators.connectors.tabular import extract, load
 
 
@@ -20,7 +19,11 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def extract(self, params: extract.Params) -> pd.DataFrame:
+    def extract(  # type: ignore
+        self,
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        params,  # extract.Params
+    ) -> pd.DataFrame:
         """Extracts data from source into a DataFrame.
 
         Args:
@@ -31,7 +34,12 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def load(self, params: load.Params, df: pd.DataFrame) -> None:
+    def load(  # type: ignore
+        self,
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        params,  # load.Params
+        df: pd.DataFrame,
+    ) -> None:
         """Loads DataFrame into destination.
 
         Args:

@@ -4,36 +4,32 @@ import uuid
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
+    ExecutionStatus,
+    FunctionGranularity,
+    FunctionType,
     GoogleSheetsSaveMode,
+    LoadUpdateMode,
+    OperatorType,
     S3FileFormat,
     SalesforceExtractType,
     ServiceType,
-    FunctionType,
-    FunctionGranularity,
-    OperatorType,
-    ExecutionStatus,
-    LoadUpdateMode,
 )
 from aqueduct.operators import (
+    ExtractSpec,
+    FunctionSpec,
     GoogleSheetsExtractParams,
     GoogleSheetsLoadParams,
-    OperatorSpec,
+    LoadSpec,
     Operator,
-    FunctionSpec,
-    ExtractSpec,
+    OperatorSpec,
+    RelationalDBExtractParams,
+    RelationalDBLoadParams,
     S3ExtractParams,
     S3LoadParams,
-    RelationalDBExtractParams,
     SalesforceExtractParams,
     SalesforceLoadParams,
-    LoadSpec,
-    RelationalDBLoadParams,
 )
-from aqueduct.responses import (
-    OperatorResult,
-    TableArtifactResult,
-    PreviewResponse,
-)
+from aqueduct.responses import Logs, OperatorResult, PreviewResponse, TableArtifactResult
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 
@@ -90,7 +86,8 @@ def test_operator_serialization():
 def test_preview_response_loading():
     op_id = uuid.uuid4()
     op_result = OperatorResult(
-        logs={"stdout": "These are the operator logs"},
+        status=ExecutionStatus.SUCCEEDED,
+        user_logs=Logs(stdout="These are the operator logs"),
     )
     artifact_id = uuid.uuid4()
     artifact_result = TableArtifactResult(
@@ -110,7 +107,6 @@ def test_preview_response_loading():
 
     assert PreviewResponse(**preview_resp) == PreviewResponse(
         status=ExecutionStatus.SUCCEEDED,
-        err_msg="",
         operator_results={
             op_id: op_result,
         },
