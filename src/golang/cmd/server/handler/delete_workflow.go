@@ -115,9 +115,9 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// TODO: Check each table is associated with the workflow. Else, return early with error.
 
 	// TODO: Delete associated tables.
+	// Launch delete job for each table
 
 	// TODO: Give user an indication when a workflow fails to completely delete from the SDK -- this is already done?
-
 
 
 	txn, err := h.Database.BeginTx(ctx)
