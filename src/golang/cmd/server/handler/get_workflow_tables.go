@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -38,9 +38,9 @@ type getWorkflowTablesResponse struct {
 type GetWorkflowTablesHandler struct {
 	GetHandler
 
-	Database                database.Database
-	OperatorReader			operator.Reader
-	WorkflowReader         	workflow.Reader
+	Database       database.Database
+	OperatorReader operator.Reader
+	WorkflowReader workflow.Reader
 }
 
 func (*GetWorkflowTablesHandler) Name() string {
@@ -88,7 +88,7 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
-	
+
 	return getWorkflowTablesResponse{
 		LoadSpec: loadList,
 	}, http.StatusOK, nil
