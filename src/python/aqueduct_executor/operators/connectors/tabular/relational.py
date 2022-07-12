@@ -1,8 +1,9 @@
 from typing import List
 
 import pandas as pd
-from sqlalchemy import engine, inspect
+from sqlalchemy import engine, inspect, MetaData
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.declarative import declarative_base
 
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 
@@ -26,6 +27,14 @@ class RelationalConnector(connector.TabularConnector):
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
+
+    def drop_table(self, params: delete.RelationalParams) -> None:
+        Base = declarative_base()
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine)
+        table = metadata.tables[params.table]
+        if table is not None:
+            Base.metadata.drop_all(self.engine, [table], checkfirst=True)
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,
