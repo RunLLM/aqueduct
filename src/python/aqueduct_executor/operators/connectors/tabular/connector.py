@@ -31,6 +31,14 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
+    def delete(self, params: delete.Params) -> None:
+        """Deletes DataFrame in destination.
+
+        Args:
+            params: Delete parameters for the connector.
+        """
+
+    @abstractmethod
     def load(self, params: load.Params, df: pd.DataFrame) -> None:
         """Loads DataFrame into destination.
 
