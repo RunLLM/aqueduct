@@ -100,13 +100,13 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	return operators, err
 }
 
-func (r *standardReaderImpl) GetUniqueOperatorsByWorkflowId(
+func (r *standardReaderImpl) GetOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
 ) ([]Operator, error) {
 	query := fmt.Sprintf(`
-	SELECT DISTINCT %s FROM operator 
+	SELECT %s FROM operator 
 	WHERE EXISTS (
 		SELECT 1
 		FROM workflow_dag_edge, workflow_dag

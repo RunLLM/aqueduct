@@ -84,7 +84,7 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 	emptyResp := getWorkflowTablesResponse{}
 
 	// Get all specs  for the workflow.
-	operatorList, err := h.OperatorReader.GetUniqueOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
+	operatorList, err := h.OperatorReader.GetOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
@@ -97,67 +97,6 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 	}
 	
-	// TODO: How dedup
-	// TODO: Test by querying
-	// create workflow that loads table into db
-	// postman (aqueduct start --expose)
-	// curl --header "api-key: 1CZR2J96NKXL4UWEO57PID03GAVTHB8Q" http://localhost:8080/api/workflow/9a6dbbb6-a1a6-454b-9a1a-8cf3def16e68/tables
-	// {
-	// 	"table_specs":[
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"test",
-	// 			 "update_mode":"replace"
-	// 		  }
-	// 	   },
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"test",
-	// 			 "update_mode":"replace"
-	// 		  }
-	// 	   },
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"test",
-	// 			 "update_mode":"replace"
-	// 		  }
-	// 	   },
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"test",
-	// 			 "update_mode":"append"
-	// 		  }
-	// 	   },
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"new_table",
-	// 			 "update_mode":"append"
-	// 		  }
-	// 	   },
-	// 	   {
-	// 		  "service":"SQLite",
-	// 		  "integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192",
-	// 		  "parameters":{
-	// 			 "table":"test",
-	// 			 "update_mode":"append"
-	// 		  }
-	// 	   }
-	// 	]
-	//  }
-
-// 	curl --header "api-key: 1CZR2J96NKXL4UWEO57PID03GAVTHB8Q" http://localhost:8080/api/workflow/ebbbe4b3-50a7-431f-bbee-a555504ef443/tables
-// {"table_specs":[{"service":"SQLite","integration_id":"95ccb2eb-068c-4a85-853c-3a5dced8f192","parameters":{"table":"test","update_mode":"replace"}}]}
-
 	return getWorkflowTablesResponse{
 		LoadSpec: loadList,
 	}, http.StatusOK, nil

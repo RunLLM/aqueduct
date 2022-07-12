@@ -27,7 +27,7 @@ type Reader interface {
 		workflowDagId uuid.UUID,
 		db database.Database,
 	) ([]Operator, error)
-	GetUniqueOperatorsByWorkflowId(
+	GetOperatorsByWorkflowId(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		db database.Database,
