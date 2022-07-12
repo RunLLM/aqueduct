@@ -17,6 +17,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
     AUTHENTICATE = "authenticate"
     EXTRACT = "extract"
+    DELETE = "delete"
     LOAD = "load"
     LOADTABLE = "load-table"
     DISCOVER = "discover"

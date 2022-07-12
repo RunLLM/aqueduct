@@ -42,6 +42,8 @@ def run(spec: spec.Spec, storage: Storage):
         run_extract(spec, op, storage)
     elif spec.type == enums.JobType.LOADTABLE:
         run_load_table(spec, op, storage)
+    elif spec.type == enums.JobType.DELETE:
+        run_delete(spec, op)
     elif spec.type == enums.JobType.LOAD:
         run_load(spec, op, storage)
     elif spec.type == enums.JobType.DISCOVER:
@@ -84,6 +86,9 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         system_metadata={},
     )
 
+
+def run_delete(spec: spec.DeleteSpec, op: connector.TabularConnector):
+    op.delete(spec.parameters)
 
 def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage):
     inputs = utils.read_artifacts(
