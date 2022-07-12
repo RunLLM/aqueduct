@@ -1,8 +1,8 @@
 import os
-import setuptools
 import sys
-
 from pathlib import Path
+
+import setuptools
 
 readme_path = Path(os.environ["PWD"], "../README.md")
 long_description = open(readme_path).read()

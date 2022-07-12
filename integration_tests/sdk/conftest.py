@@ -1,8 +1,9 @@
 import os
-import pytest
-import aqueduct
 
+import pytest
 import utils
+
+import aqueduct
 
 # Usage: add a <flag> in FLAGS which will enable `--{flag}` in test cmd options.
 # The option variable can be accessed through utils.flags during tests.

@@ -1,13 +1,14 @@
-from typing import List
+import argparse
 import json
 import os
 import subprocess
-from pathlib import Path
-import argparse
-from aqueduct import Client
 import time
+from pathlib import Path
+from typing import List
 
 from aqueduct.error import InvalidUserArgumentException
+
+from aqueduct import Client
 
 """
 See README.md for details about this script.

@@ -25,11 +25,13 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
   const operatorResult = useSelector(
     (state: RootState) => state.workflowReducer.operatorResults[operatorId]
   );
-  const error = operatorResult?.result?.error;
 
   return (
     <Box p={1} sx={{ height: '75%', overflow: 'auto' }}>
-      <DataPreviewer previewData={artifactResult} error={error} />
+      <DataPreviewer
+        previewData={artifactResult}
+        error={operatorResult?.result?.error}
+      />
     </Box>
   );
 };

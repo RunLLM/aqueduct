@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'sdk/aqueduct/**'
+      - 'src/python/**'
 
 jobs:
   sdk:
@@ -13,7 +14,7 @@ jobs:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
 
-    name: Run Mypy on the SDK
+    name: Mypy SDK
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -29,7 +30,35 @@ jobs:
         run : |
           python3 -m pip install types-croniter types-requests types-PyYAML
 
-      - name: mypy
+      - name: mypy sdk
         working-directory: sdk
         run: |
-          mypy -m aqueduct --ignore-missing-imports --strict
+          mypy aqueduct --ignore-missing-imports --strict --implicit-reexport --exclude tests
+
+  executor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+
+    name: Mypy Executor
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          pip install mypy pydantic
+
+      - name: Install Type Stub Libraries
+        run : |
+          python3 -m pip install types-croniter types-requests types-PyYAML
+      
+      - name: mypy executor
+        working-directory: src/python
+        run: |
+          mypy aqueduct_executor --ignore-missing-imports --strict --implicit-reexport --exclude tests

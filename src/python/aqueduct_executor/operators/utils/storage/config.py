@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Optional
 
 from aqueduct_executor.operators.utils.enums import MetaEnum
-
 from pydantic import BaseModel
 
 
@@ -18,6 +17,8 @@ class FileStorageConfig(BaseModel):
 class S3StorageConfig(BaseModel):
     region: str
     bucket: str
+    credentials_path: str
+    credentials_profile: str
 
 
 class StorageConfig(BaseModel):

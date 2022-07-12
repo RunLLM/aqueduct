@@ -1,17 +1,16 @@
 from typing import List
 
 import pandas as pd
+from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
-
-from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 
 
 class RelationalConnector(connector.TabularConnector):
     def __init__(self, conn_engine: engine.Engine):
         self.engine = conn_engine
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.engine.dispose()
 
     def authenticate(self) -> None:
@@ -21,7 +20,7 @@ class RelationalConnector(connector.TabularConnector):
             raise ConnectionError("Unable to connect.") from e
 
     def discover(self) -> List[str]:
-        return inspect(self.engine).get_table_names()
+        return inspect(self.engine).get_table_names()  # type: ignore
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
