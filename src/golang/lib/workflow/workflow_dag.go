@@ -1,22 +1,25 @@
 package dag
 
 import (
-"context"
-"github.com/aqueducthq/aqueduct/cmd/server/request"
-"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-"github.com/aqueducthq/aqueduct/lib/collections/shared"
-"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-"github.com/aqueducthq/aqueduct/lib/database"
-"github.com/aqueducthq/aqueduct/lib/job"
-"github.com/aqueducthq/aqueduct/lib/vault"
-"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
-"github.com/aqueducthq/aqueduct/lib/workflow/operator"
-"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-"github.com/dropbox/godropbox/errors"
-"github.com/google/uuid"
-log "github.com/sirupsen/logrus"
+	"context"
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type WorkflowDag struct {
@@ -25,11 +28,21 @@ type WorkflowDag struct {
 	Operators map[uuid.UUID]operator.Operator
 	Artifacts map[uuid.UUID]artifact.Artifact
 
-	isPreview               bool
+	ctx                     context.Context
 	workflowDagResultWriter workflow_dag_result.Writer
+	workflowReader          workflow.Reader
+	notificationWriter      notification.Writer
+	userReader              user.Reader
+	db                      database.Database
 
 	// A convenience data structure mapping artifacts to the operators that consumes it as input.
 	opsByInputArtifact map[uuid.UUID][]operator.Operator
+
+	// This is set during construction. A nil value here indicates that the workflow dag is in preview mode.
+	workflowDagResultID uuid.UUID
+
+	// This is set only after orchestration completes.
+	status shared.ExecutionStatus
 }
 
 func initializeDagResultInDatabase(
@@ -53,13 +66,16 @@ func NewWorkflowDag(
 	workflowDagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
+	workflowReader workflow.Reader,
+	notificationWriter notification.Writer,
+	userReader user.Reader,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
+	isPreview bool,
 ) (*WorkflowDag, error) {
 	dbWorkflowDag := dagSummary.Dag
-	isPreview := workflowDagResultWriter != nil && opResultWriter != nil && artifactResultWriter != nil
 
 	// First, allocate a content and metadata path for each artifact.
 	artifactIDToContentPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
@@ -72,6 +88,10 @@ func NewWorkflowDag(
 	var workflowDagResultID uuid.UUID
 	var err error
 	if !isPreview {
+		if workflowDagResultWriter == nil || opResultWriter == nil || artifactResultWriter == nil {
+			return nil, errors.New("Nil was supplied for a database writer.")
+		}
+
 		workflowDagResultID, err = initializeDagResultInDatabase(
 			ctx,
 			dbWorkflowDag,
@@ -126,7 +146,7 @@ func NewWorkflowDag(
 			inputArtifacts,
 			inputContentPaths,
 			inputMetadataPaths,
-			outputArtifacts,gg
+			outputArtifacts,
 			outputContentPaths,
 			outputMetadataPaths,
 			opResultWriter,
@@ -158,10 +178,21 @@ func NewWorkflowDag(
 		Artifacts:     artifacts,
 
 		// The following fields are internal to the class methods only.
-		isPreview:               isPreview,
+		ctx:                     ctx,
 		workflowDagResultWriter: workflowDagResultWriter,
+		workflowReader:          workflowReader,
+		notificationWriter:      notificationWriter,
+		userReader:              userReader,
 		opsByInputArtifact:      opsByInputArtifact,
+
+		// Set to nil if this is a preview dag.
+		workflowDagResultID: workflowDagResultID,
+		db:                  db,
 	}, nil
+}
+
+func (w *WorkflowDag) isPreview() bool {
+	return w.workflowDagResultID == uuid.Nil
 }
 
 func (w *WorkflowDag) ImmediateDownstreamOperators(op operator.Operator) []operator.Operator {
@@ -176,20 +207,20 @@ func (w *WorkflowDag) ImmediateDownstreamOperators(op operator.Operator) []opera
 // - Update the workflow dag result metadata.
 // This is meant to be called from a defer().
 func (w *WorkflowDag) Flush() {
-	if w.isPreview {
+	if w.isPreview() {
 		log.Errorf("Flush() was called on workflow that was not supposed to write anything.")
 		return
 	}
 
 	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
 	utils.UpdateWorkflowDagResultMetadata(
-		ctx,
-		workflowDagResultId,
-		status,
-		workflowDagResultWriter,
-		workflowReader,
-		notificationWriter,
-		userReader,
-		db,
+		w.ctx,
+		w.workflowDagResultID,
+		w.status,
+		w.workflowDagResultWriter,
+		w.workflowReader,
+		w.notificationWriter,
+		w.userReader,
+		w.db,
 	)
 }
