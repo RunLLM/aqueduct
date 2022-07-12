@@ -84,17 +84,9 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 	emptyResp := getWorkflowTablesResponse{}
 
 	// Get all specs  for the workflow.
-	operatorList, err := h.OperatorReader.GetOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
+	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
-	}
-
-	loadList := make([]connector.Load, 0, len(operatorList))
-
-	for _, operator := range operatorList {
-		if operator.Spec.IsLoad() {
-			loadList = append(loadList, *operator.Spec.Load())
-		}
 	}
 	
 	return getWorkflowTablesResponse{
