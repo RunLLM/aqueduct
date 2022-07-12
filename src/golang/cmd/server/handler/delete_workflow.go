@@ -116,6 +116,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// query to verify ownership of table in BE
 
 	// TODO: Delete associated tables.
+	// 1 drop per table may be expensive. per integration instead?
 	// transaction? best-effort?
 	// Launch delete job for each table
 
