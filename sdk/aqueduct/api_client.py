@@ -142,6 +142,9 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
+    def url_prefix(self) -> str:
+        return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
+
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
         headers = utils.generate_auth_headers(self.api_key)
