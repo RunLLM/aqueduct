@@ -52,8 +52,8 @@ def generate_uuid() -> uuid.UUID:
     return uuid.uuid4()
 
 
-WORKFLOW_ID_URL_PARAM_TEMPLATE = "/workflow/%s"
-WORKFLOW_RESULT_ID_URL_PARAM_TEMPLATE = "?workflowDagResultId=%s"
+WORKFLOW_UI_ROUTE_TEMPLATE = "/workflow/%s"
+WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
 
 
 def generate_ui_url(
@@ -63,14 +63,14 @@ def generate_ui_url(
         url = "%s%s%s%s" % (
             url_prefix,
             aqueduct_address,
-            WORKFLOW_ID_URL_PARAM_TEMPLATE % workflow_id,
-            WORKFLOW_RESULT_ID_URL_PARAM_TEMPLATE % result_id,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+            WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
         )
     else:
         url = "%s%s%s" % (
             url_prefix,
             aqueduct_address,
-            WORKFLOW_ID_URL_PARAM_TEMPLATE % workflow_id,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
         )
     return url
 
