@@ -15,6 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -52,6 +53,7 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
+	IntegrationReader 		integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -112,8 +114,40 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	emptyResp := deleteWorkflowResponse{}
 
-	// TODO: Check each table is associated with the workflow. Else, return early with error.
-	// query to verify ownership of table in BE
+	// Check tables are valid
+	for _, spec := range args.loadSpec {
+		relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
+		
+		integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndOrganization(ctx, spec.ConnectorName, args.AqContext.OrganizationId, h.Database)
+		if err {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")	
+		}
+		
+		integrationId := nil
+		for _, integration := range integrations {
+			eq := reflect.DeepEqual(integration.Config, spec.ConnectorConfig)
+			if eq {
+				if integrationId == nil {
+					integrationId = integration.Id
+				} else {
+					return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpectedly retrieved multiple integration ids.")	
+				}
+				
+			}
+		}
+		if integrationId == nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Could not find integration id.")	
+		}
+
+		touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.workflowId, integrationId, relationalParam.Table, h.Database)
+		
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
+		}
+		if touched == false {
+			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow")
+		}
+	}
 
 	// TODO: Delete associated tables.
 	// 1 drop per table may be expensive. per integration instead?
