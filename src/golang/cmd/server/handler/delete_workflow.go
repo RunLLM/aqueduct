@@ -113,8 +113,10 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	emptyResp := deleteWorkflowResponse{}
 
 	// TODO: Check each table is associated with the workflow. Else, return early with error.
+	// query to verify ownership of table in BE
 
 	// TODO: Delete associated tables.
+	// transaction? best-effort?
 	// Launch delete job for each table
 
 	// TODO: Give user an indication when a workflow fails to completely delete from the SDK -- this is already done?
@@ -302,4 +304,63 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	return emptyResp, http.StatusOK, nil
+}
+
+func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error) {
+
+	// Schedule delete table job
+	jobMetadataPath := fmt.Sprintf("delete-table-%s-%s", args.RequestId, tableSpecs.tableName)
+
+	jobName := fmt.Sprintf("create-table-operator-%s", uuid.New().String())
+
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, vaultObject)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
+	}
+
+	// Assuming service supports GenericRelationalDBLoadParams
+	loadParameters := &connector.GenericRelationalDBLoadParams{
+		RelationalDBLoadParams: connector.RelationalDBLoadParams{
+			Table:      args.tableName,
+			UpdateMode: "fail",
+		},
+	}
+
+	jobSpec := job.NewLoadTableSpec(
+		jobName,
+		contentPath,
+		storageConfig,
+		jobMetadataPath,
+		integrationObject.Service,
+		config,
+		loadParameters,
+		"",
+		"",
+	)
+	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
+	}
+
+	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollCreateInterval, pollCreateTimeout)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
+	}
+
+	if jobStatus == shared.SucceededExecutionStatus {
+		// Table creation was successful
+		return http.StatusOK, nil
+	}
+
+	// Table creation failed, so we need to fetch the error message from storage
+	var metadata operator_result.Metadata
+	if err := utils.ReadFromStorage(
+		ctx,
+		storageConfig,
+		jobMetadataPath,
+		&metadata,
+	); err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
+	}
+
+	return http.StatusBadRequest, errors.Newf("Unable to create table: %v", metadata.Error)
 }

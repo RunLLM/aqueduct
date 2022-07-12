@@ -28,7 +28,7 @@ class RelationalConnector(connector.TabularConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
 
-    def drop_table(self, params: delete.RelationalParams) -> None:
+    def delete(self, params: delete.RelationalParams) -> None:
         Base = declarative_base()
         metadata = MetaData()
         metadata.reflect(bind=self.engine)
