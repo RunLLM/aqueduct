@@ -110,7 +110,6 @@ func updateCompletedOp(
 
 			execStatus := scheduler.CheckOperatorExecutionStatus(
 				ctx,
-				jobStatus,
 				storageConfig,
 				operatorMetadataPaths[op.Id],
 			)
@@ -544,6 +543,16 @@ func waitForInProgressOperators(
 	}
 }
 
+func opFailureError(failureType shared.FailureType, op operator2.Operator) error {
+	if failureType == shared.SystemFailure {
+		return ErrOpExecSystemFailure
+	} else if failureType == shared.UserFailure {
+		log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name(), op.ID())
+		return ErrOpExecBlockingUserFailure
+	}
+	return errors.Newf("Internal error: Unsupported failure type %s", failureType)
+}
+
 func orchestrate(
 	ctx context.Context,
 	dag *dag.WorkflowDag,
@@ -587,49 +596,42 @@ func orchestrate(
 				}
 			} else if execState.Status == shared.RunningExecutionStatus {
 				continue
-			} else if execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus {
-				err = op.Finish()
-				if err != nil {
-					return shared.FailedExecutionStatus, errors.Wrap(err, fmt.Sprintf("Error when finishing execution of operator %s", op.Name()))
+			} else if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+				return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: a scheduled operator has unsupported status %s", execState.Status))
+			}
+
+			// The operator must have finished executing and is in either a success or failed state.
+			err = op.Finish()
+			if err != nil {
+				return shared.FailedExecutionStatus, errors.Wrap(err, fmt.Sprintf("Error when finishing execution of operator %s", op.Name()))
+			}
+
+			if execState.Status == shared.FailedExecutionStatus {
+				return shared.FailedExecutionStatus, opFailureError(*execState.FailureType, op)
+			}
+
+			// The operator has succeeded! Add the operator to the completed stack, and remove it from the in-progress one.
+			if _, ok := completedOps[op.ID()]; ok {
+				return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: operator %s was completed twice.", op.Name()))
+			}
+			completedOps[op.ID()] = op
+			delete(inProgressOps, op.ID())
+
+			for _, nextOp := range dag.ImmediateDownstreamOperators(op) {
+				// Before scheduling the next operator, check that all upstream artifacts to that operator
+				// have been computed.
+				if !nextOp.Ready() {
+					continue
 				}
 
-				if execState.Status == shared.FailedExecutionStatus {
-					if *execState.FailureType == shared.SystemFailure {
-						return shared.FailedExecutionStatus, ErrOpExecSystemFailure
-					} else if *execState.FailureType == shared.UserFailure {
-						log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name(), op.ID())
-						return shared.FailedExecutionStatus, ErrOpExecBlockingUserFailure
-					}
-					return shared.FailedExecutionStatus, errors.Newf("Internal error: Unsupported failure type %s", *execState.FailureType)
-				} else {
-					// Add the operator to the completed stack, and remove it from the in-progress one.
-					if _, ok := completedOps[op.ID()]; ok {
-						return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: operator %s was completed twice.", op.Name()))
-					}
-
-					completedOps[op.ID()] = op
-					delete(inProgressOps, op.ID())
-
-					for _, nextOp := range dag.ImmediateDownstreamOperators(op) {
-						// Before scheduling the next operator, check that all upstream artifacts to that operator
-						// have been computed.
-						if !nextOp.Ready() {
-							continue
-						}
-
-						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
-						// matter because we only keep and update a single copy an on operator.
-						if _, ok := inProgressOps[nextOp.ID()]; !ok {
-							inProgressOps[nextOp.ID()] = nextOp
-						}
-					}
+				// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
+				// matter because we only keep and update a single copy an on operator.
+				if _, ok := inProgressOps[nextOp.ID()]; !ok {
+					inProgressOps[nextOp.ID()] = nextOp
 				}
-			} else {
-				return shared.FailedExecutionStatus, errors.Newf(fmt.Sprintf("Internal error: a scheduled operator has unsupported status %s", status))
 			}
 
 			time.Sleep(pollInterval)
-
 		}
 	}
 

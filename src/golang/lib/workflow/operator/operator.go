@@ -2,8 +2,6 @@ package operator
 
 import (
 	"context"
-	"fmt"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -11,11 +9,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // This Operator interface allows a caller to manage and inspect the lifecycle of
@@ -24,6 +19,10 @@ type Operator interface {
 	Type() operator.Type
 	Name() string
 	ID() uuid.UUID
+
+	// Lists immediate upstream and downstream dependencies.
+	Inputs() []artifact.Artifact
+	Outputs() []artifact.Artifact
 
 	// Indicates whether this operator is can be scheduled. This means that all
 	// dependencies to this operator have already been computed.
@@ -40,10 +39,6 @@ type Operator interface {
 	// regardless of whether it ran successfully or not. This allows the operator to perform
 	// any final database writes or cleanup operations. This can only be called once.
 	Finish() error
-
-	// Lists immediate upstream and downstream dependencies.
-	Inputs() []artifact.Artifact
-	Outputs() []artifact.Artifact
 }
 
 func initializeOperatorResultInDatabase(
@@ -65,136 +60,6 @@ func initializeOperatorResultInDatabase(
 	return operatorResult.Id, nil
 }
 
-type baseOperatorFields struct {
-	ctx        context.Context
-	dbOperator *operator.DBOperator
-
-	// These fields are nil in the preview case.
-	opResultWriter operator_result.Writer
-	opResultID     uuid.UUID
-
-	isPreview      bool
-	opMetadataPath string
-
-	inputs              []artifact.Artifact
-	outputs             []artifact.Artifact
-	inputContentPaths   []string
-	inputMetadataPaths  []string
-	outputContentPaths  []string
-	outputMetadataPaths []string
-
-	jobManager    job.JobManager
-	vaultObject   vault.Vault
-	storageConfig *shared.StorageConfig
-	db            database.Database
-
-	// This field is only set after this operator has launched.
-	jobName string
-}
-
-func (bo *baseOperatorFields) Type() operator.Type {
-	return bo.dbOperator.Spec.Type()
-}
-
-func (bo *baseOperatorFields) Name() string {
-	return bo.dbOperator.Name
-}
-
-func (bo *baseOperatorFields) ID() uuid.UUID {
-	return bo.dbOperator.Id
-}
-
-func (bo *baseOperatorFields) Inputs() []artifact.Artifact {
-	return bo.inputs
-}
-
-func (bo *baseOperatorFields) Outputs() []artifact.Artifact {
-	return bo.outputs
-}
-
-func (bo *baseOperatorFields) Ready() bool {
-	for _, inputArtifact := range bo.inputs {
-		if !inputArtifact.Computed() {
-			return false
-		}
-	}
-	return true
-}
-
-func (bo *baseOperatorFields) Finish() error {
-	if bo.isPreview {
-		return errors.Newf(fmt.Sprintf("Cannot persist the results of operator %s in preview-mode.", bo.Name()))
-	}
-
-	status, err := bo.Status()
-	if err != nil {
-		return err
-	}
-	if status != shared.FailedExecutionStatus && status != shared.SucceededExecutionStatus {
-		return errors.Newf(fmt.Sprintf("Operator %s has neither succeeded or failed, so it does not have results that can be persisted.", bo.Name()))
-	}
-
-	// Best effort writes after this point.
-	utils.UpdateOperatorResultAfterComputation(
-		bo.ctx,
-		status,
-		bo.storageConfig,
-		bo.opMetadataPath,
-		bo.opResultWriter,
-		bo.opResultID,
-		bo.db,
-	)
-
-	for _, outputArtifact := range bo.outputs {
-		err = outputArtifact.Persist(status)
-		if err != nil {
-			log.Errorf(fmt.Sprintf("Error occurred when persisting artifact %s.", outputArtifact.Name()))
-		}
-	}
-	return nil
-}
-
-func (bo *baseOperatorFields) Status() (shared.ExecutionStatus, error) {
-	// TODO(kenxu): I think the stuff in `CheckOperatorExecutionStatus()` belongs here.
-
-	return bo.jobManager.Poll(bo.ctx, bo.jobName)
-}
-
-type functionOperatorImpl struct {
-	baseOperatorFields
-}
-
-func (fo *functionOperatorImpl) Schedule() error {
-	inputArtifactTypes := make([]db_artifact.Type, 0, len(fo.inputs))
-	outputArtifactTypes := make([]db_artifact.Type, 0, len(fo.outputs))
-	for _, inputArtifact := range fo.inputs {
-		inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Type())
-	}
-	for _, outputArtifact := range fo.outputs {
-		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
-	}
-
-	jobName, err := scheduler.ScheduleFunction(
-		fo.ctx,
-		*fo.dbOperator.Spec.Function(),
-		fo.opMetadataPath,
-		fo.inputContentPaths,
-		fo.inputMetadataPaths,
-		fo.outputContentPaths,
-		fo.outputMetadataPaths,
-		inputArtifactTypes,
-		outputArtifactTypes,
-		fo.storageConfig,
-		fo.jobManager,
-	)
-	if err != nil {
-		return err
-	}
-
-	fo.jobName = jobName
-	return nil
-}
-
 func NewOperator(
 	ctx context.Context,
 	dbOperator operator.DBOperator,
@@ -204,8 +69,7 @@ func NewOperator(
 	outputs []artifact.Artifact,
 	outputContentPaths []string,
 	outputMetadataPaths []string,
-// A nil value here means the operator is not persisted.
-	opResultWriter operator_result.Writer,
+	opResultWriter operator_result.Writer, // A nil value means the operator is run in preview mode.
 	workflowDagResultID uuid.UUID,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
@@ -227,7 +91,7 @@ func NewOperator(
 		}
 	}
 
-	base := baseOperatorFields{
+	baseFields := baseOperatorFields{
 		dbOperator:          &dbOperator,
 		opResultWriter:      opResultWriter,
 		opResultID:          opResultID,
@@ -245,21 +109,7 @@ func NewOperator(
 	}
 
 	if dbOperator.Spec.IsFunction() {
-		for _, inputArtifact := range inputs {
-			if inputArtifact.Type() != db_artifact.TableType && inputArtifact.Type() != db_artifact.JsonType {
-				return nil, errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
-			}
-		}
-		for _, outputArtifact := range outputs {
-			if outputArtifact.Type() != db_artifact.TableType {
-				return nil, errors.New("Outputs of function operator must be Table Artifacts.")
-			}
-		}
-
-		// TODO: Validate the number of inputs.
-		return &functionOperatorImpl{
-			base,
-		}, nil
+		return newFunctionOperator(baseFields, inputs, outputs)
 	}
 	return nil, errors.Newf("Unsupported operator type %s", dbOperator.Spec.Type())
 }
