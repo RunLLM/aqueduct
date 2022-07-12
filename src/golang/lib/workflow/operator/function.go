@@ -1,10 +1,19 @@
 package operator
 
 import (
+	"fmt"
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
+)
+
+const (
+	defaultFunctionEntryPointFile   = "model.py"
+	defaultFunctionEntryPointClass  = "Function"
+	defaultFunctionEntryPointMethod = "predict"
 )
 
 type functionOperatorImpl struct {
@@ -13,9 +22,10 @@ type functionOperatorImpl struct {
 
 func newFunctionOperator(
 	baseFields baseOperatorFields,
-	inputs []artifact.Artifact,
-	outputs []artifact.Artifact,
 ) (Operator, error) {
+	inputs := baseFields.inputs
+	outputs := baseFields.outputs
+
 	if len(inputs) == 0 {
 		return nil, scheduler.ErrWrongNumInputs
 	}
@@ -39,12 +49,20 @@ func newFunctionOperator(
 	}, nil
 }
 
-func (fo *functionOperatorImpl) Schedule() error {
-	if !fo.Ready() {
-		return errors.Newf("Operator %s cannot be scheduled yet becuase it isn't ready.", fo.Name())
-	}
-	if len(fo.jobName) > 0 {
-		return errors.Newf("Operator %s was scheduled twice.", fo.Name())
+func generateFunctionJobName() string {
+	return fmt.Sprintf("function-operator-%s", uuid.New().String())
+}
+
+func (fo *functionOperatorImpl) JobSpec() job.Spec {
+	fn := fo.dbOperator.Spec.Function()
+
+	entryPoint := fn.EntryPoint
+	if entryPoint == nil {
+		entryPoint = &function.EntryPoint{
+			File:      defaultFunctionEntryPointFile,
+			ClassName: defaultFunctionEntryPointClass,
+			Method:    defaultFunctionEntryPointMethod,
+		}
 	}
 
 	inputArtifactTypes := make([]db_artifact.Type, 0, len(fo.inputs))
@@ -56,23 +74,23 @@ func (fo *functionOperatorImpl) Schedule() error {
 		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
 	}
 
-	jobName, err := scheduler.ScheduleFunction(
-		fo.ctx,
-		*fo.dbOperator.Spec.Function(),
-		fo.opMetadataPath,
-		fo.inputContentPaths,
-		fo.inputMetadataPaths,
-		fo.outputContentPaths,
-		fo.outputMetadataPaths,
-		inputArtifactTypes,
-		outputArtifactTypes,
-		fo.storageConfig,
-		fo.jobManager,
-	)
-	if err != nil {
-		return err
+	return &job.FunctionSpec{
+		BasePythonSpec: job.NewBasePythonSpec(
+			job.FunctionJobType,
+			fo.jobName,
+			*fo.storageConfig,
+			fo.opMetadataPath,
+		),
+		FunctionPath:        fn.StoragePath,
+		EntryPointFile:      entryPoint.File,
+		EntryPointClass:     entryPoint.ClassName,
+		EntryPointMethod:    entryPoint.Method,
+		CustomArgs:          fn.CustomArgs,
+		InputContentPaths:   fo.inputContentPaths,
+		InputMetadataPaths:  fo.inputMetadataPaths,
+		OutputContentPaths:  fo.outputContentPaths,
+		OutputMetadataPaths: fo.outputMetadataPaths,
+		InputArtifactTypes:  inputArtifactTypes,
+		OutputArtifactTypes: outputArtifactTypes,
 	}
-
-	fo.jobName = jobName
-	return nil
 }

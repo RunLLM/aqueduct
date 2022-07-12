@@ -26,7 +26,7 @@ type Artifact interface {
 
 	// Writes the data of this artifact to a backing store so it can be fetched later.
 	// Errors if the artifact has not yet been computed.
-	Persist(opStatus shared.ExecutionStatus) error
+	PersistResult(opStatus shared.ExecutionStatus) error
 }
 
 func initializeArtifactResultInDatabase(
@@ -85,7 +85,7 @@ func (a *ArtifactImpl) Computed() bool {
 	// TODO(kenxu):
 }
 
-func (a *ArtifactImpl) Persist(opStatus shared.ExecutionStatus) error {
+func (a *ArtifactImpl) PersistResult(opStatus shared.ExecutionStatus) error {
 	if !a.Computed() {
 		return errors.Newf(fmt.Sprintf("Artifact %s cannot be persisted because it has not been computed.", a.name))
 	}

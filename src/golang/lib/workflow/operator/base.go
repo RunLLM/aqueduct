@@ -26,6 +26,7 @@ type baseOperatorFields struct {
 
 	isPreview      bool
 	opMetadataPath string
+	jobName        string
 
 	inputs              []artifact.Artifact
 	outputs             []artifact.Artifact
@@ -38,11 +39,6 @@ type baseOperatorFields struct {
 	vaultObject   vault.Vault
 	storageConfig *shared.StorageConfig
 	db            database.Database
-
-	// These fields are set dynamically over the lifecycle of the operator:
-
-	// Only set if the operator is scheduled.
-	jobName string
 }
 
 func (bo *baseOperatorFields) Type() operator.Type {
@@ -74,25 +70,31 @@ func (bo *baseOperatorFields) Ready() bool {
 	return true
 }
 
-func (bo *baseOperatorFields) ExecState() (*shared.ExecutionState, error) {
+func (bo *baseOperatorFields) GetExecState() (*shared.ExecutionState, error) {
 	status, err := bo.jobManager.Poll(bo.ctx, bo.jobName)
 	if err != nil {
 		return nil, err
 	}
 	if status == shared.SucceededExecutionStatus || status == shared.FailedExecutionStatus {
 		var execState shared.ExecutionState
-		err := utils.ReadFromStorage(
+		err = utils.ReadFromStorage(
 			bo.ctx,
 			bo.storageConfig,
 			bo.opMetadataPath,
 			&execState,
 		)
+
 		if err != nil {
-			// Treat this as a system internal error since operator metadata was not found
-			log.Errorf(
-				"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
-				err,
-			)
+			if err != job.ErrJobNotExist {
+				// The job already finished somehow and was garbage-collected.
+				log.Errorf("Job %s does not exist for operator %s", bo.jobName, bo.Name())
+			} else {
+				// Treat this as a system internal error since operator metadata was not found
+				log.Errorf(
+					"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
+					err,
+				)
+			}
 
 			failureType := shared.SystemFailure
 			return &shared.ExecutionState{
@@ -113,17 +115,8 @@ func (bo *baseOperatorFields) ExecState() (*shared.ExecutionState, error) {
 
 }
 
-func (bo *baseOperatorFields) Finish() error {
-	// No-op if this is a preview operator.
-	if bo.isPreview {
-		return nil
-	}
-
-	if len(bo.jobName) == 0 {
-		return errors.Newf("Unable to finish operator %s. It was never scheduled.", bo.Name())
-	}
-
-	execState, err := bo.ExecState()
+func (bo *baseOperatorFields) PersistResult() error {
+	execState, err := bo.GetExecState()
 	if err != nil {
 		return err
 	}
@@ -142,8 +135,9 @@ func (bo *baseOperatorFields) Finish() error {
 		bo.db,
 	)
 
+	// TODO: move this to artifact persist.
 	for _, outputArtifact := range bo.outputs {
-		err = outputArtifact.Persist(execState.Status)
+		err = outputArtifact.PersistResult(execState.Status)
 		if err != nil {
 			log.Errorf(fmt.Sprintf("Error occurred when persisting artifact %s.", outputArtifact.Name()))
 		}

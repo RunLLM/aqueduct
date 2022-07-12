@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	operator2 "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -45,7 +46,23 @@ var (
 //	- serialize operator metadata to `operatorMetadataPath` in json format
 //	- properly deserialize input artifacts and output artifacts, based on `inputs`, `outputs`, and `artifactPaths`.
 //
+// TODO: docstring
 func ScheduleOperator(
+	ctx context.Context,
+	op operator2.Operator,
+	jobManager job.JobManager,
+) error {
+	spec := op.JobSpec()
+
+	// TODO(kenxu): does launch need a job name field anymore?
+	err := jobManager.Launch(ctx, spec.JobName(), spec)
+	if err != nil {
+		return errors.Wrap(err, "Unable to schedule function.")
+	}
+	return err
+}
+
+func deprecatedScheduleOperator(
 	ctx context.Context,
 	op operator.DBOperator,
 	inputArtifacts []artifact.DBArtifact,

@@ -20,6 +20,8 @@ type Operator interface {
 	Name() string
 	ID() uuid.UUID
 
+	JobSpec() job.Spec
+
 	// Lists immediate upstream and downstream dependencies.
 	Inputs() []artifact.Artifact
 	Outputs() []artifact.Artifact
@@ -28,17 +30,10 @@ type Operator interface {
 	// dependencies to this operator have already been computed.
 	Ready() bool
 
-	// Kicks off the job that executes this operator.
-	// Errors if the operator is not ready.
-	Schedule() error
-
 	// Performs a non-blocking fetch of the execution state of this operator.
-	ExecState() (*shared.ExecutionState, error)
+	GetExecState() (*shared.ExecutionState, error)
 
-	// An additional hook that should be called after the operator has terminated execution,
-	// regardless of whether it ran successfully or not. This allows the operator to perform
-	// any final database writes or cleanup operations. This can only be called once.
-	Finish() error
+	PersistResult() error
 }
 
 func initializeOperatorResultInDatabase(
@@ -109,7 +104,18 @@ func NewOperator(
 	}
 
 	if dbOperator.Spec.IsFunction() {
-		return newFunctionOperator(baseFields, inputs, outputs)
+		baseFields.jobName = generateFunctionJobName()
+		return newFunctionOperator(baseFields)
+	} else if dbOperator.Spec.IsMetric() {
+
+	} else if dbOperator.Spec.IsCheck() {
+
+	} else if dbOperator.Spec.IsExtract() {
+
+	} else if dbOperator.Spec.IsLoad() {
+
+	} else if dbOperator.Spec.IsSystemMetric() {
+
 	}
 	return nil, errors.Newf("Unsupported operator type %s", dbOperator.Spec.Type())
 }

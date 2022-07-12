@@ -19,41 +19,46 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
-type WorkflowDag struct {
-	DBWorkflowDag *workflow_dag.DBWorkflowDag
+type WorkflowDag interface {
+	Operators() map[uuid.UUID]operator.Operator
 
-	Operators map[uuid.UUID]operator.Operator
-	Artifacts map[uuid.UUID]artifact.Artifact
+	OperatorsOnArtifact(artifact.Artifact) ([]operator.Operator, error)
+	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
 
-	ctx                     context.Context
+	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
+}
+
+type workflowDagImpl struct {
+	dbWorkflowDag *workflow_dag.DBWorkflowDag
+
+	operators     map[uuid.UUID]operator.Operator
+	artifacts     map[uuid.UUID]artifact.Artifact
+	opToArtifacts map[uuid.UUID][]uuid.UUID
+	artifactToOps map[uuid.UUID][]uuid.UUID
+
 	workflowDagResultWriter workflow_dag_result.Writer
 	workflowReader          workflow.Reader
 	notificationWriter      notification.Writer
 	userReader              user.Reader
 	db                      database.Database
 
-	// A convenience data structure mapping artifacts to the operators that consumes it as input.
-	opsByInputArtifact map[uuid.UUID][]operator.Operator
-
-	// This is set during construction. A nil value here indicates that the workflow dag is in preview mode.
+	// Corresponds to the workflow dag result entry in the database. This is set during construction
+	// and indicates whether the workflow dag can be persisted.
+	// Persist() will no-op if this is empty.
 	workflowDagResultID uuid.UUID
-
-	// This is set only after orchestration completes.
-	status shared.ExecutionStatus
 }
 
 func initializeDagResultInDatabase(
 	ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	workflowDagResultWriter workflow_dag_result.Writer,
+	dagResultWriter workflow_dag_result.Writer,
 	db database.Database,
 ) (uuid.UUID, error) {
 	// Create a database record of workflow dag result and set its status to `pending`.
 	// TODO(ENG-599): wrap these writes into a transaction.
-	workflowDagResult, err := workflowDagResultWriter.CreateWorkflowDagResult(ctx, dbWorkflowDag.Id, db)
+	workflowDagResult, err := dagResultWriter.CreateWorkflowDagResult(ctx, dbWorkflowDag.Id, db)
 	if err != nil {
 		return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag result record.")
 	}
@@ -63,7 +68,7 @@ func initializeDagResultInDatabase(
 func NewWorkflowDag(
 	ctx context.Context,
 	dagSummary *request.DagSummary,
-	workflowDagResultWriter workflow_dag_result.Writer,
+	dagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
 	workflowReader workflow.Reader,
@@ -73,8 +78,8 @@ func NewWorkflowDag(
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
-	isPreview bool,
-) (*WorkflowDag, error) {
+	canPersist bool,
+) (WorkflowDag, error) {
 	dbWorkflowDag := dagSummary.Dag
 
 	// First, allocate a content and metadata path for each artifact.
@@ -87,15 +92,15 @@ func NewWorkflowDag(
 
 	var workflowDagResultID uuid.UUID
 	var err error
-	if !isPreview {
-		if workflowDagResultWriter == nil || opResultWriter == nil || artifactResultWriter == nil {
+	if canPersist {
+		if dagResultWriter == nil || opResultWriter == nil || artifactResultWriter == nil {
 			return nil, errors.New("Nil was supplied for a database writer.")
 		}
 
 		workflowDagResultID, err = initializeDagResultInDatabase(
 			ctx,
 			dbWorkflowDag,
-			workflowDagResultWriter,
+			dagResultWriter,
 			db,
 		)
 		if err != nil {
@@ -122,6 +127,16 @@ func NewWorkflowDag(
 		}
 	}
 
+	// These two maps allow us to remember all the dag connections.
+	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(artifacts))
+	for artifactID, _ := range artifacts {
+		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
+	}
+	opToArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
+	for opID, _ := range operators {
+		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
+	}
+
 	for opID, dbOperator := range dbWorkflowDag.Operators {
 		inputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		inputContentPaths := make([]string, 0, len(dbOperator.Inputs))
@@ -130,6 +145,8 @@ func NewWorkflowDag(
 			inputArtifacts = append(inputArtifacts, artifacts[artifactID])
 			inputContentPaths = append(inputContentPaths, artifactIDToContentPath[artifactID])
 			inputMetadataPaths = append(inputMetadataPaths, artifactIDToContentPath[artifactID])
+
+			artifactToOps[artifactID] = append(artifactToOps[artifactID], opID)
 		}
 		outputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		outputContentPaths := make([]string, 0, len(dbOperator.Outputs))
@@ -138,6 +155,8 @@ func NewWorkflowDag(
 			outputArtifacts = append(outputArtifacts, artifacts[artifactID])
 			outputContentPaths = append(outputContentPaths, artifactIDToContentPath[artifactID])
 			outputMetadataPaths = append(outputMetadataPaths, artifactIDToContentPath[artifactID])
+
+			opToArtifacts[opID] = append(opToArtifacts[opID], artifactID)
 		}
 
 		operators[opID], err = operator.NewOperator(
@@ -172,51 +191,67 @@ func NewWorkflowDag(
 		}
 	}
 
-	return &WorkflowDag{
-		DBWorkflowDag: dbWorkflowDag,
-		Operators:     operators,
-		Artifacts:     artifacts,
+	return &workflowDagImpl{
 
-		// The following fields are internal to the class methods only.
-		ctx:                     ctx,
-		workflowDagResultWriter: workflowDagResultWriter,
+		dbWorkflowDag: dbWorkflowDag,
+		operators:     operators,
+		artifacts:     artifacts,
+		opToArtifacts: opToArtifacts,
+		artifactToOps: artifactToOps,
+
+		workflowDagResultWriter: dagResultWriter,
 		workflowReader:          workflowReader,
 		notificationWriter:      notificationWriter,
 		userReader:              userReader,
-		opsByInputArtifact:      opsByInputArtifact,
+		db:                      db,
 
-		// Set to nil if this is a preview dag.
+		// Can be nil, which means the dag cannot be persisted.
 		workflowDagResultID: workflowDagResultID,
-		db:                  db,
 	}, nil
 }
 
-func (w *WorkflowDag) isPreview() bool {
-	return w.workflowDagResultID == uuid.Nil
+func (w *workflowDagImpl) Operators() map[uuid.UUID]operator.Operator {
+	return w.operators
 }
 
-func (w *WorkflowDag) ImmediateDownstreamOperators(op operator.Operator) []operator.Operator {
-	ops := make([]operator.Operator, 0, len(w.Operators))
-	for _, outputArtifact := range op.Outputs() {
-		nextOps := w.opsByInputArtifact[outputArtifact.ID()]
-		ops = append(ops, nextOps...)
+func (w *workflowDagImpl) OperatorsOnArtifact(artifact artifact.Artifact) ([]operator.Operator, error) {
+	opIDs, ok := w.artifactToOps[artifact.ID()]
+	if !ok {
+		return nil, errors.Newf("Unable to find artifact %s (%s) on dag.", artifact.ID(), artifact.Name())
 	}
-	return ops
+
+	ops := make([]operator.Operator, 0, len(opIDs))
+	for _, opID := range opIDs {
+		ops = append(ops, w.operators[opID])
+	}
+	return ops, nil
 }
 
-// - Update the workflow dag result metadata.
-// This is meant to be called from a defer().
-func (w *WorkflowDag) Flush() {
-	if w.isPreview() {
-		log.Errorf("Flush() was called on workflow that was not supposed to write anything.")
-		return
+func (w *workflowDagImpl) ArtifactsFromOperator(op operator.Operator) ([]artifact.Artifact, error) {
+	artifactIDs, ok := w.artifactToOps[op.ID()]
+	if !ok {
+		return nil, errors.Newf("Unable to find operator %s (%s) on dag.", op.ID(), op.Name())
+	}
+
+	artifacts := make([]artifact.Artifact, 0, len(artifactIDs))
+	for _, artifactID := range artifactIDs {
+		artifacts = append(artifacts, w.artifacts[artifactID])
+	}
+	return artifacts, nil
+}
+
+// Updates the dag result metadata after the dag has been executed.
+// No-ops unless the dag result has already been initialized. This is meant to be called from a defer().
+func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.ExecutionStatus) error {
+	if w.workflowDagResultID == uuid.Nil {
+		return errors.New("Cannot persist this workflow dag result. Initialized with `CanPersist` == false.")
 	}
 
 	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
 	utils.UpdateWorkflowDagResultMetadata(
-		w.ctx,
+		ctx,
 		w.workflowDagResultID,
-		w.status,
+		status,
 		w.workflowDagResultWriter,
 		w.workflowReader,
 		w.notificationWriter,
