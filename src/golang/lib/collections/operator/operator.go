@@ -32,6 +32,13 @@ type Reader interface {
 		workflowId uuid.UUID,
 		db database.Database,
 	) ([]Operator, error)
+	TableTouchedByWorkflow(
+		ctx context.Context,
+		workflowId string,
+		integrationId string,
+		tableName string,
+		db database.Database,
+	) (bool, error)
 	ValidateOperatorOwnership(
 		ctx context.Context,
 		organizationId string,
