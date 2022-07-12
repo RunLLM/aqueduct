@@ -31,7 +31,7 @@ type Reader interface {
 		ctx context.Context,
 		workflowId uuid.UUID,
 		db database.Database,
-	) ([]Operator, error)
+	) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error)
 	ValidateOperatorOwnership(
 		ctx context.Context,
 		organizationId string,

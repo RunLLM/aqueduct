@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/google/uuid"
 )
 
 type sqliteReaderImpl struct {
@@ -49,14 +50,14 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
-	query := fmt.Sprintf(`
-	SELECT %s
-	FROM (
-		SELECT DISTINCT *, 
-			json_extract(spec, '$.load.integration_id'), 
-			json_extract(spec, '$.load.parameters.table'), 
-			json_extract(spec, '$.load.parameters.update_mode') 
+) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error) {
+	query := `
+	SELECT DISTINCT
+			name, 
+			json_extract(spec, '$.load.integration_id') AS integration_id, 
+			json_extract(spec, '$.load.service') AS service, 
+			json_extract(spec, '$.load.parameters.table') AS table_name, 
+			json_extract(spec, '$.load.parameters.update_mode') AS update_mode
 		FROM 
 			operator 
 		WHERE (
@@ -73,10 +74,9 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-		)
-	);`, allColumns())
+		);`
 
-	var workflowSpecs []Operator
+	var workflowSpecs []GetDistinctLoadOperatorsByWorkflowIdResponse
 	err := db.Query(ctx, &workflowSpecs, query, workflowId)
 	return workflowSpecs, err
 }
