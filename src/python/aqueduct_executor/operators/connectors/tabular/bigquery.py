@@ -5,7 +5,7 @@ import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load, common
+from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load, delete, common
 
 
 class BigQueryConnector(connector.TabularConnector):
@@ -32,6 +32,9 @@ class BigQueryConnector(connector.TabularConnector):
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df
+
+    def delete(self, params: delete.RelationalParams) -> None:
+        self.client.delete_table(params.table, not_found_ok=True)
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode
