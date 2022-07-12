@@ -100,29 +100,6 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	return operators, err
 }
 
-func (r *standardReaderImpl) GetOperatorsByWorkflowId(
-	ctx context.Context,
-	workflowId uuid.UUID,
-	db database.Database,
-) ([]Operator, error) {
-	query := fmt.Sprintf(`
-	SELECT %s FROM operator 
-	WHERE EXISTS (
-		SELECT 1
-		FROM workflow_dag_edge, workflow_dag
-		WHERE
-		(
-			workflow_dag_edge.from_id = operator.id OR
-			workflow_dag_edge.to_id = operator.id
-		) AND
-		workflow_dag_edge.workflow_dag_id = workflow_dag.id AND
-		workflow_dag.workflow_id = $1
-	);`, allColumns())
-
-	var workflowSpecs []Operator
-	err := db.Query(ctx, &workflowSpecs, query, workflowId)
-	return workflowSpecs, err
-}
 
 func (w *standardWriterImpl) UpdateOperator(
 	ctx context.Context,
