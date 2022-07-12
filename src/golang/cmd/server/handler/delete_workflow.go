@@ -15,11 +15,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -31,13 +31,12 @@ import (
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
-	loadSpec []connector.Load `json:"table_specs"`
+	loadSpec   []connector.Load `json:"table_specs"`
 }
 
 type deleteWorkflowInput struct {
 	LoadSpec []connector.Load `json:"table_specs"`
 }
-
 
 type deleteWorkflowResponse struct{}
 
@@ -53,7 +52,7 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
-	IntegrationReader 		integration.Reader
+	IntegrationReader       integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -82,7 +81,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	var input deleteWorkflowInput 
+	var input deleteWorkflowInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
@@ -104,12 +103,11 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
-		loadSpec:		input.tables,
+		loadSpec:   input.tables,
 	}, http.StatusOK, nil
 }
 
 func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	emptyResp := deleteWorkflowResponse{}
@@ -117,10 +115,10 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// Check tables in list are valid
 	for _, spec := range args.loadSpec {
 		relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
-		
+
 		integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndUser(ctx, spec.ConnectorName, args.AqContext.UserId, h.Database)
 		if err {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")	
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")
 		}
 
 		integrationId := nil
@@ -130,17 +128,15 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 				if integrationId == nil {
 					integrationId = integration.Id
 				} else {
-					return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpectedly retrieved multiple integration ids.")	
+					return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpectedly retrieved multiple integration ids.")
 				}
-				
 			}
 		}
 		if integrationId == nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Could not find integration id.")	
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Could not find integration id.")
 		}
 
 		touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.workflowId, integrationId, relationalParam.Table, h.Database)
-		
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
 		}
@@ -155,7 +151,6 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// Launch delete job for each table
 
 	// TODO: Give user an indication when a workflow fails to completely delete from the SDK -- this is already done?
-
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
@@ -342,7 +337,6 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 }
 
 func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error) {
-
 	// Schedule delete table job
 	jobMetadataPath := fmt.Sprintf("delete-table-%s-%s", args.RequestId, tableSpecs.tableName)
 

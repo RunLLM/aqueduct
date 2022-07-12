@@ -79,11 +79,11 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	var operators []Operator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
 
-	var touched = false;
+	touched := false
 	if len(operators) > 0 {
-		touched = true;
+		touched = true
 	}
-	
+
 	return touched, err
 }
 

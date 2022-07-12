@@ -16,7 +16,6 @@ func newPostgresWriter() Writer {
 	return &postgresWriterImpl{standardWriterImpl{}}
 }
 
-
 func (r *postgresReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
 	workflowId string,
@@ -51,11 +50,11 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 	var operators []Operator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
 
-	var touched = false;
+	touched := false
 	if len(operators) > 0 {
-		touched = true;
+		touched = true
 	}
-	
+
 	return touched, err
 }
 

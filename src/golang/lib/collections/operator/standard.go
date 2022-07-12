@@ -100,7 +100,6 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	return operators, err
 }
 
-
 func (w *standardWriterImpl) UpdateOperator(
 	ctx context.Context,
 	id uuid.UUID,
