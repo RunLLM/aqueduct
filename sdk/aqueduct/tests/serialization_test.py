@@ -276,7 +276,7 @@ def test_extract_serialization():
                     "service": ServiceType.S3,
                     "integration_id": str(integration_id),
                     "parameters": {
-                        "filepath": "test.csv",
+                        "filepath": json.dumps("test.csv"),
                         "format": "CSV",
                     },
                 }
