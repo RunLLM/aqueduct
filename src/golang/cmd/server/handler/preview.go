@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	dag "github.com/aqueducthq/aqueduct/lib/workflow"
+	artifact2 "github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"net/http"
 	"strconv"
 
@@ -14,13 +15,11 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -179,122 +178,81 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		statusCode = http.StatusBadRequest
 	}
 
-	// TODO: more to fix here.
-	operatorResults := deserializeOperatorResponses(ctx, workflowPaths, h.StorageConfig)
+	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(workflowDag.Operators()))
+	for _, op := range workflowDag.Operators() {
+		execState, err := op.GetExecState(ctx)
+		if err != nil {
+			return errorRespPtr, http.StatusInternalServerError, err
+		}
+		execStateByOp[op.ID()] = *execState
+	}
 
-	// We should not include artifact results for operators that failed.
-	artifactsToSkipFetch := map[uuid.UUID]bool{}
-	for opId, opResult := range operatorResults {
-		if opResult.Status == shared.FailedExecutionStatus {
-			for _, artifactId := range dagSummary.Dag.Operators[opId].Outputs {
-				artifactsToSkipFetch[artifactId] = true
+	// Only include artifact results of operators that were successfully computed.
+	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
+	for _, artf := range workflowDag.Artifacts() {
+		if artf.Computed(ctx) {
+			artifactResp, err := convertToPreviewArtifactResponse(artf)
+			if err != nil {
+				return errorRespPtr, http.StatusInternalServerError, err
 			}
+			artifactResults[artf.ID()] = *artifactResp
 		}
 	}
-	artifactResults, err := deserializeArtifactResponses(ctx, workflowPaths, h.StorageConfig, dagSummary.Dag.Artifacts, artifactsToSkipFetch)
-	if err != nil {
-		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error deserializing execution results.")
-	}
+
 	return &previewResponse{
 		Status:          status,
-		OperatorResults: operatorResults,
+		OperatorResults: execStateByOp,
 		ArtifactResults: artifactResults,
 	}, statusCode, nil
 }
 
-func deserializeOperatorResponses(
-	ctx context.Context,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	storageConfig *shared.StorageConfig,
-) map[uuid.UUID]shared.ExecutionState {
-	responses := make(map[uuid.UUID]shared.ExecutionState, len(workflowStoragePaths.OperatorMetadataPaths))
-	for id, path := range workflowStoragePaths.OperatorMetadataPaths {
-		var operatorMetadata shared.ExecutionState
-		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
-		if err != nil {
-			failureType := shared.SystemFailure
-			responses[id] = shared.ExecutionState{
-				Status:      shared.FailedExecutionStatus,
-				FailureType: &failureType,
-				Error: &shared.Error{
-					Context: err.Error(),
-					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,
-				},
-			}
-			continue
-		}
-
-		responses[id] = operatorMetadata
+func convertToPreviewArtifactResponse(ctx context.Context, artf artifact2.Artifact) (*previewArtifactResponse, error) {
+	content, err := artf.GetContent(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return responses
-}
 
-func deserializeArtifactResponses(
-	ctx context.Context,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	storageConfig *shared.StorageConfig,
-	dagArtifacts map[uuid.UUID]artifact.DBArtifact,
-	artifactsToSkipFetch map[uuid.UUID]bool,
-) (map[uuid.UUID]previewArtifactResponse, error) {
-	responses := make(map[uuid.UUID]previewArtifactResponse, len(workflowStoragePaths.ArtifactPaths))
-	for id, contentPath := range workflowStoragePaths.ArtifactPaths {
-		if _, ok := artifactsToSkipFetch[id]; ok {
-			continue
-		}
-
-		content, err := storage.NewStorage(storageConfig).Get(ctx, contentPath)
+	if artf.Type() == artifact.FloatType {
+		val, err := strconv.ParseFloat(string(content), 32)
 		if err != nil {
 			return nil, err
 		}
 
-		artifactSpec := dagArtifacts[id].Spec
-		if artifactSpec.IsFloat() {
-			val, err := strconv.ParseFloat(string(content), 32)
-			if err != nil {
-				return nil, err
-			}
-
-			responses[id] = previewArtifactResponse{
-				Metric: &previewFloatArtifactResponse{
-					Val: val,
-				},
-			}
-		} else if artifactSpec.IsBool() {
-			passed, err := strconv.ParseBool(string(content))
-			if err != nil {
-				return nil, err
-			}
-
-			responses[id] = previewArtifactResponse{
-				Check: &previewBoolArtifactResponse{
-					Passed: passed,
-				},
-			}
-		} else if artifactSpec.IsJson() {
-			responses[id] = previewArtifactResponse{
-				Param: &previewParamArtifactResponse{
-					Val: string(content),
-				},
-			}
-		} else if artifactSpec.IsTable() {
-
-			var metadata artifact_result.Metadata
-			err := utils.ReadFromStorage(ctx, storageConfig, workflowStoragePaths.ArtifactMetadataPaths[id], &metadata)
-			if err != nil {
-				metadata = artifact_result.Metadata{}
-			}
-
-			responses[id] = previewArtifactResponse{
-				Table: &previewTableArtifactResponse{
-					TableSchema: metadata.Schema,
-					Data:        string(content),
-				},
-			}
-		} else {
-			return nil, errors.Newf("Unsupported artifact spec %s", artifactSpec.Type())
+		return &previewArtifactResponse{
+			Metric: &previewFloatArtifactResponse{
+				Val: val,
+			},
+		}, nil
+	} else if artf.Type() == artifact.BoolType {
+		passed, err := strconv.ParseBool(string(content))
+		if err != nil {
+			return nil, err
 		}
+
+		return &previewArtifactResponse{
+			Check: &previewBoolArtifactResponse{
+				Passed: passed,
+			},
+		}, nil
+	} else if artf.Type() == artifact.JsonType {
+		return &previewArtifactResponse{
+			Param: &previewParamArtifactResponse{
+				Val: string(content),
+			},
+		}, nil
+	} else if artf.Type() == artifact.TableType {
+		metadata, err := artf.GetMetadata(ctx)
+		if err != nil {
+			metadata = artifact_result.Metadata{}
+		}
+		return &previewArtifactResponse{
+			Table: &previewTableArtifactResponse{
+				TableSchema: metadata.Schema,
+				Data:        string(content),
+			},
+		}, nil
 	}
-	return responses, nil
+	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {

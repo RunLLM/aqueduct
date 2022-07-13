@@ -23,7 +23,6 @@ type functionOperatorImpl struct {
 }
 
 func newFunctionOperator(
-	ctx context.Context,
 	baseFields baseOperator,
 ) (Operator, error) {
 	inputs := baseFields.inputs

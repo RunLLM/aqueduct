@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -28,6 +29,9 @@ type Artifact interface {
 	PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error
 
 	Finish(ctx context.Context)
+
+	GetMetadata(ctx context.Context) (artifact_result.Metadata, error)
+	GetContent(ctx context.Context) ([]byte, error)
 }
 
 func initializeArtifactResultInDatabase(
@@ -120,6 +124,23 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 	if !a.resultsPersisted {
 		utils.CleanupStorageFile(ctx, a.storageConfig, a.contentPath)
 	}
+}
+
+func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metadata, error) {
+	var metadata artifact_result.Metadata
+	err := utils.ReadFromStorage(ctx, a.storageConfig, a.metadataPath, &metadata)
+	if err != nil {
+		return nil, err
+	}
+	return &metadata, nil
+}
+
+func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
+	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.contentPath)
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
 }
 
 func NewArtifact(

@@ -22,10 +22,6 @@ type Operator interface {
 
 	JobSpec() job.Spec
 
-	// Lists immediate upstream and downstream dependencies.
-	Inputs() []artifact.Artifact
-	Outputs() []artifact.Artifact
-
 	// Indicates whether this operator is can be scheduled. This means that all
 	// dependencies to this operator have already been computed.
 	Ready(ctx context.Context) bool
@@ -108,7 +104,7 @@ func NewOperator(
 
 	if dbOperator.Spec.IsFunction() {
 		baseFields.jobName = generateFunctionJobName()
-		return newFunctionOperator(ctx, baseFields)
+		return newFunctionOperator(baseFields)
 	} else if dbOperator.Spec.IsMetric() {
 
 	} else if dbOperator.Spec.IsCheck() {

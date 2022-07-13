@@ -22,6 +22,7 @@ import (
 
 type WorkflowDag interface {
 	Operators() map[uuid.UUID]operator.Operator
+	Artifacts() map[uuid.UUID]artifact.Artifact
 
 	OperatorsOnArtifact(artifact.Artifact) ([]operator.Operator, error)
 	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
@@ -204,17 +205,6 @@ func NewWorkflowDag(
 		}
 	}
 
-	opsByInputArtifact := make(map[uuid.UUID][]operator.Operator, len(artifacts))
-	for _, op := range operators {
-		for _, inputArtifact := range op.Inputs() {
-			ops, ok := opsByInputArtifact[inputArtifact.ID()]
-			if !ok {
-				ops = make([]operator.Operator, 0, 1)
-			}
-			opsByInputArtifact[inputArtifact.ID()] = append(ops, op)
-		}
-	}
-
 	return &workflowDagImpl{
 
 		dbWorkflowDag: dbWorkflowDag,
@@ -236,6 +226,10 @@ func NewWorkflowDag(
 
 func (w *workflowDagImpl) Operators() map[uuid.UUID]operator.Operator {
 	return w.operators
+}
+
+func (w *workflowDagImpl) Artifacts() map[uuid.UUID]artifact.Artifact {
+	return w.artifacts
 }
 
 func (w *workflowDagImpl) OperatorsOnArtifact(artifact artifact.Artifact) ([]operator.Operator, error) {

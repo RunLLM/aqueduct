@@ -54,14 +54,6 @@ func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
-func (bo *baseOperator) Inputs() []artifact.Artifact {
-	return bo.inputs
-}
-
-func (bo *baseOperator) Outputs() []artifact.Artifact {
-	return bo.outputs
-}
-
 func (bo *baseOperator) Ready(ctx context.Context) bool {
 	for _, inputArtifact := range bo.inputs {
 		if !inputArtifact.Computed(ctx) {
