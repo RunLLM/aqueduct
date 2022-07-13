@@ -27,16 +27,17 @@ BUILT_IN_EXPANSIONS = {
 
 
 class RelationalParams(models.BaseParams):
-    # The query cannot be used until `apply_placeholders()` is called on it. This flushes out
-    # any user-defined tags like `{{today}}`.
-    # _query_is_usable is not passed in via the spec, so we prefix it with an _ to ensure that
-    # Pydantic ignores the field during validation
-    _query_is_usable: bool = False
-
     query: str
 
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
     github_metadata: Optional[Any]
+
+    def __init__(self):
+        super().__init__()
+
+        # The query cannot be used until `apply_placeholders()` is called on it. This flushes out
+        # any user-defined tags like `{{today}}`.
+        self._query_is_usable: bool = False
 
     def expand_placeholders(
         self,
