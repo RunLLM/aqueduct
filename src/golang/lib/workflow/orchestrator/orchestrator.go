@@ -63,6 +63,8 @@ func (orch *orchestratorImpl) Execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
+	defer dag.Finish(ctx)
+
 	status := shared.SucceededExecutionStatus
 	err := execute(
 		ctx,

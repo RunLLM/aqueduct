@@ -68,7 +68,6 @@ func NewOperator(
 	outputMetadataPaths []string,
 	opResultWriter operator_result.Writer, // A nil value means the operator is run in preview mode.
 	workflowDagResultID uuid.UUID,
-	serializedFunction []byte,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
@@ -108,7 +107,8 @@ func NewOperator(
 	}
 
 	if dbOperator.Spec.IsFunction() {
-		return newFunctionOperator(ctx, baseFields, serializedFunction)
+		baseFields.jobName = generateFunctionJobName()
+		return newFunctionOperator(ctx, baseFields)
 	} else if dbOperator.Spec.IsMetric() {
 
 	} else if dbOperator.Spec.IsCheck() {

@@ -25,7 +25,6 @@ type functionOperatorImpl struct {
 func newFunctionOperator(
 	ctx context.Context,
 	baseFields baseOperator,
-	serializedFunction []byte,
 ) (Operator, error) {
 	inputs := baseFields.inputs
 	outputs := baseFields.outputs
@@ -48,12 +47,6 @@ func newFunctionOperator(
 		}
 	}
 
-	serializedFunctionPath, err := uploadOperatorFile(ctx, baseFields.storageConfig, serializedFunction)
-	if err != nil {
-		return nil, err
-	}
-	baseFields.dbOperator.Spec.Function().StoragePath = serializedFunctionPath
-	baseFields.jobName = generateFunctionJobName()
 	return &functionOperatorImpl{
 		baseFields,
 	}, nil
