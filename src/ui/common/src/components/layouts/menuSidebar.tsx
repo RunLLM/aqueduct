@@ -179,9 +179,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           underline="none"
           component={RouterLink as any}
         >
-          <Typography variant="h3" sx={{ color: 'white' }}>
-            Aqueduct
-          </Typography>
+          <img style={{ maxWidth: '130px', width: '130px' }} src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_horizontal.png" />
         </Link>
 
         {/* popover target */}
