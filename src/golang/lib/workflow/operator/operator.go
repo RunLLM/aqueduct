@@ -108,7 +108,7 @@ func NewOperator(
 		db:                  db,
 		resultsPersisted:    false,
 
-		// TODO(kenxu): jobName is unset.Is there a better way than having the constructors do it?
+		// TODO(kenxu): jobName is unset. Is there a better way of setting this than having the specific type constructors do it?
 	}
 
 	if dbOperator.Spec.IsFunction() {
@@ -120,9 +120,11 @@ func NewOperator(
 	} else if dbOperator.Spec.IsExtract() {
 		return newExtractOperator(ctx, baseOp)
 	} else if dbOperator.Spec.IsLoad() {
-
+		return newLoadOperator(ctx, baseOp)
+	} else if dbOperator.Spec.IsParam() {
+		return newParamOperator(baseOp)
 	} else if dbOperator.Spec.IsSystemMetric() {
-
+		return newSystemMetricOperator(baseOp)
 	}
 
 	return nil, errors.Newf("Unsupported operator type %s", dbOperator.Spec.Type())

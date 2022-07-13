@@ -6,7 +6,6 @@ import (
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -31,7 +30,7 @@ func newExtractOperator(
 	outputs := base.outputs
 
 	if len(outputs) != 1 {
-		return nil, scheduler.ErrWrongNumOutputs
+		return nil, errWrongNumOutputs
 	}
 
 	for _, inputArtifact := range inputs {

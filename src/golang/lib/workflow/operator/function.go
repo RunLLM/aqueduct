@@ -4,7 +4,6 @@ import (
 	"fmt"
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -26,10 +25,10 @@ func newFunctionOperator(
 	outputs := base.outputs
 
 	if len(inputs) == 0 {
-		return nil, scheduler.ErrWrongNumInputs
+		return nil, errWrongNumInputs
 	}
 	if len(outputs) == 0 {
-		return nil, scheduler.ErrWrongNumOutputs
+		return nil, errWrongNumOutputs
 	}
 
 	for _, inputArtifact := range inputs {

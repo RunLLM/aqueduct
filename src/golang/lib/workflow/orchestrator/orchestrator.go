@@ -9,7 +9,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -20,11 +19,8 @@ const (
 )
 
 var (
-	ErrIncorrectOperatorsScheduled = errors.New("Incorrect number of operators scheduled.")
-	ErrOpExecSystemFailure         = errors.New("Operator execution failed due to system error.")
-	ErrOpExecBlockingUserFailure   = errors.New("Operator execution failed due to user error.")
-	ErrInvalidOpId                 = errors.New("Invalid operator ID.")
-	ErrInvalidArtifactId           = errors.New("Invalid artifact ID.")
+	ErrOpExecSystemFailure       = errors.New("Operator execution failed due to system error.")
+	ErrOpExecBlockingUserFailure = errors.New("Operator execution failed due to user error.")
 )
 
 type Orchestrator interface {
@@ -40,12 +36,12 @@ type orchestratorImpl struct {
 
 func NewOrchestrator(
 	jobManager job.JobManager,
-	pollInternval time.Duration,
+	pollInterval time.Duration,
 	shouldPersistResults bool,
 ) Orchestrator {
 	return &orchestratorImpl{
 		jobManager:           jobManager,
-		pollInterval:         time.Millisecond * 500,
+		pollInterval:         pollInterval,
 		shouldPersistResults: shouldPersistResults,
 	}
 }
@@ -156,10 +152,12 @@ func execute(
 			}
 
 			if execState.Status == shared.PendingExecutionStatus {
-				err = scheduler.ScheduleOperator(ctx, op, jobManager)
+				spec := op.JobSpec()
+				err = jobManager.Launch(ctx, spec.JobName(), spec)
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
+
 			} else if execState.Status == shared.RunningExecutionStatus {
 				continue
 			} else if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {

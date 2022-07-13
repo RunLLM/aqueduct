@@ -3,7 +3,6 @@ package operator
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -17,10 +16,10 @@ func newCheckOperator(base baseFunctionOperator) (Operator, error) {
 	inputs := base.inputs
 	outputs := base.outputs
 	if len(inputs) == 0 {
-		return nil, scheduler.ErrWrongNumInputs
+		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 1 {
-		return nil, scheduler.ErrWrongNumOutputs
+		return nil, errWrongNumOutputs
 	}
 
 	for _, inputArtifact := range inputs {

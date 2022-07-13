@@ -271,94 +271,6 @@ func NewBasePythonSpec(
 	}
 }
 
-// NewFunctionSpec constructs a Spec for a FunctionJob.
-func NewFunctionSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	functionPath string,
-	entryPointFile string,
-	entryPointClass string,
-	entryPointMethod string,
-	customArgs string,
-	inputContentPaths []string,
-	inputMetadataPaths []string,
-	outputContentPaths []string,
-	outputMetadataPaths []string,
-	inputArtifactTypes []artifact.Type,
-	outputArtifactTypes []artifact.Type,
-) Spec {
-	return &FunctionSpec{
-		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
-				Type: FunctionJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		FunctionPath:        functionPath,
-		EntryPointFile:      entryPointFile,
-		EntryPointClass:     entryPointClass,
-		EntryPointMethod:    entryPointMethod,
-		CustomArgs:          customArgs,
-		InputContentPaths:   inputContentPaths,
-		InputMetadataPaths:  inputMetadataPaths,
-		OutputContentPaths:  outputContentPaths,
-		OutputMetadataPaths: outputMetadataPaths,
-		InputArtifactTypes:  inputArtifactTypes,
-		OutputArtifactTypes: outputArtifactTypes,
-	}
-}
-
-func NewParamSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	val string,
-	outputContentPath string,
-	outputMetadataPath string,
-) Spec {
-	return &ParamSpec{
-		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
-				Type: ParamJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		Val:                val,
-		OutputMetadataPath: outputMetadataPath,
-		OutputContentPath:  outputContentPath,
-	}
-}
-
-func NewSystemMetricSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	metricName string,
-	inputMetadataPaths []string,
-	outputContentPath string,
-	outputMetadataPath string,
-) Spec {
-	return &SystemMetricSpec{
-		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
-				Type: SystemMetricJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		InputMetadataPaths: inputMetadataPaths,
-		OutputContentPath:  outputContentPath,
-		OutputMetadataPath: outputMetadataPath,
-		MetricName:         metricName,
-	}
-}
-
 func NewAuthenticateSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
@@ -411,34 +323,6 @@ func NewExtractSpec(
 		Parameters:         parameters,
 		OutputContentPath:  outputContentPath,
 		OutputMetadataPath: outputMetadataPath,
-	}
-}
-
-// NewLoadSpec constructs a Spec for a LoadJob.
-func NewLoadSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	connectorName integration.Service,
-	connectorConfig auth.Config,
-	parameters connector.LoadParams,
-	inputContentPath string,
-	inputMetadataPath string,
-) Spec {
-	return &LoadSpec{
-		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
-				Type: LoadJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
-		InputContentPath:  inputContentPath,
-		InputMetadataPath: inputMetadataPath,
 	}
 }
 
