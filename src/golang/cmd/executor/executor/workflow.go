@@ -106,7 +106,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	orch := orchestrator.NewOrchestrator(ex.JobManager, pollingIntervalMS, true /* shouldPersistResults */)
 	workflowDag, err := dag.NewWorkflowDag(
 		ctx,
-		dagSummary,
+		dbWorkflowDag,
 		ex.WorkflowDagResultWriter,
 		ex.OperatorResultWriter,
 		ex.ArtifactResultWriter,

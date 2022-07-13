@@ -7,19 +7,9 @@ import (
 	operator2 "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -228,63 +218,4 @@ func execute(
 		return errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps)))
 	}
 	return nil
-}
-
-func Preview(
-	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	pollIntervalMillisec time.Duration,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-) (shared.ExecutionStatus, error) {
-	return deprecatedOrchestrate(
-		ctx,
-		dag,
-		workflowStoragePaths,
-		pollIntervalMillisec,
-		workflow.NewNoopReader(true),
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
-		database.NewNoopDatabase(),
-		jobManager,
-		vaultObject,
-		true,
-	)
-}
-
-func Execute(
-	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	pollIntervalMillisec time.Duration,
-	workflowReader workflow.Reader,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
-	db database.Database,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-) (shared.ExecutionStatus, error) {
-	return deprecatedOrchestrate(
-		ctx,
-		dag,
-		workflowStoragePaths,
-		pollIntervalMillisec,
-		workflowReader,
-		workflowDagResultWriter,
-		operatorResultWriter,
-		artifactResultWriter,
-		notificationWriter,
-		userReader,
-		db,
-		jobManager,
-		vaultObject,
-		false,
-	)
 }

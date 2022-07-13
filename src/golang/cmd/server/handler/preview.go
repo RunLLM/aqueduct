@@ -2,11 +2,6 @@ package handler
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	dag "github.com/aqueducthq/aqueduct/lib/workflow"
 	"net/http"
 	"strconv"
@@ -160,20 +155,13 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		previewPollIntervalMillisec,
 		false, /* shouldPersistResults */
 	)
-	workflowDag, err := dag.NewWorkflowDag(
+	workflowDag, err := dag.NewWorkflowDagNoPersist(
 		ctx,
-		dagSummary,
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		workflow.NewNoopReader(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
+		dagSummary.Dag,
 		h.JobManager,
 		h.Vault,
 		h.StorageConfig,
 		h.Database,
-		false, /* canPersist */
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")

@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 	operator2 "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -10,9 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -287,39 +284,4 @@ func deprecatedScheduleOperator(
 
 	// If we reach here, the operator opSpec type is not supported.
 	return "", errors.Newf("Unsupported operator opSpec with type %s", op.Spec.Type())
-}
-
-// CheckOperatorExecutionStatus returns the operator metadata (if it exists) and the operator status
-// of a completed job.
-func CheckOperatorExecutionStatus(
-	ctx context.Context,
-	storageConfig *shared.StorageConfig,
-	operatorMetadataPath string,
-) *shared.ExecutionState {
-	var logs shared.ExecutionState
-	err := utils.ReadFromStorage(
-		ctx,
-		storageConfig,
-		operatorMetadataPath,
-		&logs,
-	)
-	if err != nil {
-		// Treat this as a system internal error since operator metadata was not found
-		log.Errorf(
-			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
-			err,
-		)
-
-		failureType := shared.SystemFailure
-		return &shared.ExecutionState{
-			Status:      shared.FailedExecutionStatus,
-			FailureType: &failureType,
-			Error: &shared.Error{
-				Context: fmt.Sprintf("%v", err),
-				Tip:     shared.TipUnknownInternalError,
-			},
-		}
-	}
-
-	return &logs
 }

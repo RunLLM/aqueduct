@@ -2,7 +2,6 @@ package dag
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -66,9 +65,34 @@ func initializeDagResultInDatabase(
 	return workflowDagResult.Id, nil
 }
 
+func NewWorkflowDagNoPersist(
+	ctx context.Context,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	jobManager job.JobManager,
+	vaultObject vault.Vault,
+	storageConfig *shared.StorageConfig,
+	db database.Database,
+) (WorkflowDag, error) {
+	return NewWorkflowDag(
+		ctx,
+		dbWorkflowDag,
+		workflow_dag_result.NewNoopWriter(true),
+		operator_result.NewNoopWriter(true),
+		artifact_result.NewNoopWriter(true),
+		workflow.NewNoopReader(true),
+		notification.NewNoopWriter(true),
+		user.NewNoopReader(true),
+		jobManager,
+		vaultObject,
+		storageConfig,
+		db,
+		false, /* canPersist */
+	)
+}
+
 func NewWorkflowDag(
 	ctx context.Context,
-	dagSummary *request.DagSummary,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 	dagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -81,7 +105,6 @@ func NewWorkflowDag(
 	db database.Database,
 	canPersist bool,
 ) (WorkflowDag, error) {
-	dbWorkflowDag := dagSummary.Dag
 
 	// First, allocate a content and metadata path for each artifact.
 	artifactIDToContentPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
