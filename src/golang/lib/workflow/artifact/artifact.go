@@ -73,15 +73,15 @@ type ArtifactImpl struct {
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
-	// TODO(kenxu)
+	return a.id
 }
 
 func (a *ArtifactImpl) Type() artifact.Type {
-	// TODO(kenxu)
+	return a.artifactType
 }
 
 func (a *ArtifactImpl) Name() string {
-	// TODO(kenxu)
+	return a.name
 }
 
 func (a *ArtifactImpl) Computed() bool {
