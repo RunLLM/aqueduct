@@ -9,7 +9,7 @@ from aqueduct.artifact import Artifact, get_artifact_type
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
-from aqueduct.error import ArtifactNotFoundException
+from aqueduct.error import InternalAqueductError
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
 from aqueduct.param_artifact import ParamArtifact
@@ -111,7 +111,7 @@ class FlowRun:
                 self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
             )
 
-        return None
+        raise InternalAqueductError("The artifact's type can not be recognized.")
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of
