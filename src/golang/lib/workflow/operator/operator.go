@@ -69,6 +69,13 @@ func NewOperator(
 	storageConfig *shared.StorageConfig,
 	db database.Database,
 ) (Operator, error) {
+	if len(inputs) != len(inputContentPaths) || len(inputs) != len(inputMetadataPaths) {
+		return nil, errors.New("Internal error: mismatched number of input arguments.")
+	}
+	if len(outputs) != len(outputContentPaths) || len(outputs) != len(outputMetadataPaths) {
+		return nil, errors.New("Internal error: mismatched number of output arguments.")
+	}
+
 	var opResultID uuid.UUID
 	if workflowDagResultID != uuid.Nil {
 		var err error
@@ -84,7 +91,7 @@ func NewOperator(
 		}
 	}
 
-	baseFields := baseOperator{
+	baseOp := baseOperator{
 		dbOperator:          &dbOperator,
 		opResultWriter:      opResultWriter,
 		opResultID:          opResultID,
@@ -100,21 +107,23 @@ func NewOperator(
 		storageConfig:       storageConfig,
 		db:                  db,
 		resultsPersisted:    false,
+
+		// TODO(kenxu): jobName is unset.Is there a better way than having the constructors do it?
 	}
 
 	if dbOperator.Spec.IsFunction() {
-		baseFields.jobName = generateFunctionJobName()
-		return newFunctionOperator(baseFields)
+		return newFunctionOperator(baseFunctionOperator{baseOp})
 	} else if dbOperator.Spec.IsMetric() {
-
+		return newMetricOperator(baseFunctionOperator{baseOp})
 	} else if dbOperator.Spec.IsCheck() {
-
+		return newCheckOperator(baseFunctionOperator{baseOp})
 	} else if dbOperator.Spec.IsExtract() {
-
+		return newExtractOperator(ctx, baseOp)
 	} else if dbOperator.Spec.IsLoad() {
 
 	} else if dbOperator.Spec.IsSystemMetric() {
 
 	}
+
 	return nil, errors.Newf("Unsupported operator type %s", dbOperator.Spec.Type())
 }

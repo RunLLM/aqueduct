@@ -30,7 +30,7 @@ type Artifact interface {
 
 	Finish(ctx context.Context)
 
-	GetMetadata(ctx context.Context) (artifact_result.Metadata, error)
+	GetMetadata(ctx context.Context) (*artifact_result.Metadata, error)
 	GetContent(ctx context.Context) ([]byte, error)
 }
 
@@ -67,8 +67,6 @@ type ArtifactImpl struct {
 	artifactResultWriter artifact_result.Writer
 	artifactResultID     uuid.UUID
 
-	//jobManager job.JobManager
-	//vaultObject vault.Vault
 	storageConfig *shared.StorageConfig
 	db            database.Database
 

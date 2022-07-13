@@ -3,7 +3,9 @@ package operator
 import (
 	"context"
 	"fmt"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -64,6 +66,10 @@ func (bo *baseOperator) Ready(ctx context.Context) bool {
 }
 
 func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
+	if bo.jobName == "" {
+		return nil, errors.Newf("Internal error: a jobname was not set for this operator.")
+	}
+
 	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
 		return nil, err
@@ -148,4 +154,65 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 	for _, outputArtifact := range bo.outputs {
 		outputArtifact.Finish(ctx)
 	}
+}
+
+// Any operator that runs a python function serialized from storage should use this instead of baseOperator.
+type baseFunctionOperator struct {
+	baseOperator
+}
+
+func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
+	// If the operator was not persisted to the DB, cleanup the serialized function.
+	if !bfo.resultsPersisted {
+		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
+	}
+
+	bfo.baseOperator.Finish(ctx)
+}
+
+const (
+	defaultFunctionEntryPointFile   = "model.py"
+	defaultFunctionEntryPointClass  = "Function"
+	defaultFunctionEntryPointMethod = "predict"
+)
+
+func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
+	entryPoint := fn.EntryPoint
+	if entryPoint == nil {
+		entryPoint = &function.EntryPoint{
+			File:      defaultFunctionEntryPointFile,
+			ClassName: defaultFunctionEntryPointClass,
+			Method:    defaultFunctionEntryPointMethod,
+		}
+	}
+
+	inputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.inputs))
+	outputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.outputs))
+	for _, inputArtifact := range bfo.inputs {
+		inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Type())
+	}
+	for _, outputArtifact := range bfo.outputs {
+		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
+	}
+
+	return &job.FunctionSpec{
+		BasePythonSpec: job.NewBasePythonSpec(
+			job.FunctionJobType,
+			bfo.jobName,
+			*bfo.storageConfig,
+			bfo.opMetadataPath,
+		),
+		FunctionPath:        fn.StoragePath,
+		EntryPointFile:      entryPoint.File,
+		EntryPointClass:     entryPoint.ClassName,
+		EntryPointMethod:    entryPoint.Method,
+		CustomArgs:          fn.CustomArgs,
+		InputContentPaths:   bfo.inputContentPaths,
+		InputMetadataPaths:  bfo.inputMetadataPaths,
+		OutputContentPaths:  bfo.outputContentPaths,
+		OutputMetadataPaths: bfo.outputMetadataPaths,
+		InputArtifactTypes:  inputArtifactTypes,
+		OutputArtifactTypes: outputArtifactTypes,
+	}
+
 }

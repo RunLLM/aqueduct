@@ -191,7 +191,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
 	for _, artf := range workflowDag.Artifacts() {
 		if artf.Computed(ctx) {
-			artifactResp, err := convertToPreviewArtifactResponse(artf)
+			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
@@ -243,7 +243,7 @@ func convertToPreviewArtifactResponse(ctx context.Context, artf artifact2.Artifa
 	} else if artf.Type() == artifact.TableType {
 		metadata, err := artf.GetMetadata(ctx)
 		if err != nil {
-			metadata = artifact_result.Metadata{}
+			metadata = &artifact_result.Metadata{}
 		}
 		return &previewArtifactResponse{
 			Table: &previewTableArtifactResponse{
