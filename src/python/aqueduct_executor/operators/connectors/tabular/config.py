@@ -29,7 +29,6 @@ class S3Config(models.BaseConfig):
     access_key_id: str
     secret_access_key: str
     bucket: str
-    region: Optional[str] = None
 
 
 class SnowflakeConfig(models.BaseConfig):

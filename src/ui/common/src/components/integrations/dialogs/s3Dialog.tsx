@@ -6,7 +6,6 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
   bucket: 'aqueduct',
-  region: '',
   access_key_id: '',
   secret_access_key: '',
 };
@@ -17,19 +16,17 @@ type Props = {
 
 export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [bucket, setBucket] = useState<string>(null);
-  const [region, setRegion] = useState<string>(null);
   const [accessKeyId, setAccessKeyId] = useState<string>(null);
   const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
 
   useEffect(() => {
     const config: S3Config = {
       bucket: bucket,
-      region: region,
       access_key_id: accessKeyId,
       secret_access_key: secretAccessKey,
     };
     setDialogConfig(config);
-  }, [bucket, region, accessKeyId, secretAccessKey]);
+  }, [bucket, accessKeyId, secretAccessKey]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -41,16 +38,6 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         placeholder={Placeholders.bucket}
         onChange={(event) => setBucket(event.target.value)}
         value={bucket}
-      />
-
-      <IntegrationTextInputField
-        spellCheck={false}
-        required={true}
-        label="Region*"
-        description="The AWS region that the bucket is located in (e.g., us-east-2)."
-        placeholder={Placeholders.region}
-        onChange={(event) => setRegion(event.target.value)}
-        value={region}
       />
 
       <IntegrationTextInputField

@@ -81,7 +81,6 @@ export type SalesforceConfig = {
 
 export type S3Config = {
   bucket: string;
-  region: string;
   access_key_id: string;
   secret_access_key: string;
 };
