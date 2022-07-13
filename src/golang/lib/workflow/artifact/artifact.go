@@ -21,11 +21,11 @@ type Artifact interface {
 	// Indicates whether this artifact has been computed or not. An artifact is
 	// only considered computed if the operator that generates it has completed
 	// successfully.
-	Computed() bool
+	Computed(ctx context.Context) bool
 
 	// Writes the data of this artifact to a backing store so it can be fetched later.
 	// Errors if the artifact has not yet been computed.
-	PersistResult(opStatus shared.ExecutionStatus) error
+	PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error
 
 	Finish(ctx context.Context)
 }
@@ -52,7 +52,6 @@ func initializeArtifactResultInDatabase(
 }
 
 type ArtifactImpl struct {
-	ctx          context.Context
 	id           uuid.UUID
 	name         string
 	description  string
@@ -84,19 +83,24 @@ func (a *ArtifactImpl) Name() string {
 	return a.name
 }
 
-func (a *ArtifactImpl) Computed() bool {
-	// TODO(kenxu):
+func (a *ArtifactImpl) Computed(ctx context.Context) bool {
+	// An artifact is only considered computed if its metadata path has been populated.
+	return utils.CheckIfObjectExistsInStorage(
+		ctx,
+		a.storageConfig,
+		a.metadataPath,
+	)
 }
 
-func (a *ArtifactImpl) PersistResult(opStatus shared.ExecutionStatus) error {
+func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {
 	if a.persisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
-	if !a.Computed() {
+	if !a.Computed(ctx) {
 		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
 	}
 	utils.UpdateArtifactResultAfterComputation(
-		a.ctx,
+		ctx,
 		opStatus,
 		a.storageConfig,
 		a.metadataPath,
@@ -140,7 +144,6 @@ func NewArtifact(
 	}
 
 	return &ArtifactImpl{
-		ctx:                  ctx,
 		id:                   dbArtifact.Id,
 		name:                 dbArtifact.Name,
 		description:          dbArtifact.Description,

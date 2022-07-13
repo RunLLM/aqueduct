@@ -17,7 +17,6 @@ import (
 )
 
 type baseOperator struct {
-	ctx        context.Context
 	dbOperator *operator.DBOperator
 
 	// These fields are set to nil in the preview case.
@@ -61,24 +60,24 @@ func (bo *baseOperator) Outputs() []artifact.Artifact {
 	return bo.outputs
 }
 
-func (bo *baseOperator) Ready() bool {
+func (bo *baseOperator) Ready(ctx context.Context) bool {
 	for _, inputArtifact := range bo.inputs {
-		if !inputArtifact.Computed() {
+		if !inputArtifact.Computed(ctx) {
 			return false
 		}
 	}
 	return true
 }
 
-func (bo *baseOperator) GetExecState() (*shared.ExecutionState, error) {
-	status, err := bo.jobManager.Poll(bo.ctx, bo.jobName)
+func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
+	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
 		return nil, err
 	}
 	if status == shared.SucceededExecutionStatus || status == shared.FailedExecutionStatus {
 		var execState shared.ExecutionState
 		err = utils.ReadFromStorage(
-			bo.ctx,
+			ctx,
 			bo.storageConfig,
 			bo.opMetadataPath,
 			&execState,
@@ -115,8 +114,8 @@ func (bo *baseOperator) GetExecState() (*shared.ExecutionState, error) {
 
 }
 
-func (bo *baseOperator) PersistResult() error {
-	execState, err := bo.GetExecState()
+func (bo *baseOperator) PersistResult(ctx context.Context) error {
+	execState, err := bo.GetExecState(ctx)
 	if err != nil {
 		return err
 	}
@@ -126,7 +125,7 @@ func (bo *baseOperator) PersistResult() error {
 
 	// Best effort writes after this point.
 	utils.UpdateOperatorResultAfterComputation(
-		bo.ctx,
+		ctx,
 		execState.Status,
 		bo.storageConfig,
 		bo.opMetadataPath,
@@ -136,7 +135,7 @@ func (bo *baseOperator) PersistResult() error {
 	)
 
 	for _, outputArtifact := range bo.outputs {
-		err = outputArtifact.PersistResult(execState.Status)
+		err = outputArtifact.PersistResult(ctx, execState.Status)
 		if err != nil {
 			log.Errorf(fmt.Sprintf("Error occurred when persisting artifact %s.", outputArtifact.Name()))
 		}

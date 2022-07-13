@@ -28,12 +28,12 @@ type Operator interface {
 
 	// Indicates whether this operator is can be scheduled. This means that all
 	// dependencies to this operator have already been computed.
-	Ready() bool
+	Ready(ctx context.Context) bool
 
 	// Performs a non-blocking fetch of the execution state of this operator.
-	GetExecState() (*shared.ExecutionState, error)
+	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
 
-	PersistResult() error
+	PersistResult(ctx context.Context) error
 
 	Finish()
 }

@@ -174,7 +174,7 @@ func execute(
 
 			// The operator must have finished executing and is in either a success or failed state.
 			if shouldPersistResults {
-				err = op.PersistResult()
+				err = op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}

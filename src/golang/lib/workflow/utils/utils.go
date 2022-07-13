@@ -92,6 +92,11 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 	}
 }
 
+func CheckIfObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
+	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
+	return err == nil
+}
+
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
 	// Read data from storage and deserialize payload to `container`
 	serializedPayload, err := storage.NewStorage(storageConfig).Get(ctx, path)
@@ -633,6 +638,7 @@ func UpdateArtifactResultAfterComputation(
 		)
 		if err != nil {
 			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
+			return
 		}
 
 		changes[artifact_result.MetadataColumn] = artifactResultMetadata
