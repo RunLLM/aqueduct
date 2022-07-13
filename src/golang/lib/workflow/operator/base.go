@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type baseOperatorFields struct {
+type baseOperator struct {
 	ctx        context.Context
 	dbOperator *operator.DBOperator
 
@@ -41,27 +41,27 @@ type baseOperatorFields struct {
 	db            database.Database
 }
 
-func (bo *baseOperatorFields) Type() operator.Type {
+func (bo *baseOperator) Type() operator.Type {
 	return bo.dbOperator.Spec.Type()
 }
 
-func (bo *baseOperatorFields) Name() string {
+func (bo *baseOperator) Name() string {
 	return bo.dbOperator.Name
 }
 
-func (bo *baseOperatorFields) ID() uuid.UUID {
+func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
-func (bo *baseOperatorFields) Inputs() []artifact.Artifact {
+func (bo *baseOperator) Inputs() []artifact.Artifact {
 	return bo.inputs
 }
 
-func (bo *baseOperatorFields) Outputs() []artifact.Artifact {
+func (bo *baseOperator) Outputs() []artifact.Artifact {
 	return bo.outputs
 }
 
-func (bo *baseOperatorFields) Ready() bool {
+func (bo *baseOperator) Ready() bool {
 	for _, inputArtifact := range bo.inputs {
 		if !inputArtifact.Computed() {
 			return false
@@ -70,7 +70,7 @@ func (bo *baseOperatorFields) Ready() bool {
 	return true
 }
 
-func (bo *baseOperatorFields) GetExecState() (*shared.ExecutionState, error) {
+func (bo *baseOperator) GetExecState() (*shared.ExecutionState, error) {
 	status, err := bo.jobManager.Poll(bo.ctx, bo.jobName)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (bo *baseOperatorFields) GetExecState() (*shared.ExecutionState, error) {
 
 }
 
-func (bo *baseOperatorFields) PersistResult() error {
+func (bo *baseOperator) PersistResult() error {
 	execState, err := bo.GetExecState()
 	if err != nil {
 		return err
@@ -135,7 +135,6 @@ func (bo *baseOperatorFields) PersistResult() error {
 		bo.db,
 	)
 
-	// TODO: move this to artifact persist.
 	for _, outputArtifact := range bo.outputs {
 		err = outputArtifact.PersistResult(execState.Status)
 		if err != nil {
@@ -143,4 +142,12 @@ func (bo *baseOperatorFields) PersistResult() error {
 		}
 	}
 	return nil
+}
+
+func (bo *baseOperator) Finish(ctx context.Context) {
+	utils.CleanupStorageFile(ctx, bo.storageConfig, bo.opMetadataPath)
+
+	for _, outputArtifact := range bo.outputs {
+		outputArtifact.Finish(ctx)
+	}
 }

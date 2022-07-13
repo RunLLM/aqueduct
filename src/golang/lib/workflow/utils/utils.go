@@ -79,6 +79,10 @@ func CleanupWorkflowStorageFiles(
 	CleanupStorageFiles(ctx, storageConfig, paths)
 }
 
+func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
+	CleanupStorageFiles(ctx, storageConfig, []string{key})
+}
+
 func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfig, keys []string) {
 	for _, key := range keys {
 		err := storage.NewStorage(storageConfig).Delete(ctx, key)

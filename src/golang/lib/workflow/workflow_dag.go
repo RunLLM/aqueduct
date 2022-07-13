@@ -28,6 +28,7 @@ type WorkflowDag interface {
 	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
 
 	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
+	Finish(ctx context.Context)
 }
 
 type workflowDagImpl struct {
@@ -258,4 +259,14 @@ func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.Execu
 		w.userReader,
 		w.db,
 	)
+	return nil
+}
+
+func (w *workflowDagImpl) Finish(ctx context.Context) {
+	for _, op := range w.operators {
+		op.Finish(ctx)
+	}
+	for _, artf := range w.artifacts {
+		artf.Finish(ctx)
+	}
 }

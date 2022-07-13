@@ -223,7 +223,7 @@ func execute(
 	}
 
 	if len(completedOps) != len(dag.Operators()) {
-		return errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators), len(completedOps)))
+		return errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps)))
 	}
 	return nil
 }

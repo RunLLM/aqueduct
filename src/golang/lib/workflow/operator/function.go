@@ -17,11 +17,11 @@ const (
 )
 
 type functionOperatorImpl struct {
-	baseOperatorFields
+	baseOperator
 }
 
 func newFunctionOperator(
-	baseFields baseOperatorFields,
+	baseFields baseOperator,
 ) (Operator, error) {
 	inputs := baseFields.inputs
 	outputs := baseFields.outputs

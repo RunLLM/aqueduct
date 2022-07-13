@@ -2,7 +2,6 @@ package artifact
 
 import (
 	"context"
-	"fmt"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -27,6 +26,8 @@ type Artifact interface {
 	// Writes the data of this artifact to a backing store so it can be fetched later.
 	// Errors if the artifact has not yet been computed.
 	PersistResult(opStatus shared.ExecutionStatus) error
+
+	Finish(ctx context.Context)
 }
 
 func initializeArtifactResultInDatabase(
@@ -67,6 +68,8 @@ type ArtifactImpl struct {
 	//vaultObject vault.Vault
 	storageConfig *shared.StorageConfig
 	db            database.Database
+
+	persisted bool
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
@@ -86,8 +89,11 @@ func (a *ArtifactImpl) Computed() bool {
 }
 
 func (a *ArtifactImpl) PersistResult(opStatus shared.ExecutionStatus) error {
+	if a.persisted {
+		return errors.Newf("Artifact %s was already persisted!", a.name)
+	}
 	if !a.Computed() {
-		return errors.Newf(fmt.Sprintf("Artifact %s cannot be persisted because it has not been computed.", a.name))
+		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
 	}
 	utils.UpdateArtifactResultAfterComputation(
 		a.ctx,
@@ -98,7 +104,18 @@ func (a *ArtifactImpl) PersistResult(opStatus shared.ExecutionStatus) error {
 		a.artifactResultID,
 		a.db,
 	)
+	a.persisted = true
 	return nil
+}
+
+func (a *ArtifactImpl) Finish(ctx context.Context) {
+	utils.CleanupStorageFile(ctx, a.storageConfig, a.metadataPath)
+
+	// If the artifact was persisted to the DB, don't cleanup the content paths,
+	// since we may need that data later.
+	if !a.persisted {
+		utils.CleanupStorageFile(ctx, a.storageConfig, a.contentPath)
+	}
 }
 
 func NewArtifact(
@@ -112,7 +129,9 @@ func NewArtifact(
 	db database.Database,
 ) (Artifact, error) {
 	var artifactResultID uuid.UUID
-	if workflowDagResultID != uuid.Nil {
+
+	canPersist := workflowDagResultID != uuid.Nil
+	if canPersist {
 		var err error
 		artifactResultID, err = initializeArtifactResultInDatabase(ctx, dbArtifact.Id, workflowDagResultID, artifactResultWriter, contentPath, db)
 		if err != nil {
@@ -130,6 +149,7 @@ func NewArtifact(
 		metadataPath:         metadataPath,
 		artifactResultID:     artifactResultID,
 		artifactResultWriter: artifactResultWriter,
+		persisted:            false,
 		db:                   db,
 	}, nil
 }

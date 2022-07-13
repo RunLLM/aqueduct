@@ -34,6 +34,8 @@ type Operator interface {
 	GetExecState() (*shared.ExecutionState, error)
 
 	PersistResult() error
+
+	Finish()
 }
 
 func initializeOperatorResultInDatabase(
@@ -86,7 +88,7 @@ func NewOperator(
 		}
 	}
 
-	baseFields := baseOperatorFields{
+	baseFields := baseOperator{
 		dbOperator:          &dbOperator,
 		opResultWriter:      opResultWriter,
 		opResultID:          opResultID,
