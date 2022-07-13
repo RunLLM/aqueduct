@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
-import { IntegrationConfig, AirflowConfig } from '../../../utils/integrations';
+import { AirflowConfig, IntegrationConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AirflowConfig = {

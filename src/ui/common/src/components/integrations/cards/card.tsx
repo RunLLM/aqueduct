@@ -125,7 +125,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Airflow':
       serviceCard = <AirflowCard integration={integration} />;
-      break;  
+      break;
     default:
       serviceCard = null;
   }

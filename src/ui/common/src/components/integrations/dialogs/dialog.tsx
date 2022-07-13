@@ -220,7 +220,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       break;
     case 'Airflow':
       serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
-      break;  
+      break;
     default:
       return null;
   }
