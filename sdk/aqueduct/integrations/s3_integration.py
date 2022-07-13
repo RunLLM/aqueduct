@@ -40,7 +40,13 @@ class S3Integration(Integration):
 
         Args:
             filepath:
-                Filepath to retrieve from.
+                Filepath to retrieve from. The filepath can either be:
+                1) a single string that represents a file name or a directory name. The directory 
+                name must ends with a `/`. In case of a file name, we attempt to retrieve that file,
+                and in case of a directory name, we do a prefix search on the directory and retrieve
+                all matched files and concatenate them into a single file.
+                2) a list of strings representing the file name. Note that in this case, we do not
+                accept directory names in the list.
             name:
                 Name of the query.
             description:
