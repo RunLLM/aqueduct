@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from aqueduct.error import IncompleteFlowException
+from aqueduct.table_artifact import TableArtifact
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from test_metrics.constant.model import constant_metric
@@ -168,5 +169,47 @@ def test_refresh_flow(client):
         num_initial_runs = wait_for_flow_runs(client, flow.id())
         client.trigger(flow.id())
         wait_for_flow_runs(client, flow.id(), num_runs=num_initial_runs + 1)
+    finally:
+        client.delete_flow(flow.id())
+
+
+@pytest.mark.publish
+def test_get_artifact_from_flow(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact.save(
+        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
+    )
+    flow = client.publish_flow(
+        name=generate_new_flow_name(),
+        artifacts=[output_artifact],
+    )
+    try:
+        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        artifact_return = flow.latest().artifact(output_artifact.name())
+        assert artifact_return.name() == output_artifact.name()
+        assert artifact_return.get().equals(output_artifact.get())
+    finally:
+        client.delete_flow(flow.id())
+
+
+@pytest.mark.publish
+def test_get_artifact_reuse_for_computation(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact.save(
+        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
+    )
+    flow = client.publish_flow(
+        name=generate_new_flow_name(),
+        artifacts=[output_artifact],
+    )
+    try:
+        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        artifact_return = flow.latest().artifact(output_artifact.name())
+        with pytest.raises(Exception):
+            output_artifact = run_sentiment_model(artifact_return)
     finally:
         client.delete_flow(flow.id())
