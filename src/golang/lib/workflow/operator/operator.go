@@ -35,7 +35,7 @@ type Operator interface {
 
 	PersistResult(ctx context.Context) error
 
-	Finish()
+	Finish(ctx context.Context)
 }
 
 func initializeOperatorResultInDatabase(

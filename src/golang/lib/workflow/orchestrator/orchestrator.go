@@ -87,6 +87,7 @@ func (orch *orchestratorImpl) Execute(
 }
 
 func waitForInProgressOperators(
+	ctx context.Context,
 	inProgressOps map[uuid.UUID]operator2.Operator,
 	pollInterval time.Duration,
 	timeout time.Duration,
@@ -98,7 +99,7 @@ func waitForInProgressOperators(
 		}
 
 		for opID, op := range inProgressOps {
-			execState, err := op.GetExecState()
+			execState, err := op.GetExecState(ctx)
 
 			// Resolve any jobs that aren't actively running or failed. We don't are if they succeeded or failed,
 			// since this is called after orchestration exits.
@@ -135,7 +136,7 @@ func execute(
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
-		if op.Ready() {
+		if op.Ready(ctx) {
 			inProgressOps[op.ID()] = op
 		}
 	}
@@ -145,7 +146,7 @@ func execute(
 	}
 
 	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(inProgressOps, pollInterval, cleanupTimeout)
+	defer waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 
 	start := time.Now()
 
@@ -156,7 +157,7 @@ func execute(
 		}
 
 		for _, op := range inProgressOps {
-			execState, err := op.GetExecState()
+			execState, err := op.GetExecState(ctx)
 			if err != nil {
 				return err
 			}
@@ -204,7 +205,7 @@ func execute(
 				for _, nextOp := range nextOps {
 					// Before scheduling the next operator, check that all upstream artifacts to that operator
 					// have been computed.
-					if !nextOp.Ready() {
+					if !nextOp.Ready(ctx) {
 						continue
 					}
 
