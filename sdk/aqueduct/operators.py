@@ -54,6 +54,8 @@ class GoogleSheetsExtractParams(BaseModel):
 
 
 class S3ExtractParams(BaseModel):
+    # Note that since we expect the path to be either a string or a list of strings, we need to json
+    # serialize the path before we pass it to initialize this field.
     filepath: str
     format: S3FileFormat
 

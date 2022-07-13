@@ -30,7 +30,7 @@ class S3Integration(Integration):
 
     def file(
         self,
-        filepath: Union[List[str], str],
+        filepaths: Union[List[str], str],
         format: S3FileFormat,
         name: Optional[str] = None,
         description: str = "",
@@ -39,8 +39,8 @@ class S3Integration(Integration):
         Retrieves a file from the S3 integration.
 
         Args:
-            filepath:
-                Filepath to retrieve from. The filepath can either be:
+            filepaths:
+                Filepath to retrieve from. The filepaths can either be:
                 1) a single string that represents a file name or a directory name. The directory
                 name must ends with a `/`. In case of a file name, we attempt to retrieve that file,
                 and in case of a directory name, we do a prefix search on the directory and retrieve
@@ -74,7 +74,7 @@ class S3Integration(Integration):
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
                                 parameters=S3ExtractParams(
-                                    filepath=json.dumps(filepath), format=format
+                                    filepath=json.dumps(filepaths), format=format
                                 ),
                             )
                         ),
