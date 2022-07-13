@@ -22,7 +22,7 @@ class PostgresConfig(models.BaseConfig):
     password: str
     database: str
     host: str
-    port: str
+    port: Optional[str] = "5432"
 
 
 class S3Config(models.BaseConfig):
