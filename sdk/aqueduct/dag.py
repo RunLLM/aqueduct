@@ -176,7 +176,7 @@ class DAG(BaseModel):
     def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[Artifact]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
 
-    def get_artifacts_by_name(self, name: str) -> Artifact:
+    def get_artifacts_by_name(self, name: str) -> Optional[Artifact]:
         for artifact in self.list_artifacts():
             if artifact.name == name:
                 return artifact
@@ -238,7 +238,7 @@ class DAG(BaseModel):
         self.operators[str(op.id)].spec = spec
         self.operator_by_name[op.name].spec = spec
 
-    def update_operator_spec(self, operator: Operator, serialized_function: bytes) -> None:
+    def update_operator_function(self, operator: Operator, serialized_function: bytes) -> None:
         if operator in self.operators.values():
             operator.update_serialized_function(serialized_function)
 

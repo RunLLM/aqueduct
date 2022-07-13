@@ -14,7 +14,7 @@ from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import human_readable_timestamp, format_header_for_print
+from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
 
 
 class FlowRun:
