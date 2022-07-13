@@ -1,11 +1,13 @@
 package operator
 
 import (
+	"context"
 	"fmt"
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -21,7 +23,9 @@ type functionOperatorImpl struct {
 }
 
 func newFunctionOperator(
+	ctx context.Context,
 	baseFields baseOperator,
+	serializedFunction []byte,
 ) (Operator, error) {
 	inputs := baseFields.inputs
 	outputs := baseFields.outputs
@@ -44,6 +48,12 @@ func newFunctionOperator(
 		}
 	}
 
+	serializedFunctionPath, err := uploadOperatorFile(ctx, baseFields.storageConfig, serializedFunction)
+	if err != nil {
+		return nil, err
+	}
+	baseFields.dbOperator.Spec.Function().StoragePath = serializedFunctionPath
+	baseFields.jobName = generateFunctionJobName()
 	return &functionOperatorImpl{
 		baseFields,
 	}, nil
@@ -51,6 +61,15 @@ func newFunctionOperator(
 
 func generateFunctionJobName() string {
 	return fmt.Sprintf("function-operator-%s", uuid.New().String())
+}
+
+func (fo *functionOperatorImpl) Finish(ctx context.Context) {
+	// If the operator was not persisted to the DB, cleanup the serialized function.
+	if !fo.resultsPersisted {
+		utils.CleanupStorageFile(ctx, fo.storageConfig, fo.dbOperator.Spec.Function().StoragePath)
+	}
+
+	fo.baseOperator.Finish(ctx)
 }
 
 func (fo *functionOperatorImpl) JobSpec() job.Spec {

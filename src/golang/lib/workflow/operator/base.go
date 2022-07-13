@@ -38,6 +38,8 @@ type baseOperator struct {
 	vaultObject   vault.Vault
 	storageConfig *shared.StorageConfig
 	db            database.Database
+
+	resultsPersisted bool
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -115,6 +117,10 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
+	if bo.resultsPersisted {
+		return errors.Newf("Operator %s was already persisted!", bo.Name())
+	}
+
 	execState, err := bo.GetExecState(ctx)
 	if err != nil {
 		return err
@@ -140,6 +146,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 			log.Errorf(fmt.Sprintf("Error occurred when persisting artifact %s.", outputArtifact.Name()))
 		}
 	}
+	bo.resultsPersisted = true
 	return nil
 }
 

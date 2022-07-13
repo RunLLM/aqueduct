@@ -3,17 +3,17 @@ package operator
 import (
 	"context"
 	"fmt"
-
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
-// UploadOperatorFiles uploads the provided Operator files to storage for the WorkflowDag specified.
+// uploadOperatorFiles uploads the provided Operator files to storage for the WorkflowDag specified.
 // It updates the relevant operator spec with the storage path. It returns an error, if any.
-func UploadOperatorFiles(
+func deprecateduploadOperatorFiles(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,
 	operatorIdToFileContents map[uuid.UUID][]byte,
@@ -52,4 +52,16 @@ func updateOperatorSpecFilePath(spec *operator.Spec, filePath string) error {
 		return errors.Newf("Storage file path can only be set for a Function spec.")
 	}
 	return nil
+}
+
+func uploadOperatorFile(
+	ctx context.Context,
+	storageConfig *shared.StorageConfig,
+	serializedFunction []byte,
+) (string, error) {
+	path := fmt.Sprintf("operator-%s", uuid.New())
+	if err := storage.NewStorage(storageConfig).Put(ctx, path, serializedFunction); err != nil {
+		return "", err
+	}
+	return path, nil
 }

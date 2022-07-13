@@ -68,7 +68,7 @@ type ArtifactImpl struct {
 	storageConfig *shared.StorageConfig
 	db            database.Database
 
-	persisted bool
+	resultsPersisted bool
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
@@ -93,7 +93,7 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 }
 
 func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {
-	if a.persisted {
+	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
 	if !a.Computed(ctx) {
@@ -108,7 +108,7 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 		a.artifactResultID,
 		a.db,
 	)
-	a.persisted = true
+	a.resultsPersisted = true
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 
 	// If the artifact was persisted to the DB, don't cleanup the content paths,
 	// since we may need that data later.
-	if !a.persisted {
+	if !a.resultsPersisted {
 		utils.CleanupStorageFile(ctx, a.storageConfig, a.contentPath)
 	}
 }
@@ -152,7 +152,7 @@ func NewArtifact(
 		metadataPath:         metadataPath,
 		artifactResultID:     artifactResultID,
 		artifactResultWriter: artifactResultWriter,
-		persisted:            false,
+		resultsPersisted:     false,
 		db:                   db,
 	}, nil
 }

@@ -150,7 +150,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}
 
 	defer utils.CleanupStorageFiles(ctx, h.StorageConfig, operatorStoragePaths)
-
 	workflowPaths := utils.GenerateWorkflowStoragePaths(dagSummary.Dag)
 	defer utils.CleanupWorkflowStorageFiles(ctx, workflowPaths, h.StorageConfig, false /* also clean up artifact contents */)
 
