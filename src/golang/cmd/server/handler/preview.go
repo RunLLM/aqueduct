@@ -2,6 +2,12 @@ package handler
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
+	dag "github.com/aqueducthq/aqueduct/lib/workflow"
 	"net/http"
 	"strconv"
 
@@ -144,23 +150,36 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	errorRespPtr := &previewResponse{Status: shared.FailedExecutionStatus}
 	dagSummary := args.DagSummary
 
-	operatorStoragePaths, err := operator.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
+	_, err := operator.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	defer utils.CleanupStorageFiles(ctx, h.StorageConfig, operatorStoragePaths)
-	workflowPaths := utils.GenerateWorkflowStoragePaths(dagSummary.Dag)
-	defer utils.CleanupWorkflowStorageFiles(ctx, workflowPaths, h.StorageConfig, false /* also clean up artifact contents */)
-
-	status, err := orchestrator.Preview(
-		ctx,
-		dagSummary.Dag,
-		workflowPaths,
+	orch := orchestrator.NewOrchestrator(
+		h.JobManager,
 		previewPollIntervalMillisec,
+		false, /* shouldPersistResults */
+	)
+	workflowDag, err := dag.NewWorkflowDag(
+		ctx,
+		dagSummary,
+		workflow_dag_result.NewNoopWriter(true),
+		operator_result.NewNoopWriter(true),
+		artifact_result.NewNoopWriter(true),
+		workflow.NewNoopReader(true),
+		notification.NewNoopWriter(true),
+		user.NewNoopReader(true),
 		h.JobManager,
 		h.Vault,
+		h.StorageConfig,
+		h.Database,
+		false, /* canPersist */
 	)
+	if err != nil {
+		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
+	}
+
+	status, err := orch.Execute(ctx, workflowDag)
 	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
@@ -172,6 +191,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		statusCode = http.StatusBadRequest
 	}
 
+	// TODO: more to fix here.
 	operatorResults := deserializeOperatorResponses(ctx, workflowPaths, h.StorageConfig)
 
 	// We should not include artifact results for operators that failed.

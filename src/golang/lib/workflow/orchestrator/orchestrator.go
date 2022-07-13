@@ -50,6 +50,7 @@ type orchestratorImpl struct {
 
 func NewOrchestrator(
 	jobManager job.JobManager,
+	pollInternval time.Duration,
 	shouldPersistResults bool,
 ) Orchestrator {
 	return &orchestratorImpl{
