@@ -1,4 +1,5 @@
-from typing import Optional
+import json
+from typing import List, Optional, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
@@ -29,7 +30,7 @@ class S3Integration(Integration):
 
     def file(
         self,
-        filepath: str,
+        filepath: Union[List[str], str],
         format: S3FileFormat,
         name: Optional[str] = None,
         description: str = "",
@@ -66,7 +67,7 @@ class S3Integration(Integration):
                             extract=ExtractSpec(
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
-                                parameters=S3ExtractParams(filepath=filepath, format=format),
+                                parameters=S3ExtractParams(filepath=json.dumps(filepath), format=format),
                             )
                         ),
                         outputs=[output_artifact_id],

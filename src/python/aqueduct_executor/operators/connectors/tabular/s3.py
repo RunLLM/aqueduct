@@ -1,4 +1,5 @@
 import io
+import json
 from typing import List
 
 import boto3
@@ -8,11 +9,19 @@ from aqueduct_executor.operators.connectors.tabular import common, config, conne
 
 class S3Connector(connector.TabularConnector):
     def __init__(self, config: config.S3Config):
-        self.s3 = boto3.resource(
-            "s3",
-            aws_access_key_id=config.access_key_id,
-            aws_secret_access_key=config.secret_access_key,
-        )
+        if config.region is None:
+            self.s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=config.access_key_id,
+                aws_secret_access_key=config.secret_access_key,
+            )
+        else:
+            self.s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=config.access_key_id,
+                aws_secret_access_key=config.secret_access_key,
+                region_name = config.region,
+            )
 
         self.bucket = config.bucket
 
@@ -22,19 +31,31 @@ class S3Connector(connector.TabularConnector):
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
 
-    def extract(self, params: extract.S3Params) -> pd.DataFrame:
-        response = self.s3.Object(self.bucket, params.filepath).get()
-        data = response["Body"].read()
-        buf = io.BytesIO(data)
-
-        if params.format == common.S3FileFormat.CSV:
-            return pd.read_csv(buf)
-        elif params.format == common.S3FileFormat.JSON:
-            return pd.read_json(buf)
-        elif params.format == common.S3FileFormat.PARQUET:
-            return pd.read_parquet(buf)
+    def _parse_data(self, data: io.BytesIO, format: common.S3FileFormat) -> pd.DataFrame:
+        if format == common.S3FileFormat.CSV:
+            return pd.read_csv(data)
+        elif format == common.S3FileFormat.JSON:
+            return pd.read_json(data)
+        elif format == common.S3FileFormat.PARQUET:
+            return pd.read_parquet(data)
 
         raise Exception("Unknown S3 file format %s" % format)
+
+    def extract(self, params: extract.S3Params) -> pd.DataFrame:
+        paths = json.loads(params.filepath)
+        if not isinstance(paths, List):
+            paths = [paths]
+
+        bucket_obj = self.s3.Bucket(self.bucket)
+        dfs = []
+        for path in paths:
+            for obj in bucket_obj.objects.filter(Prefix=path):
+                response = self.s3.Object(self.bucket, obj.key).get()
+                data = response["Body"].read()
+                buf = io.BytesIO(data)
+                dfs.append(self._parse_data(buf, params.format))
+
+        return pd.concat(dfs)
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()

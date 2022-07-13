@@ -6,6 +6,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
   bucket: 'aqueduct',
+  region: '',
   access_key_id: '',
   secret_access_key: '',
 };
@@ -16,24 +17,26 @@ type Props = {
 
 export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [bucket, setBucket] = useState<string>(null);
+  const [region, setRegion] = useState<string>(null);
   const [accessKeyId, setAccessKeyId] = useState<string>(null);
   const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
 
   useEffect(() => {
     const config: S3Config = {
       bucket: bucket,
+      region: region,
       access_key_id: accessKeyId,
       secret_access_key: secretAccessKey,
     };
     setDialogConfig(config);
-  }, [bucket, accessKeyId, secretAccessKey]);
+  }, [bucket, region, accessKeyId, secretAccessKey]);
 
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Bucket *"
+        label="Bucket*"
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => setBucket(event.target.value)}
@@ -43,7 +46,17 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="AWS Access Key ID"
+        label="Region*"
+        description="The AWS region that the bucket is located in (e.g., us-east-2)."
+        placeholder={Placeholders.region}
+        onChange={(event) => setRegion(event.target.value)}
+        value={region}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => setAccessKeyId(event.target.value)}
@@ -53,7 +66,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="AWS Secret Access Key"
+        label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
         onChange={(event) => setSecretAccessKey(event.target.value)}
