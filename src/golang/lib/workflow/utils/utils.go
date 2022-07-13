@@ -485,7 +485,6 @@ func UpdateOperatorResultAfterComputation(
 			err,
 		)
 	}
-	// TODO(kenxu): see `CheckOperatorExecutionStatus` - there's more to do here I think.
 
 	changes := map[string]interface{}{
 		operator_result.StatusColumn:    status,

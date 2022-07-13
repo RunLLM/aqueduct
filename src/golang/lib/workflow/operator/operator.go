@@ -13,24 +13,27 @@ import (
 	"github.com/google/uuid"
 )
 
-// This Operator interface allows a caller to manage and inspect the lifecycle of
-// a single operator in a workflow run.
+// Operator is an interface for managing and inspecting the lifecycle of an operator
+// used by a workflow run.
 type Operator interface {
 	Type() operator.Type
 	Name() string
 	ID() uuid.UUID
-
 	JobSpec() job.Spec
 
-	// Indicates whether this operator is can be scheduled. This means that all
-	// dependencies to this operator have already been computed.
+	// Ready indicates whether this operator is ready to be scheduled. That is to say,
+	// all upstream dependencies have been successfully computed.
 	Ready(ctx context.Context) bool
 
-	// Performs a non-blocking fetch of the execution state of this operator.
+	// GetExecState performs a non-blocking fetch for the execution state of this operator.
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
 
+	// PersistResult writes the results of this operator execution to the database.
+	// This method also persists any artifact results produced by this operator.
 	PersistResult(ctx context.Context) error
 
+	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
+	// Recursively calls Finish() on all the operator's output artifacts.
 	Finish(ctx context.Context)
 }
 

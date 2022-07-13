@@ -24,10 +24,19 @@ type WorkflowDag interface {
 	Operators() map[uuid.UUID]operator.Operator
 	Artifacts() map[uuid.UUID]artifact.Artifact
 
+	// OperatorsOnArtifact returns all the operators that consume the given artifact as input.
 	OperatorsOnArtifact(artifact.Artifact) ([]operator.Operator, error)
+
+	// ArtifactsFromOperator returns all the artifacts produced by the given operator.
 	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
 
+	// PersistResult writes the dag result of one execution run into the database.
+	// *Does not* recursively persist the operators or artifacts contained in this dag.
 	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
+
+	// Finish is an end-of-lifecycle hook to do any final cleanup work.
+	// It is meant to be called from defer() after execution completes.
+	// Recursively calls Finish() on all operators and artifacts contained in this dag.
 	Finish(ctx context.Context)
 }
 

@@ -12,25 +12,32 @@ import (
 	"github.com/google/uuid"
 )
 
-// This Artifact interface allows a caller to manage and inspect the lifecycle
-// of a single artifact in a workflow run.
+// Artifact is an interface for managing and inspect the lifecycle of an artifact
+// produced by a workflow run.
 type Artifact interface {
 	ID() uuid.UUID
 	Type() artifact.Type
 	Name() string
 
-	// Indicates whether this artifact has been computed or not. An artifact is
-	// only considered computed if the operator that generates it has completed
+	// Computed indicates whether this artifact has been computed or not. An artifact is
+	// only considered "computed" if the operator that generates it has completed
 	// successfully.
 	Computed(ctx context.Context) bool
 
-	// Writes the data of this artifact to a backing store so it can be fetched later.
+	// PersistResult writes the data of this artifact to a backing store so it can be
+	// fetched later.
 	// Errors if the artifact has not yet been computed.
 	PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error
 
+	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
 
+	// GetMetadata fetches the metadata for this artifact.
+	// Errors if the artifact has not yet been computed.
 	GetMetadata(ctx context.Context) (*artifact_result.Metadata, error)
+
+	// GetContent fetches the content of this artifact.
+	// Errors if the artifact has not yet been computed.
 	GetContent(ctx context.Context) ([]byte, error)
 }
 
