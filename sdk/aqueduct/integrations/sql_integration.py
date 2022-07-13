@@ -1,24 +1,24 @@
-import pandas as pd
+import json
+import re
 from typing import Optional, Union
 
+import pandas as pd
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
-from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
-from aqueduct.enums import (
-    ServiceType,
-    LoadUpdateMode,
-)
-from aqueduct.integrations.integration import IntegrationInfo, Integration
+from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.enums import LoadUpdateMode, ServiceType
+from aqueduct.error import InvalidUserArgumentException
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
+    ExtractSpec,
     Operator,
     OperatorSpec,
-    ExtractSpec,
     RelationalDBExtractParams,
     RelationalDBLoadParams,
     SaveConfig,
 )
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import generate_uuid, artifact_name_from_op_name
+from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -29,6 +29,20 @@ LIST_TABLES_QUERY_SQLSERVER = (
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+
+# Regular Expression that matches any substring appearance with
+# "{{ }}" and a word inside with optional space in front or after
+# Potential Matches: "{{today}}", "{{ today  }}""
+#
+# Duplicated in the Python operators at `src/python/aqueduct_executor/operators/connectors/tabular/extract.py`
+# Make sure the two are in sync.
+TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
+
+# A dictionary of built-in tags to their replacement0 string functions.
+#
+# Duplicated in spirit by the Python operators at `src/python/aqueduct_executor/operators/connectors/tabular/extract.py`
+# Make sure the two are in sync.
+BUILT_IN_EXPANSIONS = {"today"}
 
 
 class RelationalDBIntegration(Integration):
@@ -89,7 +103,7 @@ class RelationalDBIntegration(Integration):
         description: str = "",
     ) -> TableArtifact:
         """
-        Runs a SQL query against the RealtionalDB integration.
+        Runs a SQL query against the RelationalDB integration.
 
         Args:
             query:
@@ -127,14 +141,42 @@ class RelationalDBIntegration(Integration):
                 query=extract_params,
             )
 
-        operator_id = generate_uuid()
-        output_artifact_id = generate_uuid()
+        # Find any tags that need to be expanded in the query, and add the parameters that correspond
+        # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
+        sql_input_artifact_ids = []
+        if extract_params.query is not None:
+            matches = re.findall(TAG_PATTERN, extract_params.query)
+            for match in matches:
+                param_name = match.strip(" {}")
+                param_op = self._dag.get_operator(with_name=param_name)
+                if param_op is None:
+                    # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
+                    if param_name in BUILT_IN_EXPANSIONS:
+                        continue
+
+                    raise InvalidUserArgumentException(
+                        "There is no parameter defined with name `%s`." % param_name,
+                    )
+
+                # Check that the parameter corresponds to a string value.
+                assert param_op.spec.param is not None
+                param_val = json.loads(param_op.spec.param.val)
+                if not isinstance(param_val, str):
+                    raise InvalidUserArgumentException(
+                        "The parameter `%s` must be defined as a string. Instead, got type %s"
+                        % (param_name, type(param_val).__name__)
+                    )
+                assert len(param_op.outputs) == 1
+                sql_input_artifact_ids.append(param_op.outputs[0])
+
+        sql_operator_id = generate_uuid()
+        sql_output_artifact_id = generate_uuid()
         apply_deltas_to_dag(
             self._dag,
             deltas=[
                 AddOrReplaceOperatorDelta(
                     op=Operator(
-                        id=operator_id,
+                        id=sql_operator_id,
                         name=sql_op_name,
                         description=description,
                         spec=OperatorSpec(
@@ -144,23 +186,24 @@ class RelationalDBIntegration(Integration):
                                 parameters=extract_params,
                             )
                         ),
-                        outputs=[output_artifact_id],
+                        inputs=sql_input_artifact_ids,
+                        outputs=[sql_output_artifact_id],
                     ),
                     output_artifacts=[
                         Artifact(
-                            id=output_artifact_id,
+                            id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
                             spec=ArtifactSpec(table={}),
                         ),
                     ],
-                )
+                ),
             ],
         )
 
         return TableArtifact(
             api_client=self._api_client,
             dag=self._dag,
-            artifact_id=output_artifact_id,
+            artifact_id=sql_output_artifact_id,
         )
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
@@ -186,4 +229,8 @@ class RelationalDBIntegration(Integration):
         Prints out a human-readable description of the SQL integration.
         """
         print("==================== SQL Integration =============================")
+        print("Integration Information:")
         self._metadata.describe()
+        print("Integration Table List Preview:")
+        print(self.list_tables()["name"].head().to_string())
+        print("(only first 5 tables are shown)")

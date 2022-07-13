@@ -33,12 +33,6 @@ type getOperatorResultArgs struct {
 	operatorId          uuid.UUID
 }
 
-type getOperatorResultResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Error  string                 `json:"error"`
-	Logs   map[string]string      `json:"logs"`
-}
-
 type GetOperatorResultHandler struct {
 	GetHandler
 
@@ -92,7 +86,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
-	emptyResp := getOperatorResultResponse{}
+	emptyResp := shared.ExecutionState{}
 
 	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
 		ctx,
@@ -104,13 +98,14 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 	}
 
-	response := getOperatorResultResponse{
+	response := shared.ExecutionState{
 		Status: dbOperatorResult.Status,
 	}
 
-	if !dbOperatorResult.Metadata.IsNull {
-		response.Error = dbOperatorResult.Metadata.Error
-		response.Logs = dbOperatorResult.Metadata.Logs
+	if !dbOperatorResult.ExecState.IsNull {
+		response.FailureType = dbOperatorResult.ExecState.FailureType
+		response.Error = dbOperatorResult.ExecState.Error
+		response.UserLogs = dbOperatorResult.ExecState.UserLogs
 	}
 
 	return response, http.StatusOK, nil

@@ -1,23 +1,22 @@
 import json
-from typing import List, Optional, Union, Any
 import uuid
-
-from pydantic import BaseModel
+from typing import Any, List, Optional, Union
 
 from aqueduct.enums import (
-    GoogleSheetsSaveMode,
-    ServiceType,
-    FunctionType,
-    FunctionGranularity,
-    GithubRepoConfigContentType,
-    OperatorType,
-    SalesforceExtractType,
-    S3FileFormat,
-    LoadUpdateMode,
     CheckSeverity,
+    FunctionGranularity,
+    FunctionType,
+    GithubRepoConfigContentType,
+    GoogleSheetsSaveMode,
+    LoadUpdateMode,
+    OperatorType,
+    S3FileFormat,
+    SalesforceExtractType,
+    ServiceType,
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
+from pydantic import BaseModel
 
 
 class GithubMetadata(BaseModel):
@@ -186,19 +185,23 @@ class Operator(BaseModel):
 
 
 def get_operator_type(operator: Operator) -> OperatorType:
-    if operator.spec.extract is not None:
+    return get_operator_type_from_spec(operator.spec)
+
+
+def get_operator_type_from_spec(spec: OperatorSpec) -> OperatorType:
+    if spec.extract is not None:
         return OperatorType.EXTRACT
-    if operator.spec.load is not None:
+    if spec.load is not None:
         return OperatorType.LOAD
-    if operator.spec.function is not None:
+    if spec.function is not None:
         return OperatorType.FUNCTION
-    if operator.spec.metric is not None:
+    if spec.metric is not None:
         return OperatorType.METRIC
-    if operator.spec.check is not None:
+    if spec.check is not None:
         return OperatorType.CHECK
-    if operator.spec.param is not None:
+    if spec.param is not None:
         return OperatorType.PARAM
-    if operator.spec.system_metric is not None:
+    if spec.system_metric is not None:
         return OperatorType.SYSTEM_METRIC
     else:
         raise AqueductError("Invalid operator type")

@@ -1,29 +1,27 @@
 import inspect
-from pathlib import Path
-from datetime import datetime
-import sys
-from aqueduct.operators import Operator
-from aqueduct.enums import OperatorType
-
-import ipynbname
-import cloudpickle as cp
-import tempfile
+import json
 import os
 import shutil
-import json
+import sys
+import tempfile
 import uuid
-import pandas as pd
-from typing import Any, Dict, List, Callable, Mapping, Optional, Union
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
+import cloudpickle as cp
+import pandas as pd
 import requests
+from aqueduct.enums import OperatorType
+from aqueduct.operators import Operator
 from croniter import croniter
 
-from .dag import DAG, Schedule, RetentionPolicy
+from ._version import __version__
+from .dag import DAG, RetentionPolicy, Schedule
 from .enums import TriggerType
 from .error import *
-from .templates import op_file_content
 from .logger import Logger
-from ._version import __version__
+from .templates import op_file_content
 
 # Auth headers
 API_KEY_HEADER = "api-key"
@@ -52,6 +50,29 @@ def generate_auth_headers(api_key: str) -> Dict[str, str]:
 
 def generate_uuid() -> uuid.UUID:
     return uuid.uuid4()
+
+
+WORKFLOW_UI_ROUTE_TEMPLATE = "/workflow/%s"
+WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
+
+
+def generate_ui_url(
+    url_prefix: str, aqueduct_address: str, workflow_id: str, result_id: Optional[str] = None
+) -> str:
+    if result_id:
+        url = "%s%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+            WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
+        )
+    else:
+        url = "%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+        )
+    return url
 
 
 def raise_errors(response: requests.Response) -> None:
@@ -144,6 +165,7 @@ def make_zip_dir() -> str:
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     file_dependencies: Optional[List[str]] = None,
+    reqs_path: Optional[str] = None,
 ) -> bytes:
     """
     Takes a user-defined function and packages it into a zip file structure expected by the backend.
@@ -153,6 +175,8 @@ def serialize_function(
             The function to package
         file_dependencies:
             List of file dependencies the function uses
+        reqs_path:
+            A path to file that specify requirements
 
     Returns:
         filepath of zip file in string format
@@ -163,9 +187,7 @@ def serialize_function(
         zip_file_path = get_zip_file_path(dir_path)
 
         _package_files_and_requirements(
-            func,
-            os.path.join(os.getcwd(), dir_path),
-            file_dependencies,
+            func, os.path.join(os.getcwd(), dir_path), file_dependencies, reqs_path
         )
 
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
@@ -186,6 +208,7 @@ def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
     file_dependencies: Optional[List[str]] = None,
+    reqs_path: Optional[str] = None,
 ) -> None:
     """
     Creates the temporary directory for the function with all file dependencies and
@@ -199,26 +222,31 @@ def _package_files_and_requirements(
         file_dependencies:
             Paths of file dependencies the function uses. Note that the paths are relative to the
             file the function is defined in.
+        reqs_path:
+            A path of file that specifies the requirements of the operator.
+            Default path: /requirements.txt in the folder where the function is located
 
     """
     if not file_dependencies:
         file_dependencies = []
 
+    current_directory_path = os.getcwd()
+
     func_filepath = inspect.getsourcefile(func)
     if not func_filepath:
         raise Exception("Unable to find source file of function.")
-
     # In Python3.8, `inspect.getsourcefile` only returns the file's relative path,
     # so we need the line below to get the absolute path.
     func_filepath = os.path.abspath(func_filepath)
-    if "JPY_PARENT_PID" in os.environ:
-        func_filepath = str(ipynbname.path())
-
-    current_directory_path = os.getcwd()
     func_dirpath = os.path.dirname(func_filepath)
-    func_file = os.path.basename(func_filepath)
 
-    os.chdir(func_dirpath)
+    # We check if the directory `func_dirpath` exists. If not, this means `func` is from within a
+    # Jupyter notebook that the user is currently running, so we don't switch the working directory.
+    # The goal of switching the working directory is that if a user specifies relative paths
+    # in `file_dependencies` and if `func` is imported from a Python script located in another
+    # directory, we can locate them.
+    if os.path.isdir(func_dirpath):
+        os.chdir(func_dirpath)
 
     for file_index, file_path in enumerate(file_dependencies):
         if file_path in RESERVED_FILE_NAMES:
@@ -238,7 +266,13 @@ def _package_files_and_requirements(
         if not os.path.exists(dstfolder):
             os.makedirs(dstfolder)
         shutil.copy(file_path, os.path.join(dir_path, file_path))
-    if os.path.exists(REQUIREMENTS_FILE):
+    if reqs_path:
+        if os.path.exists(reqs_path):
+            Logger.logger.info("Installing requirements found at {path}".format(path=reqs_path))
+            shutil.copy(reqs_path, os.path.join(dir_path, REQUIREMENTS_FILE))
+        else:
+            raise FileNotFoundError("Requirement file provided does not exist.")
+    elif os.path.exists(REQUIREMENTS_FILE):
         Logger.logger.info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
             % (os.getcwd(), func.__name__)
@@ -253,8 +287,6 @@ def _package_files_and_requirements(
     python_version = ".".join((str(x) for x in sys.version_info[:2]))
     with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
         f.write(python_version)
-    if os.path.exists(os.path.join(dir_path, func_file)):
-        os.remove(os.path.join(dir_path, func_file))
 
     os.chdir(current_directory_path)
 

@@ -1,8 +1,8 @@
 import os
-import setuptools
 import sys
-
 from pathlib import Path
+
+import setuptools
 
 readme_path = Path(os.environ["PWD"], "../README.md")
 long_description = open(readme_path).read()
@@ -18,7 +18,7 @@ else:
 
 setuptools.setup(
     name="aqueduct-sdk",
-    version="0.0.3",
+    version="0.0.4",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
     description="Python SDK for the Aqueduct prediction infrastructure",

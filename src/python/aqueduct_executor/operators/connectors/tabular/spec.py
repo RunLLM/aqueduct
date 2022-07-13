@@ -1,19 +1,20 @@
-from typing import Union
+from typing import List, Union
 
 try:
     from typing import Literal
 except ImportError:
     # Python 3.7 does not support typing.Literal
-    from typing_extensions import Literal
-
-from pydantic import validator
+    from typing_extensions import Literal  # type: ignore
 
 from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
+from pydantic import validator
+
+AQUEDUCT_DEMO_NAME = "aqueduct_demo"
 
 
-def unwrap_connector_config(cls, connector_config, values):
+def unwrap_connector_config(cls, connector_config, values):  # type: ignore
     """
     TODO ENG-937: Remove this validator once connector config serialization is fixed.
 
@@ -74,6 +75,12 @@ class ExtractSpec(models.BaseSpec):
     connector_name: common.Name
     connector_config: config.Config
     parameters: extract.Params
+
+    # The input fields are only used to record user-defined parameters for relational queries.
+    # The tags in the queries will be expanded into the parameter values.
+    input_param_names: List[str]
+    input_content_paths: List[str]
+    input_metadata_paths: List[str]  # This field is ignored and is only here for completeness.
     output_content_path: str
     output_metadata_path: str
 

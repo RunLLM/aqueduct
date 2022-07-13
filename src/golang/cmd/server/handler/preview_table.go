@@ -8,7 +8,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -142,6 +141,9 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 			},
 		},
 		operatorMetadataPath,
+		[]string{}, /* inputParamNames */
+		[]string{}, /* inputContentPaths */
+		[]string{}, /* inputMetadataPaths */
 		artifactContentPath,
 		artifactMetadataPath,
 		h.StorageConfig,
@@ -161,7 +163,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while previewing table.")
 	}
 
-	var metadata operator_result.Metadata
+	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,
@@ -171,8 +173,8 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operator metadata from storage.")
 	}
 
-	if len(metadata.Error) > 0 {
-		return nil, http.StatusBadRequest, errors.Newf("Unable to preview table: %v", metadata.Error)
+	if metadata.Error != nil {
+		return nil, http.StatusBadRequest, errors.Newf("Unable to preview table: %v", metadata.Error.Context)
 	}
 
 	data, err := storage.NewStorage(h.StorageConfig).Get(

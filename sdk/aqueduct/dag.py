@@ -1,19 +1,25 @@
 import copy
 import uuid
-from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
-
-from pydantic import BaseModel
-from aqueduct.error import (
-    InternalAqueductError,
-    InvalidUserActionException,
-    ArtifactNotFoundException,
-    InvalidUserArgumentException,
-)
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import OperatorType, TriggerType, ArtifactType
-from aqueduct.operators import Operator, get_operator_type, serialize_parameter_value
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.error import (
+    ArtifactNotFoundException,
+    InternalAqueductError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
+from aqueduct.operators import (
+    Operator,
+    OperatorSpec,
+    ParamSpec,
+    get_operator_type,
+    get_operator_type_from_spec,
+    serialize_parameter_value,
+)
+from pydantic import BaseModel
 
 
 class Schedule(BaseModel):
@@ -217,10 +223,20 @@ class DAG(BaseModel):
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
 
-    def update_operator(self, op: Operator) -> None:
-        """Blind replace of an operator in the dag."""
-        self.operators[str(op.id)] = op
-        self.operator_by_name[op.name] = op
+    def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
+        """Replaces an operator's spec in the dag.
+
+        The assumption validated within the method is that the caller has already validated
+        both that the operator exists, and that the spec type will be unchanged.
+        """
+        assert name in self.operator_by_name, "Operator %s does not exist." % name
+        op = self.operator_by_name[name]
+        assert get_operator_type(op) == get_operator_type_from_spec(
+            spec
+        ), "New spec has a different type."
+
+        self.operators[str(op.id)].spec = spec
+        self.operator_by_name[op.name].spec = spec
 
     def update_operator_spec(self, operator: Operator, serialized_function: bytes) -> None:
         if operator in self.operators.values():
@@ -453,6 +469,46 @@ class RemoveCheckOperatorDelta(DAGDelta):
             )
 
 
+def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> None:
+    """Validates any parameters the user supplies that override the default value.
+
+    The following checks are performed:
+    - every parameter corresponds to a parameter artifact in the dag.
+    - every parameter name is a string.
+    - any parameter feeding into a sql query must have a string value (to resolve tags within the query).
+
+    Raises:
+        InvalidUserArgumentException:
+            If any of the above checks are violated.
+    """
+    if any(not isinstance(name, str) for name in parameters):
+        raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+
+    for param_name, param_val in parameters.items():
+        param_op = dag.get_operator(with_name=param_name)
+        if param_op is None:
+            raise InvalidUserArgumentException(
+                "Parameter %s cannot be found, or is not utilized in the current computation."
+                % param_name
+            )
+        if get_operator_type(param_op) != OperatorType.PARAM:
+            raise InvalidUserArgumentException(
+                "Parameter %s must refer to a parameter, but instead refers to a: %s"
+                % (param_name, get_operator_type(param_op))
+            )
+
+        # Any parameter that is consumed by a SQL operator must be a string type!
+        assert len(param_op.outputs) == 1
+        param_artifact_id = param_op.outputs[0]
+        ops_on_param = dag.list_operators(on_artifact_id=param_artifact_id)
+        if any(get_operator_type(op) == OperatorType.EXTRACT for op in ops_on_param):
+            if not isinstance(param_val, str):
+                raise InvalidUserArgumentException(
+                    "Parameter %s is used by a sql query, so it must be a string type, not type %s."
+                    % (param_name, type(param_val).__name__)
+                )
+
+
 class UpdateParametersDelta(DAGDelta):
     """Updates the values of the given parameters in the DAG to the given values. No-ops if no parameters provided."""
 
@@ -465,29 +521,17 @@ class UpdateParametersDelta(DAGDelta):
     def apply(self, dag: DAG) -> None:
         if self.parameters is None:
             return
-
-        if any(not isinstance(name, str) for name in self.parameters):
-            raise InvalidUserArgumentException("Parameters must be keyed by strings.")
+        validate_overwriting_parameters(dag, self.parameters)
 
         for param_name, new_val in self.parameters.items():
-            param_op = dag.get_operator(with_name=param_name)
-            if param_op is None:
-                raise InvalidUserArgumentException(
-                    "Parameter %s cannot be found, or is not utilized in the current computation."
-                    % param_name
-                )
-            if get_operator_type(param_op) != OperatorType.PARAM:
-                raise InvalidUserArgumentException(
-                    "Parameter %s must refer to a parameter, but instead refers to a: %s"
-                    % (param_name, get_operator_type(param_op))
-                )
-
-            # Update the parameter value and update the dag.
-            assert param_op.spec.param  # for mypy
-            param_op.spec.param.val = serialize_parameter_value(
-                param_name, self.parameters[param_name]
+            dag.update_operator_spec(
+                param_name,
+                OperatorSpec(
+                    param=ParamSpec(
+                        val=serialize_parameter_value(param_name, self.parameters[param_name])
+                    )
+                ),
             )
-            dag.update_operator(param_op)
 
 
 def apply_deltas_to_dag(dag: DAG, deltas: List[DAGDelta], make_copy: bool = False) -> DAG:

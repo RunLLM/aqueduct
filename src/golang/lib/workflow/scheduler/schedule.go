@@ -2,10 +2,10 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -13,8 +13,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-const systemInternalErrMsg = "Aqueduct Internal Error"
 
 var (
 	ErrWrongNumInputs                = errors.New("Wrong number of operator inputs")
@@ -26,7 +24,7 @@ var (
 
 // ScheduleOperator executes an operator based on its spec.
 // Inputs:
-//	spec: the operator spec consisting its type, and more metadata based on the type
+//	op: the operator to execute
 //	inputs: a list of input artifacts
 //	outputs: a list of output artifacts
 //	artifactPaths: a pre-generated map of `artifactId -> storage paths`. It must cover all artifacts in the workflow
@@ -49,9 +47,9 @@ var (
 //
 func ScheduleOperator(
 	ctx context.Context,
-	opSpec operator.Spec,
-	inputArtifactSpecs []artifact.Spec,
-	outputArtifactSpecs []artifact.Spec,
+	op operator.Operator,
+	inputArtifacts []artifact.Artifact,
+	outputArtifacts []artifact.Artifact,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -62,27 +60,27 @@ func ScheduleOperator(
 	vaultObject vault.Vault,
 ) (string, error) {
 	// Append to this switch for newly supported operator types
-	if opSpec.IsFunction() {
+	if op.Spec.IsFunction() {
 		// A function operator takes any number of dataframes as input and outputs
 		// any number of dataframes.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType && inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType && inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
-		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifactSpecs))
-		for _, outputArtifactSpec := range outputArtifactSpecs {
-			if outputArtifactSpec.Type() != artifact.TableType {
+		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifacts))
+		for _, outputArtifact := range outputArtifacts {
+			if outputArtifact.Spec.Type() != artifact.TableType {
 				return "", errors.New("Outputs of function operator must be Table Artifacts.")
 			}
-			outputArtifactTypes = append(outputArtifactTypes, outputArtifactSpec.Type())
+			outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Spec.Type())
 		}
 
 		return ScheduleFunction(
 			ctx,
-			*opSpec.Function(),
+			*op.Spec.Function(),
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -95,25 +93,25 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsMetric() {
-		if len(outputArtifactSpecs) != 1 {
+	if op.Spec.IsMetric() {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 
 		return ScheduleFunction(
 			ctx,
-			opSpec.Metric().Function,
+			op.Spec.Metric().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -126,26 +124,26 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsCheck() {
-		if len(outputArtifactSpecs) != 1 {
+	if op.Spec.IsCheck() {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 
 		// Checks can be computed on tables and metrics.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return "", errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.BoolType}
 
 		return ScheduleFunction(
 			ctx,
-			opSpec.Check().Function,
+			op.Spec.Check().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -158,11 +156,16 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsExtract() {
-		if len(inputArtifactSpecs) != 0 {
-			return "", ErrWrongNumInputs
+	if op.Spec.IsExtract() {
+		inputParamNames := make([]string, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.JsonType {
+				return "", errors.New("Only parameters can be used as inputs to extract operators.")
+			}
+			inputParamNames = append(inputParamNames, inputArtifact.Name)
 		}
-		if len(outputArtifactSpecs) != 1 {
+
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
 		if len(outputContentPaths) != 1 {
@@ -174,8 +177,11 @@ func ScheduleOperator(
 
 		return ScheduleExtract(
 			ctx,
-			*opSpec.Extract(),
+			*op.Spec.Extract(),
 			metadataPath,
+			inputParamNames,
+			inputContentPaths,
+			inputMetadataPaths,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
 			storageConfig,
@@ -184,11 +190,11 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsLoad() {
-		if len(inputArtifactSpecs) != 1 {
+	if op.Spec.IsLoad() {
+		if len(inputArtifacts) != 1 {
 			return "", ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 0 {
+		if len(outputArtifacts) != 0 {
 			return "", ErrWrongNumOutputs
 		}
 		if len(inputContentPaths) != 1 {
@@ -199,7 +205,7 @@ func ScheduleOperator(
 		}
 		return ScheduleLoad(
 			ctx,
-			*opSpec.Load(),
+			*op.Spec.Load(),
 			metadataPath,
 			inputContentPaths[0],
 			inputMetadataPaths[0],
@@ -209,14 +215,14 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsParam() {
-		if len(inputArtifactSpecs) != 0 {
+	if op.Spec.IsParam() {
+		if len(inputArtifacts) != 0 {
 			return "", ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return "", ErrWrongNumOutputs
 		}
-		if !outputArtifactSpecs[0].IsJson() {
+		if !outputArtifacts[0].Spec.IsJson() {
 			return "", errors.Newf("Internal Error: parameter must output a JSON artifact.")
 		}
 		if len(outputContentPaths) != 1 {
@@ -228,7 +234,7 @@ func ScheduleOperator(
 
 		return ScheduleParam(
 			ctx,
-			*opSpec.Param(),
+			*op.Spec.Param(),
 			metadataPath,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
@@ -237,7 +243,7 @@ func ScheduleOperator(
 		)
 	}
 
-	if opSpec.IsSystemMetric() {
+	if op.Spec.IsSystemMetric() {
 		if len(outputContentPaths) != 1 {
 			return "", ErrWrongNumArtifactContentPaths
 		}
@@ -252,7 +258,7 @@ func ScheduleOperator(
 
 		return ScheduleSystemMetric(
 			ctx,
-			*opSpec.SystemMetric(),
+			*op.Spec.SystemMetric(),
 			metadataPath,
 			inputMetadataPaths,
 			outputContentPaths[0],
@@ -263,16 +269,8 @@ func ScheduleOperator(
 	}
 
 	// If we reach here, the operator opSpec type is not supported.
-	return "", errors.Newf("Unsupported operator opSpec with type %s", opSpec.Type())
+	return "", errors.Newf("Unsupported operator opSpec with type %s", op.Spec.Type())
 }
-
-type FailureType int64
-
-const (
-	SystemFailure FailureType = 0
-	UserFailure   FailureType = 1
-	NoFailure     FailureType = 2
-)
 
 // CheckOperatorExecutionStatus returns the operator metadata (if it exists) and the operator status
 // of a completed job.
@@ -281,13 +279,13 @@ func CheckOperatorExecutionStatus(
 	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
-) (*operator_result.Metadata, shared.ExecutionStatus, FailureType) {
-	var operatorResultMetadata operator_result.Metadata
+) *shared.ExecutionState {
+	var logs shared.ExecutionState
 	err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		operatorMetadataPath,
-		&operatorResultMetadata,
+		&logs,
 	)
 	if err != nil {
 		// Treat this as a system internal error since operator metadata was not found
@@ -295,18 +293,17 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
-		return &operator_result.Metadata{Error: systemInternalErrMsg}, shared.FailedExecutionStatus, SystemFailure
+
+		failureType := shared.SystemFailure
+		return &shared.ExecutionState{
+			Status:      shared.FailedExecutionStatus,
+			FailureType: &failureType,
+			Error: &shared.Error{
+				Context: fmt.Sprintf("%v", err),
+				Tip:     shared.TipUnknownInternalError,
+			},
+		}
 	}
 
-	if len(operatorResultMetadata.Error) != 0 {
-		// Operator wrote metadata (including an error) to storage
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	if jobStatus == shared.FailedExecutionStatus {
-		// Operator wrote metadata (without an error) to storage, but k8s marked the job as failed
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	return &operatorResultMetadata, shared.SucceededExecutionStatus, NoFailure
+	return &logs
 }

@@ -300,5 +300,5 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
 // Helper function to check if the Integration config is completely filled
 function isConfigComplete(config: IntegrationConfig | CSVConfig): boolean {
-  return Object.values(config).every((x) => x && x !== '');
+  return Object.values(config).every((x) => x === undefined || (x && x !== ''));
 }

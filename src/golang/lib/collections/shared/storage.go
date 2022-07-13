@@ -20,8 +20,10 @@ type StorageConfig struct {
 }
 
 type S3Config struct {
-	Region string `yaml:"region" json:"region"`
-	Bucket string `yaml:"bucket" json:"bucket"`
+	Region             string `yaml:"region" json:"region"`
+	Bucket             string `yaml:"bucket" json:"bucket"`
+	CredentialsPath    string `yaml:"credentialsPath" json:"credentials_path"`
+	CredentialsProfile string `yaml:"credentialsProfile"  json:"credentials_profile"`
 }
 
 type FileConfig struct {

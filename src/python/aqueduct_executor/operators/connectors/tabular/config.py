@@ -1,9 +1,7 @@
 from typing import Optional, Union
 
-
-from pydantic import Field
-
 from aqueduct_executor.operators.connectors.tabular import models
+from pydantic import Field
 
 
 class BigQueryConfig(models.BaseConfig):
@@ -24,7 +22,7 @@ class PostgresConfig(models.BaseConfig):
     password: str
     database: str
     host: str
-    port: Optional[str] = "5432"
+    port: str
 
 
 class S3Config(models.BaseConfig):

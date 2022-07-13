@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -33,6 +33,8 @@ const (
 
 	accountOrganizationId = "aqueduct"
 )
+
+var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
 
 type AqServer struct {
 	Router *chi.Mux
@@ -90,13 +92,8 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 	}
 
 	s := &AqServer{
-		Router: chi.NewRouter(),
-		StorageConfig: &shared.StorageConfig{
-			Type: shared.FileStorageType,
-			FileConfig: &shared.FileConfig{
-				Directory: path.Join(aqPath, storage.DefaultFileStorageDir),
-			},
-		},
+		Router:        chi.NewRouter(),
+		StorageConfig: conf.StorageConfig,
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
@@ -244,7 +241,7 @@ func (s *AqServer) Run(expose bool, port int) {
 		ip = "localhost"
 	}
 
-	static := http.FileServer(http.Dir("."))
+	static := http.FileServer(http.Dir(uiDir))
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
@@ -254,7 +251,7 @@ func (s *AqServer) Run(expose bool, port int) {
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./index.html")
+		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", uiDir))
 	}
 
 	return http.HandlerFunc(fn)

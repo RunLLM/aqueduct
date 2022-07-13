@@ -2,10 +2,9 @@ import json
 from typing import List
 
 import pandas as pd
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
-from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load, common
 
 
 class BigQueryConnector(connector.TabularConnector):
@@ -28,6 +27,7 @@ class BigQueryConnector(connector.TabularConnector):
         return all_tables
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
+        assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df

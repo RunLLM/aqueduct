@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -199,15 +198,25 @@ func ValidateConfig(
 	}
 
 	// Authentication failed, so we need to fetch the error message from storage
-	var metadata operator_result.Metadata
+	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		jobMetadataPath,
-		&metadata,
+		&execState,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	return http.StatusBadRequest, errors.Newf("Unable to authenticate credentials: %v", metadata.Error)
+	if execState.Error != nil {
+		return http.StatusBadRequest, errors.Newf(
+			"Unable to authenticate.\n%s\n%s",
+			execState.Error.Tip,
+			execState.Error.Context,
+		)
+	}
+
+	return http.StatusInternalServerError, errors.New(
+		"Unable to authenticate credentials, we couldn't obtain more context at this point.",
+	)
 }

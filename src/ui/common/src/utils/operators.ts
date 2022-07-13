@@ -1,6 +1,6 @@
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import ExecutionStatus from './shared';
+import ExecutionStatus, { Error, FailureType, Logs } from './shared';
 
 export enum OperatorType {
   Function = 'function',
@@ -104,6 +104,10 @@ export type Load = {
   parameters: LoadParameters;
 };
 
+export type Param = {
+  val: string;
+};
+
 export type OperatorSpec = {
   type: OperatorType;
   function?: FunctionOp;
@@ -111,6 +115,7 @@ export type OperatorSpec = {
   extract?: Extract;
   load?: Load;
   check?: Check;
+  param?: Param;
 };
 
 export type Operator = {
@@ -136,8 +141,9 @@ export function normalizeOperator(op): Operator {
 
 export type GetOperatorResultResponse = {
   status: ExecutionStatus;
-  error: string;
-  logs: { [name: string]: string };
+  failure_type?: FailureType;
+  error?: Error;
+  user_logs?: Logs;
 };
 
 const { apiAddress } = useAqueductConsts();

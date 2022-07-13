@@ -1,46 +1,18 @@
 name: Integration Tests
 
 on:
+  workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/integration-tests.yml'
-  issue_comment:
-    types: [ created ]
 
 jobs:
-  check-comment-trigger:
-    name: Check Comment Trigger
-    runs-on: ubuntu-latest
-    outputs:
-      is-comment-triggered: ${{ steps.check_comment.outputs.triggered }}
-    timeout-minutes: 5
-    steps:
-      - name: Check for Comment triggers
-        if: ${{ github.event_name == 'issue_comment' }}
-        uses: khan/pull-request-comment-trigger@master
-        id: check_comment
-        with:
-          trigger: 'ci'
-          prefix_only: 'true'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: check-comment-trigger
-    if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we support.
         python-version: ['3.7', '3.8', '3.9', '3.10']
-
+    
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
@@ -78,9 +50,9 @@ jobs:
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
 
-      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
+      # install_local.py requires ~/.aqueduct to exist.
       - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py
+        run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
@@ -101,7 +73,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 5
+        run: pytest . -rP --publish -n 1
 
       - uses: actions/upload-artifact@v3
         if: always()
@@ -109,15 +81,8 @@ jobs:
           name: Server Logs
           path: logs/
 
-      - name: Report to Slack on Failure
+      - uses: actions/upload-artifact@v3
         if: always()
-        uses: ravsamhq/notify-slack-action@v1
         with:
-          status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+          name: Executor Logs
+          path: ~/.aqueduct/server/logs/*

@@ -5,7 +5,8 @@ import { IntegrationConfig, PostgresConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: PostgresConfig = {
-  host: '127.0.0.1:5432',
+  host: '127.0.0.1',
+  port: '5432',
   database: 'aqueduct-db',
   username: 'aqueduct',
   password: '********',
@@ -16,20 +17,27 @@ type Props = {
 };
 
 export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [address, setAddress] = useState<string>(null);
+  const [host, setHost] = useState<string>(null);
+  const [port, setPort] = useState<string>(null);
   const [database, setDatabase] = useState<string>(null);
   const [username, setUsername] = useState<string>(null);
   const [password, setPassword] = useState<string>(null);
 
   useEffect(() => {
     const config: PostgresConfig = {
-      host: address,
+      host: host,
+      port: port,
       database: database,
       username: username,
-      password: password,
+      password: undefined,
     };
+
+    if (password && password !== '') {
+      config['password'] = password;
+    }
+
     setDialogConfig(config);
-  }, [address, database, username, password]);
+  }, [host, port, database, username, password]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -39,8 +47,18 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Host *"
         description="The hostname or IP address of the Postgres server."
         placeholder={Placeholders.host}
-        onChange={(event) => setAddress(event.target.value)}
-        value={address}
+        onChange={(event) => setHost(event.target.value)}
+        value={host}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Port *"
+        description="The port number of the Postgres server."
+        placeholder={Placeholders.port}
+        onChange={(event) => setPort(event.target.value)}
+        value={port}
       />
 
       <IntegrationTextInputField
@@ -65,8 +83,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
 
       <IntegrationTextInputField
         spellCheck={false}
-        required={true}
-        label="Password *"
+        required={false}
+        label="Password"
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
