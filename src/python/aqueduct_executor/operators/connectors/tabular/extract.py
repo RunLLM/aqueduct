@@ -73,6 +73,8 @@ class RelationalParams(models.BaseParams):
 
         Callers should check that `usable()` -> True before actually executing this query.
         """
+        # We cannot return self.query_is_usable directly, since it is an Optional
+        # and the method expects a bool to be returned.
         if self.query_is_usable:
             return True
         return False
