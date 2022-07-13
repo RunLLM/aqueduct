@@ -32,7 +32,7 @@ class RelationalParams(models.BaseParams):
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
     github_metadata: Optional[Any]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # The query cannot be used until `apply_placeholders()` is called on it. This flushes out
