@@ -174,7 +174,8 @@ class DAG(BaseModel):
         for artifact in self.list_artifacts():
             if artifact.name == name:
                 return artifact
-        raise ArtifactNotFoundException("Can't find artifact with provided name")
+
+        return None
 
     def list_artifacts(
         self,

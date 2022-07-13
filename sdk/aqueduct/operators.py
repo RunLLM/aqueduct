@@ -184,8 +184,6 @@ class Operator(BaseModel):
         if self.spec.check:
             self.spec.check.function.file = serialized_function
 
-        return None
-
 
 def get_operator_type(operator: Operator) -> OperatorType:
     if operator.spec.extract is not None:

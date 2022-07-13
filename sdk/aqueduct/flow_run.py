@@ -71,20 +71,37 @@ class FlowRun:
     def artifact(
         self, name: str
     ) -> Optional[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
-        """Gets the Artifact from the flow based on artifact_name"""
+        """Gets the Artifact from the flow run based on the name of the artifact.
+
+        Args:
+            name:
+                the name of the artifact.
+
+        Returns:
+            A input artifact obtained from the dag attached to the flow run.
+            If the artifact does not exist, return None.
+        """
         flow_run_dag = self._dag
         artifact_from_dag = flow_run_dag.get_artifacts_by_name(name)
 
         if artifact_from_dag is None:
-            raise ArtifactNotFoundException("The artifact name provided does not exist.")
+            return None
         elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
-            return TableArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+            return TableArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
         elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:
-            return MetricArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+            return MetricArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
         elif get_artifact_type(artifact_from_dag) is ArtifactType.BOOL:
-            return CheckArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+            return CheckArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
         elif get_artifact_type(artifact_from_dag) is ArtifactType.PARAM:
-            return ParamArtifact(self._api_client, self._dag, artifact_from_dag.id, True)
+            return ParamArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
 
         return None
 
