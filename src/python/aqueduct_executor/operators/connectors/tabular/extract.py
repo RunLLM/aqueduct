@@ -29,7 +29,7 @@ BUILT_IN_EXPANSIONS = {
 class RelationalParams(models.BaseParams):
     # The query cannot be used until `apply_placeholders()` is called on it. This flushes out
     # any user-defined tags like `{{today}}`.
-    query_is_usable: bool = False
+    query_is_usable: Optional[bool] = False
     query: str
 
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
