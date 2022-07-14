@@ -11,6 +11,7 @@ Released on 7/14/2022
 * Displays workflow ID on workflow settings modal.
 * Adds ability to fetch an individual artifact from a workflow run using the SDK.
 * Supports reading multiple S3 files into a single Pandas DataFrame.
+* Deprecates showing `pyplot` image in notebook on workflow creation; instead, provides link to UI.
 
 ### Bugfixes
 
