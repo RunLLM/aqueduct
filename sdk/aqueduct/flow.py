@@ -94,6 +94,12 @@ class Flow:
                 ),
             )
 
+        # Because the serialized functions are stored seperately from the dag,
+        # We need to fetch them to complete the construction of the dag.
+        for operator in dag.list_operators():
+            serialized_function = self._api_client.export_serialized_function(operator)
+            dag.update_operator_function(operator, serialized_function)
+
         return FlowRun(
             api_client=self._api_client,
             flow_id=self._id,
