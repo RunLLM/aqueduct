@@ -21,9 +21,6 @@ def _create_engine(config: config.PostgresConfig) -> engine.Engine:
         )
     else:
         url = "postgresql://{username}@{host}:{port}/{database}".format(
-            username=config.username,
-            host=config.host,
-            port=config.port,
-            database=config.database,
+            username=config.username, host=config.host, port=config.port, database=config.database,
         )
     return create_engine(url)

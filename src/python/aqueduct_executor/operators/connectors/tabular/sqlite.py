@@ -11,7 +11,5 @@ class SqliteConnector(relational.RelationalConnector):
 def _create_engine(config: config.SqliteConfig) -> engine.Engine:
     # SQLite Dialect:
     # https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#dialect-sqlite-pysqlite-connect
-    url = "sqlite:///{database}".format(
-        database=config.database,
-    )
+    url = "sqlite:///{database}".format(database=config.database,)
     return create_engine(url)

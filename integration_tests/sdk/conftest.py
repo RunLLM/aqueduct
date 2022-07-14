@@ -53,8 +53,7 @@ def client(pytestconfig):
 def pytest_configure(config):
     for flag in FLAGS:
         config.addinivalue_line(
-            "markers",
-            f"{flag}: mark test to only run if --{flag} command line flag is supplied",
+            "markers", f"{flag}: mark test to only run if --{flag} command line flag is supplied",
         )
 
 

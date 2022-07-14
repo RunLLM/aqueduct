@@ -35,10 +35,7 @@ class RelationalParams(models.BaseParams):
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
     github_metadata: Optional[Any]
 
-    def expand_placeholders(
-        self,
-        parameters: Dict[str, str],
-    ) -> None:
+    def expand_placeholders(self, parameters: Dict[str, str],) -> None:
         """Expands any tags found in the raw query, eg. {{ today }}.
 
         Relational queries can be arbitrarily parameterized the same way operators are. The only

@@ -1,10 +1,13 @@
-import pytest
 import os
+
+import pytest
+
 import aqueduct
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 ADAPTER_ENV_NAME = "ADAPTER"
+
 
 def pytest_configure(config):
     pytest.api_key = os.getenv(API_KEY_ENV_NAME)

@@ -9,7 +9,7 @@ from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.operators import Operator
-from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
+from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
 
 class FlowRun:
@@ -195,19 +195,11 @@ def _show_dag(
             node_label = "<br>".join(wrap(node_details.name, width=label_width))
             if isinstance(node_details, Operator):
                 node_descr.append(
-                    [
-                        node_type,
-                        node_label,
-                        node_details.description,
-                    ]
+                    [node_type, node_label, node_details.description,]
                 )
             else:
                 node_descr.append(
-                    [
-                        node_type,
-                        node_label,
-                        "",
-                    ]
+                    [node_type, node_label, "",]
                 )
 
         node_trace = go.Scatter(

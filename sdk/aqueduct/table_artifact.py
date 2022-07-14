@@ -78,10 +78,7 @@ class TableArtifact(Artifact):
     """
 
     def __init__(
-        self,
-        api_client: APIClient,
-        dag: DAG,
-        artifact_id: uuid.UUID,
+        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID,
     ):
         self._api_client = api_client
         self._dag = dag
@@ -107,13 +104,8 @@ class TableArtifact(Artifact):
         dag = apply_deltas_to_dag(
             self._dag,
             deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
+                SubgraphDAGDelta(artifact_ids=[self._artifact_id], include_load_operators=False,),
+                UpdateParametersDelta(parameters=parameters,),
             ],
             make_copy=True,
         )
@@ -240,9 +232,7 @@ class TableArtifact(Artifact):
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
             data_context_config = DataContextConfig(
                 datasources={
-                    "my_pandas_datasource": DatasourceConfig(
-                        class_name="PandasDatasource",
-                    )
+                    "my_pandas_datasource": DatasourceConfig(class_name="PandasDatasource",)
                 },
                 store_backend_defaults=FilesystemStoreBackendDefaults(root_directory="/tmp"),
             )
@@ -284,8 +274,7 @@ class TableArtifact(Artifact):
 
             # Constructing Validator by passing in RuntimeBatchRequest
             my_validator: Validator = context.get_validator(
-                batch_request=runtime_batch_request,
-                expectation_suite=suite,
+                batch_request=runtime_batch_request, expectation_suite=suite,
             )
 
             # Run validation to return the result
@@ -294,9 +283,7 @@ class TableArtifact(Artifact):
 
         zip_file = serialize_function(great_expectations_check_method)
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         check_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
         check_name = "ge_table_check: {%s}" % expectation_name
@@ -354,9 +341,7 @@ class TableArtifact(Artifact):
         zip_file = serialize_function(metric_func)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -381,9 +366,7 @@ class TableArtifact(Artifact):
         zip_file = serialize_function(internal_num_rows_metric)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -408,16 +391,11 @@ class TableArtifact(Artifact):
             return float(table[column_id].max())
 
         metric_name = "max(%s)" % column_id
-        metric_description = "Max for column %s for table %s" % (
-            column_id,
-            table_artifact.name,
-        )
+        metric_description = "Max for column %s for table %s" % (column_id, table_artifact.name,)
         zip_file = serialize_function(internal_max_metric)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -442,16 +420,11 @@ class TableArtifact(Artifact):
             return float(table[column_id].min())
 
         metric_name = "min(%s)" % column_id
-        metric_description = "Min for column %s for table %s" % (
-            column_id,
-            table_artifact.name,
-        )
+        metric_description = "Min for column %s for table %s" % (column_id, table_artifact.name,)
         zip_file = serialize_function(internal_min_metric)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -476,16 +449,11 @@ class TableArtifact(Artifact):
             return float(table[column_id].mean())
 
         metric_name = "mean(%s)" % column_id
-        metric_description = "Mean for column %s for table %s" % (
-            column_id,
-            table_artifact.name,
-        )
+        metric_description = "Mean for column %s for table %s" % (column_id, table_artifact.name,)
         zip_file = serialize_function(internal_mean_metric)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -512,16 +480,11 @@ class TableArtifact(Artifact):
             return std
 
         metric_name = "std(%s)" % column_id
-        metric_description = "std for column %s for table %s" % (
-            column_id,
-            table_artifact.name,
-        )
+        metric_description = "std for column %s for table %s" % (column_id, table_artifact.name,)
         zip_file = serialize_function(internal_std_metric)
 
         function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
@@ -552,10 +515,7 @@ class TableArtifact(Artifact):
         return new_artifact
 
     def _apply_operator_to_table(
-        self,
-        op_spec: OperatorSpec,
-        op_name: str,
-        op_description: str,
+        self, op_spec: OperatorSpec, op_name: str, op_description: str,
     ) -> OutputArtifact:
         output_artifact: OutputArtifact
         operator_id = generate_uuid()
@@ -610,13 +570,11 @@ class TableArtifact(Artifact):
 
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         load_operators = self._dag.list_operators(
-            filter_to=[OperatorType.LOAD],
-            on_artifact_id=self._artifact_id,
+            filter_to=[OperatorType.LOAD], on_artifact_id=self._artifact_id,
         )
 
         metric_operators = self._dag.list_operators(
-            filter_to=[OperatorType.METRIC],
-            on_artifact_id=self._artifact_id,
+            filter_to=[OperatorType.METRIC], on_artifact_id=self._artifact_id,
         )
 
         check_operators = get_checks_for_op(input_operator, self._dag)
@@ -648,7 +606,5 @@ class TableArtifact(Artifact):
         """
         apply_deltas_to_dag(
             self._dag,
-            deltas=[
-                RemoveCheckOperatorDelta(check_name=name, artifact_id=self._artifact_id),
-            ],
+            deltas=[RemoveCheckOperatorDelta(check_name=name, artifact_id=self._artifact_id),],
         )

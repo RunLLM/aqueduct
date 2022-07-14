@@ -1,8 +1,11 @@
+from collections import defaultdict
+
 import pytest
 import requests
-from collections import defaultdict
-import aqueduct
 from setup.load_workflow import create_test_endpoint_GetWorkflowTables_flow
+
+import aqueduct
+
 
 class TestBackend:
     @classmethod
@@ -11,13 +14,23 @@ class TestBackend:
         cls.flows = []
 
         # For test_endpoint_GetWorkflowTables
-        cls.test_endpoint_GetWorkflowTables_flow_table_names = ["table_1", "table_1", "table_1", "table_2"]
-        cls.test_endpoint_GetWorkflowTables_flow_update_modes = ["append", "append", "replace", "append"]
+        cls.test_endpoint_GetWorkflowTables_flow_table_names = [
+            "table_1",
+            "table_1",
+            "table_1",
+            "table_2",
+        ]
+        cls.test_endpoint_GetWorkflowTables_flow_update_modes = [
+            "append",
+            "append",
+            "replace",
+            "append",
+        ]
         cls.test_endpoint_GetWorkflowTables_flow = create_test_endpoint_GetWorkflowTables_flow(
-            cls.client, 
+            cls.client,
             "test_endpoint_GetWorkflowTables flow",
             cls.test_endpoint_GetWorkflowTables_flow_table_names,
-            cls.test_endpoint_GetWorkflowTables_flow_update_modes 
+            cls.test_endpoint_GetWorkflowTables_flow_update_modes,
         )
         cls.flows.append(cls.test_endpoint_GetWorkflowTables_flow)
 
@@ -27,17 +40,15 @@ class TestBackend:
             cls.client.delete_flow(flow.id())
 
     def test_endpoint_GetWorkflowTables(self):
-        headers = {
-            "api-key": pytest.api_key
-        }
+        headers = {"api-key": pytest.api_key}
         url = f"{pytest.adapter}{pytest.server_address}/api/workflow/{self.test_endpoint_GetWorkflowTables_flow.id()}/tables"
         r = requests.get(url, headers=headers)
         data = r.json()["table_details"]
 
         expected_table_names_update_modes = defaultdict(int)
         for table_name, update_mode in zip(
-            self.test_endpoint_GetWorkflowTables_flow_table_names, 
-            self.test_endpoint_GetWorkflowTables_flow_update_modes
+            self.test_endpoint_GetWorkflowTables_flow_table_names,
+            self.test_endpoint_GetWorkflowTables_flow_update_modes,
         ):
             # Should de-dup exact duplicates.
             expected_table_names_update_modes[(table_name, update_mode)] = 1
@@ -51,11 +62,13 @@ class TestBackend:
         actual_services = defaultdict(int)
         actual_table_names_update_modes = defaultdict(int)
         for details in data:
-            assert set(details.keys()) == set(['name', 'integration_id', 'service', 'table_name', 'update_mode'])
-            actual_integration_ids[details['integration_id']] += 1
-            actual_services[details['service']] += 1
-            actual_table_names_update_modes[(details['table_name'], details['update_mode'])] += 1
-        
+            assert set(details.keys()) == set(
+                ["name", "integration_id", "service", "table_name", "update_mode"]
+            )
+            actual_integration_ids[details["integration_id"]] += 1
+            actual_services[details["service"]] += 1
+            actual_table_names_update_modes[(details["table_name"], details["update_mode"])] += 1
+
         assert len(actual_integration_ids) == 1
         assert actual_integration_ids[list(actual_integration_ids.keys())[0]] == n_saves
 

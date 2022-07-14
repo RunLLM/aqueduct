@@ -202,17 +202,10 @@ def test_subgraph_dag_delta():
     # Anchoring on one of the extract artifacts should only return that extract artifact.
     expected_dag = copy.deepcopy(dag)
     expected_dag.remove_operators(
-        [
-            load_op_ids[0],
-            extract_op_ids[0],
-            fn_op_ids[0],
-        ]
+        [load_op_ids[0], extract_op_ids[0], fn_op_ids[0],]
     )
     _check_subgraph_test_case(
-        dag,
-        expected_dag,
-        artifact_ids=[extract_artifact_ids[1]],
-        include_load_operators=True,
+        dag, expected_dag, artifact_ids=[extract_artifact_ids[1]], include_load_operators=True,
     )
 
     # Add an additional distinct path through the DAG.
@@ -251,11 +244,7 @@ def test_subgraph_dag_delta():
     # Anchoring on the one of the branches will delete the other one completely.
     expected_dag = copy.deepcopy(dag)
     expected_dag.remove_operators(
-        [
-            extract_op_ids[2],
-            fn_op_ids[1],
-            load_op_ids[1],
-        ]
+        [extract_op_ids[2], fn_op_ids[1], load_op_ids[1],]
     )
     _check_subgraph_test_case(
         dag, expected_dag, artifact_ids=[fn_artifact_ids[0]], include_load_operators=True
@@ -377,10 +366,7 @@ def test_subgraph_delta_with_checks():
     # pulls in the other half of the dag.
     expected_dag = copy.deepcopy(dag)
     _check_subgraph_test_case(
-        dag,
-        expected_dag,
-        artifact_ids=[fn_artifact_ids[0]],
-        include_check_artifacts=True,
+        dag, expected_dag, artifact_ids=[fn_artifact_ids[0]], include_check_artifacts=True,
     )
 
     # If the multiple dependency check is requested explicitly, there is one upstream function operator
@@ -388,10 +374,7 @@ def test_subgraph_delta_with_checks():
     expected_dag.remove_operator(fn_op_ids[0])
     expected_dag.remove_operator(check_op_ids[0])
     _check_subgraph_test_case(
-        dag,
-        expected_dag,
-        artifact_ids=[check_artifact_ids[2]],
-        include_check_artifacts=True,
+        dag, expected_dag, artifact_ids=[check_artifact_ids[2]], include_check_artifacts=True,
     )
 
     # None of the copies are included if include_check_artifact=False.
@@ -401,10 +384,7 @@ def test_subgraph_delta_with_checks():
     expected_dag.remove_operator(extract_op_ids[1])
     expected_dag.remove_operator(fn_op_ids[1])
     _check_subgraph_test_case(
-        dag,
-        expected_dag,
-        artifact_ids=[fn_artifact_ids[0]],
-        include_check_artifacts=False,
+        dag, expected_dag, artifact_ids=[fn_artifact_ids[0]], include_check_artifacts=False,
     )
 
 
@@ -448,12 +428,7 @@ def test_apply_deltas_make_copy():
     # Check that the original DAG is not modified when make_copy=True
     computed_dag = apply_deltas_to_dag(
         dag,
-        deltas=[
-            SubgraphDAGDelta(
-                artifact_ids=[fn_artifact_id],
-                include_load_operators=False,
-            ),
-        ],
+        deltas=[SubgraphDAGDelta(artifact_ids=[fn_artifact_id], include_load_operators=False,),],
         make_copy=True,
     )
     assert computed_dag != dag
@@ -461,12 +436,7 @@ def test_apply_deltas_make_copy():
     # Check that the original DAG is modified when make_copy=False
     computed_dag = apply_deltas_to_dag(
         dag,
-        deltas=[
-            SubgraphDAGDelta(
-                artifact_ids=[fn_artifact_id],
-                include_load_operators=False,
-            ),
-        ],
+        deltas=[SubgraphDAGDelta(artifact_ids=[fn_artifact_id], include_load_operators=False,),],
         make_copy=False,
     )
     assert computed_dag == dag
@@ -559,14 +529,8 @@ def test_metrics_subgraph_dag_delta():
     )
 
     metric_check = {
-        0: {
-            "extract": [0],
-            "fn": [3, 4, 5, 6, 7],
-        },
-        1: {
-            "extract": [1],
-            "fn": [8],
-        },
+        0: {"extract": [0], "fn": [3, 4, 5, 6, 7],},
+        1: {"extract": [1], "fn": [8],},
     }
 
     check_artifacts = {
@@ -589,9 +553,7 @@ def test_metrics_subgraph_dag_delta():
 
     for i in range(metric_n):
         sub_dag = apply_deltas_to_dag(
-            dag,
-            [SubgraphDAGDelta(artifact_ids=[metric_artifact_ids[i]])],
-            make_copy=True,
+            dag, [SubgraphDAGDelta(artifact_ids=[metric_artifact_ids[i]])], make_copy=True,
         )
         correct_artifacts = check_artifacts[str(metric_artifact_ids[i])]
         actual_artifacts = set([str(artifact.id) for artifact in sub_dag.list_artifacts()])

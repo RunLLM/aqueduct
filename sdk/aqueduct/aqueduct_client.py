@@ -67,10 +67,7 @@ class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
 
     def __init__(
-        self,
-        api_key: str,
-        aqueduct_address: str,
-        log_level: int = logging.ERROR,
+        self, api_key: str, aqueduct_address: str, log_level: int = logging.ERROR,
     ):
         """Creates an instance of Client.
 
@@ -153,20 +150,12 @@ class Client:
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
-                            id=output_artifact_id,
-                            name=name,
-                            spec=ArtifactSpec(jsonable={}),
-                        ),
+                        Artifact(id=output_artifact_id, name=name, spec=ArtifactSpec(jsonable={}),),
                     ],
                 )
             ],
         )
-        return ParamArtifact(
-            self._api_client,
-            self._dag,
-            output_artifact_id,
-        )
+        return ParamArtifact(self._api_client, self._dag, output_artifact_id,)
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
@@ -180,10 +169,7 @@ class Client:
     def integration(
         self, name: str
     ) -> Union[
-        SalesforceIntegration,
-        S3Integration,
-        GoogleSheetsIntegration,
-        RelationalDBIntegration,
+        SalesforceIntegration, S3Integration, GoogleSheetsIntegration, RelationalDBIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -206,27 +192,19 @@ class Client:
         integration_info = self._connected_integrations[name]
         if integration_info.service in RelationalDBServices:
             return RelationalDBIntegration(
-                api_client=self._api_client,
-                dag=self._dag,
-                metadata=integration_info,
+                api_client=self._api_client, dag=self._dag, metadata=integration_info,
             )
         elif integration_info.service == ServiceType.SALESFORCE:
             return SalesforceIntegration(
-                api_client=self._api_client,
-                dag=self._dag,
-                metadata=integration_info,
+                api_client=self._api_client, dag=self._dag, metadata=integration_info,
             )
         elif integration_info.service == ServiceType.GOOGLE_SHEETS:
             return GoogleSheetsIntegration(
-                api_client=self._api_client,
-                dag=self._dag,
-                metadata=integration_info,
+                api_client=self._api_client, dag=self._dag, metadata=integration_info,
             )
         elif integration_info.service == ServiceType.S3:
             return S3Integration(
-                api_client=self._api_client,
-                dag=self._dag,
-                metadata=integration_info,
+                api_client=self._api_client, dag=self._dag, metadata=integration_info,
             )
         else:
             raise InvalidIntegrationException(
@@ -262,11 +240,7 @@ class Client:
         if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
-        return Flow(
-            self._api_client,
-            flow_id,
-            self._in_notebook_or_console_context,
-        )
+        return Flow(self._api_client, flow_id, self._in_notebook_or_console_context,)
 
     def publish_flow(
         self,
@@ -337,22 +311,14 @@ class Client:
         flow_id = self._api_client.register_workflow(dag).id
 
         url = generate_ui_url(
-            self._api_client.url_prefix(),
-            self._api_client.aqueduct_address,
-            str(flow_id),
+            self._api_client.url_prefix(), self._api_client.aqueduct_address, str(flow_id),
         )
         print("Url: ", url)
 
-        return Flow(
-            self._api_client,
-            str(flow_id),
-            self._in_notebook_or_console_context,
-        )
+        return Flow(self._api_client, str(flow_id), self._in_notebook_or_console_context,)
 
     def trigger(
-        self,
-        flow_id: Union[str, uuid.UUID],
-        parameters: Optional[Dict[str, Any]] = None,
+        self, flow_id: Union[str, uuid.UUID], parameters: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Immediately triggers another run of the provided flow.
 
