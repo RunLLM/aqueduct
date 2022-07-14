@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func seedWorkflowDag(t *testing.T, count int) []workflow_dag.WorkflowDag {
+func seedWorkflowDag(t *testing.T, count int) []workflow_dag.DBWorkflowDag {
 	numWorkflows := 2
 
 	workflows := seedWorkflow(t, numWorkflows)
@@ -21,10 +21,10 @@ func seedWorkflowDag(t *testing.T, count int) []workflow_dag.WorkflowDag {
 
 // seedWorkflowDagWithWorkflows populates the workflow_dag table with count workflow dags where
 // workflow_id is set to the values provided in workflowIds.
-func seedWorkflowDagWithWorkflows(t *testing.T, count int, workflowIds []uuid.UUID) []workflow_dag.WorkflowDag {
+func seedWorkflowDagWithWorkflows(t *testing.T, count int, workflowIds []uuid.UUID) []workflow_dag.DBWorkflowDag {
 	require.Len(t, workflowIds, count)
 
-	workflowDags := make([]workflow_dag.WorkflowDag, 0, count)
+	workflowDags := make([]workflow_dag.DBWorkflowDag, 0, count)
 
 	for i := 0; i < count; i++ {
 		testWorkflowDag, err := writers.workflowDagWriter.CreateWorkflowDag(
@@ -49,7 +49,7 @@ func seedWorkflowDagWithWorkflows(t *testing.T, count int, workflowIds []uuid.UU
 	return workflowDags
 }
 
-func requireEqualWorkflowDags(t *testing.T, expected, actual []workflow_dag.WorkflowDag) {
+func requireEqualWorkflowDags(t *testing.T, expected, actual []workflow_dag.DBWorkflowDag) {
 	require.Equal(t, len(expected), len(actual))
 
 	for _, expectedWorkflowDag := range expected {
@@ -65,7 +65,7 @@ func requireEqualWorkflowDags(t *testing.T, expected, actual []workflow_dag.Work
 }
 
 // idsFromWorkflowDags returns the ids from the workflow dags provided.
-func idsFromWorkflowDags(workflowDags []workflow_dag.WorkflowDag) []uuid.UUID {
+func idsFromWorkflowDags(workflowDags []workflow_dag.DBWorkflowDag) []uuid.UUID {
 	ids := make([]uuid.UUID, 0, len(workflowDags))
 	for _, workflowDag := range workflowDags {
 		ids = append(ids, workflowDag.Id)
@@ -78,7 +78,7 @@ func TestCreateWorkflowDag(t *testing.T) {
 
 	workflows := seedWorkflow(t, 1)
 
-	expectedWorkflowDag := &workflow_dag.WorkflowDag{
+	expectedWorkflowDag := &workflow_dag.DBWorkflowDag{
 		WorkflowId: workflows[0].Id,
 		StorageConfig: shared.StorageConfig{
 			Type: shared.S3StorageType,

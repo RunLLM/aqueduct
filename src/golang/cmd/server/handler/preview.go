@@ -226,7 +226,7 @@ func deserializeArtifactResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-	dagArtifacts map[uuid.UUID]artifact.Artifact,
+	dagArtifacts map[uuid.UUID]artifact.DBArtifact,
 	artifactsToSkipFetch map[uuid.UUID]bool,
 ) (map[uuid.UUID]previewArtifactResponse, error) {
 	responses := make(map[uuid.UUID]previewArtifactResponse, len(workflowStoragePaths.ArtifactPaths))

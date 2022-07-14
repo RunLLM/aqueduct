@@ -31,13 +31,13 @@ func (w *standardWriterImpl) CreateOperator(
 	description string,
 	spec *Spec,
 	db database.Database,
-) (*Operator, error) {
+) (*DBOperator, error) {
 	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	args := []interface{}{name, description, spec}
 
-	var operator Operator
+	var operator DBOperator
 	err := db.Query(ctx, &operator, insertOperatorStmt, args...)
 	return &operator, err
 }
@@ -54,7 +54,7 @@ func (r *standardReaderImpl) GetOperator(
 	ctx context.Context,
 	id uuid.UUID,
 	db database.Database,
-) (*Operator, error) {
+) (*DBOperator, error) {
 	operators, err := r.GetOperators(ctx, []uuid.UUID{id}, db)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (r *standardReaderImpl) GetOperators(
 	ctx context.Context,
 	ids []uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
+) ([]DBOperator, error) {
 	if len(ids) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
 	}
@@ -84,7 +84,7 @@ func (r *standardReaderImpl) GetOperators(
 
 	args := stmt_preparers.CastIdsListToInterfaceList(ids)
 
-	var operators []Operator
+	var operators []DBOperator
 	err := db.Query(ctx, &operators, getOperatorsQuery, args...)
 	return operators, err
 }
@@ -93,7 +93,7 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
+) ([]DBOperator, error) {
 	getOperatorsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM operator WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
@@ -104,7 +104,7 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 		workflow_dag_edge.ArtifactToOperatorType,
 	)
 
-	var operators []Operator
+	var operators []DBOperator
 	err := db.Query(ctx, &operators, getOperatorsByWorkflowDagIdQuery, workflowDagId)
 	return operators, err
 }
@@ -114,8 +114,8 @@ func (w *standardWriterImpl) UpdateOperator(
 	id uuid.UUID,
 	changes map[string]interface{},
 	db database.Database,
-) (*Operator, error) {
-	var operator Operator
+) (*DBOperator, error) {
+	var operator DBOperator
 	err := utils.UpdateRecordToDest(ctx, &operator, changes, tableName, IdColumn, id, allColumns(), db)
 	return &operator, err
 }

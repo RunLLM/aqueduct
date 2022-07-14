@@ -62,7 +62,7 @@ type RegisterWorkflowHandler struct {
 
 type registerWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowDag              *workflow_dag.WorkflowDag
+	workflowDag              *workflow_dag.DBWorkflowDag
 	operatorIdToFileContents map[uuid.UUID][]byte
 
 	// Whether this is a registering a new workflow or updating an existing one.

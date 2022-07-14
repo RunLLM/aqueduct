@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Operator struct {
+type DBOperator struct {
 	Id          uuid.UUID `db:"id" json:"id"`
 	Name        string    `db:"name" json:"name"`
 	Description string    `db:"description" json:"description"`
@@ -20,13 +20,13 @@ type Operator struct {
 
 type Reader interface {
 	Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error)
-	GetOperator(ctx context.Context, id uuid.UUID, db database.Database) (*Operator, error)
-	GetOperators(ctx context.Context, ids []uuid.UUID, db database.Database) ([]Operator, error)
+	GetOperator(ctx context.Context, id uuid.UUID, db database.Database) (*DBOperator, error)
+	GetOperators(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBOperator, error)
 	GetOperatorsByWorkflowDagId(
 		ctx context.Context,
 		workflowDagId uuid.UUID,
 		db database.Database,
-	) ([]Operator, error)
+	) ([]DBOperator, error)
 	GetDistinctLoadOperatorsByWorkflowId(
 		ctx context.Context,
 		workflowId uuid.UUID,
@@ -47,13 +47,13 @@ type Writer interface {
 		description string,
 		spec *Spec,
 		db database.Database,
-	) (*Operator, error)
+	) (*DBOperator, error)
 	UpdateOperator(
 		ctx context.Context,
 		id uuid.UUID,
 		changes map[string]interface{},
 		db database.Database,
-	) (*Operator, error)
+	) (*DBOperator, error)
 	DeleteOperator(ctx context.Context, id uuid.UUID, db database.Database) error
 	DeleteOperators(ctx context.Context, ids []uuid.UUID, db database.Database) error
 }
