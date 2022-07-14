@@ -17,7 +17,7 @@ def workflow_load_tables_to_demo_db(
     return client.publish_flow(name=workflow_name, artifacts=tables,)
 
 
-def create_test_endpoint_GetWorkflowTables_flow(client, workflow_name, table_names, update_modes):
+def create_changing_saves_flow(client, workflow_name, table_names, update_modes):
     for table_name, update_mode in zip(table_names, update_modes):
         flow = workflow_load_tables_to_demo_db(client, workflow_name, [table_name], [update_mode])
     return flow

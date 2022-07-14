@@ -1,6 +1,8 @@
 # Backend Integration Tests
 
-These tests run the Aqueduct backend.
+These tests are run against the Aqueduct backend to check the endpoints' reads and outputs are as expected.
+
+The `setup_class` sets up all the workflows which are read by each `test_endpoint_{handler_name}` test. When all the tests in the suite are done, the workflows set up in `setup_class` are deleted in the `teardown_class`.
 
 ## Usage
 
