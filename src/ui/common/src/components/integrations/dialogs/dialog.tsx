@@ -264,7 +264,11 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       <DialogContent>
         {nameInput}
         {serviceDialog}
-        {errMsg && <Alert severity="error"><pre>{errMsg}</pre></Alert>}
+        {errMsg && (
+          <Alert severity="error">
+            <pre>{errMsg}</pre>
+          </Alert>
+        )}
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={showSuccessToast}
