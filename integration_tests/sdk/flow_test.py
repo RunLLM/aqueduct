@@ -176,10 +176,7 @@ def test_get_artifact_from_flow(client):
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
-    flow = client.publish_flow(
-        name=generate_new_flow_name(),
-        artifacts=[output_artifact],
-    )
+    flow = client.publish_flow(name=generate_new_flow_name(), artifacts=[output_artifact],)
     try:
         wait_for_flow_runs(client, flow.id(), num_runs=1)
         artifact_return = flow.latest().artifact(output_artifact.name())
@@ -197,10 +194,7 @@ def test_get_artifact_reuse_for_computation(client):
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
-    flow = client.publish_flow(
-        name=generate_new_flow_name(),
-        artifacts=[output_artifact],
-    )
+    flow = client.publish_flow(name=generate_new_flow_name(), artifacts=[output_artifact],)
     try:
         wait_for_flow_runs(client, flow.id(), num_runs=1)
         artifact_return = flow.latest().artifact(output_artifact.name())
