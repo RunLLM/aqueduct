@@ -56,10 +56,7 @@ def test_operator_serialization():
         name="Function Operator",
         description="",
         spec=OperatorSpec(
-            function=FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-            )
+            function=FunctionSpec(type=FunctionType.FILE, granularity=FunctionGranularity.TABLE,)
         ),
         inputs=[other_ids[0]],
         outputs=[other_ids[1]],
@@ -86,8 +83,7 @@ def test_operator_serialization():
 def test_preview_response_loading():
     op_id = uuid.uuid4()
     op_result = OperatorResult(
-        status=ExecutionStatus.SUCCEEDED,
-        user_logs=Logs(stdout="These are the operator logs"),
+        status=ExecutionStatus.SUCCEEDED, user_logs=Logs(stdout="These are the operator logs"),
     )
     artifact_id = uuid.uuid4()
     artifact_result = TableArtifactResult(
@@ -97,22 +93,14 @@ def test_preview_response_loading():
     preview_resp = {
         "status": ExecutionStatus.SUCCEEDED,
         "err_msg": "",
-        "operator_results": {
-            str(op_id): op_result,
-        },
-        "artifact_results": {
-            str(artifact_id): artifact_result,
-        },
+        "operator_results": {str(op_id): op_result,},
+        "artifact_results": {str(artifact_id): artifact_result,},
     }
 
     assert PreviewResponse(**preview_resp) == PreviewResponse(
         status=ExecutionStatus.SUCCEEDED,
-        operator_results={
-            op_id: op_result,
-        },
-        artifact_results={
-            artifact_id: artifact_result,
-        },
+        operator_results={op_id: op_result,},
+        artifact_results={artifact_id: artifact_result,},
     )
 
 
@@ -127,16 +115,9 @@ def test_excluded_fields_can_be_compared():
         inputs=[],
         outputs=[artifact_id],
     )
-    dag = _construct_dag(
-        operators=[op],
-        artifacts=[],
-    )
+    dag = _construct_dag(operators=[op], artifacts=[],)
     # Constructed DAG is missing the excluded field 'operator_by_name`
-    assert dag != DAG(
-        operators={**{str(op.id): op}},
-        artifacts={},
-        metadata=Metadata(),
-    )
+    assert dag != DAG(operators={**{str(op.id): op}}, artifacts={}, metadata=Metadata(),)
 
     # This is the correct comparison.
     assert dag == DAG(
@@ -173,9 +154,7 @@ def test_extract_serialization():
                 "extract": {
                     "service": ServiceType.POSTGRES,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "query": "SELECT * FROM hotel_reviews;",
-                    },
+                    "parameters": {"query": "SELECT * FROM hotel_reviews;",},
                 }
             },
             "inputs": [],
@@ -207,10 +186,7 @@ def test_extract_serialization():
                 "extract": {
                     "service": ServiceType.SALESFORCE,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "type": "search",
-                        "query": "FIND joe;",
-                    },
+                    "parameters": {"type": "search", "query": "FIND joe;",},
                 }
             },
             "inputs": [],
@@ -240,9 +216,7 @@ def test_extract_serialization():
                 "extract": {
                     "service": ServiceType.GOOGLE_SHEETS,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "spreadsheet_id": "0",
-                    },
+                    "parameters": {"spreadsheet_id": "0",},
                 }
             },
             "inputs": [],
@@ -258,10 +232,7 @@ def test_extract_serialization():
             extract=ExtractSpec(
                 service=ServiceType.S3,
                 integration_id=integration_id,
-                parameters=S3ExtractParams(
-                    filepath="test.csv",
-                    format=S3FileFormat.CSV,
-                ),
+                parameters=S3ExtractParams(filepath="test.csv", format=S3FileFormat.CSV,),
             ),
         ),
         outputs=[other_ids[1]],
@@ -275,10 +246,7 @@ def test_extract_serialization():
                 "extract": {
                     "service": ServiceType.S3,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "filepath": "test.csv",
-                        "format": "CSV",
-                    },
+                    "parameters": {"filepath": "test.csv", "format": "CSV",},
                 }
             },
             "inputs": [],
@@ -315,10 +283,7 @@ def test_load_serialization():
                 "load": {
                     "service": ServiceType.POSTGRES,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "table": "hotel_reviews",
-                        "update_mode": "replace",
-                    },
+                    "parameters": {"table": "hotel_reviews", "update_mode": "replace",},
                 }
             },
             "inputs": [str(other_ids[0])],
@@ -348,9 +313,7 @@ def test_load_serialization():
                 "load": {
                     "service": ServiceType.SALESFORCE,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "object": "hotel_reviews",
-                    },
+                    "parameters": {"object": "hotel_reviews",},
                 }
             },
             "inputs": [str(other_ids[0])],
@@ -382,10 +345,7 @@ def test_load_serialization():
                 "load": {
                     "service": ServiceType.GOOGLE_SHEETS,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "filepath": "test_sheet.csv",
-                        "save_mode": "overwrite",
-                    },
+                    "parameters": {"filepath": "test_sheet.csv", "save_mode": "overwrite",},
                 }
             },
             "inputs": [str(other_ids[0])],
@@ -401,10 +361,7 @@ def test_load_serialization():
             load=LoadSpec(
                 service=ServiceType.S3,
                 integration_id=integration_id,
-                parameters=S3LoadParams(
-                    filepath="test.json",
-                    format=S3FileFormat.JSON,
-                ),
+                parameters=S3LoadParams(filepath="test.json", format=S3FileFormat.JSON,),
             ),
         ),
         inputs=[other_ids[0]],
@@ -419,10 +376,7 @@ def test_load_serialization():
                 "load": {
                     "service": ServiceType.S3,
                     "integration_id": str(integration_id),
-                    "parameters": {
-                        "filepath": "test.json",
-                        "format": S3FileFormat.JSON,
-                    },
+                    "parameters": {"filepath": "test.json", "format": S3FileFormat.JSON,},
                 }
             },
             "inputs": [str(other_ids[0])],

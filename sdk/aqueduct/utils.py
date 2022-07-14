@@ -67,11 +67,7 @@ def generate_ui_url(
             WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
         )
     else:
-        url = "%s%s%s" % (
-            url_prefix,
-            aqueduct_address,
-            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
-        )
+        url = "%s%s%s" % (url_prefix, aqueduct_address, WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,)
     return url
 
 
@@ -309,11 +305,7 @@ def artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
 
 
-def generate_extract_op_name(
-    dag: DAG,
-    integration_name: str,
-    name: Optional[str],
-) -> str:
+def generate_extract_op_name(dag: DAG, integration_name: str, name: Optional[str],) -> str:
     """
     Generates name for extract operators to avoid operators with the same name.
 
@@ -348,10 +340,7 @@ def get_checks_for_op(op: Operator, dag: DAG) -> List[Operator]:
     check_operators = []
     for artf in op.outputs:
         check_operators.extend(
-            dag.list_operators(
-                filter_to=[OperatorType.CHECK],
-                on_artifact_id=artf,
-            )
+            dag.list_operators(filter_to=[OperatorType.CHECK], on_artifact_id=artf,)
         )
     return check_operators
 
@@ -360,10 +349,7 @@ def get_metrics_for_op(op: Operator, dag: DAG) -> List[Operator]:
     metric_operators = []
     for artf in op.outputs:
         metric_operators.extend(
-            dag.list_operators(
-                filter_to=[OperatorType.METRIC],
-                on_artifact_id=artf,
-            )
+            dag.list_operators(filter_to=[OperatorType.METRIC], on_artifact_id=artf,)
         )
     return metric_operators
 

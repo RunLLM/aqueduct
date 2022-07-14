@@ -82,15 +82,11 @@ class GoogleSheetsIntegration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client,
-            dag=self._dag,
-            artifact_id=output_artifact_id,
+            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id,
         )
 
     def config(
-        self,
-        filepath: str,
-        save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
+        self, filepath: str, save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
     ) -> SaveConfig:
         """
         Configuration for saving to Google Sheets Integration.

@@ -31,10 +31,7 @@ def read_artifacts(
     if len(input_paths) != len(artifact_types):
         raise Exception(
             "Found inconsistent number of input paths (%d) and artifact types (%d)"
-            % (
-                len(input_paths),
-                len(artifact_types),
-            )
+            % (len(input_paths), len(artifact_types),)
         )
 
     inputs: List[Any] = []
@@ -52,8 +49,7 @@ def read_artifacts(
 
 
 def read_system_metadata(
-    storage: Storage,
-    input_metadata_paths: List[str],
+    storage: Storage, input_metadata_paths: List[str],
 ) -> List[Dict[str, Any]]:
     return _read_metadata_key(storage, input_metadata_paths, _METADATA_SYSTEM_METADATA_KEY)
 
@@ -106,24 +102,14 @@ def write_artifacts(
     ):
         raise Exception(
             "Found inconsistent number of outputs (%d), artifact_types (%d), output paths (%d), and output metadata paths (%d)."
-            % (
-                len(contents),
-                len(artifact_types),
-                len(output_paths),
-                len(output_metadata_paths),
-            )
+            % (len(contents), len(artifact_types), len(output_paths), len(output_metadata_paths),)
         )
 
     for (artifact_type, output_path, output_metadata_path, content) in zip(
         artifact_types, output_paths, output_metadata_paths, contents
     ):
         write_artifact(
-            storage,
-            artifact_type,
-            output_path,
-            output_metadata_path,
-            content,
-            system_metadata,
+            storage, artifact_type, output_path, output_metadata_path, content, system_metadata,
         )
 
 
@@ -211,8 +197,7 @@ def _write_numeric_output(
     """Used for metrics."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
     storage.put(
-        output_metadata_path,
-        bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
+        output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
     )
 
 
@@ -226,8 +211,7 @@ def _write_bool_output(
     """Used for checks."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
     storage.put(
-        output_metadata_path,
-        bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
+        output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
     )
 
 
@@ -241,16 +225,11 @@ def _write_json_output(
     """Used for parameters."""
     storage.put(output_path, bytes(val, encoding=_DEFAULT_ENCODING))
     storage.put(
-        output_metadata_path,
-        bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
+        output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING),
     )
 
 
-def write_exec_state(
-    storage: Storage,
-    metadata_path: str,
-    exec_state: ExecutionState,
-) -> None:
+def write_exec_state(storage: Storage, metadata_path: str, exec_state: ExecutionState,) -> None:
     """
     Writes operator execution logs to storage.
     :param err: Any error message encountered during execution.

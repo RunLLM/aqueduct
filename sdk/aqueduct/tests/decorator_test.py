@@ -58,10 +58,7 @@ def test_handle_reserved_file_dependencies():
 def test_serialize_function():
     initial_state = set(os.listdir())
     dependencies = ["./test_dependency_folder/helper_function.py"]
-    zip_file = serialize_function(
-        func=python_function,
-        file_dependencies=dependencies,
-    )
+    zip_file = serialize_function(func=python_function, file_dependencies=dependencies,)
     final_state = set(os.listdir())
     assert initial_state == final_state
     assert zip_file is not None

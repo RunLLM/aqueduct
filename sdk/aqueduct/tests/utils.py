@@ -32,8 +32,7 @@ def generate_uuids(num: int) -> List[uuid.UUID]:
 
 
 def _construct_dag(
-    operators: List[Operator],
-    artifacts: List[Artifact],
+    operators: List[Operator], artifacts: List[Artifact],
 ):
     return DAG(
         operators={**{str(op.id): op for op in operators}},
@@ -62,14 +61,7 @@ def _construct_operator(
     else:
         spec = default_load_spec()
 
-    return Operator(
-        id=id,
-        name=name,
-        description="",
-        spec=spec,
-        inputs=inputs,
-        outputs=outputs,
-    )
+    return Operator(id=id, name=name, description="", spec=spec, inputs=inputs, outputs=outputs,)
 
 
 def default_extract_spec() -> OperatorSpec:
@@ -84,10 +76,7 @@ def default_extract_spec() -> OperatorSpec:
 
 def default_function_spec() -> OperatorSpec:
     return OperatorSpec(
-        function=FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-        )
+        function=FunctionSpec(type=FunctionType.FILE, granularity=FunctionGranularity.TABLE,)
     )
 
 
@@ -95,10 +84,7 @@ def default_check_spec() -> OperatorSpec:
     return OperatorSpec(
         check=CheckSpec(
             level=CheckSeverity.WARNING,
-            function=FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-            ),
+            function=FunctionSpec(type=FunctionType.FILE, granularity=FunctionGranularity.TABLE,),
         )
     )
 
@@ -106,10 +92,7 @@ def default_check_spec() -> OperatorSpec:
 def default_metric_spec() -> OperatorSpec:
     return OperatorSpec(
         metric=MetricSpec(
-            function=FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-            ),
+            function=FunctionSpec(type=FunctionType.FILE, granularity=FunctionGranularity.TABLE,),
         )
     )
 
@@ -149,8 +132,5 @@ def default_table_artifact(
         inputs=[],
         outputs=[artifact_id],
     )
-    dag = _construct_dag(
-        operators=[op],
-        artifacts=[artifact],
-    )
+    dag = _construct_dag(operators=[op], artifacts=[artifact],)
     return TableArtifact(api_client=api_client, dag=dag, artifact_id=artifact_id)

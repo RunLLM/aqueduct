@@ -68,9 +68,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
 
 
 def _execute_function(
-    spec: FunctionSpec,
-    inputs: List[Any],
-    exec_state: ExecutionState,
+    spec: FunctionSpec, inputs: List[Any], exec_state: ExecutionState,
 ) -> Tuple[Any, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
@@ -95,7 +93,7 @@ def _execute_function(
     _, peak = tracemalloc.get_traced_memory()
     system_metadata = {
         utils._RUNTIME_SEC_METRIC_NAME: str(elapsedTime),
-        utils._MAX_MEMORY_MB_METRIC_NAME: str(peak / 10**6),
+        utils._MAX_MEMORY_MB_METRIC_NAME: str(peak / 10 ** 6),
     }
 
     sys.path.pop(0)
@@ -143,10 +141,7 @@ def run(spec: FunctionSpec) -> None:
     except Exception as e:
         exec_state.status = ExecutionStatus.FAILED
         exec_state.failure_type = FailureType.SYSTEM
-        exec_state.error = Error(
-            context=exception_traceback(e),
-            tip=TIP_UNKNOWN_ERROR,
-        )
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR,)
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)

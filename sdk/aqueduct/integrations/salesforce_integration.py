@@ -50,9 +50,7 @@ class SalesforceIntegration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client,
-            dag=self._dag,
-            artifact_id=output_artifact_id,
+            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id,
         )
 
     def query(self, query: str, name: Optional[str] = None, description: str = "") -> TableArtifact:
@@ -75,9 +73,7 @@ class SalesforceIntegration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client,
-            dag=self._dag,
-            artifact_id=output_artifact_id,
+            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id,
         )
 
     def config(self, object: str) -> SaveConfig:
@@ -91,8 +87,7 @@ class SalesforceIntegration(Integration):
             SaveConfig object to use in TableArtifact.save()
         """
         return SaveConfig(
-            integration_info=self._metadata,
-            parameters=SalesforceLoadParams(object=object),
+            integration_info=self._metadata, parameters=SalesforceLoadParams(object=object),
         )
 
     def _add_extract_operation(

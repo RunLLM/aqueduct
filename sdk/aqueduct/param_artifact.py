@@ -12,10 +12,7 @@ from aqueduct.utils import format_header_for_print
 
 class ParamArtifact(Artifact):
     def __init__(
-        self,
-        api_client: APIClient,
-        dag: DAG,
-        artifact_id: uuid.UUID,
+        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID,
     ):
         """The APIClient is only included because decorated functions operators acting on this parameter
         will need a handle to an API client."""

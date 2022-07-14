@@ -12,7 +12,7 @@ from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import generate_ui_url, parse_user_supplied_id, format_header_for_print
+from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
 class Flow:
@@ -22,10 +22,7 @@ class Flow:
     """
 
     def __init__(
-        self,
-        api_client: APIClient,
-        flow_id: str,
-        in_notebook_or_console_context: bool,
+        self, api_client: APIClient, flow_id: str, in_notebook_or_console_context: bool,
     ):
         assert flow_id is not None
         self._api_client = api_client
@@ -72,8 +69,7 @@ class Flow:
         param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
             param_val = self._api_client.get_artifact_result_data(
-                str(dag_result.id),
-                str(param_artifact.id),
+                str(dag_result.id), str(param_artifact.id),
             )
 
             # Skip the parameter update if the parameter was never computed.
@@ -87,11 +83,7 @@ class Flow:
             dag.update_operator_spec(
                 # this works because the parameter op and artifact currently share the same name.
                 param_artifact.name,
-                OperatorSpec(
-                    param=ParamSpec(
-                        val=param_val,
-                    ),
-                ),
+                OperatorSpec(param=ParamSpec(val=param_val,),),
             )
 
         return FlowRun(

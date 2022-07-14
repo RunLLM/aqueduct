@@ -46,10 +46,7 @@ def _is_input_artifact(elem: Any) -> bool:
 
 
 def wrap_spec(
-    spec: OperatorSpec,
-    *input_artifacts: InputArtifact,
-    op_name: str,
-    description: str = "",
+    spec: OperatorSpec, *input_artifacts: InputArtifact, op_name: str, description: str = "",
 ) -> OutputArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
@@ -194,14 +191,10 @@ def op(
             assert isinstance(name, str)
             zip_file = serialize_function(func, file_dependencies, reqs_path)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-                file=zip_file,
+                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
             )
             new_function_artifact = wrap_spec(
-                OperatorSpec(function=function_spec),
-                *sql_artifacts,
-                op_name=name,
+                OperatorSpec(function=function_spec), *sql_artifacts, op_name=name,
             )
 
             assert isinstance(new_function_artifact, TableArtifact)
@@ -223,8 +216,7 @@ def op(
 
 
 def metric(
-    name: Optional[Union[str, MetricFunction]] = None,
-    description: Optional[str] = None,
+    name: Optional[Union[str, MetricFunction]] = None, description: Optional[str] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -269,9 +261,7 @@ def metric(
         """
 
         @wraps(func)
-        def wrapped(
-            *artifacts: InputArtifact,
-        ) -> MetricArtifact:
+        def wrapped(*artifacts: InputArtifact,) -> MetricArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -294,10 +284,7 @@ def metric(
             metric_spec = MetricSpec(function=function_spec)
 
             new_metric_artifact = wrap_spec(
-                OperatorSpec(metric=metric_spec),
-                *artifacts,
-                op_name=name,
-                description=description,
+                OperatorSpec(metric=metric_spec), *artifacts, op_name=name, description=description,
             )
 
             assert isinstance(new_metric_artifact, MetricArtifact)
@@ -373,9 +360,7 @@ def check(
         """
 
         @wraps(func)
-        def wrapped(
-            *artifacts: InputArtifact,
-        ) -> CheckArtifact:
+        def wrapped(*artifacts: InputArtifact,) -> CheckArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -388,17 +373,12 @@ def check(
             assert isinstance(description, str)
             zip_file = serialize_function(func)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-                file=zip_file,
+                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
 
             new_check_artifact = wrap_spec(
-                OperatorSpec(check=check_spec),
-                *artifacts,
-                op_name=name,
-                description=description,
+                OperatorSpec(check=check_spec), *artifacts, op_name=name, description=description,
             )
 
             assert isinstance(new_check_artifact, CheckArtifact)

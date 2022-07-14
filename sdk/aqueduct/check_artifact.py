@@ -31,10 +31,7 @@ class CheckArtifact(Artifact):
     """
 
     def __init__(
-        self,
-        api_client: APIClient,
-        dag: DAG,
-        artifact_id: uuid.UUID,
+        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID,
     ):
         self._api_client = api_client
         self._dag = dag
@@ -55,13 +52,8 @@ class CheckArtifact(Artifact):
         dag = apply_deltas_to_dag(
             self._dag,
             deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
+                SubgraphDAGDelta(artifact_ids=[self._artifact_id], include_load_operators=False,),
+                UpdateParametersDelta(parameters=parameters,),
             ],
             make_copy=True,
         )
