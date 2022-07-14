@@ -78,11 +78,7 @@ class TableArtifact(Artifact):
     """
 
     def __init__(
-<<<<<<< HEAD
-        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID,
-=======
         self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
->>>>>>> 14b42235a57e697c3f71cc2edafa49fc358b4a69
     ):
         self._api_client = api_client
         self._dag = dag
