@@ -52,6 +52,29 @@ def generate_uuid() -> uuid.UUID:
     return uuid.uuid4()
 
 
+WORKFLOW_UI_ROUTE_TEMPLATE = "/workflow/%s"
+WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
+
+
+def generate_ui_url(
+    url_prefix: str, aqueduct_address: str, workflow_id: str, result_id: Optional[str] = None
+) -> str:
+    if result_id:
+        url = "%s%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+            WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
+        )
+    else:
+        url = "%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+        )
+    return url
+
+
 def raise_errors(response: requests.Response) -> None:
     def _extract_err_msg() -> str:
         resp_json = response.json()

@@ -177,6 +177,14 @@ class Operator(BaseModel):
 
         return None
 
+    def update_serialized_function(self, serialized_function: bytes) -> None:
+        if self.spec.function:
+            self.spec.function.file = serialized_function
+        if self.spec.metric:
+            self.spec.metric.function.file = serialized_function
+        if self.spec.check:
+            self.spec.check.function.file = serialized_function
+
 
 def get_operator_type(operator: Operator) -> OperatorType:
     return get_operator_type_from_spec(operator.spec)
