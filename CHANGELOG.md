@@ -3,7 +3,7 @@
 ## 0.0.5
 Released on 7/14/2022
 
-### Enhancments
+### Enhancements
 * Makes password optional when creating a Postgres connection.
 * Adds `describe` method to every relational integration.
 * Improves log capture when executing user functions.
