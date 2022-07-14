@@ -4,23 +4,18 @@ from collections import defaultdict
 import aqueduct
 from setup.load_workflow import create_test_endpoint_GetWorkflowTables_flow
 
-# TODO: How to handle if workflows already exist? e.g. try to create workflow_1 but already exists and overwrites existing. Workflow_dag check won't work because will have extra history from the existing workflow_1.
-## Maybe have an account specific for testing? Not sure if we support multiple users in the OSS version.
-# TODO: Could I grab the address and apikey from something? E.g. the .aqueduct config.yml file for apikey. Should I?
-# TODO: Add to Github Actions
-
 class TestBackend:
     @classmethod
     def setup_class(cls):
-        print(f"Creating client\n\tADDRESS {pytest.address}\n\tAPIKEY: {pytest.apikey}")
-        cls.client = aqueduct.Client(pytest.apikey, pytest.address)
+        cls.client = aqueduct.Client(pytest.apikey, pytest.server_address)
         cls.flows = []
 
+        # For test_endpoint_GetWorkflowTables
         cls.test_endpoint_GetWorkflowTables_flow_table_names = ["table_1", "table_1", "table_1", "table_2"]
         cls.test_endpoint_GetWorkflowTables_flow_update_modes = ["append", "append", "replace", "append"]
         cls.test_endpoint_GetWorkflowTables_flow = create_test_endpoint_GetWorkflowTables_flow(
             cls.client, 
-            "test_endpoint_GetWorkflowTables",
+            "test_endpoint_GetWorkflowTables flow",
             cls.test_endpoint_GetWorkflowTables_flow_table_names,
             cls.test_endpoint_GetWorkflowTables_flow_update_modes 
         )
@@ -35,7 +30,7 @@ class TestBackend:
         headers = {
             "api-key": pytest.apikey
         }
-        url = f"{pytest.address}/api/workflow/{self.test_endpoint_GetWorkflowTables_flow.id()}/tables"
+        url = f"{pytest.server_address}/api/workflow/{self.test_endpoint_GetWorkflowTables_flow.id()}/tables"
         r = requests.get(url, headers=headers)
         data = r.json()["table_details"]
 

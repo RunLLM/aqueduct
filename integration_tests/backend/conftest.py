@@ -1,9 +1,10 @@
 import pytest
+import os
+import aqueduct
 
-def pytest_addoption(parser):
-    parser.addoption("--apikey", type=str, required=True)
-    parser.addoption("--address", type=str, default="http://localhost:8080")
+API_KEY_ENV_NAME = "API_KEY"
+SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 
 def pytest_configure(config):
-    pytest.apikey = config.getoption('apikey')
-    pytest.address = config.getoption('address')
+    pytest.apikey = os.getenv(API_KEY_ENV_NAME)
+    pytest.server_address = os.getenv(SERVER_ADDR_ENV_NAME)
