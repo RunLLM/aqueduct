@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.0.5
+Released on 7/14/2022
+
+### Enhancments
+* Makes password optional when creating a Postgres connection.
+* Adds `describe` method to every relational integration.
+* Improves log capture when executing user functions.
+* Enables configuration of S3 storage backend for version snapshots and operator metadata.
+* Displays workflow ID on workflow settings modal.
+* Adds ability to fetch an individual artifact from a workflow run using the SDK.
+* Supports reading multiple S3 files into a single Pandas DataFrame.
+* Deprecates showing `pyplot` image in notebook on workflow creation; instead, provides link to UI.
+
+### Bugfixes
+
+None! :tada:
+
+
 ## 0.0.4
 Released on 7/7/2022
 
