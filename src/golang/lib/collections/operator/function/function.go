@@ -1,7 +1,7 @@
 package function
 
 import (
-	github "github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github/types"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector/github"
 )
 
 type Function struct {

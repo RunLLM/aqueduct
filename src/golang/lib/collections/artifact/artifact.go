@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Artifact struct {
+type DBArtifact struct {
 	Id          uuid.UUID `db:"id" json:"id"`
 	Name        string    `db:"name" json:"name"`
 	Description string    `db:"description" json:"description"`
@@ -16,13 +16,13 @@ type Artifact struct {
 
 type Reader interface {
 	Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error)
-	GetArtifact(ctx context.Context, id uuid.UUID, db database.Database) (*Artifact, error)
-	GetArtifacts(ctx context.Context, ids []uuid.UUID, db database.Database) ([]Artifact, error)
+	GetArtifact(ctx context.Context, id uuid.UUID, db database.Database) (*DBArtifact, error)
+	GetArtifacts(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBArtifact, error)
 	GetArtifactsByWorkflowDagId(
 		ctx context.Context,
 		workflowDagId uuid.UUID,
 		db database.Database,
-	) ([]Artifact, error)
+	) ([]DBArtifact, error)
 	ValidateArtifactOwnership(
 		ctx context.Context,
 		organizationId string,
@@ -38,13 +38,13 @@ type Writer interface {
 		description string,
 		spec *Spec,
 		db database.Database,
-	) (*Artifact, error)
+	) (*DBArtifact, error)
 	UpdateArtifact(
 		ctx context.Context,
 		id uuid.UUID,
 		changes map[string]interface{},
 		db database.Database,
-	) (*Artifact, error)
+	) (*DBArtifact, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID, db database.Database) error
 	DeleteArtifacts(ctx context.Context, ids []uuid.UUID, db database.Database) error
 }

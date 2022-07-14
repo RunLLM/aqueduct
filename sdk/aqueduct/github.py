@@ -62,7 +62,9 @@ class Github:
                 repo_config_content_type=repo_config_content_type,
             ),
             entry_point=EntryPoint(
-                file=entry_point_file, class_name=entry_point_class, method=entry_point_method,
+                file=entry_point_file,
+                class_name=entry_point_class,
+                method=entry_point_method,
             ),
         )
 
@@ -147,7 +149,13 @@ class Github:
             ```
         """
         function_spec = self._get_function_spec(
-            self.repo_url, self.branch, path, entry_point, class_name, method, op_name,
+            self.repo_url,
+            self.branch,
+            path,
+            entry_point,
+            class_name,
+            method,
+            op_name,
         )
 
         def wrapped(*inputs: TableArtifact) -> TableArtifact:

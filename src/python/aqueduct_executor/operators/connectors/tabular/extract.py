@@ -29,13 +29,17 @@ BUILT_IN_EXPANSIONS = {
 class RelationalParams(models.BaseParams):
     # The query cannot be used until `apply_placeholders()` is called on it. This flushes out
     # any user-defined tags like `{{today}}`.
-    query_is_usable: bool = False
+    query_is_usable: Optional[bool] = False
+
     query: str
 
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
     github_metadata: Optional[Any]
 
-    def expand_placeholders(self, parameters: Dict[str, str],) -> None:
+    def expand_placeholders(
+        self,
+        parameters: Dict[str, str],
+    ) -> None:
         """Expands any tags found in the raw query, eg. {{ today }}.
 
         Relational queries can be arbitrarily parameterized the same way operators are. The only
@@ -69,7 +73,11 @@ class RelationalParams(models.BaseParams):
 
         Callers should check that `usable()` -> True before actually executing this query.
         """
-        return self.query_is_usable
+        # We cannot return self.query_is_usable directly, since it is an Optional
+        # and the method expects a bool to be returned.
+        if self.query_is_usable:
+            return True
+        return False
 
 
 class S3Params(models.BaseParams):

@@ -37,7 +37,7 @@ var (
 )
 
 func initializeOrchestration(
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	ready map[uuid.UUID]bool,
 	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
 	artifactToDownstreamOperatorIds map[uuid.UUID][]uuid.UUID,
@@ -75,7 +75,7 @@ func initializeOrchestration(
 // any internal system error occurred during the execution.
 func updateCompletedOp(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.Operator,
+	operators map[uuid.UUID]operator.DBOperator,
 	ready map[uuid.UUID]bool,
 	active map[uuid.UUID]bool,
 	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
@@ -165,8 +165,8 @@ func updateCompletedOp(
 
 func scheduleOperators(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.Operator,
-	artifacts map[uuid.UUID]artifact.Artifact,
+	operators map[uuid.UUID]operator.DBOperator,
+	artifacts map[uuid.UUID]artifact.DBArtifact,
 	ready map[uuid.UUID]bool,
 	active map[uuid.UUID]bool,
 	operatorIdToJobId map[uuid.UUID]string,
@@ -188,7 +188,7 @@ func scheduleOperators(
 			return ErrInvalidOpId
 		}
 
-		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
+		inputArtifacts := make([]artifact.DBArtifact, 0, len(op.Inputs))
 		inputContentPaths := make([]string, 0, len(op.Inputs))
 		inputMetadataPaths := make([]string, 0, len(op.Inputs))
 		for _, inputArtifactId := range op.Inputs {
@@ -202,7 +202,7 @@ func scheduleOperators(
 			inputMetadataPaths = append(inputMetadataPaths, artifactMetadataPaths[inputArtifact.Id])
 		}
 
-		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
+		outputArtifacts := make([]artifact.DBArtifact, 0, len(op.Outputs))
 		outputContentPaths := make([]string, 0, len(op.Outputs))
 		outputMetadataPaths := make([]string, 0, len(op.Outputs))
 		for _, outputArtifactId := range op.Outputs {
@@ -281,7 +281,7 @@ func waitForActiveOperators(
 
 func Preview(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	jobManager job.JobManager,
@@ -307,7 +307,7 @@ func Preview(
 
 func Execute(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	workflowReader workflow.Reader,
@@ -340,7 +340,7 @@ func Execute(
 
 func orchestrate(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	pollIntervalMillisec time.Duration,
 	workflowReader workflow.Reader,

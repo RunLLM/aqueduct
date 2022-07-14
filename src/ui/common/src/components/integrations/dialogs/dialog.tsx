@@ -233,7 +233,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         navigate('/integrations');
       })
       .catch((err) => {
-        setErrMsg('Unable to connect integration. ' + err.message);
+        setErrMsg(err.message);
         setIsConnecting(false);
       });
   };
@@ -264,7 +264,11 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       <DialogContent>
         {nameInput}
         {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
+        {errMsg && (
+          <Alert severity="error">
+            <pre>{errMsg}</pre>
+          </Alert>
+        )}
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={showSuccessToast}

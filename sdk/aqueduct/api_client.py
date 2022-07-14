@@ -75,6 +75,7 @@ class APIClient:
     LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
     LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
     NODE_POSITION_ROUTE = "/api/positioning"
+    EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
@@ -184,7 +185,10 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
-    def preview(self, dag: DAG,) -> PreviewResponse:
+    def preview(
+        self,
+        dag: DAG,
+    ) -> PreviewResponse:
         """Makes a request against the /preview endpoint.
 
         Args:
@@ -222,7 +226,10 @@ class APIClient:
             )
         return preview_resp
 
-    def register_workflow(self, dag: DAG,) -> RegisterWorkflowResponse:
+    def register_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         body = {
             "dag": dag.json(exclude_none=True),
@@ -240,7 +247,11 @@ class APIClient:
 
         return RegisterWorkflowResponse(**resp.json())
 
-    def refresh_workflow(self, flow_id: str, serialized_params: Optional[str] = None,) -> None:
+    def refresh_workflow(
+        self,
+        flow_id: str,
+        serialized_params: Optional[str] = None,
+    ) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(
             self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
@@ -266,7 +277,8 @@ class APIClient:
         url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        return GetWorkflowResponse(**resp.json())
+        workflow_response = GetWorkflowResponse(**resp.json())
+        return workflow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
@@ -317,3 +329,11 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
+
+    def export_serialized_function(self, operator: Operator) -> bytes:
+        headers = utils.generate_auth_headers(self.api_key)
+        operator_url = self._construct_full_url(
+            self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
+        )
+        operator_resp = requests.get(operator_url, headers=headers)
+        return operator_resp.content

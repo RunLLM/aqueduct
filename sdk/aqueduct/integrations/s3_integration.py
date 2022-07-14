@@ -1,4 +1,5 @@
-from typing import Optional
+import json
+from typing import List, Optional, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
@@ -29,7 +30,7 @@ class S3Integration(Integration):
 
     def file(
         self,
-        filepath: str,
+        filepaths: Union[List[str], str],
         format: S3FileFormat,
         name: Optional[str] = None,
         description: str = "",
@@ -38,8 +39,14 @@ class S3Integration(Integration):
         Retrieves a file from the S3 integration.
 
         Args:
-            filepath:
-                Filepath to retrieve from.
+            filepaths:
+                Filepath to retrieve from. The filepaths can either be:
+                1) a single string that represents a file name or a directory name. The directory
+                name must ends with a `/`. In case of a file name, we attempt to retrieve that file,
+                and in case of a directory name, we do a prefix search on the directory and retrieve
+                all matched files and concatenate them into a single file.
+                2) a list of strings representing the file name. Note that in this case, we do not
+                accept directory names in the list.
             name:
                 Name of the query.
             description:
@@ -66,7 +73,9 @@ class S3Integration(Integration):
                             extract=ExtractSpec(
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
-                                parameters=S3ExtractParams(filepath=filepath, format=format),
+                                parameters=S3ExtractParams(
+                                    filepath=json.dumps(filepaths), format=format
+                                ),
                             )
                         ),
                         outputs=[output_artifact_id],
@@ -83,7 +92,9 @@ class S3Integration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id,
+            api_client=self._api_client,
+            dag=self._dag,
+            artifact_id=output_artifact_id,
         )
 
     def config(self, filepath: str, format: S3FileFormat) -> SaveConfig:

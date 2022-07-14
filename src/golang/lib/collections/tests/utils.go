@@ -66,7 +66,7 @@ func randWorkflowIdsFromList(n int, workflows []workflow.Workflow) []uuid.UUID {
 
 // randWorkflowDagIdsFromList randomly polls workflowDags n times and returns
 // the workflowDagIds selected.
-func randWorkflowDagIdsFromList(n int, workflowDags []workflow_dag.WorkflowDag) []uuid.UUID {
+func randWorkflowDagIdsFromList(n int, workflowDags []workflow_dag.DBWorkflowDag) []uuid.UUID {
 	workflowDagIds := make([]uuid.UUID, 0, len(workflowDags))
 	for _, workflowDagObj := range workflowDags {
 		workflowDagIds = append(workflowDagIds, workflowDagObj.Id)

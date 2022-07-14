@@ -30,7 +30,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 	description string,
 	spec *Spec,
 	db database.Database,
-) (*Operator, error) {
+) (*DBOperator, error) {
 	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, SpecColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
@@ -41,7 +41,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 
 	args := []interface{}{id, name, description, spec}
 
-	var operator Operator
+	var operator DBOperator
 	err = db.Query(ctx, &operator, insertOperatorStmt, args...)
 	return &operator, err
 }

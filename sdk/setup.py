@@ -18,7 +18,7 @@ else:
 
 setuptools.setup(
     name="aqueduct-sdk",
-    version="0.0.4",
+    version="0.0.5",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
     description="Python SDK for the Aqueduct prediction infrastructure",
@@ -29,6 +29,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     setup_requires=["numpy", "cython", "packaging"],
-    classifiers=["Programming Language :: Python :: 3",],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+    ],
     python_requires=">=3.7",
 )

@@ -60,7 +60,9 @@ def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    op: connector.TabularConnector, exec_state: ExecutionState, is_demo: bool,
+    op: connector.TabularConnector,
+    exec_state: ExecutionState,
+    is_demo: bool,
 ) -> None:
     @exec_state.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
@@ -221,9 +223,14 @@ if __name__ == "__main__":
     try:
         run(spec, storage, exec_state)
         # Write operator execution metadata
-        if exec_state.status != enums.ExecutionStatus.FAILED:
+        # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
+        # certain that the operator succeeded.
+        if exec_state.status == enums.ExecutionStatus.FAILED:
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            sys.exit(1)
+        else:
             exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception as e:
         exec_state.status = enums.ExecutionStatus.FAILED
         exec_state.failure_type = enums.FailureType.SYSTEM
