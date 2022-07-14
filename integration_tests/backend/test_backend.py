@@ -7,7 +7,7 @@ from setup.load_workflow import create_test_endpoint_GetWorkflowTables_flow
 class TestBackend:
     @classmethod
     def setup_class(cls):
-        cls.client = aqueduct.Client(pytest.apikey, pytest.server_address)
+        cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
         cls.flows = []
 
         # For test_endpoint_GetWorkflowTables
@@ -28,9 +28,9 @@ class TestBackend:
 
     def test_endpoint_GetWorkflowTables(self):
         headers = {
-            "api-key": pytest.apikey
+            "api-key": pytest.api_key
         }
-        url = f"{pytest.server_address}/api/workflow/{self.test_endpoint_GetWorkflowTables_flow.id()}/tables"
+        url = f"{pytest.adapter}{pytest.server_address}/api/workflow/{self.test_endpoint_GetWorkflowTables_flow.id()}/tables"
         r = requests.get(url, headers=headers)
         data = r.json()["table_details"]
 

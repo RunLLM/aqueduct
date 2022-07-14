@@ -80,6 +80,7 @@ jobs:
         working-directory: integration_tests/backend
         env:
           SERVER_ADDRESS: localhost:8080
+          ADAPTER: http://
         run: pytest . -rP --publish -n 1
 
       - uses: actions/upload-artifact@v3
