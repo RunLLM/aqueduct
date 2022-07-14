@@ -12,19 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type WorkflowDag struct {
+type DBWorkflowDag struct {
 	Id            uuid.UUID            `db:"id" json:"id"`
 	WorkflowId    uuid.UUID            `db:"workflow_id" json:"workflow_id"`
 	CreatedAt     time.Time            `db:"created_at" json:"created_at"`
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
 
 	/* Field not stored in DB */
-	Metadata  *workflow.Workflow              `json:"metadata"`
-	Operators map[uuid.UUID]operator.Operator `json:"operators,omitempty"`
-	Artifacts map[uuid.UUID]artifact.Artifact `json:"artifacts,omitempty"`
+	Metadata  *workflow.Workflow                `json:"metadata"`
+	Operators map[uuid.UUID]operator.DBOperator `json:"operators,omitempty"`
+	Artifacts map[uuid.UUID]artifact.DBArtifact `json:"artifacts,omitempty"`
 }
 
-func (dag *WorkflowDag) GetOperatorByName(name string) *operator.Operator {
+func (dag *DBWorkflowDag) GetOperatorByName(name string) *operator.DBOperator {
 	for _, op := range dag.Operators {
 		if op.Name == name {
 			return &op
@@ -34,24 +34,24 @@ func (dag *WorkflowDag) GetOperatorByName(name string) *operator.Operator {
 }
 
 type Reader interface {
-	GetWorkflowDag(ctx context.Context, id uuid.UUID, db database.Database) (*WorkflowDag, error)
-	GetWorkflowDags(ctx context.Context, ids []uuid.UUID, db database.Database) ([]WorkflowDag, error)
-	GetLatestWorkflowDag(ctx context.Context, workflowId uuid.UUID, db database.Database) (*WorkflowDag, error)
+	GetWorkflowDag(ctx context.Context, id uuid.UUID, db database.Database) (*DBWorkflowDag, error)
+	GetWorkflowDags(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBWorkflowDag, error)
+	GetLatestWorkflowDag(ctx context.Context, workflowId uuid.UUID, db database.Database) (*DBWorkflowDag, error)
 	GetWorkflowDagsByWorkflowId(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		db database.Database,
-	) ([]WorkflowDag, error)
+	) ([]DBWorkflowDag, error)
 	GetWorkflowDagByWorkflowDagResultId(
 		ctx context.Context,
 		workflowDagResultId uuid.UUID,
 		db database.Database,
-	) (*WorkflowDag, error)
+	) (*DBWorkflowDag, error)
 	GetWorkflowDagsByOperatorId(
 		ctx context.Context,
 		operatorId uuid.UUID,
 		db database.Database,
-	) ([]WorkflowDag, error)
+	) ([]DBWorkflowDag, error)
 }
 
 type Writer interface {
@@ -60,13 +60,13 @@ type Writer interface {
 		workflowId uuid.UUID,
 		storageConfig *shared.StorageConfig,
 		db database.Database,
-	) (*WorkflowDag, error)
+	) (*DBWorkflowDag, error)
 	UpdateWorkflowDag(
 		ctx context.Context,
 		id uuid.UUID,
 		changes map[string]interface{},
 		db database.Database,
-	) (*WorkflowDag, error)
+	) (*DBWorkflowDag, error)
 	DeleteWorkflowDag(ctx context.Context, id uuid.UUID, db database.Database) error
 	DeleteWorkflowDags(ctx context.Context, ids []uuid.UUID, db database.Database) error
 }
