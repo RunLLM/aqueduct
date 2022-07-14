@@ -31,9 +31,9 @@ func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
 	db database.Database,
 ) ([]Operator, error) {
 	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
-		`SELET %s FROM %s
-		WHERE json(spec)->>'$.load.integration_id' = $1
-		AND json(spec)->>'$.extract.integration_id' = $2`,
+		`SELECT %s FROM %s
+		WHERE json_extract(spec, '$.load.integration_id') = $1
+		OR json_extract(spec, '$.extract.integration_id') = $2`,
 		allColumns(),
 		tableName,
 	)

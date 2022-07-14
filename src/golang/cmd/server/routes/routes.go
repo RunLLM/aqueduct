@@ -9,12 +9,13 @@ const (
 	GetFunctionRoute          = "/api/function/{functionId}"
 	ExportFunctionRoute       = "/api/function/{operatorId}/export"
 
-	ListIntegrationsRoute   = "/api/integrations"
-	ConnectIntegrationRoute = "/api/integration/connect"
-	DeleteIntegrationRoute  = "/api/integration/{integrationId}/delete"
-	CreateTableRoute        = "/api/integration/{integrationId}/create"
-	PreviewTableRoute       = "/api/integration/{integrationId}/preview_table"
-	DiscoverRoute           = "/api/integration/{integrationId}/discover"
+	ListIntegrationsRoute           = "/api/integrations"
+	ConnectIntegrationRoute         = "/api/integration/connect"
+	DeleteIntegrationRoute          = "/api/integration/{integrationId}/delete"
+	DiscoverRoute                   = "/api/integration/{integrationId}/discover"
+	CreateTableRoute                = "/api/integration/{integrationId}/create"
+	PreviewTableRoute               = "/api/integration/{integrationId}/preview_table"
+	ListOperatorsOnIntegrationRoute = "/api/integration/{integrationId}/operators"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 

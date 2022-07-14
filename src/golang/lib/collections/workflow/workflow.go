@@ -85,11 +85,6 @@ type Reader interface {
 		workflowIds []uuid.UUID,
 		db database.Database,
 	) ([]WorkflowWatcherInfo, error)
-	GetWorkflowsFromOperatorIds(
-		ctx context.Context,
-		operatorIds []uuid.UUID,
-		db database.Database,
-	) (map[uuid.UUID][]uuid.UUID, error)
 }
 
 type Writer interface {

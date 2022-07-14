@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
@@ -239,86 +238,4 @@ func (r *standardReaderImpl) GetWatchersInBatch(
 	var workflowWatchers []WorkflowWatcherInfo
 	err := db.Query(ctx, &workflowWatchers, workflowWatchersQuery, args...)
 	return workflowWatchers, err
-}
-
-func (r *standardReaderImpl) GetWorkflowsFromOperatorIds(
-	ctx context.Context,
-	operatorIds []uuid.UUID,
-	db database.Database,
-) (map[uuid.UUID][]uuid.UUID, error) {
-	// This query looks up all operators with at least one upstream
-	fromQuery := fmt.Sprintf(
-		`SELECT workflow.id, workflow_dag_edge.from_id
-		FROM
-			workflow,
-			workflow_dag,
-			workflow_dag_edge 
-		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
-		AND workflow.id = workflow_dag.workflow_id
-		AND workflow_dag_edge.type = '%s'
-		AND workflow_dag_edge.from_id IN (%s)
-		`,
-		workflow_dag_edge.OperatorToArtifactType,
-		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
-	)
-
-	// This query looks up all operators with at least one downstream
-	toQuery := fmt.Sprintf(
-		`SELECT workflow.id, workflow_dag_edge.to_id
-		FROM
-			workflow,
-			workflow_dag,
-			workflow_dag_edge 
-		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
-		AND workflow.id = workflow_dag.workflow_id
-		AND workflow_dag_edge.type = '%s'
-		AND workflow_dag_edge.to_id IN (%s)
-		`,
-		workflow_dag_edge.ArtifactToOperatorType,
-		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
-	)
-
-	args := stmt_preparers.CastIdsListToInterfaceList(operatorIds)
-
-	var fromResults, toResults []struct {
-		WorkflowId uuid.UUID
-		OperatorId uuid.UUID
-	}
-
-	err := db.Query(ctx, &fromResults, fromQuery, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Query(ctx, &toResults, toQuery, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	queryResults := make([]struct {
-		WorkflowId uuid.UUID
-		OperatorId uuid.UUID
-	}, 0, len(fromResults)+len(toResults))
-	queryResults = append(queryResults, fromResults...)
-	queryResults = append(queryResults, toResults...)
-
-	// Flags to ensure results is map from uuid to sets
-	setFlags := make(map[uuid.UUID]map[uuid.UUID]bool)
-	results := make(map[uuid.UUID][]uuid.UUID, len(queryResults))
-	for _, queryResult := range queryResults {
-		if _, ok := results[queryResult.WorkflowId]; !ok {
-			results[queryResult.WorkflowId] = make([]uuid.UUID, 0, len(queryResults))
-		}
-
-		if _, ok := setFlags[queryResult.WorkflowId][queryResult.OperatorId]; !ok {
-			results[queryResult.WorkflowId] = append(results[queryResult.WorkflowId], queryResult.OperatorId)
-			if _, ok := setFlags[queryResult.WorkflowId]; !ok {
-				setFlags[queryResult.WorkflowId] = make(map[uuid.UUID]bool, len(queryResults))
-			}
-
-			setFlags[queryResult.WorkflowId][queryResult.OperatorId] = true
-		}
-	}
-
-	return results, nil
 }

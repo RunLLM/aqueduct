@@ -30,9 +30,9 @@ func (r *postgresReaderImpl) GetOperatorsByIntegrationId(
 	db database.Database,
 ) ([]Operator, error) {
 	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
-		`SELET %s FROM %s
-		WHERE spec->load->>'integration_id' = $1
-		AND spec->extract->>'integration_id' = $2`,
+		`SELECT %s FROM %s
+		WHERE json_extract_text(spec, 'load', 'integration_id') = $1
+		OR json_extract_text(spec, 'extract', 'integration_id') = $2`,
 		allColumns(),
 		tableName,
 	)
