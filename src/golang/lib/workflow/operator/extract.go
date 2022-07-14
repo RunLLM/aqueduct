@@ -64,7 +64,7 @@ func (eo *extractOperatorImpl) JobSpec() job.Spec {
 			job.ExtractJobType,
 			eo.jobName,
 			*eo.storageConfig,
-			eo.opMetadataPath,
+			eo.metadataPath,
 		),
 		InputParamNames:    inputParamNames,
 		InputContentPaths:  eo.inputContentPaths,

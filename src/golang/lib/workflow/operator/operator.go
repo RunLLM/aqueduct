@@ -33,7 +33,7 @@ type Operator interface {
 	PersistResult(ctx context.Context) error
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
-	// Recursively calls Finish() on all the operator's output artifacts.
+	// Also calls Finish() on all the operator's output artifacts.
 	Finish(ctx context.Context)
 }
 
@@ -96,9 +96,9 @@ func NewOperator(
 
 	baseOp := baseOperator{
 		dbOperator:          &dbOperator,
-		opResultWriter:      opResultWriter,
-		opResultID:          opResultID,
-		opMetadataPath:      uuid.New().String(),
+		resultWriter:        opResultWriter,
+		resultID:            opResultID,
+		metadataPath:        uuid.New().String(),
 		inputs:              inputs,
 		outputs:             outputs,
 		inputContentPaths:   inputContentPaths,

@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	defaultTimeout = 15 * time.Minute
+	DefaultExecutionTimeout = 15 * time.Minute
+	DefaultCleanupTimeout   = 2 * time.Minute
 )
 
 var (
@@ -25,40 +26,56 @@ var (
 
 type Orchestrator interface {
 	Execute(ctx context.Context, dag dag.WorkflowDag) (shared.ExecutionStatus, error)
+
+	// Finish is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
+	Finish(ctx context.Context)
 }
 
-type orchestratorImpl struct {
+type AqueductTimeConfig struct {
+	// Configures exactly long we wait before polling again on an in-progress operator.
+	OperatorPollInterval time.Duration
+
+	// Configures the maximum amount of time we wait for execution to finish before aborting the run.
+	ExecTimeout time.Duration
+
+	// Configures the maximum amount of time we want for any leftover, in-progress operators to complete,
+	// after execution has already finished. Once this time is exceeded, we'll give up.
+	CleanupTimeout time.Duration
+}
+
+type aqOrchestrator struct {
+	dag dag.WorkflowDag
+
 	jobManager   job.JobManager
+	timeConfig   *AqueductTimeConfig
 	pollInterval time.Duration
 
 	shouldPersistResults bool
 }
 
-func NewOrchestrator(
+func NewAqueductOrchestrator(
+	dag dag.WorkflowDag,
 	jobManager job.JobManager,
-	pollInterval time.Duration,
+	timeConfig AqueductTimeConfig,
 	shouldPersistResults bool,
 ) Orchestrator {
-	return &orchestratorImpl{
+	return &aqOrchestrator{
+		dag:                  dag,
 		jobManager:           jobManager,
-		pollInterval:         pollInterval,
+		timeConfig:           &timeConfig,
 		shouldPersistResults: shouldPersistResults,
 	}
 }
 
-func (orch *orchestratorImpl) Execute(
+func (orch *aqOrchestrator) Execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
-	defer dag.Finish(ctx)
-
 	status := shared.SucceededExecutionStatus
 	err := execute(
 		ctx,
 		dag,
-		orch.pollInterval,
-		defaultTimeout, /* timeout */
-		2*time.Minute,  /* cleanupTimeout */
+		orch.timeConfig,
 		orch.jobManager,
 		orch.shouldPersistResults,
 	)
@@ -113,9 +130,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 func execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
-	pollInterval time.Duration,
-	timeout time.Duration,
-	cleanupTimeout time.Duration,
+	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
 	shouldPersistResults bool,
 ) error {
@@ -135,13 +150,13 @@ func execute(
 	}
 
 	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
+	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
 
 	start := time.Now()
 
 	// TODO(kenxu): documentation
 	for len(inProgressOps) > 0 {
-		if time.Since(start) > timeout {
+		if time.Since(start) > timeConfig.ExecTimeout {
 			return errors.New("Reached timeout waiting for workflow to complete.")
 		}
 
@@ -208,7 +223,7 @@ func execute(
 				}
 			}
 
-			time.Sleep(pollInterval)
+			time.Sleep(timeConfig.OperatorPollInterval)
 		}
 	}
 
@@ -216,4 +231,10 @@ func execute(
 		return errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps)))
 	}
 	return nil
+}
+
+func (orch *aqOrchestrator) Finish(ctx context.Context) {
+	for _, op := range orch.dag.Operators() {
+		op.Finish(ctx)
+	}
 }

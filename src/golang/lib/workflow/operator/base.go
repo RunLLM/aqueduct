@@ -22,12 +22,12 @@ type baseOperator struct {
 	dbOperator *operator.DBOperator
 
 	// These fields are set to nil in the preview case.
-	opResultWriter operator_result.Writer
-	opResultID     uuid.UUID
+	resultWriter operator_result.Writer
+	resultID     uuid.UUID
 
-	isPreview      bool
-	opMetadataPath string
-	jobName        string
+	isPreview    bool
+	metadataPath string
+	jobName      string
 
 	inputs              []artifact.Artifact
 	outputs             []artifact.Artifact
@@ -79,7 +79,7 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 		err = utils.ReadFromStorage(
 			ctx,
 			bo.storageConfig,
-			bo.opMetadataPath,
+			bo.metadataPath,
 			&execState,
 		)
 
@@ -114,6 +114,49 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 
 }
 
+func updateOperatorResultAfterComputation(
+	ctx context.Context,
+	status shared.ExecutionStatus,
+	storageConfig *shared.StorageConfig,
+	opMetadataPath string,
+	opResultWriter operator_result.Writer,
+	opResultID uuid.UUID,
+	db database.Database,
+) {
+	var execState shared.ExecutionState
+	err := utils.ReadFromStorage(
+		ctx,
+		storageConfig,
+		opMetadataPath,
+		&execState,
+	)
+	if err != nil {
+		log.Errorf(
+			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
+			err,
+		)
+	}
+
+	changes := map[string]interface{}{
+		operator_result.StatusColumn:    status,
+		operator_result.ExecStateColumn: execState,
+	}
+
+	_, err = opResultWriter.UpdateOperatorResult(
+		ctx,
+		opResultID,
+		changes,
+		db,
+	)
+	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"changes": changes,
+			},
+		).Errorf("Unable to update operator result metadata: %v", err)
+	}
+}
+
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	if bo.resultsPersisted {
 		return errors.Newf("Operator %s was already persisted!", bo.Name())
@@ -128,13 +171,13 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	}
 
 	// Best effort writes after this point.
-	utils.UpdateOperatorResultAfterComputation(
+	updateOperatorResultAfterComputation(
 		ctx,
 		execState.Status,
 		bo.storageConfig,
-		bo.opMetadataPath,
-		bo.opResultWriter,
-		bo.opResultID,
+		bo.metadataPath,
+		bo.resultWriter,
+		bo.resultID,
 		bo.db,
 	)
 
@@ -149,7 +192,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 }
 
 func (bo *baseOperator) Finish(ctx context.Context) {
-	utils.CleanupStorageFile(ctx, bo.storageConfig, bo.opMetadataPath)
+	utils.CleanupStorageFile(ctx, bo.storageConfig, bo.metadataPath)
 
 	for _, outputArtifact := range bo.outputs {
 		outputArtifact.Finish(ctx)
@@ -200,7 +243,7 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 			job.FunctionJobType,
 			bfo.jobName,
 			*bfo.storageConfig,
-			bfo.opMetadataPath,
+			bfo.metadataPath,
 		),
 		FunctionPath:        fn.StoragePath,
 		EntryPointFile:      entryPoint.File,

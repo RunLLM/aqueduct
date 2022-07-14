@@ -62,7 +62,7 @@ func (lo *loadOperatorImpl) JobSpec() job.Spec {
 			job.LoadJobType,
 			lo.jobName,
 			*lo.storageConfig,
-			lo.opMetadataPath,
+			lo.metadataPath,
 		),
 		ConnectorName:     spec.Service,
 		ConnectorConfig:   lo.config,

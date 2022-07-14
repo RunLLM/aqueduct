@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Artifact is an interface for managing and inspect the lifecycle of an artifact
@@ -101,6 +102,51 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	)
 }
 
+func updateArtifactResultAfterComputation(
+	ctx context.Context,
+	opStatus shared.ExecutionStatus,
+	storageConfig *shared.StorageConfig,
+	artifactMetadataPath string,
+	artifactResultWriter artifact_result.Writer,
+	artifactResultID uuid.UUID,
+	db database.Database,
+) {
+	changes := map[string]interface{}{
+		artifact_result.StatusColumn: opStatus,
+	}
+
+	var artifactResultMetadata artifact_result.Metadata
+	if opStatus == shared.SucceededExecutionStatus {
+		err := utils.ReadFromStorage(
+			ctx,
+			storageConfig,
+			artifactMetadataPath,
+			&artifactResultMetadata,
+		)
+		if err != nil {
+			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
+			return
+		}
+
+		changes[artifact_result.MetadataColumn] = artifactResultMetadata
+	}
+
+	_, err := artifactResultWriter.UpdateArtifactResult(
+		ctx,
+		artifactResultID,
+		changes,
+		db,
+	)
+	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"changes": changes,
+			},
+		).Errorf("Unable to update artifact result metadata: %v", err)
+	}
+
+}
+
 func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {
 	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
@@ -108,7 +154,7 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 	if !a.Computed(ctx) {
 		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
 	}
-	utils.UpdateArtifactResultAfterComputation(
+	updateArtifactResultAfterComputation(
 		ctx,
 		opStatus,
 		a.storageConfig,

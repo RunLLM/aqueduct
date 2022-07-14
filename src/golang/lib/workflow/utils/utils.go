@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -461,92 +459,4 @@ func UpdateWorkflowDagResultMetadata(
 			},
 		).Errorf("Unable to update workflow dag result metadata: %v", err)
 	}
-}
-
-func UpdateOperatorResultAfterComputation(
-	ctx context.Context,
-	status shared.ExecutionStatus,
-	storageConfig *shared.StorageConfig,
-	opMetadataPath string,
-	opResultWriter operator_result.Writer,
-	opResultID uuid.UUID,
-	db database.Database,
-) {
-	var execState shared.ExecutionState
-	err := ReadFromStorage(
-		ctx,
-		storageConfig,
-		opMetadataPath,
-		&execState,
-	)
-	if err != nil {
-		log.Errorf(
-			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
-			err,
-		)
-	}
-
-	changes := map[string]interface{}{
-		operator_result.StatusColumn:    status,
-		operator_result.ExecStateColumn: execState,
-	}
-
-	_, err = opResultWriter.UpdateOperatorResult(
-		ctx,
-		opResultID,
-		changes,
-		db,
-	)
-	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update operator result metadata: %v", err)
-	}
-}
-
-func UpdateArtifactResultAfterComputation(
-	ctx context.Context,
-	opStatus shared.ExecutionStatus,
-	storageConfig *shared.StorageConfig,
-	artifactMetadataPath string,
-	artifactResultWriter artifact_result.Writer,
-	artifactResultID uuid.UUID,
-	db database.Database,
-) {
-	changes := map[string]interface{}{
-		artifact_result.StatusColumn: opStatus,
-	}
-
-	var artifactResultMetadata artifact_result.Metadata
-	if opStatus == shared.SucceededExecutionStatus {
-		err := ReadFromStorage(
-			ctx,
-			storageConfig,
-			artifactMetadataPath,
-			&artifactResultMetadata,
-		)
-		if err != nil {
-			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
-			return
-		}
-
-		changes[artifact_result.MetadataColumn] = artifactResultMetadata
-	}
-
-	_, err := artifactResultWriter.UpdateArtifactResult(
-		ctx,
-		artifactResultID,
-		changes,
-		db,
-	)
-	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update artifact result metadata: %v", err)
-	}
-
 }

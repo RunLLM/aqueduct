@@ -103,7 +103,6 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		}
 	}
 
-	orch := orchestrator.NewOrchestrator(ex.JobManager, pollingIntervalMS, true /* shouldPersistResults */)
 	workflowDag, err := dag.NewWorkflowDag(
 		ctx,
 		dbWorkflowDag,
@@ -122,6 +121,18 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	orch := orchestrator.NewAqueductOrchestrator(
+		workflowDag,
+		ex.JobManager,
+		orchestrator.AqueductTimeConfig{
+			OperatorPollInterval: pollingIntervalMS,
+			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
+			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
+		},
+		true, /* shouldPersistResults */
+	)
+	defer orch.Finish(ctx)
 
 	status, err := orch.Execute(ctx, workflowDag)
 	if err != nil {

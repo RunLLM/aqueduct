@@ -40,7 +40,7 @@ func (smo *systemMetricOperatorImpl) JobSpec() job.Spec {
 			job.SystemMetricJobType,
 			smo.jobName,
 			*smo.storageConfig,
-			smo.opMetadataPath,
+			smo.metadataPath,
 		),
 		InputMetadataPaths: smo.inputMetadataPaths,
 		OutputContentPath:  smo.outputContentPaths[0],

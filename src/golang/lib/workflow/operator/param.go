@@ -45,7 +45,7 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			job.ParamJobType,
 			po.jobName,
 			*po.storageConfig,
-			po.opMetadataPath,
+			po.metadataPath,
 		),
 		Val:                po.dbOperator.Spec.Param().Val,
 		OutputMetadataPath: po.outputMetadataPaths[0],

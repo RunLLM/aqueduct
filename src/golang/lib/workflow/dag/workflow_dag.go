@@ -33,11 +33,6 @@ type WorkflowDag interface {
 	// PersistResult writes the dag result of one execution run into the database.
 	// *Does not* recursively persist the operators or artifacts contained in this dag.
 	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
-
-	// Finish is an end-of-lifecycle hook to do any final cleanup work.
-	// It is meant to be called from defer() after execution completes.
-	// Recursively calls Finish() on all operators and artifacts contained in this dag.
-	Finish(ctx context.Context)
 }
 
 type workflowDagImpl struct {
@@ -48,16 +43,16 @@ type workflowDagImpl struct {
 	opToArtifacts map[uuid.UUID][]uuid.UUID
 	artifactToOps map[uuid.UUID][]uuid.UUID
 
-	workflowDagResultWriter workflow_dag_result.Writer
-	workflowReader          workflow.Reader
-	notificationWriter      notification.Writer
-	userReader              user.Reader
-	db                      database.Database
+	resultWriter       workflow_dag_result.Writer
+	workflowReader     workflow.Reader
+	notificationWriter notification.Writer
+	userReader         user.Reader
+	db                 database.Database
 
 	// Corresponds to the workflow dag result entry in the database. This is set during construction
 	// and indicates whether the workflow dag can be persisted.
 	// Persist() will no-op if this is empty.
-	workflowDagResultID uuid.UUID
+	resultID uuid.UUID
 }
 
 func initializeDagResultInDatabase(
@@ -73,31 +68,6 @@ func initializeDagResultInDatabase(
 		return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag result record.")
 	}
 	return workflowDagResult.Id, nil
-}
-
-func NewWorkflowDagNoPersist(
-	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-	storageConfig *shared.StorageConfig,
-	db database.Database,
-) (WorkflowDag, error) {
-	return NewWorkflowDag(
-		ctx,
-		dbWorkflowDag,
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		workflow.NewNoopReader(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
-		jobManager,
-		vaultObject,
-		storageConfig,
-		db,
-		false, /* canPersist */
-	)
 }
 
 func NewWorkflowDag(
@@ -222,14 +192,14 @@ func NewWorkflowDag(
 		opToArtifacts: opToArtifacts,
 		artifactToOps: artifactToOps,
 
-		workflowDagResultWriter: dagResultWriter,
-		workflowReader:          workflowReader,
-		notificationWriter:      notificationWriter,
-		userReader:              userReader,
-		db:                      db,
+		resultWriter:       dagResultWriter,
+		workflowReader:     workflowReader,
+		notificationWriter: notificationWriter,
+		userReader:         userReader,
+		db:                 db,
 
 		// Can be nil, which means the dag cannot be persisted.
-		workflowDagResultID: workflowDagResultID,
+		resultID: workflowDagResultID,
 	}, nil
 }
 
@@ -270,16 +240,16 @@ func (w *workflowDagImpl) ArtifactsFromOperator(op operator.Operator) ([]artifac
 // Updates the dag result metadata after the dag has been executed.
 // No-ops unless the dag result has already been initialized. This is meant to be called from a defer().
 func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.ExecutionStatus) error {
-	if w.workflowDagResultID == uuid.Nil {
+	if w.resultID == uuid.Nil {
 		return errors.New("Cannot persist this workflow dag result. Initialized with `CanPersist` == false.")
 	}
 
 	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
 	utils.UpdateWorkflowDagResultMetadata(
 		ctx,
-		w.workflowDagResultID,
+		w.resultID,
 		status,
-		w.workflowDagResultWriter,
+		w.resultWriter,
 		w.workflowReader,
 		w.notificationWriter,
 		w.userReader,
@@ -287,13 +257,4 @@ func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.Execu
 	)
 
 	return nil
-}
-
-func (w *workflowDagImpl) Finish(ctx context.Context) {
-	for _, op := range w.operators {
-		op.Finish(ctx)
-	}
-	for _, artf := range w.artifacts {
-		artf.Finish(ctx)
-	}
 }

@@ -2,6 +2,11 @@ package handler
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"net/http"
 	"strconv"
@@ -148,22 +153,36 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	orch := orchestrator.NewOrchestrator(
-		h.JobManager,
-		previewPollIntervalMillisec,
-		false, /* shouldPersistResults */
-	)
-	workflowDag, err := dag_utils.NewWorkflowDagNoPersist(
+	workflowDag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagSummary.Dag,
+		workflow_dag_result.NewNoopWriter(true),
+		operator_result.NewNoopWriter(true),
+		artifact_result.NewNoopWriter(true),
+		workflow.NewNoopReader(true),
+		notification.NewNoopWriter(true),
+		user.NewNoopReader(true),
 		h.JobManager,
 		h.Vault,
 		h.StorageConfig,
 		h.Database,
+		false, /* canPersist */
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
 	}
+
+	orch := orchestrator.NewAqueductOrchestrator(
+		workflowDag,
+		h.JobManager,
+		orchestrator.AqueductTimeConfig{
+			OperatorPollInterval: previewPollIntervalMillisec,
+			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
+			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
+		},
+		false, /* shouldPersistResults */
+	)
+	defer orch.Finish(ctx)
 
 	status, err := orch.Execute(ctx, workflowDag)
 	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
