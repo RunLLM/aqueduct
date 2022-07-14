@@ -61,7 +61,10 @@ class S3ExtractParams(BaseModel):
 
 
 UnionExtractParams = Union[
-    SalesforceExtractParams, S3ExtractParams, GoogleSheetsExtractParams, RelationalDBExtractParams,
+    SalesforceExtractParams,
+    S3ExtractParams,
+    GoogleSheetsExtractParams,
+    RelationalDBExtractParams,
 ]
 
 

@@ -137,7 +137,9 @@ class RelationalDBIntegration(Integration):
 
         extract_params = query
         if isinstance(extract_params, str):
-            extract_params = RelationalDBExtractParams(query=extract_params,)
+            extract_params = RelationalDBExtractParams(
+                query=extract_params,
+            )
 
         # Find any tags that need to be expanded in the query, and add the parameters that correspond
         # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
@@ -199,7 +201,9 @@ class RelationalDBIntegration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client, dag=self._dag, artifact_id=sql_output_artifact_id,
+            api_client=self._api_client,
+            dag=self._dag,
+            artifact_id=sql_output_artifact_id,
         )
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:

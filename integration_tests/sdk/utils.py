@@ -112,7 +112,11 @@ def run_flow_test(
     if len(name) == 0:
         name = generate_new_flow_name()
 
-    flow = client.publish_flow(name=name, artifacts=artifacts, schedule=schedule,)
+    flow = client.publish_flow(
+        name=name,
+        artifacts=artifacts,
+        schedule=schedule,
+    )
     print("Workflow registration succeeded. Workflow ID: %s" % flow.id())
 
     try:

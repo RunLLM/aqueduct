@@ -113,7 +113,10 @@ class DAG(BaseModel):
             operators = [op for op in operators if on_artifact_id in op.inputs]
         return operators
 
-    def list_downstream_operators(self, op_id: uuid.UUID,) -> List[uuid.UUID]:
+    def list_downstream_operators(
+        self,
+        op_id: uuid.UUID,
+    ) -> List[uuid.UUID]:
         """Returns a list of all operators that depend on the given operator. Includes the given operator."""
         downstream_ops = []
 
@@ -240,7 +243,9 @@ class DAG(BaseModel):
             operator.update_serialized_function(serialized_function)
 
     def remove_operator(
-        self, operator_id: uuid.UUID, must_be_type: Optional[OperatorType] = None,
+        self,
+        operator_id: uuid.UUID,
+        must_be_type: Optional[OperatorType] = None,
     ) -> None:
         """Deletes the given operator from the DAG, along with any direct output artifacts.
 
@@ -253,7 +258,9 @@ class DAG(BaseModel):
         self.remove_operators([operator_id], must_be_type)
 
     def remove_operators(
-        self, operator_ids: List[uuid.UUID], must_be_type: Optional[OperatorType] = None,
+        self,
+        operator_ids: List[uuid.UUID],
+        must_be_type: Optional[OperatorType] = None,
     ) -> None:
         """Batch version of `remove_operator()`."""
         for operator_id in operator_ids:
@@ -433,7 +440,9 @@ class RemoveCheckOperatorDelta(DAGDelta):
     """
 
     def __init__(
-        self, check_name: str, artifact_id: uuid.UUID,
+        self,
+        check_name: str,
+        artifact_id: uuid.UUID,
     ):
         self.check_name = check_name
         self.artifact_id = artifact_id
@@ -504,7 +513,8 @@ class UpdateParametersDelta(DAGDelta):
     """Updates the values of the given parameters in the DAG to the given values. No-ops if no parameters provided."""
 
     def __init__(
-        self, parameters: Optional[Dict[str, Any]],
+        self,
+        parameters: Optional[Dict[str, Any]],
     ):
         self.parameters = parameters
 

@@ -71,8 +71,13 @@ class MetricArtifact(Artifact):
         dag = apply_deltas_to_dag(
             self._dag,
             deltas=[
-                SubgraphDAGDelta(artifact_ids=[self._artifact_id], include_load_operators=False,),
-                UpdateParametersDelta(parameters=parameters,),
+                SubgraphDAGDelta(
+                    artifact_ids=[self._artifact_id],
+                    include_load_operators=False,
+                ),
+                UpdateParametersDelta(
+                    parameters=parameters,
+                ),
             ],
             make_copy=True,
         )
@@ -159,7 +164,11 @@ class MetricArtifact(Artifact):
         if type(bound_value) not in accepted_types:
             raise AqueductError(
                 "Value for bound '%s' must be one of %s type, found %s"
-                % (bound_name, accepted_types, type(bound_value),)
+                % (
+                    bound_name,
+                    accepted_types,
+                    type(bound_value),
+                )
             )
 
         metric_name = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id).name
@@ -211,7 +220,9 @@ class MetricArtifact(Artifact):
     ) -> CheckArtifact:
         zip_file = serialize_function(check_function)
         function_spec = FunctionSpec(
-            type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
         )
         op_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
 
@@ -247,7 +258,9 @@ class MetricArtifact(Artifact):
     def remove_check(self, name: str) -> None:
         apply_deltas_to_dag(
             self._dag,
-            deltas=[RemoveCheckOperatorDelta(check_name=name, artifact_id=self._artifact_id),],
+            deltas=[
+                RemoveCheckOperatorDelta(check_name=name, artifact_id=self._artifact_id),
+            ],
         )
 
     def _describe(self) -> Dict[str, Any]:

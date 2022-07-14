@@ -92,7 +92,9 @@ class S3Integration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id,
+            api_client=self._api_client,
+            dag=self._dag,
+            artifact_id=output_artifact_id,
         )
 
     def config(self, filepath: str, format: S3FileFormat) -> SaveConfig:

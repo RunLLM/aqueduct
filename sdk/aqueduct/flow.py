@@ -22,7 +22,10 @@ class Flow:
     """
 
     def __init__(
-        self, api_client: APIClient, flow_id: str, in_notebook_or_console_context: bool,
+        self,
+        api_client: APIClient,
+        flow_id: str,
+        in_notebook_or_console_context: bool,
     ):
         assert flow_id is not None
         self._api_client = api_client
@@ -69,7 +72,8 @@ class Flow:
         param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
             param_val = self._api_client.get_artifact_result_data(
-                str(dag_result.id), str(param_artifact.id),
+                str(dag_result.id),
+                str(param_artifact.id),
             )
 
             # Skip the parameter update if the parameter was never computed.
@@ -83,7 +87,11 @@ class Flow:
             dag.update_operator_spec(
                 # this works because the parameter op and artifact currently share the same name.
                 param_artifact.name,
-                OperatorSpec(param=ParamSpec(val=param_val,),),
+                OperatorSpec(
+                    param=ParamSpec(
+                        val=param_val,
+                    ),
+                ),
             )
 
         # Because the serialized functions are stored seperately from the dag,

@@ -52,7 +52,9 @@ def test_metric():
         metric_output.id(): ArtifactResult(metric=MetricArtifactResult(val=output)),
     }
     preview_output = PreviewResponse(
-        status=status, operator_results=operator_results, artifact_results=artifact_results,
+        status=status,
+        operator_results=operator_results,
+        artifact_results=artifact_results,
     )
     api_client.preview = MagicMock(return_value=preview_output)
 
@@ -63,7 +65,10 @@ def test_metric():
     assert len(dag.operators) == 2
 
     artifact_check = {
-        artifact_name: {"float": None, "table": {},},
+        artifact_name: {
+            "float": None,
+            "table": {},
+        },
         metric_artifact_name: {"float": {}, "table": None},
     }
 
@@ -76,7 +81,11 @@ def test_metric():
             metric_artifact_id = artifact.id
 
     operator_check = {
-        op_name: {"inputs": [], "outputs": [artifact_id], "description": "",},
+        op_name: {
+            "inputs": [],
+            "outputs": [artifact_id],
+            "description": "",
+        },
         metric_op_name: {
             "inputs": [artifact_id],
             "outputs": [metric_artifact_id],

@@ -100,7 +100,11 @@ class ExecutionState(BaseModel):
         return wrapper
 
 
-def _get_redirected_logs(stdout: io.StringIO, stderr: io.StringIO, logs: Logs,) -> None:
+def _get_redirected_logs(
+    stdout: io.StringIO,
+    stderr: io.StringIO,
+    logs: Logs,
+) -> None:
     """
     If there is any output, set as the values for protected keys STDOUT_KEY and STDERR_KEY.
     """

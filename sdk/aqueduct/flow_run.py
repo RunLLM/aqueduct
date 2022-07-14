@@ -237,11 +237,19 @@ def _show_dag(
             node_label = "<br>".join(wrap(node_details.name, width=label_width))
             if isinstance(node_details, Operator):
                 node_descr.append(
-                    [node_type, node_label, node_details.description,]
+                    [
+                        node_type,
+                        node_label,
+                        node_details.description,
+                    ]
                 )
             else:
                 node_descr.append(
-                    [node_type, node_label, "",]
+                    [
+                        node_type,
+                        node_label,
+                        "",
+                    ]
                 )
 
         node_trace = go.Scatter(

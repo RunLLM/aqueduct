@@ -60,7 +60,9 @@ def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    op: connector.TabularConnector, exec_state: ExecutionState, is_demo: bool,
+    op: connector.TabularConnector,
+    exec_state: ExecutionState,
+    is_demo: bool,
 ) -> None:
     @exec_state.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION

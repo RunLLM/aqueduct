@@ -54,8 +54,13 @@ class CheckArtifact(Artifact):
         dag = apply_deltas_to_dag(
             self._dag,
             deltas=[
-                SubgraphDAGDelta(artifact_ids=[self._artifact_id], include_load_operators=False,),
-                UpdateParametersDelta(parameters=parameters,),
+                SubgraphDAGDelta(
+                    artifact_ids=[self._artifact_id],
+                    include_load_operators=False,
+                ),
+                UpdateParametersDelta(
+                    parameters=parameters,
+                ),
             ],
             make_copy=True,
         )

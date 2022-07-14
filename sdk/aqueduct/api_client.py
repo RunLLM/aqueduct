@@ -185,7 +185,10 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
-    def preview(self, dag: DAG,) -> PreviewResponse:
+    def preview(
+        self,
+        dag: DAG,
+    ) -> PreviewResponse:
         """Makes a request against the /preview endpoint.
 
         Args:
@@ -223,7 +226,10 @@ class APIClient:
             )
         return preview_resp
 
-    def register_workflow(self, dag: DAG,) -> RegisterWorkflowResponse:
+    def register_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         body = {
             "dag": dag.json(exclude_none=True),
@@ -241,7 +247,11 @@ class APIClient:
 
         return RegisterWorkflowResponse(**resp.json())
 
-    def refresh_workflow(self, flow_id: str, serialized_params: Optional[str] = None,) -> None:
+    def refresh_workflow(
+        self,
+        flow_id: str,
+        serialized_params: Optional[str] = None,
+    ) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         url = self._construct_full_url(
             self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https

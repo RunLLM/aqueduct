@@ -56,7 +56,8 @@ def extract_function(storage: Storage, spec: FunctionSpec) -> None:
 
     function_byte = storage.get(spec.function_path)
     _unzip_function_contents(
-        function_in_bytes=function_byte, extract_path=fn_path,
+        function_in_bytes=function_byte,
+        extract_path=fn_path,
     )
 
 

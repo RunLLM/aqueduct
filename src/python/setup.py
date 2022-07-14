@@ -21,6 +21,8 @@ setup(
     license="Apache License 2.0",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
-    classifiers=["Programming Language :: Python :: 3",],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+    ],
     python_requires=">=3.7",
 )

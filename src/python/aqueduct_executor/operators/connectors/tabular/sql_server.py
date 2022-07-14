@@ -12,7 +12,10 @@ class SqlServerConnector(relational.RelationalConnector):
         # NOTE (saurav): PyODBC for SQL Server does not support `method="multi"` for `df.to_sql`,
         # which is why SqlServerConnector overrides `load`.
         df.to_sql(
-            params.table, con=self.engine, if_exists="replace", index=False,
+            params.table,
+            con=self.engine,
+            if_exists="replace",
+            index=False,
         )
 
 
