@@ -232,7 +232,10 @@ def test_extract_serialization():
             extract=ExtractSpec(
                 service=ServiceType.S3,
                 integration_id=integration_id,
-                parameters=S3ExtractParams(filepath="test.csv", format=S3FileFormat.CSV,),
+                parameters=S3ExtractParams(
+                    filepath=json.dumps("test.csv"),
+                    format=S3FileFormat.CSV,
+                ),
             ),
         ),
         outputs=[other_ids[1]],
@@ -246,7 +249,10 @@ def test_extract_serialization():
                 "extract": {
                     "service": ServiceType.S3,
                     "integration_id": str(integration_id),
-                    "parameters": {"filepath": "test.csv", "format": "CSV",},
+                    "parameters": {
+                        "filepath": json.dumps("test.csv"),
+                        "format": "CSV",
+                    },
                 }
             },
             "inputs": [],

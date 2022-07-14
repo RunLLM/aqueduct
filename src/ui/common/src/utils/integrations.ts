@@ -220,8 +220,8 @@ export async function connectIntegration(
   });
 
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message);
+    const message = await res.json();
+    throw new Error(message.error);
   }
 }
 

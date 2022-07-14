@@ -1,15 +1,20 @@
 import textwrap
 import uuid
 from textwrap import wrap
-from typing import Any, Dict, List, Mapping, Union
+from typing import Dict, Any, Mapping, Optional, Union, List
 
 import plotly.graph_objects as go
 from aqueduct.api_client import APIClient
-from aqueduct.artifact import Artifact
+from aqueduct.artifact import Artifact, get_artifact_type
+from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
+from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
+from aqueduct.error import InternalAqueductError
+from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
-from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
+from aqueduct.param_artifact import ParamArtifact
+from aqueduct.table_artifact import TableArtifact
+from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
 
 
 class FlowRun:
@@ -70,6 +75,43 @@ class FlowRun:
             param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
+
+    def artifact(
+        self, name: str
+    ) -> Optional[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
+        """Gets the Artifact from the flow run based on the name of the artifact.
+
+        Args:
+            name:
+                the name of the artifact.
+
+        Returns:
+            A input artifact obtained from the dag attached to the flow run.
+            If the artifact does not exist, return None.
+        """
+        flow_run_dag = self._dag
+        artifact_from_dag = flow_run_dag.get_artifacts_by_name(name)
+
+        if artifact_from_dag is None:
+            return None
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
+            return TableArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:
+            return MetricArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.BOOL:
+            return CheckArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
+        elif get_artifact_type(artifact_from_dag) is ArtifactType.PARAM:
+            return ParamArtifact(
+                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
+            )
+
+        raise InternalAqueductError("The artifact's type can not be recognized.")
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of

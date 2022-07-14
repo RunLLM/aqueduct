@@ -1,4 +1,5 @@
 import io
+import json
 from typing import List
 
 import boto3
@@ -17,24 +18,51 @@ class S3Connector(connector.TabularConnector):
         self.bucket = config.bucket
 
     def authenticate(self) -> None:
-        pass
+        for obj in self.s3.Bucket(self.bucket).objects.all():
+            pass
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
 
-    def extract(self, params: extract.S3Params) -> pd.DataFrame:
-        response = self.s3.Object(self.bucket, params.filepath).get()
+    def _fetch_object(self, key: str, format: common.S3FileFormat) -> pd.DataFrame:
+        response = self.s3.Object(self.bucket, key).get()
         data = response["Body"].read()
         buf = io.BytesIO(data)
-
-        if params.format == common.S3FileFormat.CSV:
+        if format == common.S3FileFormat.CSV:
             return pd.read_csv(buf)
-        elif params.format == common.S3FileFormat.JSON:
+        elif format == common.S3FileFormat.JSON:
             return pd.read_json(buf)
-        elif params.format == common.S3FileFormat.PARQUET:
+        elif format == common.S3FileFormat.PARQUET:
             return pd.read_parquet(buf)
 
-        raise Exception("Unknown S3 file format %s" % format)
+        raise Exception("Unknown S3 file format %s." % format)
+
+    def extract(self, params: extract.S3Params) -> pd.DataFrame:
+        path = json.loads(params.filepath)
+        if not isinstance(path, List):
+            if len(path) == 0:
+                raise Exception("S3 file path cannot be an empty string.")
+            if path[-1] == "/":
+                # This means the path is a directory, and we will do a prefix search.
+                dfs = []
+                for obj in self.s3.Bucket(self.bucket).objects.filter(Prefix=path):
+                    # The filter api also returns the directories, so we filter them out.
+                    if (obj.key)[-1] != "/":
+                        dfs.append(self._fetch_object(obj.key, params.format))
+                return pd.concat(dfs)
+            else:
+                # This means the path is a file name, and we do a regular file retrieval.
+                return self._fetch_object(path, params.format)
+        else:
+            # This means we have a list of file paths.
+            dfs = []
+            for key in path:
+                if len(key) == 0:
+                    raise Exception("S3 file path cannot be an empty string.")
+                if key[-1] == "/":
+                    raise Exception("Each key in the list must not be a directory, found %s." % key)
+                dfs.append(self._fetch_object(key, params.format))
+            return pd.concat(dfs)
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()

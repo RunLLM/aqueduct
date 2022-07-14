@@ -54,6 +54,8 @@ class GoogleSheetsExtractParams(BaseModel):
 
 
 class S3ExtractParams(BaseModel):
+    # Note that since we expect the path to be either a string or a list of strings, we need to json
+    # serialize the path before we pass it to initialize this field.
     filepath: str
     format: S3FileFormat
 
@@ -171,6 +173,14 @@ class Operator(BaseModel):
             return self.spec.check.function.file
 
         return None
+
+    def update_serialized_function(self, serialized_function: bytes) -> None:
+        if self.spec.function:
+            self.spec.function.file = serialized_function
+        if self.spec.metric:
+            self.spec.metric.function.file = serialized_function
+        if self.spec.check:
+            self.spec.check.function.file = serialized_function
 
 
 def get_operator_type(operator: Operator) -> OperatorType:

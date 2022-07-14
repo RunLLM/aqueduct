@@ -5,7 +5,7 @@ from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserActionException
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
@@ -70,6 +70,12 @@ def wrap_spec(
     """
     if len(input_artifacts) < 1:
         raise Exception("Transformation requires at least one input artifact.")
+
+    for artifact in input_artifacts:
+        if artifact._from_flow_run:
+            raise InvalidUserActionException(
+                "Artifact fetched from flow run can not be reused for computation"
+            )
 
     dag = input_artifacts[0]._dag
     api_client = input_artifacts[0]._api_client
