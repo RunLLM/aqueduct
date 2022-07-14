@@ -3,8 +3,8 @@ package orchestrator
 import (
 	"context"
 	"fmt"
-	dag "github.com/aqueducthq/aqueduct/lib/workflow"
-	operator2 "github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -77,7 +77,7 @@ func (orch *orchestratorImpl) Execute(
 
 func waitForInProgressOperators(
 	ctx context.Context,
-	inProgressOps map[uuid.UUID]operator2.Operator,
+	inProgressOps map[uuid.UUID]operator.Operator,
 	pollInterval time.Duration,
 	timeout time.Duration,
 ) {
@@ -100,7 +100,7 @@ func waitForInProgressOperators(
 	}
 }
 
-func opFailureError(failureType shared.FailureType, op operator2.Operator) error {
+func opFailureError(failureType shared.FailureType, op operator.Operator) error {
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
 	} else if failureType == shared.UserFailure {
@@ -120,8 +120,8 @@ func execute(
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
-	inProgressOps := make(map[uuid.UUID]operator2.Operator, len(dag.Operators()))
-	completedOps := make(map[uuid.UUID]operator2.Operator, len(dag.Operators()))
+	inProgressOps := make(map[uuid.UUID]operator.Operator, len(dag.Operators()))
+	completedOps := make(map[uuid.UUID]operator.Operator, len(dag.Operators()))
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {

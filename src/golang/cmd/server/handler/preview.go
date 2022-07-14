@@ -2,13 +2,12 @@ package handler
 
 import (
 	"context"
-	dag "github.com/aqueducthq/aqueduct/lib/workflow"
-	artifact2 "github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"net/http"
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -154,7 +153,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		previewPollIntervalMillisec,
 		false, /* shouldPersistResults */
 	)
-	workflowDag, err := dag.NewWorkflowDagNoPersist(
+	workflowDag, err := dag_utils.NewWorkflowDagNoPersist(
 		ctx,
 		dagSummary.Dag,
 		h.JobManager,
@@ -206,13 +205,13 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}, statusCode, nil
 }
 
-func convertToPreviewArtifactResponse(ctx context.Context, artf artifact2.Artifact) (*previewArtifactResponse, error) {
+func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*previewArtifactResponse, error) {
 	content, err := artf.GetContent(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if artf.Type() == artifact.FloatType {
+	if artf.Type() == db_artifact.FloatType {
 		val, err := strconv.ParseFloat(string(content), 32)
 		if err != nil {
 			return nil, err
@@ -223,7 +222,7 @@ func convertToPreviewArtifactResponse(ctx context.Context, artf artifact2.Artifa
 				Val: val,
 			},
 		}, nil
-	} else if artf.Type() == artifact.BoolType {
+	} else if artf.Type() == db_artifact.BoolType {
 		passed, err := strconv.ParseBool(string(content))
 		if err != nil {
 			return nil, err
@@ -234,13 +233,13 @@ func convertToPreviewArtifactResponse(ctx context.Context, artf artifact2.Artifa
 				Passed: passed,
 			},
 		}, nil
-	} else if artf.Type() == artifact.JsonType {
+	} else if artf.Type() == db_artifact.JsonType {
 		return &previewArtifactResponse{
 			Param: &previewParamArtifactResponse{
 				Val: string(content),
 			},
 		}, nil
-	} else if artf.Type() == artifact.TableType {
+	} else if artf.Type() == db_artifact.TableType {
 		metadata, err := artf.GetMetadata(ctx)
 		if err != nil {
 			metadata = &artifact_result.Metadata{}

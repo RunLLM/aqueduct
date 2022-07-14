@@ -2,7 +2,7 @@ package executor
 
 import (
 	"context"
-	dag "github.com/aqueducthq/aqueduct/lib/workflow"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/job"

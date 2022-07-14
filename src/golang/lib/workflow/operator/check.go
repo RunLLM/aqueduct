@@ -1,7 +1,7 @@
 package operator
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -23,14 +23,14 @@ func newCheckOperator(base baseFunctionOperator) (Operator, error) {
 	}
 
 	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != artifact.TableType &&
-			inputArtifact.Type() != artifact.FloatType &&
-			inputArtifact.Type() != artifact.JsonType {
+		if inputArtifact.Type() != db_artifact.TableType &&
+			inputArtifact.Type() != db_artifact.FloatType &&
+			inputArtifact.Type() != db_artifact.JsonType {
 			return nil, errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 		}
 	}
 	for _, outputArtifact := range outputs {
-		if outputArtifact.Type() != artifact.BoolType {
+		if outputArtifact.Type() != db_artifact.BoolType {
 			return nil, errors.New("Outputs of function operator must be Table Artifacts.")
 		}
 	}
