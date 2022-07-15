@@ -24,10 +24,9 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from pydantic import parse_obj_as
 
 
-def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
+def run(spec: Spec) -> None:
     """
     Runs one of the following connector operations:
     - authenticate
