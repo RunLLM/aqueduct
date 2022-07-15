@@ -164,21 +164,28 @@ func execute(
 				return err
 			}
 
+			log.Errorf("Exec Status %s.", execState.Status)
 			if execState.Status == shared.PendingExecutionStatus {
+				log.Errorf("Scheduling op %s.", op.Name())
+
 				spec := op.JobSpec()
 				err = jobManager.Launch(ctx, spec.JobName(), spec)
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
-
-			} else if execState.Status == shared.RunningExecutionStatus {
 				continue
-			} else if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
-				return errors.Newf("Internal error: a scheduled operator has unsupported status %s", execState.Status)
+			} else if execState.Status == shared.RunningExecutionStatus {
+				log.Errorf("Op %s is running.", op.Name())
+				continue
+			}
+			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
 
-			// The operator must have finished executing and is in either a success or failed state.
+			// From here on we can assume that the operator has terminated.
+			log.Errorf("Op %s has terminated with status %s.", op.Name(), execState.Status)
 			if shouldPersistResults {
+				log.Errorf("Op %s is persisting results", op.Name())
 				err = op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
@@ -207,9 +214,11 @@ func execute(
 				}
 
 				for _, nextOp := range nextOps {
+					log.Errorf("Looking at scheduling %s.", nextOp.Name())
 					// Before scheduling the next operator, check that all upstream artifacts to that operator
 					// have been computed.
 					if !nextOp.Ready(ctx) {
+						log.Errorf("%s is not ready yet.", nextOp.Name())
 						continue
 					}
 

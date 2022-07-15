@@ -43,6 +43,23 @@ type Artifact interface {
 	GetContent(ctx context.Context) ([]byte, error)
 }
 
+type ArtifactImpl struct {
+	id           uuid.UUID
+	name         string
+	description  string
+	artifactType artifact.Type
+
+	contentPath  string
+	metadataPath string
+
+	resultWriter     artifact_result.Writer
+	resultID         uuid.UUID
+	resultsPersisted bool
+
+	storageConfig *shared.StorageConfig
+	db            database.Database
+}
+
 func initializeArtifactResultInDatabase(
 	ctx context.Context,
 	artifactID uuid.UUID,
@@ -64,22 +81,41 @@ func initializeArtifactResultInDatabase(
 	return artifactResult.Id, nil
 }
 
-type ArtifactImpl struct {
-	id           uuid.UUID
-	name         string
-	description  string
-	artifactType artifact.Type
+func NewArtifact(
+	ctx context.Context,
+	dbArtifact artifact.DBArtifact,
+	contentPath string,
+	metadataPath string,
+	// A nil value here means the artifact is not persisted.
+	artifactResultWriter artifact_result.Writer,
+	workflowDagResultID uuid.UUID,
+	storageConfig *shared.StorageConfig,
+	db database.Database,
+) (Artifact, error) {
+	var artifactResultID uuid.UUID
 
-	contentPath  string
-	metadataPath string
+	canPersist := workflowDagResultID != uuid.Nil
+	if canPersist {
+		var err error
+		artifactResultID, err = initializeArtifactResultInDatabase(ctx, dbArtifact.Id, workflowDagResultID, artifactResultWriter, contentPath, db)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	artifactResultWriter artifact_result.Writer
-	artifactResultID     uuid.UUID
-
-	storageConfig *shared.StorageConfig
-	db            database.Database
-
-	resultsPersisted bool
+	return &ArtifactImpl{
+		id:               dbArtifact.Id,
+		name:             dbArtifact.Name,
+		description:      dbArtifact.Description,
+		artifactType:     dbArtifact.Spec.Type(),
+		contentPath:      contentPath,
+		metadataPath:     metadataPath,
+		resultWriter:     artifactResultWriter,
+		resultID:         artifactResultID,
+		resultsPersisted: false,
+		storageConfig:    storageConfig,
+		db:               db,
+	}, nil
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
@@ -96,6 +132,7 @@ func (a *ArtifactImpl) Name() string {
 
 func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	// An artifact is only considered computed if its metadata path has been populated.
+	log.Errorf("Checking for existence of artifact %s, %v %v", a.Name(), a.storageConfig, a.metadataPath)
 	return utils.CheckIfObjectExistsInStorage(
 		ctx,
 		a.storageConfig,
@@ -159,8 +196,8 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 		opStatus,
 		a.storageConfig,
 		a.metadataPath,
-		a.artifactResultWriter,
-		a.artifactResultID,
+		a.resultWriter,
+		a.resultID,
 		a.db,
 	)
 	a.resultsPersisted = true
@@ -192,39 +229,4 @@ func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	return content, nil
-}
-
-func NewArtifact(
-	ctx context.Context,
-	dbArtifact artifact.DBArtifact,
-	contentPath string,
-	metadataPath string,
-	// A nil value here means the artifact is not persisted.
-	artifactResultWriter artifact_result.Writer,
-	workflowDagResultID uuid.UUID,
-	db database.Database,
-) (Artifact, error) {
-	var artifactResultID uuid.UUID
-
-	canPersist := workflowDagResultID != uuid.Nil
-	if canPersist {
-		var err error
-		artifactResultID, err = initializeArtifactResultInDatabase(ctx, dbArtifact.Id, workflowDagResultID, artifactResultWriter, contentPath, db)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &ArtifactImpl{
-		id:                   dbArtifact.Id,
-		name:                 dbArtifact.Name,
-		description:          dbArtifact.Description,
-		artifactType:         dbArtifact.Spec.Type(),
-		contentPath:          contentPath,
-		metadataPath:         metadataPath,
-		artifactResultID:     artifactResultID,
-		artifactResultWriter: artifactResultWriter,
-		resultsPersisted:     false,
-		db:                   db,
-	}, nil
 }

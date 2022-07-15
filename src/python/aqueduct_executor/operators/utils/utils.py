@@ -99,6 +99,7 @@ def write_artifacts(
     system_metadata: Dict[str, str],
 ) -> None:
     """The same system and user-defined metadata is written for each artifact."""
+
     if (
         len(contents) != len(output_paths)
         or len(contents) != len(output_metadata_paths)
@@ -195,10 +196,12 @@ def _write_tabular_output(
     output_metadata: Dict[str, Any],
 ) -> None:
     output_str = df.to_json(orient="table", date_format="iso", index=False)
+    print("WRITING TABULAR OUTPUT")
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
     storage.put(
         output_metadata_path, bytes(json.dumps(output_metadata), encoding=_DEFAULT_ENCODING)
     )
+    print("FINISHED")
 
 
 def _write_numeric_output(

@@ -96,23 +96,25 @@ func NewOperator(
 	}
 
 	baseOp := baseOperator{
-		dbOperator:          &dbOperator,
-		resultWriter:        opResultWriter,
-		resultID:            opResultID,
-		metadataPath:        uuid.New().String(),
+		dbOperator:   &dbOperator,
+		resultWriter: opResultWriter,
+		resultID:     opResultID,
+		metadataPath: uuid.New().String(),
+		jobName:      "", /* Must be set by the specific type constructors below. */
+
 		inputs:              inputs,
 		outputs:             outputs,
 		inputContentPaths:   inputContentPaths,
 		inputMetadataPaths:  inputMetadataPaths,
 		outputContentPaths:  outputContentPaths,
 		outputMetadataPaths: outputMetadataPaths,
-		jobManager:          jobManager,
-		vaultObject:         vaultObject,
-		storageConfig:       storageConfig,
-		db:                  db,
-		resultsPersisted:    false,
 
-		// TODO(kenxu): jobName is unset. Is there a better way of setting this than having the specific type constructors do it?
+		jobManager:    jobManager,
+		vaultObject:   vaultObject,
+		storageConfig: storageConfig,
+		db:            db,
+
+		resultsPersisted: false,
 	}
 
 	if dbOperator.Spec.IsFunction() {

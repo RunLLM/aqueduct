@@ -124,6 +124,7 @@ func NewWorkflowDag(
 			artifactIDToMetadataPath[artifactID],
 			artifactResultWriter,
 			workflowDagResultID,
+			storageConfig,
 			db,
 		)
 		if err != nil {
@@ -148,7 +149,7 @@ func NewWorkflowDag(
 		for _, artifactID := range dbOperator.Inputs {
 			inputArtifacts = append(inputArtifacts, artifacts[artifactID])
 			inputContentPaths = append(inputContentPaths, artifactIDToContentPath[artifactID])
-			inputMetadataPaths = append(inputMetadataPaths, artifactIDToContentPath[artifactID])
+			inputMetadataPaths = append(inputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
 			artifactToOps[artifactID] = append(artifactToOps[artifactID], opID)
 		}
@@ -158,7 +159,7 @@ func NewWorkflowDag(
 		for _, artifactID := range dbOperator.Outputs {
 			outputArtifacts = append(outputArtifacts, artifacts[artifactID])
 			outputContentPaths = append(outputContentPaths, artifactIDToContentPath[artifactID])
-			outputMetadataPaths = append(outputMetadataPaths, artifactIDToContentPath[artifactID])
+			outputMetadataPaths = append(outputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
 			opToArtifacts[opID] = append(opToArtifacts[opID], artifactID)
 		}
@@ -224,7 +225,7 @@ func (w *workflowDagImpl) OperatorsOnArtifact(artifact artifact.Artifact) ([]ope
 }
 
 func (w *workflowDagImpl) ArtifactsFromOperator(op operator.Operator) ([]artifact.Artifact, error) {
-	artifactIDs, ok := w.artifactToOps[op.ID()]
+	artifactIDs, ok := w.opToArtifacts[op.ID()]
 	if !ok {
 		return nil, errors.Newf("Unable to find operator %s (%s) on dag.", op.ID(), op.Name())
 	}

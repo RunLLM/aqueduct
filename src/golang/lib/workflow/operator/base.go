@@ -57,6 +57,7 @@ func (bo *baseOperator) ID() uuid.UUID {
 }
 
 func (bo *baseOperator) Ready(ctx context.Context) bool {
+	log.Errorf("Checking Readiness of %s", bo.Name())
 	for _, inputArtifact := range bo.inputs {
 		if !inputArtifact.Computed(ctx) {
 			return false
@@ -67,11 +68,18 @@ func (bo *baseOperator) Ready(ctx context.Context) bool {
 
 func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
-		return nil, errors.Newf("Internal error: a jobname was not set for this operator.")
+		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
 	}
 
 	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
+		// If the job hasn't been scheduled yet, we're in a pending state.
+		if err == job.ErrJobNotExist {
+			return &shared.ExecutionState{
+				Status: shared.PendingExecutionStatus,
+			}, nil
+		}
+
 		return nil, err
 	}
 	if status == shared.SucceededExecutionStatus || status == shared.FailedExecutionStatus {
@@ -105,6 +113,7 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 				},
 			}, nil
 		}
+		return &execState, nil
 	}
 
 	// For pending and running operators.
