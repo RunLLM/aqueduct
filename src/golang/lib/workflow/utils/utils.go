@@ -90,7 +90,7 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 	}
 }
 
-func CheckIfObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
+func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
 	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
 	return err != storage.ErrObjectDoesNotExist
 }

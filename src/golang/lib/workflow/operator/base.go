@@ -66,6 +66,44 @@ func (bo *baseOperator) Ready(ctx context.Context) bool {
 	return true
 }
 
+// A catch-all for execution states that are the system's fault.
+// Logs an internal message so that we can debug.
+func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
+	log.Errorf("Execution had system failure: %s. %v", logMsg, err)
+
+	failureType := shared.SystemFailure
+	return &shared.ExecutionState{
+		Status:      shared.FailedExecutionStatus,
+		FailureType: &failureType,
+		Error: &shared.Error{
+			Context: fmt.Sprintf("%v", err),
+			Tip:     shared.TipUnknownInternalError,
+		},
+	}
+}
+
+// fetchExecState assumes that the operator has been computed already.
+func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionState {
+	var execState shared.ExecutionState
+	err := utils.ReadFromStorage(
+		ctx,
+		bo.storageConfig,
+		bo.metadataPath,
+		&execState,
+	)
+	if err != nil {
+		// Treat this as a system internal error since operator metadata was not found
+		return unknownSystemFailureExecState(
+			err,
+			"Unable to read operator metadata from storage. Operator may have failed before writing metadata.",
+		)
+	}
+	return &execState
+}
+
+// GetExecState takes a more wholelistic view of the operator's status than the job manager does,
+// and can be called at any time. Because of this, the logic for figuring out the status is a more
+// involved.
 func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
@@ -73,53 +111,34 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 
 	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
-		// If the job hasn't been scheduled yet, we're in a pending state.
+		// If the job does not exist, this could mean that is hasn't been run yet (pending),
+		// or that it has run already at sometime in the past, but has been garbage collected
+		// (succeeded/failed).
 		if err == job.ErrJobNotExist {
+			// Check whether the operator actually ran.
+			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
+				return bo.fetchExecState(ctx), nil
+			}
+
+			// Otherwise, this job has not run yet and is in a pending state.
 			return &shared.ExecutionState{
 				Status: shared.PendingExecutionStatus,
 			}, nil
+		} else {
+			// This is just an internal polling error state.
+			return unknownSystemFailureExecState(err, "Unable to poll job manager."), nil
+		}
+	} else {
+		// The job could have just completed, so we know we can fetch the results (succeeded/failed).
+		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
+			return bo.fetchExecState(ctx), nil
 		}
 
-		return nil, err
+		// The job must exist at this point (running).
+		return &shared.ExecutionState{
+			Status: shared.RunningExecutionStatus,
+		}, nil
 	}
-	if status == shared.SucceededExecutionStatus || status == shared.FailedExecutionStatus {
-		var execState shared.ExecutionState
-		err = utils.ReadFromStorage(
-			ctx,
-			bo.storageConfig,
-			bo.metadataPath,
-			&execState,
-		)
-
-		if err != nil {
-			if err != job.ErrJobNotExist {
-				// The job already finished somehow and was garbage-collected.
-				log.Errorf("Job %s does not exist for operator %s", bo.jobName, bo.Name())
-			} else {
-				// Treat this as a system internal error since operator metadata was not found
-				log.Errorf(
-					"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
-					err,
-				)
-			}
-
-			failureType := shared.SystemFailure
-			return &shared.ExecutionState{
-				Status:      shared.FailedExecutionStatus,
-				FailureType: &failureType,
-				Error: &shared.Error{
-					Context: fmt.Sprintf("%v", err),
-					Tip:     shared.TipUnknownInternalError,
-				},
-			}, nil
-		}
-		return &execState, nil
-	}
-
-	// For pending and running operators.
-	return &shared.ExecutionState{
-		Status: status,
-	}, nil
 }
 
 func updateOperatorResultAfterComputation(

@@ -48,10 +48,14 @@ type aqOrchestrator struct {
 	jobManager job.JobManager
 	timeConfig *AqueductTimeConfig
 
+	inProgressOps map[uuid.UUID]operator.Operator
+	completedOps  map[uuid.UUID]operator.Operator
+	status        shared.ExecutionStatus
+
 	shouldPersistResults bool
 }
 
-func NewAqueductOrchestrator(
+func NewAqOrchestrator(
 	dag dag.WorkflowDag,
 	jobManager job.JobManager,
 	timeConfig AqueductTimeConfig,
@@ -61,6 +65,9 @@ func NewAqueductOrchestrator(
 		dag:                  dag,
 		jobManager:           jobManager,
 		timeConfig:           &timeConfig,
+		inProgressOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		completedOps:         make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		status:               shared.PendingExecutionStatus,
 		shouldPersistResults: shouldPersistResults,
 	}
 }
@@ -69,8 +76,8 @@ func (orch *aqOrchestrator) Execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
-	status := shared.SucceededExecutionStatus
-	err := execute(
+	orch.status = shared.RunningExecutionStatus
+	err := orch.execute(
 		ctx,
 		dag,
 		orch.timeConfig,
@@ -78,16 +85,18 @@ func (orch *aqOrchestrator) Execute(
 		orch.shouldPersistResults,
 	)
 	if err != nil {
-		status = shared.FailedExecutionStatus
+		orch.status = shared.FailedExecutionStatus
+	} else {
+		orch.status = shared.SucceededExecutionStatus
 	}
 
 	if orch.shouldPersistResults {
-		err = dag.PersistResult(ctx, status)
+		err = dag.PersistResult(ctx, orch.status)
 		if err != nil {
 			log.Errorf("Error when persisting dag resutls: %v", err)
 		}
 	}
-	return status, err
+	return orch.status, err
 }
 
 func waitForInProgressOperators(
@@ -125,7 +134,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 	return errors.Newf("Internal error: Unsupported failure type %s", failureType)
 }
 
-func execute(
+func (orch *aqOrchestrator) execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
 	timeConfig *AqueductTimeConfig,
@@ -133,8 +142,8 @@ func execute(
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
-	inProgressOps := make(map[uuid.UUID]operator.Operator, len(dag.Operators()))
-	completedOps := make(map[uuid.UUID]operator.Operator, len(dag.Operators()))
+	inProgressOps := orch.inProgressOps
+	completedOps := orch.completedOps
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -172,7 +173,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
 	}
 
-	orch := orchestrator.NewAqueductOrchestrator(
+	orch := orchestrator.NewAqOrchestrator(
 		workflowDag,
 		h.JobManager,
 		orchestrator.AqueductTimeConfig{
@@ -185,7 +186,9 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	defer orch.Finish(ctx)
 
 	status, err := orch.Execute(ctx, workflowDag)
+	log.Errorf("Orchestration error %v", err)
 	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
+		log.Errorf("Returning early")
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
@@ -205,7 +208,9 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		execStateByOp[op.ID()] = *execState
 	}
 
-	// Only include artifact results of operators that were successfully computed.
+	log.Errorf("ExecStateByOp: %v", execStateByOp)
+
+	// Only include artifact results that were successfully computed.
 	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
 	for _, artf := range workflowDag.Artifacts() {
 		if artf.Computed(ctx) {

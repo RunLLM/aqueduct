@@ -122,7 +122,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
-	orch := orchestrator.NewAqueductOrchestrator(
+	orch := orchestrator.NewAqOrchestrator(
 		workflowDag,
 		ex.JobManager,
 		orchestrator.AqueductTimeConfig{

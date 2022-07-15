@@ -132,7 +132,7 @@ func NewWorkflowDag(
 		}
 	}
 
-	// These two maps allow us to remember all the dag connections.
+	// These maps allow us to remember all the dag connections.
 	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(artifacts))
 	for artifactID := range artifacts {
 		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
@@ -141,7 +141,7 @@ func NewWorkflowDag(
 	for opID := range operators {
 		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
 	}
-
+	artifactToInputOp := make(map[uuid.UUID]uuid.UUID, len(artifacts))
 	for opID, dbOperator := range dbWorkflowDag.Operators {
 		inputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		inputContentPaths := make([]string, 0, len(dbOperator.Inputs))
@@ -162,6 +162,9 @@ func NewWorkflowDag(
 			outputMetadataPaths = append(outputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
 			opToArtifacts[opID] = append(opToArtifacts[opID], artifactID)
+
+			// Assumption: an operator only outputs a single artifact.
+			artifactToInputOp[artifactID] = opID
 		}
 
 		operators[opID], err = operator.NewOperator(

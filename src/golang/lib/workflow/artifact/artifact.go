@@ -133,11 +133,13 @@ func (a *ArtifactImpl) Name() string {
 func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	// An artifact is only considered computed if its metadata path has been populated.
 	log.Errorf("Checking for existence of artifact %s, %v %v", a.Name(), a.storageConfig, a.metadataPath)
-	return utils.CheckIfObjectExistsInStorage(
+	res := utils.ObjectExistsInStorage(
 		ctx,
 		a.storageConfig,
 		a.metadataPath,
 	)
+	log.Error("Artifact exists %s", res)
+	return res
 }
 
 func updateArtifactResultAfterComputation(
@@ -215,6 +217,10 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 }
 
 func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metadata, error) {
+	if !a.Computed(ctx) {
+		return nil, errors.Newf("Cannot get metadata of Artifact %s, it has not yet been computed.", a.Name())
+	}
+
 	var metadata artifact_result.Metadata
 	err := utils.ReadFromStorage(ctx, a.storageConfig, a.metadataPath, &metadata)
 	if err != nil {
@@ -224,6 +230,9 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metada
 }
 
 func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
+	if !a.Computed(ctx) {
+		return nil, errors.Newf("Cannot get content of Artifact %s, it has not yet been computed.", a.Name())
+	}
 	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.contentPath)
 	if err != nil {
 		return nil, err
