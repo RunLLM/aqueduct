@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -25,7 +26,6 @@ type baseOperator struct {
 	resultWriter operator_result.Writer
 	resultID     uuid.UUID
 
-	isPreview    bool
 	metadataPath string
 	jobName      string
 
@@ -111,7 +111,6 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 	return &shared.ExecutionState{
 		Status: status,
 	}, nil
-
 }
 
 func updateOperatorResultAfterComputation(
@@ -257,5 +256,4 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		InputArtifactTypes:  inputArtifactTypes,
 		OutputArtifactTypes: outputArtifactTypes,
 	}
-
 }

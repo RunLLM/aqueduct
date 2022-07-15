@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"

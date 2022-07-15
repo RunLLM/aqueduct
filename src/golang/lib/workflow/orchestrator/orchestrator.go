@@ -3,12 +3,12 @@ package orchestrator
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -44,11 +44,9 @@ type AqueductTimeConfig struct {
 }
 
 type aqOrchestrator struct {
-	dag dag.WorkflowDag
-
-	jobManager   job.JobManager
-	timeConfig   *AqueductTimeConfig
-	pollInterval time.Duration
+	dag        dag.WorkflowDag
+	jobManager job.JobManager
+	timeConfig *AqueductTimeConfig
 
 	shouldPersistResults bool
 }

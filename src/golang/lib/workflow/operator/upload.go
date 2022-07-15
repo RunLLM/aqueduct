@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/storage"

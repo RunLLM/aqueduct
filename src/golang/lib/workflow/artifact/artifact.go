@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -144,7 +145,6 @@ func updateArtifactResultAfterComputation(
 			},
 		).Errorf("Unable to update artifact result metadata: %v", err)
 	}
-
 }
 
 func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {

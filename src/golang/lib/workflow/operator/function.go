@@ -2,6 +2,7 @@ package operator
 
 import (
 	"fmt"
+
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"

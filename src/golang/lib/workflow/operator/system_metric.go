@@ -2,6 +2,7 @@ package operator
 
 import (
 	"fmt"
+
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/google/uuid"
 )

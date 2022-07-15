@@ -2,6 +2,7 @@ package dag
 
 import (
 	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -85,7 +86,6 @@ func NewWorkflowDag(
 	db database.Database,
 	canPersist bool,
 ) (WorkflowDag, error) {
-
 	// First, allocate a content and metadata path for each artifact.
 	artifactIDToContentPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
 	artifactIDToMetadataPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
@@ -133,11 +133,11 @@ func NewWorkflowDag(
 
 	// These two maps allow us to remember all the dag connections.
 	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(artifacts))
-	for artifactID, _ := range artifacts {
+	for artifactID := range artifacts {
 		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
 	}
 	opToArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
-	for opID, _ := range operators {
+	for opID := range operators {
 		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
 	}
 
@@ -185,7 +185,6 @@ func NewWorkflowDag(
 	}
 
 	return &workflowDagImpl{
-
 		dbWorkflowDag: dbWorkflowDag,
 		operators:     operators,
 		artifacts:     artifacts,

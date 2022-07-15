@@ -2,10 +2,10 @@ package executor
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
