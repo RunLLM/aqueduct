@@ -125,90 +125,53 @@ func (r *standardReaderImpl) GetWorkflowLastRun(
 	return response, err
 }
 
-// The following helper is used in `GetWorkflowsFromOperatorIds`
-// to provide a hash-key-like behavior for the response object.
-func keyWorkflowIdsFromOperatorIdsResponse(obj *WorkflowIdsFromOperatorIdsResponse) string {
-	return fmt.Sprintf(
-		"%s_%s_%s",
-		obj.WorkflowId.String(),
-		obj.WorkflowDagId.String(),
-		obj.OperatorId.String(),
-	)
-}
-
 func (r *standardReaderImpl) GetWorkflowIdsFromOperatorIds(
 	ctx context.Context,
 	operatorIds []uuid.UUID,
 	db database.Database,
 ) ([]WorkflowIdsFromOperatorIdsResponse, error) {
 	// This query looks up all operators with at least one upstream
-	fromQuery := fmt.Sprintf(
-		`SELECT
-			workflow.id as workflow_id,
-			workflow_dag.id as workflow_dag_id,
-			workflow_dag_edge.from_id as operator_id
-		FROM
-			workflow,
-			workflow_dag,
-			workflow_dag_edge 
-		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
-		AND workflow.id = workflow_dag.workflow_id
-		AND workflow_dag_edge.type = '%s'
-		AND workflow_dag_edge.from_id IN (%s)
+	query := fmt.Sprintf(
+		`
+			SELECT
+				workflow.id as workflow_id,
+				workflow_dag.id as workflow_dag_id,
+				workflow_dag_edge.from_id as operator_id
+			FROM
+				workflow,
+				workflow_dag,
+				workflow_dag_edge 
+			WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.from_id IN (%s)
+		UNION
+			SELECT
+				workflow.id as workflow_id,
+				workflow_dag.id as workflow_dag_id,
+				workflow_dag_edge.to_id as operator_id
+			FROM
+				workflow,
+				workflow_dag,
+				workflow_dag_edge 
+			WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.to_id IN (%s)
 		`,
 		workflow_dag_edge.OperatorToArtifactType,
 		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
-	)
-
-	// This query looks up all operators with at least one downstream
-	toQuery := fmt.Sprintf(
-		`SELECT
-			workflow.id as workflow_id,
-			workflow_dag.id as workflow_dag_id,
-			workflow_dag_edge.to_id as operator_id
-		FROM
-			workflow,
-			workflow_dag,
-			workflow_dag_edge 
-		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
-		AND workflow.id = workflow_dag.workflow_id
-		AND workflow_dag_edge.type = '%s'
-		AND workflow_dag_edge.to_id IN (%s)
-		`,
 		workflow_dag_edge.ArtifactToOperatorType,
 		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
 	)
 
 	args := stmt_preparers.CastIdsListToInterfaceList(operatorIds)
 
-	var fromResults, toResults []WorkflowIdsFromOperatorIdsResponse
+	var results []WorkflowIdsFromOperatorIdsResponse
 
-	err := db.Query(ctx, &fromResults, fromQuery, args...)
+	err := db.Query(ctx, &results, query, args...)
 	if err != nil {
 		return nil, err
-	}
-
-	err = db.Query(ctx, &toResults, toQuery, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	queryResults := make([]WorkflowIdsFromOperatorIdsResponse, 0, len(fromResults)+len(toResults))
-	queryResults = append(queryResults, fromResults...)
-	queryResults = append(queryResults, toResults...)
-
-	// Flags to ensure results is a set
-	setFlags := make(map[string]bool)
-	results := make(
-		[]WorkflowIdsFromOperatorIdsResponse, 0, len(queryResults),
-	)
-
-	for _, queryResult := range queryResults {
-		key := keyWorkflowIdsFromOperatorIdsResponse(&queryResult)
-		if _, ok := setFlags[key]; !ok {
-			results = append(results, queryResult)
-			setFlags[key] = true
-		}
 	}
 
 	return results, nil

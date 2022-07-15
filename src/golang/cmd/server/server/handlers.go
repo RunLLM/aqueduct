@@ -92,7 +92,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			NotificationReader: s.NotificationReader,
 			WorkflowReader:     s.WorkflowReader,
 		},
-		routes.ListOperatorsOnIntegrationRoute: &handler.ListOperatorsOnIntegrationHandler{
+		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
 			Database:       s.Database,
 			OperatorReader: s.OperatorReader,
 			CustomReader:   s.CustomReader,

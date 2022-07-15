@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/workflows
+// Route: /integration/{integrationId}/operators
 // Method: GET
 // Params: None
 // Request:
@@ -21,9 +21,9 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `listOperatorsOnIntegrationResponse`
+//		serialized `listOperatorsForIntegrationResponse`
 //
-// `listOperatorsOnIntegration` lists all operators associated with
+// `listOperatorsForIntegration` lists all operators associated with
 // the given integraion. Together we provide the following information for
 // each associated operator:
 //  `workflow_id`: the workflow associated with this operator
@@ -31,18 +31,18 @@ import (
 //	`is_active`: whether the operator is being used in the latest version of the workflow.
 //				 This is the equivalent to whether `workflow_dag_id` is the latest for the `workflow_id`
 
-type listOperatorsOnIntegrationItem struct {
-	Operator      *operator.Operator
-	WorkflowId    uuid.UUID
-	WorkflowDagId uuid.UUID
-	IsActive      bool `json:"is_active"`
+type listOperatorsForIntegrationItem struct {
+	Operator      *operator.Operator `json:"operator"`
+	WorkflowId    uuid.UUID          `json:"workflow_id"`
+	WorkflowDagId uuid.UUID          `json:"workflow_dag_id"`
+	IsActive      bool               `json:"is_active"`
 }
 
-type listOperatorsOnIntegrationResponse struct {
-	OperatorWithIds []listOperatorsOnIntegrationItem `json:"operator_with_ids"`
+type listOperatorsForIntegrationResponse struct {
+	OperatorWithIds []listOperatorsForIntegrationItem `json:"operator_with_ids"`
 }
 
-type ListOperatorsOnIntegrationHandler struct {
+type ListOperatorsForIntegrationHandler struct {
 	GetHandler
 
 	Database       database.Database
@@ -50,11 +50,11 @@ type ListOperatorsOnIntegrationHandler struct {
 	OperatorReader operator.Reader
 }
 
-func (*ListOperatorsOnIntegrationHandler) Name() string {
-	return "ListWorkflowsOnIntegration"
+func (*ListOperatorsForIntegrationHandler) Name() string {
+	return "ListOperatorsForIntegration"
 }
 
-func (*ListOperatorsOnIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
@@ -64,8 +64,10 @@ func (*ListOperatorsOnIntegrationHandler) Prepare(r *http.Request) (interface{},
 	return integrationId, http.StatusOK, nil
 }
 
-func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	integrationId := interfaceArgs.(uuid.UUID)
+
+	// Fetch all operators on this integration.
 	operators, err := h.OperatorReader.GetOperatorsByIntegrationId(ctx, integrationId, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
@@ -78,6 +80,8 @@ func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfa
 		operatorByIds[op.Id] = op
 	}
 
+	// Fetch all workflows that owns all fetched operators.
+	// Returned results are {workflow_id, workflow_dag_id, operator_id} struct.
 	ids, err := h.CustomReader.GetWorkflowIdsFromOperatorIds(ctx, operatorIds, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operator ID information.")
@@ -88,6 +92,7 @@ func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfa
 		workflowIds = append(workflowIds, idsItem.WorkflowId)
 	}
 
+	// Fetch latest workflow_dag_id for each workflow.
 	workflowIdsToLatestDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsFromWorkflowIds(
 		ctx,
 		workflowIds,
@@ -97,7 +102,8 @@ func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve latest dag IDs for workflows.")
 	}
 
-	results := make([]listOperatorsOnIntegrationItem, 0, len(ids))
+	// Combine all fetched results
+	results := make([]listOperatorsForIntegrationItem, 0, len(ids))
 	for _, idsItem := range ids {
 		op, ok := operatorByIds[idsItem.OperatorId]
 		if !ok {
@@ -110,7 +116,7 @@ func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfa
 		}
 
 		active := latestDagId == idsItem.WorkflowDagId
-		results = append(results, listOperatorsOnIntegrationItem{
+		results = append(results, listOperatorsForIntegrationItem{
 			Operator:      &op,
 			WorkflowId:    idsItem.WorkflowId,
 			WorkflowDagId: idsItem.WorkflowDagId,
@@ -118,5 +124,5 @@ func (h *ListOperatorsOnIntegrationHandler) Perform(ctx context.Context, interfa
 		})
 	}
 
-	return listOperatorsOnIntegrationResponse{OperatorWithIds: results}, http.StatusOK, nil
+	return listOperatorsForIntegrationResponse{OperatorWithIds: results}, http.StatusOK, nil
 }
