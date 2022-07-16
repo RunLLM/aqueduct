@@ -26,9 +26,11 @@ type Artifact interface {
 	// successfully.
 	Computed(ctx context.Context) bool
 
-	// PersistResult writes the data of this artifact to a backing store so it can be
-	// fetched later.
-	// Errors if the artifact has not yet been computed.
+	// InitializeResult initializes the artifact in the database.
+	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
+
+	// PersistResult updates the artifact result in the database.
+	// Errors if the artifact has not yet been computed, or InitializeResult() hasn't been called yet.
 	PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
@@ -60,49 +62,14 @@ type ArtifactImpl struct {
 	db            database.Database
 }
 
-func initializeArtifactResultInDatabase(
-	ctx context.Context,
-	artifactID uuid.UUID,
-	workflowDagResultID uuid.UUID,
-	artifactResultWriter artifact_result.Writer,
-	contentPath string,
-	db database.Database,
-) (uuid.UUID, error) {
-	artifactResult, err := artifactResultWriter.CreateArtifactResult(
-		ctx,
-		workflowDagResultID,
-		artifactID,
-		contentPath,
-		db,
-	)
-	if err != nil {
-		return uuid.Nil, errors.Wrap(err, "Failed to create operator result record.")
-	}
-	return artifactResult.Id, nil
-}
-
 func NewArtifact(
-	ctx context.Context,
 	dbArtifact artifact.DBArtifact,
 	contentPath string,
 	metadataPath string,
-	// A nil value here means the artifact is not persisted.
 	artifactResultWriter artifact_result.Writer,
-	workflowDagResultID uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
 ) (Artifact, error) {
-	var artifactResultID uuid.UUID
-
-	canPersist := workflowDagResultID != uuid.Nil
-	if canPersist {
-		var err error
-		artifactResultID, err = initializeArtifactResultInDatabase(ctx, dbArtifact.Id, workflowDagResultID, artifactResultWriter, contentPath, db)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &ArtifactImpl{
 		id:               dbArtifact.Id,
 		name:             dbArtifact.Name,
@@ -111,7 +78,7 @@ func NewArtifact(
 		contentPath:      contentPath,
 		metadataPath:     metadataPath,
 		resultWriter:     artifactResultWriter,
-		resultID:         artifactResultID,
+		resultID:         uuid.Nil,
 		resultsPersisted: false,
 		storageConfig:    storageConfig,
 		db:               db,
@@ -172,7 +139,6 @@ func updateArtifactResultAfterComputation(
 		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
 	}
 
-	log.Errorf("Updating Artifact Result %s", artifactResultID)
 	_, err := artifactResultWriter.UpdateArtifactResult(
 		ctx,
 		artifactResultID,
@@ -186,6 +152,26 @@ func updateArtifactResultAfterComputation(
 			},
 		).Errorf("Unable to update artifact result metadata: %v", err)
 	}
+}
+
+func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
+	if a.resultWriter == nil {
+		return errors.New("Artifact's result writer cannot be nil.")
+	}
+
+	artifactResult, err := a.resultWriter.CreateArtifactResult(
+		ctx,
+		dagResultID,
+		a.ID(),
+		a.contentPath,
+		a.db,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Failed to create operator result record.")
+	}
+
+	a.resultID = artifactResult.Id
+	return nil
 }
 
 func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {
@@ -213,7 +199,7 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 func (a *ArtifactImpl) Finish(ctx context.Context) {
 	utils.CleanupStorageFile(ctx, a.storageConfig, a.metadataPath)
 
-	// If the artifact was persisted to the DB, don't cleanup the content paths,
+	// If the artifact was persisted to the DB, don't cleanup the storage content paths,
 	// since we may need that data later.
 	if !a.resultsPersisted {
 		utils.CleanupStorageFile(ctx, a.storageConfig, a.contentPath)

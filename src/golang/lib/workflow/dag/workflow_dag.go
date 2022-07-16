@@ -31,8 +31,13 @@ type WorkflowDag interface {
 	// ArtifactsFromOperator returns all the artifacts produced by the given operator.
 	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
 
-	// PersistResult writes the dag result of one execution run into the database.
-	// *Does not* recursively persist the operators or artifacts contained in this dag.
+	// InitializeResult initializes the dag result in the database.
+	// Also initializes the operators and artifacts contained in this dag.
+	InitializeResults(ctx context.Context) error
+
+	// PersistResult updates the dag result in the database after execution.
+	// InitializeResult() must have already been called.
+	// *Does not* persist the operators or artifacts contained in this dag.
 	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
 }
 
@@ -50,25 +55,9 @@ type workflowDagImpl struct {
 	userReader         user.Reader
 	db                 database.Database
 
-	// Corresponds to the workflow dag result entry in the database. This is set during construction
-	// and indicates whether the workflow dag can be persisted.
-	// Persist() will no-op if this is empty.
+	// Corresponds to the workflow dag result entry in the database.
+	// This is empty if InitializeResult() has not been called.
 	resultID uuid.UUID
-}
-
-func initializeDagResultInDatabase(
-	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	dagResultWriter workflow_dag_result.Writer,
-	db database.Database,
-) (uuid.UUID, error) {
-	// Create a database record of workflow dag result and set its status to `pending`.
-	// TODO(ENG-599): wrap these writes into a transaction.
-	workflowDagResult, err := dagResultWriter.CreateWorkflowDagResult(ctx, dbWorkflowDag.Id, db)
-	if err != nil {
-		return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag result record.")
-	}
-	return workflowDagResult.Id, nil
 }
 
 func NewWorkflowDag(
@@ -84,7 +73,6 @@ func NewWorkflowDag(
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
-	canPersist bool,
 ) (WorkflowDag, error) {
 	// First, allocate a content and metadata path for each artifact.
 	artifactIDToContentPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
@@ -94,23 +82,7 @@ func NewWorkflowDag(
 		artifactIDToMetadataPath[dbArtifact.Id] = uuid.New().String()
 	}
 
-	var workflowDagResultID uuid.UUID
 	var err error
-	if canPersist {
-		if dagResultWriter == nil || opResultWriter == nil || artifactResultWriter == nil {
-			return nil, errors.New("Nil was supplied for a database writer.")
-		}
-
-		workflowDagResultID, err = initializeDagResultInDatabase(
-			ctx,
-			dbWorkflowDag,
-			dagResultWriter,
-			db,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// With all the initial database writes completed (if at all), we can now initialize
 	// the operator and artifact classes. As well as the connections between them.
@@ -118,12 +90,10 @@ func NewWorkflowDag(
 	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dbWorkflowDag.Artifacts))
 	for artifactID, dbArtifact := range dbWorkflowDag.Artifacts {
 		artifacts[artifactID], err = artifact.NewArtifact(
-			ctx,
 			dbArtifact,
 			artifactIDToContentPath[artifactID],
 			artifactIDToMetadataPath[artifactID],
 			artifactResultWriter,
-			workflowDagResultID,
 			storageConfig,
 			db,
 		)
@@ -177,7 +147,6 @@ func NewWorkflowDag(
 			outputContentPaths,
 			outputMetadataPaths,
 			opResultWriter,
-			workflowDagResultID,
 			jobManager,
 			vaultObject,
 			storageConfig,
@@ -200,9 +169,7 @@ func NewWorkflowDag(
 		notificationWriter: notificationWriter,
 		userReader:         userReader,
 		db:                 db,
-
-		// Can be nil, which means the dag cannot be persisted.
-		resultID: workflowDagResultID,
+		resultID:           uuid.Nil,
 	}, nil
 }
 
@@ -240,11 +207,39 @@ func (w *workflowDagImpl) ArtifactsFromOperator(op operator.Operator) ([]artifac
 	return artifacts, nil
 }
 
-// Updates the dag result metadata after the dag has been executed.
-// No-ops unless the dag result has already been initialized. This is meant to be called from a defer().
+func (w *workflowDagImpl) InitializeResults(ctx context.Context) error {
+	if w.resultWriter == nil {
+		return errors.New("Workflow dag's result writer cannot be nil.")
+	}
+
+	// Create a database record of workflow dag result and set its status to `pending`.
+	// TODO(ENG-599): wrap these writes into a transaction.
+	dagResult, err := w.resultWriter.CreateWorkflowDagResult(ctx, w.dbWorkflowDag.Id, w.db)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create workflow dag result record.")
+	}
+	w.resultID = dagResult.Id
+
+	// Also initialize the operators and artifact results.
+	for _, op := range w.Operators() {
+		err := op.InitializeResult(ctx, w.resultID)
+		if err != nil {
+			return err
+		}
+	}
+	for _, artf := range w.Artifacts() {
+		err := artf.InitializeResult(ctx, w.resultID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.ExecutionStatus) error {
 	if w.resultID == uuid.Nil {
-		return errors.New("Cannot persist this workflow dag result. Initialized with `CanPersist` == false.")
+		return errors.New("Workflow's dag result was not initialized before calling PersistResult.")
 	}
 
 	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.

@@ -76,8 +76,22 @@ func (orch *aqOrchestrator) Execute(
 	ctx context.Context,
 	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
+	if orch.shouldPersistResults {
+		err := dag.InitializeResults(ctx)
+		if err != nil {
+			return shared.FailedExecutionStatus, err
+		}
+
+		// Make sure to persist the dag results on exit.
+		defer func() {
+			err = dag.PersistResult(ctx, orch.status)
+			if err != nil {
+				log.Errorf("Error when persisting dag resutls: %v", err)
+			}
+		}()
+	}
+
 	orch.status = shared.RunningExecutionStatus
-	log.Errorf("Should persist results! %s", orch.shouldPersistResults)
 	err := orch.execute(
 		ctx,
 		dag,
@@ -89,13 +103,6 @@ func (orch *aqOrchestrator) Execute(
 		orch.status = shared.FailedExecutionStatus
 	} else {
 		orch.status = shared.SucceededExecutionStatus
-	}
-
-	if orch.shouldPersistResults {
-		err = dag.PersistResult(ctx, orch.status)
-		if err != nil {
-			log.Errorf("Error when persisting dag resutls: %v", err)
-		}
 	}
 	return orch.status, err
 }

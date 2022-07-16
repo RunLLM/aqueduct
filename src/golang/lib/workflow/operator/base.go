@@ -57,7 +57,6 @@ func (bo *baseOperator) ID() uuid.UUID {
 }
 
 func (bo *baseOperator) Ready(ctx context.Context) bool {
-	log.Errorf("Checking Readiness of %s", bo.Name())
 	for _, inputArtifact := range bo.inputs {
 		if !inputArtifact.Computed(ctx) {
 			return false
@@ -182,6 +181,24 @@ func updateOperatorResultAfterComputation(
 			},
 		).Errorf("Unable to update operator result metadata: %v", err)
 	}
+}
+
+func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
+	if bo.resultWriter == nil {
+		return errors.New("Operator's result writer cannot be nil.")
+	}
+
+	operatorResult, err := bo.resultWriter.CreateOperatorResult(
+		ctx,
+		dagResultID,
+		bo.ID(),
+		bo.db,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Failed to create operator result record.")
+	}
+	bo.resultID = operatorResult.Id
+	return nil
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {

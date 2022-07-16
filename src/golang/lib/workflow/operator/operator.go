@@ -29,32 +29,17 @@ type Operator interface {
 	// GetExecState performs a non-blocking fetch for the execution state of this operator.
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
 
+	// InitializeResult initializes the operator in the database.
+	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
+
 	// PersistResult writes the results of this operator execution to the database.
-	// This method also persists any artifact results produced by this operator.
+	// Errors if the artifact hasn ot yet been computed, or InitializeResult() hasn't been called yet.
+	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	// Also calls Finish() on all the operator's output artifacts.
 	Finish(ctx context.Context)
-}
-
-func initializeOperatorResultInDatabase(
-	ctx context.Context,
-	opID uuid.UUID,
-	workflowDagResultID uuid.UUID,
-	opResultWriter operator_result.Writer,
-	db database.Database,
-) (uuid.UUID, error) {
-	operatorResult, err := opResultWriter.CreateOperatorResult(
-		ctx,
-		workflowDagResultID,
-		opID,
-		db,
-	)
-	if err != nil {
-		return uuid.Nil, errors.Wrap(err, "Failed to create operator result record.")
-	}
-	return operatorResult.Id, nil
 }
 
 func NewOperator(
@@ -67,7 +52,6 @@ func NewOperator(
 	outputContentPaths []string,
 	outputMetadataPaths []string,
 	opResultWriter operator_result.Writer, // A nil value means the operator is run in preview mode.
-	workflowDagResultID uuid.UUID,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
@@ -80,25 +64,10 @@ func NewOperator(
 		return nil, errors.New("Internal error: mismatched number of output arguments.")
 	}
 
-	var opResultID uuid.UUID
-	if workflowDagResultID != uuid.Nil {
-		var err error
-		opResultID, err = initializeOperatorResultInDatabase(
-			ctx,
-			dbOperator.Id,
-			workflowDagResultID,
-			opResultWriter,
-			db,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	baseOp := baseOperator{
 		dbOperator:   &dbOperator,
 		resultWriter: opResultWriter,
-		resultID:     opResultID,
+		resultID:     uuid.Nil,
 		metadataPath: uuid.New().String(),
 		jobName:      "", /* Must be set by the specific type constructors below. */
 
