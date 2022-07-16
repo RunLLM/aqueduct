@@ -77,6 +77,7 @@ func (orch *aqOrchestrator) Execute(
 	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
 	orch.status = shared.RunningExecutionStatus
+	log.Errorf("Should persist results! %s", orch.shouldPersistResults)
 	err := orch.execute(
 		ctx,
 		dag,

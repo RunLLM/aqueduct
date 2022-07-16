@@ -152,7 +152,8 @@ func updateArtifactResultAfterComputation(
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		artifact_result.StatusColumn: opStatus,
+		artifact_result.StatusColumn:   opStatus,
+		artifact_result.MetadataColumn: nil,
 	}
 
 	var artifactResultMetadata artifact_result.Metadata
@@ -168,9 +169,10 @@ func updateArtifactResultAfterComputation(
 			return
 		}
 
-		changes[artifact_result.MetadataColumn] = artifactResultMetadata
+		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
 	}
 
+	log.Errorf("Updating Artifact Result %s", artifactResultID)
 	_, err := artifactResultWriter.UpdateArtifactResult(
 		ctx,
 		artifactResultID,
@@ -193,6 +195,8 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 	if !a.Computed(ctx) {
 		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
 	}
+
+	log.Errorf("Persisting artifact %s to %s", a.Name(), a.metadataPath)
 	updateArtifactResultAfterComputation(
 		ctx,
 		opStatus,

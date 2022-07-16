@@ -102,8 +102,8 @@ func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionSta
 }
 
 // GetExecState takes a more wholelistic view of the operator's status than the job manager does,
-// and can be called at any time. Because of this, the logic for figuring out the status is a more
-// involved.
+// and can be called at any time. Because of this, the logic for figuring out the correct state is
+// a little more involved.
 func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
@@ -166,7 +166,7 @@ func updateOperatorResultAfterComputation(
 
 	changes := map[string]interface{}{
 		operator_result.StatusColumn:    status,
-		operator_result.ExecStateColumn: execState,
+		operator_result.ExecStateColumn: &execState,
 	}
 
 	_, err = opResultWriter.UpdateOperatorResult(
@@ -211,7 +211,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	for _, outputArtifact := range bo.outputs {
 		err = outputArtifact.PersistResult(ctx, execState.Status)
 		if err != nil {
-			log.Errorf(fmt.Sprintf("Error occurred when persisting artifact %s.", outputArtifact.Name()))
+			log.Errorf("Error occurred when persisting artifact %s.", outputArtifact.Name())
 		}
 	}
 	bo.resultsPersisted = true
