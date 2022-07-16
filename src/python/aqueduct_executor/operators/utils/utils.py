@@ -263,5 +263,8 @@ def write_operator_metadata(
 
 def write_discover_results(storage: Storage, path: str, tables: List[str]):
     table_names_str = json.dumps(tables)
-
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
+
+def write_delete_results(storage: Storage, path: str, deletion_results: List[bool]):
+    deletion_results_str = json.dumps(tables)
+    storage.put(path, bytes(deletion_results_str, encoding=_DEFAULT_ENCODING))

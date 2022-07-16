@@ -34,22 +34,23 @@ def run(spec: spec.Spec, storage: Storage):
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
-    op = setup_connector(spec.connector_name, spec.connector_config)
-
-    if spec.type == enums.JobType.AUTHENTICATE:
-        run_authenticate(op)
-    elif spec.type == enums.JobType.EXTRACT:
-        run_extract(spec, op, storage)
-    elif spec.type == enums.JobType.LOADTABLE:
-        run_load_table(spec, op, storage)
-    elif spec.type == enums.JobType.DELETE:
-        run_delete(spec, op)
-    elif spec.type == enums.JobType.LOAD:
-        run_load(spec, op, storage)
-    elif spec.type == enums.JobType.DISCOVER:
-        run_discover(spec, op, storage)
+    if spec.type == enums.JobType.DELETE:
+        run_delete_all(spec, storage)
     else:
-        raise Exception("Unknown job: %s" % spec.type)
+        op = setup_connector(spec.connector_name, spec.connector_config)
+
+        if spec.type == enums.JobType.AUTHENTICATE:
+            run_authenticate(op)
+        elif spec.type == enums.JobType.EXTRACT:
+            run_extract(spec, op, storage)
+        elif spec.type == enums.JobType.LOADTABLE:
+            run_load_table(spec, op, storage)
+        elif spec.type == enums.JobType.LOAD:
+            run_load(spec, op, storage)
+        elif spec.type == enums.JobType.DISCOVER:
+            run_discover(spec, op, storage)
+        else:
+            raise Exception("Unknown job: %s" % spec.type)
 
 
 def run_authenticate(op: connector.TabularConnector):
@@ -87,8 +88,15 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
     )
 
 
-def run_delete(spec: spec.DeleteSpec, op: connector.TabularConnector):
-    op.delete(spec.parameters)
+def run_delete_all(spec: spec.DeleteSpec, storage: Storage):
+    all_res = []
+    for i in range(len(spec.connector_name)):
+        op = setup_connector(spec.connector_name[i], spec.connector_config[i])
+        res = op.delete(spec.parameters[i])
+        all_res.append(res)
+    utils.write_delete_results(storage, spec.output_content_path, all_res)
+    
+
 
 def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage):
     inputs = utils.read_artifacts(

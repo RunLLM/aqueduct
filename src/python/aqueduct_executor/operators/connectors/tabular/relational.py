@@ -29,12 +29,17 @@ class RelationalConnector(connector.TabularConnector):
         return pd.read_sql(params.query, con=self.engine)
 
     def delete(self, params: delete.RelationalParams) -> None:
-        Base = declarative_base()
-        metadata = MetaData()
-        metadata.reflect(bind=self.engine)
-        table = metadata.tables[params.table]
-        if table is not None:
-            Base.metadata.drop_all(self.engine, [table], checkfirst=True)
+        try:
+            Base = declarative_base()
+            metadata = MetaData()
+            metadata.reflect(bind=self.engine)
+            table = metadata.tables[params.table]
+            if table is not None:
+                Base.metadata.drop_all(self.engine, [table], checkfirst=True)
+                return True 
+            return False
+        except:
+            return False
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,

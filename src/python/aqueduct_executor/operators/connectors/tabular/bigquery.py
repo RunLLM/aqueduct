@@ -34,7 +34,11 @@ class BigQueryConnector(connector.TabularConnector):
         return df
 
     def delete(self, params: delete.RelationalParams) -> None:
-        self.client.delete_table(params.table, not_found_ok=True)
+        try:
+            self.client.delete_table(params.table, not_found_ok=False)
+            return True
+        except:
+            return False
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode
