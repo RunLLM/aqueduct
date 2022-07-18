@@ -3,6 +3,7 @@ name: Golang Linter
 # Reference: https://github.com/golangci/golangci-lint-action
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'src/golang/**'
