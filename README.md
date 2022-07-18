@@ -19,6 +19,7 @@ client = Client(get_apikey(), "localhost:8080")
 @op
 def transform_data(reviews):
     reviews['strlen'] = reviews['review'].str.len()
+    return reviews
     
 demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
