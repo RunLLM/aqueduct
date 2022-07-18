@@ -19,8 +19,8 @@ class Table:
     
     def to_dict(self) -> dict:
         return {
-            "Id": str(self.id),
-            "Name": self.name,
-            "Service": self.service.value,
-            "Table": self.table
+            "id": str(self.id),
+            "name": self.name,
+            "service": self.service.value,
+            "table": self.table
         }
