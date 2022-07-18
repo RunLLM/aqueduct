@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -185,9 +184,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	defer orch.Finish(ctx)
 
 	status, err := orch.Execute(ctx, workflowDag)
-	log.Errorf("Orchestration error %v", err)
 	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
-		log.Errorf("Returning early")
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
@@ -206,8 +203,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		}
 		execStateByOp[op.ID()] = *execState
 	}
-
-	log.Errorf("ExecStateByOp: %v", execStateByOp)
 
 	// Only include artifact results that were successfully computed.
 	artifactResults := make(map[uuid.UUID]previewArtifactResponse)

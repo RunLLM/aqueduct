@@ -180,7 +180,6 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
 	}
 
-	log.Errorf("Persisting artifact %s to %s", a.Name(), a.metadataPath)
 	updateArtifactResultAfterComputation(
 		ctx,
 		opStatus,

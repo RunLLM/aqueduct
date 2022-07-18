@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -116,10 +115,6 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
-
-	log.Errorf(
-		"DBArtifactResult %s status %s: %s", dbArtifactResult.Id, dbArtifactResult.Status, dbArtifactResult.ContentPath,
-	)
 
 	response := getArtifactResultResponse{
 		Status: dbArtifactResult.Status,

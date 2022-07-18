@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -11,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type standardReaderImpl struct{}

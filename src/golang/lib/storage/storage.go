@@ -2,16 +2,15 @@ package storage
 
 import (
 	"context"
-	"github.com/dropbox/godropbox/errors"
 	"log"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/dropbox/godropbox/errors"
 )
 
 var ErrObjectDoesNotExist = errors.New("Object does not exist in storage.")
 
 type Storage interface {
-
 	// Throws `ErrObjectDoesNotExist` if the path does not exist.
 	// TODO(..): this is not the case for S3.
 	Get(ctx context.Context, key string) ([]byte, error)
