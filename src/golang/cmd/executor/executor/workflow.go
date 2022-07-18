@@ -116,7 +116,6 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		ex.Vault,
 		&dbWorkflowDag.StorageConfig,
 		ex.Database,
-		true, /* canPersist */
 	)
 	if err != nil {
 		return err

@@ -167,7 +167,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.Vault,
 		h.StorageConfig,
 		h.Database,
-		false, /* canPersist */
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")

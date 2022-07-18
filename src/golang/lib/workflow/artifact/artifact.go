@@ -99,13 +99,11 @@ func (a *ArtifactImpl) Name() string {
 
 func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	// An artifact is only considered computed if its metadata path has been populated.
-	log.Errorf("Checking for existence of artifact %s, %v %v", a.Name(), a.storageConfig, a.metadataPath)
 	res := utils.ObjectExistsInStorage(
 		ctx,
 		a.storageConfig,
 		a.metadataPath,
 	)
-	log.Error("Artifact exists %s", res)
 	return res
 }
 

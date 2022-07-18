@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -163,7 +164,12 @@ func (r *standardReaderImpl) ValidateWorkflowOwnership(
 		return false, err
 	}
 
-	return count.Count == 1, nil
+	isOwned := count.Count == 1
+	if !isOwned {
+		log.Errorf("Workflow ownership query returned count %v.", count.Count)
+	}
+
+	return isOwned, nil
 }
 
 func (w *standardWriterImpl) UpdateWorkflow(

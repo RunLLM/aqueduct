@@ -139,7 +139,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 		log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name(), op.ID())
 		return ErrOpExecBlockingUserFailure
 	}
-	return errors.Newf("Internal error: Unsupported failure type %s", failureType)
+	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
 }
 
 func (orch *aqOrchestrator) execute(
