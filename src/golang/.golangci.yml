@@ -24,14 +24,14 @@ linters:
 #    - makezero
 #    - nilerr
     - gci
-    - goconst
-    - gofmt # has autofixer.
-    - gofumpt # has autofixer.
-    - goheader
-    - goimports # has autofixer.
-    - goprintffuncname
-    - gosec
-    - misspell # has autofixer.
+#    - goconst
+#    - gofmt # has autofixer.
+#    - gofumpt # has autofixer.
+#    - goheader
+#    - goimports # has autofixer.
+#    - goprintffuncname
+#    - gosec
+#    - misspell # has autofixer.
 #    - prealloc
 #    - predeclared
 #    - rowserrcheck
