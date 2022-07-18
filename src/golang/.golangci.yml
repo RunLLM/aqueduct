@@ -14,9 +14,9 @@ linters:
     - deadcode
     - errcheck
     - gosimple
-    - staticcheck
-    - structcheck
-    - unused
+#    - staticcheck
+#    - structcheck
+#    - unused
     - varcheck
     - bidichk
     - decorder
