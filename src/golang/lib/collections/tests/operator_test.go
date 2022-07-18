@@ -93,7 +93,7 @@ func TestGetOperatorsByIntegrationId(t *testing.T) {
 
 	integrations := seedIntegration(t, 1)
 
-	expectedOperator := &operator.Operator{
+	expectedOperator := &operator.DBOperator{
 		Name:        "test-operator",
 		Description: "testing op",
 		Spec: *operator.NewSpecFromExtract(connector.Extract{
