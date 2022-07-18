@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )

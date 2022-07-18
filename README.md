@@ -1,6 +1,6 @@
 [<img src="https://user-images.githubusercontent.com/867892/172955552-f1f29c80-713f-41e9-af0c-7d7c8ee622f0.jpg" width= "35%" />](https://www.aqueducthq.com)
 
-## Aqueduct: Prediction Delivery for Data Teams
+## Aqueduct: A Production Data Science Platform
 
 [![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
 [![Slack](https://img.shields.io/static/v1.svg?label=chat&message=on%20slack&color=27b1ff&style=flat)](https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A)
@@ -8,7 +8,7 @@
 [![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
 [![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
 
-**Aqueduct is prediction delivery made simple**. 
+**Aqueduct automates the engineering required to make data science operational**. 
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into everything from inference latency to model accuracy -- all with Python. 
 
 ```python
@@ -19,6 +19,7 @@ client = Client(get_apikey(), "localhost:8080")
 @op
 def transform_data(reviews):
     reviews['strlen'] = reviews['review'].str.len()
+    return reviews
     
 demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")

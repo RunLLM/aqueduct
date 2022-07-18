@@ -2,17 +2,17 @@ package tests
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func seedOperator(t *testing.T, count int) []operator.Operator {
+func seedOperator(t *testing.T, count int) []operator.DBOperator {
 	specs := make([]operator.Spec, 0, count)
 
 	for i := 0; i < count; i++ {
@@ -31,10 +31,10 @@ func seedOperator(t *testing.T, count int) []operator.Operator {
 
 // seedOperatorWithSpecs populates the operator table with count operators
 // using the specs provided.
-func seedOperatorWithSpecs(t *testing.T, count int, specs []operator.Spec) []operator.Operator {
+func seedOperatorWithSpecs(t *testing.T, count int, specs []operator.Spec) []operator.DBOperator {
 	require.Len(t, specs, count)
 
-	operators := make([]operator.Operator, 0, count)
+	operators := make([]operator.DBOperator, 0, count)
 
 	for i := 0; i < count; i++ {
 		testOperator, err := writers.operatorWriter.CreateOperator(
@@ -59,7 +59,7 @@ func TestCreateOperator(t *testing.T) {
 
 	integrations := seedIntegration(t, 1)
 
-	expectedOperator := &operator.Operator{
+	expectedOperator := &operator.DBOperator{
 		Name:        "test-operator",
 		Description: "testing op",
 		Spec: *operator.NewSpecFromExtract(connector.Extract{

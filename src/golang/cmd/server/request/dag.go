@@ -7,10 +7,10 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -18,7 +18,7 @@ import (
 const dagKey = "dag"
 
 type DagSummary struct {
-	Dag *workflow_dag.WorkflowDag
+	Dag *workflow_dag.DBWorkflowDag
 
 	// Extract the operator contents from the request body
 	FileContentsByOperatorUUID map[uuid.UUID][]byte
@@ -40,7 +40,7 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Serialized dag object not available")
 	}
 
-	var workflowDag workflow_dag.WorkflowDag
+	var workflowDag workflow_dag.DBWorkflowDag
 	err = json.Unmarshal(serializedDAGBytes, &workflowDag)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid dag specification.")
@@ -81,7 +81,7 @@ func ParseDagSummaryFromRequest(
 // For github contents, retrieve zipball for files and update string contents like sql queries.
 func extractOperatorContentsFromRequest(
 	r *http.Request,
-	op *operator.Operator,
+	op *operator.DBOperator,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {

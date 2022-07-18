@@ -9,8 +9,6 @@ import (
 )
 
 const (
-	DefaultFileStorageDir = "storage/"
-
 	filePermissionCode = 0o664
 )
 

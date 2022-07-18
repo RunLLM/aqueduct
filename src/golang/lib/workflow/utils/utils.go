@@ -29,7 +29,7 @@ type WorkflowStoragePaths struct {
 	ArtifactMetadataPaths map[uuid.UUID]string
 }
 
-func GenerateWorkflowStoragePaths(dag *workflow_dag.WorkflowDag) *WorkflowStoragePaths {
+func GenerateWorkflowStoragePaths(dag *workflow_dag.DBWorkflowDag) *WorkflowStoragePaths {
 	workflowStoragePaths := WorkflowStoragePaths{
 		OperatorMetadataPaths: make(map[uuid.UUID]string),
 		ArtifactPaths:         make(map[uuid.UUID]string),
@@ -105,7 +105,7 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 
 func WriteWorkflowDagToDatabase(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
 	workflowDagWriter workflow_dag.Writer,
@@ -241,7 +241,7 @@ func ReadWorkflowDagFromDatabase(
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
+) (*workflow_dag.DBWorkflowDag, error) {
 	workflowDag, err := workflowDagReader.GetWorkflowDag(ctx, workflowDagId, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow dag from the database.")
@@ -254,8 +254,8 @@ func ReadWorkflowDagFromDatabase(
 
 	workflowDag.Metadata = dbWorkflow
 
-	workflowDag.Operators = make(map[uuid.UUID]operator.Operator)
-	workflowDag.Artifacts = make(map[uuid.UUID]artifact.Artifact)
+	workflowDag.Operators = make(map[uuid.UUID]operator.DBOperator)
+	workflowDag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
 
 	// Populate nodes for operators and artifacts.
 	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, workflowDag.Id, db)
@@ -324,7 +324,7 @@ func ReadLatestWorkflowDagFromDatabase(
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
+) (*workflow_dag.DBWorkflowDag, error) {
 	workflowDag, err := workflowDagReader.GetLatestWorkflowDag(ctx, workflowId, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read the latest workflow dag from the database.")
@@ -351,7 +351,7 @@ func ReadLatestWorkflowDagFromDatabase(
 func UpdateWorkflowDagToLatest(
 	ctx context.Context,
 	githubClient github.Client,
-	workflowDag *workflow_dag.WorkflowDag,
+	workflowDag *workflow_dag.DBWorkflowDag,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
 	workflowDagReader workflow_dag.Reader,
@@ -363,8 +363,8 @@ func UpdateWorkflowDagToLatest(
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
-	operatorsToReplace := make([]operator.Operator, 0, len(workflowDag.Operators))
+) (*workflow_dag.DBWorkflowDag, error) {
+	operatorsToReplace := make([]operator.DBOperator, 0, len(workflowDag.Operators))
 	for _, op := range workflowDag.Operators {
 		opUpdated, err := github.PullOperator(
 			ctx,
@@ -459,7 +459,7 @@ func UpdateWorkflowDagResultMetadata(
 // It logs any error that occurs during these steps.
 func UpdateOperatorAndArtifactResults(
 	ctx context.Context,
-	operator *operator.Operator,
+	operator *operator.DBOperator,
 	storageConfig *shared.StorageConfig,
 	operatorState *shared.ExecutionState,
 	artifactMetadataPaths map[uuid.UUID]string,
@@ -512,7 +512,7 @@ func UpdateOperatorAndArtifactResults(
 
 func updateOperatorAndArtifactResults(
 	ctx context.Context,
-	operator *operator.Operator,
+	operator *operator.DBOperator,
 	operatorState *shared.ExecutionState,
 	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
 	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
