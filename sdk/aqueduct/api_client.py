@@ -12,6 +12,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.table import Table
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
@@ -264,12 +265,24 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(self, flow_id: str, tables_to_delete: List[Table], force: bool=False) -> None:
         headers = utils.generate_auth_headers(self.api_key)
+        headers.update({
+            "tables": [table.to_dict() for table in tables_to_delete],
+            "force": force
+        })
         url = self._construct_full_url(
             self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
         )
         response = requests.post(url, headers=headers)
+        table_results = response.json()["tables"]
+        print("Table Results")
+        for table in table_results:
+            print(f"[{table['service']}] {table['name']} ({table['id']}): {table['table']}")
+            if table['result']:
+                print(f"Deletion succeeded.")
+            else:
+                print(f"Deletion failed.")
         utils.raise_errors(response)
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:

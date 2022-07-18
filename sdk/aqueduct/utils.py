@@ -29,7 +29,6 @@ API_KEY_HEADER = "api-key"
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
 
-
 def format_header_for_print(header: str) -> str:
     """Used to print the header of a section in "describe()" with a consistent length.
 

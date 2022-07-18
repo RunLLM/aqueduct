@@ -28,6 +28,7 @@ from .error import (
 from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
+from .integrations.table import Table
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
@@ -40,7 +41,7 @@ from .utils import (
     generate_uuid,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
-    schedule_from_cron_string,
+    schedule_from_cron_string
 )
 
 
@@ -396,12 +397,16 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def delete_flow(self, flow_id: Union[str, uuid.UUID], tables_to_delete: List[Table], force: bool=False) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            tables_to_delete:
+                List of tables to delete (tables from integration.get_table(name))
+            force:
+                Force delete even if `tables_to_delete` includes table(s) with UpdateMode=Append
 
         Raises:
             InvalidRequestError:
@@ -414,7 +419,7 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        self._api_client.delete_workflow(flow_id)
+        self._api_client.delete_workflow(flow_id, tables_to_delete, force)
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
