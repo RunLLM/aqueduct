@@ -1,28 +1,27 @@
 import inspect
-from pathlib import Path
-from datetime import datetime
-import sys
-from aqueduct.operators import Operator
-from aqueduct.enums import OperatorType
-
-import cloudpickle as cp
-import tempfile
+import json
 import os
 import shutil
-import json
+import sys
+import tempfile
 import uuid
-import pandas as pd
-from typing import Any, Dict, List, Callable, Mapping, Optional, Union
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
+import cloudpickle as cp
+import pandas as pd
 import requests
+from aqueduct.enums import OperatorType
+from aqueduct.operators import Operator
 from croniter import croniter
 
-from .dag import DAG, Schedule, RetentionPolicy
+from ._version import __version__
+from .dag import DAG, RetentionPolicy, Schedule
 from .enums import TriggerType
 from .error import *
-from .templates import op_file_content
 from .logger import Logger
-from ._version import __version__
+from .templates import op_file_content
 
 # Auth headers
 API_KEY_HEADER = "api-key"
@@ -51,6 +50,29 @@ def generate_auth_headers(api_key: str) -> Dict[str, str]:
 
 def generate_uuid() -> uuid.UUID:
     return uuid.uuid4()
+
+
+WORKFLOW_UI_ROUTE_TEMPLATE = "/workflow/%s"
+WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
+
+
+def generate_ui_url(
+    url_prefix: str, aqueduct_address: str, workflow_id: str, result_id: Optional[str] = None
+) -> str:
+    if result_id:
+        url = "%s%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+            WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
+        )
+    else:
+        url = "%s%s%s" % (
+            url_prefix,
+            aqueduct_address,
+            WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
+        )
+    return url
 
 
 def raise_errors(response: requests.Response) -> None:

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )

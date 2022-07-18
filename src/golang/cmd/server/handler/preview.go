@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -47,12 +46,6 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-type previewOperatorResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Logs   map[string]string      `json:"logs"`
-	ErrMsg string                 `json:"err_msg"`
-}
-
 type previewFloatArtifactResponse struct {
 	Val float64 `json:"val"`
 }
@@ -79,7 +72,7 @@ type previewArtifactResponse struct {
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]previewOperatorResponse `json:"operator_results"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
 	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
 }
 
@@ -169,8 +162,15 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.JobManager,
 		h.Vault,
 	)
-	if err != nil {
+	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
+	}
+
+	statusCode := http.StatusOK
+	if err == orchestrator.ErrOpExecSystemFailure {
+		statusCode = http.StatusInternalServerError
+	} else if err == orchestrator.ErrOpExecBlockingUserFailure {
+		statusCode = http.StatusBadRequest
 	}
 
 	operatorResults := deserializeOperatorResponses(ctx, workflowPaths, h.StorageConfig)
@@ -192,36 +192,32 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		Status:          status,
 		OperatorResults: operatorResults,
 		ArtifactResults: artifactResults,
-	}, http.StatusOK, nil
+	}, statusCode, nil
 }
 
 func deserializeOperatorResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-) map[uuid.UUID]previewOperatorResponse {
-	responses := make(map[uuid.UUID]previewOperatorResponse, len(workflowStoragePaths.OperatorMetadataPaths))
+) map[uuid.UUID]shared.ExecutionState {
+	responses := make(map[uuid.UUID]shared.ExecutionState, len(workflowStoragePaths.OperatorMetadataPaths))
 	for id, path := range workflowStoragePaths.OperatorMetadataPaths {
-		var operatorMetadata operator_result.Metadata
+		var operatorMetadata shared.ExecutionState
 		err := utils.ReadFromStorage(ctx, storageConfig, path, &operatorMetadata)
 		if err != nil {
-			responses[id] = previewOperatorResponse{
-				Status: shared.FailedExecutionStatus,
-				ErrMsg: "Unable to retrieve metadata for this operator. The workflow might have failed before executing this operator.",
+			failureType := shared.SystemFailure
+			responses[id] = shared.ExecutionState{
+				Status:      shared.FailedExecutionStatus,
+				FailureType: &failureType,
+				Error: &shared.Error{
+					Context: err.Error(),
+					Tip:     "Failed to read logs for this operator. " + shared.TipCreateBugReport,
+				},
 			}
 			continue
 		}
 
-		status := shared.FailedExecutionStatus
-		if len(operatorMetadata.Error) == 0 {
-			status = shared.SucceededExecutionStatus
-		}
-
-		responses[id] = previewOperatorResponse{
-			Status: status,
-			Logs:   operatorMetadata.Logs,
-			ErrMsg: operatorMetadata.Error,
-		}
+		responses[id] = operatorMetadata
 	}
 	return responses
 }
@@ -230,7 +226,7 @@ func deserializeArtifactResponses(
 	ctx context.Context,
 	workflowStoragePaths *utils.WorkflowStoragePaths,
 	storageConfig *shared.StorageConfig,
-	dagArtifacts map[uuid.UUID]artifact.Artifact,
+	dagArtifacts map[uuid.UUID]artifact.DBArtifact,
 	artifactsToSkipFetch map[uuid.UUID]bool,
 ) (map[uuid.UUID]previewArtifactResponse, error) {
 	responses := make(map[uuid.UUID]previewArtifactResponse, len(workflowStoragePaths.ArtifactPaths))

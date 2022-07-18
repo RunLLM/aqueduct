@@ -1,47 +1,47 @@
 import json
 import logging
+import os
 import uuid
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.generic_artifact import Artifact as GenericArtifact
+import __main__ as main
 import yaml
+from aqueduct.generic_artifact import Artifact as GenericArtifact
 
 from .api_client import APIClient
-from .artifact import ArtifactSpec, Artifact
+from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
-    apply_deltas_to_dag,
-    SubgraphDAGDelta,
-    Metadata,
     AddOrReplaceOperatorDelta,
+    Metadata,
+    SubgraphDAGDelta,
+    apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
 from .enums import RelationalDBServices, ServiceType
 from .error import (
-    InvalidIntegrationException,
     IncompleteFlowException,
-    InvalidUserArgumentException,
+    InvalidIntegrationException,
     InvalidUserActionException,
+    InvalidUserArgumentException,
 )
 from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
-from .integrations.integration import IntegrationInfo
-from .integrations.sql_integration import RelationalDBIntegration
-from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
+from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
-from .operators import Operator, ParamSpec, OperatorSpec, serialize_parameter_value
+from .integrations.salesforce_integration import SalesforceIntegration
+from .integrations.sql_integration import RelationalDBIntegration
+from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
-    schedule_from_cron_string,
-    retention_policy_from_latest_runs,
+    generate_ui_url,
     generate_uuid,
     parse_user_supplied_id,
+    retention_policy_from_latest_runs,
+    schedule_from_cron_string,
 )
-
-import __main__ as main
-import os
 
 
 def get_apikey() -> str:
@@ -334,10 +334,15 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        if self._in_notebook_or_console_context:
-            _show_dag(self._api_client, dag)
-
         flow_id = self._api_client.register_workflow(dag).id
+
+        url = generate_ui_url(
+            self._api_client.url_prefix(),
+            self._api_client.aqueduct_address,
+            str(flow_id),
+        )
+        print("Url: ", url)
+
         return Flow(
             self._api_client,
             str(flow_id),

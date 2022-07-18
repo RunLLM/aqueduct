@@ -1,11 +1,9 @@
-from aqueduct.utils import delete_zip_folder_and_file
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct.decorator import metric, check, op
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.decorator import check, metric, op
 from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.tests.utils import (
-    default_table_artifact,
-)
+from aqueduct.table_artifact import TableArtifact
+from aqueduct.tests.utils import default_table_artifact
+from aqueduct.utils import delete_zip_folder_and_file
 
 
 def test_decorators_with_without_parentheses():

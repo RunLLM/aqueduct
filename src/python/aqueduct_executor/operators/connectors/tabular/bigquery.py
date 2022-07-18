@@ -2,10 +2,9 @@ import json
 from typing import List
 
 import pandas as pd
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load, delete
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
-from aqueduct_executor.operators.connectors.tabular import config, connector, extract, load, delete, common
 
 
 class BigQueryConnector(connector.TabularConnector):

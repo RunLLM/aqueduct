@@ -17,16 +17,15 @@ import os
 import shutil
 import subprocess
 import sys
-
 from os import listdir
-from os.path import isfile, join, isdir
+from os.path import isdir, isfile, join
 
 base_directory = join(os.environ["HOME"], ".aqueduct")
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "9"
+SCHEMA_VERSION = "12"
 
 
 def execute_command(args, cwd=None):

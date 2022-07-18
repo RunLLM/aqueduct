@@ -15,7 +15,7 @@ import (
 // It updates the relevant operator spec with the storage path. It returns an error, if any.
 func UploadOperatorFiles(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	operatorIdToFileContents map[uuid.UUID][]byte,
 ) ([]string, error) {
 	paths := make([]string, 0, len(operatorIdToFileContents))

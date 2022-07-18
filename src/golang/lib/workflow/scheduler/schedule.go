@@ -2,10 +2,10 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -13,8 +13,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-const systemInternalErrMsg = "Aqueduct Internal Error"
 
 var (
 	ErrWrongNumInputs                = errors.New("Wrong number of operator inputs")
@@ -49,9 +47,9 @@ var (
 //
 func ScheduleOperator(
 	ctx context.Context,
-	op operator.Operator,
-	inputArtifacts []artifact.Artifact,
-	outputArtifacts []artifact.Artifact,
+	op operator.DBOperator,
+	inputArtifacts []artifact.DBArtifact,
+	outputArtifacts []artifact.DBArtifact,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -274,14 +272,6 @@ func ScheduleOperator(
 	return "", errors.Newf("Unsupported operator opSpec with type %s", op.Spec.Type())
 }
 
-type FailureType int64
-
-const (
-	SystemFailure FailureType = 0
-	UserFailure   FailureType = 1
-	NoFailure     FailureType = 2
-)
-
 // CheckOperatorExecutionStatus returns the operator metadata (if it exists) and the operator status
 // of a completed job.
 func CheckOperatorExecutionStatus(
@@ -289,13 +279,13 @@ func CheckOperatorExecutionStatus(
 	jobStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	operatorMetadataPath string,
-) (*operator_result.Metadata, shared.ExecutionStatus, FailureType) {
-	var operatorResultMetadata operator_result.Metadata
+) *shared.ExecutionState {
+	var logs shared.ExecutionState
 	err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		operatorMetadataPath,
-		&operatorResultMetadata,
+		&logs,
 	)
 	if err != nil {
 		// Treat this as a system internal error since operator metadata was not found
@@ -303,18 +293,17 @@ func CheckOperatorExecutionStatus(
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
 			err,
 		)
-		return &operator_result.Metadata{Error: systemInternalErrMsg}, shared.FailedExecutionStatus, SystemFailure
+
+		failureType := shared.SystemFailure
+		return &shared.ExecutionState{
+			Status:      shared.FailedExecutionStatus,
+			FailureType: &failureType,
+			Error: &shared.Error{
+				Context: fmt.Sprintf("%v", err),
+				Tip:     shared.TipUnknownInternalError,
+			},
+		}
 	}
 
-	if len(operatorResultMetadata.Error) != 0 {
-		// Operator wrote metadata (including an error) to storage
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	if jobStatus == shared.FailedExecutionStatus {
-		// Operator wrote metadata (without an error) to storage, but k8s marked the job as failed
-		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
-	}
-
-	return &operatorResultMetadata, shared.SucceededExecutionStatus, NoFailure
+	return &logs
 }

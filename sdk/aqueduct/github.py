@@ -1,20 +1,20 @@
 from typing import List, Optional, Tuple
 
+from aqueduct.api_client import APIClient
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.api_client import APIClient
-from aqueduct.utils import MODEL_FILE_NAME
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
+from aqueduct.utils import MODEL_FILE_NAME
 
+from .decorator import OutputArtifactFunction, wrap_spec
 from .operators import (
     EntryPoint,
-    OperatorSpec,
-    RelationalDBExtractParams,
     FunctionSpec,
     GithubMetadata,
+    OperatorSpec,
+    RelationalDBExtractParams,
 )
-from .decorator import OutputArtifactFunction, wrap_spec
 
 
 def _get_operator_name(prefix: str, repo_url: str, branch: str, path: str) -> str:

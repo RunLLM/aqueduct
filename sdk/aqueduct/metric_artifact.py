@@ -1,33 +1,33 @@
 from __future__ import annotations
+
 import json
-
-from typing import Any, Callable, Dict, Optional, List
 import uuid
-
-from aqueduct.utils import get_description_for_metric, format_header_for_print
-import aqueduct
+from typing import Any, Callable, Dict, List, Optional
 
 from aqueduct.api_client import APIClient
+from aqueduct.artifact import ArtifactSpec
+from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import (
     DAG,
-    SubgraphDAGDelta,
+    AddOrReplaceOperatorDelta,
     RemoveCheckOperatorDelta,
+    SubgraphDAGDelta,
     UpdateParametersDelta,
+    apply_deltas_to_dag,
 )
+from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError
-
-from aqueduct.artifact import ArtifactSpec
 from aqueduct.generic_artifact import Artifact
-from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
+from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
-    serialize_function,
-    generate_uuid,
     artifact_name_from_op_name,
+    format_header_for_print,
+    generate_uuid,
+    get_description_for_metric,
+    serialize_function,
 )
-from aqueduct.operators import CheckSpec, FunctionSpec, OperatorSpec
-from aqueduct.check_artifact import CheckArtifact
-from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
-from aqueduct.operators import Operator
+
+import aqueduct
 
 
 class MetricArtifact(Artifact):
@@ -48,14 +48,13 @@ class MetricArtifact(Artifact):
     """
 
     def __init__(
-        self,
-        api_client: APIClient,
-        dag: DAG,
-        artifact_id: uuid.UUID,
+        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
     ):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
+        # This parameter indicates whether the artifact is fetched from flow-run or not.
+        self._from_flow_run = from_flow_run
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> float:
         """Materializes a MetricArtifact into its immediate float value.

@@ -1,24 +1,21 @@
-from typing import Optional
+import json
+from typing import List, Optional, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
-from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
+from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import S3FileFormat
-from aqueduct.integrations.integration import IntegrationInfo, Integration
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
+    ExtractSpec,
     Operator,
     OperatorSpec,
-    ExtractSpec,
     S3ExtractParams,
     S3LoadParams,
     SaveConfig,
 )
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import (
-    generate_uuid,
-    artifact_name_from_op_name,
-    generate_extract_op_name,
-)
+from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
 class S3Integration(Integration):
@@ -33,7 +30,7 @@ class S3Integration(Integration):
 
     def file(
         self,
-        filepath: str,
+        filepaths: Union[List[str], str],
         format: S3FileFormat,
         name: Optional[str] = None,
         description: str = "",
@@ -42,8 +39,14 @@ class S3Integration(Integration):
         Retrieves a file from the S3 integration.
 
         Args:
-            filepath:
-                Filepath to retrieve from.
+            filepaths:
+                Filepath to retrieve from. The filepaths can either be:
+                1) a single string that represents a file name or a directory name. The directory
+                name must ends with a `/`. In case of a file name, we attempt to retrieve that file,
+                and in case of a directory name, we do a prefix search on the directory and retrieve
+                all matched files and concatenate them into a single file.
+                2) a list of strings representing the file name. Note that in this case, we do not
+                accept directory names in the list.
             name:
                 Name of the query.
             description:
@@ -70,7 +73,9 @@ class S3Integration(Integration):
                             extract=ExtractSpec(
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
-                                parameters=S3ExtractParams(filepath=filepath, format=format),
+                                parameters=S3ExtractParams(
+                                    filepath=json.dumps(filepaths), format=format
+                                ),
                             )
                         ),
                         outputs=[output_artifact_id],

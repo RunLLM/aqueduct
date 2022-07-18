@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -45,9 +44,9 @@ type artifactVersion struct {
 }
 
 type CheckResult struct {
-	Name     string                   `json:"name"`
-	Status   shared.ExecutionStatus   `json:"status"`
-	Metadata operator_result.Metadata `json:"metadata"`
+	Name     string                 `json:"name"`
+	Status   shared.ExecutionStatus `json:"status"`
+	Metadata shared.ExecutionState  `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
@@ -78,7 +77,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	latestVersions := make(map[uuid.UUID]artifactVersions)
 	historicalVersions := make(map[uuid.UUID]artifactVersions)
 
-	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
+	loadStatus, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
 		ctx,
 		args.OrganizationId,
 		h.Database,
@@ -96,10 +95,10 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	loadOperatorIds := make([]uuid.UUID, 0, len(loadOperatorMetadata))
+	loadOperatorIds := make([]uuid.UUID, 0, len(loadStatus))
 	latestWorkflowDagIds := make([]uuid.UUID, 0, len(latestWorkflowDagIdObjects))
 
-	for _, loadOperator := range loadOperatorMetadata {
+	for _, loadOperator := range loadStatus {
 		loadOperatorIds = append(loadOperatorIds, loadOperator.LoadOperatorId)
 	}
 
@@ -133,7 +132,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	allArtifactIds := make([]uuid.UUID, 0, len(loadOperatorIds))
 
-	for _, loadOperator := range loadOperatorMetadata {
+	for _, loadOperator := range loadStatus {
 		if _, ok := latestArtifactIds[loadOperator.ArtifactId]; ok {
 			// If we reach here, it means this load operator corresponds to an artifact that belongs
 			// to the latest workflow dag of a workflow.
@@ -248,11 +247,17 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		for _, failedOperatorResult := range failedOperatorResults {
 			if _, ok := latestVersions[failedOperatorResult.ArtifactId]; ok {
 				artifactVersionObject := latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				artifactVersionObject.Error = failedOperatorResult.Metadata.Error
+				if failedOperatorResult.Metadata.Error != nil {
+					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+				}
+
 				latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
 			} else {
 				artifactVersionObject := historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				artifactVersionObject.Error = failedOperatorResult.Metadata.Error
+				if failedOperatorResult.Metadata.Error != nil {
+					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+				}
+
 				historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
 			}
 		}

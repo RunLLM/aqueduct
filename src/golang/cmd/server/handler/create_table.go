@@ -9,14 +9,13 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -175,15 +174,25 @@ func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string,
 	}
 
 	// Table creation failed, so we need to fetch the error message from storage
-	var metadata operator_result.Metadata
+	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		jobMetadataPath,
-		&metadata,
+		&execState,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
 	}
 
-	return http.StatusBadRequest, errors.Newf("Unable to create table: %v", metadata.Error)
+	if execState.Error != nil {
+		return http.StatusBadRequest, errors.Newf(
+			"Unable to create table.\n%s\n%s",
+			execState.Error.Tip,
+			execState.Error.Context,
+		)
+	}
+
+	return http.StatusInternalServerError, errors.New(
+		"Unable to create table, we couldn't obtain more context at this point.",
+	)
 }

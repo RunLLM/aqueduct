@@ -1,28 +1,27 @@
 import io
 import json
-from typing import Any, Dict, List, Tuple, IO, Optional
+from typing import IO, Any, Dict, List, Optional, Tuple
 
 import requests
-
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
-    NoConnectedIntegrationsException,
     AqueductError,
-    InternalAqueductError,
     ClientValidationError,
+    InternalAqueductError,
+    NoConnectedIntegrationsException,
+)
+from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.logger import Logger
+from aqueduct.operators import Operator
+from aqueduct.responses import (
+    GetWorkflowResponse,
+    ListWorkflowResponseEntry,
+    PreviewResponse,
+    RegisterWorkflowResponse,
 )
 
 from aqueduct import utils
-from aqueduct.logger import Logger
-from aqueduct.operators import Operator
-from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.responses import (
-    PreviewResponse,
-    RegisterWorkflowResponse,
-    ListWorkflowResponseEntry,
-    GetWorkflowResponse,
-)
 
 
 def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -35,15 +34,15 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
         if curr_op.id in preview_resp.operator_results:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
-            if curr_op_result.logs is not None and len(curr_op_result.logs) > 0:
-                print('Operator "%s" Logs:\n' % curr_op.name)
-                print(json.dumps(curr_op_result.logs, sort_keys=False, indent=4))
+            if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
+                print(f"Operator {curr_op.name} Logs:")
+                print(curr_op_result.user_logs)
+                print("")
 
-            if curr_op_result.err_msg and len(curr_op_result.err_msg) > 0:
-                print(
-                    "Operator %s Failed! Error message: \n %s"
-                    % (curr_op.name, curr_op_result.err_msg)
-                )
+            if curr_op_result.error is not None:
+                print(curr_op_result.error.tip)
+                print(curr_op_result.error.context)
+
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
                 for output_artifact_id in curr_op.outputs:
@@ -76,6 +75,7 @@ class APIClient:
     LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
     LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
     NODE_POSITION_ROUTE = "/api/positioning"
+    EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
@@ -142,6 +142,9 @@ class APIClient:
         headers = utils.generate_auth_headers(self.api_key)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
+
+    def url_prefix(self) -> str:
+        return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
@@ -274,7 +277,8 @@ class APIClient:
         url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        return GetWorkflowResponse(**resp.json())
+        workflow_response = GetWorkflowResponse(**resp.json())
+        return workflow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
@@ -325,3 +329,11 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
+
+    def export_serialized_function(self, operator: Operator) -> bytes:
+        headers = utils.generate_auth_headers(self.api_key)
+        operator_url = self._construct_full_url(
+            self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
+        )
+        operator_resp = requests.get(operator_url, headers=headers)
+        return operator_resp.content
