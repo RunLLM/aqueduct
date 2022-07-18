@@ -34,7 +34,7 @@ def run(spec: spec.Spec, storage: Storage):
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
-    if spec.type == enums.JobType.DELETE:
+    if spec.type == enums.JobType.DELETETABLE:
         run_delete_all(spec, storage)
     else:
         op = setup_connector(spec.connector_name, spec.connector_config)
@@ -93,7 +93,11 @@ def run_delete_all(spec: spec.DeleteSpec, storage: Storage):
     for i in range(len(spec.connector_name)):
         op = setup_connector(spec.connector_name[i], spec.connector_config[i])
         res = op.delete(spec.parameters[i])
-        all_res.append(res)
+        all_res.append({
+            "service": spec.connector_name[i],
+            "table": spec.parameters[i],
+            "success": res,
+            })
     utils.write_delete_results(storage, spec.output_content_path, all_res)
     
 

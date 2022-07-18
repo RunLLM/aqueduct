@@ -91,7 +91,7 @@ class ExtractSpec(models.BaseSpec):
 
 class DeleteSpec(models.BaseSpec):
     name: str
-    type: Literal[enums.JobType.DELETE]
+    type: Literal[enums.JobType.DELETETABLE]
     storage_config: sconfig.StorageConfig
     metadata_path: str
     output_content_path: str

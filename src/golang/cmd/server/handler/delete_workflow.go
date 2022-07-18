@@ -145,12 +145,8 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		}
 	}
 
-	// TODO: Delete associated tables.
-	// 1 drop per table may be expensive. per integration instead?
-	// transaction? best-effort?
-	// Launch delete job for each table
-
-	// TODO: Give user an indication when a workflow fails to completely delete from the SDK -- this is already done?
+	// Delete associated tables.
+	tableResults, httpResponse, err := DeleteTable(ctx, args, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error)
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
@@ -338,49 +334,39 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error) {
 	// Schedule delete table job
-	jobMetadataPath := fmt.Sprintf("delete-table-%s-%s", args.RequestId, tableSpecs.tableName)
+	jobMetadataPath := fmt.Sprintf("delete-tables-%s", args.RequestId)
 
-	jobName := fmt.Sprintf("create-table-operator-%s", uuid.New().String())
+	jobName := fmt.Sprintf("delete-tables-operator-%s", uuid.New().String())
 
 	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, vaultObject)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
 	}
 
-	// Assuming service supports GenericRelationalDBLoadParams
-	loadParameters := &connector.GenericRelationalDBLoadParams{
-		RelationalDBLoadParams: connector.RelationalDBLoadParams{
-			Table:      args.tableName,
-			UpdateMode: "fail",
-		},
-	}
-
-	jobSpec := job.NewLoadTableSpec(
+	jobSpec := job.NewDeleteTablesSpec(
 		jobName,
-		contentPath,
 		storageConfig,
 		jobMetadataPath,
 		integrationObject.Service,
 		config,
 		loadParameters,
-		"",
-		"",
+		contentPath,
 	)
 	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
 	}
 
 	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollCreateInterval, pollCreateTimeout)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
 	}
 
 	if jobStatus == shared.SucceededExecutionStatus {
-		// Table creation was successful
+		// Table deletions were successful
 		return http.StatusOK, nil
 	}
 
-	// Table creation failed, so we need to fetch the error message from storage
+	// Table deletions failed, so we need to fetch the error message from storage
 	var metadata operator_result.Metadata
 	if err := utils.ReadFromStorage(
 		ctx,
@@ -388,8 +374,8 @@ func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec
 		jobMetadataPath,
 		&metadata,
 	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
 	}
 
-	return http.StatusBadRequest, errors.Newf("Unable to create table: %v", metadata.Error)
+	return http.StatusBadRequest, errors.Newf("Unable to delete tables: %v", metadata.Error)
 }
