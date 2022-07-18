@@ -32,10 +32,10 @@ import (
 //				 This is the equivalent to whether `workflow_dag_id` is the latest for the `workflow_id`
 
 type listOperatorsForIntegrationItem struct {
-	Operator      *operator.Operator `json:"operator"`
-	WorkflowId    uuid.UUID          `json:"workflow_id"`
-	WorkflowDagId uuid.UUID          `json:"workflow_dag_id"`
-	IsActive      bool               `json:"is_active"`
+	Operator      *operator.DBOperator `json:"operator"`
+	WorkflowId    uuid.UUID            `json:"workflow_id"`
+	WorkflowDagId uuid.UUID            `json:"workflow_dag_id"`
+	IsActive      bool                 `json:"is_active"`
 }
 
 type listOperatorsForIntegrationResponse struct {
@@ -74,7 +74,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	}
 
 	operatorIds := make([]uuid.UUID, 0, len(operators))
-	operatorByIds := make(map[uuid.UUID]operator.Operator, len(operators))
+	operatorByIds := make(map[uuid.UUID]operator.DBOperator, len(operators))
 	for _, op := range operators {
 		operatorIds = append(operatorIds, op.Id)
 		operatorByIds[op.Id] = op

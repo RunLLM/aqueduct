@@ -37,7 +37,7 @@ type Reader interface {
 		ctx context.Context,
 		integrationId uuid.UUID,
 		db database.Database,
-	) ([]Operator, error)
+	) ([]DBOperator, error)
 }
 
 type Writer interface {

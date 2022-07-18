@@ -29,7 +29,7 @@ func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
 	ctx context.Context,
 	integrationId uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
+) ([]DBOperator, error) {
 	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
 		`SELECT %s FROM %s
 		WHERE json_extract(spec, '$.load.integration_id') = $1
@@ -38,7 +38,7 @@ func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
 		tableName,
 	)
 
-	var operators []Operator
+	var operators []DBOperator
 	err := db.Query(
 		ctx,
 		&operators,
