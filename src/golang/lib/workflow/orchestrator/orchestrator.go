@@ -136,7 +136,6 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
 	} else if failureType == shared.UserFailure {
-		log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name(), op.ID())
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
@@ -180,10 +179,7 @@ func (orch *aqOrchestrator) execute(
 				return err
 			}
 
-			log.Errorf("Exec Status %s.", execState.Status)
 			if execState.Status == shared.PendingExecutionStatus {
-				log.Errorf("Scheduling op %s.", op.Name())
-
 				spec := op.JobSpec()
 				err = jobManager.Launch(ctx, spec.JobName(), spec)
 				if err != nil {
@@ -191,7 +187,6 @@ func (orch *aqOrchestrator) execute(
 				}
 				continue
 			} else if execState.Status == shared.RunningExecutionStatus {
-				log.Errorf("Op %s is running.", op.Name())
 				continue
 			}
 			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
@@ -199,9 +194,7 @@ func (orch *aqOrchestrator) execute(
 			}
 
 			// From here on we can assume that the operator has terminated.
-			log.Errorf("Op %s has terminated with status %s.", op.Name(), execState.Status)
 			if shouldPersistResults {
-				log.Errorf("Op %s is persisting results", op.Name())
 				err = op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
@@ -230,11 +223,9 @@ func (orch *aqOrchestrator) execute(
 				}
 
 				for _, nextOp := range nextOps {
-					log.Errorf("Looking at scheduling %s.", nextOp.Name())
 					// Before scheduling the next operator, check that all upstream artifacts to that operator
 					// have been computed.
 					if !nextOp.Ready(ctx) {
-						log.Errorf("%s is not ready yet.", nextOp.Name())
 						continue
 					}
 

@@ -2,7 +2,6 @@ package dag
 
 import (
 	"context"
-
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -102,17 +101,15 @@ func NewWorkflowDag(
 		}
 	}
 
-	// These maps allow us to remember all the dag connections.
+	// These artifact <-> operator maps help us remember all dag connections.
 	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(artifacts))
 	for artifactID := range artifacts {
 		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
 	}
 	opToArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
-	for opID := range operators {
-		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
-	}
-	artifactToInputOp := make(map[uuid.UUID]uuid.UUID, len(artifacts))
 	for opID, dbOperator := range dbWorkflowDag.Operators {
+		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
+
 		inputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		inputContentPaths := make([]string, 0, len(dbOperator.Inputs))
 		inputMetadataPaths := make([]string, 0, len(dbOperator.Inputs))
@@ -132,9 +129,6 @@ func NewWorkflowDag(
 			outputMetadataPaths = append(outputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
 			opToArtifacts[opID] = append(opToArtifacts[opID], artifactID)
-
-			// Assumption: an operator only outputs a single artifact.
-			artifactToInputOp[artifactID] = opID
 		}
 
 		operators[opID], err = operator.NewOperator(
