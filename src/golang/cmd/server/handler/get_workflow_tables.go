@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -28,11 +27,11 @@ import (
 
 type getWorkflowTablesArgs struct {
 	*aq_context.AqContext
-	workflowId uuid.UUID
+	WorkflowId uuid.UUID
 }
 
 type getWorkflowTablesResponse struct {
-	LoadSpec []connector.Load `json:"table_specs"`
+	LoadSpec []operator.DBOperator `json:"table_specs"`
 }
 
 type GetWorkflowTablesHandler struct {
@@ -74,7 +73,7 @@ func (h *GetWorkflowTablesHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	return &getWorkflowTablesArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		WorkflowId: workflowId,
 	}, http.StatusOK, nil
 }
 
@@ -84,12 +83,12 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 	emptyResp := getWorkflowTablesResponse{}
 
 	// Get all specs  for the workflow.
-	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
+	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.WorkflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
 	return getWorkflowTablesResponse{
-		LoadSpec: loadList,
+		LoadSpec: operatorList,
 	}, http.StatusOK, nil
 }

@@ -1,5 +1,13 @@
 package operator
 
+import (
+	"fmt"
+	"context"
+
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/google/uuid"
+)
+
 type postgresReaderImpl struct {
 	standardReaderImpl
 }
@@ -47,7 +55,7 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
 		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3;`, allColumns())
 
-	var operators []Operator
+	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
 
 	touched := false
@@ -62,7 +70,7 @@ func (r *postgresReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
+) ([]DBOperator, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
 	FROM (
@@ -87,7 +95,7 @@ func (r *postgresReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 		)
 	);`, allColumns())
 
-	var workflowSpecs []Operator
+	var workflowSpecs []DBOperator
 	err := db.Query(ctx, &workflowSpecs, query, workflowId)
 	return workflowSpecs, err
 }

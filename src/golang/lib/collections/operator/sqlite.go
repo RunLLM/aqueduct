@@ -1,10 +1,12 @@
 package operator
 
 import (
+	"fmt"
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/google/uuid"
 )
 
 type sqliteReaderImpl struct {
@@ -76,7 +78,7 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 		json_extract(spec, '$.load.integration_id')=$2 AND
 		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
 
-	var operators []Operator
+	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
 
 	touched := false
@@ -91,7 +93,7 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
-) ([]Operator, error) {
+) ([]DBOperator, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
 	FROM (
@@ -118,7 +120,7 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 		)
 	);`, allColumns())
 
-	var workflowSpecs []Operator
+	var workflowSpecs []DBOperator
 	err := db.Query(ctx, &workflowSpecs, query, workflowId)
 	return workflowSpecs, err
 }

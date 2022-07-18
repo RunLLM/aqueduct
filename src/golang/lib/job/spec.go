@@ -135,6 +135,14 @@ type ExtractSpec struct {
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
+type DeleteTableSpec struct {
+	basePythonSpec
+	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
+	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+}
+
 type LoadSpec struct {
 	basePythonSpec
 	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
@@ -199,6 +207,10 @@ func (*LoadSpec) Type() JobType {
 
 func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
+}
+
+func (*DeleteTableSpec) Type() JobType {
+	return DeleteTableJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -407,7 +419,7 @@ func NewDeleteTablesSpec(
 	return &DeleteTableSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: DeleteJobType,
+				Type: DeleteTableJobType,
 				Name: name,
 			},
 			StorageConfig: *storageConfig,
