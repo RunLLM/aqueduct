@@ -226,10 +226,6 @@ if __name__ == "__main__":
         # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
         # certain that the operator succeeded.
         if exec_state.status == enums.ExecutionStatus.FAILED:
-            print(
-                "HELLO: Writing failed ExecState with error %s, %s to %s.\n"
-                % (exec_state.error.tip, exec_state.user_logs, spec.metadata_path)
-            )
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
         else:

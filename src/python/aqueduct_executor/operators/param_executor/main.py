@@ -30,7 +30,6 @@ def run(spec: ParamSpec) -> None:
             system_metadata={},
         )
         exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        print("HELLO: PARAM write success state to output path : %s" % spec.output_content_path)
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception as e:
         exec_state.status = enums.ExecutionStatus.FAILED

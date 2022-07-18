@@ -169,7 +169,6 @@ func (orch *aqOrchestrator) execute(
 
 	start := time.Now()
 
-	// TODO(kenxu): documentation
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
 			return errors.New("Reached timeout waiting for workflow to complete.")

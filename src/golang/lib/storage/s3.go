@@ -39,7 +39,7 @@ func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 }
 
 func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
-	// TODO(...): throw an `ErrObjectDoesNotExist` error if the is not present in S3.
+	// TODO(ENG-1368): throw an `ErrObjectDoesNotExist` error if the is not present in S3.
 	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
 		return nil, err

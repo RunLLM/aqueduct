@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// uploadOperatorFiles uploads the provided Operator files to storage for the WorkflowDag specified.
+// UploadOperatorFiles uploads the provided Operator files to storage for the WorkflowDag specified.
 // It updates the relevant operator spec with the storage path. It returns an error, if any.
 func UploadOperatorFiles(
 	ctx context.Context,

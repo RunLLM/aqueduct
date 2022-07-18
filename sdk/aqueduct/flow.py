@@ -80,7 +80,8 @@ class Flow:
             if len(param_val) == 0:
                 Logger.logger.error(
                     "The parameter %s was not successfully computed. If you triggered this flow run with custom "
-                    "parameters, those parameter values will not be reflected in `FlowRun.describe()." % param_artifact.name
+                    "parameters, those parameter values will not be reflected in `FlowRun.describe()."
+                    % param_artifact.name
                 )
                 continue
 
@@ -96,7 +97,9 @@ class Flow:
 
         # Because the serialized functions are stored separately from the dag,
         # We need to fetch them to complete the construction of the dag.
-        for operator in dag.list_operators(filter_to=[OperatorType.CHECK, OperatorType.FUNCTION, OperatorType.METRIC]):
+        for operator in dag.list_operators(
+            filter_to=[OperatorType.CHECK, OperatorType.FUNCTION, OperatorType.METRIC]
+        ):
             serialized_function = self._api_client.export_serialized_function(operator)
             dag.update_operator_function(operator, serialized_function)
 

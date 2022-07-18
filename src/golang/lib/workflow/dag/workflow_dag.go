@@ -56,7 +56,7 @@ type workflowDagImpl struct {
 	db                 database.Database
 
 	// Corresponds to the workflow dag result entry in the database.
-	// This is empty if InitializeResult() has not been called.
+	// This is empty if InitializeResultsj() has not been called.
 	resultID uuid.UUID
 }
 

@@ -128,12 +128,12 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 			return unknownSystemFailureExecState(err, "Unable to poll job manager."), nil
 		}
 	} else {
-		// The job could have just completed, so we know we can fetch the results (succeeded/failed).
+		// The job just completed, so we know we can fetch the results (succeeded/failed).
 		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
 			return bo.fetchExecState(ctx), nil
 		}
 
-		// The job must exist at this point (running).
+		// The job must exist at this point, but it hasn't completed (running).
 		return &shared.ExecutionState{
 			Status: shared.RunningExecutionStatus,
 		}, nil
