@@ -166,7 +166,7 @@ func (r *standardReaderImpl) ValidateWorkflowOwnership(
 
 	isOwned := count.Count == 1
 	if !isOwned {
-		log.Errorf("Workflow ownership query returned count %v.", count.Count)
+		log.Infof("Workflow ownership query returned count %v.", count.Count)
 	}
 
 	return isOwned, nil
