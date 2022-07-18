@@ -32,13 +32,13 @@ linters:
     - goprintffuncname
     - gosec
     - misspell # has autofixer.
-    - prealloc
-    - predeclared
-    - rowserrcheck
-    - sqlclosecheck
-    - unconvert
-    - unparam
-    - wastedassign
+#    - prealloc
+#    - predeclared
+#    - rowserrcheck
+#    - sqlclosecheck
+#    - unconvert
+#    - unparam
+#    - wastedassign
 #    - stylecheck # TODO(ENG-1231)
 #    - wrapcheck # TODO(ENG-1230): Wrapping errors at the edge of our system will give us better stack traces.
 
