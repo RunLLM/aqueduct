@@ -21,9 +21,9 @@ linters:
 #    - bidichk
 #    - decorder
 #    - exhaustive
-    - makezero
-    - nilerr
-    - gci
+#    - makezero
+#    - nilerr
+#    - gci
     - goconst
     - gofmt # has autofixer.
     - gofumpt # has autofixer.
