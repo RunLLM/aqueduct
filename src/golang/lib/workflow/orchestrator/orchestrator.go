@@ -136,6 +136,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
 	} else if failureType == shared.UserFailure {
+		log.Errorf("Failed due to user error. Operator name %s, id %s.", op.Name(), op.ID())
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
