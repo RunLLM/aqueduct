@@ -30,7 +30,7 @@ jobs:
           working-directory: src/golang
 
           # Optional: golangci-lint command line arguments.
-          args: --verbose # --concurrency 2
+          args: --verbose --concurrency 4
 
           # NOTE (saurav): This flag should be enabled, but for now there is a known issue when using
           # only-new-issues with working-directory (https://github.com/golangci/golangci-lint-action/issues/150).
