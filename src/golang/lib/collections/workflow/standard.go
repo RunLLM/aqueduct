@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type standardReaderImpl struct{}
@@ -163,7 +164,12 @@ func (r *standardReaderImpl) ValidateWorkflowOwnership(
 		return false, err
 	}
 
-	return count.Count == 1, nil
+	isOwned := count.Count == 1
+	if !isOwned {
+		log.Infof("Workflow ownership query returned count %v.", count.Count)
+	}
+
+	return isOwned, nil
 }
 
 func (w *standardWriterImpl) UpdateWorkflow(
