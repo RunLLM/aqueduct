@@ -29,7 +29,10 @@ type WorkflowDag interface {
 	OperatorsOnArtifact(artifact.Artifact) ([]operator.Operator, error)
 
 	// ArtifactsFromOperator returns all the artifacts produced by the given operator.
-	ArtifactsFromOperator(operator.Operator) ([]artifact.Artifact, error)
+	OperatorOutputs(operator.Operator) ([]artifact.Artifact, error)
+
+	// OperatorInputs returns all the artifacts that are fed as input to the given operator.
+	OperatorInputs(operator.Operator) ([]artifact.Artifact, error)
 
 	// InitializeResult initializes the dag result in the database.
 	// Also initializes the operators and artifacts contained in this dag.
@@ -44,10 +47,11 @@ type WorkflowDag interface {
 type workflowDagImpl struct {
 	dbWorkflowDag *workflow_dag.DBWorkflowDag
 
-	operators     map[uuid.UUID]operator.Operator
-	artifacts     map[uuid.UUID]artifact.Artifact
-	opToArtifacts map[uuid.UUID][]uuid.UUID
-	artifactToOps map[uuid.UUID][]uuid.UUID
+	operators           map[uuid.UUID]operator.Operator
+	artifacts           map[uuid.UUID]artifact.Artifact
+	opToOutputArtifacts map[uuid.UUID][]uuid.UUID
+	opToInputArtifacts  map[uuid.UUID][]uuid.UUID
+	artifactToOps       map[uuid.UUID][]uuid.UUID
 
 	resultWriter       workflow_dag_result.Writer
 	workflowReader     workflow.Reader
@@ -107,9 +111,11 @@ func NewWorkflowDag(
 	for artifactID := range artifacts {
 		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
 	}
-	opToArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
+	opToOutputArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
+	opToInputArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
 	for opID, dbOperator := range dbWorkflowDag.Operators {
-		opToArtifacts[opID] = make([]uuid.UUID, 0, 1)
+		opToOutputArtifacts[opID] = make([]uuid.UUID, 0, 1)
+		opToInputArtifacts[opID] = make([]uuid.UUID, 0, 1)
 
 		inputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		inputContentPaths := make([]string, 0, len(dbOperator.Inputs))
@@ -120,6 +126,7 @@ func NewWorkflowDag(
 			inputMetadataPaths = append(inputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
 			artifactToOps[artifactID] = append(artifactToOps[artifactID], opID)
+			opToInputArtifacts[opID] = append(opToInputArtifacts[opID], artifactID)
 		}
 		outputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
 		outputContentPaths := make([]string, 0, len(dbOperator.Outputs))
@@ -129,7 +136,7 @@ func NewWorkflowDag(
 			outputContentPaths = append(outputContentPaths, artifactIDToContentPath[artifactID])
 			outputMetadataPaths = append(outputMetadataPaths, artifactIDToMetadataPath[artifactID])
 
-			opToArtifacts[opID] = append(opToArtifacts[opID], artifactID)
+			opToOutputArtifacts[opID] = append(opToOutputArtifacts[opID], artifactID)
 		}
 
 		operators[opID], err = operator.NewOperator(
@@ -153,11 +160,12 @@ func NewWorkflowDag(
 	}
 
 	return &workflowDagImpl{
-		dbWorkflowDag: dbWorkflowDag,
-		operators:     operators,
-		artifacts:     artifacts,
-		opToArtifacts: opToArtifacts,
-		artifactToOps: artifactToOps,
+		dbWorkflowDag:       dbWorkflowDag,
+		operators:           operators,
+		artifacts:           artifacts,
+		opToOutputArtifacts: opToOutputArtifacts,
+		opToInputArtifacts:  opToInputArtifacts,
+		artifactToOps:       artifactToOps,
 
 		resultWriter:       dagResultWriter,
 		workflowReader:     workflowReader,
@@ -189,8 +197,21 @@ func (w *workflowDagImpl) OperatorsOnArtifact(artifact artifact.Artifact) ([]ope
 	return ops, nil
 }
 
-func (w *workflowDagImpl) ArtifactsFromOperator(op operator.Operator) ([]artifact.Artifact, error) {
-	artifactIDs, ok := w.opToArtifacts[op.ID()]
+func (w *workflowDagImpl) OperatorOutputs(op operator.Operator) ([]artifact.Artifact, error) {
+	artifactIDs, ok := w.opToOutputArtifacts[op.ID()]
+	if !ok {
+		return nil, errors.Newf("Unable to find operator %s (%s) on dag.", op.ID(), op.Name())
+	}
+
+	artifacts := make([]artifact.Artifact, 0, len(artifactIDs))
+	for _, artifactID := range artifactIDs {
+		artifacts = append(artifacts, w.artifacts[artifactID])
+	}
+	return artifacts, nil
+}
+
+func (w *workflowDagImpl) OperatorInputs(op operator.Operator) ([]artifact.Artifact, error) {
+	artifactIDs, ok := w.opToInputArtifacts[op.ID()]
 	if !ok {
 		return nil, errors.Newf("Unable to find operator %s (%s) on dag.", op.ID(), op.Name())
 	}

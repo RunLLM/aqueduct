@@ -2,7 +2,6 @@ package orchestrator
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -25,7 +24,7 @@ var (
 )
 
 type Orchestrator interface {
-	Execute(ctx context.Context, dag dag.WorkflowDag) (shared.ExecutionStatus, error)
+	Execute(ctx context.Context) (shared.ExecutionStatus, error)
 
 	// Finish is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
 	Finish(ctx context.Context)
@@ -48,9 +47,13 @@ type aqOrchestrator struct {
 	jobManager job.JobManager
 	timeConfig *AqueductTimeConfig
 
-	inProgressOps map[uuid.UUID]operator.Operator
-	completedOps  map[uuid.UUID]operator.Operator
-	status        shared.ExecutionStatus
+	// Maps every operator to the number of its immediate dependencies
+	// that still needs to be computed. When this hits 0 during execution,
+	// then the operator is ready to be scheduled.
+	opToDependencyCount map[uuid.UUID]int
+	inProgressOps       map[uuid.UUID]operator.Operator
+	completedOps        map[uuid.UUID]operator.Operator
+	status              shared.ExecutionStatus
 
 	shouldPersistResults bool
 }
@@ -60,31 +63,40 @@ func NewAqOrchestrator(
 	jobManager job.JobManager,
 	timeConfig AqueductTimeConfig,
 	shouldPersistResults bool,
-) Orchestrator {
+) (Orchestrator, error) {
+	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
+	for _, op := range dag.Operators() {
+		inputs, err := dag.OperatorInputs(op)
+		if err != nil {
+			return nil, err
+		}
+		opToDependencyCount[op.ID()] = len(inputs)
+	}
+
 	return &aqOrchestrator{
 		dag:                  dag,
 		jobManager:           jobManager,
 		timeConfig:           &timeConfig,
+		opToDependencyCount:  opToDependencyCount,
 		inProgressOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		completedOps:         make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		status:               shared.PendingExecutionStatus,
 		shouldPersistResults: shouldPersistResults,
-	}
+	}, nil
 }
 
 func (orch *aqOrchestrator) Execute(
 	ctx context.Context,
-	dag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
 	if orch.shouldPersistResults {
-		err := dag.InitializeResults(ctx)
+		err := orch.dag.InitializeResults(ctx)
 		if err != nil {
 			return shared.FailedExecutionStatus, err
 		}
 
 		// Make sure to persist the dag results on exit.
 		defer func() {
-			err = dag.PersistResult(ctx, orch.status)
+			err = orch.dag.PersistResult(ctx, orch.status)
 			if err != nil {
 				log.Errorf("Error when persisting dag resutls: %v", err)
 			}
@@ -94,7 +106,6 @@ func (orch *aqOrchestrator) Execute(
 	orch.status = shared.RunningExecutionStatus
 	err := orch.execute(
 		ctx,
-		dag,
 		orch.timeConfig,
 		orch.jobManager,
 		orch.shouldPersistResults,
@@ -144,7 +155,6 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 
 func (orch *aqOrchestrator) execute(
 	ctx context.Context,
-	dag dag.WorkflowDag,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
 	shouldPersistResults bool,
@@ -152,6 +162,8 @@ func (orch *aqOrchestrator) execute(
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := orch.inProgressOps
 	completedOps := orch.completedOps
+	dag := orch.dag
+	opToDependencyCount := orch.opToDependencyCount
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -213,7 +225,7 @@ func (orch *aqOrchestrator) execute(
 			completedOps[op.ID()] = op
 			delete(inProgressOps, op.ID())
 
-			outputArtifacts, err := dag.ArtifactsFromOperator(op)
+			outputArtifacts, err := dag.OperatorOutputs(op)
 			if err != nil {
 				return err
 			}
@@ -224,16 +236,20 @@ func (orch *aqOrchestrator) execute(
 				}
 
 				for _, nextOp := range nextOps {
-					// Before scheduling the next operator, check that all upstream artifacts to that operator
-					// have been computed.
-					if !nextOp.Ready(ctx) {
-						continue
+					// Decrement the active dependency count for every downstream operator.
+					// Once this count reaches zero, we can schedule the next operator.
+					opToDependencyCount[nextOp.ID()] -= 1
+
+					if opToDependencyCount[nextOp.ID()] < 0 {
+						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
 					}
 
-					// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
-					// matter because we only keep and update a single copy an on operator.
-					if _, ok := inProgressOps[nextOp.ID()]; !ok {
-						inProgressOps[nextOp.ID()] = nextOp
+					if opToDependencyCount[nextOp.ID()] == 0 {
+						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
+						// matter because we only keep and update a single copy an on operator.
+						if _, ok := inProgressOps[nextOp.ID()]; !ok {
+							inProgressOps[nextOp.ID()] = nextOp
+						}
 					}
 				}
 			}
@@ -243,7 +259,13 @@ func (orch *aqOrchestrator) execute(
 	}
 
 	if len(completedOps) != len(dag.Operators()) {
-		return errors.Newf(fmt.Sprintf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps)))
+		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
+	}
+
+	for opID, depCount := range opToDependencyCount {
+		if depCount != 0 {
+			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
+		}
 	}
 	return nil
 }

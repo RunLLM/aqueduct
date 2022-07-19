@@ -171,7 +171,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
 	}
 
-	orch := orchestrator.NewAqOrchestrator(
+	orch, err := orchestrator.NewAqOrchestrator(
 		workflowDag,
 		h.JobManager,
 		orchestrator.AqueductTimeConfig{
@@ -181,9 +181,12 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		},
 		false, /* shouldPersistResults */
 	)
-	defer orch.Finish(ctx)
+	if err != nil {
+		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
+	}
 
-	status, err := orch.Execute(ctx, workflowDag)
+	defer orch.Finish(ctx)
+	status, err := orch.Execute(ctx)
 	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}

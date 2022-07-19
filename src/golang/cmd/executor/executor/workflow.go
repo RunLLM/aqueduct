@@ -121,7 +121,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
-	orch := orchestrator.NewAqOrchestrator(
+	orch, err := orchestrator.NewAqOrchestrator(
 		workflowDag,
 		ex.JobManager,
 		orchestrator.AqueductTimeConfig{
@@ -131,9 +131,12 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		},
 		true, /* shouldPersistResults */
 	)
-	defer orch.Finish(ctx)
+	if err != nil {
+		return err
+	}
 
-	status, err := orch.Execute(ctx, workflowDag)
+	defer orch.Finish(ctx)
+	status, err := orch.Execute(ctx)
 	if err != nil {
 		return err
 	}
