@@ -1,4 +1,5 @@
 import sys
+
 api_key, server_address = sys.argv[1], sys.argv[2]
 
 ###
