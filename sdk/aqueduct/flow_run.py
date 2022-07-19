@@ -51,7 +51,7 @@ class FlowRun:
         """Prints out a human-readable description of the flow run."""
 
         url = generate_ui_url(
-            self._api_client._construct_base_url(),
+            self._api_client.construct_base_url(),
             self._flow_id,
             self._id,
         )

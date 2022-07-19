@@ -151,7 +151,7 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
-        url = generate_ui_url(self._api_client._construct_base_url(), self._id)
+        url = generate_ui_url(self._api_client.construct_base_url(), self._id)
 
         print(
             textwrap.dedent(

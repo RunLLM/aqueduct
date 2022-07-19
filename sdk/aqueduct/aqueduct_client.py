@@ -337,7 +337,7 @@ class Client:
         flow_id = self._api_client.register_workflow(dag).id
 
         url = generate_ui_url(
-            self._api_client._construct_base_url(),
+            self._api_client.construct_base_url(),
             str(flow_id),
         )
         print("Url: ", url)
