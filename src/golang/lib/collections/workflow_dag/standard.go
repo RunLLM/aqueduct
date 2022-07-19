@@ -23,13 +23,13 @@ func (w *standardWriterImpl) CreateWorkflowDag(
 	workflowId uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
-) (*WorkflowDag, error) {
+) (*DBWorkflowDag, error) {
 	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	args := []interface{}{workflowId, time.Now(), storageConfig}
 
-	var workflowDag WorkflowDag
+	var workflowDag DBWorkflowDag
 	err := db.Query(ctx, &workflowDag, insertWorkflowDagStmt, args...)
 	return &workflowDag, err
 }
@@ -38,7 +38,7 @@ func (r *standardReaderImpl) GetWorkflowDag(
 	ctx context.Context,
 	id uuid.UUID,
 	db database.Database,
-) (*WorkflowDag, error) {
+) (*DBWorkflowDag, error) {
 	workflowDags, err := r.GetWorkflowDags(ctx, []uuid.UUID{id}, db)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *standardReaderImpl) GetWorkflowDags(
 	ctx context.Context,
 	ids []uuid.UUID,
 	db database.Database,
-) ([]WorkflowDag, error) {
+) ([]DBWorkflowDag, error) {
 	if len(ids) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
 	}
@@ -68,7 +68,7 @@ func (r *standardReaderImpl) GetWorkflowDags(
 
 	args := stmt_preparers.CastIdsListToInterfaceList(ids)
 
-	var workflowDags []WorkflowDag
+	var workflowDags []DBWorkflowDag
 	err := db.Query(ctx, &workflowDags, getWorkflowDagsQuery, args...)
 	return workflowDags, err
 }
@@ -77,13 +77,13 @@ func (r *standardReaderImpl) GetWorkflowDagsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
-) ([]WorkflowDag, error) {
+) ([]DBWorkflowDag, error) {
 	query := fmt.Sprintf(
 		"SELECT %s FROM workflow_dag WHERE workflow_id = $1;",
 		allColumns(),
 	)
 
-	var workflowDags []WorkflowDag
+	var workflowDags []DBWorkflowDag
 	err := db.Query(ctx, &workflowDags, query, workflowId)
 	return workflowDags, err
 }
@@ -92,13 +92,13 @@ func (r *standardReaderImpl) GetLatestWorkflowDag(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	db database.Database,
-) (*WorkflowDag, error) {
+) (*DBWorkflowDag, error) {
 	getLatestWorkflowDagQuery := fmt.Sprintf(
 		"SELECT %s FROM workflow_dag WHERE workflow_id = $1 ORDER BY created_at DESC LIMIT 1;",
 		allColumns(),
 	)
 
-	var workflowDag WorkflowDag
+	var workflowDag DBWorkflowDag
 	err := db.Query(ctx, &workflowDag, getLatestWorkflowDagQuery, workflowId)
 	return &workflowDag, err
 }
@@ -107,7 +107,7 @@ func (r *standardReaderImpl) GetWorkflowDagByWorkflowDagResultId(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	db database.Database,
-) (*WorkflowDag, error) {
+) (*DBWorkflowDag, error) {
 	query := fmt.Sprintf(`
 		SELECT %s FROM workflow_dag, workflow_dag_result 
 		WHERE workflow_dag.id = workflow_dag_result.workflow_dag_id 
@@ -115,7 +115,7 @@ func (r *standardReaderImpl) GetWorkflowDagByWorkflowDagResultId(
 		allColumnsWithPrefix(),
 	)
 
-	var workflowDag WorkflowDag
+	var workflowDag DBWorkflowDag
 	err := db.Query(ctx, &workflowDag, query, workflowDagResultId)
 	return &workflowDag, err
 }
@@ -124,7 +124,7 @@ func (r *standardReaderImpl) GetWorkflowDagsByOperatorId(
 	ctx context.Context,
 	operatorId uuid.UUID,
 	db database.Database,
-) ([]WorkflowDag, error) {
+) ([]DBWorkflowDag, error) {
 	query := fmt.Sprintf(`
 		SELECT DISTINCT %s FROM workflow_dag, workflow_dag_edge 
 		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
@@ -132,7 +132,7 @@ func (r *standardReaderImpl) GetWorkflowDagsByOperatorId(
 		(workflow_dag_edge.type = '%s' AND workflow_dag_edge.to_id = $1));`,
 		allColumnsWithPrefix(), workflow_dag_edge.OperatorToArtifactType, workflow_dag_edge.ArtifactToOperatorType)
 
-	var workflowDags []WorkflowDag
+	var workflowDags []DBWorkflowDag
 	err := db.Query(ctx, &workflowDags, query, operatorId)
 	return workflowDags, err
 }
@@ -142,8 +142,8 @@ func (w *standardWriterImpl) UpdateWorkflowDag(
 	id uuid.UUID,
 	changes map[string]interface{},
 	db database.Database,
-) (*WorkflowDag, error) {
-	var workflowDag WorkflowDag
+) (*DBWorkflowDag, error) {
+	var workflowDag DBWorkflowDag
 	err := utils.UpdateRecordToDest(ctx, &workflowDag, changes, tableName, IdColumn, id, allColumns(), db)
 	return &workflowDag, err
 }

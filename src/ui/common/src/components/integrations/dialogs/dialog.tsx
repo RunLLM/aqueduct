@@ -23,6 +23,7 @@ import {
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
+import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CSVDialog } from './csvDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -216,6 +217,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       break;
     case 'S3':
       serviceDialog = <S3Dialog setDialogConfig={setConfig} />;
+      break;
+    case 'Airflow':
+      serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
       break;
     default:
       return null;
