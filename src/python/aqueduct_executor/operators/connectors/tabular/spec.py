@@ -6,10 +6,12 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal  # type: ignore
 
+import json
+
 from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
-from pydantic import validator
+from pydantic import parse_obj_as, validator
 
 AQUEDUCT_DEMO_NAME = "aqueduct_demo"
 
@@ -141,3 +143,16 @@ class DiscoverSpec(models.BaseSpec):
 
 
 Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec]
+
+
+def parse_spec(spec_json: bytes) -> Spec:
+    """
+    Parses a JSON string into a Spec.
+    """
+    data = json.loads(spec_json)
+
+    # TODO (ENG-1286): https://linear.app/aqueducthq/issue/ENG-1286/investigate-why-mypy-is-complaining-about-object-parsing
+    # The following line is working, but mypy complains:
+    # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
+    # We ignore the error for now.
+    return parse_obj_as(Spec, data)  # type: ignore

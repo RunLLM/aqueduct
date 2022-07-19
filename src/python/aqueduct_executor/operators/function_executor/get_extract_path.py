@@ -2,11 +2,11 @@ import argparse
 import base64
 import os
 
-from aqueduct_executor.operators.function_executor.spec import parse_spec
+from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 
 
-def run(spec) -> str:
+def run(spec: FunctionSpec) -> str:
     return os.path.join(spec.function_extract_path, OP_DIR)
 
 
