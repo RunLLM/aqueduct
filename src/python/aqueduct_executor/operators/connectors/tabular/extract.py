@@ -82,6 +82,7 @@ class RelationalParams(models.BaseParams):
 
 class S3Params(models.BaseParams):
     filepath: str
+    type: common.AqueductType
     format: common.S3FileFormat
 
 

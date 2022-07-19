@@ -40,6 +40,7 @@ type SalesforceExtractParams struct {
 
 type S3ExtractParams struct {
 	Filepath string `json:"filepath"`
+	Type     string `json:"type"`
 	Format   string `json:"format"`
 }
 
