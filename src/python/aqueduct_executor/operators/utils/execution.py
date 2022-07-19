@@ -78,7 +78,7 @@ class ExecutionState(BaseModel):
                         result = user_fn(*args, **kwargs)
                 except Exception:
                     # Include the stack trace within the user's code.
-                    _get_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                    _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
                     self.status = ExecutionStatus.FAILED
                     self.failure_type = FailureType.USER
                     self.error = Error(
@@ -91,7 +91,7 @@ class ExecutionState(BaseModel):
                     return None
 
                 # Include the stack trace within the user's code.
-                _get_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
                 print(f"User execution succeeded. Full log: {self.json()}")
                 return result
 
@@ -100,7 +100,7 @@ class ExecutionState(BaseModel):
         return wrapper
 
 
-def _get_redirected_logs(
+def _set_redirected_logs(
     stdout: io.StringIO,
     stderr: io.StringIO,
     logs: Logs,
