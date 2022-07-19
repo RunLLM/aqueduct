@@ -289,7 +289,8 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 			*bfo.storageConfig,
 			bfo.metadataPath,
 		),
-		FunctionPath:        fn.StoragePath,
+		FunctionPath: fn.StoragePath,
+		/* `FunctionExtractPath` is set by the job manager at launch time. */
 		EntryPointFile:      entryPoint.File,
 		EntryPointClass:     entryPoint.ClassName,
 		EntryPointMethod:    entryPoint.Method,
