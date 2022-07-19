@@ -85,7 +85,7 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 	for _, key := range keys {
 		err := storage.NewStorage(storageConfig).Delete(ctx, key)
 		if err != nil {
-			log.Errorf("Unable to clean up storage file with key: %s. %v.", key, err)
+			log.Errorf("Unable to clean up storage file with key: %s. %v. \n %s", key, err, errors.New("").GetStack())
 		}
 	}
 }

@@ -194,6 +194,11 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.Execut
 }
 
 func (a *ArtifactImpl) Finish(ctx context.Context) {
+	// There is nothing to clean up if the artifact was never computed.
+	if !a.Computed(ctx) {
+		return
+	}
+
 	utils.CleanupStorageFile(ctx, a.storageConfig, a.metadataPath)
 
 	// If the artifact was persisted to the DB, don't cleanup the storage content paths,
