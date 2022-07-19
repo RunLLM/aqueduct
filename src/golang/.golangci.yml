@@ -23,7 +23,7 @@ linters:
     - exhaustive
     - makezero
     - nilerr
-#    - gci # TODO(ENG-1373): Reenable this linter ASAP.
+    - gci
     - goconst
     - gofmt # has autofixer.
     - gofumpt # has autofixer.
