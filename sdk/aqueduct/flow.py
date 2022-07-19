@@ -152,7 +152,7 @@ class Flow:
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
         url = generate_ui_url(
-            self._api_client.url_prefix(), self._api_client.aqueduct_address, self._id
+            self._api_client._construct_base_url(), self._id
         )
 
         print(

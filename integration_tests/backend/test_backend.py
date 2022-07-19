@@ -7,31 +7,13 @@ import sys
 
 import aqueduct
 
-
-def get_response(endpoint, additional_headers={}):
-    headers = {"api-key": pytest.api_key}
-    headers.update(additional_headers)
-    url = f"{pytest.server_address}{endpoint}"
-    r = requests.get(url, headers=headers)
-    return r
-
 class TestBackend:
     GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
     
     @classmethod
     def setup_class(cls):
-        if pytest.server_address.endswith('/'):
-            pytest.server_address = pytest.server_address[:-1]
-
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-
-        if not pytest.server_address.startswith('http'):
-            if cls.client._api_client.use_https:
-                pytest.server_address = 'https://'+pytest.server_address
-            else:
-                pytest.server_address = 'http://'+pytest.server_address
-        
         cls.flows = {}
 
         workflow_files = [f for f in os.listdir(cls.WORKFLOW_PATH) if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))]
@@ -50,9 +32,16 @@ class TestBackend:
     def teardown_class(cls):
         for flow in cls.flows:
             cls.client.delete_flow(cls.flows[flow])
+    
+    @classmethod
+    def get_response_class(cls, endpoint, additional_headers={}):
+        headers = {"api-key": pytest.api_key}
+        headers.update(additional_headers)
+        url = cls.client._api_client._construct_full_url(endpoint)
+        r = requests.get(url, headers=headers)
+        return r
 
     def test_endpoint_getworkflowtables(self):
-        return
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = get_response(endpoint).json()["table_details"]
 

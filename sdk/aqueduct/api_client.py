@@ -81,12 +81,17 @@ class APIClient:
         self.api_key = api_key
         self.aqueduct_address = aqueduct_address
 
+        # Clean URL
+        if self.aqueduct_address.endswith('/'):
+            self.aqueduct_address = self.aqueduct_address[:-1]
+
         # If a dummy client is initialized, don't perform validation.
         if self.api_key == "" and self.aqueduct_address == "":
             Logger.logger.info(
                 "Neither api key or server address were specified. This is a dummy client."
             )
             return
+
 
         # Check that the connection with the backend is working.
         if self.aqueduct_address.startswith(self.HTTP_PREFIX):
@@ -97,6 +102,10 @@ class APIClient:
             self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
         else:
             self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
+
+    def _construct_base_url(self, route_suffix: str, use_https: bool) -> str:
+        protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
+        return "%s%s%s" % (protocol_prefix, self.aqueduct_address)
 
     def _construct_full_url(self, route_suffix: str, use_https: bool) -> str:
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
