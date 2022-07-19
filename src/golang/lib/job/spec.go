@@ -425,7 +425,7 @@ func NewCompileAirflowSpec(
 	return &CompileAirflowSpec{
 		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
-				Type: DiscoverJobType,
+				Type: CompileAirflowJobType,
 				Name: name,
 			},
 			StorageConfig: *storageConfig,
