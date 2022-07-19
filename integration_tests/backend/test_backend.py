@@ -12,19 +12,7 @@ def get_response(endpoint, additional_headers={}):
     headers = {"api-key": pytest.api_key}
     headers.update(additional_headers)
     url = f"{pytest.server_address}{endpoint}"
-    if url[:4] != "http":
-        try:
-           r = requests.get("https://"+url, headers=headers) 
-        except:
-            try:
-                r = requests.get("http://"+url, headers=headers) 
-            except:
-                raise Exception(f"Cannot connect to {url}")
-    else:
-        try:
-            r = requests.get(url, headers=headers)
-        except:
-            raise Exception(f"Cannot connect to {url}")
+    r = requests.get(url, headers=headers)
     return r
 
 class TestBackend:
@@ -33,7 +21,17 @@ class TestBackend:
     
     @classmethod
     def setup_class(cls):
+        if pytest.server_address.endswith('/'):
+            pytest.server_address = pytest.server_address[:-1]
+
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
+
+        if not pytest.server_address.startswith('http'):
+            if cls.client._api_client.use_https:
+                pytest.server_address = 'https://'+pytest.server_address
+            else:
+                pytest.server_address = 'http://'+pytest.server_address
+        
         cls.flows = {}
 
         workflow_files = [f for f in os.listdir(cls.WORKFLOW_PATH) if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))]
@@ -54,6 +52,7 @@ class TestBackend:
             cls.client.delete_flow(cls.flows[flow])
 
     def test_endpoint_getworkflowtables(self):
+        return
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = get_response(endpoint).json()["table_details"]
 
@@ -70,4 +69,3 @@ class TestBackend:
         # Check all in same integration
         assert len(set([item['integration_id'] for item in data])) == 1
         assert len(set([item['service'] for item in data])) == 1
-        
