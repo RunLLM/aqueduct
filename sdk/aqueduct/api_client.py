@@ -103,13 +103,13 @@ class APIClient:
             self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
 
     def _construct_base_url(self, use_https: Optional[bool] = None) -> str:
-        if use_https==None:
+        if use_https == None:
             use_https = self.use_https
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
         return "%s%s" % (protocol_prefix, self.aqueduct_address)
 
     def _construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
-        if use_https==None:
+        if use_https == None:
             use_https = self.use_https
         return "%s%s" % (self._construct_base_url(use_https), route_suffix)
 
