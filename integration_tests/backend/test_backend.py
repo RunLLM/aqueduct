@@ -57,7 +57,7 @@ class TestBackend:
 
     def test_endpoint_getworkflowtables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
-        data = get_response(endpoint).json()["table_details"]
+        data = self.get_response_class(endpoint).json()["table_details"]
 
         assert len(data) == 3
 
