@@ -21,6 +21,6 @@ if __name__ == "__main__":
     # The following line is working, but mypy complains:
     # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
     # We ignore the error for now.
-    spec = parse_obj_as(spec.Spec, spec_json) # type: ignore
+    spec = parse_obj_as(spec.Spec, data) # type: ignore
 
     execute.run(spec)
