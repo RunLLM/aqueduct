@@ -167,7 +167,7 @@ func (orch *aqOrchestrator) execute(
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
-		if op.Ready(ctx) {
+		if opToDependencyCount[op.ID()] == 0 {
 			inProgressOps[op.ID()] = op
 		}
 	}

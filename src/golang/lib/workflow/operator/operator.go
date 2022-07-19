@@ -22,10 +22,6 @@ type Operator interface {
 	ID() uuid.UUID
 	JobSpec() job.Spec
 
-	// Ready indicates whether this operator is ready to be scheduled. That is to say,
-	// all upstream dependencies have been successfully computed.
-	Ready(ctx context.Context) bool
-
 	// GetExecState performs a non-blocking fetch for the execution state of this operator.
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
 

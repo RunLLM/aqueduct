@@ -56,15 +56,6 @@ func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
-func (bo *baseOperator) Ready(ctx context.Context) bool {
-	for _, inputArtifact := range bo.inputs {
-		if !inputArtifact.Computed(ctx) {
-			return false
-		}
-	}
-	return true
-}
-
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
