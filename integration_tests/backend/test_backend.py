@@ -11,8 +11,20 @@ import aqueduct
 def get_response(endpoint, additional_headers={}):
     headers = {"api-key": pytest.api_key}
     headers.update(additional_headers)
-    url = f"{pytest.adapter}{pytest.server_address}{endpoint}"
-    r = requests.get(url, headers=headers)
+    url = f"{pytest.server_address}{endpoint}"
+    if url[:4] != "http":
+        try:
+           r = requests.get("https://"+url, headers=headers) 
+        except:
+            try:
+                r = requests.get("http://"+url, headers=headers) 
+            except:
+                raise Exception(f"Cannot connect to {url}")
+    else:
+        try:
+            r = requests.get(url, headers=headers)
+        except:
+            raise Exception(f"Cannot connect to {url}")
     return r
 
 class TestBackend:
@@ -44,6 +56,7 @@ class TestBackend:
     def test_endpoint_getworkflowtables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = get_response(endpoint).json()["table_details"]
+        print(data)
 
     #     expected_table_names_update_modes = defaultdict(int)
     #     for table_name, update_mode in zip(
