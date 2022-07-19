@@ -111,8 +111,7 @@ class APIClient:
     def _construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
         if not use_https:
             use_https = self.use_https
-        protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
-        return "%s%s%s" % (protocol_prefix, self.aqueduct_address, route_suffix)
+        return "%s%s" % (self._construct_base_url(use_https), route_suffix)
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
