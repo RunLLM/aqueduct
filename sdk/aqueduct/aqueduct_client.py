@@ -14,12 +14,14 @@ from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
+    AirflowEngineConfig,
     Metadata,
+    EngineConfig,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -29,6 +31,7 @@ from .error import (
 from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
+from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
@@ -245,6 +248,12 @@ class Client:
                 dag=self._dag,
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.AIRFLOW:
+            return AirflowIntegration(
+                api_client=self._api_client,
+                dag=self._dag,
+                metadata=integration_info,
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
@@ -295,6 +304,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
+        engine: AirflowIntegration = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -354,7 +364,24 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+        if engine:
+            # This is an Airflow workflow
+            dag.engine_config = EngineConfig(
+                type=RuntimeType.AIRFLOW,
+                airflow_config=AirflowEngineConfig(
+                    integration_id=engine._metadata.id,
+                )
+            )
+            resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            flow_id, airflow_file = resp.id, resp.file
+
+            file = "{}_airflow.py".format(name)
+            with open(file, "w") as f:
+                f.write(airflow_file)
+            print('''The Airflow DAG file has been downloaded to: {}. 
+                Please copy it to your Airflow server to begin execution.'''.format(file))
+        else:
+            flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
             api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
