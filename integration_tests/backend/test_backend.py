@@ -56,39 +56,17 @@ class TestBackend:
     def test_endpoint_getworkflowtables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = get_response(endpoint).json()["table_details"]
-        print(data)
 
-    #     expected_table_names_update_modes = defaultdict(int)
-    #     for table_name, update_mode in zip(
-    #         self.changing_saves_flow_table_names,
-    #         self.changing_saves_flow_update_modes,
-    #     ):
-    #         # Should de-dup exact duplicates.
-    #         expected_table_names_update_modes[(table_name, update_mode)] = 1
+        assert len(data) == 3
 
-    #     # Should contain all except for exact duplicates
-    #     n_saves = len(data)
-    #     assert n_saves == len(expected_table_names_update_modes.keys())
-
-    #     # Check structure, values
-    #     actual_integration_ids = defaultdict(int)
-    #     actual_services = defaultdict(int)
-    #     actual_table_names_update_modes = defaultdict(int)
-    #     for details in data:
-    #         assert set(details.keys()) == set(
-    #             ["name", "integration_id", "service", "table_name", "update_mode"]
-    #         )
-    #         actual_integration_ids[details["integration_id"]] += 1
-    #         actual_services[details["service"]] += 1
-    #         actual_table_names_update_modes[(details["table_name"], details["update_mode"])] += 1
-
-    #     assert len(actual_integration_ids) == 1
-    #     assert actual_integration_ids[list(actual_integration_ids.keys())[0]] == n_saves
-
-    #     assert len(actual_services) == 1
-    #     assert actual_services[list(actual_services.keys())[0]] == n_saves
-
-    #     assert len(actual_table_names_update_modes) == len(expected_table_names_update_modes)
-    #     for key in expected_table_names_update_modes.keys():
-    #         assert key in actual_table_names_update_modes
-    #         assert actual_table_names_update_modes[key] == expected_table_names_update_modes[key]
+        # table_name, update_mode
+        data_set = set([
+            ('table_1', 'append'),
+            ('table_1', 'replace'),
+            ('table_2', 'append'),
+        ])
+        assert set([(item['table_name'], item['update_mode'])for item in data]) == data_set
+        
+        # Check all in same integration
+        assert len(set([item['integration_id'] for item in data])) == 1
+        assert len(set([item['service'] for item in data])) == 1
