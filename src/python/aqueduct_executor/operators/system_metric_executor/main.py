@@ -12,4 +12,3 @@ if __name__ == "__main__":
     spec = spec.parse_spec(spec_json)
 
     execute.run(spec)
-    

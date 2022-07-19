@@ -2,13 +2,8 @@ import argparse
 import base64
 import json
 
-from aqueduct_executor.operators.connectors.tabular import (
-    execute,
-    spec,
-)
-
+from aqueduct_executor.operators.connectors.tabular import execute, spec
 from pydantic import parse_obj_as
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -21,6 +16,6 @@ if __name__ == "__main__":
     # The following line is working, but mypy complains:
     # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
     # We ignore the error for now.
-    spec = parse_obj_as(spec.Spec, data) # type: ignore
+    spec = parse_obj_as(spec.Spec, data)  # type: ignore
 
     execute.run(spec)

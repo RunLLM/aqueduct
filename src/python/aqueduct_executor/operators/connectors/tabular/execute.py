@@ -41,7 +41,6 @@ def run(spec: Spec) -> None:
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
-
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
 

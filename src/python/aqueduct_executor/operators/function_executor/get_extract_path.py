@@ -5,8 +5,10 @@ import os
 from aqueduct_executor.operators.function_executor.spec import parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 
+
 def run(spec) -> str:
     return os.path.join(spec.function_extract_path, OP_DIR)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
