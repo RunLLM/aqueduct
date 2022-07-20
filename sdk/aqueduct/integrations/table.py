@@ -11,7 +11,7 @@ class WrittenObject:
     update_mode: str
 
     def __init__(self, name: str, update_mode: str):
-        self.name = table
+        self.name = name
         self.update_mode = update_mode
 
     def to_dict(self) -> Dict[str, str]:
