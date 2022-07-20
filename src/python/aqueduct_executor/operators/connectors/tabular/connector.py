@@ -34,14 +34,6 @@ class TabularConnector(ABC):
         """
 
     @abstractmethod
-    def delete(self, params: delete.Params) -> None:
-        """Deletes DataFrame in destination.
-
-        Args:
-            params: Delete parameters for the connector.
-        """
-
-    @abstractmethod
     def load(  # type: ignore
         self,
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence

@@ -222,6 +222,24 @@ class GetWorkflowResponse(BaseModel):
     workflow_dag_results: List[WorkflowDagResultResponse]
 
 
+class WritesDelete(BaseModel):
+    """This is an item in the list returned by DeleteWorkflowResponse."""
+
+    name: str
+    succeeded: bool
+
+
+class DeleteWorkflowResponse(BaseModel):
+    """This is the response object returned by api_client.get_workflow().
+
+    Attributes:
+        writes_results:
+            Results of deleting writes
+    """
+
+    writes_results: Dict[uuid.UUID, List[WritesDelete]]
+
+
 class TableUpdate(BaseModel):
     """This is an item in the list returned by GetWorkflowTablesResponse."""
 

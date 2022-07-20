@@ -28,16 +28,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type Table struct {
-	Service integration.Service `json:"service"`
-	Name string `json:"name"`
-	Id uuid.UUID `json:"id"`
-	Table string `json:"table"`
-}
-
 type TableOutput struct {
-	Table
-
+	Name string `json:"name"`
 	Result bool `json:"result"`
 }
 
@@ -47,17 +39,17 @@ type TableOutput struct {
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	WorkflowId uuid.UUID
-	Tables   []Table `json:"tables"`
+	Tables   map[uuid.UUID][]str `json:"tables"`
 	Force   bool `json:"force"`
 }
 
 type deleteWorkflowInput struct {
-	Tables []Table `json:"tables"`
+	Tables map[uuid.UUID][]str `json:"tables"`
 	Force   bool `json:"force"`
 }
 
 type deleteWorkflowResponse struct{
-	Tables []TableOutput `json:"tables"`
+	Tables map[uuid.UUID][]TableOutput `json:"tables"`
 }
 
 type DeleteWorkflowHandler struct {
@@ -72,7 +64,6 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
-	IntegrationReader       integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -99,12 +90,6 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	workflowId, err := uuid.Parse(workflowIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	var input deleteWorkflowInput
-	err = json.NewDecoder(r.Body).Decode(&input)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
 	}
 
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(

@@ -2,7 +2,7 @@ import json
 from typing import List
 
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load, delete
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -31,13 +31,6 @@ class BigQueryConnector(connector.TabularConnector):
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df
-
-    def delete(self, params: delete.RelationalParams) -> None:
-        try:
-            self.client.delete_table(params.table, not_found_ok=False)
-            return True
-        except:
-            return False
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode
