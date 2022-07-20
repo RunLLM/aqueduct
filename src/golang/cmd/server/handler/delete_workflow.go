@@ -29,8 +29,8 @@ import (
 )
 
 type TableOutput struct {
-	Name string `json:"name"`
-	Result bool `json:"result"`
+	name string `json:"name"`
+	result bool `json:"succeeded"`
 }
 
 
@@ -38,18 +38,18 @@ type TableOutput struct {
 // k8s resources, Postgres state, and output tables in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
-	WorkflowId uuid.UUID
-	Tables   map[uuid.UUID][]str `json:"tables"`
-	Force   bool `json:"force"`
+	workflowId uuid.UUID
+	externalDelete   map[uuid.UUID][]str `json:"external_delete"`
+	force   bool `json:"force"`
 }
 
 type deleteWorkflowInput struct {
-	Tables map[uuid.UUID][]str `json:"tables"`
-	Force   bool `json:"force"`
+	externalDelete map[uuid.UUID][]str `json:"external_delete"`
+	force   bool `json:"force"`
 }
 
 type deleteWorkflowResponse struct{
-	Tables map[uuid.UUID][]TableOutput `json:"tables"`
+	writesResults map[uuid.UUID][]TableOutput `json:"writes_results"`
 }
 
 type DeleteWorkflowHandler struct {
@@ -105,11 +105,19 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
+	var input deleteWorkflowInput
+	err = json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
+	}
+
+	fmt.print(input)
+
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
-		WorkflowId: workflowId,
-		Tables:   input.Tables,
-		Force:   input.Force,
+		workflowId: workflowId,
+		externalDelete:   input.externalDelete,
+		force:   input.force,
 	}, http.StatusOK, nil
 }
 
