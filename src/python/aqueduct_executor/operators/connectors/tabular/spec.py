@@ -90,21 +90,6 @@ class ExtractSpec(models.BaseSpec):
     )
 
 
-class DeleteSpec(models.BaseSpec):
-    name: str
-    type: Literal[enums.JobType.DELETETABLE]
-    storage_config: sconfig.StorageConfig
-    metadata_path: str
-    output_content_path: str
-    connector_name: List[common.Name]
-    connector_config: List[config.Config]
-    parameters: List[delete.Params]
-
-    # validators
-    _unwrap_connector_config = validator("connector_config", allow_reuse=True, pre=True)(
-        unwrap_connector_config
-    )
-
 class LoadSpec(models.BaseSpec):
     name: str
     type: Literal[enums.JobType.LOAD]

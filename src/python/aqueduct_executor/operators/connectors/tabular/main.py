@@ -43,23 +43,20 @@ def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
-    if spec.type == enums.JobType.DELETETABLE:
-        run_delete_all(spec, storage)
-    else:
-        op = setup_connector(spec.connector_name, spec.connector_config)
+    op = setup_connector(spec.connector_name, spec.connector_config)
 
-        if spec.type == enums.JobType.AUTHENTICATE:
-            run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
-        elif spec.type == enums.JobType.EXTRACT:
-            run_extract(spec, op, storage, exec_state)
-        elif spec.type == enums.JobType.LOADTABLE:
-            run_load_table(spec, op, storage)
-        elif spec.type == enums.JobType.LOAD:
-            run_load(spec, op, storage, exec_state)
-        elif spec.type == enums.JobType.DISCOVER:
-            run_discover(spec, op, storage)
-        else:
-            raise Exception("Unknown job: %s" % spec.type)
+    if spec.type == enums.JobType.AUTHENTICATE:
+        run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
+    elif spec.type == enums.JobType.EXTRACT:
+        run_extract(spec, op, storage, exec_state)
+    elif spec.type == enums.JobType.LOADTABLE:
+        run_load_table(spec, op, storage)
+    elif spec.type == enums.JobType.LOAD:
+        run_load(spec, op, storage, exec_state)
+    elif spec.type == enums.JobType.DISCOVER:
+        run_discover(spec, op, storage)
+    else:
+        raise Exception("Unknown job: %s" % spec.type)
 
 
 def run_authenticate(
@@ -114,19 +111,6 @@ def run_extract(
         )
 
 
-def run_delete_all(spec: spec.DeleteSpec, storage: Storage):
-    all_res = []
-    for i in range(len(spec.connector_name)):
-        op = setup_connector(spec.connector_name[i], spec.connector_config[i])
-        res = op.delete(spec.parameters[i])
-        all_res.append({
-            "service": spec.connector_name[i],
-            "table": spec.parameters[i],
-            "success": res,
-            })
-    utils.write_delete_results(storage, spec.output_content_path, all_res)
-    
-    
 def run_load(
     spec: LoadSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
