@@ -273,14 +273,12 @@ func (j *ProcessJobManager) Launch(
 	// For function operators, we need to set the directory path to expand the function into here.
 	var fnExtractStoragePath string
 	if spec.Type() == FunctionJobType {
-		if _, ok := spec.(*FunctionSpec); !ok {
-			return ErrInvalidJobSpec
+		if fnSpec, ok := spec.(*FunctionSpec); ok {
+			fnExtractStoragePath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
+			fnSpec.FunctionExtractPath = fnExtractStoragePath
 		}
-		fnExtractStoragePath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
-		spec.(*FunctionSpec).FunctionExtractPath = fnExtractStoragePath
+		log.Errorf("Function extract storage path: %s", spec.(*FunctionSpec).FunctionExtractPath)
 	}
-	log.Errorf("Function extract storage path: %s", fnExtractStoragePath)
-
 	cmd, err := j.mapJobTypeToCmd(name, spec)
 	if err != nil {
 		return err
@@ -328,12 +326,12 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	defer func() {
 		if len(command.fnExtractStoragePath) > 0 {
 			log.Errorf("Attempting to remove %s", command.fnExtractStoragePath)
-			if _, err = os.Stat(command.fnExtractStoragePath); os.IsExist(err) {
-				err = os.Remove(command.fnExtractStoragePath)
-				if err != nil {
-					log.Errorf("Unable to remove function extraction directory %s.", command.fnExtractStoragePath)
-				}
-			}
+			//if _, err = os.Stat(command.fnExtractStoragePath); os.IsExist(err) {
+			//	err = os.Remove(command.fnExtractStoragePath)
+			//	if err != nil {
+			//		log.Errorf("Unable to remove function extraction directory %s.", command.fnExtractStoragePath)
+			//	}
+			//}
 			log.Errorf("Removed: %s", command.fnExtractStoragePath)
 		}
 		j.deleteCmd(name)
