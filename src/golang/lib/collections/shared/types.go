@@ -22,6 +22,7 @@ type ExecutionStatus string
 const (
 	SucceededExecutionStatus ExecutionStatus = "succeeded"
 	FailedExecutionStatus    ExecutionStatus = "failed"
+	RunningExecutionStatus   ExecutionStatus = "running"
 	PendingExecutionStatus   ExecutionStatus = "pending"
 	UnknownExecutionStatus   ExecutionStatus = "unknown"
 )
@@ -45,10 +46,12 @@ type Error struct {
 }
 
 type ExecutionState struct {
-	UserLogs    *Logs           `json:"user_logs"`
-	Status      ExecutionStatus `json:"status"`
-	FailureType *FailureType    `json:"failure_type"`
-	Error       *Error          `json:"error"`
+	UserLogs *Logs           `json:"user_logs"`
+	Status   ExecutionStatus `json:"status"`
+
+	// These fields are only set if status == Failed.
+	FailureType *FailureType `json:"failure_type"`
+	Error       *Error       `json:"error"`
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {

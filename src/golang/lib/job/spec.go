@@ -60,12 +60,17 @@ type ExecutorConfiguration struct {
 
 type Spec interface {
 	Type() JobType
+	JobName() string
 }
 
 // baseSpec defines fields shared by all job specs.
 type baseSpec struct {
 	Type JobType `json:"type"  yaml:"type"`
 	Name string  `json:"name"  yaml:"name"`
+}
+
+func (bs *baseSpec) JobName() string {
+	return bs.Name
 }
 
 type WorkflowRetentionSpec struct {
@@ -81,17 +86,17 @@ type WorkflowSpec struct {
 	ExecutorConfig *ExecutorConfiguration
 }
 
-// basePythonSpec defines fields shared by all Python job specs.
+// BasePythonSpec defines fields shared by all Python job specs.
 // These Python jobs can be one-off jobs (e.g. Authenticate, Discover)
 // or Workflow operators (e.g. Function, Extract, Load).
-type basePythonSpec struct {
+type BasePythonSpec struct {
 	baseSpec
 	StorageConfig shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
 }
 
 type FunctionSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	FunctionPath        string          `json:"function_path"  yaml:"function_path"`
 	FunctionExtractPath string          `json:"function_extract_path" yaml:"function_extract_path"`
 	EntryPointFile      string          `json:"entry_point_file"  yaml:"entry_point_file"`
@@ -107,14 +112,14 @@ type FunctionSpec struct {
 }
 
 type ParamSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	Val                string `json:"val"  yaml:"val"`
 	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	MetricName         string   `json:"metric_name"  yaml:"metric_name"`
 	InputMetadataPaths []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
@@ -122,7 +127,7 @@ type SystemMetricSpec struct {
 }
 
 type ExtractSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName   integration.Service     `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
 	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
@@ -136,7 +141,7 @@ type ExtractSpec struct {
 }
 
 type LoadSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
 	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
@@ -145,7 +150,7 @@ type LoadSpec struct {
 }
 
 type LoadTableSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
 	CSV             string              `json:"csv"  yaml:"csv"`
@@ -153,13 +158,13 @@ type LoadTableSpec struct {
 }
 
 type AuthenticateSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
 }
 
 type DiscoverSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName     integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   auth.Config         `json:"connector_config"  yaml:"connector_config"`
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
@@ -251,91 +256,19 @@ func NewWorkflowSpec(
 	}
 }
 
-// NewFunctionSpec constructs a Spec for a FunctionJob.
-func NewFunctionSpec(
+func NewBasePythonSpec(
+	jobType JobType,
 	name string,
-	storageConfig *shared.StorageConfig,
+	storageConfig shared.StorageConfig,
 	metadataPath string,
-	functionPath string,
-	entryPointFile string,
-	entryPointClass string,
-	entryPointMethod string,
-	customArgs string,
-	inputContentPaths []string,
-	inputMetadataPaths []string,
-	outputContentPaths []string,
-	outputMetadataPaths []string,
-	inputArtifactTypes []artifact.Type,
-	outputArtifactTypes []artifact.Type,
-) Spec {
-	return &FunctionSpec{
-		basePythonSpec: basePythonSpec{
-			baseSpec: baseSpec{
-				Type: FunctionJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
+) BasePythonSpec {
+	return BasePythonSpec{
+		baseSpec: baseSpec{
+			Type: jobType,
+			Name: name,
 		},
-		FunctionPath:        functionPath,
-		EntryPointFile:      entryPointFile,
-		EntryPointClass:     entryPointClass,
-		EntryPointMethod:    entryPointMethod,
-		CustomArgs:          customArgs,
-		InputContentPaths:   inputContentPaths,
-		InputMetadataPaths:  inputMetadataPaths,
-		OutputContentPaths:  outputContentPaths,
-		OutputMetadataPaths: outputMetadataPaths,
-		InputArtifactTypes:  inputArtifactTypes,
-		OutputArtifactTypes: outputArtifactTypes,
-	}
-}
-
-func NewParamSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	val string,
-	outputContentPath string,
-	outputMetadataPath string,
-) Spec {
-	return &ParamSpec{
-		basePythonSpec: basePythonSpec{
-			baseSpec: baseSpec{
-				Type: ParamJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		Val:                val,
-		OutputMetadataPath: outputMetadataPath,
-		OutputContentPath:  outputContentPath,
-	}
-}
-
-func NewSystemMetricSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	metricName string,
-	inputMetadataPaths []string,
-	outputContentPath string,
-	outputMetadataPath string,
-) Spec {
-	return &SystemMetricSpec{
-		basePythonSpec: basePythonSpec{
-			baseSpec: baseSpec{
-				Type: SystemMetricJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		InputMetadataPaths: inputMetadataPaths,
-		OutputContentPath:  outputContentPath,
-		OutputMetadataPath: outputMetadataPath,
-		MetricName:         metricName,
+		StorageConfig: storageConfig,
+		MetadataPath:  metadataPath,
 	}
 }
 
@@ -347,7 +280,7 @@ func NewAuthenticateSpec(
 	connectorConfig auth.Config,
 ) Spec {
 	return &AuthenticateSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: AuthenticateJobType,
 				Name: name,
@@ -375,7 +308,7 @@ func NewExtractSpec(
 	outputMetadataPath string,
 ) Spec {
 	return &ExtractSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: ExtractJobType,
 				Name: name,
@@ -461,7 +394,7 @@ func NewLoadTableSpec(
 	inputMetadataPath string,
 ) Spec {
 	return &LoadTableSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: LoadTableJobType,
 				Name: name,
@@ -473,7 +406,7 @@ func NewLoadTableSpec(
 		ConnectorConfig: connectorConfig,
 		CSV:             csv,
 		LoadParameters: LoadSpec{
-			basePythonSpec: basePythonSpec{
+			BasePythonSpec: BasePythonSpec{
 				baseSpec: baseSpec{
 					Type: LoadJobType,
 					Name: name,
@@ -500,7 +433,7 @@ func NewDiscoverSpec(
 	outputContentPath string,
 ) Spec {
 	return &DiscoverSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: DiscoverJobType,
 				Name: name,

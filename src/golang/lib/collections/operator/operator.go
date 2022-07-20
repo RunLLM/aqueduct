@@ -31,7 +31,7 @@ type Reader interface {
 		ctx context.Context,
 		workflowId uuid.UUID,
 		db database.Database,
-	) ([]Operator, error)
+	) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error)
 	TableTouchedByWorkflow(
 		ctx context.Context,
 		workflowId string,
@@ -45,6 +45,11 @@ type Reader interface {
 		operatorId uuid.UUID,
 		db database.Database,
 	) (bool, error)
+	GetOperatorsByIntegrationId(
+		ctx context.Context,
+		integrationId uuid.UUID,
+		db database.Database,
+	) ([]DBOperator, error)
 }
 
 type Writer interface {

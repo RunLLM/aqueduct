@@ -32,7 +32,7 @@ type getWorkflowTablesArgs struct {
 }
 
 type getWorkflowTablesResponse struct {
-	LoadSpec []connector.Load `json:"table_specs"`
+	LoadDetails []operator.GetDistinctLoadOperatorsByWorkflowIdResponse `json:"table_details"`
 }
 
 type GetWorkflowTablesHandler struct {
@@ -90,6 +90,6 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	return getWorkflowTablesResponse{
-		LoadSpec: loadList,
+		LoadDetails: operatorList,
 	}, http.StatusOK, nil
 }

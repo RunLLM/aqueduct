@@ -191,6 +191,15 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["branches"]]
 
+    def list_tables(self, limit: int) -> List[Tuple[str, str]]:
+        url = self.construct_full_url(self.LIST_TABLES_ROUTE)
+        headers = utils.generate_auth_headers(self.api_key)
+        headers["limit"] = str(limit)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+
+        return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
+
     def preview(
         self,
         dag: DAG,
@@ -270,16 +279,8 @@ class APIClient:
 
     def delete_workflow(self, flow_id: str, tables_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
         headers = utils.generate_auth_headers(self.api_key)
-        body = {
-            "tables": {
-                str(integration_id): list(set([table.name 
-                                        for table in tables_to_delete[integration_id]])) 
-                for integration_id in tables_to_delete.keys()
-            },
-            "force": force
-        }
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers, json=body)
+        response = requests.post(url, headers=headers)
         utils.raise_errors(response)
         DeleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
         return DeleteWorkflowResponse

@@ -9,13 +9,15 @@ class FileStorage(Storage):
         self._config = config
 
     def put(self, key: str, value: bytes) -> None:
-        print(f"writing to file: {key}")
-        with open(self.get_full_path(key), "wb") as f:
+        path = self.get_full_path(key)
+        print(f"writing to file: {path}")
+        with open(path, "wb") as f:
             f.write(value)
 
     def get(self, key: str) -> bytes:
-        print(f"reading from file: {key}")
-        with open(self.get_full_path(key), "rb") as f:
+        path = self.get_full_path(key)
+        print(f"reading from file: {path}")
+        with open(path, "rb") as f:
             return f.read()
 
     def get_full_path(self, key: str) -> str:
