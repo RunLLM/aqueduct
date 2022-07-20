@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, DefaultDict, List, Optional, Union
 
 import __main__ as main
 import yaml
@@ -250,7 +250,7 @@ class Client:
 
     def get_workflow_writes(
         self, flow_id: Union[str, uuid.UUID]
-    ) -> defaultdict[uuid.UUID, List[Table]]:
+    ) -> DefaultDict[uuid.UUID, List[Table]]:
         """Get everything written to by the flow identified by the flow id (via `.save`).
 
         Returns:
