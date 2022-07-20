@@ -16,6 +16,7 @@ from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
+    GetWorkflowTablesResponse,
     ListWorkflowResponseEntry,
     PreviewResponse,
     RegisterWorkflowResponse,
@@ -68,6 +69,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    GET_WORKFLOW_TABLES_ROUTE = "/api/workflow/%s/tables"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -187,15 +189,6 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["branches"]]
 
-    def list_tables(self, limit: int) -> List[Tuple[str, str]]:
-        url = self.construct_full_url(self.LIST_TABLES_ROUTE)
-        headers = utils.generate_auth_headers(self.api_key)
-        headers["limit"] = str(limit)
-        resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
-
-        return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
-
     def preview(
         self,
         dag: DAG,
@@ -286,6 +279,14 @@ class APIClient:
         utils.raise_errors(resp)
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
+
+    def get_workflow_writes(self, flow_id: str) -> GetWorkflowTablesResponse:
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self.construct_full_url(self.GET_WORKFLOW_TABLES_ROUTE % flow_id)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        workflow_writes_response = GetWorkflowTablesResponse(**resp.json())
+        return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)

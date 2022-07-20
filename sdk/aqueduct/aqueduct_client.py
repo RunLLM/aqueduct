@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+from collections import defaultdict
 from typing import Any, Dict, List, Optional, Union
 
 import __main__ as main
@@ -33,6 +34,7 @@ from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
+from .integrations.table import Table
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
@@ -245,6 +247,26 @@ class Client:
         return [
             workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
         ]
+
+    def get_workflow_writes(
+        self, flow_id: Union[str, uuid.UUID]
+    ) -> defaultdict[uuid.UUID, List[Table]]:
+        """Get everything written to by the flow identified by the flow id (via `.save`).
+
+        Returns:
+            A dictionary mapping the integration id to the list of table names/storage path.
+        """
+        flow_id = parse_user_supplied_id(flow_id)
+
+        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+
+        workflow_writes = self._api_client.get_workflow_writes(flow_id).table_details
+        writes_mapping = defaultdict(list)
+        for item in workflow_writes:
+            table_object = Table(item.table_name, item.update_mode)
+            writes_mapping[item.integration_id].append(table_object)
+        return writes_mapping
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
         """Fetches a flow corresponding to the given flow id.
