@@ -304,7 +304,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	}
 
 	if status == processRunningStatus {
-		return shared.PendingExecutionStatus, nil
+		return shared.RunningExecutionStatus, nil
 	}
 
 	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success

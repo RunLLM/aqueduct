@@ -47,7 +47,7 @@ func init() {
 	registeredMigrations[4] = &migration{
 		upPostgres: _000004.Up, upSqlite: _000004.Up,
 		downPostgres: _000004.Down,
-		name:         "backfill workflow_dag.storage_config and operator.spec->>storage_path",
+		name:         "backfill workflow_dag.storage_config and operator.spec.storage_path",
 	}
 	registeredMigrations[5] = &migration{
 		upPostgres: _000005.UpPostgres, upSqlite: _000005.UpSqlite,
