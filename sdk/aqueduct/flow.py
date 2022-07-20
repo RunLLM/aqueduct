@@ -12,7 +12,7 @@ from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import generate_ui_url, parse_user_supplied_id, format_header_for_print
+from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
 class Flow:
