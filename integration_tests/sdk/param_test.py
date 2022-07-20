@@ -115,7 +115,7 @@ def test_edit_param_for_flow(client):
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
 
-    flow_name = "Edit Parameter Test Flow"
+    flow_name = generate_new_flow_name()
     flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
     flow_id = flow.id()
 

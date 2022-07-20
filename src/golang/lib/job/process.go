@@ -326,16 +326,22 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	defer func() {
 		if len(command.fnExtractStoragePath) > 0 {
 			log.Errorf("Attempting to remove %s", command.fnExtractStoragePath)
-			//if _, err = os.Stat(command.fnExtractStoragePath); os.IsExist(err) {
-			//	err = os.Remove(command.fnExtractStoragePath)
-			//	if err != nil {
-			//		log.Errorf("Unable to remove function extraction directory %s.", command.fnExtractStoragePath)
-			//	}
-			//}
+
+			// Since this is a somewhat scary recursive deleete, instead of just checking that function
+			// extract storage path exists, we check for the presence of a particular file inside this
+			// directory. This is to help make sure that we aren't deleting a folder that we aren't supposed to.
+			if _, err = os.Stat(path.Join(command.fnExtractStoragePath, "op", "model.pkl")); !os.IsNotExist(err) {
+				err = os.RemoveAll(command.fnExtractStoragePath)
+				if err != nil {
+					log.Errorf("Unable to remove function extraction directory %s. %v", command.fnExtractStoragePath, err)
+				}
+			}
 			log.Errorf("Removed: %s", command.fnExtractStoragePath)
 		}
 		j.deleteCmd(name)
 	}()
+
+	err = command.cmd.Wait()
 	if err != nil {
 		log.Errorf("Unexpected error occurred while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
 			name,
