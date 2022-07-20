@@ -44,7 +44,6 @@ const (
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
 	LoadTableJobType      JobType = "load-table"
-	DeleteTableJobType    JobType = "delete-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -324,60 +323,6 @@ func NewExtractSpec(
 		Parameters:         parameters,
 		OutputContentPath:  outputContentPath,
 		OutputMetadataPath: outputMetadataPath,
-	}
-}
-
-// NewDeleteTablesSpec constructs a Spec for a DeleteTablesJob.
-func NewDeleteTablesSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	connectorName integration.Service,
-	connectorConfig auth.Config,
-	parameters connector.LoadParams,
-	outputContentPath string,
-) Spec {
-	return &DeleteTableSpec{
-		basePythonSpec: basePythonSpec{
-			baseSpec: baseSpec{
-				Type: DeleteJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
-		OutputContentPath: outputContentPath,
-	}
-}
-
-// NewLoadSpec constructs a Spec for a LoadJob.
-func NewLoadSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	connectorName integration.Service,
-	connectorConfig auth.Config,
-	parameters connector.LoadParams,
-	inputContentPath string,
-	inputMetadataPath string,
-) Spec {
-	return &LoadSpec{
-		basePythonSpec: basePythonSpec{
-			baseSpec: baseSpec{
-				Type: LoadJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
-		InputContentPath:  inputContentPath,
-		InputMetadataPath: inputMetadataPath,
 	}
 }
 

@@ -19,7 +19,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -31,11 +30,6 @@ import (
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
-	loadSpec   []connector.Load `json:"table_specs"`
-}
-
-type deleteWorkflowInput struct {
-	LoadSpec []connector.Load `json:"table_specs"`
 }
 
 type deleteWorkflowResponse struct{}
@@ -52,7 +46,6 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
-	IntegrationReader       integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -81,12 +74,6 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	var input deleteWorkflowInput
-	err = json.NewDecoder(r.Body).Decode(&input)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
-	}
-
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
@@ -103,7 +90,6 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
-		loadSpec:   input.tables,
 	}, http.StatusOK, nil
 }
 
@@ -111,42 +97,6 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	emptyResp := deleteWorkflowResponse{}
-
-	// Check tables in list are valid
-	for _, spec := range args.loadSpec {
-		relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
-
-		integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndUser(ctx, spec.ConnectorName, args.AqContext.UserId, h.Database)
-		if err {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")
-		}
-
-		integrationId := nil
-		for _, integration := range integrations {
-			eq := reflect.DeepEqual(integration.Config, spec.ConnectorConfig)
-			if eq {
-				if integrationId == nil {
-					integrationId = integration.Id
-				} else {
-					return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpectedly retrieved multiple integration ids.")
-				}
-			}
-		}
-		if integrationId == nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Could not find integration id.")
-		}
-
-		touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.workflowId, integrationId, relationalParam.Table, h.Database)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
-		}
-		if touched == false {
-			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow")
-		}
-	}
-
-	// Delete associated tables.
-	tableResults, httpResponse, err := DeleteTable(ctx, args, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error)
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
@@ -330,52 +280,4 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	return emptyResp, http.StatusOK, nil
-}
-
-func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error) {
-	// Schedule delete table job
-	jobMetadataPath := fmt.Sprintf("delete-tables-%s", args.RequestId)
-
-	jobName := fmt.Sprintf("delete-tables-operator-%s", uuid.New().String())
-
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, vaultObject)
-	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
-	}
-
-	jobSpec := job.NewDeleteTablesSpec(
-		jobName,
-		storageConfig,
-		jobMetadataPath,
-		integrationObject.Service,
-		config,
-		loadParameters,
-		contentPath,
-	)
-	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
-	}
-
-	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollCreateInterval, pollCreateTimeout)
-	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
-	}
-
-	if jobStatus == shared.SucceededExecutionStatus {
-		// Table deletions were successful
-		return http.StatusOK, nil
-	}
-
-	// Table deletions failed, so we need to fetch the error message from storage
-	var metadata operator_result.Metadata
-	if err := utils.ReadFromStorage(
-		ctx,
-		storageConfig,
-		jobMetadataPath,
-		&metadata,
-	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
-	}
-
-	return http.StatusBadRequest, errors.Newf("Unable to delete tables: %v", metadata.Error)
 }
