@@ -1,26 +1,25 @@
 import copy
 import uuid
-from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
-
-from pydantic import BaseModel
-from aqueduct.error import (
-    InternalAqueductError,
-    InvalidUserActionException,
-    ArtifactNotFoundException,
-    InvalidUserArgumentException,
-)
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import OperatorType, TriggerType, ArtifactType
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.error import (
+    ArtifactNotFoundException,
+    InternalAqueductError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.operators import (
     Operator,
-    get_operator_type,
-    serialize_parameter_value,
     OperatorSpec,
-    get_operator_type_from_spec,
     ParamSpec,
+    get_operator_type,
+    get_operator_type_from_spec,
+    serialize_parameter_value,
 )
+from pydantic import BaseModel
 
 
 class Schedule(BaseModel):
@@ -177,6 +176,13 @@ class DAG(BaseModel):
     def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[Artifact]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
 
+    def get_artifacts_by_name(self, name: str) -> Optional[Artifact]:
+        for artifact in self.list_artifacts():
+            if artifact.name == name:
+                return artifact
+
+        return None
+
     def list_artifacts(
         self,
         on_op_ids: Optional[List[uuid.UUID]] = None,
@@ -231,6 +237,10 @@ class DAG(BaseModel):
 
         self.operators[str(op.id)].spec = spec
         self.operator_by_name[op.name].spec = spec
+
+    def update_operator_function(self, operator: Operator, serialized_function: bytes) -> None:
+        if operator in self.operators.values():
+            operator.update_serialized_function(serialized_function)
 
     def remove_operator(
         self,

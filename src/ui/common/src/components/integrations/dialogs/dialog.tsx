@@ -23,6 +23,7 @@ import {
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
+import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CSVDialog } from './csvDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -217,6 +218,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
     case 'S3':
       serviceDialog = <S3Dialog setDialogConfig={setConfig} />;
       break;
+    case 'Airflow':
+      serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
+      break;
     default:
       return null;
   }
@@ -233,7 +237,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         navigate('/integrations');
       })
       .catch((err) => {
-        setErrMsg('Unable to connect integration. ' + err.message);
+        setErrMsg(err.message);
         setIsConnecting(false);
       });
   };
@@ -264,7 +268,11 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       <DialogContent>
         {nameInput}
         {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
+        {errMsg && (
+          <Alert severity="error">
+            <pre>{errMsg}</pre>
+          </Alert>
+        )}
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={showSuccessToast}
@@ -300,5 +308,5 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
 // Helper function to check if the Integration config is completely filled
 function isConfigComplete(config: IntegrationConfig | CSVConfig): boolean {
-  return Object.values(config).every((x) => x && x !== '');
+  return Object.values(config).every((x) => x === undefined || (x && x !== ''));
 }

@@ -3,8 +3,8 @@ package github
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 )
 
 type Client interface {

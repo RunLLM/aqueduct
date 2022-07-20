@@ -1,14 +1,9 @@
 import pytest
-from aqueduct import LoadUpdateMode, metric
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
-
 from constants import SENTIMENT_SQL_QUERY
-from utils import (
-    get_integration_name,
-    run_sentiment_model,
-    generate_table_name,
-    run_flow_test,
-)
+from utils import generate_table_name, get_integration_name, run_flow_test, run_sentiment_model
+
+from aqueduct import LoadUpdateMode, metric
 
 
 def test_sql_integration_load_table(client):

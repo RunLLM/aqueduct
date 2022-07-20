@@ -81,9 +81,15 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
+    UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     PENDING = "pending"
+
+
+class FailureType(Enum, metaclass=MetaEnum):
+    SYSTEM = 1
+    USER = 2
 
 
 class SalesforceExtractType(str, Enum, metaclass=MetaEnum):

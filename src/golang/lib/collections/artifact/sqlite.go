@@ -29,7 +29,7 @@ func (w *sqliteWriterImpl) CreateArtifact(
 	description string,
 	spec *Spec,
 	db database.Database,
-) (*Artifact, error) {
+) (*DBArtifact, error) {
 	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, SpecColumn}
 	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
@@ -40,7 +40,7 @@ func (w *sqliteWriterImpl) CreateArtifact(
 
 	args := []interface{}{id, name, description, spec}
 
-	var artifact Artifact
+	var artifact DBArtifact
 	err = db.Query(ctx, &artifact, insertArtifactStmt, args...)
 	return &artifact, err
 }

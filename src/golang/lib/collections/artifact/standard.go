@@ -22,13 +22,13 @@ func (w *standardWriterImpl) CreateArtifact(
 	description string,
 	spec *Spec,
 	db database.Database,
-) (*Artifact, error) {
+) (*DBArtifact, error) {
 	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn}
 	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	args := []interface{}{name, description, spec}
 
-	var artifact Artifact
+	var artifact DBArtifact
 	err := db.Query(ctx, &artifact, insertArtifactStmt, args...)
 	return &artifact, err
 }
@@ -41,7 +41,7 @@ func (r *standardReaderImpl) GetArtifact(
 	ctx context.Context,
 	id uuid.UUID,
 	db database.Database,
-) (*Artifact, error) {
+) (*DBArtifact, error) {
 	artifacts, err := r.GetArtifacts(ctx, []uuid.UUID{id}, db)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *standardReaderImpl) GetArtifacts(
 	ctx context.Context,
 	ids []uuid.UUID,
 	db database.Database,
-) ([]Artifact, error) {
+) ([]DBArtifact, error) {
 	if len(ids) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
 	}
@@ -71,7 +71,7 @@ func (r *standardReaderImpl) GetArtifacts(
 
 	args := stmt_preparers.CastIdsListToInterfaceList(ids)
 
-	var artifacts []Artifact
+	var artifacts []DBArtifact
 	err := db.Query(ctx, &artifacts, getArtifactsQuery, args...)
 	return artifacts, err
 }
@@ -80,7 +80,7 @@ func (r *standardReaderImpl) GetArtifactsByWorkflowDagId(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
 	db database.Database,
-) ([]Artifact, error) {
+) ([]DBArtifact, error) {
 	getArtifactsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM artifact WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
@@ -91,7 +91,7 @@ func (r *standardReaderImpl) GetArtifactsByWorkflowDagId(
 		workflow_dag_edge.OperatorToArtifactType,
 	)
 
-	var artifacts []Artifact
+	var artifacts []DBArtifact
 	err := db.Query(ctx, &artifacts, getArtifactsByWorkflowDagIdQuery, workflowDagId)
 	return artifacts, err
 }
@@ -101,8 +101,8 @@ func (w *standardWriterImpl) UpdateArtifact(
 	id uuid.UUID,
 	changes map[string]interface{},
 	db database.Database,
-) (*Artifact, error) {
-	var artifact Artifact
+) (*DBArtifact, error) {
+	var artifact DBArtifact
 	err := utils.UpdateRecordToDest(ctx, &artifact, changes, tableName, IdColumn, id, allColumns(), db)
 	return &artifact, err
 }

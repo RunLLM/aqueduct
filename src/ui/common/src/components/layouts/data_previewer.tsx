@@ -7,12 +7,13 @@ import React from 'react';
 
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
+import { Error } from '../../utils/shared';
 import DataTable from '../tables/data_table';
 import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {
   previewData: ArtifactResult;
-  error?: string;
+  error?: Error;
 };
 
 const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
@@ -20,11 +21,13 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
     return null;
   }
 
-  let errorMessage: React.ReactElement;
+  const errorMsg = !!error ? `${error.tip ?? ''}\n${error.context ?? ''}` : '';
+
+  let errorComponent: React.ReactElement;
   if (error) {
-    errorMessage = (
+    errorComponent = (
       <LogBlock
-        logText={error.trim()}
+        logText={errorMsg.trim()}
         level={LogLevel.Error}
         title="An error occurred during execution"
       />
@@ -32,11 +35,10 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   } else if (previewData.result?.status === ExecutionStatus.Failed) {
     // If the execution status is marked as failed but there is no error,
     // that means something upstream from where we are failed.
-    errorMessage = (
+    errorComponent = (
       <Alert severity="warning">
         <AlertTitle>
-          {' '}
-          An upstream operator failed, ending the workflow execution.{' '}
+          An upstream operator failed, ending the workflow execution.
         </AlertTitle>
       </Alert>
     );
@@ -61,7 +63,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   if (loadingStatus && loadingStatus.loading === LoadingStatusEnum.Failed) {
-    errorMessage = (
+    errorComponent = (
       <Box>
         <Alert severity="error">
           <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
@@ -88,7 +90,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
 
   return (
     <>
-      {errorMessage}
+      {errorComponent}
       {data}
     </>
   );

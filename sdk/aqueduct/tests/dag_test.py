@@ -1,9 +1,9 @@
 from aqueduct.enums import OperatorType
 from aqueduct.tests.utils import (
-    generate_uuids,
+    _construct_dag,
     _construct_operator,
     default_artifact,
-    _construct_dag,
+    generate_uuids,
 )
 
 

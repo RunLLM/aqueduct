@@ -33,7 +33,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Bucket *"
+        label="Bucket*"
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => setBucket(event.target.value)}
@@ -43,7 +43,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="AWS Access Key ID"
+        label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => setAccessKeyId(event.target.value)}
@@ -53,7 +53,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="AWS Secret Access Key"
+        label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
         onChange={(event) => setSecretAccessKey(event.target.value)}

@@ -40,7 +40,7 @@ type getWorkflowArgs struct {
 
 type getWorkflowResponse struct {
 	// a map of workflow dags keyed by their IDs
-	WorkflowDags map[uuid.UUID]*workflow_dag.WorkflowDag `json:"workflow_dags"`
+	WorkflowDags map[uuid.UUID]*workflow_dag.DBWorkflowDag `json:"workflow_dags"`
 	// a list of dag results. Each result's `workflow_dag_id` field correspond to the
 	WorkflowDagResults []workflowDagResult `json:"workflow_dag_results"`
 	// a list of auth0Ids associated with workflow watchers
@@ -116,7 +116,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	workflowDags := make(map[uuid.UUID]*workflow_dag.WorkflowDag, len(dbWorkflowDags))
+	workflowDags := make(map[uuid.UUID]*workflow_dag.DBWorkflowDag, len(dbWorkflowDags))
 	for _, dbWorkflowDag := range dbWorkflowDags {
 		constructedDag, err := workflow_utils.ReadWorkflowDagFromDatabase(
 			ctx,

@@ -1,20 +1,20 @@
-from typing import List
+import argparse
 import json
 import os
 import subprocess
-from pathlib import Path
-import argparse
-from aqueduct import Client
 import time
+from pathlib import Path
+from typing import List
 
 from aqueduct.error import InvalidUserArgumentException
+
+from aqueduct import Client, get_apikey
 
 """
 See README.md for details about this script.
 """
 
 # These are the prefixes that we use to identify and extract client credentials from the notebook.
-API_KEY_CODE_SNIPPET = "api_key = "
 SERVER_ADDRESS_CODE_SNIPPET = "address = "
 
 parser = argparse.ArgumentParser()
@@ -24,12 +24,6 @@ parser.add_argument(
     required=False,
     default=None,
     help="The flow id that the notebook publishes. If not supplied, we will attempt to infer from the code.",
-)
-parser.add_argument(
-    "--api_key",
-    required=False,
-    default=None,
-    help="The api_key to use when running the notebook, instead of the notebook value.",
 )
 parser.add_argument(
     "--server_address",
@@ -142,14 +136,6 @@ def extract_credential(credential_prefix: str) -> str:
     return code[start_idx + len(credential_prefix) : end_idx].strip('"')
 
 
-# Fetch the client credentials from within the notebook in order to instantiate the same client in this script.
-# Overwrite the api_key value if supplied as a command line argument.
-api_key = extract_credential(API_KEY_CODE_SNIPPET)
-if args.api_key is not None:
-    new_api_key = args.api_key.strip('"')
-    code = code.replace(api_key, new_api_key)
-    api_key = new_api_key
-
 server_address = extract_credential(SERVER_ADDRESS_CODE_SNIPPET)
 if args.server_address is not None:
     new_server_address = args.server_address.strip('"')
@@ -185,7 +171,7 @@ print("Notebook ran successfully!\n")
 
 # Track the flows that were published by the workflow.
 # They must have at least one successful run since we executed the notebook.
-client = Client(api_key, server_address)
+client = Client(get_apikey(), server_address)
 if args.flow_id is None:
     flow_ids = infer_flow_ids_from_stdout(client, code_block_list, stdout)
 else:

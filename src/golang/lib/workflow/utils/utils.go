@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -29,7 +27,7 @@ type WorkflowStoragePaths struct {
 	ArtifactMetadataPaths map[uuid.UUID]string
 }
 
-func GenerateWorkflowStoragePaths(dag *workflow_dag.WorkflowDag) *WorkflowStoragePaths {
+func GenerateWorkflowStoragePaths(dag *workflow_dag.DBWorkflowDag) *WorkflowStoragePaths {
 	workflowStoragePaths := WorkflowStoragePaths{
 		OperatorMetadataPaths: make(map[uuid.UUID]string),
 		ArtifactPaths:         make(map[uuid.UUID]string),
@@ -79,13 +77,22 @@ func CleanupWorkflowStorageFiles(
 	CleanupStorageFiles(ctx, storageConfig, paths)
 }
 
+func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
+	CleanupStorageFiles(ctx, storageConfig, []string{key})
+}
+
 func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfig, keys []string) {
 	for _, key := range keys {
 		err := storage.NewStorage(storageConfig).Delete(ctx, key)
 		if err != nil {
-			log.Errorf("Unable to clean up storage file with key: %s. %v.", key, err)
+			log.Errorf("Unable to clean up storage file with key: %s. %v. \n %s", key, err, errors.New("").GetStack())
 		}
 	}
+}
+
+func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
+	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
+	return err != storage.ErrObjectDoesNotExist
 }
 
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
@@ -105,7 +112,7 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 
 func WriteWorkflowDagToDatabase(
 	ctx context.Context,
-	dag *workflow_dag.WorkflowDag,
+	dag *workflow_dag.DBWorkflowDag,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
 	workflowDagWriter workflow_dag.Writer,
@@ -241,7 +248,7 @@ func ReadWorkflowDagFromDatabase(
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
+) (*workflow_dag.DBWorkflowDag, error) {
 	workflowDag, err := workflowDagReader.GetWorkflowDag(ctx, workflowDagId, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow dag from the database.")
@@ -254,8 +261,8 @@ func ReadWorkflowDagFromDatabase(
 
 	workflowDag.Metadata = dbWorkflow
 
-	workflowDag.Operators = make(map[uuid.UUID]operator.Operator)
-	workflowDag.Artifacts = make(map[uuid.UUID]artifact.Artifact)
+	workflowDag.Operators = make(map[uuid.UUID]operator.DBOperator)
+	workflowDag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
 
 	// Populate nodes for operators and artifacts.
 	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, workflowDag.Id, db)
@@ -324,7 +331,7 @@ func ReadLatestWorkflowDagFromDatabase(
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
+) (*workflow_dag.DBWorkflowDag, error) {
 	workflowDag, err := workflowDagReader.GetLatestWorkflowDag(ctx, workflowId, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read the latest workflow dag from the database.")
@@ -351,7 +358,7 @@ func ReadLatestWorkflowDagFromDatabase(
 func UpdateWorkflowDagToLatest(
 	ctx context.Context,
 	githubClient github.Client,
-	workflowDag *workflow_dag.WorkflowDag,
+	workflowDag *workflow_dag.DBWorkflowDag,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
 	workflowDagReader workflow_dag.Reader,
@@ -363,8 +370,8 @@ func UpdateWorkflowDagToLatest(
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
 	db database.Database,
-) (*workflow_dag.WorkflowDag, error) {
-	operatorsToReplace := make([]operator.Operator, 0, len(workflowDag.Operators))
+) (*workflow_dag.DBWorkflowDag, error) {
+	operatorsToReplace := make([]operator.DBOperator, 0, len(workflowDag.Operators))
 	for _, op := range workflowDag.Operators {
 		opUpdated, err := github.PullOperator(
 			ctx,
@@ -451,123 +458,5 @@ func UpdateWorkflowDagResultMetadata(
 				"changes": changes,
 			},
 		).Errorf("Unable to update workflow dag result metadata: %v", err)
-	}
-}
-
-// This helper function is called after executing each operator for non-preview execution.
-// It pulls artifact results from storage and writes the operator and its output artifact results into the database.
-// It logs any error that occurs during these steps.
-func UpdateOperatorAndArtifactResults(
-	ctx context.Context,
-	operator *operator.Operator,
-	storageConfig *shared.StorageConfig,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
-	artifactMetadataPaths map[uuid.UUID]string,
-	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
-	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
-) {
-	artifactStatuses := make(map[uuid.UUID]shared.ExecutionStatus, len(operator.Outputs))
-	artifactIdToArtifactMetadata := make(map[uuid.UUID]*artifact_result.Metadata, len(operator.Outputs))
-	// Initialize the map.
-	for _, artifactId := range operator.Outputs {
-		artifactStatuses[artifactId] = shared.FailedExecutionStatus
-		artifactIdToArtifactMetadata[artifactId] = nil
-	}
-
-	if operatorStatus == shared.SucceededExecutionStatus {
-		for _, artifactId := range operator.Outputs {
-			var artifactResultMetadata artifact_result.Metadata
-			err := ReadFromStorage(
-				ctx,
-				storageConfig,
-				artifactMetadataPaths[artifactId],
-				&artifactResultMetadata,
-			)
-			if err != nil {
-				log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
-				continue
-			}
-
-			artifactIdToArtifactMetadata[artifactId] = &artifactResultMetadata
-			artifactStatuses[artifactId] = shared.SucceededExecutionStatus
-		}
-	}
-
-	updateOperatorAndArtifactResults(
-		ctx,
-		operator,
-		operatorStatus,
-		operatorResultMetadata,
-		artifactStatuses,
-		artifactIdToArtifactMetadata,
-		operatorToOperatorResult,
-		artifactToArtifactResult,
-		operatorResultWriter,
-		artifactResultWriter,
-		db,
-	)
-}
-
-func updateOperatorAndArtifactResults(
-	ctx context.Context,
-	operator *operator.Operator,
-	operatorStatus shared.ExecutionStatus,
-	operatorResultMetadata *operator_result.Metadata,
-	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
-	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
-	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
-	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
-) {
-	changes := map[string]interface{}{
-		operator_result.StatusColumn: operatorStatus,
-	}
-	if operatorResultMetadata != nil {
-		changes[operator_result.MetadataColumn] = operatorResultMetadata
-	}
-
-	_, err := operatorResultWriter.UpdateOperatorResult(
-		ctx,
-		operatorToOperatorResult[operator.Id],
-		changes,
-		db,
-	)
-	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update operator result metadata: %v", err)
-	}
-
-	// Write the artifact results.
-	for _, artifactId := range operator.Outputs {
-		artifactResultMap := map[string]interface{}{
-			artifact_result.StatusColumn: artifactStatuses[artifactId],
-		}
-
-		if artifactResultsMetadata[artifactId] != nil {
-			artifactResultMap[artifact_result.MetadataColumn] = artifactResultsMetadata[artifactId]
-		}
-
-		_, err := artifactResultWriter.UpdateArtifactResult(
-			ctx,
-			artifactToArtifactResult[artifactId],
-			artifactResultMap,
-			db,
-		)
-		if err != nil {
-			log.WithFields(
-				log.Fields{
-					"changes": artifactResultMap,
-				},
-			).Errorf("Unable to update artifact result metadata: %v", err)
-		}
 	}
 }

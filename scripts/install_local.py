@@ -17,16 +17,15 @@ import os
 import shutil
 import subprocess
 import sys
-
 from os import listdir
-from os.path import isfile, join, isdir
+from os.path import isdir, isfile, join
 
 base_directory = join(os.environ["HOME"], ".aqueduct")
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "9"
+SCHEMA_VERSION = "12"
 
 
 def execute_command(args, cwd=None):
@@ -130,9 +129,13 @@ if __name__ == "__main__":
         # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
         # solution at the moment.
         if isdir(join(os.sep, "home", "ec2-user", "SageMaker")):
-            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "sagemaker"), ui_directory, dirs_exist_ok=True)
+            shutil.copytree(
+                join(cwd, "src", "ui", "app", "dist", "sagemaker"), ui_directory, dirs_exist_ok=True
+            )
         else:
-            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "default"), ui_directory, dirs_exist_ok=True)
+            shutil.copytree(
+                join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
+            )
 
     # Install the local SDK.
     if args.update_sdk:

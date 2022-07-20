@@ -2,10 +2,10 @@ package operator_test
 
 import (
 	"encoding/json"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestSerializingAndDeserializingOperator(t *testing.T) {
 	id := uuid.New()
 
-	op := operator.Operator{
+	op := operator.DBOperator{
 		Id:   id,
 		Name: "test",
 		Spec: *operator.NewSpecFromFunction(
@@ -28,7 +28,7 @@ func TestSerializingAndDeserializingOperator(t *testing.T) {
 	rawOp, err := json.Marshal(op)
 	require.Nil(t, err)
 
-	var reconstructedOp operator.Operator
+	var reconstructedOp operator.DBOperator
 	err = json.Unmarshal(rawOp, &reconstructedOp)
 	require.Nil(t, err)
 	require.True(t, reconstructedOp.Spec.IsFunction())

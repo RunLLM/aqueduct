@@ -29,8 +29,13 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
       port: port,
       database: database,
       username: username,
-      password: password,
+      password: undefined,
     };
+
+    if (password && password !== '') {
+      config['password'] = password;
+    }
+
     setDialogConfig(config);
   }, [host, port, database, username, password]);
 
@@ -78,8 +83,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
 
       <IntegrationTextInputField
         spellCheck={false}
-        required={true}
-        label="Password *"
+        required={false}
+        label="Password"
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"

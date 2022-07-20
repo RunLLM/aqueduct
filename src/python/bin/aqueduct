@@ -2,29 +2,29 @@
 
 import argparse
 import os
-import string
+import platform
 import random
-import subprocess
-import sys
-import platform
 import shutil
-import requests
-import zipfile
-import platform
 import socket
+import string
 import subprocess
 import sys
 import time
-import yaml
-import shutil
+import zipfile
 
 import distro
+import requests
+import yaml
+
+SCHEMA_VERION = "12"
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.4"
+package_version = "0.0.5"
+aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
+
 default_server_port = 8080
 
 s3_server_prefix = (
@@ -177,7 +177,7 @@ def update_server_version():
     update_executable_permissions()
 
     execute_command(
-        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"]
+        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", SCHEMA_VERION]
     )
 
 
@@ -365,6 +365,48 @@ def clear():
 def version():
     print(package_version)
 
+def read_config():
+    with open(os.path.join(server_directory, "config", "config.yml"), 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
+def write_config(config):
+    with open(os.path.join(server_directory, "config", "config.yml"), 'w') as f:
+        yaml.dump(config, f)
+
+def use_local_storage(path):
+    config = read_config()
+
+    path = os.path.join(server_directory, path)
+    
+    file_config = {"directory": path}
+    config["storageConfig"] = {
+        "type": "file",
+        "fileConfig": file_config,
+    }
+
+    write_config(config)
+
+def use_s3_storage(region, bucket, creds_path, creds_profile):
+    if not bucket.startswith("s3://"):
+        print('S3 path is malformed, it should be of the form s3://')
+        sys.exit(1)
+        
+    config = read_config()
+    
+    s3_config = {
+        "region": region,
+        "bucket": bucket,
+        "credentialsPath": creds_path,
+        "credentialsProfile": creds_profile,
+    }
+    config["storageConfig"] = {
+        "type": "s3",
+        "s3Config": s3_config,
+    }
+
+    write_config(config)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='The Aqueduct CLI')
     subparsers = parser.add_subparsers(dest="command")
@@ -407,7 +449,40 @@ if __name__ == "__main__":
     clear_args = subparsers.add_parser('clear', help="Erase your Aqueduct installation.")
     version_args = subparsers.add_parser('version', help="Retrieve the package version number.")
 
+    storage_args = subparsers.add_parser('storage', help=
+                               '''This changes the storage location for any new workflows created.
+                               The change will take affect once you restart the Aqueduct server.
+                               We are currently working on adding support for modifying the storage
+                               location of existing workflows.
+                               ''')
+    storage_args.add_argument('--use', dest="storage_use", 
+                                choices=["local", "s3"], required=True,
+                                help="The following storage locations are supported: local, s3"
+                            )
+    storage_args.add_argument('--path', dest="storage_path", required=True, 
+                                help=
+                                '''For local storage this is the filepath of the storage directory.
+                                This should be relative to the Aqueduct installation path.
+                                For S3 storage this is the S3 path, which should be of the form:
+                                s3://bucket/path/to/folder
+                                '''
+                            )
+    storage_args.add_argument('--region', dest="storage_s3_region", 
+                                help="The AWS S3 region where the bucket is located."
+                            )
+    storage_args.add_argument('--credentials', dest="storage_s3_creds", 
+                                default=aws_credentials_path,
+                                help='''The filepath to the AWS credentials to use.
+                                It defaults to ~/.aws/credentials'''
+                            )
+    storage_args.add_argument('--profile', dest="storage_s3_profile",
+                                default="default",
+                                help='''The AWS credentials profile to use. It uses default 
+                                if none is provided.'''
+                            )
+
     args = parser.parse_args()
+    sysargs = sys.argv
 
     if args.command == "start":
         try:
@@ -436,6 +511,29 @@ if __name__ == "__main__":
         clear()
     elif args.command == "version":
         version()
+    elif args.command == "storage":
+        if args.storage_use == "local":
+            # Ensure that S3 args are not provided for local storage
+            s3_args = ["--region", "--credentials", "--profile"]
+            for s3_arg in s3_args:
+                if s3_arg in sysargs:
+                    print("{} should not be used with local storage".format(s3_arg))
+                    sys.exit(1)
+            use_local_storage(args.storage_path)
+        elif args.storage_use == "s3":
+            # Ensure that required S3 args are provided
+            if "--region" not in sysargs:
+                print("--region is required when using S3 storage")
+                sys.exit(1)
+            use_s3_storage(
+                args.storage_s3_region, 
+                args.storage_path, 
+                args.storage_s3_creds, 
+                args.storage_s3_profile,
+            )
+        else:
+            print("Unsupported storage type: ", args.storage_use)
+            sys.exit(1)
     elif args.command is None:
         parser.print_help()
     else:

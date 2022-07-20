@@ -2,14 +2,14 @@ package tests
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact/table"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )

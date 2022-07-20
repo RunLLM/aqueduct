@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,8 +10,6 @@ import (
 )
 
 const (
-	DefaultFileStorageDir = "storage/"
-
 	filePermissionCode = 0o664
 )
 
@@ -25,7 +24,11 @@ func newFileStorage(fileConfig *shared.FileConfig) *fileStorage {
 }
 
 func (f *fileStorage) Get(ctx context.Context, key string) ([]byte, error) {
-	return os.ReadFile(f.getFullPath(key))
+	path := f.getFullPath(key)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil, ErrObjectDoesNotExist
+	}
+	return os.ReadFile(path)
 }
 
 func (f *fileStorage) Put(ctx context.Context, key string, value []byte) error {
