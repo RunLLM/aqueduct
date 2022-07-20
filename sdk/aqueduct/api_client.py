@@ -1,6 +1,7 @@
 import io
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple
+import uuid
+from typing import IO, Any, Dict, DefaultDict, List, Optional, Tuple
 
 import requests
 from aqueduct.dag import DAG
@@ -12,6 +13,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.table import Table
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
@@ -266,10 +268,14 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(self, flow_id: str, tables_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
         headers = utils.generate_auth_headers(self.api_key)
+        body = {
+            "tables": {str(integration_id):[table.to_dict() for table in tables_to_delete[integration_id]] for integration_id in tables_to_delete.keys()}
+            "force": force
+        }
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
