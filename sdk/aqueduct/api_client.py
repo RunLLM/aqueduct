@@ -37,7 +37,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
             If something unexpected happened in our system.
     """
     # There can be multiple operator failures, one for each entry.
-    op_errmsgs: List[str] = []
+    op_err_msgs: List[str] = []
 
     # Creates the message to show the user in the error.
     def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
@@ -64,7 +64,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
                 print("")
 
             if curr_op_result.error is not None:
-                op_errmsgs.append(_construct_failure_error_msg(curr_op.name, curr_op_result))
+                op_err_msgs.append(_construct_failure_error_msg(curr_op.name, curr_op_result))
 
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
@@ -81,8 +81,8 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
-        failureErrMsg = "\n".join(op_errmsgs)
-        raise AqueductError(f"Preview Execution Failed:\n" f"\n" f"{failureErrMsg}\n")
+        failure_err_msg = "\n".join(op_err_msgs)
+        raise AqueductError(f"Preview Execution Failed:\n\n{failure_err_msg}\n")
 
 
 class APIClient:
