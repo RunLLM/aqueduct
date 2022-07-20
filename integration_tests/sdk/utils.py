@@ -161,7 +161,7 @@ def wait_for_flow_runs(
         statuses = [flow_run["status"] for flow_run in flow_runs]
 
         # Continue checking as long as there are still runs pending.
-        if any(status == str(ExecutionStatus.PENDING) for status in statuses):
+        if any(status == ExecutionStatus.PENDING for status in statuses):
             continue
 
         if len(flow_runs) < num_runs:
@@ -169,12 +169,12 @@ def wait_for_flow_runs(
 
         if expect_success:
             assert all(
-                status == str(ExecutionStatus.SUCCEEDED) for status in statuses
+                status == ExecutionStatus.SUCCEEDED for status in statuses
             ), "At least one workflow run failed!"
         else:
             # We expect them all to fail.
             assert all(
-                status == str(ExecutionStatus.FAILED) for status in statuses
+                status == ExecutionStatus.FAILED for status in statuses
             ), "At least one workflow succeeded!"
 
         print(
