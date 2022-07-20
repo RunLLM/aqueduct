@@ -96,7 +96,7 @@ class TestBackend:
     def test_sdk_deleteworkflow_invalid(self):
         tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
         integration_id = list(tables.keys())[0]
-        tables[integration_id][0].name = 'I_DON_T_EXIST'
+        tables[integration_id][0].table = 'I_DON_T_EXIST'
         tables[integration_id] = [tables[integration_id][0]]
         print(tables)
         # data = self.client.delete_flow(self.flows["changing_saves.py"], )
