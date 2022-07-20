@@ -60,7 +60,7 @@ class TestBackend:
         data = self.get_response_class(endpoint).json()["table_details"]
 
         assert len(data) == 3
-
+        
         # table_name, update_mode
         data_set = set(
             [
@@ -91,4 +91,4 @@ class TestBackend:
         )
         integration_id = list(data.keys())[0]
         assert len(data[integration_id]) == 3
-        assert set([(item.table, item.update_mode) for item in data[integration_id]]) == data_set
+        assert set([(item.name, item.update_mode) for item in data[integration_id]]) == data_set

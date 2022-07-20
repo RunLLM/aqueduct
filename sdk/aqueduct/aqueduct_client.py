@@ -267,7 +267,7 @@ class Client:
         workflow_writes = self._api_client.get_workflow_writes(flow_id).table_details
         writes_mapping = defaultdict(list)
         for item in workflow_writes:
-            written_object = WrittenObject(item.name, item.update_mode)
+            written_object = WrittenObject(item.table_name, item.update_mode)
             writes_mapping[item.integration_id].append(written_object)
         return writes_mapping
 
