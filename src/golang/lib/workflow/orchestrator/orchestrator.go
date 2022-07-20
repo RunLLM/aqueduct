@@ -4,504 +4,274 @@ import (
 	"context"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	defaultTimeout = 15 * time.Minute
+	DefaultExecutionTimeout = 15 * time.Minute
+	DefaultCleanupTimeout   = 2 * time.Minute
 )
 
 var (
-	ErrIncorrectOperatorsScheduled = errors.New("Incorrect number of operators scheduled.")
-	ErrOpExecSystemFailure         = errors.New("Operator execution failed due to system error.")
-	ErrOpExecBlockingUserFailure   = errors.New("Operator execution failed due to user error.")
-	ErrInvalidOpId                 = errors.New("Invalid operator ID.")
-	ErrInvalidArtifactId           = errors.New("Invalid artifact ID.")
+	ErrOpExecSystemFailure       = errors.New("Operator execution failed due to system error.")
+	ErrOpExecBlockingUserFailure = errors.New("Operator execution failed due to user error.")
 )
 
-func initializeOrchestration(
-	operators map[uuid.UUID]operator.DBOperator,
-	ready map[uuid.UUID]bool,
-	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
-	artifactToDownstreamOperatorIds map[uuid.UUID][]uuid.UUID,
-) {
-	// This block does an initial scan of all operators and set the initial state for the orchestration.
-	// Input data structures should be empty and will be updated throughout initialization:
-	// - set upstream artifact counts for all operators
-	// - put all operators without any upstream to 'ready to schedule' set
-	// - set downstream operator list for all artifacts
-	for id, operator := range operators {
-		operatorDependencies[id] = make(map[uuid.UUID]bool, len(operator.Inputs))
-		for _, artifactId := range operator.Inputs {
-			operatorDependencies[id][artifactId] = true
+type Orchestrator interface {
+	Execute(ctx context.Context) (shared.ExecutionStatus, error)
+
+	// Finish is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
+	Finish(ctx context.Context)
+}
+
+type AqueductTimeConfig struct {
+	// Configures exactly long we wait before polling again on an in-progress operator.
+	OperatorPollInterval time.Duration
+
+	// Configures the maximum amount of time we wait for execution to finish before aborting the run.
+	ExecTimeout time.Duration
+
+	// Configures the maximum amount of time we want for any leftover, in-progress operators to complete,
+	// after execution has already finished. Once this time is exceeded, we'll give up.
+	CleanupTimeout time.Duration
+}
+
+type aqOrchestrator struct {
+	dag        dag.WorkflowDag
+	jobManager job.JobManager
+	timeConfig *AqueductTimeConfig
+
+	// Maps every operator to the number of its immediate dependencies
+	// that still needs to be computed. When this hits 0 during execution,
+	// then the operator is ready to be scheduled.
+	opToDependencyCount map[uuid.UUID]int
+	inProgressOps       map[uuid.UUID]operator.Operator
+	completedOps        map[uuid.UUID]operator.Operator
+	status              shared.ExecutionStatus
+
+	shouldPersistResults bool
+}
+
+func NewAqOrchestrator(
+	dag dag.WorkflowDag,
+	jobManager job.JobManager,
+	timeConfig AqueductTimeConfig,
+	shouldPersistResults bool,
+) (Orchestrator, error) {
+	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
+	for _, op := range dag.Operators() {
+		inputs, err := dag.OperatorInputs(op)
+		if err != nil {
+			return nil, err
+		}
+		opToDependencyCount[op.ID()] = len(inputs)
+	}
+
+	return &aqOrchestrator{
+		dag:                  dag,
+		jobManager:           jobManager,
+		timeConfig:           &timeConfig,
+		opToDependencyCount:  opToDependencyCount,
+		inProgressOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		completedOps:         make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		status:               shared.PendingExecutionStatus,
+		shouldPersistResults: shouldPersistResults,
+	}, nil
+}
+
+func (orch *aqOrchestrator) Execute(
+	ctx context.Context,
+) (shared.ExecutionStatus, error) {
+	if orch.shouldPersistResults {
+		err := orch.dag.InitializeResults(ctx)
+		if err != nil {
+			return shared.FailedExecutionStatus, err
 		}
 
-		if len(operator.Inputs) == 0 {
-			ready[id] = true
-		}
-
-		for _, artifactId := range operator.Inputs {
-			downstreamOps, ok := artifactToDownstreamOperatorIds[artifactId]
-			if !ok {
-				downstreamOps = make([]uuid.UUID, 0, len(operators))
-				artifactToDownstreamOperatorIds[artifactId] = downstreamOps
+		// Make sure to persist the dag results on exit.
+		defer func() {
+			err = orch.dag.PersistResult(ctx, orch.status)
+			if err != nil {
+				log.Errorf("Error when persisting dag resutls: %v", err)
 			}
+		}()
+	}
 
-			artifactToDownstreamOperatorIds[artifactId] = append(downstreamOps, id)
+	orch.status = shared.RunningExecutionStatus
+	err := orch.execute(
+		ctx,
+		orch.timeConfig,
+		orch.jobManager,
+		orch.shouldPersistResults,
+	)
+	if err != nil {
+		orch.status = shared.FailedExecutionStatus
+	} else {
+		orch.status = shared.SucceededExecutionStatus
+	}
+	return orch.status, err
+}
+
+func waitForInProgressOperators(
+	ctx context.Context,
+	inProgressOps map[uuid.UUID]operator.Operator,
+	pollInterval time.Duration,
+	timeout time.Duration,
+) {
+	start := time.Now()
+	for len(inProgressOps) > 0 {
+		if time.Since(start) > timeout {
+			return
 		}
+
+		for opID, op := range inProgressOps {
+			execState, err := op.GetExecState(ctx)
+
+			// Resolve any jobs that aren't actively running or failed. We don't are if they succeeded or failed,
+			// since this is called after orchestration exits.
+			if err != nil || execState.Status != shared.RunningExecutionStatus {
+				delete(inProgressOps, opID)
+			}
+		}
+		time.Sleep(pollInterval)
 	}
 }
 
-// `updateCompletedOp` checks the status of actively running operators and updates
-// their status according to the execution result. It returns a bool indicating
-// whether the workflow execution should stop due to an error in the user code, and
-// any internal system error occurred during the execution.
-func updateCompletedOp(
+func opFailureError(failureType shared.FailureType, op operator.Operator) error {
+	if failureType == shared.SystemFailure {
+		return ErrOpExecSystemFailure
+	} else if failureType == shared.UserFailure {
+		log.Errorf("Failed due to user error. Operator name %s, id %s.", op.Name(), op.ID())
+		return ErrOpExecBlockingUserFailure
+	}
+	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
+}
+
+func (orch *aqOrchestrator) execute(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.DBOperator,
-	ready map[uuid.UUID]bool,
-	active map[uuid.UUID]bool,
-	operatorDependencies map[uuid.UUID]map[uuid.UUID]bool,
-	artifactToDownstreamOperatorIds map[uuid.UUID][]uuid.UUID,
-	operatorIdToJobId map[uuid.UUID]string,
-	storageConfig *shared.StorageConfig,
-	artifactMetadataPaths map[uuid.UUID]string,
-	operatorMetadataPaths map[uuid.UUID]string,
-	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
-	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
+	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
-	isPreview bool,
+	shouldPersistResults bool,
 ) error {
-	completedIds := make([]uuid.UUID, 0, len(active))
-	for id := range active {
-		jobStatus, err := jobManager.Poll(ctx, operatorIdToJobId[id])
-		if err != nil {
-			return err
+	// These are the operators of immediate interest. They either need to be scheduled or polled on.
+	inProgressOps := orch.inProgressOps
+	completedOps := orch.completedOps
+	dag := orch.dag
+	opToDependencyCount := orch.opToDependencyCount
+
+	// Kick off execution by starting all operators that don't have any inputs.
+	for _, op := range dag.Operators() {
+		if opToDependencyCount[op.ID()] == 0 {
+			inProgressOps[op.ID()] = op
+		}
+	}
+
+	if len(inProgressOps) == 0 {
+		return errors.Newf("No initial operators to schedule.")
+	}
+
+	// Wait a little bit for all active operators to finish before exiting on failure.
+	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+
+	start := time.Now()
+
+	for len(inProgressOps) > 0 {
+		if time.Since(start) > timeConfig.ExecTimeout {
+			return errors.New("Reached timeout waiting for workflow to complete.")
 		}
 
-		if jobStatus != shared.PendingExecutionStatus {
-			op, ok := operators[id]
-			if !ok {
-				return errors.Newf("Error during exeuction, invalid operator ID %s", id)
+		for _, op := range inProgressOps {
+			execState, err := op.GetExecState(ctx)
+			if err != nil {
+				return err
 			}
 
-			execStatus := scheduler.CheckOperatorExecutionStatus(
-				ctx,
-				jobStatus,
-				storageConfig,
-				operatorMetadataPaths[op.Id],
-			)
-
-			if !isPreview {
-				utils.UpdateOperatorAndArtifactResults(
-					ctx,
-					&op,
-					storageConfig,
-					execStatus,
-					artifactMetadataPaths,
-					operatorToOperatorResult,
-					artifactToArtifactResult,
-					operatorResultWriter,
-					artifactResultWriter,
-					db,
-				)
+			if execState.Status == shared.PendingExecutionStatus {
+				spec := op.JobSpec()
+				err = jobManager.Launch(ctx, spec.JobName(), spec)
+				if err != nil {
+					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
+				}
+				continue
+			} else if execState.Status == shared.RunningExecutionStatus {
+				continue
+			}
+			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
 
-			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.SystemFailure {
-				return ErrOpExecSystemFailure
+			// From here on we can assume that the operator has terminated.
+			if shouldPersistResults {
+				err = op.PersistResult(ctx)
+				if err != nil {
+					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+				}
 			}
 
-			if execStatus.Status == shared.FailedExecutionStatus && *execStatus.FailureType == shared.UserFailure {
-				// There is an user error when executing the operator.
-				log.Errorf("Failed due to user error. Operator name %s, id %s", op.Name, op.Id)
-				return ErrOpExecBlockingUserFailure
+			if execState.Status == shared.FailedExecutionStatus {
+				return opFailureError(*execState.FailureType, op)
 			}
 
-			completedIds = append(completedIds, id)
+			// The operator has succeeded! Add the operator to the completed stack, and remove it from the in-progress one.
+			if _, ok := completedOps[op.ID()]; ok {
+				return errors.Newf("Internal error: operator %s was completed twice.", op.Name())
+			}
+			completedOps[op.ID()] = op
+			delete(inProgressOps, op.ID())
 
-			for _, artifactId := range op.Outputs {
-				if downstreampOps, ok := artifactToDownstreamOperatorIds[artifactId]; ok {
-					for _, downstreamOpId := range downstreampOps {
-						if _, ok := operatorDependencies[downstreamOpId][artifactId]; !ok {
-							return ErrInvalidArtifactId
-						}
+			outputArtifacts, err := dag.OperatorOutputs(op)
+			if err != nil {
+				return err
+			}
+			for _, outputArtifact := range outputArtifacts {
+				nextOps, err := dag.OperatorsOnArtifact(outputArtifact)
+				if err != nil {
+					return err
+				}
 
-						delete(operatorDependencies[downstreamOpId], artifactId)
-						if len(operatorDependencies[downstreamOpId]) == 0 {
-							ready[downstreamOpId] = true
+				for _, nextOp := range nextOps {
+					// Decrement the active dependency count for every downstream operator.
+					// Once this count reaches zero, we can schedule the next operator.
+					opToDependencyCount[nextOp.ID()] -= 1
+
+					if opToDependencyCount[nextOp.ID()] < 0 {
+						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
+					}
+
+					if opToDependencyCount[nextOp.ID()] == 0 {
+						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
+						// matter because we only keep and update a single copy an on operator.
+						if _, ok := inProgressOps[nextOp.ID()]; !ok {
+							inProgressOps[nextOp.ID()] = nextOp
 						}
 					}
 				}
 			}
+
+			time.Sleep(timeConfig.OperatorPollInterval)
 		}
 	}
 
-	for _, id := range completedIds {
-		delete(active, id)
+	if len(completedOps) != len(dag.Operators()) {
+		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
 	}
 
+	for opID, depCount := range opToDependencyCount {
+		if depCount != 0 {
+			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
+		}
+	}
 	return nil
 }
 
-func scheduleOperators(
-	ctx context.Context,
-	operators map[uuid.UUID]operator.DBOperator,
-	artifacts map[uuid.UUID]artifact.DBArtifact,
-	ready map[uuid.UUID]bool,
-	active map[uuid.UUID]bool,
-	operatorIdToJobId map[uuid.UUID]string,
-	storageConfig *shared.StorageConfig,
-	artifactContentPaths map[uuid.UUID]string,
-	artifactMetadataPaths map[uuid.UUID]string,
-	operatorMetadataPaths map[uuid.UUID]string,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-) error {
-	for id := range ready {
-		op, ok := operators[id]
-		if !ok {
-			return ErrInvalidOpId
-		}
-
-		operatorMetadataPath, ok := operatorMetadataPaths[id]
-		if !ok {
-			return ErrInvalidOpId
-		}
-
-		inputArtifacts := make([]artifact.DBArtifact, 0, len(op.Inputs))
-		inputContentPaths := make([]string, 0, len(op.Inputs))
-		inputMetadataPaths := make([]string, 0, len(op.Inputs))
-		for _, inputArtifactId := range op.Inputs {
-			inputArtifact, ok := artifacts[inputArtifactId]
-			if !ok {
-				return errors.Newf("Cannot find artifact with ID %v", inputArtifactId)
-			}
-
-			inputArtifacts = append(inputArtifacts, inputArtifact)
-			inputContentPaths = append(inputContentPaths, artifactContentPaths[inputArtifact.Id])
-			inputMetadataPaths = append(inputMetadataPaths, artifactMetadataPaths[inputArtifact.Id])
-		}
-
-		outputArtifacts := make([]artifact.DBArtifact, 0, len(op.Outputs))
-		outputContentPaths := make([]string, 0, len(op.Outputs))
-		outputMetadataPaths := make([]string, 0, len(op.Outputs))
-		for _, outputArtifactId := range op.Outputs {
-			outputArtifact, ok := artifacts[outputArtifactId]
-			if !ok {
-				return errors.Newf("Cannot find artifact with ID %v", outputArtifactId)
-			}
-
-			outputArtifacts = append(outputArtifacts, outputArtifact)
-			outputContentPaths = append(outputContentPaths, artifactContentPaths[outputArtifact.Id])
-			outputMetadataPaths = append(outputMetadataPaths, artifactMetadataPaths[outputArtifact.Id])
-		}
-
-		jobId, err := scheduler.ScheduleOperator(
-			ctx,
-			op,
-			inputArtifacts,
-			outputArtifacts,
-			operatorMetadataPath,
-			inputContentPaths,
-			inputMetadataPaths,
-			outputContentPaths,
-			outputMetadataPaths,
-			storageConfig,
-			jobManager,
-			vaultObject,
-		)
-		if err != nil {
-			return err
-		}
-
-		active[id] = true
-		operatorIdToJobId[id] = jobId
+func (orch *aqOrchestrator) Finish(ctx context.Context) {
+	for _, op := range orch.dag.Operators() {
+		op.Finish(ctx)
 	}
-
-	return nil
-}
-
-// `waitForActiveOperators` is deferred till the end of `Orchestrate`.
-// If the workflow is successfully executed, this should return immediately
-// as `active` would be empty. But if the workflow failed in the middle,
-// there may be some in-progress operators that we want to wait till they finish.
-// After they finish, we can then perform cleanup operations such as clearing
-// storage files.
-func waitForActiveOperators(
-	ctx context.Context,
-	active map[uuid.UUID]bool,
-	operatorIdToJobId map[uuid.UUID]string,
-	jobManager job.JobManager,
-) {
-	for len(active) != 0 {
-		completedIds := make([]uuid.UUID, 0, len(active))
-		for id := range active {
-			jobStatus, err := jobManager.Poll(ctx, operatorIdToJobId[id])
-			if err != nil {
-				// If the err is job doesn't exist, then it means it already finished and was garbage-collected.
-				if err != job.ErrJobNotExist {
-					log.Errorf(
-						"Unexpected error occurred when checking the job status during failed workflow cleanup. %v",
-						err,
-					)
-					return
-				}
-			}
-
-			if jobStatus != shared.PendingExecutionStatus {
-				completedIds = append(completedIds, id)
-			}
-		}
-
-		for _, id := range completedIds {
-			delete(active, id)
-		}
-	}
-}
-
-func Preview(
-	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	pollIntervalMillisec time.Duration,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-) (shared.ExecutionStatus, error) {
-	return orchestrate(
-		ctx,
-		dag,
-		workflowStoragePaths,
-		pollIntervalMillisec,
-		workflow.NewNoopReader(true),
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
-		database.NewNoopDatabase(),
-		jobManager,
-		vaultObject,
-		true,
-	)
-}
-
-func Execute(
-	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	pollIntervalMillisec time.Duration,
-	workflowReader workflow.Reader,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
-	db database.Database,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-) (shared.ExecutionStatus, error) {
-	return orchestrate(
-		ctx,
-		dag,
-		workflowStoragePaths,
-		pollIntervalMillisec,
-		workflowReader,
-		workflowDagResultWriter,
-		operatorResultWriter,
-		artifactResultWriter,
-		notificationWriter,
-		userReader,
-		db,
-		jobManager,
-		vaultObject,
-		false,
-	)
-}
-
-func orchestrate(
-	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
-	workflowStoragePaths *utils.WorkflowStoragePaths,
-	pollIntervalMillisec time.Duration,
-	workflowReader workflow.Reader,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
-	db database.Database,
-	jobManager job.JobManager,
-	vaultObject vault.Vault,
-	isPreview bool,
-) (shared.ExecutionStatus, error) {
-	numOperators := len(dag.Operators)
-	artifactToDownstreamOperatorIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
-	operatorIdToJobId := make(map[uuid.UUID]string, numOperators)
-	// Maps from operator ID to its upstream artifact dependencies.
-	operatorDependencies := make(map[uuid.UUID]map[uuid.UUID]bool, numOperators)
-	ready := make(map[uuid.UUID]bool, numOperators)
-	active := make(map[uuid.UUID]bool, numOperators)
-
-	defer func() {
-		waitForActiveOperators(ctx, active, operatorIdToJobId, jobManager)
-	}()
-
-	initializeOrchestration(
-		dag.Operators,
-		ready,
-		operatorDependencies,
-		artifactToDownstreamOperatorIds,
-	)
-
-	status := shared.FailedExecutionStatus
-
-	// These are only relevant for non-preview execution.
-	var workflowDagResultId uuid.UUID
-	operatorToOperatorResult := make(map[uuid.UUID]uuid.UUID, len(dag.Operators))
-	artifactToArtifactResult := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
-
-	if !isPreview {
-		// First, we create a database record of workflow dag result and set its status to `pending`.
-		// TODO: wrap these writes into a transaction.
-		// eng-599-adding-transaction-support-to-our-database-reader-and-writer
-		workflowDagResult, err := workflowDagResultWriter.CreateWorkflowDagResult(ctx, dag.Id, db)
-		if err != nil {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create workflow dag result record.")
-		}
-
-		workflowDagResultId = workflowDagResult.Id
-
-		defer func() {
-			// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
-			utils.UpdateWorkflowDagResultMetadata(
-				ctx,
-				workflowDagResultId,
-				status,
-				workflowDagResultWriter,
-				workflowReader,
-				notificationWriter,
-				userReader,
-				db,
-			)
-		}()
-
-		// Initialize all operator results and artifact results.
-		for operatorId := range dag.Operators {
-			operatorResult, err := operatorResultWriter.CreateOperatorResult(
-				ctx,
-				workflowDagResultId,
-				operatorId,
-				db,
-			)
-			if err != nil {
-				return shared.FailedExecutionStatus, errors.Wrap(err, "Failed to create operator result record.")
-			}
-
-			operatorToOperatorResult[operatorId] = operatorResult.Id
-		}
-
-		for artifactId := range dag.Artifacts {
-			storagePath := workflowStoragePaths.ArtifactPaths[artifactId]
-			artifactResult, err := artifactResultWriter.CreateArtifactResult(
-				ctx,
-				workflowDagResultId,
-				artifactId,
-				storagePath,
-				db,
-			)
-			if err != nil {
-				return shared.FailedExecutionStatus, errors.Wrap(err, "Failed to create artifact result record.")
-			}
-
-			artifactToArtifactResult[artifactId] = artifactResult.Id
-		}
-	}
-
-	start := time.Now()
-
-	// We keep orchestrating while there's any active or ready-to-schedule operators.
-	// While such case, we do the following:
-	// - poll the state of all active operators
-	// - if any operator is completed, we:
-	//   - for each of output artifacts, decrement their downstream operators' 'upstream artifact' count by 1
-	//   - if any operator's upstream count become 0, mark it as 'ready'
-	// - remove all completed operator from the list of active ones
-	// - schedule all operators in ready list
-	//   - mark each of them as active
-	//   - clear the ready list after all operators are scheduled
-	for len(ready) > 0 || len(active) > 0 {
-		if time.Since(start) > defaultTimeout {
-			return shared.FailedExecutionStatus, errors.New("Reached timeout waiting for workflow to complete.")
-		}
-
-		err := updateCompletedOp(
-			ctx,
-			dag.Operators,
-			ready,
-			active,
-			operatorDependencies,
-			artifactToDownstreamOperatorIds,
-			operatorIdToJobId,
-			&dag.StorageConfig,
-			workflowStoragePaths.ArtifactMetadataPaths,
-			workflowStoragePaths.OperatorMetadataPaths,
-			operatorToOperatorResult,
-			artifactToArtifactResult,
-			operatorResultWriter,
-			artifactResultWriter,
-			db,
-			jobManager,
-			isPreview,
-		)
-		if err != nil {
-			return shared.FailedExecutionStatus, err
-		}
-
-		// Schedule all operators in ready state.
-		err = scheduleOperators(
-			ctx,
-			dag.Operators,
-			dag.Artifacts,
-			ready,
-			active,
-			operatorIdToJobId,
-			&dag.StorageConfig,
-			workflowStoragePaths.ArtifactPaths,
-			workflowStoragePaths.ArtifactMetadataPaths,
-			workflowStoragePaths.OperatorMetadataPaths,
-			jobManager,
-			vaultObject,
-		)
-		if err != nil {
-			return shared.FailedExecutionStatus, err
-		}
-
-		ready = map[uuid.UUID]bool{}
-
-		time.Sleep(pollIntervalMillisec)
-	}
-
-	status = shared.SucceededExecutionStatus
-
-	return status, nil
 }
