@@ -277,10 +277,14 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str, tables_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
+    def delete_workflow(self, flow_id: str, writes_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        body = {
+            'external_delete': writes_to_delete,
+            'force': force
+        }
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
         DeleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
         return DeleteWorkflowResponse
