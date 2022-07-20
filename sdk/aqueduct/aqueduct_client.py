@@ -420,7 +420,7 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> Dict[uuid.UUID, List[WritesDelete]]:
+    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[Table]]=[], force: bool=False) -> Dict[uuid.UUID, List[WritesDelete]]:
         """Deletes a flow object.
 
         Args:
