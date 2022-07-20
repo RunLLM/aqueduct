@@ -187,8 +187,8 @@ def test_check_failure_with_varying_severity(client):
     def failure_blocking_check(df):
         return False
 
-    # nonblocking_check = failure_nonblocking_check(sql_artifact)
-    # run_flow_test(client, artifacts=[sql_artifact, nonblocking_check])
+    nonblocking_check = failure_nonblocking_check(sql_artifact)
+    run_flow_test(client, artifacts=[sql_artifact, nonblocking_check])
 
     blocking_check = failure_blocking_check(sql_artifact)
     run_flow_test(client, artifacts=[sql_artifact, blocking_check], expect_success=False)
