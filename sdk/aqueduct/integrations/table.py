@@ -6,13 +6,13 @@ from aqueduct.enums import ServiceType
 
 
 @dataclass
-class Table:
-    table: str
+class WrittenObject:
+    name: str
     update_mode: str
 
-    def __init__(self, table: str, update_mode: str):
-        self.table = table
+    def __init__(self, name: str, update_mode: str):
+        self.name = table
         self.update_mode = update_mode
 
     def to_dict(self) -> Dict[str, str]:
-        return {"table": self.table, "update_mode": self.update_mode}
+        return {"name": self.name, "update_mode": self.update_mode}
