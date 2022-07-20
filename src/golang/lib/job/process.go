@@ -277,8 +277,8 @@ func (j *ProcessJobManager) Launch(
 			fnExtractStoragePath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
 			fnSpec.FunctionExtractPath = fnExtractStoragePath
 		}
-		log.Errorf("Function extract storage path: %s", spec.(*FunctionSpec).FunctionExtractPath)
 	}
+
 	cmd, err := j.mapJobTypeToCmd(name, spec)
 	if err != nil {
 		return err
@@ -325,8 +325,6 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	// collect the entry in j.cmds.
 	defer func() {
 		if len(command.fnExtractStoragePath) > 0 {
-			log.Errorf("Attempting to remove %s", command.fnExtractStoragePath)
-
 			// Since this is a somewhat scary recursive deleete, instead of just checking that function
 			// extract storage path exists, we check for the presence of a particular file inside this
 			// directory. This is to help make sure that we aren't deleting a folder that we aren't supposed to.
@@ -336,7 +334,6 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 					log.Errorf("Unable to remove function extraction directory %s. %v", command.fnExtractStoragePath, err)
 				}
 			}
-			log.Errorf("Removed: %s", command.fnExtractStoragePath)
 		}
 		j.deleteCmd(name)
 	}()

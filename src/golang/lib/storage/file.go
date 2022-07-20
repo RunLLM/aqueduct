@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -27,7 +26,6 @@ func newFileStorage(fileConfig *shared.FileConfig) *fileStorage {
 func (f *fileStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	path := f.getFullPath(key)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		log.Errorf("File object does not exist at path %s.", path)
 		return nil, ErrObjectDoesNotExist
 	}
 	return os.ReadFile(path)
