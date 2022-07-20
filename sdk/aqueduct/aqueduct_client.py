@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from collections import defaultdict
+from typing import Any, Dict, DefaultDict, List, Optional, Union
 
 import __main__ as main
 import yaml
@@ -28,12 +29,12 @@ from .error import (
 from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
-from .integrations.table import Table
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
+from .integrations.table import Table
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
@@ -41,7 +42,7 @@ from .utils import (
     generate_uuid,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
-    schedule_from_cron_string
+    schedule_from_cron_string,
 )
 
 
@@ -247,6 +248,26 @@ class Client:
             workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
         ]
 
+    def get_workflow_writes(
+        self, flow_id: Union[str, uuid.UUID]
+    ) -> DefaultDict[uuid.UUID, List[Table]]:
+        """Get everything written to by the flow identified by the flow id (via `.save`).
+
+        Returns:
+            A dictionary mapping the integration id to the list of table names/storage path.
+        """
+        flow_id = parse_user_supplied_id(flow_id)
+
+        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+
+        workflow_writes = self._api_client.get_workflow_writes(flow_id).table_details
+        writes_mapping = defaultdict(list)
+        for item in workflow_writes:
+            table_object = Table(item.table_name, item.update_mode)
+            writes_mapping[item.integration_id].append(table_object)
+        return writes_mapping
+
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
         """Fetches a flow corresponding to the given flow id.
 
@@ -338,8 +359,7 @@ class Client:
         flow_id = self._api_client.register_workflow(dag).id
 
         url = generate_ui_url(
-            self._api_client.url_prefix(),
-            self._api_client.aqueduct_address,
+            self._api_client.construct_base_url(),
             str(flow_id),
         )
         print("Url: ", url)
@@ -397,16 +417,12 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID], tables_to_delete: List[Table], force: bool=False) -> None:
+    def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
-            tables_to_delete:
-                List of tables to delete (tables from integration.get_table(name))
-            force:
-                Force delete even if `tables_to_delete` includes table(s) with UpdateMode=Append
 
         Raises:
             InvalidRequestError:
@@ -419,7 +435,7 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        self._api_client.delete_workflow(flow_id, tables_to_delete, force)
+        self._api_client.delete_workflow(flow_id)
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.

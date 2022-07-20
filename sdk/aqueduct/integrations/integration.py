@@ -1,7 +1,6 @@
 import json
 import uuid
 from abc import ABC
-from aqueduct.integrations.table import Table
 
 from aqueduct.enums import ServiceType
 from pydantic import BaseModel
@@ -25,12 +24,10 @@ class IntegrationInfo(BaseModel):
         }
         print(json.dumps(description_map, sort_keys=False, indent=4))
 
+
 class Integration(ABC):
     """
     Abstract class for the various integrations Aqueduct interacts with.
     """
 
     _metadata: IntegrationInfo
-
-    def get_table(self, table) -> Table:
-        return Table(self._metadata.id, self._metadata.name, self._metadata.service, table)

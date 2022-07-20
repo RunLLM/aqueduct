@@ -1,26 +1,18 @@
 import uuid
+from dataclasses import dataclass
+from typing import Dict
 
 from aqueduct.enums import ServiceType
 
-from dataclasses import dataclass
 
 @dataclass
 class Table:
-    id: uuid.UUID
-    name: str
-    service: ServiceType
     table: str
+    update_mode: str
 
-    def __init__(self, id: uuid.UUID, name: str, service: ServiceType, table: str):
-        self.id = id
-        self.name = name
-        self.service = service
+    def __init__(self, table: str, update_mode: str):
         self.table = table
-    
-    def to_dict(self) -> dict:
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "service": self.service.value,
-            "table": self.table
-        }
+        self.update_mode = update_mode
+
+    def to_dict(self) -> Dict[str, str]:
+        return {"table": self.table, "update_mode": self.update_mode}

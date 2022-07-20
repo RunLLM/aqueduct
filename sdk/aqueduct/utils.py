@@ -29,6 +29,7 @@ API_KEY_HEADER = "api-key"
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
 
+
 def format_header_for_print(header: str) -> str:
     """Used to print the header of a section in "describe()" with a consistent length.
 
@@ -56,19 +57,17 @@ WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
 
 
 def generate_ui_url(
-    url_prefix: str, aqueduct_address: str, workflow_id: str, result_id: Optional[str] = None
+    aqueduct_base_address: str, workflow_id: str, result_id: Optional[str] = None
 ) -> str:
     if result_id:
-        url = "%s%s%s%s" % (
-            url_prefix,
-            aqueduct_address,
+        url = "%s%s%s" % (
+            aqueduct_base_address,
             WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
             WORKFLOW_RUN_UI_ROUTE_TEMPLATE % result_id,
         )
     else:
-        url = "%s%s%s" % (
-            url_prefix,
-            aqueduct_address,
+        url = "%s%s" % (
+            aqueduct_base_address,
             WORKFLOW_UI_ROUTE_TEMPLATE % workflow_id,
         )
     return url

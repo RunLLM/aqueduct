@@ -12,11 +12,11 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.integrations.table import Table
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
+    GetWorkflowTablesResponse,
     ListWorkflowResponseEntry,
     PreviewResponse,
     RegisterWorkflowResponse,
@@ -69,6 +69,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    GET_WORKFLOW_TABLES_ROUTE = "/api/workflow/%s/tables"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -81,6 +82,10 @@ class APIClient:
     def __init__(self, api_key: str, aqueduct_address: str):
         self.api_key = api_key
         self.aqueduct_address = aqueduct_address
+
+        # Clean URL
+        if self.aqueduct_address.endswith("/"):
+            self.aqueduct_address = self.aqueduct_address[:-1]
 
         # If a dummy client is initialized, don't perform validation.
         if self.api_key == "" and self.aqueduct_address == "":
@@ -99,9 +104,16 @@ class APIClient:
         else:
             self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
 
-    def _construct_full_url(self, route_suffix: str, use_https: bool) -> str:
+    def construct_base_url(self, use_https: Optional[bool] = None) -> str:
+        if use_https is None:
+            use_https = self.use_https
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
-        return "%s%s%s" % (protocol_prefix, self.aqueduct_address, route_suffix)
+        return "%s%s" % (protocol_prefix, self.aqueduct_address)
+
+    def construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
+        if use_https is None:
+            use_https = self.use_https
+        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -112,7 +124,7 @@ class APIClient:
 
         if try_https:
             try:
-                url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=True)
+                url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=True)
                 self._test_url(url)
                 return True
             except Exception as e:
@@ -122,7 +134,7 @@ class APIClient:
 
         if try_http:
             try:
-                url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=False)
+                url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=False)
                 self._test_url(url)
                 return False
             except Exception as e:
@@ -148,7 +160,7 @@ class APIClient:
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
-        url = self._construct_full_url(self.LIST_INTEGRATIONS_ROUTE, self.use_https)
+        url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
         headers = utils.generate_auth_headers(self.api_key)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
@@ -163,28 +175,19 @@ class APIClient:
         }
 
     def list_github_repos(self) -> List[str]:
-        url = self._construct_full_url(self.LIST_GITHUB_REPO_ROUTE, self.use_https)
+        url = self.construct_full_url(self.LIST_GITHUB_REPO_ROUTE)
         headers = utils.generate_auth_headers(self.api_key)
 
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["repos"]]
 
     def list_github_branches(self, repo_url: str) -> List[str]:
-        url = self._construct_full_url(self.LIST_GITHUB_BRANCH_ROUTE, self.use_https)
+        url = self.construct_full_url(self.LIST_GITHUB_BRANCH_ROUTE)
         headers = utils.generate_auth_headers(self.api_key)
         headers["github-repo"] = repo_url
 
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["branches"]]
-
-    def list_tables(self, limit: int) -> List[Tuple[str, str]]:
-        url = self._construct_full_url(self.LIST_TABLES_ROUTE, self.use_https)
-        headers = utils.generate_auth_headers(self.api_key)
-        headers["limit"] = str(limit)
-        resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
-
-        return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
     def preview(
         self,
@@ -213,7 +216,7 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self._construct_full_url(self.PREVIEW_ROUTE, self.use_https)
+        url = self.construct_full_url(self.PREVIEW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
@@ -242,7 +245,7 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self._construct_full_url(self.REGISTER_WORKFLOW_ROUTE, self.use_https)
+        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
@@ -254,9 +257,7 @@ class APIClient:
         serialized_params: Optional[str] = None,
     ) -> None:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(
-            self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
-        )
+        url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
         body = {}
         if serialized_params is not None:
@@ -265,37 +266,31 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str, tables_to_delete: List[Table], force: bool=False) -> None:
+    def delete_workflow(self, flow_id: str) -> None:
         headers = utils.generate_auth_headers(self.api_key)
-        headers.update({
-            "tables": [table.to_dict() for table in tables_to_delete],
-            "force": force
-        })
-        url = self._construct_full_url(
-            self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https
-        )
+        url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         response = requests.post(url, headers=headers)
-        table_results = response.json()["tables"]
-        print("Table Results")
-        for table in table_results:
-            print(f"[{table['service']}] {table['name']} ({table['id']}): {table['table']}")
-            if table['result']:
-                print(f"Deletion succeeded.")
-            else:
-                print(f"Deletion failed.")
         utils.raise_errors(response)
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id, self.use_https)
+        url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
+    def get_workflow_writes(self, flow_id: str) -> GetWorkflowTablesResponse:
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self.construct_full_url(self.GET_WORKFLOW_TABLES_ROUTE % flow_id)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        workflow_writes_response = GetWorkflowTablesResponse(**resp.json())
+        return workflow_writes_response
+
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(self.LIST_WORKFLOWS_ROUTE, self.use_https)
+        url = self.construct_full_url(self.LIST_WORKFLOWS_ROUTE)
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
 
@@ -304,8 +299,8 @@ class APIClient:
     def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
         """Returns an empty string if the artifact failed to be computed."""
         headers = utils.generate_auth_headers(self.api_key)
-        url = self._construct_full_url(
-            self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id), self.use_https
+        url = self.construct_full_url(
+            self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id)
         )
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
@@ -331,7 +326,7 @@ class APIClient:
             Two mappings of UUIDs to positions, structured as a dictionary with the keys "x" and "y".
             The first mapping is for operators and the second is for artifacts.
         """
-        url = self._construct_full_url(self.NODE_POSITION_ROUTE, self.use_https)
+        url = self.construct_full_url(self.NODE_POSITION_ROUTE)
         headers = {
             **utils.generate_auth_headers(self.api_key),
         }
@@ -345,8 +340,6 @@ class APIClient:
 
     def export_serialized_function(self, operator: Operator) -> bytes:
         headers = utils.generate_auth_headers(self.api_key)
-        operator_url = self._construct_full_url(
-            self.EXPORT_FUNCTION_ROUTE % str(operator.id), self.use_https
-        )
+        operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
         operator_resp = requests.get(operator_url, headers=headers)
         return operator_resp.content
