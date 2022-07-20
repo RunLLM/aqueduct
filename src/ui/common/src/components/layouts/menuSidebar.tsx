@@ -170,10 +170,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
     </Avatar>
   );
 
+  const pathPrefix = getPathPrefix();
   const sidebarContent = (
     <>
       <Box className={styles['menu-sidebar-popover-container']}>
-        <Link href={`${getPathPrefix() ?? '/'}`} underline="none">
+        <Link href={`${pathPrefix.length > 0 ? pathPrefix : '/'}`} underline="none">
           <Typography variant="h3" sx={{ color: 'white' }}>
             Aqueduct
           </Typography>
