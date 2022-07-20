@@ -83,11 +83,11 @@ func NewOperator(
 	}
 
 	if dbOperator.Spec.IsFunction() {
-		return newFunctionOperator(baseFunctionOperator{baseOp})
+		return newFunctionOperator(baseFunctionOperator{baseOp, nil})
 	} else if dbOperator.Spec.IsMetric() {
-		return newMetricOperator(baseFunctionOperator{baseOp})
+		return newMetricOperator(baseFunctionOperator{baseOp, nil})
 	} else if dbOperator.Spec.IsCheck() {
-		return newCheckOperator(baseFunctionOperator{baseOp})
+		return newCheckOperator(baseFunctionOperator{baseOp, nil})
 	} else if dbOperator.Spec.IsExtract() {
 		return newExtractOperator(ctx, baseOp)
 	} else if dbOperator.Spec.IsLoad() {

@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-co-op/gocron"
-	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/process"
 	log "github.com/sirupsen/logrus"
 )
@@ -36,7 +35,7 @@ const (
 
 var (
 	defaultBinaryDir          = path.Join(os.Getenv("HOME"), ".aqueduct", BinaryDir)
-	defaultOperatorStorageDir = path.Join(os.Getenv("HOME"), ".aqueduct", OperatorStorageDir)
+	DefaultOperatorStorageDir = path.Join(os.Getenv("HOME"), ".aqueduct", "server", OperatorStorageDir)
 	defaultLogsDir            = path.Join(os.Getenv("HOME"), ".aqueduct", "server", LogsDir)
 )
 
@@ -44,10 +43,6 @@ type Command struct {
 	cmd    *exec.Cmd
 	stdout *bytes.Buffer
 	stderr *bytes.Buffer
-
-	// Only set for Function Jobs. Points to the directory that will need to be removed
-	// after the command finishes executing.
-	fnExtractStoragePath string
 }
 
 type cronMetadata struct {
@@ -119,7 +114,7 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 	}
 
 	if conf.OperatorStorageDir == "" {
-		conf.OperatorStorageDir = defaultOperatorStorageDir
+		conf.OperatorStorageDir = DefaultOperatorStorageDir
 	}
 
 	cronScheduler := gocron.NewScheduler(time.UTC)
@@ -270,15 +265,6 @@ func (j *ProcessJobManager) Launch(
 		return ErrJobAlreadyExists
 	}
 
-	// For function operators, we need to set the directory path to expand the function into here.
-	var fnExtractStoragePath string
-	if spec.Type() == FunctionJobType {
-		if fnSpec, ok := spec.(*FunctionSpec); ok {
-			fnExtractStoragePath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
-			fnSpec.FunctionExtractPath = fnExtractStoragePath
-		}
-	}
-
 	cmd, err := j.mapJobTypeToCmd(name, spec)
 	if err != nil {
 		return err
@@ -291,9 +277,6 @@ func (j *ProcessJobManager) Launch(
 		cmd:    cmd,
 		stdout: stdout,
 		stderr: stderr,
-
-		// This is only set in the case of a function job.
-		fnExtractStoragePath: fnExtractStoragePath,
 	})
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -323,20 +306,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.
-	defer func() {
-		if len(command.fnExtractStoragePath) > 0 {
-			// Since this is a somewhat scary recursive deleete, instead of just checking that function
-			// extract storage path exists, we check for the presence of a particular file inside this
-			// directory. This is to help make sure that we aren't deleting a folder that we aren't supposed to.
-			if _, err = os.Stat(path.Join(command.fnExtractStoragePath, "op", "model.pkl")); !os.IsNotExist(err) {
-				err = os.RemoveAll(command.fnExtractStoragePath)
-				if err != nil {
-					log.Errorf("Unable to remove function extraction directory %s. %v", command.fnExtractStoragePath, err)
-				}
-			}
-		}
-		j.deleteCmd(name)
-	}()
+	defer j.deleteCmd(name)
 
 	err = command.cmd.Wait()
 	if err != nil {

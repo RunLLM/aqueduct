@@ -3,6 +3,8 @@ package operator
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -237,12 +239,29 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 // Any operator that runs a python function serialized from storage should use this instead of baseOperator.
 type baseFunctionOperator struct {
 	baseOperator
+
+	cachedSpec *job.FunctionSpec
 }
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
 	// If the operator was not persisted to the DB, cleanup the serialized function.
 	if !bfo.resultsPersisted {
 		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
+	}
+
+	// If a spec was never generated, that means the function was never run, so there is not
+	// function extract directory to cleanup.
+	if bfo.cachedSpec != nil {
+		// Since this is a somewhat scary recursive delete, instead of just checking that function
+		// extract storage path exists, we check for the presence of a particular file inside this
+		// directory. This is to help make sure that we aren't deleting a folder that we aren't supposed to.
+		fnExtractPath := bfo.cachedSpec.FunctionExtractPath
+		if _, err := os.Stat(path.Join(fnExtractPath, "op", "model.pkl")); !os.IsNotExist(err) {
+			err = os.RemoveAll(fnExtractPath)
+			if err != nil {
+				log.Errorf("Unable to remove function extraction directory %s. %v", fnExtractPath, err)
+			}
+		}
 	}
 
 	bfo.baseOperator.Finish(ctx)
@@ -255,6 +274,10 @@ const (
 )
 
 func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
+	if bfo.cachedSpec != nil {
+		return bfo.cachedSpec
+	}
+
 	entryPoint := fn.EntryPoint
 	if entryPoint == nil {
 		entryPoint = &function.EntryPoint{
@@ -273,7 +296,7 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
 	}
 
-	return &job.FunctionSpec{
+	bfo.cachedSpec = &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
 			bfo.jobName,
@@ -281,7 +304,10 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 			bfo.metadataPath,
 		),
 		FunctionPath: fn.StoragePath,
-		/* `FunctionExtractPath` is set by the job manager at launch time. */
+
+		// TODO(kenxu): we always use the default storage directory here.
+		FunctionExtractPath: path.Join(job.DefaultOperatorStorageDir, uuid.New().String()),
+
 		EntryPointFile:      entryPoint.File,
 		EntryPointClass:     entryPoint.ClassName,
 		EntryPointMethod:    entryPoint.Method,
@@ -293,4 +319,5 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		InputArtifactTypes:  inputArtifactTypes,
 		OutputArtifactTypes: outputArtifactTypes,
 	}
+	return bfo.cachedSpec
 }
