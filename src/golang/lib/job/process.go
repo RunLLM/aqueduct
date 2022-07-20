@@ -44,6 +44,10 @@ type Command struct {
 	cmd    *exec.Cmd
 	stdout *bytes.Buffer
 	stderr *bytes.Buffer
+
+	// Only set for Function Jobs. Points to the directory that will need to be removed
+	// after the command finishes executing.
+	fnExtractStoragePath string
 }
 
 type cronMetadata struct {
@@ -176,12 +180,10 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			logFilePath,
 		)
 	} else if spec.Type() == FunctionJobType {
-		functionSpec, ok := spec.(*FunctionSpec)
-		if !ok {
+		if _, ok := spec.(*FunctionSpec); !ok {
 			return nil, ErrInvalidJobSpec
 		}
 
-		functionSpec.FunctionExtractPath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return nil, err
@@ -268,6 +270,17 @@ func (j *ProcessJobManager) Launch(
 		return ErrJobAlreadyExists
 	}
 
+	// For function operators, we need to set the directory path to expand the function into here.
+	var fnExtractStoragePath string
+	if spec.Type() == FunctionJobType {
+		if _, ok := spec.(*FunctionSpec); !ok {
+			return ErrInvalidJobSpec
+		}
+		fnExtractStoragePath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())
+		spec.(*FunctionSpec).FunctionExtractPath = fnExtractStoragePath
+	}
+	log.Errorf("Function extract storage path: %s", fnExtractStoragePath)
+
 	cmd, err := j.mapJobTypeToCmd(name, spec)
 	if err != nil {
 		return err
@@ -280,6 +293,9 @@ func (j *ProcessJobManager) Launch(
 		cmd:    cmd,
 		stdout: stdout,
 		stderr: stderr,
+
+		// This is only set in the case of a function job.
+		fnExtractStoragePath: fnExtractStoragePath,
 	})
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -307,13 +323,21 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 		return shared.RunningExecutionStatus, nil
 	}
 
-	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success
-	//  execution status when it should be failure.
-	// TODO(ENG-1196): workflows that do not completely succeed still return a success execution status here.
-	err = command.cmd.Wait()
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.
-	defer j.deleteCmd(name)
+	defer func() {
+		if len(command.fnExtractStoragePath) > 0 {
+			log.Errorf("Attempting to remove %s", command.fnExtractStoragePath)
+			if _, err = os.Stat(command.fnExtractStoragePath); os.IsExist(err) {
+				err = os.Remove(command.fnExtractStoragePath)
+				if err != nil {
+					log.Errorf("Unable to remove function extraction directory %s.", command.fnExtractStoragePath)
+				}
+			}
+			log.Errorf("Removed: %s", command.fnExtractStoragePath)
+		}
+		j.deleteCmd(name)
+	}()
 	if err != nil {
 		log.Errorf("Unexpected error occurred while executing job %s: %v. Stdout: \n %s \n Stderr: \n %s",
 			name,
