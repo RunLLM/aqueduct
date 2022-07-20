@@ -44,6 +44,7 @@ const (
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
 	LoadTableJobType      JobType = "load-table"
+	DeleteTableJobType      JobType = "delete-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -140,7 +141,7 @@ type ExtractSpec struct {
 }
 
 type DeleteTableSpec struct {
-	basePythonSpec
+	BasePythonSpec
 	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
 	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
@@ -349,7 +350,7 @@ func NewDeleteTablesSpec(
 	outputContentPath string,
 ) Spec {
 	return &DeleteTableSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: DeleteTableJobType,
 				Name: name,
@@ -376,7 +377,7 @@ func NewLoadSpec(
 	inputMetadataPath string,
 ) Spec {
 	return &LoadSpec{
-		basePythonSpec: basePythonSpec{
+		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
 				Type: LoadJobType,
 				Name: name,

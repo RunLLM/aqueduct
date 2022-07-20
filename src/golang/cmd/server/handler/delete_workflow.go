@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 	// "reflect"
+	"fmt"
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	// "github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	// "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -39,12 +40,12 @@ type TableOutput struct {
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
-	externalDelete   map[uuid.UUID][]str `json:"external_delete"`
+	externalDelete   map[uuid.UUID][]string `json:"external_delete"`
 	force   bool `json:"force"`
 }
 
 type deleteWorkflowInput struct {
-	externalDelete map[uuid.UUID][]str `json:"external_delete"`
+	externalDelete map[uuid.UUID][]string `json:"external_delete"`
 	force   bool `json:"force"`
 }
 
@@ -111,7 +112,8 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
 	}
 
-	fmt.print(input)
+	s, _ := json.MarshalIndent(input, "", "\t")
+	fmt.Print(string(s))
 
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
