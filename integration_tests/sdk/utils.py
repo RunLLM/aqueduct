@@ -3,6 +3,7 @@ import uuid
 from typing import Dict, List, Optional, Union
 
 from aqueduct.check_artifact import CheckArtifact
+from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
@@ -159,20 +160,26 @@ def wait_for_flow_runs(
 
         statuses = [flow_run["status"] for flow_run in flow_runs]
 
-        if expect_success:
-            assert all(status != "failed" for status in statuses), "At least one workflow run failed!"
-        else:
-            assert all(status == "failed" for status in statuses), "At least one workflow succeeded!"
+        # Continue checking as long as there are still runs pending.
+        if any(status == str(ExecutionStatus.PENDING) for status in statuses):
+            continue
 
         if len(flow_runs) < num_runs:
             continue
 
-        # Continue checking as long as there are still runs pending.
-        if any(status == "pending" for status in statuses):
-            continue
+        if expect_success:
+            assert all(
+                status == str(ExecutionStatus.SUCCEEDED) for status in statuses
+            ), "At least one workflow run failed!"
+        else:
+            # We expect them all to fail.
+            assert all(
+                status == str(ExecutionStatus.FAILED) for status in statuses
+            ), "At least one workflow succeeded!"
 
         print(
-            "Workflow %s was created and ran successfully at least %s times!" % (flow_id, len(flow_runs))
+            "Workflow %s was created and ran successfully at least %s times!"
+            % (flow_id, len(flow_runs))
         )
         return len(flow_runs)
     return -1

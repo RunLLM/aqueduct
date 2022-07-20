@@ -10,6 +10,7 @@ from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from aqueduct_executor.operators.utils.execution import (
+    TIP_BLACKLISTED_OUTPUT,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
@@ -135,9 +136,25 @@ def run(spec: FunctionSpec) -> None:
             system_metadata=system_metadata,
         )
 
-        exec_state.status = ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
-        print(f"Succeeded! Full logs: {exec_state.json()}")
+        # Check if any of the written results were blacklisted and there should fail
+        # the workflow.
+        if spec.blacklisted_outputs is not None and any(
+            json.dumps(res) in spec.blacklisted_outputs for res in results
+        ):
+            exec_state.status = ExecutionStatus.FAILED
+            exec_state.failure_type = FailureType.USER
+            exec_state.error = Error(
+                context="",
+                tip=TIP_BLACKLISTED_OUTPUT,
+            )
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+
+            print(f"Failed with user error. Full Logs:\n{exec_state.json()}")
+            sys.exit(1)
+        else:
+            exec_state.status = ExecutionStatus.SUCCEEDED
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            print(f"Succeeded! Full logs: {exec_state.json()}")
 
     except Exception as e:
         exec_state.status = ExecutionStatus.FAILED

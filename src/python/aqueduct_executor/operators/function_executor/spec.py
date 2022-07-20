@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 try:
     from typing import Literal
@@ -29,6 +29,10 @@ class FunctionSpec(BaseModel):
     output_metadata_paths: List[str]
     input_artifact_types: List[enums.InputArtifactType]
     output_artifact_types: List[enums.OutputArtifactType]
+
+    # If the function produces one of these blacklisted outputs exactly,
+    # we will error out the workflow.
+    blacklisted_outputs: Optional[List[str]] = None  # Optional for backwards compatability.
 
     class Config:
         extra = Extra.forbid

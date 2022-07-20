@@ -174,7 +174,7 @@ def test_check_with_series_output(client):
     run_flow_test(client, artifacts=[sql_artifact, passed, failed])
 
 
-def test_check_failure_with_severity(client):
+def test_check_failure_with_varying_severity(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
@@ -187,8 +187,8 @@ def test_check_failure_with_severity(client):
     def failure_blocking_check(df):
         return False
 
-    _ = failure_nonblocking_check(sql_artifact)
-    run_flow_test(client, artifacts=[sql_artifact])
+    # nonblocking_check = failure_nonblocking_check(sql_artifact)
+    # run_flow_test(client, artifacts=[sql_artifact, nonblocking_check])
 
-    _ = failure_blocking_check(sql_artifact)
-    run_flow_test(client, artifacts=[sql_artifact], expect_success=False)
+    blocking_check = failure_blocking_check(sql_artifact)
+    run_flow_test(client, artifacts=[sql_artifact, blocking_check], expect_success=False)
