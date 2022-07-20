@@ -282,8 +282,7 @@ class APIClient:
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
         DeleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
-        print("Workflow-Written Objects' Deletion Results")
-        print(json.dumps(DeleteWorkflowResponse.writes_results, sort_keys=False, indent=4))
+        return DeleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)

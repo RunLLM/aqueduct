@@ -44,6 +44,9 @@ from .utils import (
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
+from .responses import (
+    WritesDelete
+)
 
 
 def get_apikey() -> str:
@@ -417,7 +420,7 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
+    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> Dict[uuid.UUID, List[WritesDelete]]:
         """Deletes a flow object.
 
         Args:
@@ -439,7 +442,24 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        self._api_client.delete_workflow(flow_id)
+        resp = self._api_client.delete_workflow(flow_id)
+
+        failed_deletions = {}
+        counts = 0
+        for integration in resp.writes_results:
+            failed_for_integration = []
+            for obj in resp[integration]:
+                if not obj.succeeded:
+                    failed_for_integration.append(obj)
+            if len(failed_for_integration) > 0:
+                failed_deletions[integration] = failed_for_integration
+                counts += len(failed_for_integration)
+        if counts > 0:
+            print("Workflow-Written Objects' Deletion Failures")
+            print(f"{counts} Failures")
+            print(json.dumps(failed_deletions, sort_keys=False, indent=4))
+        return resp.writes_results
+
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
