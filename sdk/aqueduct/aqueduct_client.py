@@ -417,14 +417,16 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID], tables_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
+    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            writes_to_delete:
+                The tables or storage paths to delete grouped by integration id.
             force:
-                Force the deletion even though some tables in the tables_to_delete argument had UpdateMode=append
+                Force the deletion even though some workflow-written objects in the writes_to_delete argument had UpdateMode=append
 
         Raises:
             InvalidRequestError:

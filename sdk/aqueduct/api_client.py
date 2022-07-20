@@ -271,12 +271,19 @@ class APIClient:
     def delete_workflow(self, flow_id: str, tables_to_delete: DefaultDict[uuid.UUID, List[Table]], force: bool=False) -> None:
         headers = utils.generate_auth_headers(self.api_key)
         body = {
-            "tables": {str(integration_id):[table.to_dict() for table in tables_to_delete[integration_id]] for integration_id in tables_to_delete.keys()}
+            "tables": {
+                str(integration_id): list(set([table.name 
+                                        for table in tables_to_delete[integration_id]])) 
+                for integration_id in tables_to_delete.keys()
+            },
             "force": force
         }
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
+        DeleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        print("Workflow-Written Objects' Deletion Results")
+        print(json.dumps(DeleteWorkflowResponse.writes_results, sort_keys=False, indent=4))
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
