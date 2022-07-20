@@ -148,5 +148,11 @@ if __name__ == "__main__":
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
+        
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/start-function-executor.sh",
+            join(server_directory, "bin")
+        ])
 
     print("Successfully installed aqueduct from local repo!")
