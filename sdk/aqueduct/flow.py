@@ -7,12 +7,12 @@ from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 
-from .enums import ArtifactType
+from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import generate_ui_url, parse_user_supplied_id, format_header_for_print
+from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
 class Flow:
@@ -81,6 +81,7 @@ class Flow:
                 Logger.logger.error(
                     "The parameter %s was not successfully computed. If you triggered this flow run with custom "
                     "parameters, those parameter values will not be reflected in `FlowRun.describe()."
+                    % param_artifact.name
                 )
                 continue
 
@@ -94,9 +95,11 @@ class Flow:
                 ),
             )
 
-        # Because the serialized functions are stored seperately from the dag,
+        # Because the serialized functions are stored separately from the dag,
         # We need to fetch them to complete the construction of the dag.
-        for operator in dag.list_operators():
+        for operator in dag.list_operators(
+            filter_to=[OperatorType.CHECK, OperatorType.FUNCTION, OperatorType.METRIC]
+        ):
             serialized_function = self._api_client.export_serialized_function(operator)
             dag.update_operator_function(operator, serialized_function)
 
@@ -151,9 +154,7 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
-        url = generate_ui_url(
-            self._api_client.url_prefix(), self._api_client.aqueduct_address, self._id
-        )
+        url = generate_ui_url(self._api_client.construct_base_url(), self._id)
 
         print(
             textwrap.dedent(

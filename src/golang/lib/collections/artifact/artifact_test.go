@@ -2,8 +2,9 @@ package artifact_test
 
 import (
 	"encoding/json"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 	"testing"
+
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/google/uuid"
