@@ -1,4 +1,4 @@
-package orchestrator
+package engine
 
 import (
 	"context"
@@ -13,23 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	DefaultExecutionTimeout = 15 * time.Minute
-	DefaultCleanupTimeout   = 2 * time.Minute
-)
-
-var (
-	ErrOpExecSystemFailure       = errors.New("Operator execution failed due to system error.")
-	ErrOpExecBlockingUserFailure = errors.New("Operator execution failed due to user error.")
-)
-
-type Orchestrator interface {
-	Execute(ctx context.Context) (shared.ExecutionStatus, error)
-
-	// Finish is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
-	Finish(ctx context.Context)
-}
-
 type AqueductTimeConfig struct {
 	// Configures exactly long we wait before polling again on an in-progress operator.
 	OperatorPollInterval time.Duration
@@ -42,7 +25,7 @@ type AqueductTimeConfig struct {
 	CleanupTimeout time.Duration
 }
 
-type aqOrchestrator struct {
+type aqEngine struct {
 	dag        dag.WorkflowDag
 	jobManager job.JobManager
 	timeConfig *AqueductTimeConfig
@@ -58,12 +41,12 @@ type aqOrchestrator struct {
 	shouldPersistResults bool
 }
 
-func NewAqOrchestrator(
+func NewAqEngine(
 	dag dag.WorkflowDag,
 	jobManager job.JobManager,
 	timeConfig AqueductTimeConfig,
 	shouldPersistResults bool,
-) (Orchestrator, error) {
+) (Engine, error) {
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
 		inputs, err := dag.OperatorInputs(op)
@@ -73,7 +56,7 @@ func NewAqOrchestrator(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	return &aqOrchestrator{
+	return &aqEngine{
 		dag:                  dag,
 		jobManager:           jobManager,
 		timeConfig:           &timeConfig,
@@ -85,37 +68,37 @@ func NewAqOrchestrator(
 	}, nil
 }
 
-func (orch *aqOrchestrator) Execute(
+func (eng *aqEngine) Execute(
 	ctx context.Context,
 ) (shared.ExecutionStatus, error) {
-	if orch.shouldPersistResults {
-		err := orch.dag.InitializeResults(ctx)
+	if eng.shouldPersistResults {
+		err := eng.dag.InitializeResults(ctx)
 		if err != nil {
 			return shared.FailedExecutionStatus, err
 		}
 
 		// Make sure to persist the dag results on exit.
 		defer func() {
-			err = orch.dag.PersistResult(ctx, orch.status)
+			err = eng.dag.PersistResult(ctx, eng.status)
 			if err != nil {
 				log.Errorf("Error when persisting dag resutls: %v", err)
 			}
 		}()
 	}
 
-	orch.status = shared.RunningExecutionStatus
-	err := orch.execute(
+	eng.status = shared.RunningExecutionStatus
+	err := eng.execute(
 		ctx,
-		orch.timeConfig,
-		orch.jobManager,
-		orch.shouldPersistResults,
+		eng.timeConfig,
+		eng.jobManager,
+		eng.shouldPersistResults,
 	)
 	if err != nil {
-		orch.status = shared.FailedExecutionStatus
+		eng.status = shared.FailedExecutionStatus
 	} else {
-		orch.status = shared.SucceededExecutionStatus
+		eng.status = shared.SucceededExecutionStatus
 	}
-	return orch.status, err
+	return eng.status, err
 }
 
 func waitForInProgressOperators(
@@ -134,7 +117,7 @@ func waitForInProgressOperators(
 			execState, err := op.GetExecState(ctx)
 
 			// Resolve any jobs that aren't actively running or failed. We don't are if they succeeded or failed,
-			// since this is called after orchestration exits.
+			// since this is called after engestration exits.
 			if err != nil || execState.Status != shared.RunningExecutionStatus {
 				delete(inProgressOps, opID)
 			}
@@ -153,17 +136,17 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
 }
 
-func (orch *aqOrchestrator) execute(
+func (eng *aqEngine) execute(
 	ctx context.Context,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
-	inProgressOps := orch.inProgressOps
-	completedOps := orch.completedOps
-	dag := orch.dag
-	opToDependencyCount := orch.opToDependencyCount
+	inProgressOps := eng.inProgressOps
+	completedOps := eng.completedOps
+	dag := eng.dag
+	opToDependencyCount := eng.opToDependencyCount
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -270,8 +253,12 @@ func (orch *aqOrchestrator) execute(
 	return nil
 }
 
-func (orch *aqOrchestrator) Finish(ctx context.Context) {
-	for _, op := range orch.dag.Operators() {
+func (eng *aqEngine) Finish(ctx context.Context) {
+	for _, op := range eng.dag.Operators() {
 		op.Finish(ctx)
 	}
 }
+
+func (eng *aqEngine) Schedule(ctx context.Context) {}
+
+func (eng *aqEngine) Sync(ctx context.Context) {}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -121,13 +121,13 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
-	orch, err := orchestrator.NewAqOrchestrator(
+	orch, err := engine.NewAqEngine(
 		workflowDag,
 		ex.JobManager,
-		orchestrator.AqueductTimeConfig{
+		engine.AqueductTimeConfig{
 			OperatorPollInterval: pollingIntervalMS,
-			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
-			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
+			ExecTimeout:          engine.DefaultExecutionTimeout,
+			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		true, /* shouldPersistResults */
 	)

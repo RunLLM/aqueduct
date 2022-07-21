@@ -21,9 +21,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -171,13 +171,13 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
 	}
 
-	orch, err := orchestrator.NewAqOrchestrator(
+	eng, err := engine.NewAqEngine(
 		workflowDag,
 		h.JobManager,
-		orchestrator.AqueductTimeConfig{
+		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,
-			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
-			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
+			ExecTimeout:          engine.DefaultExecutionTimeout,
+			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		false, /* shouldPersistResults */
 	)
@@ -185,16 +185,16 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
 	}
 
-	defer orch.Finish(ctx)
-	status, err := orch.Execute(ctx)
-	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
+	defer eng.Finish(ctx)
+	status, err := eng.Execute(ctx)
+	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
 	statusCode := http.StatusOK
-	if err == orchestrator.ErrOpExecSystemFailure {
+	if err == engine.ErrOpExecSystemFailure {
 		statusCode = http.StatusInternalServerError
-	} else if err == orchestrator.ErrOpExecBlockingUserFailure {
+	} else if err == engine.ErrOpExecBlockingUserFailure {
 		statusCode = http.StatusBadRequest
 	}
 
