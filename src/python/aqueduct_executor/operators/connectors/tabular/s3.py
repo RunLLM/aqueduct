@@ -64,6 +64,22 @@ class S3Connector(connector.TabularConnector):
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
 
+    def delete(self, objects: List[str]) -> List[Dict[str, ObjectResult]:
+        results = []
+        for key in objects:
+            try:
+                self.s3.Object(self.bucket, key).delete()
+                results.append(ObjectResult(key, True))
+            except:
+                results.append(ObjectResult(key, False))
+        return results
+
+    def delete(self, params: delete.S3Params) -> None:
+            try:
+                self.s3.Object(self.bucket, params.key).delete()
+                return True 
+            except:
+                return False
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()
 

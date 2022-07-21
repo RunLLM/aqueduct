@@ -371,9 +371,7 @@ func DeleteTable(ctx context.Context, args *deleteWorkflowArgs, vaultObject vaul
 		}
 		integrationNames[integrationId] = integrationObjects[0].Service
 	}
-	fmt.Print("\n\nINTEGRATION NAMES\n")
-	fmt.Print(integrationNames)
-	fmt.Print("\n\n")
+
 	jobSpec := job.NewDeleteWrittenObjectsSpec(
 		jobName,
 		storageConfig,
