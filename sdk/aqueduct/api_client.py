@@ -282,8 +282,11 @@ class APIClient:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
-            'external_delete': writes_to_delete,
-            'force': force
+            'external_delete': {
+                str(integration): [obj.name for obj in writes_to_delete[integration]] 
+                for integration in writes_to_delete
+            },
+            'force': force,
         }
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
