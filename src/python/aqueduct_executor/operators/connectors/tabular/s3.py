@@ -18,8 +18,9 @@ class S3Connector(connector.TabularConnector):
         self.bucket = config.bucket
 
     def authenticate(self) -> None:
-        for obj in self.s3.Bucket(self.bucket).objects.all():
-            pass
+        bucket = self.s3.Bucket(self.bucket)
+        if not bucket.creation_date:
+            raise Exception("Bucket does not exist or you do not have permission to access the bucket.")
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
