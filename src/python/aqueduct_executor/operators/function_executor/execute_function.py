@@ -7,6 +7,9 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
+import PIL
+import numpy as np
+
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
@@ -44,7 +47,7 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
     return ".".join([OP_DIR, file_path.replace("/", ".")])
 
 
-def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
+def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     fn_path = spec.function_extract_path
     os.chdir(os.path.join(fn_path, OP_DIR))
     sys.path.append(fn_path)
@@ -65,6 +68,36 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
         function.set_args(custom_args)
 
     return getattr(function, method_name)  # type: ignore
+
+
+def _infer_result_type(result: Any) -> ArtifactType:
+    if isinstance(result, DataFrame):
+        return ArtifactType.TABULAR
+    elif isinstance(result, PIL.Image.Image):
+        return ArtifactType.IMAGE
+    elif isinstance(result, bytes):
+        return ArtifactType.BYTES
+    elif isinstance(result, str):
+        # We first check if the result is a valid JSON string.
+        try:
+            json.loads(result)
+            return ArtifactType.JSON
+        except:
+            return ArtifactType.STRING
+    elif isinstance(result, bool) or isinstance(result, np.bool_):
+        return ArtifactType.BOOL
+    elif isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number):
+        return ArtifactType.NUMERIC
+    elif isinstance(result, dict):
+        return ArtifactType.DICT
+    elif isinstance(result, tuple):
+        return ArtifactType.TUPLE
+    else:
+        try:
+            pickle.dumps(result)
+            return ArtifactType.PICKLABLE
+        except:
+            raise Exception("Failed to infer the type of the operator output.")
 
 
 def _execute_function(
@@ -99,7 +132,7 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return result, xxx, system_metadata
+    return result, _infer_result_type(result), system_metadata
 
 
 def run(spec: FunctionSpec) -> None:
