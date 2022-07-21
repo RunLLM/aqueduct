@@ -125,5 +125,10 @@ func TestGetOperatorsByIntegrationId(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, len(actualOperators), 1)
 
-	requireDeepEqual(t, expectedOperator, actualOperators[0])
+	actualOperator := &actualOperators[0]
+	require.NotEqual(t, uuid.Nil, actualOperator.Id)
+
+	expectedOperator.Id = actualOperator.Id
+
+	requireDeepEqual(t, expectedOperator, actualOperator)
 }
