@@ -3,6 +3,7 @@ from datetime import date
 from typing import Any, Dict, Optional, Union
 
 from aqueduct_executor.operators.connectors.tabular import common, models
+from aqueduct_executor.operators.utils import enums
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
@@ -82,8 +83,9 @@ class RelationalParams(models.BaseParams):
 
 class S3Params(models.BaseParams):
     filepath: str
-    type: common.AqueductType
-    format: common.S3FileFormat
+    data_type: enums.ArtifactType
+    format: Optional[common.S3FileFormat]
+    merge: Optional[bool]
 
 
 Params = Union[RelationalParams, S3Params]

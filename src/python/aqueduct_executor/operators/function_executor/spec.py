@@ -27,8 +27,10 @@ class FunctionSpec(BaseModel):
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    input_artifact_types: List[enums.InputArtifactType]
-    output_artifact_types: List[enums.OutputArtifactType]
+    # cgwu: add an operator_type field. We can't rely on the types of input/output artifact to infer the operator type anymore.
+    # cgwu: replace the two below with a single expected_artifact_type
+    input_artifact_types: List[enums.ArtifactType]
+    output_artifact_types: List[enums.ArtifactType]
 
     class Config:
         extra = Extra.forbid

@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType, ArtifactType
 from aqueduct_executor.operators.utils.execution import (
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
@@ -71,7 +71,7 @@ def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
-) -> Tuple[Any, Dict[str, str]]:
+) -> Tuple[Any, ArtifactType, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors. Instead, returns the error message as a string.
@@ -99,7 +99,7 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return result, system_metadata
+    return result, xxx, system_metadata
 
 
 def run(spec: FunctionSpec) -> None:
@@ -111,28 +111,25 @@ def run(spec: FunctionSpec) -> None:
     storage = parse_storage(spec.storage_config)
     try:
         # Read the input data from intermediate storage.
-        inputs = utils.read_artifacts(
-            storage, spec.input_content_paths, spec.input_metadata_paths, spec.input_artifact_types
+        inputs, _ = utils.read_artifacts(
+            storage, spec.input_content_paths, spec.input_metadata_paths
         )
 
         print("Invoking the function...")
-        results, system_metadata = _execute_function(spec, inputs, exec_state)
+        result, result_type, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
-        # Force all results to be of type `list`, so we can always loop over them.
-        if not isinstance(results, list):
-            results = [results]
 
-        utils.write_artifacts(
+        utils.write_artifact(
             storage,
-            spec.output_artifact_types,
-            spec.output_content_paths,
-            spec.output_metadata_paths,
-            results,
+            result_type,
+            spec.output_content_paths[0],
+            spec.output_metadata_paths[0],
+            result,
             system_metadata=system_metadata,
         )
 

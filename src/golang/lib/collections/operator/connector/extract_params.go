@@ -40,8 +40,9 @@ type SalesforceExtractParams struct {
 
 type S3ExtractParams struct {
 	Filepath string `json:"filepath"`
-	Type     string `json:"type"`
+	DataType string `json:"data_type"`
 	Format   string `json:"format"`
+	Merge    bool   `json:"merge"`
 }
 
 func (*PostgresExtractParams) isExtractParams() {}

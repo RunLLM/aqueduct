@@ -36,14 +36,14 @@ class JobType(str, Enum, metaclass=MetaEnum):
     SYSTEM_METRIC = "system_metric"
 
 
-class InputArtifactType(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    FLOAT = "float"
-    JSON = "json"
-
-
-class OutputArtifactType(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    FLOAT = "float"
+class ArtifactType(Enum, metaclass=MetaEnum):
+    STRING = "string"
     BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABULAR = "tabular"
     JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLABLE = "picklable"
