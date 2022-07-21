@@ -222,8 +222,8 @@ class GetWorkflowResponse(BaseModel):
     workflow_dag_results: List[WorkflowDagResultResponse]
 
 
-class TableUpdate(BaseModel):
-    """This is an item in the list returned by GetWorkflowTablesResponse."""
+class WrittenObjectUpdate(BaseModel):
+    """This is an item in the list returned by GetWorkflowWritteObjectsResponse."""
 
     name: str
     integration_id: uuid.UUID
@@ -232,12 +232,12 @@ class TableUpdate(BaseModel):
     update_mode: str
 
 
-class GetWorkflowTablesResponse(BaseModel):
+class GetWorkflowWritteObjectsResponse(BaseModel):
     """This is the response object returned by api_client.get_workflow_writes().
 
     Attributes:
         table_details:
-            List of tables written by the workflow.
+            List of objects written by the workflow.
     """
 
-    table_details: List[TableUpdate]
+    table_details: List[WrittenObjectUpdate]
