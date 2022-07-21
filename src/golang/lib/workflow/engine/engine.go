@@ -19,7 +19,7 @@ var (
 )
 
 type Engine interface {
-	Schedule(ctx context.Context, name string, period string)
+	Schedule(ctx context.Context, workflowId string, name string, period string) error
 
 	Sync(ctx context.Context)
 

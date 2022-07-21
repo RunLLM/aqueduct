@@ -6,12 +6,17 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -19,6 +24,7 @@ import (
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -50,19 +56,24 @@ type RegisterWorkflowHandler struct {
 	ArtifactReader    artifact.Reader
 	IntegrationReader integration.Reader
 	OperatorReader    operator.Reader
+	UserReader        user.Reader
 	WorkflowReader    workflow.Reader
 
-	ArtifactWriter        artifact.Writer
-	OperatorWriter        operator.Writer
-	WorkflowWriter        workflow.Writer
-	WorkflowDagWriter     workflow_dag.Writer
-	WorkflowDagEdgeWriter workflow_dag_edge.Writer
-	WorkflowWatcherWriter workflow_watcher.Writer
+	ArtifactWriter          artifact.Writer
+	ArtifactResultWriter    artifact_result.Writer
+	NotificationWriter      notification.Writer
+	OperatorWriter          operator.Writer
+	OperatorResultWriter    operator_result.Writer
+	WorkflowWriter          workflow.Writer
+	WorkflowDagWriter       workflow_dag.Writer
+	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
+	WorkflowDagResultWriter workflow_dag_result.Writer
+	WorkflowWatcherWriter   workflow_watcher.Writer
 }
 
 type registerWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowDag              *workflow_dag.DBWorkflowDag
+	dbWorkflowDag            *workflow_dag.DBWorkflowDag
 	operatorIdToFileContents map[uuid.UUID][]byte
 
 	// Whether this is a registering a new workflow or updating an existing one.
@@ -137,7 +148,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 
 	return &registerWorkflowArgs{
 		AqContext:                aqContext,
-		workflowDag:              dagSummary.Dag,
+		dbWorkflowDag:            dagSummary.Dag,
 		operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
 		isUpdate:                 isUpdate,
 	}, http.StatusOK, nil
@@ -148,7 +159,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	emptyResp := registerWorkflowResponse{}
 
-	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
+	if _, err := operator_utils.UploadOperatorFiles(ctx, args.dbWorkflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -160,7 +171,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.workflowDag,
+		args.dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -175,7 +186,42 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.workflowDag.Metadata.Id = workflowId
+	args.dbWorkflowDag.Metadata.Id = workflowId
+
+	workflowDag, err := dag_utils.NewWorkflowDag(
+		ctx,
+		args.dbWorkflowDag,
+		h.WorkflowDagResultWriter,
+		h.OperatorResultWriter,
+		h.ArtifactResultWriter,
+		h.WorkflowReader,
+		h.NotificationWriter,
+		h.UserReader,
+		h.JobManager,
+		h.Vault,
+		h.StorageConfig,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
+	}
+
+	eng, err := engine.NewAqEngine(
+		workflowDag,
+		h.Database,
+		h.GithubManager,
+		h.Vault,
+		h.JobManager,
+		engine.AqueductTimeConfig{
+			OperatorPollInterval: previewPollIntervalMillisec,
+			ExecTimeout:          engine.DefaultExecutionTimeout,
+			CleanupTimeout:       engine.DefaultCleanupTimeout,
+		},
+		false, /* shouldPersistResults */
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
+	}
 
 	if args.isUpdate {
 		// If we're updating an existing workflow, first update the metadata.
@@ -188,9 +234,9 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			ctx,
 			&editWorkflowArgs{
 				workflowId:          workflowId,
-				workflowName:        args.workflowDag.Metadata.Name,
-				workflowDescription: args.workflowDag.Metadata.Description,
-				schedule:            &args.workflowDag.Metadata.Schedule,
+				workflowName:        args.dbWorkflowDag.Metadata.Name,
+				workflowDescription: args.dbWorkflowDag.Metadata.Description,
+				schedule:            &args.dbWorkflowDag.Metadata.Schedule,
 			},
 		)
 		if err != nil {
@@ -198,15 +244,15 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	} else {
 		// We should create cron jobs for newly created, non-manually triggered workflows.
-		if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
-			err = CreateWorkflowCronJob(
+		if string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule) != "" {
+
+			err = eng.Schedule(
 				ctx,
-				args.workflowDag.Metadata,
-				h.Database.Config(),
-				h.Vault,
-				h.JobManager,
-				h.GithubManager,
+				args.dbWorkflowDag.Metadata.Id.String(),
+				shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
+				string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
+
 			if err != nil {
 				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 			}
@@ -217,18 +263,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	_, _, err = (&RefreshWorkflowHandler{
-		Database:       h.Database,
-		JobManager:     h.JobManager,
-		GithubManager:  h.GithubManager,
-		Vault:          h.Vault,
-		WorkflowReader: h.WorkflowReader,
-	}).Perform(
-		ctx,
-		&RefreshWorkflowArgs{
-			WorkflowId: workflowId,
-		},
-	)
+	_, err = eng.Execute(ctx)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
 	}
@@ -252,40 +287,4 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
-}
-
-// CreateWorkflowCronJob creates a k8s cron job
-// that will run the workflow on the specified schedule.
-func CreateWorkflowCronJob(
-	ctx context.Context,
-	workflow *workflow.Workflow,
-	dbConfig *database.DatabaseConfig,
-	vaultObject vault.Vault,
-	jobManager job.JobManager,
-	githubManager github.Manager,
-) error {
-	workflowId := workflow.Id.String()
-	name := shared_utils.AppendPrefix(workflowId)
-	period := string(workflow.Schedule.CronSchedule)
-
-	spec := job.NewWorkflowSpec(
-		workflow.Name,
-		workflowId,
-		dbConfig,
-		vaultObject.Config(),
-		jobManager.Config(),
-		githubManager.Config(),
-		nil, /* parameters */
-	)
-
-	err := jobManager.DeployCronJob(
-		ctx,
-		name,
-		period,
-		spec,
-	)
-	if err != nil {
-		return errors.Wrap(err, "unable to deploy workflow cron job")
-	}
-	return nil
 }

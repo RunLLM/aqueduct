@@ -271,7 +271,7 @@ func (eng *aqEngine) Finish(ctx context.Context) {
 	}
 }
 
-func (eng *aqEngine) Schedule(ctx context.Context, workflowId string, name string, period string) {
+func (eng *aqEngine) Schedule(ctx context.Context, workflowId string, name string, period string) error {
 
 	spec := job.NewWorkflowSpec(
 		name,
@@ -283,13 +283,18 @@ func (eng *aqEngine) Schedule(ctx context.Context, workflowId string, name strin
 		nil, /* parameters */
 	)
 
-	eng.jobManager.DeployCronJob(
+	// Note: Change implementation of Schedule to not rely on JobManager
+	err := eng.jobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
 		spec,
 	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to schedule workflow.")
+	}
 
+	return nil
 }
 
 func (eng *aqEngine) Sync(ctx context.Context) {}
