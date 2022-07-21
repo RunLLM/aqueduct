@@ -261,10 +261,10 @@ class Client:
         if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
-        workflow_writes = self._api_client.get_workflow_writes(flow_id).table_details
+        workflow_writes = self._api_client.get_workflow_writes(flow_id).object_details
         writes_mapping = defaultdict(list)
         for item in workflow_writes:
-            written_object = WrittenObject(item.table_name, item.update_mode)
+            written_object = WrittenObject(item.object_name, item.update_mode)
             writes_mapping[item.integration_id].append(written_object)
         return writes_mapping
 

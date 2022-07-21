@@ -16,7 +16,7 @@ from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
-    GetWorkflowWritteObjectsResponse,
+    GetWorkflowWrittenObjectsResponse,
     ListWorkflowResponseEntry,
     OperatorResult,
     PreviewResponse,
@@ -313,12 +313,12 @@ class APIClient:
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
-    def get_workflow_writes(self, flow_id: str) -> GetWorkflowWritteObjectsResponse:
+    def get_workflow_writes(self, flow_id: str) -> GetWorkflowWrittenObjectsResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.GET_WORKFLOW_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        workflow_writes_response = GetWorkflowWritteObjectsResponse(**resp.json())
+        workflow_writes_response = GetWorkflowWrittenObjectsResponse(**resp.json())
         return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:

@@ -223,16 +223,16 @@ class GetWorkflowResponse(BaseModel):
 
 
 class WrittenObjectUpdate(BaseModel):
-    """This is an item in the list returned by GetWorkflowWritteObjectsResponse."""
+    """This is an item in the list returned by GetWorkflowWrittenObjectsResponse."""
 
     name: str
     integration_id: uuid.UUID
     service: ServiceType
-    table_name: str
+    object_name: str
     update_mode: str
 
 
-class GetWorkflowWritteObjectsResponse(BaseModel):
+class GetWorkflowWrittenObjectsResponse(BaseModel):
     """This is the response object returned by api_client.get_workflow_writes().
 
     Attributes:
@@ -240,4 +240,4 @@ class GetWorkflowWritteObjectsResponse(BaseModel):
             List of objects written by the workflow.
     """
 
-    table_details: List[WrittenObjectUpdate]
+    object_details: List[WrittenObjectUpdate]
