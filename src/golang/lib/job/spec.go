@@ -44,7 +44,7 @@ const (
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
 	LoadTableJobType      JobType = "load-table"
-	DeleteTableJobType      JobType = "delete-table"
+	DeleteWrittenObjectsJobType      JobType = "delete-written-objects"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -140,11 +140,11 @@ type ExtractSpec struct {
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
-type DeleteTableSpec struct {
+type DeleteWrittenObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
-	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
+	ConnectorName   map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   map[string]auth.Config          `json:"connector_config"  yaml:"connector_config"`
+	Parameters        map[string][]string `json:"parameters"  yaml:"parameters"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
 }
 
@@ -214,8 +214,8 @@ func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
 }
 
-func (*DeleteTableSpec) Type() JobType {
-	return DeleteTableJobType
+func (*DeleteWrittenObjectsSpec) Type() JobType {
+	return DeleteWrittenObjectsJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -339,26 +339,26 @@ func NewExtractSpec(
 	}
 }
 
-// NewDeleteTablesSpec constructs a Spec for a DeleteTablesJob.
-func NewDeleteTablesSpec(
+// NewDeleteWrittenObjectsSpec constructs a Spec for a DeleteTablesJob.
+func NewDeleteWrittenObjectsSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName integration.Service,
-	connectorConfig auth.Config,
-	parameters connector.LoadParams,
+	connectorName map[string]integration.Service,
+	connectorConfig map[string]auth.Config,
+	parameters map[string][]string,
 	outputContentPath string,
 ) Spec {
-	return &DeleteTableSpec{
+	return &DeleteWrittenObjectsSpec{
 		BasePythonSpec: BasePythonSpec{
 			baseSpec: baseSpec{
-				Type: DeleteTableJobType,
+				Type: DeleteWrittenObjectsJobType,
 				Name: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		ConnectorName:     connectorName,
+		ConnectorName:	connectorName,
 		ConnectorConfig:   connectorConfig,
 		Parameters:        parameters,
 		OutputContentPath: outputContentPath,

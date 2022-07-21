@@ -60,5 +60,8 @@ flow = client.publish_flow(
 )
 
 ###
-
+print("DELETE")
+client.delete_flow(
+    flow.id(), writes_to_delete=client.get_workflow_writes(flow.id())
+)
 print(flow.id())

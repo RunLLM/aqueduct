@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict
 
 try:
     from typing import Literal
@@ -44,13 +44,17 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
     if "connector_name" not in values:
         raise ValueError("Unknown connector name.")
 
-    values["connector_name"]
+    if type(values["connector_name"]) == dict:
+        for integration in connector_config:
+            connector_config[integration] = connector_config[integration]["conf"]
+        
+        return connector_config
+    else:
+        if not isinstance(connector_config, dict):
+            raise ValueError("connector_config is not a dictionary.")
 
-    if not isinstance(connector_config, dict):
-        raise ValueError("connector_config is not a dictionary.")
-
-    # This is a static config
-    return connector_config["conf"]
+        # This is a static config
+        return connector_config["conf"]
 
 
 class AuthenticateSpec(models.BaseSpec):
@@ -123,6 +127,22 @@ class LoadTableSpec(models.BaseSpec):
     )
 
 
+class DeleteWrittenObjectsSpec(models.BaseSpec):
+    name: str
+    type: Literal[enums.JobType.DELETEWRITTENOBJECTS]
+    storage_config: sconfig.StorageConfig
+    metadata_path: str
+    connector_name: Dict[str, common.Name]
+    connector_config: Dict[str, config.Config]
+    parameters: Dict[str, List[str]]
+    output_content_path: str
+
+    # validators
+    _unwrap_connector_config = validator("connector_config", allow_reuse=True, pre=True)(
+        unwrap_connector_config
+    )
+
+
 class DiscoverSpec(models.BaseSpec):
     name: str
     type: Literal[enums.JobType.DISCOVER]
@@ -138,4 +158,4 @@ class DiscoverSpec(models.BaseSpec):
     )
 
 
-Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec]
+Spec = DeleteWrittenObjectsSpec#Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DeleteWrittenObjectsSpec, DiscoverSpec]

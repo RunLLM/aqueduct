@@ -2,29 +2,39 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"encoding/json"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	// "github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	// "github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	// shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
-	// workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+)
+
+const (
+	pollDeleteWrittenObjectsInterval = 500 * time.Millisecond
+	pollDeleteWrittenObjectsTimeout  = 2 * time.Minute
 )
 
 type TableOutput struct {
@@ -55,7 +65,9 @@ type DeleteWorkflowHandler struct {
 	PostHandler
 
 	Database                database.Database
-	JobManager              job.JobManager
+	StorageConfig     *shared.StorageConfig
+	JobManager        job.JobManager
+	Vault             vault.Vault
 	WorkflowReader          workflow.Reader
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
@@ -63,6 +75,7 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
+	IntegrationReader          integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -121,40 +134,44 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
-	emptyResp := deleteWorkflowResponse{}
-	emptyResp.WritesResults = map[uuid.UUID][]TableOutput{}
+	resp := deleteWorkflowResponse{}
+	resp.WritesResults = map[uuid.UUID][]TableOutput{}
 
 	// Check tables in list are valid
-	for integrationId, writeList := range args.ExternalDelete {
-		for _, name := range writeList {
-			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
-			if err != nil {
-				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
-			}
-			if touched == false {
-				return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow.")
-			}
-		}
-	}
+	// for integrationId, writeList := range args.ExternalDelete {
+	// 	for _, name := range writeList {
+	// 		touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
+	// 		if err != nil {
+	// 			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
+	// 		}
+	// 		if touched == false {
+	// 			return resp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow.")
+	// 		}
+	// 	}
+	// }
 
 	// Delete associated tables.
-	// tableResults, httpResponse, err := DeleteTable(ctx, args, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) ([]TableOutput, int, error)
+	writesResults, httpResponse, err := DeleteTable(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+	if httpResponse != http.StatusOK {
+		return resp, httpResponse, err
+	}
+	resp.WritesResults = writesResults
 
 	// txn, err := h.Database.BeginTx(ctx)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	// }
 	// defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// // We first retrieve all relevant records from the database.
 	// workflowObject, err := h.WorkflowReader.GetWorkflow(ctx, args.workflowId, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	// }
 
 	// workflowDagsToDelete, err := h.WorkflowDagReader.GetWorkflowDagsByWorkflowId(ctx, workflowObject.Id, txn)
 	// if err != nil || len(workflowDagsToDelete) == 0 {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	// }
 
 	// workflowDagIds := make([]uuid.UUID, 0, len(workflowDagsToDelete))
@@ -164,7 +181,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// workflowDagResultsToDelete, err := h.WorkflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, workflowObject.Id, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	// }
 
 	// workflowDagResultIds := make([]uuid.UUID, 0, len(workflowDagResultsToDelete))
@@ -174,7 +191,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// workflowDagEdgesToDelete, err := h.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
 	// }
 
 	// operatorIds := make([]uuid.UUID, 0, len(workflowDagEdgesToDelete))
@@ -208,7 +225,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// operatorsToDelete, err := h.OperatorReader.GetOperators(ctx, operatorIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
 	// }
 
 	// operatorResultsToDelete, err := h.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
@@ -217,7 +234,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// 	txn,
 	// )
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving operator results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving operator results.")
 	// }
 
 	// operatorResultIds := make([]uuid.UUID, 0, len(operatorResultsToDelete))
@@ -231,7 +248,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// 	txn,
 	// )
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving artifact results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving artifact results.")
 	// }
 
 	// artifactResultIds := make([]uuid.UUID, 0, len(artifactResultsToDelete))
@@ -242,51 +259,51 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// // Start deleting database records.
 	// err = h.WorkflowWatcherWriter.DeleteWorkflowWatcherByWorkflowId(ctx, workflowObject.Id, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
 	// }
 
 	// err = h.OperatorResultWriter.DeleteOperatorResults(ctx, operatorResultIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
 	// }
 
 	// err = h.ArtifactResultWriter.DeleteArtifactResults(ctx, artifactResultIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	// }
 
 	// err = h.WorkflowDagResultWriter.DeleteWorkflowDagResults(ctx, workflowDagResultIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	// }
 
 	// err = h.WorkflowDagEdgeWriter.DeleteEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
 	// }
 
 	// err = h.OperatorWriter.DeleteOperators(ctx, operatorIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting operators.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting operators.")
 	// }
 
 	// err = h.ArtifactWriter.DeleteArtifacts(ctx, artifactIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting artifacts.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting artifacts.")
 	// }
 
 	// err = h.WorkflowDagWriter.DeleteWorkflowDags(ctx, workflowDagIds, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
 	// }
 
 	// err = h.WorkflowWriter.DeleteWorkflow(ctx, workflowObject.Id, txn)
 	// if err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting workflow.")
 	// }
 
 	// if err := txn.Commit(ctx); err != nil {
-	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete workflow.")
+	// 	return resp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete workflow.")
 	// }
 
 	// // Delete storage files (artifact content and function files)
@@ -306,7 +323,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// storageConfig := workflowDagsToDelete[0].StorageConfig
 	// for _, workflowDag := range workflowDagsToDelete {
 	// 	if !reflect.DeepEqual(workflowDag.StorageConfig, storageConfig) {
-	// 		return emptyResp, http.StatusInternalServerError, errors.New("Workflow Dags have mismatching storage config.")
+	// 		return resp, http.StatusInternalServerError, errors.New("Workflow Dags have mismatching storage config.")
 	// 	}
 	// }
 
@@ -317,68 +334,90 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// 	cronjobName := shared_utils.AppendPrefix(workflowObject.Id.String())
 	// 	err = h.JobManager.DeleteCronJob(ctx, cronjobName)
 	// 	if err != nil {
-	// 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete workflow's cronjob.")
+	// 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete workflow's cronjob.")
 	// 	}
 	// }
 
-	return emptyResp, http.StatusOK, nil
+	return resp, http.StatusOK, nil
 }
 
-// func DeleteTable(ctx context.Context, args *DeleteTableArgs, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) (int, error) {
-// 	emptyTables := make([]TableOutput, 0)
+func DeleteTable(ctx context.Context, args *deleteWorkflowArgs, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]TableOutput, int, error) {
+	emptyWritesResults := map[uuid.UUID][]TableOutput{}
 
-// 	// Schedule delete table job
-// 	jobMetadataPath := fmt.Sprintf("delete-tables-%s", args.RequestId)
+	// Schedule delete written objects job
+	jobMetadataPath := fmt.Sprintf("delete-written-objects-%s", args.RequestId)
 
-// 	jobName := fmt.Sprintf("delete-tables-operator-%s", uuid.New().String())
+	jobName := fmt.Sprintf("delete-written-objects-%s", uuid.New().String())
+	contentPath := fmt.Sprintf("delete-written-objects-content-%s", args.RequestId)
 
-// 	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, vaultObject)
-// 	if err != nil {
-// 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
-// 	}
+	integrationConfigs := map[string]auth.Config{}
+	integrationNames := map[string]integration.Service{}
+	for integrationId, _ := range args.ExternalDelete {
+		integrationUUID, err := uuid.Parse(integrationId)
+		if err != nil {
+			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+		}
+		config, err := auth.ReadConfigFromSecret(ctx, integrationUUID, vaultObject)
+		if err != nil {
+			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+		}
+		integrationConfigs[integrationId] = config
+		integrationObjects, err := intergrationReader.GetIntegrationsById(ctx, integrationUUID, db)
+		if err != nil {
+			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+		}
+		if len(integrationObjects) != 1 {
+			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+		}
+		integrationNames[integrationId] = integrationObjects[0].Service
+	}
+	fmt.Print("\n\nINTEGRATION NAMES\n")
+	fmt.Print(integrationNames)
+	fmt.Print("\n\n")
+	jobSpec := job.NewDeleteWrittenObjectsSpec(
+		jobName,
+		storageConfig,
+		jobMetadataPath,
+		integrationNames,
+		integrationConfigs,
+		args.ExternalDelete,
+		contentPath,
+	)
+	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
+		return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete written objects job.")
+	}
 
-// 	jobSpec := job.NewDeleteTablesSpec(
-// 		jobName,
-// 		storageConfig,
-// 		jobMetadataPath,
-// 		integrationObject.Service,
-// 		config,
-// 		loadParameters,
-// 		contentPath,
-// 	)
-// 	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
-// 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete tables job.")
-// 	}
+	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollDeleteWrittenObjectsInterval, pollDeleteWrittenObjectsTimeout)
+	if err != nil {
+		return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete written objects.")
+	}
 
-// 	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollCreateInterval, pollCreateTimeout)
-// 	if err != nil {
-// 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
-// 	}
+	if jobStatus == shared.SucceededExecutionStatus {
+		// Table deletions were successful
+		jobWritesResults := map[uuid.UUID][]TableOutput{}
 
-// 	if jobStatus == shared.SucceededExecutionStatus {
-// 		// Table deletions were successful
-// 		var tables []TableOutput
-// 		if err := utils.ReadFromStorage(
-// 			ctx,
-// 			storageConfig,
-// 			contentPath,
-// 			&tables,
-// 		); err != nil {
-// 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
-// 		}
-// 		return tables, http.StatusOK, nil
-// 	}
+		if err := workflow_utils.ReadFromStorage(
+			ctx,
+			storageConfig,
+			contentPath,
+			&jobWritesResults,
+		); err != nil {
+			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete written objects.")
+		}
 
-// 	// Table deletions failed, so we need to fetch the error message from storage
-// 	var metadata operator_result.Metadata
-// 	if err := utils.ReadFromStorage(
-// 		ctx,
-// 		storageConfig,
-// 		jobMetadataPath,
-// 		&metadata,
-// 	); err != nil {
-// 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to delete tables.")
-// 	}
+		return jobWritesResults, http.StatusOK, nil
+	}
 
-// 	return http.StatusBadRequest, errors.Newf("Unable to delete tables: %v", metadata.Error)
-// }
+	// // Written object deletions failed, so we need to fetch the error message from storage
+	// var metadata operator_result.Metadata
+	// if err := workflow_utils.ReadFromStorage(
+	// 	ctx,
+	// 	storageConfig,
+	// 	jobMetadataPath,
+	// 	&metadata,
+	// ); err != nil {
+	// 	return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete written objects.")
+	// }
+
+	return emptyWritesResults, http.StatusInternalServerError, errors.New("Unable to delete written objects.")
+}

@@ -289,6 +289,7 @@ class APIClient:
             'force': force,
         }
         response = requests.post(url, headers=headers, json=body)
+        print(response.json())
         utils.raise_errors(response)
         deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
         return deleteWorkflowResponse

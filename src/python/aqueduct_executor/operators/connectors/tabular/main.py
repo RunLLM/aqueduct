@@ -11,6 +11,7 @@ from aqueduct_executor.operators.connectors.tabular.spec import (
     ExtractSpec,
     LoadSpec,
     LoadTableSpec,
+    DeleteWrittenObjectsSpec,
     Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
