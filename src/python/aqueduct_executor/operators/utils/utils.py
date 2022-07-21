@@ -260,8 +260,10 @@ def write_exec_state(
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
 def write_delete_written_objects_results(storage: Storage, path: str, results: Dict[str, List[ObjectResult]]) -> None:
-    results_str = json.dumps(results)
-
+    results_str = json.dumps({
+        integration: [result.__dict__ for result in results[integration]] 
+        for integration in results
+    })
     storage.put(path, bytes(results_str, encoding=_DEFAULT_ENCODING))
 
 def write_discover_results(storage: Storage, path: str, tables: List[str]) -> None:

@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
@@ -33,7 +33,7 @@ class BigQueryConnector(connector.TabularConnector):
         df = query.result().to_dataframe()
         return df
     
-    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]:
+    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]]:
         results = []
         for table in tables:
             try:

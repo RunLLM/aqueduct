@@ -231,21 +231,21 @@ if __name__ == "__main__":
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
 
-    try:
-        run(spec, storage, exec_state)
-        # Write operator execution metadata
-        # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
-        # certain that the operator succeeded.
-        if exec_state.status == enums.ExecutionStatus.FAILED:
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-            sys.exit(1)
-        else:
-            exec_state.status = enums.ExecutionStatus.SUCCEEDED
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-    except Exception as e:
-        exec_state.status = enums.ExecutionStatus.FAILED
-        exec_state.failure_type = enums.FailureType.SYSTEM
-        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+    # try:
+    run(spec, storage, exec_state)
+    # Write operator execution metadata
+    # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
+    # certain that the operator succeeded.
+    if exec_state.status == enums.ExecutionStatus.FAILED:
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
+    else:
+        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    # except Exception as e:
+    #     exec_state.status = enums.ExecutionStatus.FAILED
+    #     exec_state.failure_type = enums.FailureType.SYSTEM
+    #     exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+    #     print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+    #     utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    #     sys.exit(1)

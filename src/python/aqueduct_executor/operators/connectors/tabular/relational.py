@@ -1,8 +1,10 @@
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
-from sqlalchemy import engine, inspect
+from aqueduct_executor.operators.utils.dicts import ObjectResult
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import engine, inspect, MetaData
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -26,10 +28,7 @@ class RelationalConnector(connector.TabularConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
 
-    def delete(self, params: delete.RelationalParams) -> None:
-
-
-    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]:
+    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]]:
         results = []
         Base = declarative_base()
         metadata = MetaData()
