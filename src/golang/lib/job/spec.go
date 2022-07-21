@@ -108,6 +108,11 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+
+	// If the function outputs a value that exists in this list, we will fail the entire workflow.
+	// This list contains the json-serialized version of the offending values.
+	// Must be set to nil if there are no blacklisted outputs expected.
+	BlacklistedOutputs []string `json:"blacklisted_outputs" yaml:"blacklisted_outputs"`
 }
 
 type ParamSpec struct {
