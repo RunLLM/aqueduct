@@ -25,6 +25,14 @@ TIP_EXTRACT = "We couldn't execute the provided query. Please double check your 
 TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
+# This tip is not meant to be surfaced to the user, because at this level
+# we can only give a very generic error. This message should be overwritten
+# at a higher level with a more user-friendly one, specific to type of operator.
+#
+# Eg. Check operators with error severity are blacklisted from returning `false`,
+# since that signifies a failed blocking check.
+TIP_BLACKLISTED_OUTPUT = "Operator has output a blacklisted value."
+
 
 class Error(BaseModel):
     tip: str = ""  # Information about how the user could fix the error.
