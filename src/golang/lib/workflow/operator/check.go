@@ -76,7 +76,7 @@ func (co *checkOperatorImpl) JobSpec() job.Spec {
 	if co.hasErrorSeverity() {
 		falseSerialized, err := json.Marshal(false)
 		if err != nil {
-			log.Errorf("Internal error: Operator %s is unable to marshal `false`")
+			log.Errorf("Internal error: Operator %s is unable to marshal `false`", co.Name())
 		}
 
 		fnSpec := spec.(*job.FunctionSpec)
