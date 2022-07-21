@@ -19,7 +19,7 @@ var (
 )
 
 type Engine interface {
-	Schedule(ctx context.Context)
+	Schedule(ctx context.Context, name string, period string)
 
 	Sync(ctx context.Context)
 

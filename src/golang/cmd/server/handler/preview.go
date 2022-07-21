@@ -173,6 +173,9 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 	eng, err := engine.NewAqEngine(
 		workflowDag,
+		h.Database,
+		h.GithubManager,
+		h.Vault,
 		h.JobManager,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,

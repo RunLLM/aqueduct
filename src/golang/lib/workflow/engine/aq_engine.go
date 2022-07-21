@@ -5,9 +5,12 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -26,9 +29,12 @@ type AqueductTimeConfig struct {
 }
 
 type aqEngine struct {
-	dag        dag.WorkflowDag
-	jobManager job.JobManager
-	timeConfig *AqueductTimeConfig
+	dag           dag.WorkflowDag
+	database      database.Database
+	githubManager github.Manager
+	vault         vault.Vault
+	jobManager    job.JobManager
+	timeConfig    *AqueductTimeConfig
 
 	// Maps every operator to the number of its immediate dependencies
 	// that still needs to be computed. When this hits 0 during execution,
@@ -43,6 +49,9 @@ type aqEngine struct {
 
 func NewAqEngine(
 	dag dag.WorkflowDag,
+	database database.Database,
+	githubManager github.Manager,
+	vault vault.Vault,
 	jobManager job.JobManager,
 	timeConfig AqueductTimeConfig,
 	shouldPersistResults bool,
@@ -58,6 +67,9 @@ func NewAqEngine(
 
 	return &aqEngine{
 		dag:                  dag,
+		database:             database,
+		githubManager:        githubManager,
+		vault:                vault,
 		jobManager:           jobManager,
 		timeConfig:           &timeConfig,
 		opToDependencyCount:  opToDependencyCount,
@@ -259,6 +271,25 @@ func (eng *aqEngine) Finish(ctx context.Context) {
 	}
 }
 
-func (eng *aqEngine) Schedule(ctx context.Context) {}
+func (eng *aqEngine) Schedule(ctx context.Context, workflowId string, name string, period string) {
+
+	spec := job.NewWorkflowSpec(
+		name,
+		workflowId,
+		eng.database.Config(),
+		eng.vault.Config(),
+		eng.jobManager.Config(),
+		eng.githubManager.Config(),
+		nil, /* parameters */
+	)
+
+	eng.jobManager.DeployCronJob(
+		ctx,
+		name,
+		period,
+		spec,
+	)
+
+}
 
 func (eng *aqEngine) Sync(ctx context.Context) {}

@@ -123,6 +123,9 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 
 	orch, err := engine.NewAqEngine(
 		workflowDag,
+		ex.Database,
+		ex.GithubManager,
+		ex.Vault,
 		ex.JobManager,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: pollingIntervalMS,
