@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/{workflowId}/tables
+// Route: /workflow/{workflowId}/objects
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
@@ -23,18 +23,18 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		all tables for the given `workflowId`
+//		all written objects for the given `workflowId`
 
-type getWorkflowTablesArgs struct {
+type GetWorkflowObjectsArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
 }
 
-type getWorkflowTablesResponse struct {
-	LoadDetails []operator.GetDistinctLoadOperatorsByWorkflowIdResponse `json:"table_details"`
+type GetWorkflowObjectsResponse struct {
+	LoadDetails []operator.GetDistinctLoadOperatorsByWorkflowIdResponse `json:"object_details"`
 }
 
-type GetWorkflowTablesHandler struct {
+type GetWorkflowObjectsHandler struct {
 	GetHandler
 
 	Database       database.Database
@@ -42,11 +42,11 @@ type GetWorkflowTablesHandler struct {
 	WorkflowReader workflow.Reader
 }
 
-func (*GetWorkflowTablesHandler) Name() string {
-	return "GetWorkflowTables"
+func (*GetWorkflowObjectsHandler) Name() string {
+	return "GetWorkflowObjects"
 }
 
-func (h *GetWorkflowTablesHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -71,16 +71,16 @@ func (h *GetWorkflowTablesHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	return &getWorkflowTablesArgs{
+	return &GetWorkflowObjectsArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
 	}, http.StatusOK, nil
 }
 
-func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*getWorkflowTablesArgs)
+func (h *GetWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*GetWorkflowObjectsArgs)
 
-	emptyResp := getWorkflowTablesResponse{}
+	emptyResp := GetWorkflowObjectsResponse{}
 
 	// Get all specs  for the workflow.
 	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
@@ -88,7 +88,7 @@ func (h *GetWorkflowTablesHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	return getWorkflowTablesResponse{
+	return GetWorkflowObjectsResponse{
 		LoadDetails: operatorList,
 	}, http.StatusOK, nil
 }
