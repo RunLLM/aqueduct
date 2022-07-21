@@ -69,7 +69,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
-    GET_WORKFLOW_TABLES_ROUTE = "/api/workflow/%s/tables"
+    GET_WORKFLOW_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -291,7 +291,7 @@ class APIClient:
 
     def get_workflow_writes(self, flow_id: str) -> GetWorkflowWritteObjectsResponse:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self.construct_full_url(self.GET_WORKFLOW_TABLES_ROUTE % flow_id)
+        url = self.construct_full_url(self.GET_WORKFLOW_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
         workflow_writes_response = GetWorkflowWritteObjectsResponse(**resp.json())
