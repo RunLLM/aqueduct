@@ -26,7 +26,7 @@ func newPostgresWriter() Writer {
 
 func (r *postgresReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
-	workflowId string,
+	workflowId uuid.UUID,
 	integrationId string,
 	tableName string,
 	db database.Database,

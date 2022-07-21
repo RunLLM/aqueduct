@@ -60,7 +60,7 @@ class TestBackend:
         data = self.get_response_class(endpoint).json()["table_details"]
 
         assert len(data) == 3
-
+        
         # table_name, update_mode
         data_set = set(
             [
@@ -91,27 +91,15 @@ class TestBackend:
         )
         integration_id = list(data.keys())[0]
         assert len(data[integration_id]) == 3
-        assert set([(item.table, item.update_mode) for item in data[integration_id]]) == data_set
+        assert set([(item.name, item.update_mode) for item in data[integration_id]]) == data_set
 
     def test_sdk_deleteworkflow_invalid(self):
         tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
         integration_id = list(tables.keys())[0]
         tables[integration_id][0].name = 'I_DON_T_EXIST'
         tables[integration_id] = [tables[integration_id][0]]
-        print(tables)
-        # data = self.client.delete_flow(self.flows["changing_saves.py"], )
+       
 
-        # # Check all in same integration
-        # assert len(data.keys()) == 1
-
-        # # table_name, update_mode
-        # data_set = set(
-        #     [
-        #         ("table_1", "append"),
-        #         ("table_1", "replace"),
-        #         ("table_2", "append"),
-        #     ]
-        # )
-        # integration_id = list(data.keys())[0]
-        # assert len(data[integration_id]) == 3
-        # assert set([(item.table, item.update_mode) for item in data[integration_id]]) == data_set
+        with pytest.raises(Exception) as e_info:
+            data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
+            

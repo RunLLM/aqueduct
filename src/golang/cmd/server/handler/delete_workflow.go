@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	// "reflect"
-	"fmt"
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -30,8 +28,8 @@ import (
 )
 
 type TableOutput struct {
-	name string `json:"name"`
-	result bool `json:"succeeded"`
+	Name string `json:"name"`
+	Result bool `json:"succeeded"`
 }
 
 
@@ -39,18 +37,18 @@ type TableOutput struct {
 // k8s resources, Postgres state, and output tables in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowId uuid.UUID
-	externalDelete   map[uuid.UUID][]string `json:"external_delete"`
-	force   bool `json:"force"`
+	WorkflowId uuid.UUID
+	ExternalDelete   map[string][]string
+	Force   bool
 }
 
 type deleteWorkflowInput struct {
-	externalDelete map[uuid.UUID][]string `json:"external_delete"`
-	force   bool `json:"force"`
+	ExternalDelete map[string][]string `json:"external_delete"`
+	Force   bool `json:"force"`
 }
 
 type deleteWorkflowResponse struct{
-	writesResults map[uuid.UUID][]TableOutput `json:"writes_results"`
+	WritesResults map[uuid.UUID][]TableOutput `json:"writes_results"`
 }
 
 type DeleteWorkflowHandler struct {
@@ -112,54 +110,32 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
 	}
 
-	s, _ := json.MarshalIndent(input, "", "\t")
-	fmt.Print(string(s))
-
 	return &deleteWorkflowArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
-		externalDelete:   input.externalDelete,
-		force:   input.force,
+		WorkflowId: workflowId,
+		ExternalDelete:   input.ExternalDelete,
+		Force:   input.Force,
 	}, http.StatusOK, nil
 }
 
 func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	// args := interfaceArgs.(*deleteWorkflowArgs)
+	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	emptyResp := deleteWorkflowResponse{}
+	emptyResp.WritesResults = map[uuid.UUID][]TableOutput{}
 
 	// Check tables in list are valid
-	// for _, spec := range args.loadSpec {
-	// 	relationalParam := connector.CastToRelationalDBLoadParams(spec.Parameters)
-
-	// 	integrations, err := h.IntegrationReader.GetIntegrationsByServiceAndUser(ctx, spec.ConnectorName, args.AqContext.UserId, h.Database)
-	// 	if err {
-	// 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving integration id.")
-	// 	}
-
-	// 	integrationId := nil
-	// 	for _, integration := range integrations {
-	// 		eq := reflect.DeepEqual(integration.Config, spec.ConnectorConfig)
-	// 		if eq {
-	// 			if integrationId == nil {
-	// 				integrationId = integration.Id
-	// 			} else {
-	// 				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpectedly retrieved multiple integration ids.")
-	// 			}
-	// 		}
-	// 	}
-	// 	if integrationId == nil {
-	// 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Could not find integration id.")
-	// 	}
-
-	// 	touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.workflowId, integrationId, relationalParam.Table, h.Database)
-	// 	if err != nil {
-	// 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
-	// 	}
-	// 	if touched == false {
-	// 		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow")
-	// 	}
-	// }
+	for integrationId, writeList := range args.ExternalDelete {
+		for _, name := range writeList {
+			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
+			if err != nil {
+				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
+			}
+			if touched == false {
+				return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow.")
+			}
+		}
+	}
 
 	// Delete associated tables.
 	// tableResults, httpResponse, err := DeleteTable(ctx, args, tableSpecs LoadSpec, integrationObject *integration.Integration, vaultObject vault.Vault, jobManager job.JobManager) ([]TableOutput, int, error)

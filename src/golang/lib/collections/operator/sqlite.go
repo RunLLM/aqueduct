@@ -73,7 +73,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 
 func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
-	workflowId string,
+	workflowId uuid.UUID,
 	integrationId string,
 	tableName string,
 	db database.Database,

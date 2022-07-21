@@ -19,6 +19,7 @@ from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
     GetWorkflowTablesResponse,
+    DeleteWorkflowResponse,
     ListWorkflowResponseEntry,
     PreviewResponse,
     RegisterWorkflowResponse,
@@ -286,8 +287,8 @@ class APIClient:
         }
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
-        DeleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
-        return DeleteWorkflowResponse
+        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        return deleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
