@@ -62,7 +62,7 @@ func (co *checkOperatorImpl) GetExecState(ctx context.Context) (*shared.Executio
 	if co.hasErrorSeverity() &&
 		execState.Status == shared.FailedExecutionStatus &&
 		execState.Error.Tip == shared.TipBlacklistedOutputError {
-		execState.Error.Tip = fmt.Sprintf("Check operator %s failed and has ERROR level severity, so the entire workflow failed.", co.Name())
+		execState.Error.Tip = fmt.Sprintf("Check %s did not pass and has ERROR level severity, so the entire workflow failed.", co.Name())
 	}
 	return execState, nil
 }
