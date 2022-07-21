@@ -1,5 +1,3 @@
-import argparse
-import base64
 import importlib
 import json
 import os
@@ -7,7 +5,7 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
+from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
@@ -106,6 +104,7 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
+    print("Started %s job: %s" % (spec.type, spec.name))
 
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
@@ -150,16 +149,3 @@ def run(spec: FunctionSpec) -> None:
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--spec", required=True)
-    args = parser.parse_args()
-
-    spec_json = base64.b64decode(args.spec)
-    spec = parse_spec(spec_json)
-
-    print("Started %s job: %s" % (spec.type, spec.name))
-
-    run(spec)
