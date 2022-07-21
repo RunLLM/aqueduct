@@ -51,6 +51,8 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
 
     if "conf" not in connector_config:
         # There is no inner `conf` dictionary to unwrap
+        # This occurs when the spec is serialized in Python to run operators
+        # on other engines. 
         return connector_config
 
     # This is a static config
