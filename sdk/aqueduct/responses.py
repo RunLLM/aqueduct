@@ -201,7 +201,7 @@ class WorkflowDagResultResponse(BaseModel):
         return {
             "run_id": str(self.id),
             "created_at": human_readable_timestamp(self.created_at),
-            "status": str(self.status),
+            "status": self.status.value,
         }
 
 
@@ -239,23 +239,23 @@ class DeleteWorkflowResponse(BaseModel):
 
     writes_results: Dict[uuid.UUID, List[WritesDelete]]
 
-
-class TableUpdate(BaseModel):
-    """This is an item in the list returned by GetWorkflowTablesResponse."""
+    
+class WrittenObjectUpdate(BaseModel):
+    """This is an item in the list returned by GetWorkflowWrittenObjectsResponse."""
 
     name: str
     integration_id: uuid.UUID
     service: ServiceType
-    table_name: str
+    object_name: str
     update_mode: str
 
 
-class GetWorkflowTablesResponse(BaseModel):
+class GetWorkflowWrittenObjectsResponse(BaseModel):
     """This is the response object returned by api_client.get_workflow_writes().
 
     Attributes:
         table_details:
-            List of tables written by the workflow.
+            List of objects written by the workflow.
     """
 
-    table_details: List[TableUpdate]
+    object_details: List[WrittenObjectUpdate]
