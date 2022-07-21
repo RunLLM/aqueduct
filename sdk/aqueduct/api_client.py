@@ -17,6 +17,7 @@ from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
+    OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
 )
@@ -24,8 +25,31 @@ from aqueduct.responses import (
 from aqueduct import utils
 
 
-def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
-    """Prints all the logs generated during preview, in BFS order."""
+def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
+    """
+    Prints all the logs generated during preview, in BFS order.
+
+    Raises:
+        AqueductError:
+            If the preview execution has failed. This error will have the context
+            and error message of every failed operator in it.
+        InternalAqueductError:
+            If something unexpected happened in our system.
+    """
+    # There can be multiple operator failures, one for each entry.
+    op_err_msgs: List[str] = []
+
+    # Creates the message to show the user in the error.
+    def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
+        assert op_result.error is not None
+        return (
+            f"Operator {op_name} failed!\n"
+            f"{op_result.error.context}\n"
+            f"\n"
+            f"{op_result.error.tip}\n"
+            f"\n"
+        )
+
     q: List[Operator] = dag.list_root_operators()
     seen_op_ids = set(op.id for op in q)
     while len(q) > 0:
@@ -40,8 +64,7 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
                 print("")
 
             if curr_op_result.error is not None:
-                print(curr_op_result.error.tip)
-                print(curr_op_result.error.context)
+                op_err_msgs.append(_construct_failure_error_msg(curr_op.name, curr_op_result))
 
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
@@ -53,6 +76,13 @@ def _print_preview_logs(preview_resp: PreviewResponse, dag: DAG) -> None:
                     ]
                     q.extend(next_operators)
                     seen_op_ids.union(set(op.id for op in next_operators))
+
+    if preview_resp.status == ExecutionStatus.PENDING:
+        raise InternalAqueductError("Preview route should not be returning PENDING status.")
+
+    if preview_resp.status == ExecutionStatus.FAILED:
+        failure_err_msg = "\n".join(op_err_msgs)
+        raise AqueductError(f"Preview Execution Failed:\n\n{failure_err_msg}\n")
 
 
 class APIClient:
@@ -228,13 +258,7 @@ class APIClient:
         utils.raise_errors(resp)
 
         preview_resp = PreviewResponse(**resp.json())
-        _print_preview_logs(preview_resp, dag)
-        if preview_resp.status == ExecutionStatus.PENDING:
-            raise InternalAqueductError("Preview route should not be returning PENDING status.")
-        if preview_resp.status == ExecutionStatus.FAILED:
-            raise AqueductError(
-                "Preview execution failed. See console logs for error message and trace."
-            )
+        _handle_preview_resp(preview_resp, dag)
         return preview_resp
 
     def register_workflow(
