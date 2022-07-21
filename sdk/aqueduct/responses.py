@@ -201,7 +201,7 @@ class WorkflowDagResultResponse(BaseModel):
         return {
             "run_id": str(self.id),
             "created_at": human_readable_timestamp(self.created_at),
-            "status": str(self.status),
+            "status": self.status.value,
         }
 
 

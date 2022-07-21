@@ -2,9 +2,10 @@ package tests
 
 import (
 	"context"
+	"testing"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"testing"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"

@@ -129,9 +129,13 @@ if __name__ == "__main__":
         # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
         # solution at the moment.
         if isdir(join(os.sep, "home", "ec2-user", "SageMaker")):
-            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "sagemaker"), ui_directory, dirs_exist_ok=True)
+            shutil.copytree(
+                join(cwd, "src", "ui", "app", "dist", "sagemaker"), ui_directory, dirs_exist_ok=True
+            )
         else:
-            shutil.copytree(join(cwd, "src", "ui", "app" ,"dist", "default"), ui_directory, dirs_exist_ok=True)
+            shutil.copytree(
+                join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
+            )
 
     # Install the local SDK.
     if args.update_sdk:
@@ -148,5 +152,11 @@ if __name__ == "__main__":
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
+        
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/start-function-executor.sh",
+            join(server_directory, "bin")
+        ])
 
     print("Successfully installed aqueduct from local repo!")

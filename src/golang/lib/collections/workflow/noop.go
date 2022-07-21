@@ -137,3 +137,11 @@ func (r *noopReaderImpl) GetWatchersInBatch(
 ) ([]WorkflowWatcherInfo, error) {
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
+
+func (r *noopReaderImpl) GetWorkflowsFromOperatorIds(
+	ctx context.Context,
+	operatorIds []uuid.UUID,
+	db database.Database,
+) (map[uuid.UUID][]uuid.UUID, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}

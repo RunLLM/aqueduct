@@ -140,7 +140,7 @@ class TableArtifact(Artifact):
         Returns:
             A dataframe containing the tabular contents of this artifact.
         """
-        df = self.get()
+        df = self.get(parameters=parameters)
         return df.head(n)
 
     def save(self, config: SaveConfig) -> None:

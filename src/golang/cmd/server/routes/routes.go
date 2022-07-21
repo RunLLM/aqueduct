@@ -9,12 +9,13 @@ const (
 	GetFunctionRoute          = "/api/function/{functionId}"
 	ExportFunctionRoute       = "/api/function/{operatorId}/export"
 
-	ListIntegrationsRoute   = "/api/integrations"
-	ConnectIntegrationRoute = "/api/integration/connect"
-	DeleteIntegrationRoute  = "/api/integration/{integrationId}/delete"
-	CreateTableRoute        = "/api/integration/{integrationId}/create"
-	PreviewTableRoute       = "/api/integration/{integrationId}/preview_table"
-	DiscoverRoute           = "/api/integration/{integrationId}/discover"
+	ListIntegrationsRoute            = "/api/integrations"
+	ConnectIntegrationRoute          = "/api/integration/connect"
+	DeleteIntegrationRoute           = "/api/integration/{integrationId}/delete"
+	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
+	CreateTableRoute                 = "/api/integration/{integrationId}/create"
+	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
+	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 
@@ -28,12 +29,13 @@ const (
 
 	GetUserProfileRoute = "/api/user"
 
-	ListWorkflowsRoute    = "/api/workflows"
-	RegisterWorkflowRoute = "/api/workflow/register"
-	GetWorkflowRoute      = "/api/workflow/{workflowId}"
-	DeleteWorkflowRoute   = "/api/workflow/{workflowId}/delete"
-	EditWorkflowRoute     = "/api/workflow/{workflowId}/edit"
-	RefreshWorkflowRoute  = "/api/workflow/{workflowId}/refresh"
-	UnwatchWorkflowRoute  = "/api/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute    = "/api/workflow/{workflowId}/watch"
+	ListWorkflowsRoute     = "/api/workflows"
+	RegisterWorkflowRoute  = "/api/workflow/register"
+	GetWorkflowRoute       = "/api/workflow/{workflowId}"
+	GetWorkflowTablesRoute = "/api/workflow/{workflowId}/tables"
+	DeleteWorkflowRoute    = "/api/workflow/{workflowId}/delete"
+	EditWorkflowRoute      = "/api/workflow/{workflowId}/edit"
+	RefreshWorkflowRoute   = "/api/workflow/{workflowId}/refresh"
+	UnwatchWorkflowRoute   = "/api/workflow/{workflowId}/unwatch"
+	WatchWorkflowRoute     = "/api/workflow/{workflowId}/watch"
 )

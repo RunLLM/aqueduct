@@ -1,7 +1,3 @@
-import argparse
-import base64
-<<<<<<< HEAD
-import json
 import sys
 
 import pandas as pd
@@ -28,11 +24,10 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from pydantic import parse_obj_as
 from typing import Any
 
 
-def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
+def run(spec: Spec) -> None:
     """
     Runs one of the following connector operations:
     - authenticate
@@ -45,6 +40,27 @@ def run(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     - spec: The spec provided for this operator.
     - storage: An execution storage to use for reading or writing artifacts.
     """
+    print("Started %s job: %s" % (spec.type, spec.name))
+
+    storage = parse_storage(spec.storage_config)
+    exec_state = ExecutionState(user_logs=Logs())
+
+    try:
+        _execute(spec, storage, exec_state)
+        # Write operator execution metadata
+        if exec_state.status != enums.ExecutionStatus.FAILED:
+            exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    except Exception as e:
+        exec_state.status = enums.ExecutionStatus.FAILED
+        exec_state.failure_type = enums.FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+        sys.exit(1)
+
+
+def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     op = setup_connector(spec.connector_name, spec.connector_config)
 
     if spec.type == enums.JobType.AUTHENTICATE:
@@ -195,33 +211,3 @@ def setup_connector(
 
     # isort: on
     return OpConnector(config=connector_config)  # type: ignore
-
-
-def _parse_spec(spec_json: bytes) -> Spec:
-    """
-    Parses a JSON string into a spec.Spec.
-    """
-    data = json.loads(spec_json)
-
-    print("Job Spec: \n{}".format(json.dumps(data, indent=4)))
-
-    # TODO (ENG-1286): https://linear.app/aqueducthq/issue/ENG-1286/investigate-why-mypy-is-complaining-about-object-parsing
-    # The following line is working, but mypy complains:
-    # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
-    # We ignore the error for now.
-    return parse_obj_as(Spec, data)  # type: ignore
-=======
->>>>>>> main
-
-from aqueduct_executor.operators.connectors.tabular import execute
-from aqueduct_executor.operators.connectors.tabular.spec import parse_spec
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--spec", required=True)
-    args = parser.parse_args()
-
-    spec_json = base64.b64decode(args.spec)
-    spec = parse_spec(spec_json)
-
-    execute.run(spec)

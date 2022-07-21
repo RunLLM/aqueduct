@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -81,4 +82,25 @@ func (w *sqliteWriterImpl) CreateIntegrationForUser(
 	var integration Integration
 	err = db.Query(ctx, &integration, insertIntegrationStmt, args...)
 	return &integration, err
+}
+
+func (r *sqliteReaderImpl) GetIntegrationsByConfigField(
+	ctx context.Context,
+	fieldName string,
+	fieldValue string,
+	db database.Database,
+) ([]Integration, error) {
+	getIntegrationsQuery := fmt.Sprintf(
+		"SELECT %s FROM integration WHERE json_extract(config, $1) = $2;",
+		allColumns(),
+	)
+	var integrations []Integration
+
+	// The full 'where' condition becomes
+	// `json_extract(config, '$.field_name') = 'field_value'`
+	// which matches https://www.sqlite.org/json1.html .
+	// We parametrize the extracted field_name and field_value
+	// to prevent injection.
+	err := db.Query(ctx, &integrations, getIntegrationsQuery, "$."+fieldName, fieldValue)
+	return integrations, err
 }

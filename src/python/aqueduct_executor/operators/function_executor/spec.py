@@ -32,6 +32,10 @@ class FunctionSpec(BaseModel):
     #input_artifact_types: List[enums.ArtifactType]
     #output_artifact_types: List[enums.ArtifactType]
 
+    # If the function produces one of these blacklisted outputs exactly,
+    # we will error out the workflow.
+    blacklisted_outputs: Optional[List[str]] = None  # Optional for backwards compatability.
+
     class Config:
         extra = Extra.forbid
 
