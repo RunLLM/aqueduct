@@ -21,11 +21,6 @@ type Artifact interface {
 	Type() artifact.Type
 	Name() string
 
-	// Computed indicates whether this artifact has been computed or not. An artifact is
-	// only considered "computed" if the operator that generates it has completed
-	// successfully.
-	Computed(ctx context.Context) bool
-
 	// InitializeResult initializes the artifact in the database.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
@@ -35,6 +30,10 @@ type Artifact interface {
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
+
+	// Computed indicates whether this artifact has been computed or not.
+	// An artifact is only considered "computed" if its results have been written to storage.
+	Computed(ctx context.Context) bool
 
 	// GetMetadata fetches the metadata for this artifact.
 	// Errors if the artifact has not yet been computed.
