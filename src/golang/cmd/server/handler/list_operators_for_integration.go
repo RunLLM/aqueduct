@@ -123,6 +123,5 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 			IsActive:      active,
 		})
 	}
-
 	return listOperatorsForIntegrationResponse{OperatorWithIds: results}, http.StatusOK, nil
 }

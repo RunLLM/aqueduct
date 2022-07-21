@@ -114,6 +114,11 @@ import integrationTables, {
   integrationTablesSlice,
   IntegrationTablesState,
 } from './reducers/integrationTables';
+import integrationOperators, {
+  handleLoadIntegrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
+} from './reducers/integrationOperators';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -383,6 +388,7 @@ export {
   handleLoadIntegrations,
   handleLoadIntegrationTable,
   handleLoadIntegrationTables,
+  handleLoadIntegrationOperators,
   HeightTransition,
   HomePage,
   IconButton,
@@ -400,6 +406,9 @@ export {
   integrationTables,
   integrationTablesSlice,
   IntegrationTablesState,
+  integrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
   IntegrationTextInputField,
   listNotifications,
   ListWorkflowResponse,
