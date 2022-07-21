@@ -123,6 +123,7 @@ def _execute_function(
         return invoke(*inputs)
 
     result = _invoke()
+    inferred_result_type = _infer_result_type(result)
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -132,7 +133,7 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return result, _infer_result_type(result), system_metadata
+    return result, inferred_result_type, system_metadata
 
 
 def run(spec: FunctionSpec) -> None:
