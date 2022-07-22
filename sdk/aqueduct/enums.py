@@ -134,7 +134,7 @@ class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     BOOL = "boolean"
     PARAM = "param"'''
 
-class ArtifactType(Enum, metaclass=MetaEnum):
+class ArtifactType(str, Enum, metaclass=MetaEnum):
     UNTYPED = "untyped"
     STRING = "string"
     BOOL = "boolean"
@@ -146,3 +146,12 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"
     PICKLABLE = "picklable"
+
+class SerializationType(str, Enum, metaclass=MetaEnum):
+    TABULAR = "tabular"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STANDARD = "standard"
+    BYTES = "bytes"
+    

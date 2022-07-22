@@ -414,3 +414,27 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     if isinstance(id, uuid.UUID):
         return str(id)
     return id
+
+def _read_tabular_content(storage: Storage, path: str) -> pd.DataFrame:
+    input_bytes = storage.get(path)
+    return pd.read_json(io.BytesIO(input_bytes), orient="table")
+
+
+def _read_json_input(storage: Storage, path: str) -> Any:
+    return json.loads(storage.get(path).decode(_DEFAULT_ENCODING))
+
+
+def _read_pickle_input(storage: Storage, path: str) -> Any:
+    return pickle.loads(storage.get(path))
+
+
+def _read_image_input(storage: Storage, path: str) -> Image.Image:
+    return Image.open(io.BytesIO(storage.get(path)))
+
+
+def _read_standard_input(storage: Storage, path: str) -> str:
+    return storage.get(path).decode(_DEFAULT_ENCODING)
+
+
+def _read_bytes_input(storage: Storage, path: str) -> bytes:
+    return storage.get(path)

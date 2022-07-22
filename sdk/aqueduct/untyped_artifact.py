@@ -27,6 +27,9 @@ class UntypedArtifact(Artifact):
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
 
+    def _parse_content(self, serialization_type, content) -> Any:
+
+
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the untyped artifact.
 
@@ -53,9 +56,11 @@ class UntypedArtifact(Artifact):
             make_copy=True,
         )
         preview_resp = self._api_client.preview(dag=dag)
-        encoded_result = preview_resp.artifact_results[self._artifact_id]
+        artifact_response = preview_resp.artifact_results[self._artifact_id]
+        serialization_type = artifact_response.serialization_type
+        print(serialization_type)
 
-        artifact_result = base64.b64decode(encoded_result)
+        artifact_result = base64.b64decode(artifact_response.content)
 
         return pickle.loads(artifact_result)
 

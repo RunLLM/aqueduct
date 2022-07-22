@@ -36,7 +36,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     SYSTEM_METRIC = "system_metric"
 
 
-class ArtifactType(Enum, metaclass=MetaEnum):
+class ArtifactType(str, Enum, metaclass=MetaEnum):
     STRING = "string"
     BOOL = "boolean"
     NUMERIC = "numeric"
@@ -49,7 +49,7 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     PICKLABLE = "picklable"
 
 
-class SerializationMethod(Enum, metaclass=MetaEnum):
+class SerializationType(str, Enum, metaclass=MetaEnum):
     TABULAR = "tabular"
     JSON = "json"
     PICKLE = "pickle"

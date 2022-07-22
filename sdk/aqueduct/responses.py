@@ -51,6 +51,11 @@ class OperatorResult(BaseModel):
     failure_type: Optional[FailureType] = None
 
 
+class ArtifactResult(BaseModel):
+    serialization_type: str
+    content: str
+
+
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().
 
@@ -69,7 +74,7 @@ class PreviewResponse(BaseModel):
 
     status: ExecutionStatus
     operator_results: Dict[uuid.UUID, OperatorResult]
-    artifact_results: Dict[uuid.UUID, str]
+    artifact_results: Dict[uuid.UUID, ArtifactResult]
 
 
 class RegisterWorkflowResponse(BaseModel):

@@ -24,6 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /preview
@@ -48,10 +49,15 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
+type previewArtifactResponse struct {
+	SerializationType string `json:"serialization_type"`
+	Content           string `json:"content"`
+}
+
 type previewResponse struct {
-	Status          shared.ExecutionStatus              `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
-	ArtifactResults map[uuid.UUID]string                `json:"artifact_results"`
+	Status          shared.ExecutionStatus                `json:"status"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
+	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
 }
 
 type PreviewHandler struct {
@@ -182,14 +188,24 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}
 
 	// Only include artifact results that were successfully computed.
-	artifactResults := make(map[uuid.UUID]string)
+	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
 	for _, artf := range workflowDag.Artifacts() {
 		if artf.Computed(ctx) {
+			artifact_metadata, err := artf.GetMetadata(ctx)
+			if err != nil {
+				return errorRespPtr, http.StatusInternalServerError, err
+			}
+
+			log.Info(artifact_metadata.SerializationType)
+
 			content, err := artf.GetContent(ctx)
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
-			artifactResults[artf.ID()] = base64.StdEncoding.EncodeToString(content)
+			artifactResults[artf.ID()] = previewArtifactResponse{
+				SerializationType: artifact_metadata.SerializationType,
+				Content:           base64.StdEncoding.EncodeToString(content),
+			}
 		}
 	}
 
