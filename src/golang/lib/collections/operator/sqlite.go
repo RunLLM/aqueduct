@@ -1,8 +1,8 @@
 package operator
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -69,91 +69,6 @@ func (w *sqliteWriterImpl) CreateOperator(
 	var operator DBOperator
 	err = db.Query(ctx, &operator, insertOperatorStmt, args...)
 	return &operator, err
-}
-
-func (r *sqliteReaderImpl) TableTouchedByWorkflow(
-	ctx context.Context,
-	workflowId uuid.UUID,
-	integrationId string,
-	tableName string,
-	db database.Database,
-) (bool, error) {
-	query := fmt.Sprintf(`
-	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator
-		WHERE
-			json_extract(spec, '$.type') = 'load' AND 
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
-
-	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
-
-	touched := false
-	if len(operators) > 0 {
-		touched = true
-	}
-
-	return touched, err
-}
-
-func (r *sqliteReaderImpl) TableAppendedByWorkflow(
-	ctx context.Context,
-	workflowId uuid.UUID,
-	integrationId string,
-	tableName string,
-	db database.Database,
-) (bool, error) {
-	query := fmt.Sprintf(`
-	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator
-		WHERE
-			json_extract(spec, '$.type') = 'load' AND 
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.update_mode')='append' AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
-
-	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
-
-	appended := false
-	if len(operators) > 0 {
-		appended = true
-	}
-
-	return appended, err
 }
 
 func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(

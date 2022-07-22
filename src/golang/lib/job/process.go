@@ -209,7 +209,6 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		spec.Type() == LoadJobType ||
 		spec.Type() == ExtractJobType ||
 		spec.Type() == LoadTableJobType ||
-		spec.Type() == DeleteWrittenObjectsJobType ||
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
