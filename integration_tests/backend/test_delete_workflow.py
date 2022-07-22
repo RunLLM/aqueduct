@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from time import sleep
 
 import pytest
 import requests
@@ -41,6 +42,7 @@ class TestDeleteWorkflow:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
                 cls.flows[workflow] = out.strip().split()[-1]
+            sleep(10)
 
     @classmethod
     def teardown_class(cls):
@@ -61,6 +63,7 @@ class TestDeleteWorkflow:
 
         endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
         data = self.get_response_class(endpoint).json()
+        print(set(data['table_names']))
         assert 'delete_table' in set(data['table_names'])
        
         with pytest.raises(Exception) as e_info:
