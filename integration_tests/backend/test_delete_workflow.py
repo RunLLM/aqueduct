@@ -19,11 +19,7 @@ class TestDeleteWorkflow:
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
         cls.flows = {}
 
-        workflow_files = [
-            f
-            for f in os.listdir(cls.WORKFLOW_PATH)
-            if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))
-        ]
+        workflow_files = ['simple_saves.py']
         for workflow in workflow_files:
             proc = subprocess.Popen(
                 [
@@ -62,11 +58,18 @@ class TestDeleteWorkflow:
         integration_id = list(tables.keys())[0]
 
         endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
-        data = self.get_response_class(endpoint).json()
-        print(set(data['table_names']))
-        assert 'delete_table' in set(data['table_names'])
+        tables_response = self.get_response_class(endpoint).json()
+        assert 'delete_table' in set(tables_response['table_names'])
        
         with pytest.raises(Exception) as e_info:
             self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=False)
         data = self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=True)
-        print(data)
+        sleep(1)
+        endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
+        tables_response = self.get_response_class(endpoint).json()
+        assert 'delete_table' not in set(tables_response['table_names'])
+        del self.flows["simple_saves.py"]
+   
+        assert len(data) == 1
+        assert len(data[integration_id]) == 1
+        assert data[integration_id][0].succeeded == True
