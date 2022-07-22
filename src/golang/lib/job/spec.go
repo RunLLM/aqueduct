@@ -344,7 +344,7 @@ func NewExtractSpec(
 	}
 }
 
-// NewDeleteWrittenObjectsSpec constructs a Spec for a DeleteTablesJob.
+// NewDeleteWrittenObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
 func NewDeleteWrittenObjectsSpec(
 	name string,
 	storageConfig *shared.StorageConfig,

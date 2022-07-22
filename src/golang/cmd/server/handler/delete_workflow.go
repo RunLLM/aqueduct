@@ -151,7 +151,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	// Delete associated tables.
-	writesResults, httpResponse, err := DeleteTable(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+	writesResults, httpResponse, err := DeleteWrittenObject(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 	if httpResponse != http.StatusOK {
 		return resp, httpResponse, err
 	}
@@ -341,7 +341,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	return resp, http.StatusOK, nil
 }
 
-func DeleteTable(ctx context.Context, args *deleteWorkflowArgs, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]TableOutput, int, error) {
+func DeleteWrittenObject(ctx context.Context, args *deleteWorkflowArgs, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]TableOutput, int, error) {
 	emptyWritesResults := map[uuid.UUID][]TableOutput{}
 
 	// Schedule delete written objects job
