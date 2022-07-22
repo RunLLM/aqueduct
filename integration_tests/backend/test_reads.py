@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from time import sleep
 
 import pytest
 import requests
@@ -41,6 +42,7 @@ class TestReads:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
                 cls.flows[workflow] = out.strip().split()[-1]
+            sleep(10)
 
     @classmethod
     def teardown_class(cls):
