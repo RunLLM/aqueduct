@@ -61,7 +61,7 @@ class TestReads:
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = self.get_response_class(endpoint)
       
-        data = data.json()["table_details"]
+        data = data.json()["object_details"]
 
         assert len(data) == 3
         
@@ -73,7 +73,7 @@ class TestReads:
                 ("table_2", "append"),
             ]
         )
-        assert set([(item["table_name"], item["update_mode"]) for item in data]) == data_set
+        assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
         assert len(set([item["integration_id"] for item in data])) == 1
