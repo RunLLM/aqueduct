@@ -31,11 +31,6 @@ type Reader interface {
 		ids []uuid.UUID,
 		db database.Database,
 	) ([]Integration, error)
-	GetIntegrationsById(
-		ctx context.Context,
-		integrationId uuid.UUID,
-		db database.Database,
-	) ([]Integration, error)
 	GetIntegrationsByServiceAndUser(
 		ctx context.Context,
 		service Service,

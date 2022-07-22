@@ -362,7 +362,7 @@ func DeleteTable(ctx context.Context, args *deleteWorkflowArgs, vaultObject vaul
 			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationConfigs[integrationId] = config
-		integrationObjects, err := intergrationReader.GetIntegrationsById(ctx, integrationUUID, db)
+		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationUUID}, db)
 		if err != nil {
 			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}

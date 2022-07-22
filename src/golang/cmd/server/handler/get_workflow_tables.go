@@ -27,7 +27,7 @@ import (
 
 type GetWorkflowObjectsArgs struct {
 	*aq_context.AqContext
-	WorkflowId uuid.UUID
+	workflowId uuid.UUID
 }
 
 type GetWorkflowObjectsResponse struct {
@@ -73,7 +73,7 @@ func (h *GetWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	return &GetWorkflowObjectsArgs{
 		AqContext:  aqContext,
-		WorkflowId: workflowId,
+		workflowId: workflowId,
 	}, http.StatusOK, nil
 }
 
@@ -83,7 +83,7 @@ func (h *GetWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	emptyResp := GetWorkflowObjectsResponse{}
 
 	// Get all specs  for the workflow.
-	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.WorkflowId, h.Database)
+	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}

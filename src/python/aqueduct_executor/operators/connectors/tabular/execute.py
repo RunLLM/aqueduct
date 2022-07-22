@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import json
 import sys
 

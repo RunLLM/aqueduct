@@ -356,7 +356,7 @@ func NewDeleteWrittenObjectsSpec(
 ) Spec {
 	return &DeleteWrittenObjectsSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: DeleteWrittenObjectsJobType,
 				Name: name,
 			},
@@ -383,7 +383,7 @@ func NewLoadSpec(
 ) Spec {
 	return &LoadSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: LoadJobType,
 				Name: name,
 			},
