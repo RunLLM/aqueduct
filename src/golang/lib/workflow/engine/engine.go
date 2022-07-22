@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -19,12 +20,12 @@ var (
 )
 
 type Engine interface {
-	Schedule(ctx context.Context, workflowId string, name string, period string) error
+	ScheduleWorkflow(ctx context.Context, workflowDag dag.WorkflowDag, workflowId string, name string, period string) error
 
-	Sync(ctx context.Context)
+	SyncWorkflow(ctx context.Context, workflowDag dag.WorkflowDag)
 
-	Execute(ctx context.Context) (shared.ExecutionStatus, error)
+	ExecuteWorkflow(ctx context.Context, workflowDag dag.WorkflowDag) (shared.ExecutionStatus, error)
 
-	// Finish is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
-	Finish(ctx context.Context)
+	// Cleanup is an end-of-orchestration hook meant to do any final cleanup work, after Execute completes.
+	CleanupWorkflow(ctx context.Context, workflowDag dag.WorkflowDag)
 }

@@ -188,8 +188,8 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
 	}
 
-	defer eng.Finish(ctx)
-	status, err := eng.Execute(ctx)
+	defer eng.CleanupWorkflow(ctx, workflowDag)
+	status, err := eng.ExecuteWorkflow(ctx, workflowDag)
 	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}

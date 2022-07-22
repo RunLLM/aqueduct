@@ -80,18 +80,53 @@ func NewAqEngine(
 	}, nil
 }
 
-func (eng *aqEngine) Execute(
+func (eng *aqEngine) CleanupWorkflow(ctx context.Context, workflowDag dag.WorkflowDag) {
+	for _, op := range workflowDag.Operators() {
+		op.Finish(ctx)
+	}
+}
+
+func (eng *aqEngine) ScheduleWorkflow(ctx context.Context, workflowDag dag.WorkflowDag, workflowId string, name string, period string) error {
+
+	spec := job.NewWorkflowSpec(
+		name,
+		workflowId,
+		eng.database.Config(),
+		eng.vault.Config(),
+		eng.jobManager.Config(),
+		eng.githubManager.Config(),
+		nil, /* parameters */
+	)
+
+	// Note: Change implementation of Schedule to not rely on JobManager
+	err := eng.jobManager.DeployCronJob(
+		ctx,
+		name,
+		period,
+		spec,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to schedule workflow.")
+	}
+
+	return nil
+}
+
+func (eng *aqEngine) SyncWorkflow(ctx context.Context, workflowDag dag.WorkflowDag) {}
+
+func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
+	workflowDag dag.WorkflowDag,
 ) (shared.ExecutionStatus, error) {
 	if eng.shouldPersistResults {
-		err := eng.dag.InitializeResults(ctx)
+		err := workflowDag.InitializeResults(ctx)
 		if err != nil {
 			return shared.FailedExecutionStatus, err
 		}
 
 		// Make sure to persist the dag results on exit.
 		defer func() {
-			err = eng.dag.PersistResult(ctx, eng.status)
+			err = workflowDag.PersistResult(ctx, eng.status)
 			if err != nil {
 				log.Errorf("Error when persisting dag resutls: %v", err)
 			}
@@ -101,6 +136,7 @@ func (eng *aqEngine) Execute(
 	eng.status = shared.RunningExecutionStatus
 	err := eng.execute(
 		ctx,
+		workflowDag,
 		eng.timeConfig,
 		eng.jobManager,
 		eng.shouldPersistResults,
@@ -150,6 +186,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 
 func (eng *aqEngine) execute(
 	ctx context.Context,
+	workflowDag dag.WorkflowDag,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
 	shouldPersistResults bool,
@@ -157,7 +194,7 @@ func (eng *aqEngine) execute(
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := eng.inProgressOps
 	completedOps := eng.completedOps
-	dag := eng.dag
+	dag := workflowDag
 	opToDependencyCount := eng.opToDependencyCount
 
 	// Kick off execution by starting all operators that don't have any inputs.
@@ -264,37 +301,3 @@ func (eng *aqEngine) execute(
 	}
 	return nil
 }
-
-func (eng *aqEngine) Finish(ctx context.Context) {
-	for _, op := range eng.dag.Operators() {
-		op.Finish(ctx)
-	}
-}
-
-func (eng *aqEngine) Schedule(ctx context.Context, workflowId string, name string, period string) error {
-
-	spec := job.NewWorkflowSpec(
-		name,
-		workflowId,
-		eng.database.Config(),
-		eng.vault.Config(),
-		eng.jobManager.Config(),
-		eng.githubManager.Config(),
-		nil, /* parameters */
-	)
-
-	// Note: Change implementation of Schedule to not rely on JobManager
-	err := eng.jobManager.DeployCronJob(
-		ctx,
-		name,
-		period,
-		spec,
-	)
-	if err != nil {
-		return errors.Wrap(err, "Unable to schedule workflow.")
-	}
-
-	return nil
-}
-
-func (eng *aqEngine) Sync(ctx context.Context) {}

@@ -138,8 +138,8 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
-	defer orch.Finish(ctx)
-	status, err := orch.Execute(ctx)
+	defer orch.CleanupWorkflow(ctx, workflowDag)
+	status, err := orch.ExecuteWorkflow(ctx, workflowDag)
 	if err != nil {
 		return err
 	}

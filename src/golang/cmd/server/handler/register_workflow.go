@@ -246,8 +246,9 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		// We should create cron jobs for newly created, non-manually triggered workflows.
 		if string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule) != "" {
 
-			err = eng.Schedule(
+			err = eng.ScheduleWorkflow(
 				ctx,
+				workflowDag,
 				args.dbWorkflowDag.Metadata.Id.String(),
 				shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
 				string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule),
@@ -263,7 +264,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	_, err = eng.Execute(ctx)
+	_, err = eng.ExecuteWorkflow(ctx, workflowDag)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
 	}
@@ -287,4 +288,40 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
+}
+
+// CreateWorkflowCronJob creates a k8s cron job
+// that will run the workflow on the specified schedule.
+func CreateWorkflowCronJob(
+	ctx context.Context,
+	workflow *workflow.Workflow,
+	dbConfig *database.DatabaseConfig,
+	vaultObject vault.Vault,
+	jobManager job.JobManager,
+	githubManager github.Manager,
+) error {
+	workflowId := workflow.Id.String()
+	name := shared_utils.AppendPrefix(workflowId)
+	period := string(workflow.Schedule.CronSchedule)
+
+	spec := job.NewWorkflowSpec(
+		workflow.Name,
+		workflowId,
+		dbConfig,
+		vaultObject.Config(),
+		jobManager.Config(),
+		githubManager.Config(),
+		nil, /* parameters */
+	)
+
+	err := jobManager.DeployCronJob(
+		ctx,
+		name,
+		period,
+		spec,
+	)
+	if err != nil {
+		return errors.Wrap(err, "unable to deploy workflow cron job")
+	}
+	return nil
 }
