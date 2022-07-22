@@ -448,7 +448,7 @@ class Client:
         counts = 0
         for integration in resp.writes_results:
             failed_for_integration = []
-            for obj in resp[integration]:
+            for obj in resp.writes_results[integration]:
                 if not obj.succeeded:
                     failed_for_integration.append(obj)
             if len(failed_for_integration) > 0:
