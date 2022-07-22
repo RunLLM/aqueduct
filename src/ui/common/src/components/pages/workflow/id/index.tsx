@@ -43,12 +43,14 @@ import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
 import WorkflowHeader from '../../../workflows/workflowHeader';
+import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
-const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
+const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, Layout = DefaultLayout }) => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
@@ -274,7 +276,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   };
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <Box
         sx={{
           display: 'flex',
@@ -321,7 +323,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
       )}
 
       <WorkflowStatusBar user={user} />
-    </DefaultLayout>
+    </Layout>
   );
 };
 
