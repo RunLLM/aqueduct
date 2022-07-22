@@ -26,7 +26,9 @@ TIP_LOAD = "We couldn't load to the integration. Please make sure the target exi
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
 # Assumption: only check operators will use this tip.
-TIP_BLACKLISTED_OUTPUT = "The check did not pass and has ERROR level severity, so the entire workflow failed."
+TIP_BLACKLISTED_OUTPUT = (
+    "The check did not pass and has ERROR level severity, so the entire workflow failed."
+)
 
 
 class Error(BaseModel):

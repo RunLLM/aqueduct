@@ -2,6 +2,7 @@ package operator
 
 import (
 	"encoding/json"
+
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/job"
