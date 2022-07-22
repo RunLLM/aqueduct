@@ -138,6 +138,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp.WritesResults = map[uuid.UUID][]TableOutput{}
 
 	// Check tables in list are valid
+	objCount := 0
 	for integrationId, writeList := range args.ExternalDelete {
 		for _, name := range writeList {
 			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
@@ -147,15 +148,18 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			if touched == false {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow.")
 			}
+			objCount += 1
 		}
 	}
 
 	// Delete associated tables.
-	writesResults, httpResponse, err := DeleteWrittenObject(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
-	if httpResponse != http.StatusOK {
-		return resp, httpResponse, err
+	if objCount > 0 {
+		writesResults, httpResponse, err := DeleteWrittenObject(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		if httpResponse != http.StatusOK {
+			return resp, httpResponse, err
+		}
+		resp.WritesResults = writesResults
 	}
-	resp.WritesResults = writesResults
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
