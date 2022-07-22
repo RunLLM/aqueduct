@@ -120,7 +120,11 @@ def run_extract(
 
     output_artifact_type = enums.ArtifactType.TABULAR
     if isinstance(extract_params, extract.S3Params):
-        output_artifact_type = extract_params.data_type
+        output_artifact_type = extract_params.artifact_type
+        # If the type of the output is tuple, then it could be a multi-file S3 request so we
+        # overwrite the output type to tuple.
+        if isinstance(output, tuple):
+            output_artifact_type = enums.ArtifactType.TUPLE
 
     if exec_state.status != enums.ExecutionStatus.FAILED:
         utils.write_artifact(

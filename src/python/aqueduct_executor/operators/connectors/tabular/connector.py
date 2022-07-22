@@ -40,12 +40,12 @@ class StorageConnector(ABC):
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
         params,  # load.Params
         data: Any,
-        data_type: ArtifactType,
+        artifact_type: ArtifactType,
     ) -> None:
         """Loads data into destination storage integration.
 
         Args:
             params: Load parameters for the connector.
             data: data to load.
-            data_type: type of the data.
+            artifact_type: type of the artifact.
         """

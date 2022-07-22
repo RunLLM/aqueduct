@@ -1,9 +1,7 @@
 package operator
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type metricOperatorImpl struct {
@@ -22,7 +20,7 @@ func newMetricOperator(base baseFunctionOperator) (Operator, error) {
 		return nil, errWrongNumOutputs
 	}
 
-	for _, inputArtifact := range inputs {
+	/*for _, inputArtifact := range inputs {
 		if inputArtifact.Type() != artifact.TableType &&
 			inputArtifact.Type() != artifact.FloatType &&
 			inputArtifact.Type() != artifact.JsonType {
@@ -31,9 +29,9 @@ func newMetricOperator(base baseFunctionOperator) (Operator, error) {
 	}
 	for _, outputArtifact := range outputs {
 		if outputArtifact.Type() != artifact.FloatType {
-			return nil, errors.New("Outputs of function operator must be Table Artifacts.")
+			return nil, errors.New("Outputs of metric operator must be Float Artifacts.")
 		}
-	}
+	}*/
 
 	return &metricOperatorImpl{
 		base,

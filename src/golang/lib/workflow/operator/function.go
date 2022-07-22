@@ -3,9 +3,7 @@ package operator
 import (
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -32,7 +30,7 @@ func newFunctionOperator(
 		return nil, errWrongNumOutputs
 	}
 
-	for _, inputArtifact := range inputs {
+	/*for _, inputArtifact := range inputs {
 		if inputArtifact.Type() != db_artifact.TableType && inputArtifact.Type() != db_artifact.JsonType {
 			return nil, errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
 		}
@@ -41,7 +39,7 @@ func newFunctionOperator(
 		if outputArtifact.Type() != db_artifact.TableType {
 			return nil, errors.New("Outputs of function operator must be Table Artifacts.")
 		}
-	}
+	}*/
 
 	return &functionOperatorImpl{
 		base,

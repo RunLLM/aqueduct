@@ -97,7 +97,7 @@ class SalesforceExtractType(str, Enum, metaclass=MetaEnum):
     QUERY = "query"
 
 
-class S3FileFormat(str, Enum, metaclass=MetaEnum):
+class S3TabularFormat(str, Enum, metaclass=MetaEnum):
     CSV = "CSV"
     JSON = "JSON"
     PARQUET = "Parquet"
@@ -128,8 +128,21 @@ class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     ARTIFACT = "ARTIFACT"
 
 
-class ArtifactType(Enum, metaclass=MetaEnum):
+'''class ArtifactType(Enum, metaclass=MetaEnum):
     TABLE = "table"
     NUMBER = "number"
     BOOL = "boolean"
-    PARAM = "param"
+    PARAM = "param"'''
+
+class ArtifactType(Enum, metaclass=MetaEnum):
+    UNTYPED = "untyped"
+    STRING = "string"
+    BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABULAR = "tabular"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLABLE = "picklable"

@@ -76,7 +76,7 @@ def write_artifact(
         _METADATA_ARTIFACT_TYPE_KEY: artifact_type,
     }
 
-    if artifact_type == ArtifactType.TABLE:
+    if artifact_type == ArtifactType.TABULAR:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
 
     _write_artifact_output(

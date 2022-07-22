@@ -5,7 +5,7 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-import PIL
+from PIL import Image
 import numpy as np
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -73,7 +73,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
 def _infer_result_type(result: Any) -> ArtifactType:
     if isinstance(result, DataFrame):
         return ArtifactType.TABULAR
-    elif isinstance(result, PIL.Image.Image):
+    elif isinstance(result, Image.Image):
         return ArtifactType.IMAGE
     elif isinstance(result, bytes):
         return ArtifactType.BYTES
@@ -97,7 +97,7 @@ def _infer_result_type(result: Any) -> ArtifactType:
             pickle.dumps(result)
             return ArtifactType.PICKLABLE
         except:
-            raise Exception("Failed to infer the type of the operator output.")
+            raise Exception("Failed to map type %s to supported artifact type." % type(result))
 
 
 def _execute_function(

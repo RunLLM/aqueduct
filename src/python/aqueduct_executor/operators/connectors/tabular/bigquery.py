@@ -33,9 +33,9 @@ class BigQueryConnector(connector.StorageConnector):
         df = query.result().to_dataframe()
         return df
 
-    def load(self, params: load.RelationalParams, df: Any, data_type: ArtifactType) -> None:
-        if data_type != ArtifactType.TABULAR:
-            raise Exception("The data being loaded must be of type tabular, found %s" % data_type)
+    def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
+        if artifact_type != ArtifactType.TABULAR:
+            raise Exception("The data being loaded must be of type tabular, found %s" % artifact_type)
             
         update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default

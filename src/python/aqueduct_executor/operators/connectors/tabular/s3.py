@@ -39,50 +39,50 @@ class S3Connector(connector.StorageConnector):
     def _fetch_object(self, key: str, params: extract.S3Params) -> Any:
         response = self.s3.Object(self.bucket, key).get()
         data = response["Body"].read()
-        if params.data_type == ArtifactType.TABULAR:
+        if params.artifact_type == ArtifactType.TABULAR:
             if params.format is None:
                 raise Exception("You must specify a file format for tabular data.")
             buf = io.BytesIO(data)
-            if params.format == common.S3FileFormat.CSV:
+            if params.format == common.S3TabularFormat.CSV:
                 return pd.read_csv(buf)
-            elif params.format == common.S3FileFormat.JSON:
+            elif params.format == common.S3TabularFormat.JSON:
                 return pd.read_json(buf)
-            elif params.format == common.S3FileFormat.PARQUET:
+            elif params.format == common.S3TabularFormat.PARQUET:
                 return pd.read_parquet(buf)
             raise Exception("Unknown S3 file format %s." % params.format)
-        elif params.data_type == ArtifactType.JSON:
+        elif params.artifact_type == ArtifactType.JSON:
             # This assumes that the encoding is "utf-8". May worth considering letting the user
             # specify custom encoding in the future.
             json_data = data.decode(_DEFAULT_JSON_ENCODING)
             # Make sure the data is a valid json object.
             json.loads(json_data)
             return json_data
-        elif params.data_type == ArtifactType.IMAGE:
+        elif params.artifact_type == ArtifactType.IMAGE:
             return Image.open(io.BytesIO(data))
-        elif params.data_type == ArtifactType.BYTES:
+        elif params.artifact_type == ArtifactType.BYTES:
             return data
-        elif (params.data_type == ArtifactType.STRING or
-              params.data_type == ArtifactType.BOOL or
-              params.data_type == ArtifactType.NUMERIC or
-              params.data_type == ArtifactType.DICT or
-              params.data_type == ArtifactType.TUPLE or
-              params.data_type == ArtifactType.PICKLABLE):
+        elif (params.artifact_type == ArtifactType.STRING or
+              params.artifact_type == ArtifactType.BOOL or
+              params.artifact_type == ArtifactType.NUMERIC or
+              params.artifact_type == ArtifactType.DICT or
+              params.artifact_type == ArtifactType.TUPLE or
+              params.artifact_type == ArtifactType.PICKLABLE):
             unpickled_data = pickle.loads(data)
 
-            if params.data_type == ArtifactType.STRING:
+            if params.artifact_type == ArtifactType.STRING:
                 assert(isinstance(unpickled_data, str))
-            elif params.data_type == ArtifactType.BOOL:
+            elif params.artifact_type == ArtifactType.BOOL:
                 assert(isinstance(unpickled_data, bool) or isinstance(unpickled_data, np.bool_))
-            elif params.data_type == ArtifactType.NUMERIC:
+            elif params.artifact_type == ArtifactType.NUMERIC:
                 assert(isinstance(unpickled_data, int) or isinstance(unpickled_data, float) or isinstance(unpickled_data, np.number))
-            elif params.data_type == ArtifactType.DICT:
+            elif params.artifact_type == ArtifactType.DICT:
                 assert(isinstance(unpickled_data, dict))
-            elif params.data_type == ArtifactType.TUPLE:
+            elif params.artifact_type == ArtifactType.TUPLE:
                 assert(isinstance(unpickled_data, tuple))
             
             return unpickled_data
         else:
-            raise Exception("Unsupported data type %s." % params.data_type)
+            raise Exception("Unsupported data type %s." % params.artifact_type)
 
     def extract(self, params: extract.S3Params) -> Any:
         path = json.loads(params.filepath)
@@ -97,7 +97,7 @@ class S3Connector(connector.StorageConnector):
                     if (obj.key)[-1] != "/":
                         files.append(self._fetch_object(obj.key, params))
 
-                if params.data_type == ArtifactType.TABULAR and params.merge:
+                if params.artifact_type == ArtifactType.TABULAR and params.merge:
                     return pd.concat(files)
                 else:
                     return tuple(files)
@@ -114,43 +114,43 @@ class S3Connector(connector.StorageConnector):
                     raise Exception("Each key in the list must not be a directory, found %s." % key)
                 files.append(self._fetch_object(key, params))
             
-            if params.data_type == ArtifactType.TABULAR and params.merge:
+            if params.artifact_type == ArtifactType.TABULAR and params.merge:
                 return pd.concat(files)
             else:
                 return tuple(files)
 
-    def load(self, params: load.S3Params, data: Any, data_type: ArtifactType) -> None:
-        if data_type == ArtifactType.TABULAR:
+    def load(self, params: load.S3Params, data: Any, artifact_type: ArtifactType) -> None:
+        if artifact_type == ArtifactType.TABULAR:
             if params.format is None:
                 raise Exception("You must specify a file format for tabular data.")
             buf = io.BytesIO(data)
-            if params.format == common.S3FileFormat.CSV:
+            if params.format == common.S3TabularFormat.CSV:
                 data.to_csv(buf, index=False)
-            elif params.format == common.S3FileFormat.JSON:
+            elif params.format == common.S3TabularFormat.JSON:
                 # Index cannot be False for `to.json` for default orient
                 # See: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html
                 data.to_json(buf)
-            elif params.format == common.S3FileFormat.PARQUET:
+            elif params.format == common.S3TabularFormat.PARQUET:
                 data.to_parquet(buf, index=False)
             else:
                 raise Exception("Unknown S3 file format %s." % params.format)
             serialized_data = buf.getvalue()
-        elif data_type == ArtifactType.JSON:
+        elif artifact_type == ArtifactType.JSON:
             serialized_data = data.encode(_DEFAULT_JSON_ENCODING)
-        elif data_type == ArtifactType.IMAGE:
+        elif artifact_type == ArtifactType.IMAGE:
             img_bytes = io.BytesIO()
             data.save(img_bytes, format=_DEFAULT_IMAGE_FORMAT)
             serialized_data = img_bytes.getvalue()
-        elif data_type == ArtifactType.BYTES:
+        elif artifact_type == ArtifactType.BYTES:
             serialized_data = data
-        elif (data_type == ArtifactType.STRING or
-              data_type == ArtifactType.BOOL or
-              data_type == ArtifactType.NUMERIC or
-              data_type == ArtifactType.DICT or
-              data_type == ArtifactType.TUPLE or
-              data_type == ArtifactType.PICKLABLE):
+        elif (artifact_type == ArtifactType.STRING or
+              artifact_type == ArtifactType.BOOL or
+              artifact_type == ArtifactType.NUMERIC or
+              artifact_type == ArtifactType.DICT or
+              artifact_type == ArtifactType.TUPLE or
+              artifact_type == ArtifactType.PICKLABLE):
             serialized_data = pickle.dumps(data)
         else:
-            raise Exception("Unsupported data type %s." % data_type)
+            raise Exception("Unsupported data type %s." % artifact_type)
 
         self.s3.Object(self.bucket, params.filepath).put(Body=serialized_data)
