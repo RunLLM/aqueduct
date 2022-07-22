@@ -59,7 +59,13 @@ class TestReads:
 
     def test_endpoint_get_workflow_tables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
+<<<<<<< HEAD
         data = self.get_response_class(endpoint).json()["object_details"]
+=======
+        data = self.get_response_class(endpoint)
+      
+        data = data.json()["object_details"]
+>>>>>>> 5a64ce5 (Rename)
 
         assert len(data) == 3
         
@@ -94,3 +100,15 @@ class TestReads:
         integration_id = list(data.keys())[0]
         assert len(data[integration_id]) == 3
         assert set([(item.name, item.update_mode) for item in data[integration_id]]) == data_set
+<<<<<<< HEAD
+=======
+    
+    def test_sdk_delete_workflow_invalid(self):
+        tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
+        integration_id = list(tables.keys())[0]
+        tables[integration_id][0].name = 'I_DON_T_EXIST'
+        tables[integration_id] = [tables[integration_id][0]]
+       
+        with pytest.raises(Exception) as e_info:
+            data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
+>>>>>>> 5a64ce5 (Rename)
