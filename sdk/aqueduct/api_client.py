@@ -1,7 +1,7 @@
 import io
 import json
 import uuid
-from typing import IO, Any, Dict, DefaultDict, List, Optional, Tuple
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple
 
 import requests
 from aqueduct.dag import DAG
@@ -17,9 +17,9 @@ from aqueduct.integrations.written_object import WrittenObject
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    DeleteWorkflowResponse,
     GetWorkflowResponse,
     GetWorkflowWrittenObjectsResponse,
-    DeleteWorkflowResponse,
     ListWorkflowResponseEntry,
     OperatorResult,
     PreviewResponse,
@@ -302,15 +302,20 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str, writes_to_delete: DefaultDict[uuid.UUID, List[WrittenObject]], force: bool=False) -> None:
+    def delete_workflow(
+        self,
+        flow_id: str,
+        writes_to_delete: DefaultDict[uuid.UUID, List[WrittenObject]],
+        force: bool,
+    ) -> DeleteWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
-            'external_delete': {
-                str(integration): [obj.name for obj in writes_to_delete[integration]] 
+            "external_delete": {
+                str(integration): [obj.name for obj in writes_to_delete[integration]]
                 for integration in writes_to_delete
             },
-            'force': force,
+            "force": force,
         }
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)

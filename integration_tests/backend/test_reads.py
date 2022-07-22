@@ -62,7 +62,7 @@ class TestReads:
         data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
-        
+
         # table_name, update_mode
         data_set = set(
             [

@@ -239,7 +239,7 @@ class DeleteWorkflowResponse(BaseModel):
 
     writes_results: Dict[uuid.UUID, List[WritesDelete]]
 
-    
+
 class WrittenObjectUpdate(BaseModel):
     """This is an item in the list returned by GetWorkflowWrittenObjectsResponse."""
 

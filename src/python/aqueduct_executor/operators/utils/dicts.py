@@ -1,5 +1,5 @@
 class ObjectResult:
-    name: str 
+    name: str
     succeeded: bool
 
     def __init__(self, name: str, succeeded: bool):
