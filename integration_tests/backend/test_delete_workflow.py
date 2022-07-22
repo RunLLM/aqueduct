@@ -10,7 +10,7 @@ import aqueduct
 
 
 class TestDeleteWorkflow:
-    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
+    INTEGRATION_OBJECTS_TEMPLATE = "/api/integration/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -46,21 +46,30 @@ class TestDeleteWorkflow:
     def teardown_class(cls):
         for flow in cls.flows:
             cls.client.delete_flow(cls.flows[flow])
+
+    @classmethod
+    def get_response_class(cls, endpoint, additional_headers={}):
+        headers = {"api-key": pytest.api_key}
+        headers.update(additional_headers)
+        url = cls.client._api_client.construct_full_url(endpoint)
+        print(url, headers)
+        r = requests.get(url, headers=headers)
+        return r
     
-    def test_sdk_deleteworkflow_invalid(self):
-        tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
-        integration_id = list(tables.keys())[0]
-        tables[integration_id][0].name = 'I_DON_T_EXIST'
-        tables[integration_id] = [tables[integration_id][0]]
+    # def test_sdk_delete_workflow_invalid(self):
+    #     tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
+    #     integration_id = list(tables.keys())[0]
+    #     tables[integration_id][0].name = 'I_DON_T_EXIST'
+    #     tables[integration_id] = [tables[integration_id][0]]
        
-        with pytest.raises(Exception) as e_info:
-            data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
+    #     with pytest.raises(Exception) as e_info:
+    #         data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
 
     def test_delete_workflow(self):
-        tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
+        tables = self.client.get_workflow_writes(self.flows["simple_saves.py"])
         integration_id = list(tables.keys())[0]
-        tables[integration_id][0].name = 'I_DON_T_EXIST'
-        tables[integration_id] = [tables[integration_id][0]]
-       
-        with pytest.raises(Exception) as e_info:
-            data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
+        table = tables[integration_id][0].name
+
+        endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
+        data = self.get_response_class(endpoint)
+        print(data.json())

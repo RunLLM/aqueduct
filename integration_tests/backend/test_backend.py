@@ -55,7 +55,7 @@ class TestBackend:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_getworkflowtables(self):
+    def test_endpoint_get_workflow_tables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
         data = self.get_response_class(endpoint).json()["table_details"]
 
@@ -75,7 +75,7 @@ class TestBackend:
         assert len(set([item["integration_id"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
 
-    def test_sdk_getworkflowtables(self):
+    def test_sdk_get_workflow_tables(self):
         data = self.client.get_workflow_writes(self.flows["changing_saves.py"])
 
         # Check all in same integration
