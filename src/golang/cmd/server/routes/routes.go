@@ -29,13 +29,13 @@ const (
 
 	GetUserProfileRoute = "/api/user"
 
-	ListWorkflowsRoute     = "/api/workflows"
-	RegisterWorkflowRoute  = "/api/workflow/register"
-	GetWorkflowRoute       = "/api/workflow/{workflowId}"
+	ListWorkflowsRoute      = "/api/workflows"
+	RegisterWorkflowRoute   = "/api/workflow/register"
+	GetWorkflowRoute        = "/api/workflow/{workflowId}"
 	GetWorkflowObjectsRoute = "/api/workflow/{workflowId}/objects"
-	DeleteWorkflowRoute    = "/api/workflow/{workflowId}/delete"
-	EditWorkflowRoute      = "/api/workflow/{workflowId}/edit"
-	RefreshWorkflowRoute   = "/api/workflow/{workflowId}/refresh"
-	UnwatchWorkflowRoute   = "/api/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute     = "/api/workflow/{workflowId}/watch"
+	DeleteWorkflowRoute     = "/api/workflow/{workflowId}/delete"
+	EditWorkflowRoute       = "/api/workflow/{workflowId}/edit"
+	RefreshWorkflowRoute    = "/api/workflow/{workflowId}/refresh"
+	UnwatchWorkflowRoute    = "/api/workflow/{workflowId}/unwatch"
+	WatchWorkflowRoute      = "/api/workflow/{workflowId}/watch"
 )

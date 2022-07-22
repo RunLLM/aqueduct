@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 from collections import defaultdict
-from typing import Any, Dict, DefaultDict, List, Optional, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
