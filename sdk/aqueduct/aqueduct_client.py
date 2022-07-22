@@ -453,7 +453,7 @@ class Client:
                     failed_for_integration.append(obj)
             if len(failed_for_integration) > 0:
                 failed_deletions[str(integration)] = [res.__dict__ for res in failed_for_integration]
-                counts += len(failed_for_integrat
+                counts += len(failed_for_integration)
         if counts > 0:
             print("Workflow-Written Objects' Deletion Failures")
             print(f"{counts} Failures")
