@@ -65,7 +65,5 @@ class TestDeleteWorkflow:
        
         with pytest.raises(Exception) as e_info:
             self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=False)
-        print(e_info)
-        print(tables)
         data = self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=True)
         print(data)
