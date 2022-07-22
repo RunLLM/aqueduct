@@ -306,7 +306,7 @@ class APIClient:
         self,
         flow_id: str,
         writes_to_delete: DefaultDict[uuid.UUID, List[WrittenObject]],
-        force: bool = False,
+        force: bool,
     ) -> DeleteWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
