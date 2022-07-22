@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from PIL import Image
 import numpy as np
+import cloudpickle as pickle
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec

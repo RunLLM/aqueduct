@@ -2,7 +2,7 @@ import io
 import json
 from typing import Any, List
 from PIL import Image
-import pickle
+import cloudpickle as pickle
 import numpy as np
 
 import boto3

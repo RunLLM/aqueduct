@@ -4,7 +4,7 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
-import pickle
+import cloudpickle as pickle
 import base64
 
 from aqueduct.api_client import APIClient

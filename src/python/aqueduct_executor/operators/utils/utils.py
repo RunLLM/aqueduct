@@ -4,17 +4,20 @@ from typing import Any, Dict, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
-import pickle
-from aqueduct_executor.operators.utils.enums import ArtifactType
+import cloudpickle as pickle
+from PIL import Image
+from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationMethod
 from aqueduct_executor.operators.utils.execution import ExecutionState
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 _DEFAULT_ENCODING = "utf8"
+_DEFAULT_IMAGE_FORMAT = "jpeg"
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
 _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
+_METADATA_SERIALIZATION_METHOD_KEY = "serialization_method"
 
 
 def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
@@ -76,12 +79,122 @@ def write_artifact(
         _METADATA_ARTIFACT_TYPE_KEY: artifact_type,
     }
 
-    if artifact_type == ArtifactType.TABULAR:
-        output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
-
     _write_artifact_output(
         storage, output_path, output_metadata_path, content, output_metadata
     )
+
+    '''if artifact_type == ArtifactType.TABULAR:
+        output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.TABULAR
+        _write_tabular_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.IMAGE:
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.IMAGE
+        _write_image_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.JSON:
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.STANDARD
+        _write_standard_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.BYTES:
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.BYTES
+        _write_bytes_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.STRING or artifact_type == ArtifactType.BOOL or artifact_type == ArtifactType.NUMERIC:
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.STANDARD
+        _write_standard_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.PICKLABLE:
+        output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.PICKLE
+        _write_pickle_output(
+            storage, output_path, output_metadata_path, content, output_metadata
+        )
+    elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE:
+        try:
+            json.dumps(content)
+            output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.JSON
+            _write_json_output(
+                storage, output_path, output_metadata_path, content, output_metadata
+            )
+        except:
+            output_metadata[_METADATA_SERIALIZATION_METHOD_KEY] = SerializationMethod.PICKLE
+            _write_pickle_output(
+                storage, output_path, output_metadata_path, content, output_metadata
+            )
+    else:
+        raise Exception("Unsupported artifact type %s" % artifact_type)
+    
+    storage.put(
+        output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING)
+    )'''
+
+    
+def _write_tabular_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: pd.DataFrame,
+    output_metadata: Dict[str, Any],
+) -> None:
+    output_str = output.to_json(orient="table", date_format="iso", index=False)
+    storage.put(output_path, output_str.encode(_DEFAULT_ENCODING))
+
+
+def _write_image_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: Image.Image,
+    output_metadata: Dict[str, Any],
+) -> None:
+    img_bytes = io.BytesIO()
+    output.save(img_bytes, format=_DEFAULT_IMAGE_FORMAT)
+    storage.put(output_path, img_bytes.getvalue())
+
+
+def _write_standard_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: str,
+    output_metadata: Dict[str, Any],
+) -> None:
+    storage.put(output_path, output.encode(_DEFAULT_ENCODING))
+
+
+def _write_bytes_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: bytes,
+    output_metadata: Dict[str, Any],
+) -> None:
+    storage.put(output_path, output)
+
+
+def _write_pickle_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: Any,
+    output_metadata: Dict[str, Any],
+) -> None:
+    storage.put(output_path, pickle.dumps(output))
+
+
+def _write_json_output(
+    storage: Storage,
+    output_path: str,
+    output_metadata_path: str,
+    output: Any,
+    output_metadata: Dict[str, Any],
+) -> None:
+    storage.put(output_path, json.dumps(output))
 
 
 def _write_artifact_output(

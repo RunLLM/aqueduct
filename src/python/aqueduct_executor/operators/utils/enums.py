@@ -47,3 +47,12 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"
     PICKLABLE = "picklable"
+
+
+class SerializationMethod(Enum, metaclass=MetaEnum):
+    TABULAR = "tabular"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STANDARD = "standard"
+    BYTES = "bytes"
