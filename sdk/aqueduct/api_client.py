@@ -13,7 +13,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.integrations.table import WrittenObject
+from aqueduct.integrations.written_object import WrittenObject
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
