@@ -1,8 +1,10 @@
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
-from sqlalchemy import engine, inspect
+from aqueduct_executor.operators.utils.dicts import ObjectResult
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import engine, inspect, MetaData
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -25,6 +27,23 @@ class RelationalConnector(connector.TabularConnector):
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
+
+    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]]:
+        results = []
+        Base = declarative_base()
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine)
+        for table in tables:
+            try:
+                table = metadata.tables[table]
+                if table is not None:
+                    Base.metadata.drop_all(self.engine, [table], checkfirst=True)
+                    results.append(ObjectResult(table, True))
+                else:
+                    results.append(ObjectResult(table, False))
+            except:
+                results.append(ObjectResult(table, False))
+        return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,

@@ -1,8 +1,9 @@
 import json
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
+from aqueduct_executor.operators.utils.dicts import ObjectResult
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -31,6 +32,16 @@ class BigQueryConnector(connector.TabularConnector):
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df
+    
+    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]]:
+        results = []
+        for table in tables:
+            try:
+                self.client.delete_table(table, not_found_ok=False)
+                results.append(ObjectResult(table, True))
+            except:
+                results.append(ObjectResult(table, False))
+        return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         update_mode = params.update_mode
