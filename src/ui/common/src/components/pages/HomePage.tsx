@@ -10,7 +10,10 @@ type HomePageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
-const HomePage: React.FC<HomePageProps> = ({ user, Layout = DefaultLayout }) => {
+const HomePage: React.FC<HomePageProps> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   // Set the title of the page on page load.
   useEffect(() => {
     document.title = 'Home | Aqueduct';

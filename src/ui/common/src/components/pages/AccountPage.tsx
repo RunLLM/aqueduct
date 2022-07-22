@@ -13,7 +13,10 @@ type AccountPageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
-const AccountPage: React.FC<AccountPageProps> = ({ user, Layout = DefaultLayout }) => {
+const AccountPage: React.FC<AccountPageProps> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   // Set the title of the page on page load.
   useEffect(() => {
     document.title = 'Account | Aqueduct';

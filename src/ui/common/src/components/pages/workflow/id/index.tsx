@@ -50,7 +50,10 @@ type WorkflowPageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
-const WorkflowPage: React.FC<WorkflowPageProps> = ({ user, Layout = DefaultLayout }) => {
+const WorkflowPage: React.FC<WorkflowPageProps> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;

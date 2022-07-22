@@ -37,7 +37,7 @@ type IntegrationDetailsPageProps = {
 
 const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
-  Layout = DefaultLayout
+  Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;

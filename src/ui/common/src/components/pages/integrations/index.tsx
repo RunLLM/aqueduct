@@ -15,7 +15,10 @@ type Props = {
   Layout?: React.FC<LayoutProps>;
 };
 
-const IntegrationsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
+const IntegrationsPage: React.FC<Props> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   useEffect(() => {
     document.title = 'Integrations | Aqueduct';
   }, []);

@@ -1,5 +1,5 @@
 export type LayoutProps = {
-    user: UserProfile;
-    contentWidth?: string;
-    children: React.ReactElement | React.ReactElement[];
+  user: UserProfile;
+  contentWidth?: string;
+  children: React.ReactElement | React.ReactElement[];
 };
