@@ -79,24 +79,3 @@ class TestReads:
         # Check all in same integration
         assert len(set([item["integration_name"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
-<<<<<<< HEAD:integration_tests/backend/test_reads.py
-=======
-
-    def test_sdk_get_workflow_tables(self):
-        data = self.client.get_workflow_writes(self.flows["changing_saves.py"])
-
-        # Check all in same integration
-        assert len(data.keys()) == 1
-
-        # table_name, update_mode
-        data_set = set(
-            [
-                ("table_1", "append"),
-                ("table_1", "replace"),
-                ("table_2", "append"),
-            ]
-        )
-        integration_id = list(data.keys())[0]
-        assert len(data[integration_id]) == 3
-        assert set([(item.name, item.update_mode) for item in data[integration_id]]) == data_set
->>>>>>> 474cb69 (New handler):integration_tests/backend/test_backend.py
