@@ -58,6 +58,7 @@ class TestDeleteWorkflow:
         integration_id = list(tables.keys())[0]
 
         endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
+
         tables_response = self.get_response_class(endpoint).json()
         assert 'delete_table' in set(tables_response['table_names'])
        
@@ -65,9 +66,10 @@ class TestDeleteWorkflow:
             self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=False)
         data = self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=True)
         sleep(1)
-        endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
+
         tables_response = self.get_response_class(endpoint).json()
         assert 'delete_table' not in set(tables_response['table_names'])
+
         del self.flows["simple_saves.py"]
    
         assert len(data) == 1
