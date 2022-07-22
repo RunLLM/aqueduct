@@ -373,7 +373,7 @@ func DeleteWrittenObject(ctx context.Context, args *deleteWorkflowArgs, vaultObj
 		if len(integrationObjects) != 1 {
 			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
-		integrationNames[integrationId] = integrationObjects[0].Service
+		integrationNames[integrationId] = integrationObjects[0].Service.value
 	}
 
 	jobSpec := job.NewDeleteWrittenObjectsSpec(
