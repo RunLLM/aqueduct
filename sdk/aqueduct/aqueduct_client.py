@@ -37,15 +37,13 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.written_object import WrittenObject
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
+from .responses import WritesDelete
 from .utils import (
     generate_ui_url,
     generate_uuid,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
-)
-from .responses import (
-    WritesDelete
 )
 
 
@@ -420,7 +418,12 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         self._api_client.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID], writes_to_delete: DefaultDict[uuid.UUID, List[WrittenObject]]=[], force: bool=False) -> Dict[uuid.UUID, List[WritesDelete]]:
+    def delete_flow(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        writes_to_delete: Optional[DefaultDict[uuid.UUID, List[WrittenObject]]] = None,
+        force: bool = False,
+    ) -> Dict[uuid.UUID, List[WritesDelete]]:
         """Deletes a flow object.
 
         Args:
@@ -438,6 +441,8 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        if writes_to_delete is None:
+            writes_to_delete = defaultdict()
         flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
@@ -452,14 +457,15 @@ class Client:
                 if not obj.succeeded:
                     failed_for_integration.append(obj)
             if len(failed_for_integration) > 0:
-                failed_deletions[str(integration)] = [res.__dict__ for res in failed_for_integration]
+                failed_deletions[str(integration)] = [
+                    res.__dict__ for res in failed_for_integration
+                ]
                 counts += len(failed_for_integration)
         if counts > 0:
             print("Workflow-Written Objects' Deletion Failures")
             print(f"{counts} Failures")
             print(json.dumps(failed_deletions, sort_keys=False, indent=4))
         return resp.writes_results
-
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
