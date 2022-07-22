@@ -11,7 +11,7 @@ import aqueduct
 
 
 class TestReads:
-    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
+    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -59,7 +59,9 @@ class TestReads:
 
     def test_endpoint_get_workflow_tables(self):
         endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
-        data = self.get_response_class(endpoint).json()["table_details"]
+        data = self.get_response_class(endpoint)
+      
+        data = data.json()["table_details"]
 
         assert len(data) == 3
         
