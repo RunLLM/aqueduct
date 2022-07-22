@@ -61,7 +61,6 @@ def run(spec: Spec) -> None:
         sys.exit(1)
 
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
-    op = setup_connector(spec.connector_name, spec.connector_config)
 
     if type(spec.connector_name) == dict:
         run_delete_written_objects(spec, storage, exec_state)
