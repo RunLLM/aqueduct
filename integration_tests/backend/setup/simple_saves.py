@@ -16,7 +16,7 @@ integration = client.integration(name="aqueduct_demo")
 
 table = integration.sql(query="SELECT * FROM wine;")
 
-table.save(integration.config(table="delete_table", update_mode="replace"))
+table.save(integration.config(table="delete_table", update_mode="append"))
 
 flow = client.publish_flow(
     name=name,

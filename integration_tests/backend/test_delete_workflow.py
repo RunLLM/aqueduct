@@ -52,24 +52,20 @@ class TestDeleteWorkflow:
         headers = {"api-key": pytest.api_key}
         headers.update(additional_headers)
         url = cls.client._api_client.construct_full_url(endpoint)
-        print(url, headers)
         r = requests.get(url, headers=headers)
         return r
-    
-    # def test_sdk_delete_workflow_invalid(self):
-    #     tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
-    #     integration_id = list(tables.keys())[0]
-    #     tables[integration_id][0].name = 'I_DON_T_EXIST'
-    #     tables[integration_id] = [tables[integration_id][0]]
-       
-    #     with pytest.raises(Exception) as e_info:
-    #         data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
 
     def test_delete_workflow(self):
         tables = self.client.get_workflow_writes(self.flows["simple_saves.py"])
         integration_id = list(tables.keys())[0]
-        table = tables[integration_id][0].name
 
         endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
-        data = self.get_response_class(endpoint)
-        print(data.json())
+        data = self.get_response_class(endpoint).json()
+        assert 'delete_table' in set(data['table_names'])
+       
+        with pytest.raises(Exception) as e_info:
+            self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=False)
+        print(e_info)
+        print(tables)
+        data = self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=True)
+        print(data)
