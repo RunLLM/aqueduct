@@ -143,10 +143,17 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		for _, name := range writeList {
 			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
 			if err != nil {
-				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating tables.")
+				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
 			if touched == false {
-				return resp, http.StatusBadRequest, errors.Wrap(err, "Table list not valid. Make sure all tables are touched by the workflow.")
+				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
+			}
+			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
+			if err != nil {
+				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+			}
+			if appended == false && args.Force == false {
+				return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 			}
 			objCount += 1
 		}

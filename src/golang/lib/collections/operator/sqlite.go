@@ -113,6 +113,49 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	return touched, err
 }
 
+func (r *sqliteReaderImpl) TableAppendedByWorkflow(
+	ctx context.Context,
+	workflowId uuid.UUID,
+	integrationId string,
+	tableName string,
+	db database.Database,
+) (bool, error) {
+	query := fmt.Sprintf(`
+	SELECT %s
+	FROM (
+		SELECT *
+		FROM operator
+		WHERE
+			json_extract(spec, '$.type') = 'load' AND 
+			EXISTS (
+				SELECT 1 
+				FROM 
+					workflow_dag_edge, workflow_dag 
+				WHERE 
+					( 
+						workflow_dag_edge.from_id = operator.id OR 
+						workflow_dag_edge.to_id = operator.id 
+					) AND 
+					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+					workflow_dag.workflow_id = $1
+			)
+	)
+	WHERE
+		json_extract(spec, '$.load.integration_id')=$2 AND
+		json_extract(spec, '$.load.parameters.update_mode')='append' AND
+		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
+
+	var operators []DBOperator
+	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
+
+	appended := false
+	if len(operators) > 0 {
+		appended = true
+	}
+
+	return appended, err
+}
+
 func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
