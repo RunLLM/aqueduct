@@ -425,10 +425,26 @@ def check(
         return inner_decorator
 
 def to_operator(
-    func: Callable,    
+    func: Callable[..., DataFrame],    
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     reqs_path: Optional[str] = None,) -> OutputArtifactFunction:
+    """Convert a function that returns a dataframe into an Aqueduct operator.
+    
+    Args:
+        func:
+            the function that is to convert to operator.
+        name:
+            Operator name.
+        description:
+            A description for the operator.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        reqs_path:
+            A path to file that specifies requirements for this specific operator.
+    """
     func = op(name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path)(func)
     return func
