@@ -14,6 +14,7 @@ takes longer to update.
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -144,6 +145,14 @@ if __name__ == "__main__":
             shutil.copytree(
                 join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
             )
+
+        # To prevent unnecessary files from getting into our releases
+        # Will replace the react-code-block component soon (next week) to avoid this concern completely
+        files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]
+        fileNameRegex = re.compile(r'^(python|core|markup|clike|javascript|css|index|favicon)\..*(html|js|css|map|ico)$')
+        for f in files:
+            if not fileNameRegex.search(f) and not f == "__version__":
+                execute_command(["rm", f], cwd=ui_directory)
 
     # Install the local SDK.
     if args.update_sdk:
