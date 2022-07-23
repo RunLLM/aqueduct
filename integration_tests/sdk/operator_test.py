@@ -6,6 +6,7 @@ from utils import get_integration_name, run_sentiment_model
 def test_to_operator(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    
     @op
     def dummy_sentiment_model(df):
         df["positivity"] = 123
