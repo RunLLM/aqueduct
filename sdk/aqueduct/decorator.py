@@ -1,3 +1,4 @@
+from ast import Call
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
@@ -423,3 +424,12 @@ def check(
         return inner_decorator(name)
     else:
         return inner_decorator
+
+def to_operator(
+    func: Callable,    
+    name: Optional[Union[str, UserFunction]] = None,
+    description: Optional[str] = None,
+    file_dependencies: Optional[List[str]] = None,
+    reqs_path: Optional[str] = None,) -> OutputArtifactFunction:
+    func = op(name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path)(func)
+    return func
