@@ -33,7 +33,7 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
       s3_credentials_profile: s3CredsProfile,
     };
     setDialogConfig(config);
-  }, [address, username, password]);
+  }, [address, username, password, s3CredsPath, s3CredsProfile]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -72,7 +72,7 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={true}
         label="S3 Credentials Path *"
-        description="The filepath on the Airflow server to the AWS credentials for the S3 bucket used as storage."
+        description="The path to the AWS credentials for the S3 bucket used for Aqueduct storage. This path should be specific to the Airflow server."
         placeholder={Placeholders.s3_credentials_path}
         onChange={(event) => setS3CredsPath(event.target.value)}
         value={s3CredsPath}
