@@ -426,12 +426,12 @@ def check(
 
 
 def to_operator(
-    func: Callable[..., DataFrame],
+    func: UserFunction,
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     reqs_path: Optional[str] = None,
-) -> OutputArtifactFunction:
+) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
     Args:
@@ -448,7 +448,7 @@ def to_operator(
         reqs_path:
             A path to file that specifies requirements for this specific operator.
     """
-    func = op(
+    func_op = op(
         name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path
-    )(func)
-    return func
+    )
+    return func_op(func)
