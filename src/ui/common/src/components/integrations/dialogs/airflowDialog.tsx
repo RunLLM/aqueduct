@@ -8,7 +8,7 @@ const Placeholders: AirflowConfig = {
   host: 'http://localhost/api/v1',
   username: 'aqueduct',
   password: '********',
-  s3_credentials_path : '/home/user/.aws/credentials',
+  s3_credentials_path: '/home/user/.aws/credentials',
   s3_credentials_profile: 'default',
 };
 
@@ -22,7 +22,6 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [password, setPassword] = useState<string>(null);
   const [s3CredsPath, setS3CredsPath] = useState<string>(null);
   const [s3CredsProfile, setS3CredsProfile] = useState<string>(null);
-
 
   useEffect(() => {
     const config: AirflowConfig = {
