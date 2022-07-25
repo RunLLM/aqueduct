@@ -34,9 +34,17 @@ export enum ExecutionStatus {
   Pending = 'pending',
 }
 
+export type ExecState = {
+  status: ExecutionStatus;
+  failure_type?: FailureType;
+  error?: Error;
+  user_logs?: Logs;
+};
+
 export enum FailureType {
   System = 1,
-  User = 2,
+  UserFatal = 2,
+  UserNonFatal = 3,
 }
 
 export enum CheckStatus {

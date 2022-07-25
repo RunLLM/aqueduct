@@ -36,9 +36,13 @@ type getArtifactResultArgs struct {
 }
 
 type getArtifactResultResponse struct {
-	ExecState shared.ExecutionState `json:"exec_state"`
-	Schema    []map[string]string   `json:"schema"`
-	Data      string                `json:"data"`
+	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
+	// We are incurring this tech debt right now since there are quite a few usages of
+	// `status` in the UI.
+	Status    shared.ExecutionStatus `json:"status"`
+	ExecState shared.ExecutionState  `json:"exec_state"`
+	Schema    []map[string]string    `json:"schema"`
+	Data      string                 `json:"data"`
 }
 
 type GetArtifactResultHandler struct {
@@ -126,6 +130,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	response := getArtifactResultResponse{
+		Status:    execState.Status,
 		ExecState: execState,
 	}
 
