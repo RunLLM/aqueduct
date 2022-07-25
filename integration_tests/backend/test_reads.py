@@ -2,9 +2,10 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-
 import pytest
 import requests
+
+import utils
 
 import aqueduct
 
@@ -40,12 +41,15 @@ class TestReads:
             if err:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
-                cls.flows[workflow] = out.strip().split()[-1]
+                parsed = out.strip().split()
+                cls.flows[workflow] = parsed[-2]
+                n_runs = int(parsed[-1])
+                utils.wait_for_flow_runs(cls.client, cls.flows[workflow], n_runs)
 
     @classmethod
     def teardown_class(cls):
         for flow in cls.flows:
-            cls.client.delete_flow(cls.flows[flow])
+            utils.delete_flow(cls.client, cls.flows[flow])
 
     @classmethod
     def get_response_class(cls, endpoint, additional_headers={}):
