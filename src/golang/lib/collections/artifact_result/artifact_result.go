@@ -9,12 +9,13 @@ import (
 )
 
 type ArtifactResult struct {
-	Id                  uuid.UUID              `db:"id" json:"id"`
-	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
-	ContentPath         string                 `db:"content_path" json:"content_path"`
-	Status              shared.ExecutionStatus `db:"status" json:"status"`
-	Metadata            NullMetadata           `db:"metadata" json:"metadata"`
+	Id                  uuid.UUID                 `db:"id" json:"id"`
+	WorkflowDagResultId uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID                 `db:"artifact_id" json:"artifact_id"`
+	ContentPath         string                    `db:"content_path" json:"content_path"`
+	Status              shared.ExecutionStatus    `db:"status" json:"status"`
+	ExecState           shared.NullExecutionState `db:"execution_state" json:"execution_state"`
+	Metadata            NullMetadata              `db:"metadata" json:"metadata"`
 }
 
 type Reader interface {

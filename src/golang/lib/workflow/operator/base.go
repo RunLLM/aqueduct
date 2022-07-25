@@ -6,6 +6,7 @@ import (
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -133,33 +134,17 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 
 func updateOperatorResultAfterComputation(
 	ctx context.Context,
-	status shared.ExecutionStatus,
-	storageConfig *shared.StorageConfig,
-	opMetadataPath string,
+	execState *shared.ExecutionState,
 	opResultWriter operator_result.Writer,
 	opResultID uuid.UUID,
 	db database.Database,
 ) {
-	var execState shared.ExecutionState
-	err := utils.ReadFromStorage(
-		ctx,
-		storageConfig,
-		opMetadataPath,
-		&execState,
-	)
-	if err != nil {
-		log.Errorf(
-			"Unable to read operator metadata from storage. Operator may have failed before writing metadata. %v",
-			err,
-		)
-	}
-
 	changes := map[string]interface{}{
-		operator_result.StatusColumn:    status,
-		operator_result.ExecStateColumn: &execState,
+		operator_result.StatusColumn:    execState.Status,
+		operator_result.ExecStateColumn: execState,
 	}
 
-	_, err = opResultWriter.UpdateOperatorResult(
+	_, err := opResultWriter.UpdateOperatorResult(
 		ctx,
 		opResultID,
 		changes,
@@ -202,22 +187,20 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 		return err
 	}
 	if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
-		return errors.Newf(fmt.Sprintf("Operator %s has neither succeeded or failed, so it does not have results that can be persisted.", bo.Name()))
+		return errors.Newf("Operator %s has neither succeeded or failed, so it does not have results that can be persisted.", bo.Name())
 	}
 
 	// Best effort writes after this point.
 	updateOperatorResultAfterComputation(
 		ctx,
-		execState.Status,
-		bo.storageConfig,
-		bo.metadataPath,
+		execState,
 		bo.resultWriter,
 		bo.resultID,
 		bo.db,
 	)
 
 	for _, outputArtifact := range bo.outputs {
-		err = outputArtifact.PersistResult(ctx, execState.Status)
+		err = outputArtifact.PersistResult(ctx, execState)
 		if err != nil {
 			log.Errorf("Error occurred when persisting artifact %s.", outputArtifact.Name())
 		}
@@ -254,7 +237,10 @@ const (
 	defaultFunctionEntryPointMethod = "predict"
 )
 
-func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
+func (bfo *baseFunctionOperator) jobSpec(
+	fn *function.Function,
+	checkSeverity *check.Level,
+) job.Spec {
 	entryPoint := fn.EntryPoint
 	if entryPoint == nil {
 		entryPoint = &function.EntryPoint{
@@ -292,5 +278,7 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		OutputMetadataPaths: bfo.outputMetadataPaths,
 		InputArtifactTypes:  inputArtifactTypes,
 		OutputArtifactTypes: outputArtifactTypes,
+		OperatorType:        bfo.Type(),
+		CheckSeverity:       checkSeverity,
 	}
 }
