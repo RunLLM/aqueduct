@@ -6,12 +6,17 @@ import { CopyBlock, github } from 'react-code-blocks';
 import UserProfile from '../../utils/auth';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import DefaultLayout from '../layouts/default';
+import { LayoutProps } from './types';
 
 type AccountPageProps = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
-const AccountPage: React.FC<AccountPageProps> = ({ user }) => {
+const AccountPage: React.FC<AccountPageProps> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   // Set the title of the page on page load.
   useEffect(() => {
     document.title = 'Account | Aqueduct';
@@ -27,7 +32,7 @@ client = aqueduct.Client(
   const maxContentWidth = '600px';
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <Typography variant="h2" gutterBottom component="div">
         Account Overview
       </Typography>
@@ -62,7 +67,7 @@ client = aqueduct.Client(
           />
         </Box>
       </Box>
-    </DefaultLayout>
+    </Layout>
   );
 };
 
