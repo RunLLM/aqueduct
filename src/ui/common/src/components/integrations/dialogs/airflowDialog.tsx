@@ -30,8 +30,13 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
       username: username,
       password: password,
       s3_credentials_path: s3CredsPath,
-      s3_credentials_profile: s3CredsProfile,
+      s3_credentials_profile: 'default',
     };
+
+    if (s3CredsProfile && s3CredsProfile !== 'default') {
+      config.s3_credentials_profile = s3CredsProfile;
+    }
+
     setDialogConfig(config);
   }, [address, username, password, s3CredsPath, s3CredsProfile]);
 
