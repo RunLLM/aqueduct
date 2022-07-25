@@ -1,8 +1,9 @@
-import uuid
 import time
+import uuid
+
+from aqueduct.enums import ExecutionStatus
 
 import aqueduct
-from aqueduct.enums import ExecutionStatus
 
 
 def wait_for_flow_runs(
