@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
-from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
 from aqueduct_executor.operators.utils.dicts import ObjectResult
+from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
 from aqueduct_executor.operators.utils.execution import ExecutionState
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -259,12 +259,18 @@ def write_exec_state(
     """
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
-def write_delete_written_objects_results(storage: Storage, path: str, results: Dict[str, List[ObjectResult]]) -> None:
-    results_str = json.dumps({
-        integration: [result.__dict__ for result in results[integration]] 
-        for integration in results
-    })
+
+def write_delete_written_objects_results(
+    storage: Storage, path: str, results: Dict[str, List[ObjectResult]]
+) -> None:
+    results_str = json.dumps(
+        {
+            integration: [result.__dict__ for result in results[integration]]
+            for integration in results
+        }
+    )
     storage.put(path, bytes(results_str, encoding=_DEFAULT_ENCODING))
+
 
 def write_discover_results(storage: Storage, path: str, tables: List[str]) -> None:
     table_names_str = json.dumps(tables)

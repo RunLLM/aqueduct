@@ -1,11 +1,11 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
 from aqueduct_executor.operators.utils.dicts import ObjectResult
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import engine, inspect, MetaData
+from sqlalchemy import MetaData, engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.declarative import declarative_base
 
 
 class RelationalConnector(connector.TabularConnector):

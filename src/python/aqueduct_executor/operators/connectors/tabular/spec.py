@@ -1,4 +1,4 @@
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 try:
     from typing import Literal
@@ -45,14 +45,14 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
 
     if "connector_name" not in values:
         raise ValueError("Unknown connector name.")
-    
+
     if not isinstance(connector_config, dict):
         raise ValueError("connector_config is not a dictionary.")
 
     if type(values["connector_name"]) == dict:
         for integration in connector_config:
             connector_config[integration] = connector_config[integration]["conf"]
-        
+
         return connector_config
     else:
         if "conf" not in connector_config:
@@ -166,7 +166,9 @@ class DiscoverSpec(models.BaseSpec):
     )
 
 
-Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteWrittenObjectsSpec]
+Spec = Union[
+    AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteWrittenObjectsSpec
+]
 
 
 def parse_spec(spec_json: bytes) -> Spec:

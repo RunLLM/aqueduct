@@ -1,6 +1,6 @@
 import io
 import json
-from typing import List, Dict
+from typing import Dict, List
 
 import boto3
 import pandas as pd
@@ -81,11 +81,12 @@ class S3Connector(connector.TabularConnector):
         return results
 
     def delete(self, params: delete.S3Params) -> None:
-            try:
-                self.s3.Object(self.bucket, params.key).delete()
-                return True 
-            except:
-                return False
+        try:
+            self.s3.Object(self.bucket, params.key).delete()
+            return True
+        except:
+            return False
+
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()
 

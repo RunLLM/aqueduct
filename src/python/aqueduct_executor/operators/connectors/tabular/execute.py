@@ -5,11 +5,11 @@ import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract
 from aqueduct_executor.operators.connectors.tabular.spec import (
     AQUEDUCT_DEMO_NAME,
+    DeleteWrittenObjectsSpec,
     DiscoverSpec,
     ExtractSpec,
     LoadSpec,
     LoadTableSpec,
-    DeleteWrittenObjectsSpec,
     Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
@@ -59,6 +59,7 @@ def run(spec: Spec) -> None:
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
+
 
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
@@ -131,6 +132,7 @@ def run_extract(
             [df],
             system_metadata={},
         )
+
 
 def run_delete_written_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     results = {}
