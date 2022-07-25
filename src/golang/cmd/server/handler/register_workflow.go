@@ -217,7 +217,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			ExecTimeout:          engine.DefaultExecutionTimeout,
 			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
-		false, /* shouldPersistResults */
+		true, /* shouldPersistResults */
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
