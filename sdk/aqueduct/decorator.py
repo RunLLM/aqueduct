@@ -436,7 +436,7 @@ def to_operator(
 
     Args:
         func:
-            the function that is to convert to operator.
+            the python function that is to be converted into operator.
         name:
             Operator name.
         description:
