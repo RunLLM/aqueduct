@@ -137,18 +137,30 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp := deleteWorkflowResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
+
+	nameToId := make(map[string]uuid.UUID, len(input.ExternalDelete))
+	for integrationName, _ := range args.ExternalDelete {
+		nameToId[integrationName] = h.IntegrationReader.GetIntegrationByNameAndUser(
+			ctx,
+			integrationName,
+			args.AqContext.Id,
+			args.AqContext.OrganizationId,
+			h.Database,
+		)
+	}
+
 	// Check tables in list are valid
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, args.AqContext.OrganizationId, args.AqContext.Id, integrationId, name, h.Database)
+			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
 			if touched == false {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
 			}
-			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, args.AqContext.OrganizationId, args.AqContext.Id, integrationId, name, h.Database)
+			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
@@ -161,7 +173,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated tables.
 	if objCount > 0 {
-		SavedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		SavedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
@@ -352,7 +364,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	return resp, http.StatusOK, nil
 }
 
-func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]SavedObjectResult, int, error) {
+func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID,  vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]SavedObjectResult, int, error) {
 	emptySavedObjectDeletionResults := map[str][]SavedObjectResult{}
 
 	// Schedule delete written objects job
@@ -363,7 +375,8 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, vaultObjec
 
 	integrationConfigs := map[string]auth.Config{}
 	integrationNames := map[string]integration.Service{}
-	for integrationId, _ := range args.ExternalDelete {
+	for integrationName, _ := range args.ExternalDelete {
+		integrationId = integrationNameToId[integrationName]
 		integrationUUID, err := uuid.Parse(integrationId)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
@@ -381,6 +394,7 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, vaultObjec
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationNames[integrationId] = integrationObjects[0].Service
+		integrationCustomNames[integrationId] = integrationName
 	}
 
 	jobSpec := job.NewDeleteSavedObjectsSpec(
@@ -388,6 +402,7 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, vaultObjec
 		storageConfig,
 		jobMetadataPath,
 		integrationNames,
+		integrationCustomNames,
 		integrationConfigs,
 		args.ExternalDelete,
 		contentPath,

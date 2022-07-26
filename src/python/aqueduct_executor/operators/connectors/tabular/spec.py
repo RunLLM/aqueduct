@@ -137,9 +137,10 @@ class LoadTableSpec(models.BaseSpec):
 
 class DeleteSavedObjectsSpec(models.BaseSpec):
     name: str
-    type: Literal[enums.JobType.DELETEWRITTENOBJECTS]
+    type: Literal[enums.JobType.DELETESAVEDOBJECTS]
     storage_config: sconfig.StorageConfig
     metadata_path: str
+    integration_name: Dict[str, str]
     connector_name: Dict[str, common.Name]
     connector_config: Dict[str, config.Config]
     parameters: Dict[str, List[str]]

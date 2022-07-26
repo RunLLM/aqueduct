@@ -70,7 +70,7 @@ class S3Connector(connector.TabularConnector):
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
 
-    def delete(self, objects: List[str]) -> List[Dict[str, SavedObjectDelete]]:
+    def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
         results = []
         for key in objects:
             try:

@@ -33,7 +33,7 @@ class BigQueryConnector(connector.TabularConnector):
         df = query.result().to_dataframe()
         return df
 
-    def delete(self, tables: List[str]) -> List[Dict[str, SavedObjectDelete]]:
+    def delete(self, tables: List[str]) -> List[SavedObjectDelete]:
         results = []
         for table in tables:
             try:

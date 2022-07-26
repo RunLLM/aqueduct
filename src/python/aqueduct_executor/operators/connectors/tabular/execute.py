@@ -138,7 +138,8 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
     results = {}
     for integration in spec.connector_name:
         op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.parameters[integration])
+        integration_name = spec.integration_name[integration]
+        results[integration_name] = op.delete(spec.parameters[integration])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
