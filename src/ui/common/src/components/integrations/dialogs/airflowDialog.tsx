@@ -76,7 +76,7 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={true}
         label="S3 Credentials Path *"
-        description="The path to the AWS credentials for the S3 bucket used for Aqueduct storage. This path should be specific to the Airflow server."
+        description="The path on the Airflow server to the AWS credentials that have access to the same S3 bucket configured for Aqueduct storage."
         placeholder={Placeholders.s3_credentials_path}
         onChange={(event) => setS3CredsPath(event.target.value)}
         value={s3CredsPath}
@@ -86,7 +86,7 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={false}
         label="S3 Credentials Profile"
-        description="The profile to use for the AWS credentials above."
+        description="The profile to use for the AWS credentials above. The default profile will be used if none is provided."
         placeholder={Placeholders.s3_credentials_profile}
         onChange={(event) => setS3CredsProfile(event.target.value)}
         value={s3CredsProfile}
