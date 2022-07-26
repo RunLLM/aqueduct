@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integrationOperators';
+import OperatorParametersOverview from '../operators/operatorParametersOverview';
 
 type Props = {
   operators: OperatorsForIntegrationItem[];
@@ -19,6 +20,7 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
   const shownOperators = showInactive
     ? operators
     : operators.filter((x) => x.is_active);
+  const hasInactive = operators.filter((x) => !x.is_active).length;
 
   return (
     <TableContainer>
@@ -26,18 +28,18 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
         <TableHead>
           <TableRow>
             <TableCell>
-              {' '}
               <Typography variant="body2" color="gray.900">
-                Operator{' '}
+                Operator
               </Typography>
             </TableCell>
             <TableCell align="right">
-              <Typography
-                variant="body2"
-                color="gray.900"
-                onClick={() => setShowInactive(!showInactive)}
-              >
+              <Typography variant="body2" color="gray.900">
                 Type
+              </Typography>
+            </TableCell>
+            <TableCell align="right">
+              <Typography variant="body2" color="gray.900">
+                Parameters
               </Typography>
             </TableCell>
           </TableRow>
@@ -55,22 +57,29 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
                   {opInfo.operator.spec.type}
                 </Typography>
               </TableCell>
+              <TableCell align="right">
+                <OperatorParametersOverview operator={opInfo.operator} />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
-        <TableFooter sx={{ marginTop: '2px' }}>
-          <TableRow>
-            <Typography
-              variant="body2"
-              color="gray.800"
-              onClick={() => setShowInactive(!showInactive)}
-            >
-              {showInactive
-                ? 'only show operators from current version'
-                : 'show operators from older versions'}
-            </Typography>
-          </TableRow>
-        </TableFooter>
+        {/* This !! is necessary. Otherwise it becomes bitwise & op for integer. */}
+        {!!hasInactive && (
+          <TableFooter>
+            <TableRow>
+              <Typography
+                variant="body2"
+                color="gray.800"
+                sx={{ marginTop: '2px', '&:hover': { cursor: 'pointer' } }}
+                onClick={() => setShowInactive(!showInactive)}
+              >
+                {showInactive
+                  ? 'only show operators from current version'
+                  : 'show operators from older versions'}
+              </Typography>
+            </TableRow>
+          </TableFooter>
+        )}
       </Table>
     </TableContainer>
   );
