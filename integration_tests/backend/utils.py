@@ -7,10 +7,7 @@ import aqueduct
 
 
 def wait_for_flow_runs(
-    client: aqueduct.Client,
-    flow_id: str,
-    num_runs: int = 1,
-    expect_success: bool = True
+    client: aqueduct.Client, flow_id: str, num_runs: int = 1, expect_success: bool = True
 ) -> int:
     """
     Returns only when the specified flow has run successfully at least `num_runs` times.
