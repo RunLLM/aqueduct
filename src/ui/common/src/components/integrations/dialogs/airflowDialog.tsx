@@ -32,6 +32,16 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
       s3_credentials_profile: 'default',
     };
 
+    if (address && address.startsWith("http://")) {
+      // Backend requires the protocol to be stripped
+      config.host = address.substring(7);
+    }
+
+    if (address && address.startsWith("https://")) {
+      // Backend requires the protocol to be stripped
+      config.host = address.substring(8);
+    }
+
     if (s3CredsProfile && s3CredsProfile !== 'default') {
       config.s3_credentials_profile = s3CredsProfile;
     }
