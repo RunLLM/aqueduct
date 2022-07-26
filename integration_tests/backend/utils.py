@@ -7,7 +7,7 @@ import aqueduct
 
 
 def wait_for_flow_runs(
-    client: aqueduct.Client, flow_id: str, num_runs: int = 1, expect_success: bool = True
+    client: aqueduct.Client, flow_id: str, num_runs: int = 1, expect_success: Optional[bool] = None
 ) -> int:
     """
     Returns only when the specified flow has run successfully at least `num_runs` times.
@@ -41,15 +41,16 @@ def wait_for_flow_runs(
         if len(flow_runs) < num_runs:
             continue
 
-        if expect_success:
-            assert all(
-                status == ExecutionStatus.SUCCEEDED for status in statuses
-            ), "At least one workflow run failed!"
-        else:
-            # We expect them all to fail.
-            assert all(
-                status == ExecutionStatus.FAILED for status in statuses
-            ), "At least one workflow succeeded!"
+        if expect_success is not None:
+            if expect_success:
+                assert all(
+                    status == ExecutionStatus.SUCCEEDED for status in statuses
+                ), "At least one workflow run failed!"
+            else:
+                # We expect them all to fail.
+                assert all(
+                    status == ExecutionStatus.FAILED for status in statuses
+                ), "At least one workflow succeeded!"
 
         print(
             "Workflow %s was created and ran successfully at least %s times!"
