@@ -108,6 +108,4 @@ func init() {
 		downPostgres: _000013.DownPostgres,
 		name:         "add exec state column to artifact result",
 	}
-
-	// TODO(kenxu): add migration script for backfilling exec state column.
 }
