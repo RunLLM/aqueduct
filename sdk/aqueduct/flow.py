@@ -1,11 +1,13 @@
 import json
 import textwrap
 import uuid
-from typing import Dict, List, Union
+from typing import Dict, DefaultDict, List, Union
+from collections import defaultdict
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.saved_object import SavedObject
 
 from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
@@ -143,6 +145,19 @@ class Flow:
 
         workflow_dag = resp.workflow_dags[result.workflow_dag_id]
         return self._construct_flow_run(result, workflow_dag)
+    
+    def list_saved_objects(self) -> DefaultDict[str, List[SavedObject]]:
+        """Get everything saved by the flow.
+
+        Returns:
+            A dictionary mapping the integration id to the list of table names/storage path.
+        """
+        workflow_objects = self._api_client.list_saved_objects(self._id).object_details
+        object_mapping = defaultdict(list)
+        for item in workflow_objects:
+            saved_object = SavedObject(item.object_name, item.update_mode)
+            object_mapping[item.integration_name].append(saved_object)
+        return object_mapping
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""

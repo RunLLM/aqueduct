@@ -16,7 +16,7 @@ from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
-    GetWorkflowWrittenObjectsResponse,
+    ListWorkflowSavedObjectsResponse,
     ListWorkflowResponseEntry,
     OperatorResult,
     PreviewResponse,
@@ -99,7 +99,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
-    GET_WORKFLOW_OBJECTS_ROUTE = "/api/workflow/%s/objects"
+    LIST_WORKFLOW_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -313,12 +313,12 @@ class APIClient:
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
-    def get_workflow_writes(self, flow_id: str) -> GetWorkflowWrittenObjectsResponse:
+    def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self.construct_full_url(self.GET_WORKFLOW_OBJECTS_ROUTE % flow_id)
+        url = self.construct_full_url(self.LIST_WORKFLOW_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        workflow_writes_response = GetWorkflowWrittenObjectsResponse(**resp.json())
+        workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
         return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:

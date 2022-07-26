@@ -61,4 +61,4 @@ flow = client.publish_flow(
 
 ###
 
-print(flow.id())
+print(flow.id(), 4)

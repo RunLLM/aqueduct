@@ -6,7 +6,7 @@ from aqueduct.enums import ServiceType
 
 
 @dataclass
-class WrittenObject:
+class SavedObject:
     name: str
     update_mode: str
 

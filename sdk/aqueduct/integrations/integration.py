@@ -31,3 +31,13 @@ class Integration(ABC):
     """
 
     _metadata: IntegrationInfo
+
+    def __hash__(self):
+        return hash(self._metadata.name)
+
+    def __eq__(self, other):
+        if type(other) == type(self) and 'name' in other._metadata.__dict__:
+            return self._metadata.name == other._metadata.name
+        elif type(other) == str:
+            return self._metadata.name == other
+        return False

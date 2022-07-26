@@ -222,17 +222,18 @@ class GetWorkflowResponse(BaseModel):
     workflow_dag_results: List[WorkflowDagResultResponse]
 
 
-class WrittenObjectUpdate(BaseModel):
-    """This is an item in the list returned by GetWorkflowWrittenObjectsResponse."""
+class SavedObjectUpdate(BaseModel):
+    """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
-    name: str
+    operator_name: str
+    integration_name: str
     integration_id: uuid.UUID
     service: ServiceType
     object_name: str
     update_mode: str
 
 
-class GetWorkflowWrittenObjectsResponse(BaseModel):
+class ListWorkflowSavedObjectsResponse(BaseModel):
     """This is the response object returned by api_client.get_workflow_writes().
 
     Attributes:
@@ -240,4 +241,4 @@ class GetWorkflowWrittenObjectsResponse(BaseModel):
             List of objects written by the workflow.
     """
 
-    object_details: List[WrittenObjectUpdate]
+    object_details: List[SavedObjectUpdate]
