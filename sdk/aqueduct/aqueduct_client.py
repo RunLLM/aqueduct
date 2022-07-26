@@ -30,14 +30,13 @@ from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import IntegrationInfo
+from .integrations.integration import IntegrationInfo, Integration
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
-from .integrations.written_object import WrittenObject
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
-from .responses import WritesDelete
+from .responses import SavedObjectUpdate, SavedObjectDelete
 from .utils import (
     generate_ui_url,
     generate_uuid,
@@ -249,26 +248,6 @@ class Client:
             workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
         ]
 
-    def get_workflow_writes(
-        self, flow_id: Union[str, uuid.UUID]
-    ) -> DefaultDict[uuid.UUID, List[WrittenObject]]:
-        """Get everything written to by the flow identified by the flow id (via `.save`).
-
-        Returns:
-            A dictionary mapping the integration id to the list of table names/storage path.
-        """
-        flow_id = parse_user_supplied_id(flow_id)
-
-        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
-            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
-
-        workflow_writes = self._api_client.get_workflow_writes(flow_id).object_details
-        writes_mapping = defaultdict(list)
-        for item in workflow_writes:
-            written_object = WrittenObject(item.object_name, item.update_mode)
-            writes_mapping[item.integration_id].append(written_object)
-        return writes_mapping
-
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
         """Fetches a flow corresponding to the given flow id.
 
@@ -421,16 +400,16 @@ class Client:
     def delete_flow(
         self,
         flow_id: Union[str, uuid.UUID],
-        writes_to_delete: Optional[DefaultDict[uuid.UUID, List[WrittenObject]]] = None,
+        saved_objects_to_delete: Optional[DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]] = None,
         force: bool = False,
-    ) -> Dict[uuid.UUID, List[WritesDelete]]:
+    ) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
-            writes_to_delete:
-                The tables or storage paths to delete grouped by integration id.
+            saved_objects_to_delete:
+                The tables or storage paths to delete grouped by integration name.
             force:
                 Force the deletion even though some workflow-written objects in the writes_to_delete argument had UpdateMode=append
 
@@ -441,19 +420,19 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        if writes_to_delete is None:
-            writes_to_delete = defaultdict()
+        if saved_objects_to_delete is None:
+            saved_objects_to_delete = defaultdict()
         flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        resp = self._api_client.delete_workflow(flow_id, writes_to_delete, force)
+        resp = self._api_client.delete_workflow(flow_id, saved_objects_to_delete, force)
 
         failed_deletions = {}
         counts = 0
-        for integration in resp.writes_results:
+        for integration in resp.saved_object_deletion_results:
             failed_for_integration = []
-            for obj in resp.writes_results[integration]:
+            for obj in resp.saved_object_deletion_results[integration]:
                 if not obj.succeeded:
                     failed_for_integration.append(obj)
             if len(failed_for_integration) > 0:
@@ -462,10 +441,8 @@ class Client:
                 ]
                 counts += len(failed_for_integration)
         if counts > 0:
-            print("Workflow-Written Objects' Deletion Failures")
-            print(f"{counts} Failures")
-            print(json.dumps(failed_deletions, sort_keys=False, indent=4))
-        return resp.writes_results
+            failures = json.dumps(failed_deletions, sort_keys=False, indent=4)
+            raise Exception (f"Workflow-Written Objects' Deletion Failures\n{counts} Failures\n{failures}")
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.

@@ -28,13 +28,16 @@ import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
 import { Button } from '../../../primitives/Button.styles';
+import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
 const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
+  Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;
@@ -269,7 +272,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
@@ -294,7 +297,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         )}
       </Box>
       {preview}
-    </DefaultLayout>
+    </Layout>
   );
 };
 

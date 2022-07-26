@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/ui",
   "author": "Aqueduct, Inc. <hello@aqueducthq.com",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "start": "parcel --no-cache --no-hmr index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
@@ -42,7 +42,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",
-    "@parcel/css": "^1.10.0",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.5",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
@@ -55,12 +54,9 @@
     "eslint-plugin-unused-imports": "^1.1.5",
     "os-browserify": "^0.3.0",
     "parcel": "2.6.0",
-    "parcel-resolver-ignore": "^2.1.3",
+    "@parcel/css": "^1.10.0",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "typescript": "^3.9.10"
-  },
-  "parcelIgnore": [
-    "^refractor\/lang\/(?!python.*\\.js$)"
-  ]
+  }
 }

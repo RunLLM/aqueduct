@@ -25,16 +25,16 @@ import (
 //	Body:
 //		all written objects for the given `workflowId`
 
-type GetWorkflowObjectsArgs struct {
+type ListWorkflowObjectsArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
 }
 
-type GetWorkflowObjectsResponse struct {
+type ListWorkflowObjectsResponse struct {
 	LoadDetails []operator.GetDistinctLoadOperatorsByWorkflowIdResponse `json:"object_details"`
 }
 
-type GetWorkflowObjectsHandler struct {
+type ListWorkflowObjectsHandler struct {
 	GetHandler
 
 	Database       database.Database
@@ -42,11 +42,11 @@ type GetWorkflowObjectsHandler struct {
 	WorkflowReader workflow.Reader
 }
 
-func (*GetWorkflowObjectsHandler) Name() string {
-	return "GetWorkflowObjects"
+func (*ListWorkflowObjectsHandler) Name() string {
+	return "ListWorkflowObjects"
 }
 
-func (h *GetWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -71,16 +71,16 @@ func (h *GetWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	return &GetWorkflowObjectsArgs{
+	return &ListWorkflowObjectsArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,
 	}, http.StatusOK, nil
 }
 
-func (h *GetWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*GetWorkflowObjectsArgs)
+func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*ListWorkflowObjectsArgs)
 
-	emptyResp := GetWorkflowObjectsResponse{}
+	emptyResp := ListWorkflowObjectsResponse{}
 
 	// Get all specs  for the workflow.
 	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
@@ -88,7 +88,7 @@ func (h *GetWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	return GetWorkflowObjectsResponse{
+	return ListWorkflowObjectsResponse{
 		LoadDetails: operatorList,
 	}, http.StatusOK, nil
 }
