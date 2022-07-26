@@ -2,22 +2,48 @@ package _00014_artifact_result_exec_state_column_backfill
 
 import (
 	"context"
-	"fmt"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
 func Up(ctx context.Context, db database.Database) error {
-	execStateInfos, err := getExecutionStateForEachArtifactID(ctx, db)
+	execStateInfos, err := getExecStateForEachArtifactResult(ctx, db)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("HELLO: ", execStateInfos)
-
+	for _, execStateInfo := range execStateInfos {
+		if !execStateInfo.ExecState.IsNull {
+			err = updateExecStateInArtifactResult(
+				ctx,
+				execStateInfo.ArtifactResultID,
+				&execStateInfo.ExecState.ExecutionState,
+				db,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
 func Down(ctx context.Context, db database.Database) error {
-	// TODO: figure this out
+	execStateInfos, err := getExecStateForEachArtifactResult(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	for _, execStateInfo := range execStateInfos {
+		err = updateStatusInArtifactResult(
+			ctx,
+			execStateInfo.ArtifactResultID,
+			execStateInfo.ExecState.Status,
+			db,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
