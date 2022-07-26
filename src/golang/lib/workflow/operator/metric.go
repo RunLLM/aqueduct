@@ -20,19 +20,6 @@ func newMetricOperator(base baseFunctionOperator) (Operator, error) {
 		return nil, errWrongNumOutputs
 	}
 
-	/*for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != artifact.TableType &&
-			inputArtifact.Type() != artifact.FloatType &&
-			inputArtifact.Type() != artifact.JsonType {
-			return nil, errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
-		}
-	}
-	for _, outputArtifact := range outputs {
-		if outputArtifact.Type() != artifact.FloatType {
-			return nil, errors.New("Outputs of metric operator must be Float Artifacts.")
-		}
-	}*/
-
 	return &metricOperatorImpl{
 		base,
 	}, nil

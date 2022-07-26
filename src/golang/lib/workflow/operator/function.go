@@ -30,17 +30,6 @@ func newFunctionOperator(
 		return nil, errWrongNumOutputs
 	}
 
-	/*for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.TableType && inputArtifact.Type() != db_artifact.JsonType {
-			return nil, errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
-		}
-	}
-	for _, outputArtifact := range outputs {
-		if outputArtifact.Type() != db_artifact.TableType {
-			return nil, errors.New("Outputs of function operator must be Table Artifacts.")
-		}
-	}*/
-
 	return &functionOperatorImpl{
 		base,
 	}, nil

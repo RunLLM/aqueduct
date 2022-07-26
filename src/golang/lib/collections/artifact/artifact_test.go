@@ -21,6 +21,7 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	_, err := json.Marshal(atf)
 	require.Nil(t, err)
 
+	// TODO(cgwu): Temporarily commenting this out. Will revisit after finalizing the new type struct.
 	/*var reconstructedAtf artifact.DBArtifact
 	err = json.Unmarshal(rawAtf, &reconstructedAtf)
 	require.Nil(t, err)

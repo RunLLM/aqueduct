@@ -128,12 +128,6 @@ class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     ARTIFACT = "ARTIFACT"
 
 
-'''class ArtifactType(Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    NUMBER = "number"
-    BOOL = "boolean"
-    PARAM = "param"'''
-
 class ArtifactType(str, Enum, metaclass=MetaEnum):
     UNTYPED = "untyped"
     STRING = "string"

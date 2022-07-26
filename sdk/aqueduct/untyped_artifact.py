@@ -21,6 +21,7 @@ from aqueduct.deserialize import (
     read_standard_content,
     read_bytes_content,
 )
+from aqueduct.operators import SaveConfig
 
 class UntypedArtifact(Artifact):
     """This class represents an artifact with unknown type within the flow's DAG.
@@ -88,4 +89,8 @@ class UntypedArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""
-        print("Describe method not implemented for untyped artifact.")
+        print("Describe method not implemented yet for untyped artifact.")
+
+
+    def save(self, config: SaveConfig) -> None:
+        print("Save method not implemented yet for untyped artifact.")

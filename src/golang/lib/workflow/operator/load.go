@@ -35,12 +35,6 @@ func newLoadOperator(
 		return nil, errWrongNumOutputs
 	}
 
-	/*for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.TableType {
-			return nil, errors.New("Only table artifacts can be saved.")
-		}
-	}*/
-
 	spec := base.dbOperator.Spec.Load()
 	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, base.vaultObject)
 	if err != nil {
