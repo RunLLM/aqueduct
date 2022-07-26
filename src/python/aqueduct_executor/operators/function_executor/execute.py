@@ -40,17 +40,32 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
 
     if file_path.startswith("/"):
         file_path = file_path[1:]
-    return ".".join([OP_DIR, file_path.replace("/", ".")])
+    return file_path.replace("/", ".")
 
 
 def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
+    # `_import_invoke_method` imports the model object.
+    # it assumes the operator has been extracted to `<storage>/operators/<id>/op`
+    # and imports the route from the above path.
+
+    # fn_path should be `<storage>/operators/<id>`
     fn_path = spec.function_extract_path
-    os.chdir(os.path.join(fn_path, OP_DIR))
-    sys.path.append(fn_path)
+
+    # work_dir should be `<storage>/operators/<id>/op`
+    work_dir = os.path.join(fn_path, OP_DIR)
+    print("listdir workdir")
+    print(os.listdir(work_dir))
+    print("listdir fn path")
+    print(os.listdir(fn_path))
+    os.chdir(work_dir)
+    sys.path.append(work_dir)
+
     import_path = _get_py_import_path(spec)
+    print(f"import_path: {import_path}")
     class_name = spec.entry_point_class
     method_name = spec.entry_point_method
     custom_args_str = spec.custom_args
+
     # Invoke the function and parse out the result object.
     module = importlib.import_module(import_path)
     if not class_name:
