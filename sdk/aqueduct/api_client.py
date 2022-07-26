@@ -1,7 +1,7 @@
 import io
 import json
 import uuid
-from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
 from aqueduct.dag import DAG
@@ -12,18 +12,18 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.integrations.written_object import WrittenObject
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     DeleteWorkflowResponse,
     GetWorkflowResponse,
-    GetWorkflowWrittenObjectsResponse,
     ListWorkflowResponseEntry,
+    ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
 
 from aqueduct import utils
@@ -102,7 +102,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
-    GET_WORKFLOW_OBJECTS_ROUTE = "/api/workflow/%s/objects"
+    LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -305,15 +305,15 @@ class APIClient:
     def delete_workflow(
         self,
         flow_id: str,
-        writes_to_delete: DefaultDict[uuid.UUID, List[WrittenObject]],
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [obj.name for obj in writes_to_delete[integration]]
-                for integration in writes_to_delete
+                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                for integration in saved_objects_to_delete
             },
             "force": force,
         }
@@ -330,12 +330,12 @@ class APIClient:
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
-    def get_workflow_writes(self, flow_id: str) -> GetWorkflowWrittenObjectsResponse:
+    def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
         headers = utils.generate_auth_headers(self.api_key)
-        url = self.construct_full_url(self.GET_WORKFLOW_OBJECTS_ROUTE % flow_id)
+        url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        workflow_writes_response = GetWorkflowWrittenObjectsResponse(**resp.json())
+        workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
         return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
