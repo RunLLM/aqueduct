@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	RequiredSchemaVersion = 13
+	RequiredSchemaVersion = 14
 
 	accountOrganizationId = "aqueduct"
 )

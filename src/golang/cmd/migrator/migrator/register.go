@@ -17,6 +17,7 @@ import (
 	_000012 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000012_drop_metadata_column"
 	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_workflow_dag_engine_config"
 	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_exec_state_column_to_artifact_result"
+	_000014 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000014_artifact_result_exec_state_column_backfill"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -107,5 +108,10 @@ func init() {
 		upPostgres: _000013.UpPostgres, upSqlite: _000013.UpSqlite,
 		downPostgres: _000013.DownPostgres,
 		name:         "add exec state column to artifact result",
+	}
+	registeredMigrations[14] = &migration{
+		upPostgres: _000014.Up, upSqlite: _000014.Up,
+		downPostgres: _000014.Down,
+		name:         "backfill exec state column in artifact result",
 	}
 }
