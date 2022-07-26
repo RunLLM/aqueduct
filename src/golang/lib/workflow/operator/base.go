@@ -3,7 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
