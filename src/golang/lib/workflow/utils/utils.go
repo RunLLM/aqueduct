@@ -149,6 +149,7 @@ func WriteWorkflowDagToDatabase(
 		ctx,
 		workflowId,
 		&dag.StorageConfig,
+		&dag.EngineConfig,
 		db,
 	)
 	if err != nil {
