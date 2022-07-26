@@ -8,7 +8,12 @@ from typing import Any, Callable, Dict, List, Tuple
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType, OperatorType, CheckSeverityLevel
+from aqueduct_executor.operators.utils.enums import (
+    CheckSeverityLevel,
+    ExecutionStatus,
+    FailureType,
+    OperatorType,
+)
 from aqueduct_executor.operators.utils.execution import (
     TIP_CHECK_DID_NOT_PASS,
     TIP_OP_EXECUTION,
@@ -20,9 +25,8 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-from pandas import DataFrame
-
 from aqueduct_executor.operators.utils.utils import check_passed
+from pandas import DataFrame
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:

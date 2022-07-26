@@ -134,7 +134,7 @@ def check_passed(content: Any) -> bool:
     elif isinstance(content, pd.Series) and content.dtype == "bool":
         # We only write True if every boolean in the series is True.
         series = pd.Series(content)
-        return series.size - series.sum().item() == 0
+        return bool(series.size - series.sum().item() == 0)
     else:
         raise Exception(
             "Expected output type of check to be either a bool or a series of booleans, "
@@ -175,7 +175,9 @@ def write_artifact(
                 "Expected output type to be numeric, instead got %s" % type(content).__name__
             )
     elif artifact_type == OutputArtifactType.BOOL:
-        _write_bool_output(storage, output_path, output_metadata_path, check_passed(content), output_metadata)
+        _write_bool_output(
+            storage, output_path, output_metadata_path, check_passed(content), output_metadata
+        )
 
     elif artifact_type == OutputArtifactType.JSON:
         if not isinstance(content, str):

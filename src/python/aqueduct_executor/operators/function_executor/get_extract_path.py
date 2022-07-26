@@ -19,7 +19,7 @@ if __name__ == "__main__":
         spec = parse_spec(spec_json)
     except Exception:
         # Log the offending spec on failures.
-        print(json.loads(spec_json))
+        print("Failing raw spec: ", args.spec)
         raise
 
     # The output of the print statement to stdout is captured by the calling bash script into a variable,

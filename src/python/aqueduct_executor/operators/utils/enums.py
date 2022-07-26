@@ -42,6 +42,7 @@ class FailureType(Enum, metaclass=MetaEnum):
     # Eg. check operator with WARNING severity fails.
     USER_NON_FATAL = 3
 
+
 class JobType(str, Enum, metaclass=MetaEnum):
     FUNCTION = "function"
     AUTHENTICATE = "authenticate"
