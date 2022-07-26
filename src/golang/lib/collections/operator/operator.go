@@ -35,14 +35,18 @@ type Reader interface {
 	TableTouchedByWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
-		integrationId string,
+		organizationId string,
+		userId uuid.UUID,
+		integrationName string,
 		tableName string,
 		db database.Database,
 	) (bool, error)
 	TableAppendedByWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
-		integrationId string,
+		organizationId string,
+		userId uuid.UUID,
+		integrationName string,
 		tableName string,
 		db database.Database,
 	) (bool, error)

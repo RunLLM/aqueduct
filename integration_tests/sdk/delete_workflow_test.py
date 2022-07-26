@@ -24,7 +24,7 @@ def test_delete_workflow_invalid_saved_objects(client):
     tables[get_integration_name()][0].name = "I_DON_T_EXIST"
     tables[get_integration_name()] = [tables[get_integration_name()][0]]
 
-    with pytest.raises(Exception) as e_info:
+    with pytest.raises(InvalidRequestError) as e_info:
         data = client.delete_flow(
             flow_id, saved_objects_to_delete=tables, force=True
         )

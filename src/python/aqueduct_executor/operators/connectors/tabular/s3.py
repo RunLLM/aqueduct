@@ -5,7 +5,7 @@ from typing import Dict, List
 import boto3
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
-from aqueduct_executor.operators.utils.dicts import ObjectResult
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 
 class S3Connector(connector.TabularConnector):
@@ -70,14 +70,14 @@ class S3Connector(connector.TabularConnector):
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
 
-    def delete(self, objects: List[str]) -> List[Dict[str, ObjectResult]]:
+    def delete(self, objects: List[str]) -> List[Dict[str, SavedObjectDelete]]:
         results = []
         for key in objects:
             try:
                 self.s3.Object(self.bucket, key).delete()
-                results.append(ObjectResult(key, True))
+                results.append(SavedObjectDelete(name=key, result=True))
             except:
-                results.append(ObjectResult(key, False))
+                results.append(SavedObjectDelete(name=key, result=False))
         return results
 
     def delete(self, params: delete.S3Params) -> None:

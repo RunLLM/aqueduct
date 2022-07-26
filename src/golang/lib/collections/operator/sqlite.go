@@ -74,7 +74,9 @@ func (w *sqliteWriterImpl) CreateOperator(
 func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	organizationId string,
+	userId uuid.UUID,
+	integrationName string,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -82,9 +84,13 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	SELECT %s
 	FROM (
 		SELECT *
-		FROM operator
+		FROM operator, integration
 		WHERE
+			integration.organization_id = $2 AND integration.name = $4 AND
+			(integration.user_id IS NULL OR integration.user_id = $3) AND
 			json_extract(spec, '$.type') = 'load' AND 
+			json_extract(spec, '$.load.integration_id')=integration.id AND
+			json_extract(spec, '$.load.parameters.table')=$5 AND
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -97,13 +103,10 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
+	err := db.Query(ctx, &operators, query, workflowId, organizationId, userId, integrationName, tableName)
 
 	touched := false
 	if len(operators) > 0 {
@@ -116,7 +119,9 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	organizationId string,
+	userId uuid.UUID,
+	integrationName string,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -124,9 +129,14 @@ func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 	SELECT %s
 	FROM (
 		SELECT *
-		FROM operator
+		FROM operator, integration
 		WHERE
+			integration.organization_id = $2 AND integration.name = $4 AND
+			(integration.user_id IS NULL OR integration.user_id = $3) AND
 			json_extract(spec, '$.type') = 'load' AND 
+			json_extract(spec, '$.load.integration_id')=integration.id AND
+			json_extract(spec, '$.load.parameters.update_mode')='append' AND
+			json_extract(spec, '$.load.parameters.table')=$5 AND
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -139,14 +149,10 @@ func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.update_mode')='append' AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
+	err := db.Query(ctx, &operators, query, workflowId, organizationId, userId, integrationName, tableName)
 
 	appended := false
 	if len(operators) > 0 {

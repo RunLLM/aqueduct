@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
-from aqueduct_executor.operators.utils.dicts import ObjectResult
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
 from aqueduct_executor.operators.utils.execution import ExecutionState
 from aqueduct_executor.operators.utils.storage.storage import Storage
@@ -260,8 +260,8 @@ def write_exec_state(
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
 
-def write_delete_written_objects_results(
-    storage: Storage, path: str, results: Dict[str, List[ObjectResult]]
+def write_delete_saved_objects_results(
+    storage: Storage, path: str, results: Dict[str, List[SavedObjectDelete]]
 ) -> None:
     results_str = json.dumps(
         {

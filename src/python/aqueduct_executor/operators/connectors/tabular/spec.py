@@ -135,7 +135,7 @@ class LoadTableSpec(models.BaseSpec):
     )
 
 
-class DeleteWrittenObjectsSpec(models.BaseSpec):
+class DeleteSavedObjectsSpec(models.BaseSpec):
     name: str
     type: Literal[enums.JobType.DELETEWRITTENOBJECTS]
     storage_config: sconfig.StorageConfig
@@ -167,7 +167,7 @@ class DiscoverSpec(models.BaseSpec):
 
 
 Spec = Union[
-    AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteWrittenObjectsSpec
+    AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteSavedObjectsSpec
 ]
 
 
