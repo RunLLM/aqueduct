@@ -20,6 +20,14 @@ export const AirflowCard: React.FC<Props> = ({ integration }) => {
         <strong>Username: </strong>
         {config.username}
       </Typography>
+      <Typography variant="body1">
+        <strong>S3 Credentials Path: </strong>
+        {config.s3_credentials_path}
+      </Typography>
+      <Typography variant="body1">
+        <strong>S3 Credentials Profile: </strong>
+        {config.s3_credentials_profile}
+      </Typography>
     </Box>
   );
 };

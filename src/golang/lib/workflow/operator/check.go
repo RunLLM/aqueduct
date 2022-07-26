@@ -1,12 +1,9 @@
 package operator
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,22 +44,6 @@ func newCheckOperator(base baseFunctionOperator) (Operator, error) {
 
 func (co *checkOperatorImpl) hasErrorSeverity() bool {
 	return co.dbOperator.Spec.Check().Level == check.ErrorLevel
-}
-
-func (co *checkOperatorImpl) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
-	execState, err := co.baseOperator.GetExecState(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// If this was a blocking check that failed, overwrite the returned tip message
-	// to be much more helpful.
-	if co.hasErrorSeverity() &&
-		execState.Status == shared.FailedExecutionStatus &&
-		execState.Error.Tip == shared.TipBlacklistedOutputError {
-		execState.Error.Tip = fmt.Sprintf("Check %s did not pass and has ERROR level severity, so the entire workflow failed.", co.Name())
-	}
-	return execState, nil
 }
 
 func (co *checkOperatorImpl) JobSpec() job.Spec {

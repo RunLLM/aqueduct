@@ -15,9 +15,11 @@ import { DataPreviewInfo } from '../../../utils/data';
 import { DataCard, dataCardName } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
+import { LayoutProps } from '../types';
 
 type Props = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
 const SearchBar = (
@@ -88,7 +90,7 @@ const SearchBar = (
   );
 };
 
-const DataPage: React.FC<Props> = ({ user }) => {
+const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const apiKey = user.apiKey;
   const dispatch: AppDispatch = useDispatch();
 
@@ -125,7 +127,7 @@ const DataPage: React.FC<Props> = ({ user }) => {
   }, []);
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <div />
       <Box>
         <Typography variant="h2" gutterBottom component="div">
@@ -148,7 +150,7 @@ const DataPage: React.FC<Props> = ({ user }) => {
           </Box>
         </Box>
       </Box>
-    </DefaultLayout>
+    </Layout>
   );
 };
 

@@ -91,6 +91,8 @@ export type AirflowConfig = {
   host: string;
   username: string;
   password: string;
+  s3_credentials_path: string;
+  s3_credentials_profile: string;
 };
 
 export type IntegrationConfig =
@@ -272,7 +274,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
-    activated: true,
+    activated: false,
   },
 };
 
