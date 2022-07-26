@@ -16,8 +16,8 @@ from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
-    ListWorkflowSavedObjectsResponse,
     ListWorkflowResponseEntry,
+    ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,

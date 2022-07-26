@@ -34,9 +34,9 @@ from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
-from .responses import SavedObjectUpdate
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
+from .responses import SavedObjectUpdate
 from .utils import (
     generate_ui_url,
     generate_uuid,

@@ -1,8 +1,8 @@
 import json
 import textwrap
 import uuid
-from typing import Dict, DefaultDict, List, Union
 from collections import defaultdict
+from typing import DefaultDict, Dict, List, Union
 
 from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
@@ -12,7 +12,7 @@ from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
 from .logger import Logger
 from .operators import OperatorSpec, ParamSpec
-from .responses import WorkflowDagResponse, WorkflowDagResultResponse, SavedObjectUpdate
+from .responses import SavedObjectUpdate, WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
@@ -144,7 +144,7 @@ class Flow:
 
         workflow_dag = resp.workflow_dags[result.workflow_dag_id]
         return self._construct_flow_run(result, workflow_dag)
-    
+
     def list_saved_objects(self) -> DefaultDict[str, List[SavedObjectUpdate]]:
         """Get everything saved by the flow.
 

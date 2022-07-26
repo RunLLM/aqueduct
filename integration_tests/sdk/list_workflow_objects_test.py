@@ -1,13 +1,9 @@
 import pytest
-from utils import (
-    delete_flow,
-    generate_new_flow_name,
-    run_flow_test,
-    get_integration_name,
-)
 from constants import SENTIMENT_SQL_QUERY
+from utils import delete_flow, generate_new_flow_name, get_integration_name, run_flow_test
 
 from aqueduct import LoadUpdateMode
+
 
 @pytest.mark.publish
 def test_list_saved_objects(client):
@@ -19,17 +15,11 @@ def test_list_saved_objects(client):
         table = integration.sql(query=SENTIMENT_SQL_QUERY)
 
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.REPLACE))
-        
+
         # Tables don't already exist already so cannot append or replace it.
-        flow_ids_to_delete.add(run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id())
-        
-        ###
-
-        table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
-        table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
-
-        flow_ids_to_delete.add(run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id())
+        flow_ids_to_delete.add(
+            run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+        )
 
         ###
 
@@ -37,7 +27,19 @@ def test_list_saved_objects(client):
 
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
 
-        flow_ids_to_delete.add(run_flow_test(client, [table], name=name, num_runs=3, delete_flow_after=False).id())
+        flow_ids_to_delete.add(
+            run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id()
+        )
+
+        ###
+
+        table = integration.sql(query=SENTIMENT_SQL_QUERY)
+
+        table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
+
+        flow_ids_to_delete.add(
+            run_flow_test(client, [table], name=name, num_runs=3, delete_flow_after=False).id()
+        )
 
         ###
 
@@ -45,7 +47,9 @@ def test_list_saved_objects(client):
 
         table.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
 
-        flow_ids_to_delete.add(run_flow_test(client, [table], name=name, num_runs=4, delete_flow_after=False).id())
+        flow_ids_to_delete.add(
+            run_flow_test(client, [table], name=name, num_runs=4, delete_flow_after=False).id()
+        )
 
         ###
 
