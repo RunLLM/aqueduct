@@ -48,17 +48,26 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
           {shownOperators.map((opInfo) => (
             <TableRow key={opInfo.operator.id}>
               <TableCell align="left" scope="row">
-                <Typography variant="body2" color="gray.800">
+                <Typography
+                  variant="body2"
+                  color={opInfo.is_active ? 'gray.800' : 'gray.600'}
+                >
                   {opInfo.operator.name}
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <Typography variant="body2" color="gray.800">
+                <Typography
+                  variant="body2"
+                  color={opInfo.is_active ? 'gray.800' : 'gray.600'}
+                >
                   {opInfo.operator.spec.type}
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <OperatorParametersOverview operator={opInfo.operator} />
+                <OperatorParametersOverview
+                  operator={opInfo.operator}
+                  textColor={opInfo.is_active ? 'gray.800' : 'gray.600'}
+                />
               </TableCell>
             </TableRow>
           ))}

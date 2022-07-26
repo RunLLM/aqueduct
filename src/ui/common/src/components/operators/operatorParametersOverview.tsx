@@ -13,9 +13,13 @@ import {
 
 type Props = {
   operator: Operator;
+  textColor?: string;
 };
 
-const OperatorParametersOverview: React.FC<Props> = ({ operator }) => {
+const OperatorParametersOverview: React.FC<Props> = ({
+  operator,
+  textColor,
+}) => {
   if (operator.spec.type === OperatorType.Extract) {
     const exParams = operator.spec.extract?.parameters;
     if (!exParams) {
@@ -26,14 +30,14 @@ const OperatorParametersOverview: React.FC<Props> = ({ operator }) => {
     // extracts based on the fields of type union exParams.
     if ('query' in exParams) {
       return (
-        <Typography variant="body2" color="gray.800">
+        <Typography variant="body2" color={textColor}>
           <strong>query: </strong>
           <code>{(exParams as RelationalDBExtractParams).query}</code>
         </Typography>
       );
     } else if ('spreadsheet_id' in exParams) {
       return (
-        <Typography variant="body2" color="gray.800">
+        <Typography variant="body2" color={textColor}>
           <strong>spreadsheet ID: </strong>
           {(exParams as GoogleSheetsExtractParams).spreadsheet_id}
         </Typography>
@@ -50,13 +54,13 @@ const OperatorParametersOverview: React.FC<Props> = ({ operator }) => {
     if ('table' in loadParams) {
       return (
         <Box>
-          <Typography variant="body2" color="gray.800">
+          <Typography variant="body2" color={textColor}>
             <strong>table: </strong>
             {(loadParams as RelationalDBLoadParams).table}
           </Typography>
           <Typography
             variant="body2"
-            color="gray.800"
+            color={textColor}
             sx={{ marginTop: '2px' }}
           >
             <strong>update_mode: </strong>
@@ -67,13 +71,13 @@ const OperatorParametersOverview: React.FC<Props> = ({ operator }) => {
     } else if ('filepath' in loadParams) {
       return (
         <Box>
-          <Typography variant="body2" color="gray.800">
+          <Typography variant="body2" color={textColor}>
             <strong>filepath: </strong>
             {(loadParams as GoogleSheetsLoadParams).filepath}
           </Typography>
           <Typography
             variant="body2"
-            color="gray.800"
+            color={textColor}
             sx={{ marginTop: '2px' }}
           >
             <strong>save_mode: </strong>
