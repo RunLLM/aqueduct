@@ -17,7 +17,6 @@ import (
 	_000012 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000012_drop_metadata_column"
 	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_workflow_dag_engine_config"
 	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_exec_state_column_to_artifact_result"
-
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
