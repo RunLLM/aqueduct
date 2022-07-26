@@ -11,7 +11,7 @@ import aqueduct
 
 
 class TestReads:
-    LIST_WORKFLOW_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
+    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -60,7 +60,7 @@ class TestReads:
         return r
 
     def test_endpoint_list_workflow_tables(self):
-        endpoint = self.LIST_WORKFLOW_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
+        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
         data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
