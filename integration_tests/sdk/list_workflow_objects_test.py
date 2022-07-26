@@ -70,7 +70,7 @@ def test_list_saved_objects(client):
         )
         integration_name = list(data.keys())[0]
         assert len(data[integration_name]) == 3
-        assert set([(item.name, item.update_mode) for item in data[integration_name]]) == data_set
+        assert set([(item.object_name, item.update_mode) for item in data[integration_name]]) == data_set
 
         # Check mapping can be accessed correctly
         # Can be accessed by string of integration name
