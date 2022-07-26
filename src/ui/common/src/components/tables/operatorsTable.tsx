@@ -25,24 +25,44 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell> Operator </TableCell>
-            <TableCell align="right"> Type </TableCell>
+            <TableCell>
+              {' '}
+              <Typography variant="body2" color="gray.900">
+                Operator{' '}
+              </Typography>
+            </TableCell>
+            <TableCell align="right">
+              <Typography
+                variant="body2"
+                color="gray.900"
+                onClick={() => setShowInactive(!showInactive)}
+              >
+                Type
+              </Typography>
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {shownOperators.map((opInfo) => (
             <TableRow key={opInfo.operator.id}>
               <TableCell align="left" scope="row">
-                {opInfo.operator.name}
+                <Typography variant="body2" color="gray.800">
+                  {opInfo.operator.name}
+                </Typography>
               </TableCell>
-              <TableCell align="right">{opInfo.operator.spec.type}</TableCell>
+              <TableCell align="right">
+                <Typography variant="body2" color="gray.800">
+                  {opInfo.operator.spec.type}
+                </Typography>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
-        <TableFooter>
+        <TableFooter sx={{ marginTop: '2px' }}>
           <TableRow>
             <Typography
               variant="body2"
+              color="gray.800"
               onClick={() => setShowInactive(!showInactive)}
             >
               {showInactive

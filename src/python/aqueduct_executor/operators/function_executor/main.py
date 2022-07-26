@@ -1,8 +1,8 @@
 import argparse
 import base64
 
-from aqueduct_executor.operators.connectors.tabular import execute
-from aqueduct_executor.operators.connectors.tabular.spec import parse_spec
+from aqueduct_executor.operators.function_executor import execute
+from aqueduct_executor.operators.function_executor.spec import parse_spec
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

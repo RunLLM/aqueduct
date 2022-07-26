@@ -1,9 +1,16 @@
 package operator
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type checkOperatorImpl struct {
@@ -40,7 +47,41 @@ func newCheckOperator(base baseFunctionOperator) (Operator, error) {
 	}, nil
 }
 
+func (co *checkOperatorImpl) hasErrorSeverity() bool {
+	return co.dbOperator.Spec.Check().Level == check.ErrorLevel
+}
+
+func (co *checkOperatorImpl) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
+	execState, err := co.baseOperator.GetExecState(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// If this was a blocking check that failed, overwrite the returned tip message
+	// to be much more helpful.
+	if co.hasErrorSeverity() &&
+		execState.Status == shared.FailedExecutionStatus &&
+		execState.Error.Tip == shared.TipBlacklistedOutputError {
+		execState.Error.Tip = fmt.Sprintf("Check %s did not pass and has ERROR level severity, so the entire workflow failed.", co.Name())
+	}
+	return execState, nil
+}
+
 func (co *checkOperatorImpl) JobSpec() job.Spec {
 	fn := co.dbOperator.Spec.Check().Function
-	return co.jobSpec(&fn)
+	spec := co.jobSpec(&fn)
+
+	// This will tell the orchestration engine to fail the workflow
+	// if the check fails with sufficient severity.
+	if co.hasErrorSeverity() {
+		falseSerialized, err := json.Marshal(false)
+		if err != nil {
+			log.Errorf("Internal error: Operator %s is unable to marshal `false`", co.Name())
+		}
+
+		fnSpec := spec.(*job.FunctionSpec)
+		fnSpec.BlacklistedOutputs = append(fnSpec.BlacklistedOutputs, string(falseSerialized))
+		return fnSpec
+	}
+	return spec
 }

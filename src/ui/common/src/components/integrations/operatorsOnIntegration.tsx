@@ -2,7 +2,7 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integrationOperators';
@@ -15,11 +15,10 @@ const OperatorsOnIntegration: React.FC = () => {
   const listWorkflowState = useSelector(
     (state: RootState) => state.listWorkflowReducer
   );
-  const operatorsState = useSelector(
-    (state: RootState) => {
-        return state.integrationOperatorsReducer
-    }
-  );
+  const operatorsState = useSelector((state: RootState) => {
+    return state.integrationOperatorsReducer;
+  });
+  const [expandedWf, setExpandedWf] = useState('');
 
   if (
     isLoading(operatorsState.loadingStatus) ||
@@ -69,6 +68,14 @@ const OperatorsOnIntegration: React.FC = () => {
     <Box>
       {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
         <WorkflowAccordion
+          expanded={expandedWf === wfId}
+          handleExpand={() => {
+            if (expandedWf === wfId) {
+              setExpandedWf('');
+              return;
+            }
+            setExpandedWf(wfId);
+          }}
           key={wfId}
           workflow={item.workflow}
           operators={item.operators}

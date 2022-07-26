@@ -100,6 +100,11 @@ import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
 } from './reducers/dataPreview';
+import integrationOperators, {
+  handleLoadIntegrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
+} from './reducers/integrationOperators';
 import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
@@ -114,11 +119,6 @@ import integrationTables, {
   integrationTablesSlice,
   IntegrationTablesState,
 } from './reducers/integrationTables';
-import integrationOperators, {
-  handleLoadIntegrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
-} from './reducers/integrationOperators';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -385,10 +385,10 @@ export {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleLoadIntegrationOperators,
   handleLoadIntegrations,
   handleLoadIntegrationTable,
   handleLoadIntegrationTables,
-  handleLoadIntegrationOperators,
   HeightTransition,
   HomePage,
   IconButton,
@@ -398,6 +398,9 @@ export {
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
+  integrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
   integrations,
   IntegrationsPage,
   integrationsSlice,
@@ -406,9 +409,6 @@ export {
   integrationTables,
   integrationTablesSlice,
   IntegrationTablesState,
-  integrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
   IntegrationTextInputField,
   listNotifications,
   ListWorkflowResponse,

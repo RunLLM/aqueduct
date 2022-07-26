@@ -62,23 +62,23 @@ type Spec interface {
 	JobName() string
 }
 
-// baseSpec defines fields shared by all job specs.
-type baseSpec struct {
+// BaseSpec defines fields shared by all job specs.
+type BaseSpec struct {
 	Type JobType `json:"type"  yaml:"type"`
 	Name string  `json:"name"  yaml:"name"`
 }
 
-func (bs *baseSpec) JobName() string {
+func (bs *BaseSpec) JobName() string {
 	return bs.Name
 }
 
 type WorkflowRetentionSpec struct {
-	baseSpec
+	BaseSpec
 	ExecutorConfig *ExecutorConfiguration
 }
 
 type WorkflowSpec struct {
-	baseSpec
+	BaseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
 	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
 	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
@@ -89,7 +89,7 @@ type WorkflowSpec struct {
 // These Python jobs can be one-off jobs (e.g. Authenticate, Discover)
 // or Workflow operators (e.g. Function, Extract, Load).
 type BasePythonSpec struct {
-	baseSpec
+	BaseSpec
 	StorageConfig shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
 }
@@ -108,6 +108,11 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+
+	// If the function outputs a value that exists in this list, we will fail the entire workflow.
+	// This list contains the json-serialized version of the offending values.
+	// Must be set to nil if there are no blacklisted outputs expected.
+	BlacklistedOutputs []string `json:"blacklisted_outputs" yaml:"blacklisted_outputs"`
 }
 
 type ParamSpec struct {
@@ -216,7 +221,7 @@ func NewWorkflowRetentionJobSpec(
 	jobManager Config,
 ) Spec {
 	return &WorkflowRetentionSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: WorkflowRetentionType,
 			Name: WorkflowRetentionName,
 		},
@@ -240,7 +245,7 @@ func NewWorkflowSpec(
 	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: WorkflowJobType,
 			Name: name,
 		},
@@ -262,7 +267,7 @@ func NewBasePythonSpec(
 	metadataPath string,
 ) BasePythonSpec {
 	return BasePythonSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: jobType,
 			Name: name,
 		},
@@ -280,7 +285,7 @@ func NewAuthenticateSpec(
 ) Spec {
 	return &AuthenticateSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: AuthenticateJobType,
 				Name: name,
 			},
@@ -308,7 +313,7 @@ func NewExtractSpec(
 ) Spec {
 	return &ExtractSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: ExtractJobType,
 				Name: name,
 			},
@@ -340,7 +345,7 @@ func NewLoadTableSpec(
 ) Spec {
 	return &LoadTableSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: LoadTableJobType,
 				Name: name,
 			},
@@ -352,7 +357,7 @@ func NewLoadTableSpec(
 		CSV:             csv,
 		LoadParameters: LoadSpec{
 			BasePythonSpec: BasePythonSpec{
-				baseSpec: baseSpec{
+				BaseSpec: BaseSpec{
 					Type: LoadJobType,
 					Name: name,
 				},
@@ -379,7 +384,7 @@ func NewDiscoverSpec(
 ) Spec {
 	return &DiscoverSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: DiscoverJobType,
 				Name: name,
 			},
@@ -424,7 +429,7 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 
 	var spec Spec
 	if serializationType == JsonSerializationType {
-		var base baseSpec
+		var base BaseSpec
 		if err := json.Unmarshal(specBytes, &base); err != nil {
 			return nil, err
 		}

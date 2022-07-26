@@ -112,12 +112,20 @@ if __name__ == "__main__":
 
     # Build and replace UI files.
     if args.update_ui:
+        UI_PATH = "src/ui"
+        UI_COMMON_PATH = UI_PATH + "/common"
+        UI_APP_PATH = UI_PATH + "/app"
+        
         print("Updating UI files...")
-        execute_command(["npm", "install"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["npm", "run", "build"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["sudo", "npm", "link"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["npm", "install"], cwd=join(cwd, "src/ui/app"))
-        execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, "src/ui/app"))
+        execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "install"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "run", "build"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "link"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["npm", "install"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["make", "dist"], cwd=join(cwd, "src/ui"))
 
         files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]
@@ -152,5 +160,11 @@ if __name__ == "__main__":
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
+        
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/start-function-executor.sh",
+            join(server_directory, "bin")
+        ])
 
     print("Successfully installed aqueduct from local repo!")
