@@ -241,6 +241,7 @@ class DeleteWorkflowResponse(BaseModel):
 
     saved_object_deletion_results: Dict[str, List[SavedObjectDelete]]
 
+
 class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 

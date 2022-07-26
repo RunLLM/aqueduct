@@ -30,13 +30,13 @@ from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import IntegrationInfo, Integration
+from .integrations.integration import Integration, IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
-from .responses import SavedObjectUpdate, SavedObjectDelete
+from .responses import SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     generate_ui_url,
     generate_uuid,
@@ -400,7 +400,9 @@ class Client:
     def delete_flow(
         self,
         flow_id: Union[str, uuid.UUID],
-        saved_objects_to_delete: Optional[DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]] = None,
+        saved_objects_to_delete: Optional[
+            DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
+        ] = None,
         force: bool = False,
     ) -> None:
         """Deletes a flow object.
@@ -442,7 +444,9 @@ class Client:
                 counts += len(failed_for_integration)
         if counts > 0:
             failures = json.dumps(failed_deletions, sort_keys=False, indent=4)
-            raise Exception (f"Workflow-Written Objects' Deletion Failures\n{counts} Failures\n{failures}")
+            raise Exception(
+                f"Workflow-Written Objects' Deletion Failures\n{counts} Failures\n{failures}"
+            )
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.

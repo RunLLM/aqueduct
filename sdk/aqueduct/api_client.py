@@ -1,7 +1,7 @@
 import io
 import json
 import uuid
-from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
 from aqueduct.dag import DAG
@@ -12,8 +12,7 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.integrations.written_object import WrittenObject
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
@@ -24,6 +23,7 @@ from aqueduct.responses import (
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
 
 from aqueduct import utils
@@ -304,8 +304,8 @@ class APIClient:
 
     def delete_workflow(
         self,
-        flow_id: str, 
-        saved_objects_to_delete: Optional[DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]],
+        flow_id: str,
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
