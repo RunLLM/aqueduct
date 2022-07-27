@@ -27,7 +27,7 @@ func newPostgresWriter() Writer {
 func (r *postgresReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	integrationId uuid.UUID,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -38,6 +38,8 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 		FROM operator
 		WHERE
 			json_extract_path_text(spec, 'type') = 'load' AND 
+			json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
+			json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -50,10 +52,7 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
-		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
@@ -69,7 +68,7 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 func (r *postgresReaderImpl) TableAppendedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	integrationId uuid.UUID,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -80,6 +79,9 @@ func (r *postgresReaderImpl) TableAppendedByWorkflow(
 		FROM operator
 		WHERE
 			json_extract_path_text(spec, 'type') = 'load' AND 
+			json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
+			json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
+			json_extract_path_text(spec, 'load', 'parameters', 'update_mode')='append' AND 
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -92,11 +94,7 @@ func (r *postgresReaderImpl) TableAppendedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
-		json_extract_path_text(spec, 'load', 'parameters', 'update_mode')='append' AND
-		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
@@ -140,13 +138,16 @@ func (r *postgresReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 ) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error) {
 	query := `
 	SELECT DISTINCT 
-		name, 
-		json_extract_path_text(spec, 'load', 'integration_id') AS integration_id,
-		json_extract_path_text(spec, 'load', 'service') AS service, 
-		json_extract_path_text(spec, 'load', 'parameters', 'table') AS table_name, 
-		json_extract_path_text(spec, 'load', 'parameters', 'update_mode')  AS update_mode
-	FROM operator WHERE (
+		operator.name AS operator_name, 
+		integration.name AS integration_name, 
+		json_extract_path_text(operator.spec, 'load', 'integration_id') AS integration_id,
+		json_extract_path_text(operator.spec, 'load', 'service') AS service, 
+		json_extract_path_text(operator.spec, 'load', 'parameters', 'table') AS table_name, 
+		json_extract_path_text(operator.spec, 'load', 'parameters', 'update_mode')  AS update_mode
+	FROM operator, integration 
+	WHERE (
 		json_extract_path_text(spec, 'type') = 'load' AND 
+		integration.id = json_extract_path_text(operator.spec, 'load', 'integration_id') AND
 		EXISTS (
 			SELECT 1 
 			FROM 

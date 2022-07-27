@@ -1,4 +1,4 @@
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 try:
     from typing import Literal
@@ -45,14 +45,14 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
 
     if "connector_name" not in values:
         raise ValueError("Unknown connector name.")
-    
+
     if not isinstance(connector_config, dict):
         raise ValueError("connector_config is not a dictionary.")
 
     if type(values["connector_name"]) == dict:
         for integration in connector_config:
             connector_config[integration] = connector_config[integration]["conf"]
-        
+
         return connector_config
     else:
         if "conf" not in connector_config:
@@ -135,11 +135,12 @@ class LoadTableSpec(models.BaseSpec):
     )
 
 
-class DeleteWrittenObjectsSpec(models.BaseSpec):
+class DeleteSavedObjectsSpec(models.BaseSpec):
     name: str
-    type: Literal[enums.JobType.DELETEWRITTENOBJECTS]
+    type: Literal[enums.JobType.DELETESAVEDOBJECTS]
     storage_config: sconfig.StorageConfig
     metadata_path: str
+    integration_name: Dict[str, str]
     connector_name: Dict[str, common.Name]
     connector_config: Dict[str, config.Config]
     parameters: Dict[str, List[str]]
@@ -166,7 +167,9 @@ class DiscoverSpec(models.BaseSpec):
     )
 
 
-Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteWrittenObjectsSpec]
+Spec = Union[
+    AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec, DeleteSavedObjectsSpec
+]
 
 
 def parse_spec(spec_json: bytes) -> Spec:

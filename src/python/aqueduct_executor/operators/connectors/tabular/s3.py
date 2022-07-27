@@ -1,11 +1,11 @@
 import io
 import json
-from typing import List, Dict
+from typing import Dict, List
 
 import boto3
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
-from aqueduct_executor.operators.utils.dicts import ObjectResult
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 
 class S3Connector(connector.TabularConnector):
@@ -19,8 +19,13 @@ class S3Connector(connector.TabularConnector):
         self.bucket = config.bucket
 
     def authenticate(self) -> None:
-        for obj in self.s3.Bucket(self.bucket).objects.all():
-            pass
+        bucket = self.s3.Bucket(self.bucket)
+        # Below is a low-overhead way of checking if the user has access to the bucket.
+        # Source: https://stackoverflow.com/a/49817544
+        if not bucket.creation_date:
+            raise Exception(
+                "Bucket does not exist or you do not have permission to access the bucket."
+            )
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
@@ -65,22 +70,23 @@ class S3Connector(connector.TabularConnector):
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
 
-    def delete(self, objects: List[str]) -> List[Dict[str, ObjectResult]]:
+    def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
         results = []
         for key in objects:
             try:
                 self.s3.Object(self.bucket, key).delete()
-                results.append(ObjectResult(key, True))
+                results.append(SavedObjectDelete(name=key, result=True))
             except:
-                results.append(ObjectResult(key, False))
+                results.append(SavedObjectDelete(name=key, result=False))
         return results
 
     def delete(self, params: delete.S3Params) -> None:
-            try:
-                self.s3.Object(self.bucket, params.key).delete()
-                return True 
-            except:
-                return False
+        try:
+            self.s3.Object(self.bucket, params.key).delete()
+            return True
+        except:
+            return False
+
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()
 

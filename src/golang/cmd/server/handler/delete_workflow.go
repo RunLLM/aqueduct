@@ -33,11 +33,11 @@ import (
 )
 
 const (
-	pollDeleteWrittenObjectsInterval = 500 * time.Millisecond
-	pollDeleteWrittenObjectsTimeout  = 2 * time.Minute
+	pollDeleteSavedObjectsInterval = 500 * time.Millisecond
+	pollDeleteSavedObjectsTimeout  = 2 * time.Minute
 )
 
-type TableOutput struct {
+type SavedObjectResult struct {
 	Name string `json:"name"`
 	Result bool `json:"succeeded"`
 }
@@ -58,7 +58,7 @@ type deleteWorkflowInput struct {
 }
 
 type deleteWorkflowResponse struct{
-	WritesResults map[uuid.UUID][]TableOutput `json:"writes_results"`
+	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
 
 type DeleteWorkflowHandler struct {
@@ -135,20 +135,32 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	args := interfaceArgs.(*deleteWorkflowArgs)
 
 	resp := deleteWorkflowResponse{}
-	resp.WritesResults = map[uuid.UUID][]TableOutput{}
+	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
+
+
+	nameToId := make(map[string]uuid.UUID, len(input.ExternalDelete))
+	for integrationName, _ := range args.ExternalDelete {
+		nameToId[integrationName] = h.IntegrationReader.GetIntegrationByNameAndUser(
+			ctx,
+			integrationName,
+			args.AqContext.Id,
+			args.AqContext.OrganizationId,
+			h.Database,
+		)
+	}
 
 	// Check tables in list are valid
 	objCount := 0
-	for integrationId, writeList := range args.ExternalDelete {
-		for _, name := range writeList {
-			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
+	for integrationName, savedObjectList := range args.ExternalDelete {
+		for _, name := range savedObjectList {
+			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
 			if touched == false {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
 			}
-			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, integrationId, name, h.Database)
+			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
@@ -161,11 +173,11 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated tables.
 	if objCount > 0 {
-		writesResults, httpResponse, err := DeleteWrittenObject(ctx, args, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		SavedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
-		resp.WritesResults = writesResults
+		resp.SavedObjectDeletionResults = savedObjectDeletionResults
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -352,72 +364,75 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	return resp, http.StatusOK, nil
 }
 
-func DeleteWrittenObject(ctx context.Context, args *deleteWorkflowArgs, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]TableOutput, int, error) {
-	emptyWritesResults := map[uuid.UUID][]TableOutput{}
+func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID,  vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]SavedObjectResult, int, error) {
+	emptySavedObjectDeletionResults := map[str][]SavedObjectResult{}
 
 	// Schedule delete written objects job
-	jobMetadataPath := fmt.Sprintf("delete-written-objects-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestId)
 
-	jobName := fmt.Sprintf("delete-written-objects-%s", uuid.New().String())
-	contentPath := fmt.Sprintf("delete-written-objects-content-%s", args.RequestId)
+	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
+	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
 
 	integrationConfigs := map[string]auth.Config{}
 	integrationNames := map[string]integration.Service{}
-	for integrationId, _ := range args.ExternalDelete {
+	for integrationName, _ := range args.ExternalDelete {
+		integrationId = integrationNameToId[integrationName]
 		integrationUUID, err := uuid.Parse(integrationId)
 		if err != nil {
-			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		config, err := auth.ReadConfigFromSecret(ctx, integrationUUID, vaultObject)
 		if err != nil {
-			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationConfigs[integrationId] = config
 		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationUUID}, db)
 		if err != nil {
-			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		if len(integrationObjects) != 1 {
-			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationNames[integrationId] = integrationObjects[0].Service
+		integrationCustomNames[integrationId] = integrationName
 	}
 
-	jobSpec := job.NewDeleteWrittenObjectsSpec(
+	jobSpec := job.NewDeleteSavedObjectsSpec(
 		jobName,
 		storageConfig,
 		jobMetadataPath,
 		integrationNames,
+		integrationCustomNames,
 		integrationConfigs,
 		args.ExternalDelete,
 		contentPath,
 	)
 	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
-		return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete written objects job.")
+		return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to launch delete saved objects job.")
 	}
 
-	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollDeleteWrittenObjectsInterval, pollDeleteWrittenObjectsTimeout)
+	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollDeleteSavedObjectsInterval, pollDeleteSavedObjectsTimeout)
 	if err != nil {
-		return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete written objects.")
+		return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete saved objects.")
 	}
 
 	if jobStatus == shared.SucceededExecutionStatus {
-		// Table deletions were successful
-		jobWritesResults := map[uuid.UUID][]TableOutput{}
+		// Object deletions were successful
+		jobSavedObjectDeletionResults := map[uuid.UUID][]SavedObjectResult{}
 
 		if err := workflow_utils.ReadFromStorage(
 			ctx,
 			storageConfig,
 			contentPath,
-			&jobWritesResults,
+			&jobSavedObjectDeletionResults,
 		); err != nil {
-			return emptyWritesResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete written objects.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete saved objects.")
 		}
 
-		return jobWritesResults, http.StatusOK, nil
+		return jobSavedObjectDeletionResults, http.StatusOK, nil
 	}
 
-	// Written object deletions failed, so we need to fetch the error message from storage
+	// Saved object deletions failed, so we need to fetch the error message from storage
 	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
@@ -428,6 +443,5 @@ func DeleteWrittenObject(ctx context.Context, args *deleteWorkflowArgs, vaultObj
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operator metadata from storage.")
 	}
 
-
-	return emptyWritesResults, http.StatusInternalServerError, errors.New("Unable to delete written objects.")
+	return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.New("Unable to delete saved objects.")
 }

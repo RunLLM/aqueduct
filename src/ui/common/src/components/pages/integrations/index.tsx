@@ -8,18 +8,23 @@ import { SupportedIntegrations } from '../../../utils/integrations';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
+import { LayoutProps } from '../types';
 
 type Props = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
-const IntegrationsPage: React.FC<Props> = ({ user }) => {
+const IntegrationsPage: React.FC<Props> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   useEffect(() => {
     document.title = 'Integrations | Aqueduct';
   }, []);
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integrations
@@ -40,7 +45,7 @@ const IntegrationsPage: React.FC<Props> = ({ user }) => {
           <ConnectedIntegrations user={user} />
         </Box>
       </Box>
-    </DefaultLayout>
+    </Layout>
   );
 };
 

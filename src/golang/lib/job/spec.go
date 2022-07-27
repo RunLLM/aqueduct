@@ -44,7 +44,7 @@ const (
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
 	LoadTableJobType      JobType = "load-table"
-	DeleteWrittenObjectsJobType      JobType = "delete-written-objects"
+	DeleteSavedObjectsJobType      JobType = "delete-saved-objects"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
 )
@@ -145,8 +145,9 @@ type ExtractSpec struct {
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
-type DeleteWrittenObjectsSpec struct {
+type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
+	IntegrationName   map[string]string`json:"integration_name"  yaml:"integration_name"`
 	ConnectorName   map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   map[string]auth.Config          `json:"connector_config"  yaml:"connector_config"`
 	Parameters        map[string][]string `json:"parameters"  yaml:"parameters"`
@@ -219,8 +220,8 @@ func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
 }
 
-func (*DeleteWrittenObjectsSpec) Type() JobType {
-	return DeleteWrittenObjectsJobType
+func (*DeleteSavedObjectsSpec) Type() JobType {
+	return DeleteSavedObjectsJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -344,57 +345,31 @@ func NewExtractSpec(
 	}
 }
 
-// NewDeleteWrittenObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
-func NewDeleteWrittenObjectsSpec(
+// NewDeleteSavedObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
+func NewDeleteSavedObjectsSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
+	integrationName map[string]string,
 	connectorName map[string]integration.Service,
 	connectorConfig map[string]auth.Config,
 	parameters map[string][]string,
 	outputContentPath string,
 ) Spec {
-	return &DeleteWrittenObjectsSpec{
+	return &DeleteSavedObjectsSpec{
 		BasePythonSpec: BasePythonSpec{
 			BaseSpec: BaseSpec{
-				Type: DeleteWrittenObjectsJobType,
+				Type: DeleteSavedObjectsJobType,
 				Name: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		IntegratonName: integrationName,
 		ConnectorName:	connectorName,
 		ConnectorConfig:   connectorConfig,
 		Parameters:        parameters,
 		OutputContentPath: outputContentPath,
-	}
-}
-
-// NewLoadSpec constructs a Spec for a LoadJob.
-func NewLoadSpec(
-	name string,
-	storageConfig *shared.StorageConfig,
-	metadataPath string,
-	connectorName integration.Service,
-	connectorConfig auth.Config,
-	parameters connector.LoadParams,
-	inputContentPath string,
-	inputMetadataPath string,
-) Spec {
-	return &LoadSpec{
-		BasePythonSpec: BasePythonSpec{
-			BaseSpec: BaseSpec{
-				Type: LoadJobType,
-				Name: name,
-			},
-			StorageConfig: *storageConfig,
-			MetadataPath:  metadataPath,
-		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
-		InputContentPath:  inputContentPath,
-		InputMetadataPath: inputMetadataPath,
 	}
 }
 

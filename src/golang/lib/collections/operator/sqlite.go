@@ -74,7 +74,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	integrationId uuid.UUID,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -85,6 +85,8 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 		FROM operator
 		WHERE
 			json_extract(spec, '$.type') = 'load' AND 
+			json_extract(spec, '$.load.parameters.table')=$3 AND
+			json_extract(spec, '$.load.integration_id')=$2 AND
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -97,10 +99,7 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
@@ -116,7 +115,7 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
-	integrationId string,
+	integrationId uuid.UUID,
 	tableName string,
 	db database.Database,
 ) (bool, error) {
@@ -124,9 +123,12 @@ func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 	SELECT %s
 	FROM (
 		SELECT *
-		FROM operator
+		FROM operator, integration
 		WHERE
 			json_extract(spec, '$.type') = 'load' AND 
+			json_extract(spec, '$.load.parameters.table')=$3 AND
+			json_extract(spec, '$.load.integration_id')=$2 AND
+			json_extract(spec, '$.load.parameters.update_mode')='append' AND
 			EXISTS (
 				SELECT 1 
 				FROM 
@@ -139,11 +141,7 @@ func (r *sqliteReaderImpl) TableAppendedByWorkflow(
 					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
 					workflow_dag.workflow_id = $1
 			)
-	)
-	WHERE
-		json_extract(spec, '$.load.integration_id')=$2 AND
-		json_extract(spec, '$.load.parameters.update_mode')='append' AND
-		json_extract(spec, '$.load.parameters.table')=$3;`, allColumns())
+	);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
@@ -163,15 +161,17 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 ) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error) {
 	query := `
 	SELECT DISTINCT
-			name, 
-			json_extract(spec, '$.load.integration_id') AS integration_id, 
-			json_extract(spec, '$.load.service') AS service, 
-			json_extract(spec, '$.load.parameters.table') AS table_name, 
-			json_extract(spec, '$.load.parameters.update_mode') AS update_mode
+			operator.name AS operator_name, 
+			integration.name AS integration_name, 
+			json_extract(operator.spec, '$.load.integration_id') AS integration_id, 
+			json_extract(operator.spec, '$.load.service') AS service, 
+			json_extract(operator.spec, '$.load.parameters.table') AS table_name, 
+			json_extract(operator.spec, '$.load.parameters.update_mode') AS update_mode
 		FROM 
-			operator 
+			operator, integration
 		WHERE (
 			json_extract(spec, '$.type')='load' AND 
+			integration.id = json_extract(operator.spec, '$.load.integration_id') AND
 			EXISTS (
 				SELECT 1 
 				FROM 

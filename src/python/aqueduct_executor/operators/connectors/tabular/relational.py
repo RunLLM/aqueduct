@@ -1,11 +1,11 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
-from aqueduct_executor.operators.utils.dicts import ObjectResult
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import engine, inspect, MetaData
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
+from sqlalchemy import MetaData, engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.declarative import declarative_base
 
 
 class RelationalConnector(connector.TabularConnector):
@@ -28,7 +28,7 @@ class RelationalConnector(connector.TabularConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
 
-    def delete(self, tables: List[str]) -> List[Dict[str, ObjectResult]]:
+    def delete(self, tables: List[str]) -> List[Dict[str, SavedObjectDelete]]:
         results = []
         Base = declarative_base()
         metadata = MetaData()
@@ -38,11 +38,11 @@ class RelationalConnector(connector.TabularConnector):
                 table = metadata.tables[table]
                 if table is not None:
                     Base.metadata.drop_all(self.engine, [table], checkfirst=True)
-                    results.append(ObjectResult(table, True))
+                    results.append(SavedObjectDelete(name=table, result=True))
                 else:
-                    results.append(ObjectResult(table, False))
+                    results.append(SavedObjectDelete(name=table, result=False))
             except:
-                results.append(ObjectResult(table, False))
+                results.append(SavedObjectDelete(name=table, result=False))
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:

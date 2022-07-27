@@ -272,7 +272,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
-    activated: true,
+    activated: false,
   },
 };
 

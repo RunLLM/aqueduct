@@ -5,11 +5,11 @@ import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract
 from aqueduct_executor.operators.connectors.tabular.spec import (
     AQUEDUCT_DEMO_NAME,
+    DeleteSavedObjectsSpec,
     DiscoverSpec,
     ExtractSpec,
     LoadSpec,
     LoadTableSpec,
-    DeleteWrittenObjectsSpec,
     Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
@@ -35,7 +35,7 @@ def run(spec: Spec) -> None:
     - extract
     - load
     - load-table
-    - delete-written-objects
+    - delete-saved-objects
     - discover
 
     Arguments:
@@ -60,10 +60,11 @@ def run(spec: Spec) -> None:
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
+
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
     if type(spec.connector_name) == dict:
-        run_delete_written_objects(spec, storage, exec_state)
+        run_delete_saved_objects(spec, storage, exec_state)
     else:
         op = setup_connector(spec.connector_name, spec.connector_config)
 
@@ -132,12 +133,14 @@ def run_extract(
             system_metadata={},
         )
 
-def run_delete_written_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
+
+def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     results = {}
     for integration in spec.connector_name:
         op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.parameters[integration])
-    utils.write_delete_written_objects_results(storage, spec.output_content_path, results)
+        integration_name = spec.integration_name[integration]
+        results[integration_name] = op.delete(spec.parameters[integration])
+    utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
 def run_load(

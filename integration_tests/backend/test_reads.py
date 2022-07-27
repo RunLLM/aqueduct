@@ -6,12 +6,13 @@ from time import sleep
 
 import pytest
 import requests
+import utils
 
 import aqueduct
 
 
 class TestReads:
-    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/objects"
+    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -41,13 +42,15 @@ class TestReads:
             if err:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
-                cls.flows[workflow] = out.strip().split()[-1]
-            sleep(10)
+                parsed = out.strip().split()
+                cls.flows[workflow] = parsed[-2]
+                n_runs = int(parsed[-1])
+                utils.wait_for_flow_runs(cls.client, cls.flows[workflow], n_runs)
 
     @classmethod
     def teardown_class(cls):
         for flow in cls.flows:
-            cls.client.delete_flow(cls.flows[flow])
+            utils.delete_flow(cls.client, cls.flows[flow])
 
     @classmethod
     def get_response_class(cls, endpoint, additional_headers={}):
@@ -57,51 +60,22 @@ class TestReads:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_get_workflow_tables(self):
-        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
-        data = self.get_response_class(endpoint)
-      
-        data = data.json()["object_details"]
+    def test_endpoint_list_saved_objects(self):
+        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
+        data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
-        
+
         # table_name, update_mode
         data_set = set(
             [
                 ("table_1", "append"),
                 ("table_1", "replace"),
-                ("table_2", "append"),
+                ("table_2", "replace"),
             ]
         )
         assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
-        assert len(set([item["integration_id"] for item in data])) == 1
+        assert len(set([item["integration_name"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
-
-    def test_sdk_get_workflow_tables(self):
-        data = self.client.get_workflow_writes(self.flows["changing_saves.py"])
-
-        # Check all in same integration
-        assert len(data.keys()) == 1
-
-        # table_name, update_mode
-        data_set = set(
-            [
-                ("table_1", "append"),
-                ("table_1", "replace"),
-                ("table_2", "append"),
-            ]
-        )
-        integration_id = list(data.keys())[0]
-        assert len(data[integration_id]) == 3
-        assert set([(item.name, item.update_mode) for item in data[integration_id]]) == data_set
-    
-    def test_sdk_delete_workflow_invalid(self):
-        tables = self.client.get_workflow_writes(self.flows["changing_saves.py"])
-        integration_id = list(tables.keys())[0]
-        tables[integration_id][0].name = 'I_DON_T_EXIST'
-        tables[integration_id] = [tables[integration_id][0]]
-       
-        with pytest.raises(Exception) as e_info:
-            data = self.client.delete_flow(self.flows["changing_saves.py"], writes_to_delete=tables, force=True)
