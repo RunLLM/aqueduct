@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Doesn't currently work for S3 because it's too expensive to list.
+
 // Route: /integration/{integrationId}/objects
 // Method: GET
 // Params:
@@ -46,7 +48,9 @@ type IntegrationObjectsArgs struct {
 	integrationId uuid.UUID
 }
 
-type IntegrationObjectsResponse struct{}
+type IntegrationObjectsResponse struct{
+	ObjectNames []string
+}
 
 func (*IntegrationObjectsHandler) Name() string {
 	return "IntegrationObjects"
@@ -83,14 +87,14 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if _, ok := integration.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "List tables request is only allowed for relational databases.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
-	jobMetadataPath := fmt.Sprintf("list-tables-metadata-%s", args.RequestId)
-	jobResultPath := fmt.Sprintf("list-tables-result-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestId)
+	jobResultPath := fmt.Sprintf("list-objects-result-%s", args.RequestId)
 
 	defer func() {
-		// Delete storage files created for list tables job metadata
+		// Delete storage files created for list objects job metadata
 		go workflow_utils.CleanupStorageFiles(ctx, h.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
@@ -119,7 +123,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing tables.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing objects.")
 	}
 
 	var metadata shared.ExecutionState
@@ -133,20 +137,20 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if metadata.Error != nil {
-		return nil, http.StatusBadRequest, errors.Newf("Unable to list tables: %v", metadata.Error.Context)
+		return nil, http.StatusBadRequest, errors.Newf("Unable to list objects: %v", metadata.Error.Context)
 	}
 
-	var tableNames []string
+	var objectNames []string
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		h.StorageConfig,
 		jobResultPath,
-		&tableNames,
+		&objectNames,
 	); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve table names from storage.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve object names from storage.")
 	}
 
 	return discoverResponse{
-		TableNames: tableNames,
+		ObjectNames: objectNames,
 	}, http.StatusOK, nil
 }
