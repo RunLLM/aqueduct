@@ -28,7 +28,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     const allRows = file.data.split(/\r?\n/);
     const parsedHeader = ['id'];
     parsedHeader.push(...allRows[0].split(/,/));
-    
+
     const width = 25;
     const parsedColumns = parsedHeader.map((headerName) => {
       let hideColumn = false;
@@ -51,10 +51,10 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
         if (headerName === 'id') {
           parsedRow[headerName] = id;
         } else {
-          parsedRow[headerName] = row[i-1];
+          parsedRow[headerName] = row[i - 1];
         }
       });
-      
+
       return parsedRow;
     });
 
