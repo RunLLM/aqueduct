@@ -49,7 +49,7 @@ type IntegrationObjectsArgs struct {
 }
 
 type IntegrationObjectsResponse struct {
-	ObjectNames []string
+	ObjectNames []string `json:"object_names"`
 }
 
 func (*IntegrationObjectsHandler) Name() string {
@@ -76,7 +76,7 @@ func (h *IntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, int, 
 
 func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*IntegrationObjectsArgs)
-	fmt.Print("IN IntegrationObjectsHandler")
+
 	integrationObject, err := h.IntegrationReader.GetIntegration(
 		ctx,
 		args.integrationId,

@@ -9,6 +9,7 @@ from utils import (
 )
 
 from aqueduct import LoadUpdateMode
+from aqueduct.error import InvalidRequestError
 
 LIST_INTEGRATION_OBJECTS_TEMPLATE = "/api/integration/%s/objects"
 
@@ -31,7 +32,7 @@ def test_delete_workflow_invalid_saved_objects(client):
 
     try:
         tables = client.flow(flow_id).list_saved_objects()
-        tables[get_integration_name()][0].name = "I_DON_T_EXIST"
+        tables[get_integration_name()][0].object_name = "I_DON_T_EXIST"
         tables[get_integration_name()] = [tables[get_integration_name()][0]]
 
         with pytest.raises(InvalidRequestError) as e_info:
@@ -72,15 +73,15 @@ def test_delete_workflow_saved_objects(client):
         flow_id = list(flow_ids_to_delete)[0]
         tables = client.flow(flow_id).list_saved_objects()
 
-        assert "delete_table" in tables[get_integration_name()]
+        assert "delete_table" in [item.object_name for item in tables[get_integration_name()]]
 
         tables_response = get_response(client, endpoint).json()
-
+        print(tables_response)
         assert "delete_table" in set(tables_response["object_names"])
 
         with pytest.raises(InvalidRequestError) as e_info:
             client.delete_flow(flow_id, saved_objects_to_delete=tables, force=False)
-
+        print(e_info)
         client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
 
         # Wait for deletion to occur
