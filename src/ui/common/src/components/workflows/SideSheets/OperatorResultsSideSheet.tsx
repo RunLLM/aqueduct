@@ -328,7 +328,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
                 Status:
               </Typography>
               <Box sx={{ ml: 2 }}>
-                <Status execState={execState} />
+                <Status status={execState.status} />
               </Box>
             </Box>
           )}
