@@ -1,6 +1,7 @@
 import time
 import uuid
 from typing import Dict, List, Optional, Union
+import requests
 
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.enums import ExecutionStatus
