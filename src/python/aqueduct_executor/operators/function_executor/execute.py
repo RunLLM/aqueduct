@@ -55,10 +55,8 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
 
     # work_dir should be `<storage>/operators/<id>/op`
     work_dir = os.path.join(fn_path, OP_DIR)
-    print("listdir(workdir)")
-    print(os.listdir(work_dir))
-    print("listdir(fn_path)")
-    print(os.listdir(fn_path))
+    print(f"listdir(workdir): {os.listdir(work_dir)}")
+    print(f"listdir(fn_path): {os.listdir(fn_path)}")
     
     # this ensures any file manipulation happens with respect to work_dir
     os.chdir(work_dir)
