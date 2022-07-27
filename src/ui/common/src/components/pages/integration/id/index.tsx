@@ -292,7 +292,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             onCloseDialog={() => setShowDialog(false)}
-            onConnect={() => forceLoadTableList()}
+            onConnect={() => {
+              forceLoadTableList();
+              setShowDialog(false);
+            }}
           />
         )}
       </Box>
