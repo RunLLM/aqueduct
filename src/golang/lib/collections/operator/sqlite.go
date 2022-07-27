@@ -1,8 +1,8 @@
 package operator
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"

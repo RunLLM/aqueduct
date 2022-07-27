@@ -138,7 +138,7 @@ func (r *standardReaderImpl) GetIntegrationByNameAndUser(
 	userId uuid.UUID,
 	organizationId string,
 	db database.Database,
-) ([]Integration, error) {
+) (*Integration, error) {
 	getIntegrationsQuery := fmt.Sprintf(
 		"SELECT %s FROM integration WHERE name=$1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);",
 		allColumns(),
@@ -146,7 +146,12 @@ func (r *standardReaderImpl) GetIntegrationByNameAndUser(
 	var integrations []Integration
 
 	err := db.Query(ctx, &integrations, getIntegrationsQuery, integrationName, organizationId, userId)
-	return integrations, err
+
+	if len(integrations) != 1 {
+		return nil, errors.Newf("Wrong number of integrations fetched")
+	}
+
+	return &integrations[0], err
 }
 
 func (r *standardReaderImpl) GetIntegrationsByServiceAndUser(

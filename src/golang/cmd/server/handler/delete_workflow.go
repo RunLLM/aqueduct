@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
-	"encoding/json"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -13,19 +13,19 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
@@ -38,26 +38,25 @@ const (
 )
 
 type SavedObjectResult struct {
-	Name string `json:"name"`
-	Result bool `json:"succeeded"`
+	Name   string `json:"name"`
+	Result bool   `json:"succeeded"`
 }
-
 
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output tables in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
-	WorkflowId uuid.UUID
-	ExternalDelete   map[string][]string
-	Force   bool
+	WorkflowId     uuid.UUID
+	ExternalDelete map[string][]string
+	Force          bool
 }
 
 type deleteWorkflowInput struct {
 	ExternalDelete map[string][]string `json:"external_delete"`
-	Force   bool `json:"force"`
+	Force          bool                `json:"force"`
 }
 
-type deleteWorkflowResponse struct{
+type deleteWorkflowResponse struct {
 	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
 
@@ -65,9 +64,9 @@ type DeleteWorkflowHandler struct {
 	PostHandler
 
 	Database                database.Database
-	StorageConfig     *shared.StorageConfig
-	JobManager        job.JobManager
-	Vault             vault.Vault
+	StorageConfig           *shared.StorageConfig
+	JobManager              job.JobManager
+	Vault                   vault.Vault
 	WorkflowReader          workflow.Reader
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
@@ -75,7 +74,7 @@ type DeleteWorkflowHandler struct {
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
 	ArtifactResultReader    artifact_result.Reader
-	IntegrationReader          integration.Reader
+	IntegrationReader       integration.Reader
 
 	WorkflowWriter          workflow.Writer
 	WorkflowDagWriter       workflow_dag.Writer
@@ -124,10 +123,10 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}
 
 	return &deleteWorkflowArgs{
-		AqContext:  aqContext,
-		WorkflowId: workflowId,
-		ExternalDelete:   input.ExternalDelete,
-		Force:   input.Force,
+		AqContext:      aqContext,
+		WorkflowId:     workflowId,
+		ExternalDelete: input.ExternalDelete,
+		Force:          input.Force,
 	}, http.StatusOK, nil
 }
 
@@ -137,16 +136,19 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp := deleteWorkflowResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
-
-	nameToId := make(map[string]uuid.UUID, len(input.ExternalDelete))
-	for integrationName, _ := range args.ExternalDelete {
-		nameToId[integrationName] = h.IntegrationReader.GetIntegrationByNameAndUser(
+	nameToId := make(map[string]uuid.UUID, len(args.ExternalDelete))
+	for integrationName := range args.ExternalDelete {
+		integrationObject, err := h.IntegrationReader.GetIntegrationByNameAndUser(
 			ctx,
 			integrationName,
 			args.AqContext.Id,
 			args.AqContext.OrganizationId,
 			h.Database,
 		)
+		if err != nil {
+			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while getting integration.")
+		}
+		nameToId[integrationName] = integrationObject.Id
 	}
 
 	// Check tables in list are valid
@@ -157,14 +159,14 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
-			if touched == false {
+			if !touched {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
 			}
 			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
-			if appended == false && args.Force == false {
+			if !appended && !args.Force {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 			}
 			objCount += 1
@@ -173,7 +175,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated tables.
 	if objCount > 0 {
-		SavedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
@@ -364,8 +366,8 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	return resp, http.StatusOK, nil
 }
 
-func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID,  vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[uuid.UUID][]SavedObjectResult, int, error) {
-	emptySavedObjectDeletionResults := map[str][]SavedObjectResult{}
+func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[string][]SavedObjectResult, int, error) {
+	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
 	// Schedule delete written objects job
 	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestId)
@@ -373,28 +375,23 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
 	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
 
-	integrationConfigs := map[string]auth.Config{}
-	integrationNames := map[string]integration.Service{}
-	for integrationName, _ := range args.ExternalDelete {
-		integrationId = integrationNameToId[integrationName]
-		integrationUUID, err := uuid.Parse(integrationId)
+	integrationConfigs := make(map[string]auth.Config, len(integrationNameToId))
+	integrationNames := make(map[string]integration.Service, len(integrationNameToId))
+	for integrationName := range args.ExternalDelete {
+		integrationId := integrationNameToId[integrationName]
+		config, err := auth.ReadConfigFromSecret(ctx, integrationId, vaultObject)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
-		config, err := auth.ReadConfigFromSecret(ctx, integrationUUID, vaultObject)
-		if err != nil {
-			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
-		}
-		integrationConfigs[integrationId] = config
-		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationUUID}, db)
+		integrationConfigs[integrationName] = config
+		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationId}, db)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		if len(integrationObjects) != 1 {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
-		integrationNames[integrationId] = integrationObjects[0].Service
-		integrationCustomNames[integrationId] = integrationName
+		integrationNames[integrationName] = integrationObjects[0].Service
 	}
 
 	jobSpec := job.NewDeleteSavedObjectsSpec(
@@ -402,7 +399,6 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 		storageConfig,
 		jobMetadataPath,
 		integrationNames,
-		integrationCustomNames,
 		integrationConfigs,
 		args.ExternalDelete,
 		contentPath,
@@ -418,7 +414,7 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 
 	if jobStatus == shared.SucceededExecutionStatus {
 		// Object deletions were successful
-		jobSavedObjectDeletionResults := map[uuid.UUID][]SavedObjectResult{}
+		jobSavedObjectDeletionResults := map[string][]SavedObjectResult{}
 
 		if err := workflow_utils.ReadFromStorage(
 			ctx,
