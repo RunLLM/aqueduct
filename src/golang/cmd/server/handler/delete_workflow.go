@@ -43,7 +43,7 @@ type SavedObjectResult struct {
 }
 
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
-// k8s resources, Postgres state, and output tables in the user's data warehouse.
+// k8s resources, Postgres state, and output objects in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
 	WorkflowId     uuid.UUID
@@ -151,18 +151,18 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		nameToId[integrationName] = integrationObject.Id
 	}
 
-	// Check tables in list are valid
+	// Check objects in list are valid
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touched, err := h.OperatorReader.TableTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			touched, err := h.OperatorReader.ObjectTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
 			if !touched {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
 			}
-			appended, err := h.OperatorReader.TableAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			appended, err := h.OperatorReader.ObjectAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
@@ -173,7 +173,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		}
 	}
 
-	// Delete associated tables.
+	// Delete associated objects.
 	if objCount > 0 {
 		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 		if httpResponse != http.StatusOK {

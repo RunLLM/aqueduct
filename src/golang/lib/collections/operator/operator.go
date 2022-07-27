@@ -32,18 +32,18 @@ type Reader interface {
 		workflowId uuid.UUID,
 		db database.Database,
 	) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error)
-	TableTouchedByWorkflow(
+	ObjectTouchedByWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		integrationId uuid.UUID,
-		tableName string,
+		objectName string,
 		db database.Database,
 	) (bool, error)
-	TableAppendedByWorkflow(
+	ObjectAppendedByWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		integrationId uuid.UUID,
-		tableName string,
+		objectName string,
 		db database.Database,
 	) (bool, error)
 	ValidateOperatorOwnership(

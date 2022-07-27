@@ -24,38 +24,35 @@ func newPostgresWriter() Writer {
 	return &postgresWriterImpl{standardWriterImpl{}}
 }
 
-func (r *postgresReaderImpl) TableTouchedByWorkflow(
+func (r *postgresReaderImpl) ObjectTouchedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,
-	tableName string,
+	objectName string,
 	db database.Database,
 ) (bool, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator
-		WHERE
-			json_extract_path_text(spec, 'type') = 'load' AND 
-			json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
-			json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	);`, allColumns())
+	FROM operator
+	WHERE
+		json_extract_path_text(spec, 'type') = 'load' AND 
+		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
+		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
+		EXISTS (
+			SELECT 1 
+			FROM 
+				workflow_dag_edge, workflow_dag 
+			WHERE 
+				( 
+					workflow_dag_edge.from_id = operator.id OR 
+					workflow_dag_edge.to_id = operator.id 
+				) AND 
+				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+				workflow_dag.workflow_id = $1
+		);`, allColumns())
 
 	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
+	err := db.Query(ctx, &operators, query, workflowId, integrationId, objectName)
 
 	touched := false
 	if len(operators) > 0 {
@@ -65,39 +62,36 @@ func (r *postgresReaderImpl) TableTouchedByWorkflow(
 	return touched, err
 }
 
-func (r *postgresReaderImpl) TableAppendedByWorkflow(
+func (r *postgresReaderImpl) ObjectAppendedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,
-	tableName string,
+	objectName string,
 	db database.Database,
 ) (bool, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator
-		WHERE
-			json_extract_path_text(spec, 'type') = 'load' AND 
-			json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
-			json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
-			json_extract_path_text(spec, 'load', 'parameters', 'update_mode')='append' AND 
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	);`, allColumns())
+	FROM operator
+	WHERE
+		json_extract_path_text(spec, 'type') = 'load' AND 
+		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
+		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
+		json_extract_path_text(spec, 'load', 'parameters', 'update_mode')='append' AND 
+		EXISTS (
+			SELECT 1 
+			FROM 
+				workflow_dag_edge, workflow_dag 
+			WHERE 
+				( 
+					workflow_dag_edge.from_id = operator.id OR 
+					workflow_dag_edge.to_id = operator.id 
+				) AND 
+				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+				workflow_dag.workflow_id = $1
+		);`, allColumns())
 
 	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
+	err := db.Query(ctx, &operators, query, workflowId, integrationId, objectName)
 
 	appended := false
 	if len(operators) > 0 {
