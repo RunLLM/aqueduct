@@ -4,6 +4,7 @@ from utils import delete_flow, generate_new_flow_name, get_integration_name, run
 
 from aqueduct import LoadUpdateMode
 
+
 @pytest.mark.publish
 def test_delete_workflow_invalid_saved_objects(client):
     integration = client.integration(name=get_integration_name())
@@ -17,7 +18,7 @@ def test_delete_workflow_invalid_saved_objects(client):
     table.save(integration.config(table="delete_table", update_mode=LoadUpdateMode.REPLACE))
 
     flow_id = run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
-    
+
     ###
 
     tables = client.flow(flow_id).list_saved_objects()
@@ -25,6 +26,4 @@ def test_delete_workflow_invalid_saved_objects(client):
     tables[get_integration_name()] = [tables[get_integration_name()][0]]
 
     with pytest.raises(InvalidRequestError) as e_info:
-        data = client.delete_flow(
-            flow_id, saved_objects_to_delete=tables, force=True
-        )
+        data = client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
