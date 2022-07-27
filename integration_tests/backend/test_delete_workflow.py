@@ -11,6 +11,7 @@ import aqueduct
 
 
 class TestDeleteWorkflow:
+    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     INTEGRATION_OBJECTS_TEMPLATE = "/api/integration/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
@@ -54,17 +55,16 @@ class TestDeleteWorkflow:
         return r
 
     def test_delete_workflow(self):
-        tables = self.client.get_workflow_writes(self.flows["simple_saves.py"])
-        integration_id = list(tables.keys())[0]
-
         endpoint = self.INTEGRATION_OBJECTS_TEMPLATE % integration_id
 
         tables_response = self.get_response_class(endpoint).json()
         assert 'delete_table' in set(tables_response['table_names'])
        
-        with pytest.raises(Exception) as e_info:
+        with pytest.raises(InvalidRequestError) as e_info:
             self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=False)
+        print(e_info)
         data = self.client.delete_flow(self.flows["simple_saves.py"], writes_to_delete=tables, force=True)
+        # Wait for deletion to occur
         sleep(1)
 
         tables_response = self.get_response_class(endpoint).json()
