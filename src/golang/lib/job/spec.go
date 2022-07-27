@@ -36,17 +36,17 @@ const (
 )
 
 const (
-	WorkflowJobType       JobType = "workflow"
-	FunctionJobType       JobType = "function"
-	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "system_metric"
-	AuthenticateJobType   JobType = "authenticate"
-	ExtractJobType        JobType = "extract"
-	LoadJobType           JobType = "load"
-	LoadTableJobType      JobType = "load-table"
-	DeleteSavedObjectsJobType      JobType = "delete-saved-objects"
-	DiscoverJobType       JobType = "discover"
-	WorkflowRetentionType JobType = "workflow_retention"
+	WorkflowJobType           JobType = "workflow"
+	FunctionJobType           JobType = "function"
+	ParamJobType              JobType = "param"
+	SystemMetricJobType       JobType = "system_metric"
+	AuthenticateJobType       JobType = "authenticate"
+	ExtractJobType            JobType = "extract"
+	LoadJobType               JobType = "load"
+	LoadTableJobType          JobType = "load-table"
+	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
+	DiscoverJobType           JobType = "discover"
+	WorkflowRetentionType     JobType = "workflow_retention"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -147,11 +147,10 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	IntegrationName   map[string]string`json:"integration_name"  yaml:"integration_name"`
-	ConnectorName   map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   map[string]auth.Config          `json:"connector_config"  yaml:"connector_config"`
-	Parameters        map[string][]string `json:"parameters"  yaml:"parameters"`
-	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName     map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	Parameters        map[string][]string            `json:"parameters"  yaml:"parameters"`
+	OutputContentPath string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -350,7 +349,6 @@ func NewDeleteSavedObjectsSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	integrationName map[string]string,
 	connectorName map[string]integration.Service,
 	connectorConfig map[string]auth.Config,
 	parameters map[string][]string,
@@ -365,8 +363,7 @@ func NewDeleteSavedObjectsSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		IntegratonName: integrationName,
-		ConnectorName:	connectorName,
+		ConnectorName:     connectorName,
 		ConnectorConfig:   connectorConfig,
 		Parameters:        parameters,
 		OutputContentPath: outputContentPath,

@@ -63,7 +63,7 @@ def run(spec: Spec) -> None:
 
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
-    if type(spec.connector_name) == dict:
+    if isinstance(spec.connector_name, dict):
         run_delete_saved_objects(spec, storage, exec_state)
     else:
         op = setup_connector(spec.connector_name, spec.connector_config)
@@ -136,10 +136,10 @@ def run_extract(
 
 def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     results = {}
+    assert isinstance(spec.connector_name, dict)
     for integration in spec.connector_name:
         op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        integration_name = spec.integration_name[integration]
-        results[integration_name] = op.delete(spec.parameters[integration])
+        results[integration] = op.delete(spec.parameters[integration])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 

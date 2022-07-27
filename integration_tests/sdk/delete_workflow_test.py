@@ -30,4 +30,3 @@ def test_delete_workflow_invalid_saved_objects(client):
             data = client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
     finally:
         delete_flow(client, flow_id)
-
