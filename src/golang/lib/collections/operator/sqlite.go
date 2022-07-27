@@ -71,35 +71,32 @@ func (w *sqliteWriterImpl) CreateOperator(
 	return &operator, err
 }
 
-func (r *sqliteReaderImpl) TableTouchedByWorkflow(
+func (r *sqliteReaderImpl) ObjectTouchedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,
-	tableName string,
+	objectName string,
 	db database.Database,
 ) (bool, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator
-		WHERE
-			json_extract(spec, '$.type') = 'load' AND 
-			json_extract(spec, '$.load.parameters.table')=$3 AND
-			json_extract(spec, '$.load.integration_id')=$2 AND
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	);`, allColumns())
+	FROM operator
+	WHERE
+		json_extract(spec, '$.type') = 'load' AND 
+		json_extract(spec, '$.load.parameters.table')=$3 AND
+		json_extract(spec, '$.load.integration_id')=$2 AND
+		EXISTS (
+			SELECT 1 
+			FROM 
+				workflow_dag_edge, workflow_dag 
+			WHERE 
+				( 
+					workflow_dag_edge.from_id = operator.id OR 
+					workflow_dag_edge.to_id = operator.id 
+				) AND 
+				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+				workflow_dag.workflow_id = $1
+		);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
@@ -112,36 +109,33 @@ func (r *sqliteReaderImpl) TableTouchedByWorkflow(
 	return touched, err
 }
 
-func (r *sqliteReaderImpl) TableAppendedByWorkflow(
+func (r *sqliteReaderImpl) ObjectAppendedByWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,
-	tableName string,
+	objectName string,
 	db database.Database,
 ) (bool, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
-	FROM (
-		SELECT *
-		FROM operator, integration
-		WHERE
-			json_extract(spec, '$.type') = 'load' AND 
-			json_extract(spec, '$.load.parameters.table')=$3 AND
-			json_extract(spec, '$.load.integration_id')=$2 AND
-			json_extract(spec, '$.load.parameters.update_mode')='append' AND
-			EXISTS (
-				SELECT 1 
-				FROM 
-					workflow_dag_edge, workflow_dag 
-				WHERE 
-					( 
-						workflow_dag_edge.from_id = operator.id OR 
-						workflow_dag_edge.to_id = operator.id 
-					) AND 
-					workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-					workflow_dag.workflow_id = $1
-			)
-	);`, allColumns())
+	FROM operator
+	WHERE
+		json_extract(spec, '$.type') = 'load' AND 
+		json_extract(spec, '$.load.parameters.table')=$3 AND
+		json_extract(spec, '$.load.integration_id')=$2 AND
+		json_extract(spec, '$.load.parameters.update_mode')='append' AND
+		EXISTS (
+			SELECT 1 
+			FROM 
+				workflow_dag_edge, workflow_dag 
+			WHERE 
+				( 
+					workflow_dag_edge.from_id = operator.id OR 
+					workflow_dag_edge.to_id = operator.id 
+				) AND 
+				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+				workflow_dag.workflow_id = $1
+		);`, allColumns())
 
 	var operators []DBOperator
 	err := db.Query(ctx, &operators, query, workflowId, integrationId, tableName)
