@@ -139,8 +139,7 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
     assert isinstance(spec.connector_name, dict)
     for integration in spec.connector_name:
         op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        integration_name = spec.integration_name[integration]
-        results[integration_name] = op.delete(spec.parameters[integration])
+        results[integration] = op.delete(spec.parameters[integration])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
