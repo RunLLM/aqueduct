@@ -2,6 +2,7 @@ package _00014_artifact_result_exec_state_column_backfill
 
 import (
 	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
