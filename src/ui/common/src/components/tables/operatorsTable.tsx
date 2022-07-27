@@ -1,3 +1,4 @@
+import { Link } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -9,13 +10,17 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integrationOperators';
+import { getPathPrefix } from '../../utils/getPathPrefix';
+import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorParametersOverview from '../operators/operatorParametersOverview';
+import { Button } from '../primitives/Button.styles';
 
 type Props = {
+  workflow?: ListWorkflowSummary;
   operators: OperatorsForIntegrationItem[];
 };
 
-const OperatorsTable: React.FC<Props> = ({ operators }) => {
+const OperatorsTable: React.FC<Props> = ({ workflow, operators }) => {
   const [showInactive, setShowInactive] = useState(false);
   const shownOperators = showInactive
     ? operators
@@ -46,7 +51,10 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
         </TableHead>
         <TableBody>
           {shownOperators.map((opInfo) => (
-            <TableRow key={opInfo.operator.id}>
+            <TableRow
+              key={opInfo.operator.id}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
               <TableCell align="left" scope="row">
                 <Typography
                   variant="body2"
@@ -72,23 +80,35 @@ const OperatorsTable: React.FC<Props> = ({ operators }) => {
             </TableRow>
           ))}
         </TableBody>
-        {/* This !! is necessary. Otherwise it becomes bitwise & op for integer. */}
-        {!!hasInactive && (
-          <TableFooter>
-            <TableRow>
-              <Typography
-                variant="body2"
-                color="gray.800"
-                sx={{ marginTop: '2px', '&:hover': { cursor: 'pointer' } }}
+        <TableFooter>
+          <TableRow>
+            {workflow && (
+              <Link
+                underline="none"
+                href={`${getPathPrefix()}/workflow/${workflow.id}`}
+              >
+                <Button
+                  color="primary"
+                  sx={{ marginTop: '6px', marginRight: '8px' }}
+                >
+                  {'Go to workflow details'}
+                </Button>
+              </Link>
+            )}
+            {/* This !! is necessary. Otherwise it becomes bitwise & op for integer. */}
+            {!!hasInactive && (
+              <Button
+                color="secondary"
+                sx={{ marginTop: '6px' }}
                 onClick={() => setShowInactive(!showInactive)}
               >
                 {showInactive
-                  ? 'only show operators from current version'
-                  : 'show operators from older versions'}
-              </Typography>
-            </TableRow>
-          </TableFooter>
-        )}
+                  ? 'Hide operators from previous versions'
+                  : 'Show operators from previous versions'}
+              </Button>
+            )}
+          </TableRow>
+        </TableFooter>
       </Table>
     </TableContainer>
   );

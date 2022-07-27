@@ -1,6 +1,5 @@
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link } from '@mui/material';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import MuiAccordionSummary, {
@@ -11,7 +10,6 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integrationOperators';
-import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorsTable from '../tables/operatorsTable';
 
@@ -59,19 +57,13 @@ const WorkflowAccordion: React.FC<Props> = ({
     <Accordion expanded={expanded} onChange={handleExpand}>
       <AccordionSummary aria-controls="panel1d-content" id="panel1d-header">
         {workflow ? (
-          <Link
-            underline="hover"
-            color="inherit"
-            href={`${getPathPrefix()}/workflow/${workflow.id}`}
-          >
-            <Typography variant="body1"> {workflow.name} </Typography>
-          </Link>
+          <Typography variant="body1"> {workflow.name} </Typography>
         ) : (
           <Typography variant="body1"> Unknown workflow </Typography>
         )}
       </AccordionSummary>
       <AccordionDetails>
-        <OperatorsTable operators={operators} />
+        <OperatorsTable workflow={workflow} operators={operators} />
       </AccordionDetails>
     </Accordion>
   );
