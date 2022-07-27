@@ -57,7 +57,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     work_dir = os.path.join(fn_path, OP_DIR)
     print(f"listdir(workdir): {os.listdir(work_dir)}")
     print(f"listdir(fn_path): {os.listdir(fn_path)}")
-    
+
     # this ensures any file manipulation happens with respect to work_dir
     os.chdir(work_dir)
     # adds work_dir to sys.path to support relative imports from work_dir
