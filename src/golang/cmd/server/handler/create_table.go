@@ -19,7 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
