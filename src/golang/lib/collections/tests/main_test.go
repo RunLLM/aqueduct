@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	schemaVersion = 13
+	schemaVersion = 15
 
 	// Postgres config
 	postgresHost     = "localhost"
