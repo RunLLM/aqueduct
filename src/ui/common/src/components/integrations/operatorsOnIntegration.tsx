@@ -18,7 +18,7 @@ const OperatorsOnIntegration: React.FC = () => {
   const operatorsState = useSelector((state: RootState) => {
     return state.integrationOperatorsReducer;
   });
-  const [expandedWf, setExpandedWf] = useState('');
+  const [expandedWf, setExpandedWf] = useState<string>('');
 
   if (
     isLoading(operatorsState.loadingStatus) ||
