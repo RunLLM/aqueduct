@@ -12,6 +12,21 @@ export type LoadingStatus = {
   err: string;
 };
 
+export function isLoading(status: LoadingStatus) {
+  return (
+    status.loading === LoadingStatusEnum.Initial ||
+    status.loading === LoadingStatusEnum.Loading
+  );
+}
+
+export function isSucceeded(status: LoadingStatus) {
+  return status.loading === LoadingStatusEnum.Succeeded;
+}
+
+export function isFailed(status: LoadingStatus) {
+  return status.loading === LoadingStatusEnum.Failed;
+}
+
 export enum ExecutionStatus {
   Unknown = 'unknown',
   Succeeded = 'succeeded',
