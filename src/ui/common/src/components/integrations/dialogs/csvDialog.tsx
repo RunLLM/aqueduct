@@ -28,6 +28,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     const allRows = file.data.split(/\r?\n/);
     const parsedHeader = ['id'];
     parsedHeader.push(...allRows[0].split(/,/));
+    console.log('header is', parsedHeader);
     const width = 25;
     const parsedColumns = parsedHeader.map((headerName) => {
       let hideColumn = false;
@@ -35,6 +36,12 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
         hideColumn = true;
       }
 
+      console.log({
+        field: headerName,
+        headerName: headerName,
+        width: width * headerName.length,
+        hide: hideColumn,
+      });
       return {
         field: headerName,
         headerName: headerName,
@@ -42,10 +49,23 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
         hide: hideColumn,
       };
     });
+
     const parsedRows = allRows.slice(1).map((line, id) => {
       const row = line.split(/,/);
-      const parsedRow = { id: id };
-      parsedHeader.forEach((headerName, i) => (parsedRow[headerName] = row[i]));
+      const parsedRow = {};
+      parsedHeader.forEach((headerName, i) => {
+        if (headerName === 'id') {
+          parsedRow[headerName] = id;
+        } else {
+          parsedRow[headerName] = row[i-1];
+        }
+      });
+      
+      if (id === 0) {
+        console.log(row)
+        console.log(parsedHeader);
+        console.log(parsedRow);
+      }
       return parsedRow;
     });
 
