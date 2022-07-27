@@ -28,6 +28,8 @@ func Up(ctx context.Context, db database.Database) error {
 }
 
 func Down(ctx context.Context, db database.Database) error {
+	// This updates the status field with the exec state fetched from the operator result.
+	// In the future, we can simply drop the status field without having to worry about downgrading. TODO(ENG-1453).
 	execStateInfos, err := getExecStateForEachArtifactResult(ctx, db)
 	if err != nil {
 		return err
