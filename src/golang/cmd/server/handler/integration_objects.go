@@ -48,7 +48,7 @@ type IntegrationObjectsArgs struct {
 	integrationId uuid.UUID
 }
 
-type IntegrationObjectsResponse struct{
+type IntegrationObjectsResponse struct {
 	ObjectNames []string
 }
 
@@ -150,7 +150,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve object names from storage.")
 	}
 
-	return discoverResponse{
+	return IntegrationObjectsResponse{
 		ObjectNames: objectNames,
 	}, http.StatusOK, nil
 }
