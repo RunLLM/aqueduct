@@ -375,6 +375,11 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
 	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
 
+	defer func() {
+		// Delete storage files created for delete saved objects job metadata
+		go workflow_utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath, contentPath})
+	}()
+
 	integrationConfigs := make(map[string]auth.Config, len(integrationNameToId))
 	integrationNames := make(map[string]integration.Service, len(integrationNameToId))
 	for integrationName := range args.ExternalDelete {
