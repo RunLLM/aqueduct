@@ -44,20 +44,25 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
 
 
 def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
-    # `_import_invoke_method` imports the model object.
-    # it assumes the operator has been extracted to `<storage>/operators/<id>/op`
-    # and imports the route from the above path.
+    """
+    `_import_invoke_method` imports the model object.
+    it assumes the operator has been extracted to `<storage>/operators/<id>/op`
+    and imports the route from the above path.
+    """
 
     # fn_path should be `<storage>/operators/<id>`
     fn_path = spec.function_extract_path
 
     # work_dir should be `<storage>/operators/<id>/op`
     work_dir = os.path.join(fn_path, OP_DIR)
-    print("listdir workdir")
+    print("listdir(workdir)")
     print(os.listdir(work_dir))
-    print("listdir fn path")
+    print("listdir(fn_path)")
     print(os.listdir(fn_path))
+    
+    # this ensures any file manipulation happens with respect to work_dir
     os.chdir(work_dir)
+    # adds work_dir to sys.path to support relative imports from work_dir
     sys.path.append(work_dir)
 
     import_path = _get_py_import_path(spec)
