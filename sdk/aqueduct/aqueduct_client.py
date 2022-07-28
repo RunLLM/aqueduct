@@ -9,7 +9,7 @@ import yaml
 from aqueduct.generic_artifact import Artifact as GenericArtifact
 
 from aqueduct import api_client
-from .api_client import APIClient, __GLOBAL_API_CLIENT__
+from .api_client import APIClient
 from .artifact import Artifact, ArtifactSpec
 from aqueduct import dag
 from .dag import (

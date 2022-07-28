@@ -4,7 +4,7 @@ from typing import Any, Callable, List, Optional, Union
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct import dag as dag_module
-from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag, __GLOBAL_DAG__
+from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct import api_client as api_client_module
 from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException
