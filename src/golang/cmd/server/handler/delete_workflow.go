@@ -183,7 +183,6 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 						if googleSheets.SaveMode == "NEWSHEET" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}
-
 					}
 				}
 			}
