@@ -45,6 +45,7 @@ def test_invalid_path_operator(client):
     with pytest.raises(FileNotFoundError):
         invalid_path_table = sentiment_prediction_with_invalid_reqs_path(table)
 
+
 # TODO(ENG-1217): Straighten out our requirements story and testing.
 # @pytest.mark.skipif(
 #     condition=check_if_transformers_exist(),
