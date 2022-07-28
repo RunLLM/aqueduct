@@ -114,13 +114,13 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
 	}
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
+		return nil, http.StatusBadRequest, errors.New("The organization does not own this workflow.")
 	}
 
 	var input deleteWorkflowInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse JSON input.")
 	}
 
 	return &deleteWorkflowArgs{
@@ -162,14 +162,14 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			}
 			// No operator had touched the object at the specified integration.
 			if len(touchedOperators) == 0 {
-				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
+				return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
 			}
 			if !args.Force {
 				// Check none have UpdateMode=append.
 				for _, touchedOperator := range touchedOperators {
 					load := touchedOperator.Spec.Load()
 					if load==nil {
-						return resp, http.StatusBadRequest,  errors.Wrap(err, "Unexpected error occurred while validating objects.")
+						return resp, http.StatusBadRequest,  errors.New("Unexpected error occurred while validating objects.")
 					}
 					loadParams := load.Parameters
 
@@ -177,12 +177,12 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 					// Check not updating anything in the integration.
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
-							return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
+							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 
 						}
 					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
 						if googleSheets.SaveMode == "NEWSHEET" {
-							return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
+							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 
 						}
 						
@@ -414,7 +414,7 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		if len(integrationObjects) != 1 {
-			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.New("Unable to get integration configs.")
 		}
 		integrationNames[integrationName] = integrationObjects[0].Service
 	}
