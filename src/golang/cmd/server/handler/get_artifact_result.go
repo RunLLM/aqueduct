@@ -36,9 +36,9 @@ type getArtifactResultArgs struct {
 }
 
 type getArtifactResultResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Schema []map[string]string    `json:"schema"`
-	Data   string                 `json:"data"`
+	ExecState shared.ExecutionState `json:"exec_state"`
+	Schema    []map[string]string   `json:"schema"`
+	Data      string                `json:"data"`
 }
 
 type GetArtifactResultHandler struct {
@@ -116,8 +116,17 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
-	response := getArtifactResultResponse{
+	execState := shared.ExecutionState{
 		Status: dbArtifactResult.Status,
+	}
+	if !dbArtifactResult.ExecState.IsNull {
+		execState.FailureType = dbArtifactResult.ExecState.FailureType
+		execState.Error = dbArtifactResult.ExecState.Error
+		execState.UserLogs = dbArtifactResult.ExecState.UserLogs
+	}
+
+	response := getArtifactResultResponse{
+		ExecState: execState,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {

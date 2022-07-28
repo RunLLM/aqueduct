@@ -27,56 +27,6 @@ type WorkflowStoragePaths struct {
 	ArtifactMetadataPaths map[uuid.UUID]string
 }
 
-func GenerateWorkflowStoragePaths(dag *workflow_dag.DBWorkflowDag) *WorkflowStoragePaths {
-	workflowStoragePaths := WorkflowStoragePaths{
-		OperatorMetadataPaths: make(map[uuid.UUID]string),
-		ArtifactPaths:         make(map[uuid.UUID]string),
-		ArtifactMetadataPaths: make(map[uuid.UUID]string),
-	}
-
-	for id := range dag.Operators {
-		workflowStoragePaths.OperatorMetadataPaths[id] = uuid.New().String()
-	}
-
-	for id := range dag.Artifacts {
-		workflowStoragePaths.ArtifactPaths[id] = uuid.New().String()
-		workflowStoragePaths.ArtifactMetadataPaths[id] = uuid.New().String()
-	}
-
-	return &workflowStoragePaths
-}
-
-func CleanupWorkflowStorageFiles(
-	ctx context.Context,
-	workflowStoragePaths *WorkflowStoragePaths,
-	storageConfig *shared.StorageConfig,
-	metadataOnly bool,
-) {
-	// Clean up generated workflow storage files.
-	// If `metadataOnly` is turned on, clean up only metadata files and preserve content files.
-	numFiles := len(workflowStoragePaths.ArtifactMetadataPaths) + len(workflowStoragePaths.OperatorMetadataPaths)
-	if !metadataOnly {
-		numFiles += len(workflowStoragePaths.ArtifactPaths)
-	}
-
-	paths := make([]string, 0, numFiles)
-	for _, path := range workflowStoragePaths.ArtifactMetadataPaths {
-		paths = append(paths, path)
-	}
-
-	for _, path := range workflowStoragePaths.OperatorMetadataPaths {
-		paths = append(paths, path)
-	}
-
-	if !metadataOnly {
-		for _, path := range workflowStoragePaths.ArtifactPaths {
-			paths = append(paths, path)
-		}
-	}
-
-	CleanupStorageFiles(ctx, storageConfig, paths)
-}
-
 func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
 	CleanupStorageFiles(ctx, storageConfig, []string{key})
 }
