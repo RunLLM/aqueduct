@@ -1,6 +1,6 @@
+import { CircularProgress } from '@mui/material';
 import React, { useEffect } from 'react';
 import ReactFlow, {
-  Edge,
   Node as ReactFlowNode,
   useReactFlow,
 } from 'react-flow-renderer';
@@ -19,23 +19,23 @@ type ReactFlowCanvasProps = {
     event: React.MouseEvent,
     element: ReactFlowNode<ReactFlowNodeData>
   ) => void;
-  nodes: ReactFlowNode<ReactFlowNodeData>[];
-  edges: Edge[];
 };
 
 const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   onPaneClicked,
   switchSideSheet,
-  nodes,
-  edges,
 }) => {
   const openSideSheetState = useSelector(
     (state: RootState) => state.openSideSheetReducer
   );
-  const { fitView } = useReactFlow();
+  const dagPositionState = useSelector(
+    (state: RootState) => state.workflowReducer.selectedDagPosition
+  );
+
+  const { fitView, viewportInitialized } = useReactFlow();
   useEffect(() => {
     fitView();
-  }, []);
+  }, [dagPositionState]);
 
   useEffect(() => {
     // NOTE(vikram): There's a timeout here because there seems to be a
@@ -45,11 +45,18 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
 
+  if (
+    dagPositionState.result?.nodes === undefined ||
+    dagPositionState.result?.edges === undefined
+  ) {
+    return <CircularProgress />;
+  }
+
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
-      nodes={nodes}
-      edges={edges}
+      nodes={dagPositionState.result?.nodes}
+      edges={dagPositionState.result?.edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}
