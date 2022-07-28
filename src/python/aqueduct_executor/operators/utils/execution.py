@@ -26,7 +26,7 @@ TIP_LOAD = "We couldn't load to the integration. Please make sure the target exi
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
 # Assumption: only check operators will use this tip.
-TIP_CHECK_DID_NOT_PASS = "The check operator did not pass."
+TIP_CHECK_DID_NOT_PASS = "The check did not pass (returned False)."
 
 
 class Error(BaseModel):
