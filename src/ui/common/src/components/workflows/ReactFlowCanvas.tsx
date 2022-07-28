@@ -1,4 +1,3 @@
-import { CircularProgress } from '@mui/material';
 import React, { useEffect } from 'react';
 import ReactFlow, {
   Node as ReactFlowNode,
@@ -44,13 +43,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     // we're not 100% sure.
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
-
-  if (
-    dagPositionState.result?.nodes === undefined ||
-    dagPositionState.result?.edges === undefined
-  ) {
-    return <CircularProgress />;
-  }
 
   return (
     <ReactFlow
