@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -155,19 +156,38 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touched, err := h.OperatorReader.ObjectTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			touchedOperators, err := h.OperatorReader.ObjectTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
-			if !touched {
+			// No operator had touched the object at the specified integration.
+			if len(touchedOperators) == 0 {
 				return resp, http.StatusBadRequest, errors.Wrap(err, "Object list not valid. Make sure all objects are touched by the workflow.")
 			}
-			appended, err := h.OperatorReader.ObjectAppendedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
-			if err != nil {
-				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
-			}
-			if !appended && !args.Force {
-				return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
+			if !args.Force {
+				// Check none have UpdateMode=append.
+				for _, touchedOperator := range touchedOperators {
+					load := touchedOperator.Spec.Load()
+					if load==nil {
+						return resp, http.StatusBadRequest,  errors.Wrap(err, "Unexpected error occurred while validating objects.")
+					}
+					loadParams := load.Parameters
+
+					relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+					// Check not updating anything in the integration.
+					if ok {
+						if relationalLoad.UpdateMode == "append" {
+							return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
+
+						}
+					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
+						if googleSheets.SaveMode == "NEWSHEET" {
+							return resp, http.StatusBadRequest, errors.Wrap(err, "Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
+
+						}
+						
+					}
+				}
 			}
 			objCount += 1
 		}
@@ -418,7 +438,7 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 	}
 
 	if jobStatus == shared.SucceededExecutionStatus {
-		// Object deletions were successful
+		// Object deletion attempts were successful
 		jobSavedObjectDeletionResults := map[string][]SavedObjectResult{}
 
 		if err := workflow_utils.ReadFromStorage(

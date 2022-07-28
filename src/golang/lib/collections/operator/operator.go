@@ -38,14 +38,7 @@ type Reader interface {
 		integrationId uuid.UUID,
 		objectName string,
 		db database.Database,
-	) (bool, error)
-	ObjectAppendedByWorkflow(
-		ctx context.Context,
-		workflowId uuid.UUID,
-		integrationId uuid.UUID,
-		objectName string,
-		db database.Database,
-	) (bool, error)
+	) ([]DBOperator, error)
 	ValidateOperatorOwnership(
 		ctx context.Context,
 		organizationId string,

@@ -38,9 +38,9 @@ class BigQueryConnector(connector.TabularConnector):
         for table in tables:
             try:
                 self.client.delete_table(table, not_found_ok=False)
-                results.append(SavedObjectDelete(name=table, result=True))
+                results.append(SavedObjectDelete(name=table, succeeded=True))
             except:
-                results.append(SavedObjectDelete(name=table, result=False))
+                results.append(SavedObjectDelete(name=table, succeeded=False))
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
