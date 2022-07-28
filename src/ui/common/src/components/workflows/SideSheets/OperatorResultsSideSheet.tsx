@@ -25,7 +25,7 @@ import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSid
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import LogViewer from '../log_viewer';
-import NodeStatus from '../nodes/nodeStatus';
+import NodeStatus from '../nodes/NodeStatus';
 
 interface Props {
   user: UserProfile;
