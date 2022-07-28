@@ -33,7 +33,7 @@ import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
 import { Operator } from '../../utils/operators';
-import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
+import ExecutionStatus, { FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
 enum WorkflowStatusTabs {
@@ -371,22 +371,20 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         type: 'tableArtifact',
       };
 
-      // Custom logic for check artifacts that display a warning message
-      // if the check did not pass, even if the check was successfully executed.
+      const artifactStatus = artifactResult.result?.status;
       const artifactExecState = artifactResult.result?.exec_state;
-
       if (
-        artifactExecState.status === ExecutionStatus.Failed &&
+        artifactStatus === ExecutionStatus.Failed &&
         artifactExecState.failure_type == FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
-      } else if (artifactExecState.status === ExecutionStatus.Failed) {
+      } else if (artifactStatus === ExecutionStatus.Failed) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         newWorkflowStatusItem.title = `Error creating ${artifactName}.`;
         newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
-      } else if (artifactExecState.status === ExecutionStatus.Succeeded) {
+      } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
         newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
@@ -430,15 +428,16 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
-      const opExecState = operatorResult.result as ExecState;
+      const opStatus = operatorResult.result?.status;
+      const opExecState = operatorResult.result;
       if (
-        opExecState.status === ExecutionStatus.Failed &&
+        opStatus === ExecutionStatus.Failed &&
         opExecState.failure_type === FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Warning for ${operatorName}`;
         newWorkflowStatusItem.message = opExecState.error?.tip;
-      } else if (opExecState.status === ExecutionStatus.Failed) {
+      } else if (opStatus === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
@@ -451,7 +450,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
         }
-      } else if (opExecState.status === ExecutionStatus.Succeeded) {
+      } else if (opStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `${operatorName} succeeded`;
         newWorkflowStatusItem.message = `Operator successfully executed`;

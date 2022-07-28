@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
-import { ExecState, ExecutionStatus, FailureType } from '../../../utils/shared';
+import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
 
 type Props = {
@@ -41,12 +41,13 @@ export const Node: React.FC<Props> = ({
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
 
-  const textAndBorderColor = selected
+  const textColor = selected
     ? theme.palette.DarkContrast50
     : theme.palette.DarkContrast;
-  let backgroundColor, hoverColor;
+  const borderColor = textColor;
 
-  if (execState.status === ExecutionStatus.Succeeded) {
+  let backgroundColor, hoverColor;
+  if (execState?.status === ExecutionStatus.Succeeded) {
     backgroundColor = selected
       ? theme.palette.DarkSuccessMain50
       : theme.palette.DarkSuccessMain;
@@ -54,14 +55,14 @@ export const Node: React.FC<Props> = ({
 
     // Warning color for non-fatal errors.
   } else if (
-    execState.status === ExecutionStatus.Failed &&
+    execState?.status === ExecutionStatus.Failed &&
     execState.failure_type == FailureType.UserNonFatal
   ) {
     backgroundColor = selected
       ? theme.palette.DarkWarningMain50
       : theme.palette.DarkWarningMain;
     hoverColor = theme.palette.DarkWarningMain75;
-  } else if (execState.status === ExecutionStatus.Failed) {
+  } else if (execState?.status === ExecutionStatus.Failed) {
     backgroundColor = selected
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
@@ -75,8 +76,8 @@ export const Node: React.FC<Props> = ({
     <BaseNode
       sx={{
         backgroundColor,
-        color: textAndBorderColor,
-        borderColor: textAndBorderColor,
+        color: textColor,
+        borderColor: borderColor,
         '&:hover': { backgroundColor: hoverColor },
       }}
     >

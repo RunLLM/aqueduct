@@ -25,7 +25,7 @@ import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSid
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import LogViewer from '../log_viewer';
-import Status from '../workflowStatus';
+import NodeStatus from '../nodes/nodeStatus';
 
 interface Props {
   user: UserProfile;
@@ -328,7 +328,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
                 Status:
               </Typography>
               <Box sx={{ ml: 2 }}>
-                <Status status={execState.status} />
+                <NodeStatus execState={execState} />
               </Box>
             </Box>
           )}
