@@ -16,7 +16,7 @@ import distro
 import requests
 import yaml
 
-SCHEMA_VERION = "13"
+SCHEMA_VERSION = "15"
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
@@ -177,7 +177,7 @@ def update_server_version():
     update_executable_permissions()
 
     execute_command(
-        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", SCHEMA_VERION]
+        [os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", SCHEMA_VERSION]
     )
 
 
