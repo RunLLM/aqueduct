@@ -35,14 +35,11 @@ class RelationalConnector(connector.TabularConnector):
         metadata.reflect(bind=self.engine)
         for table in tables:
             try:
-                table = metadata.tables[table]
-                if table is not None:
-                    Base.metadata.drop_all(self.engine, [table], checkfirst=True)
-                    results.append(SavedObjectDelete(name=table, result=True))
-                else:
-                    results.append(SavedObjectDelete(name=table, result=False))
+                sql_table = metadata.tables[table]
+                Base.metadata.drop_all(self.engine, [sql_table], checkfirst=True)
+                results.append(SavedObjectDelete(name=table, succeeded=True))
             except:
-                results.append(SavedObjectDelete(name=table, result=False))
+                results.append(SavedObjectDelete(name=table, succeeded=False))
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:

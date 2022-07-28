@@ -30,13 +30,13 @@ func (r *postgresReaderImpl) ObjectTouchedByWorkflow(
 	integrationId uuid.UUID,
 	objectName string,
 	db database.Database,
-) (bool, error) {
+) ([]DBOperator, error) {
 	query := fmt.Sprintf(`
 	SELECT %s
 	FROM operator
 	WHERE
-		json_extract_path_text(spec, 'type') = 'load' AND 
-		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
+		json_extract_path_text(spec, 'type') = '%s' AND 
+		json_extract_path_text(spec, 'load', 'parameters', 'table')=$1 AND
 		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
 		EXISTS (
 			SELECT 1 
@@ -48,57 +48,13 @@ func (r *postgresReaderImpl) ObjectTouchedByWorkflow(
 					workflow_dag_edge.to_id = operator.id 
 				) AND 
 				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-				workflow_dag.workflow_id = $1
-		);`, allColumns())
+				workflow_dag.workflow_id = $4
+		);`, allColumns(), LoadType)
 
 	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, objectName)
+	err := db.Query(ctx, &operators, query, objectName, integrationId, workflowId)
 
-	touched := false
-	if len(operators) > 0 {
-		touched = true
-	}
-
-	return touched, err
-}
-
-func (r *postgresReaderImpl) ObjectAppendedByWorkflow(
-	ctx context.Context,
-	workflowId uuid.UUID,
-	integrationId uuid.UUID,
-	objectName string,
-	db database.Database,
-) (bool, error) {
-	query := fmt.Sprintf(`
-	SELECT %s
-	FROM operator
-	WHERE
-		json_extract_path_text(spec, 'type') = 'load' AND 
-		json_extract_path_text(spec, 'load', 'parameters', 'table')=$3 AND
-		json_extract_path_text(spec, 'load', 'integration_id')=$2 AND
-		json_extract_path_text(spec, 'load', 'parameters', 'update_mode')='append' AND 
-		EXISTS (
-			SELECT 1 
-			FROM 
-				workflow_dag_edge, workflow_dag 
-			WHERE 
-				( 
-					workflow_dag_edge.from_id = operator.id OR 
-					workflow_dag_edge.to_id = operator.id 
-				) AND 
-				workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-				workflow_dag.workflow_id = $1
-		);`, allColumns())
-
-	var operators []DBOperator
-	err := db.Query(ctx, &operators, query, workflowId, integrationId, objectName)
-
-	appended := false
-	if len(operators) > 0 {
-		appended = true
-	}
-
-	return appended, err
+	return operators, err
 }
 
 func (r *postgresReaderImpl) GetOperatorsByIntegrationId(

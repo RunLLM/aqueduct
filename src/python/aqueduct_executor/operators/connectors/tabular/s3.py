@@ -75,9 +75,9 @@ class S3Connector(connector.TabularConnector):
         for key in objects:
             try:
                 self.s3.Object(self.bucket, key).delete()
-                results.append(SavedObjectDelete(name=key, result=True))
+                results.append(SavedObjectDelete(name=key, succeeded=True))
             except:
-                results.append(SavedObjectDelete(name=key, result=False))
+                results.append(SavedObjectDelete(name=key, succeeded=False))
         return results
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
