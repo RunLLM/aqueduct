@@ -66,7 +66,7 @@ def test_delete_workflow_saved_objects(client):
     table.save(integration.config(table="delete_table", update_mode=LoadUpdateMode.APPEND))
 
     flow_ids_to_delete.add(
-        run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+        run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id()
     )
 
     ###
@@ -78,20 +78,28 @@ def test_delete_workflow_saved_objects(client):
 
         assert "delete_table" in [item.object_name for item in tables[get_integration_name()]]
 
+        # No SDK function to do this so we query the endpoint directly to see delete_table is properly created at the integration.
         tables_response = get_response(client, endpoint).json()
-        print(tables_response)
         assert "delete_table" in set(tables_response["object_names"])
 
-        with pytest.raises(InvalidRequestError) as e_info:
+        # Doesn't work if don't force
+        with pytest.raises(InvalidRequestError):
             client.delete_flow(flow_id, saved_objects_to_delete=tables, force=False)
-        print(e_info)
+        
+        # Wait for deletion to occur
+        sleep(1)
+
+        # No SDK function to do this so we query the endpoint directly to see delete_table is properly deleted at the integration.
+        tables_response = get_response(client, endpoint).json()
+        assert "delete_table" in set(tables_response["object_names"])
+   
         client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
 
         # Wait for deletion to occur
         sleep(1)
 
+        # No SDK function to do this so we query the endpoint directly to see delete_table is properly deleted at the integration.
         tables_response = get_response(client, endpoint).json()
-
         assert "delete_table" not in set(tables_response["object_names"])
 
     finally:
