@@ -1,8 +1,18 @@
 import pytest
+from time import sleep
 from constants import SENTIMENT_SQL_QUERY
-from utils import delete_flow, generate_new_flow_name, get_integration_name, run_flow_test
+from utils import (
+    delete_flow,
+    generate_new_flow_name,
+    get_integration_name,
+    get_response,
+    run_flow_test,
+)
 
 from aqueduct import LoadUpdateMode
+from aqueduct.error import InvalidRequestError
+
+LIST_INTEGRATION_OBJECTS_TEMPLATE = "/api/integration/%s/objects"
 
 
 @pytest.mark.publish
@@ -23,10 +33,10 @@ def test_delete_workflow_invalid_saved_objects(client):
 
     try:
         tables = client.flow(flow_id).list_saved_objects()
-        tables[get_integration_name()][0].name = "I_DON_T_EXIST"
+        tables[get_integration_name()][0].object_name = "I_DON_T_EXIST"
         tables[get_integration_name()] = [tables[get_integration_name()][0]]
 
-        with pytest.raises(InvalidRequestError) as e_info:
+        with pytest.raises(InvalidRequestError):
             data = client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
     finally:
         delete_flow(client, flow_id)
