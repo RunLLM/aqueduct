@@ -1,5 +1,7 @@
-import pytest
 from time import sleep
+
+import pytest
+from aqueduct.error import InvalidRequestError
 from constants import SENTIMENT_SQL_QUERY
 from utils import (
     delete_flow,
@@ -10,7 +12,6 @@ from utils import (
 )
 
 from aqueduct import LoadUpdateMode
-from aqueduct.error import InvalidRequestError
 
 LIST_INTEGRATION_OBJECTS_TEMPLATE = "/api/integration/%s/objects"
 
