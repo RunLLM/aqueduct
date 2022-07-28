@@ -24,7 +24,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /preview
@@ -195,8 +194,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
-
-			log.Info(artifact_metadata.SerializationType)
 
 			content, err := artf.GetContent(ctx)
 			if err != nil {

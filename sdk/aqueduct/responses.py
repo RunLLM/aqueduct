@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType
+from aqueduct.enums import ExecutionStatus, FailureType, SerializationType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
@@ -52,7 +52,7 @@ class OperatorResult(BaseModel):
 
 
 class ArtifactResult(BaseModel):
-    serialization_type: str
+    serialization_type: SerializationType
     content: str
 
 
