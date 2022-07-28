@@ -22,6 +22,8 @@ from aqueduct.operators import (
 from pydantic import BaseModel
 
 
+__GLOBAL_DAG__ = None
+
 class Schedule(BaseModel):
     trigger: Optional[TriggerType] = None
     cron_schedule: str = ""

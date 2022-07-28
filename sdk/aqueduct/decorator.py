@@ -3,7 +3,9 @@ from typing import Any, Callable, List, Optional, Union
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct import dag as dag_module
+from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag, __GLOBAL_DAG__
+from aqueduct import api_client as api_client_module
 from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException
 from aqueduct.metric_artifact import MetricArtifact
@@ -71,17 +73,19 @@ def wrap_spec(
         description:
             The description for this operator.
     """
-    if len(input_artifacts) < 1:
-        raise Exception("Transformation requires at least one input artifact.")
-
     for artifact in input_artifacts:
         if artifact._from_flow_run:
             raise InvalidUserActionException(
                 "Artifact fetched from flow run can not be reused for computation"
             )
 
-    dag = input_artifacts[0]._dag
-    api_client = input_artifacts[0]._api_client
+    if len(input_artifacts) == 0:
+        print("This operator takes no artifact input.")
+        dag = dag_module.__GLOBAL_DAG__
+        api_client = api_client_module.__GLOBAL_API_CLIENT__
+    else:
+        dag = input_artifacts[0]._dag
+        api_client = input_artifacts[0]._api_client
 
     # Check that all the artifact ids exist in the dag.
     for artifact in input_artifacts:

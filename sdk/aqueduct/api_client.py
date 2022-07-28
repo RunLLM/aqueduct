@@ -25,6 +25,8 @@ from aqueduct.responses import (
 from aqueduct import utils
 
 
+__GLOBAL_API_CLIENT__ = None
+
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     """
     Prints all the logs generated during preview, in BFS order.

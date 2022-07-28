@@ -8,8 +8,10 @@ import __main__ as main
 import yaml
 from aqueduct.generic_artifact import Artifact as GenericArtifact
 
-from .api_client import APIClient
+from aqueduct import api_client
+from .api_client import APIClient, __GLOBAL_API_CLIENT__
 from .artifact import Artifact, ArtifactSpec
+from aqueduct import dag
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -88,10 +90,12 @@ class Client:
         """
         logging.basicConfig(level=log_level)
         self._api_client = APIClient(api_key, aqueduct_address)
+        api_client.__GLOBAL_API_CLIENT__ = self._api_client
         self._connected_integrations: Dict[
             str, IntegrationInfo
         ] = self._api_client.list_integrations()
         self._dag = DAG(metadata=Metadata())
+        dag.__GLOBAL_DAG__ = self._dag
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
