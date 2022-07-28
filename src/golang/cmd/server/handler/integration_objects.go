@@ -123,7 +123,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
-		return nil, http.StatusInternalServerError, errors.Wrap("Unexpected error while listing objects.")
+		return nil, http.StatusInternalServerError, errors.New("Unexpected error while listing objects.")
 	}
 
 	var metadata shared.ExecutionState
