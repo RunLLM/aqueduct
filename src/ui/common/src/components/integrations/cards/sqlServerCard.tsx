@@ -1,7 +1,8 @@
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import { Integration, SqlServerConfig } from '../../../utils/integrations';
 import React from 'react';
+
+import { Integration, SqlServerConfig } from '../../../utils/integrations';
 
 type Props = {
   integration: Integration;
