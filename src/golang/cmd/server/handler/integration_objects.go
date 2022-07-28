@@ -87,7 +87,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if _, ok := integration.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
+		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
 	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestId)
@@ -123,7 +123,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while listing objects.")
+		return nil, http.StatusInternalServerError, errors.Wrap("Unexpected error while listing objects.")
 	}
 
 	var metadata shared.ExecutionState
