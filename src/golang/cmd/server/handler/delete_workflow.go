@@ -168,8 +168,8 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 				// Check none have UpdateMode=append.
 				for _, touchedOperator := range touchedOperators {
 					load := touchedOperator.Spec.Load()
-					if load==nil {
-						return resp, http.StatusBadRequest,  errors.New("Unexpected error occurred while validating objects.")
+					if load == nil {
+						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred while validating objects.")
 					}
 					loadParams := load.Parameters
 
@@ -178,14 +178,12 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
-
 						}
 					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
 						if googleSheets.SaveMode == "NEWSHEET" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
-
 						}
-						
+
 					}
 				}
 			}
