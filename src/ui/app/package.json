@@ -10,7 +10,7 @@
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
   "dependencies": {
-    "@aqueducthq/common": "^0.0.7",
+    "@aqueducthq/common": "^0.0.11",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
