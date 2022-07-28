@@ -61,7 +61,7 @@ jobs:
         run: pip3 install nltk matplotlib pytest-xdist
 
       - name: Wait for server again
-        timeout-minutes: 1
+        timeout-minutes: 5
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
       - name: Fetch the API key
