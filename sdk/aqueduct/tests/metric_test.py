@@ -29,7 +29,6 @@ def test_metric():
     op_id = generate_uuid()
     artifact_id = generate_uuid()
     artifact_name = "artifact"
-    api_client.__GLOBAL_API_CLIENT__.configure("", "")
 
     metric_input = default_table_artifact(
         operator_name=op_name,
