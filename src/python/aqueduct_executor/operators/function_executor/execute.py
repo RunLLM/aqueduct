@@ -5,6 +5,7 @@ import os
 import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
+import uuid
 
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -210,6 +211,12 @@ def run_with_setup(spec: FunctionSpec) -> None:
     """
     Performs the setup needed for a Function operator and then executes it.
     """
+    # Generate a unique function extract path if one does not exist already
+    fn_extract_path = None
+    if not spec.function_extract_path:
+        fn_extract_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
+        spec.function_extract_path = fn_extract_path
+
     op_path = get_extract_path.run(spec)
     extract_function.run(spec)
 
@@ -217,4 +224,7 @@ def run_with_setup(spec: FunctionSpec) -> None:
     if os.path.exists(requirements_path):
         os.system("pip3 install -r {}".format(requirements_path))
 
-    run(spec)
+    if fn_extract_path:
+        # Delete extracted function
+        os.remove(fn_extract_path)
+
