@@ -166,5 +166,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:   s.Database,
 			UserWriter: s.UserWriter,
 		},
+		routes.TestIntegrationRoute: &handler.TestIntegrationHandler{
+			Database:          s.Database,
+			IntegrationReader: s.IntegrationReader,
+			JobManager:        s.JobManager,
+			Vault:             s.Vault,
+			StorageConfig:     s.StorageConfig,
+		},
 	}
 }
