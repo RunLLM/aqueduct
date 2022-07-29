@@ -81,6 +81,19 @@ export type GetWorkflowResponse = {
   watcherAuthIds: string[];
 };
 
+export type SavedObject = {
+  operator_name: string;
+  integration_name: string;
+  integration_id: string;
+  service: string;
+  object_name: string;
+  update_mode: string;
+};
+
+export type ListWorkflowSavedObjectsResponse = {
+  object_details: SavedObject[];
+};
+
 export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {
   const dags: WorkflowDag[] = Object.values(resp.workflow_dags ?? {});
   resp.workflow_dags = {};

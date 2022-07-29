@@ -1,4 +1,4 @@
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faCircleXmark, faCircleCheck, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -21,6 +21,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { theme } from '../../styles/theme/theme';
 
 import UserProfile from '../../utils/auth';
 import {
@@ -30,10 +31,16 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+import {
+  handleListWorkflowSavedObjects
+} from '../../reducers/workflow';
+import { SavedObject, WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
+import { AppDispatch, RootState } from '../../stores/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { Checkbox, FormGroup, List, ListItem, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -156,6 +163,15 @@ type WorkflowSettingsProps = {
   onClose: () => void;
 };
 
+type SavedObjectResult = {
+  name: string,
+  succeeded: boolean,
+}
+
+type DeleteWorkflowResponse = {
+  saved_object_deletion_results: { [id: string]: SavedObjectResult[] }
+}
+
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
   workflowDag,
@@ -164,6 +180,20 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 }) => {
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
+
+  const dispatch: AppDispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(handleListWorkflowSavedObjects({ apiKey: user.apiKey, workflowId: workflowDag.workflow_id }));
+  }, []);
+
+  const savedObjects = useSelector(
+    (state: RootState) => state.workflowReducer.savedObjects
+  );
+
+  const [selectedObjects, setSelectedObjects] = useState(new Set<SavedObject>());
+  const [deleteWorkflowResults, setDeleteWorkflowResults] = useState({saved_object_deletion_results:{}} as DeleteWorkflowResponse);
+  
 
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
@@ -256,6 +286,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   }
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSavedObjectDeletionResultsDialog, setShowSavedObjectDeletionResultsDialog] = useState(false);
   const [deleteValidation, setDeleteValidation] = useState('');
   const handleDeleteClicked = (event) => {
     event.preventDefault();
@@ -278,13 +309,26 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const handleDeleteWorkflow = (event) => {
     event.preventDefault();
+    
     setIsDeleting(true);
+
+    let data = {force: true};
+    data['external_delete'] = {};
+
+    selectedObjects.forEach((object) => {
+      if (data['external_delete'][object.integration_name]) {
+        data['external_delete'][object.integration_name].push(object.object_name)
+      } else {
+        data['external_delete'][object.integration_name] = [object.object_name]
+      }
+    });
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/delete`, {
       method: 'POST',
       headers: {
         'api-key': user.apiKey,
       },
+      body: JSON.stringify(data)
     }).then((res) => {
       res.json().then((body) => {
         setIsDeleting(false);
@@ -292,11 +336,16 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
         if (res.ok) {
           setDeleteSucceeded(true);
-          setDeleteMessage(
-            'Successfully deleted your workflow. Redirecting you to the workflows page...'
-          );
-          setShowDeleteMessage(true);
-          navigate('/workflows');
+          if (selectedObjects.size > 0) {
+            setShowSavedObjectDeletionResultsDialog(true);
+            setDeleteWorkflowResults(body as DeleteWorkflowResponse);
+          } else {
+            setDeleteMessage(
+              'Successfully deleted your workflow. Redirecting you to the workflows page...'
+            );
+            setShowDeleteMessage(true);
+            navigate('/workflows');
+          }
         } else {
           setDeleteSucceeded(false);
           setDeleteMessage(
@@ -334,7 +383,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }).then((res) => {
       res.json().then((body) => {
         setIsUpdating(false);
-
         if (res.ok) {
           setUpdateSucceeded(true);
           setUpdateMessage('Sucessfully updated your workflow.');
@@ -351,12 +399,20 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     });
   };
 
+  const updateSelectedObjects = (event) => {
+    if (event.target.checked) {
+      setSelectedObjects(prev => new Set(prev.add(savedObjects[event.target.id][0])));
+    } else {
+      setSelectedObjects(prev => new Set( Array.from(prev).filter(x => x !== savedObjects[event.target.id][0])));
+    }
+  };
+
   const deleteDialog = (
     <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
       <DialogTitle>
         <Typography variant="h5">
           {' '}
-          {/* We don't use the `name` state here because it will udpate when the user is mid-changes, which is awkward. */}
+          {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
           Delete{' '}
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
@@ -364,13 +420,62 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           ?{' '}
         </Typography>
       </DialogTitle>
-
+      
       <DialogContent>
         <Typography variant="body1">
-          Are you sure you want to delete{' '}
+        The following objects had been saved by{' '}
+        <span style={{ fontFamily: 'Monospace' }}>
+            {workflowDag.metadata?.name}
+        </span>
+        {' '}and can be removed when deleting the workflow. 
+        </Typography>
+
+        <Typography variant="body1">
+        Please select the saved objects you wish to delete:
+        </Typography>
+
+        <Box sx={{ my: 2 }}>
+          <FormGroup>
+            {
+              Object.entries(savedObjects).map(([integrationTableKey, savedObjectsList]) => (
+                  <FormControlLabel 
+                  control={<Checkbox 
+                    id={integrationTableKey}
+                    onChange={updateSelectedObjects}
+                  />} 
+                  label={
+                  <Box>
+                    <Typography variant="body1">
+                      <b>{savedObjectsList[0].integration_name}</b>: {savedObjectsList[0].object_name}
+                    </Typography>
+
+                    <Typography style={{color:theme.palette.gray[600], paddingRight:"8px"}} variant="body2" display="inline">
+                      Update Mode: {savedObjectsList.map(object=>object.update_mode).join(", ")}
+                    </Typography>
+
+                    <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
+                      <Typography display="inline">
+                        <FontAwesomeIcon
+                            icon={faCircleInfo}
+                            style={{ color:theme.palette.Info }}
+                          />
+                      </Typography>
+                    </Tooltip>
+
+                  </Box>
+                  }
+                  />
+                  )
+                )
+            }
+          </FormGroup>
+        </Box>
+      
+        <Typography variant="body1">
+          Are you sure you want to <span style={{color:theme.palette.red[500]}}>delete</span>{' '}
           <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
-          is not reversible, and all data associated with your workflow will be
-          deleted.
+          is not reversible. The workflow and all <b>{selectedObjects.size}</b> selected object(s) {' '}
+          <b>regardless of update mode</b> will be <b>completely removed</b>.
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -380,7 +485,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
 
         <TextField
-          placeholder="my-workflow"
+          placeholder={name}
           value={deleteValidation}
           size="small"
           onChange={(e) => setDeleteValidation(e.target.value)}
@@ -409,6 +514,53 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     </Dialog>
   );
 
+  const savedObjectDeletionResultsDialog = (
+    <Dialog open={showSavedObjectDeletionResultsDialog} onClose={() => setShowSavedObjectDeletionResultsDialog(false)}>
+      <DialogTitle>
+        <Typography variant="h5">
+          Saved Object Deletion Results
+        </Typography>
+      </DialogTitle>
+      
+      <DialogContent>
+        <List dense={false}>
+          {Object.entries(deleteWorkflowResults.saved_object_deletion_results).map(([integrationName, objectResults]) => (
+            (objectResults).map((objectResult)=>(
+              <ListItem>
+                <ListItemIcon>
+                  {objectResult.succeeded? 
+                  <FontAwesomeIcon
+                    icon={faCircleCheck}
+                    style={{ color:theme.palette.green[500] }}
+                  />
+                  :
+                  <FontAwesomeIcon
+                    icon={faCircleXmark}
+                    style={{ color:theme.palette.red[500] }}
+                  />
+                  }
+                </ListItemIcon>
+                <ListItemText
+                  primary={<><b>{integrationName}</b>: {objectResult.name}</>}
+                  secondary={objectResult.succeeded}
+                />
+              </ListItem>
+            ))
+          )).flat()}
+        </List>
+      </DialogContent>
+
+      <DialogActions>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/workflows')}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <>
       <Dialog open={open} onClose={onClose}>
@@ -417,7 +569,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             <Box sx={{ flex: 1 }}>
               <Typography variant="h5">
                 {' '}
-                {/* We don't use the `name` state here because it will udpate when the user is mid-changes, which is awkward. */}
+                {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
                 <span style={{ fontFamily: 'Monospace' }}>
                   {workflowDag.metadata?.name}
                 </span>{' '}
@@ -504,6 +656,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </DialogContent>
       </Dialog>
       {deleteDialog}
+      {savedObjectDeletionResultsDialog}
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

@@ -17,6 +17,8 @@ import {
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import {
   GetWorkflowResponse,
+  ListWorkflowSavedObjectsResponse,
+  SavedObject,
   normalizeGetWorkflowResponse,
   WorkflowDag,
   WorkflowDagResultSummary,
@@ -46,6 +48,7 @@ export type OperatorResult = {
 
 export type WorkflowState = {
   loadingStatus: LoadingStatus;
+  savedObjects: { [id: string]: SavedObject[] };
   dags: { [id: string]: WorkflowDag };
   dagResults: WorkflowDagResultSummary[];
   watcherAuthIds: string[];
@@ -59,6 +62,7 @@ export type WorkflowState = {
 
 const initialState: WorkflowState = {
   loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+  savedObjects: {},
   dags: {},
   dagResults: [],
   artifactResults: {},
@@ -163,6 +167,36 @@ export const handleGetWorkflow = createAsyncThunk<
     }
 
     return normalizeGetWorkflowResponse(body);
+  }
+);
+
+export const handleListWorkflowSavedObjects = createAsyncThunk<
+ListWorkflowSavedObjectsResponse,
+  { apiKey: string; workflowId: string }
+  >(
+  'workflowReducer/getObjects',
+  async (
+    args: {
+      apiKey: string;
+      workflowId: string;
+    },
+    thunkAPI
+  )  => {
+    const { apiKey, workflowId } = args;
+
+    const res = await fetch(`${apiAddress}/api/workflow/${workflowId}/objects`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
+
+    const body = await res.json();
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(body.error);
+    }
+
+    return body as ListWorkflowSavedObjectsResponse;
   }
 );
 
@@ -299,6 +333,20 @@ export const workflowSlice = createSlice({
         loading: LoadingStatusEnum.Failed,
         err: payload as string,
       };
+    });
+
+    builder.addCase(handleListWorkflowSavedObjects.fulfilled, (state, action) => {
+      const response = action.payload;
+      let savedObjects = {};
+      response.object_details.map(object => {
+        const key = String([object.integration_name, object.object_name])
+        if (savedObjects[key]) {
+          savedObjects[key].push(object)
+        } else {
+          savedObjects[key] = [object]
+        }
+      })
+      state.savedObjects = savedObjects;
     });
 
     builder.addCase(handleGetWorkflow.pending, (state) => {
