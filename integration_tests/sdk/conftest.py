@@ -4,6 +4,7 @@ import pytest
 import utils
 
 import aqueduct
+from aqueduct.dag import DAG, Metadata
 
 # Usage: add a <flag> in FLAGS which will enable `--{flag}` in test cmd options.
 # The option variable can be accessed through utils.flags during tests.
@@ -40,6 +41,8 @@ def fetch_flags(pytestconfig):
 
 @pytest.fixture(scope="function")
 def client(pytestconfig):
+    # Reset the global dag variable.
+    aqueduct.dag.__GLOBAL_DAG__ = DAG(metadata=Metadata())
     api_key = os.getenv(API_KEY_ENV_NAME)
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
     if api_key is None or server_address is None:
