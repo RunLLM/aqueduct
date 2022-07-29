@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -22,9 +22,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
-	utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -40,18 +40,18 @@ type RefreshWorkflowArgs struct {
 type RefreshWorkflowHandler struct {
 	PostHandler
 
-	Database                database.Database
-	JobManager              job.JobManager
-	GithubManager           github.Manager
-	Vault                   vault.Vault
-	StorageConfig           *shared.StorageConfig
-	
-	OperatorReader          operator.Reader
-	ArtifactReader          artifact.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	UserReader              user.Reader
+	Database      database.Database
+	JobManager    job.JobManager
+	GithubManager github.Manager
+	Vault         vault.Vault
+	StorageConfig *shared.StorageConfig
+
+	OperatorReader        operator.Reader
+	ArtifactReader        artifact.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	UserReader            user.Reader
 
 	ArtifactResultWriter    artifact_result.Writer
 	OperatorResultWriter    operator_result.Writer
@@ -103,13 +103,9 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}, http.StatusOK, nil
 }
 
-func generateWorkflowJobName() string {
-	return fmt.Sprintf("workflow-adhoc-%s", uuid.New().String())
-}
-
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
-	
+
 	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		args.WorkflowId,
@@ -162,10 +158,10 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating Aqueduct Engine.")
 	}
 
-	_ , err = eng.ExecuteWorkflow(ctx,workflowDag)
+	_, err = eng.ExecuteWorkflow(ctx, workflowDag)
 
 	if err != nil {
-	return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
 	return struct{}{}, http.StatusOK, nil
