@@ -6,6 +6,7 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 import uuid
+import shutil
 
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -226,5 +227,5 @@ def run_with_setup(spec: FunctionSpec) -> None:
 
     if fn_extract_path:
         # Delete extracted function
-        os.remove(fn_extract_path)
+        shutil.rmtree(fn_extract_path)
 

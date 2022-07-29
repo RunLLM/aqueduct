@@ -84,7 +84,7 @@ with DAG(
     dag_id='{{ dag_id }}',
     default_args={
         'retries': 0,
-    }
+    },
     start_date=datetime(2022, 1, 1, 1),
     schedule_interval='{{ schedule }}',
     tags=['aqueduct'],
