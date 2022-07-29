@@ -269,9 +269,7 @@ def _package_files_and_requirements(
 
         if isinstance(requirements, str):
             if os.path.exists(requirements):
-                logger().info(
-                    "Installing requirements found at {path}".format(path=requirements)
-                )
+                logger().info("Installing requirements found at {path}".format(path=requirements))
                 shutil.copy(requirements, packaged_requirements_path)
             else:
                 raise FileNotFoundError(
