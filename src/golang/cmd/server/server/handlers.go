@@ -143,7 +143,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:          s.Vault,
 			StorageConfig:	s.StorageConfig,
 			
-			OperatorReader:			s.OperatorReader,
+			OperatorReader:         s.OperatorReader,
 			ArtifactReader:         s.ArtifactReader,
 			WorkflowDagEdgeReader:  s.WorkflowDagEdgeReader,
 			WorkflowReader:         s.WorkflowReader,
