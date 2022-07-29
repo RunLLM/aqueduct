@@ -2,9 +2,9 @@ import os
 
 import pytest
 import utils
+from aqueduct.dag import DAG, Metadata
 
 import aqueduct
-from aqueduct.dag import DAG, Metadata
 
 # Usage: add a <flag> in FLAGS which will enable `--{flag}` in test cmd options.
 # The option variable can be accessed through utils.flags during tests.

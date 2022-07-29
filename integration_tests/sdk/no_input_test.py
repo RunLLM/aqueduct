@@ -5,7 +5,7 @@ from aqueduct import op
 
 @op
 def no_input() -> pd.DataFrame:
-    d = {'col1': [1, 2], 'col2': [3, 4]}
+    d = {"col1": [1, 2], "col2": [3, 4]}
     return pd.DataFrame(data=d)
 
 
@@ -15,7 +15,7 @@ def join(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
 
 
 def test_basic_no_input_function(client):
-    expected = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
+    expected = pd.DataFrame(data={"col1": [1, 2], "col2": [3, 4]})
     result = no_input().get()
     assert result.equals(expected)
 
@@ -25,5 +25,5 @@ def test_flow_with_no_input_function(client):
     customers_table = warehouse.sql(query="SELECT * FROM customers;")
 
     result = join(no_input(), customers_table)
-    expected = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
+    expected = pd.DataFrame(data={"col1": [1, 2], "col2": [3, 4]})
     assert result.get().equals(expected)
