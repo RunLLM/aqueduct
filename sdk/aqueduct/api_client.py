@@ -25,12 +25,6 @@ from aqueduct.responses import (
 
 from aqueduct import utils
 
-# Auth headers
-API_KEY_HEADER = "api-key"
-
-# Client version header
-CLIENT_VERSION = "sdk-client-version"
-
 
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     """
@@ -114,6 +108,11 @@ class APIClient:
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
+    # Auth header
+    API_KEY_HEADER = "api-key"
+    # Client version header
+    CLIENT_VERSION_HEADER = "sdk-client-version"
+
     configured = False
 
     def configure(self, api_key: str, aqueduct_address: str) -> None:
@@ -149,7 +148,7 @@ class APIClient:
 
     def _generate_auth_headers(self) -> Dict[str, str]:
         self._check_config()
-        return {API_KEY_HEADER: self.api_key, CLIENT_VERSION: str(__version__)}
+        return {self.API_KEY_HEADER: self.api_key, self.CLIENT_VERSION_HEADER: str(__version__)}
 
     def construct_base_url(self, use_https: Optional[bool] = None) -> str:
         self._check_config()
