@@ -20,7 +20,7 @@ from croniter import croniter
 from .dag import DAG, RetentionPolicy, Schedule
 from .enums import TriggerType
 from .error import *
-from .logger import Logger
+from .logger import logger
 from .templates import op_file_content
 
 
@@ -269,7 +269,7 @@ def _package_files_and_requirements(
 
         if isinstance(requirements, str):
             if os.path.exists(requirements):
-                Logger.logger.error(
+                logger().info(
                     "Installing requirements found at {path}".format(path=requirements)
                 )
                 shutil.copy(requirements, packaged_requirements_path)
@@ -284,7 +284,7 @@ def _package_files_and_requirements(
 
     # If there already exists a requirements.txt in the same directory as the function.
     elif os.path.exists(REQUIREMENTS_FILE):
-        Logger.logger.info(
+        logger().info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
             % (os.getcwd(), func.__name__)
         )
@@ -292,7 +292,7 @@ def _package_files_and_requirements(
 
     # No requirements have been provided, so we do our best to infer.
     else:
-        Logger.logger.info(
+        logger().info(
             "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
             % func.__name__
         )
@@ -316,8 +316,8 @@ def _infer_requirements() -> List[str]:
             stderr=subprocess.PIPE,
         )
         stdout_raw, stderr_raw = process.communicate()
-        Logger.logger.debug("Inferred requirements raw stdout: %s", stdout_raw)
-        Logger.logger.debug("Inferred requirements raw stderr: %s", stderr_raw)
+        logger().debug("Inferred requirements raw stdout: %s", stdout_raw)
+        logger().debug("Inferred requirements raw stderr: %s", stderr_raw)
 
         return stdout_raw.decode("utf-8").split("\n")
     except Exception as e:
