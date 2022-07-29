@@ -1,10 +1,6 @@
-import os
-import subprocess
-import sys
-from pathlib import Path
-
 import pytest
 import requests
+from setup.changing_saves_workflow import setup_changing_saves
 
 import aqueduct
 
@@ -12,39 +8,13 @@ import aqueduct
 class TestBackend:
     GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
-    WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-        cls.flows = {}
-
-        workflow_files = [
-            f
-            for f in os.listdir(cls.WORKFLOW_PATH)
-            if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))
-        ]
-        for workflow in workflow_files:
-            proc = subprocess.Popen(
-                [
-                    "python3",
-                    os.path.join(cls.WORKFLOW_PATH, workflow),
-                    pytest.api_key,
-                    pytest.server_address,
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            out, err = proc.communicate()
-            out = out.decode("utf-8")
-            err = err.decode("utf-8")
-            if err:
-                raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
-            else:
-                cls.flows[workflow] = out.strip().split()[-1]
-        
         integration = cls.client.integration(name=pytest.integration)
         cls.integration = integration
+        cls.flows = {"changing_saves": setup_changing_saves(cls.client, pytest.integration)}
 
     @classmethod
     def teardown_class(cls):
@@ -60,7 +30,7 @@ class TestBackend:
         return r
 
     def test_endpoint_getworkflowtables(self):
-        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
+        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves"]
         data = self.get_response_class(endpoint).json()["table_details"]
 
         assert len(data) == 3
@@ -78,7 +48,7 @@ class TestBackend:
         # Check all in same integration
         assert len(set([item["integration_id"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
-    
+
     def test_testintegration(self):
         resp = self.get_response_class(
             self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
