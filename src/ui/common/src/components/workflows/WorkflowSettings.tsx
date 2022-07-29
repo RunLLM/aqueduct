@@ -461,7 +461,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                           />
                       </Typography>
                     </Tooltip>
-
                   </Box>
                   }
                   />
