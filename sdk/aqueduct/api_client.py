@@ -3,6 +3,7 @@ import json
 from typing import IO, Any, Dict, List, Optional, Tuple
 
 import requests
+from aqueduct._version import __version__
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
@@ -23,14 +24,13 @@ from aqueduct.responses import (
 )
 
 from aqueduct import utils
-from aqueduct._version import __version__
-
 
 # Auth headers
 API_KEY_HEADER = "api-key"
 
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
+
 
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     """
