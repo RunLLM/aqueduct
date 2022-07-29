@@ -13,10 +13,6 @@ const (
 		githubIssueLink + " . " +
 		"We will get back to you as soon as we can."
 	TipUnknownInternalError = "Sorry, we've run into an unexpected error! " + TipCreateBugReport
-
-	// This tip is not meant to be surfaced to the user. It should be overwritten in the specific
-	// operator.GetExecState() implementation with a more helpful error message.
-	TipBlacklistedOutputError = "Operator has output a blacklisted value."
 )
 
 var ErrInvalidStorageConfig = errors.New("Invalid Storage Config")
@@ -34,9 +30,13 @@ const (
 type FailureType int64
 
 const (
-	Success       FailureType = 0
-	SystemFailure FailureType = 1
-	UserFailure   FailureType = 2
+	Success          FailureType = 0
+	SystemFailure    FailureType = 1
+	UserFatalFailure FailureType = 2
+
+	// Orchestration can continue onwards, despite this failure.
+	// Eg. Check operator with WARNING severity does not pass.
+	UserNonFatalFailure FailureType = 3
 )
 
 type Logs struct {

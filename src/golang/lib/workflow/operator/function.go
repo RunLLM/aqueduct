@@ -50,5 +50,5 @@ func newFunctionOperator(
 
 func (fo *functionOperatorImpl) JobSpec() job.Spec {
 	fn := fo.dbOperator.Spec.Function()
-	return fo.jobSpec(fn)
+	return fo.jobSpec(fn, nil /* checkSeverity */)
 }

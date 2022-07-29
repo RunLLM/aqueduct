@@ -13,6 +13,7 @@ const (
 	WorkflowIdColumn    = "workflow_id"
 	CreatedAtColumn     = "created_at"
 	StorageConfigColumn = "storage_config"
+	EngineConfigColumn  = "engine_config"
 )
 
 // Returns a joined string of all WorkflowDag columns.
