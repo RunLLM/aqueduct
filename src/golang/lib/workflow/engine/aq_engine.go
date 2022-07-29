@@ -87,7 +87,6 @@ func (eng *aqEngine) CleanupWorkflow(ctx context.Context, workflowDag dag.Workfl
 }
 
 func (eng *aqEngine) ScheduleWorkflow(ctx context.Context, workflowDag dag.WorkflowDag, workflowId string, name string, period string) error {
-
 	spec := job.NewWorkflowSpec(
 		name,
 		workflowId,

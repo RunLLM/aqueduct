@@ -116,7 +116,6 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		h.WorkflowDagEdgeReader,
 		h.Database,
 	)
-
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error reading dag object from database.")
 	}
@@ -135,7 +134,6 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		h.StorageConfig,
 		h.Database,
 	)
-
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
 	}
@@ -153,7 +151,6 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		},
 		true,
 	)
-
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating Aqueduct Engine.")
 	}
