@@ -75,6 +75,15 @@ jobs:
           INTEGRATION: aqueduct_demo
         run: pytest . -rP --publish -n 1
 
+      # These must be run with concurrency=1
+      - name: Run the SDK Requirements Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/sdk
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest ./requirements_tests -rP --requirements
+
       - name: Run the Backend Integration Tests
         timeout-minutes: 10
         working-directory: integration_tests/backend
