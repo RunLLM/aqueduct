@@ -110,7 +110,6 @@ func generateWorkflowJobName() string {
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 	
-	//extract the dag based on workflow ID provided.
 	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		args.WorkflowId,
@@ -123,7 +122,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	)
 
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error reading dag object from database.")
 	}
 
 	workflowDag, err := dag_utils.NewWorkflowDag(
@@ -164,25 +163,10 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	}
 
 	_ , err = eng.ExecuteWorkflow(ctx,workflowDag)
-	// jobName := generateWorkflowJobName()
 
-	// jobSpec := job.NewWorkflowSpec(
-	// 	workflowObject.Name,
-	// 	workflowObject.Id.String(),
-	// 	h.Database.Config(),
-	// 	h.Vault.Config(),
-	// 	h.JobManager.Config(),
-	// 	h.GithubManager.Config(),
-	// 	args.Parameters,
-	// )
-
-	// err = h.JobManager.Launch(
-	// 	ctx,
-	// 	jobName,
-	// 	jobSpec,
-	// )
 	if err != nil {
 	return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
+
 	return struct{}{}, http.StatusOK, nil
 }
