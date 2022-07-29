@@ -18,6 +18,9 @@ const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
         {Object.entries(supportedIntegrations)
           .filter(([svc]) => svc !== 'Aqueduct Demo')
           .map(([svc, integration]) => {
+            console.log('service: ', svc);
+            console.log('integration: ', integration);
+
             const service = svc as Service;
             const [showDialog, setShowDialog] = useState(false);
 
