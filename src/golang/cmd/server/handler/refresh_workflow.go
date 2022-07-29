@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -23,6 +22,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -45,16 +45,18 @@ type RefreshWorkflowHandler struct {
 	GithubManager           github.Manager
 	Vault                   vault.Vault
 	StorageConfig           *shared.StorageConfig
+	
 	OperatorReader          operator.Reader
 	ArtifactReader          artifact.Reader
-	ArtifactResultWriter    artifact_result.Writer
-	OperatorResultWriter    operator_result.Writer
-	NotificationWriter      notification.Writer
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultWriter workflow_dag_result.Writer
 	WorkflowReader          workflow.Reader
 	WorkflowDagReader       workflow_dag.Reader
 	UserReader              user.Reader
+
+	ArtifactResultWriter    artifact_result.Writer
+	OperatorResultWriter    operator_result.Writer
+	NotificationWriter      notification.Writer
+	WorkflowDagResultWriter workflow_dag_result.Writer
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -109,7 +111,16 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 	
 	//extract the dag based on workflow ID provided.
-	dag, err := h.WorkflowDagReader.GetLatestWorkflowDag(ctx, args.WorkflowId, h.Database)
+	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		args.WorkflowId,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.Database,
+	)
 
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
