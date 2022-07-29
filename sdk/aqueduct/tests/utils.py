@@ -25,6 +25,8 @@ from aqueduct.operators import (
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid
 
+from aqueduct import dag as dag_module
+
 
 def generate_uuids(num: int) -> List[uuid.UUID]:
     return [generate_uuid() for _ in range(num)]
@@ -145,8 +147,8 @@ def default_table_artifact(
         inputs=[],
         outputs=[artifact_id],
     )
-    dag = _construct_dag(
+    dag_module.__GLOBAL_DAG__ = _construct_dag(
         operators=[op],
         artifacts=[artifact],
     )
-    return TableArtifact(dag=dag, artifact_id=artifact_id)
+    return TableArtifact(dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id)
