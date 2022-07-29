@@ -269,13 +269,17 @@ def _package_files_and_requirements(
 
         if isinstance(requirements, str):
             if os.path.exists(requirements):
-                Logger.logger.error("Installing requirements found at {path}".format(path=requirements))
+                Logger.logger.error(
+                    "Installing requirements found at {path}".format(path=requirements)
+                )
                 shutil.copy(requirements, packaged_requirements_path)
 
                 with open(packaged_requirements_path, "r") as f:
                     print(str(f.read()))
             else:
-                raise FileNotFoundError("Requirements file provided at %s does not exist." % requirements)
+                raise FileNotFoundError(
+                    "Requirements file provided at %s does not exist." % requirements
+                )
         else:
             # User has given us a list of pip requirement strings.
             with open(packaged_requirements_path, "x") as f:
@@ -315,8 +319,8 @@ def _infer_requirements() -> List[str]:
             stderr=subprocess.PIPE,
         )
         stdout_raw, stderr_raw = process.communicate()
-        Logger.logger.debug("Inferred requirements raw stdout: %s" % stdout_raw)
-        Logger.logger.debug("Inferred requirements raw stderr: %s" % stderr_raw)
+        Logger.logger.debug("Inferred requirements raw stdout: %s", stdout_raw)
+        Logger.logger.debug("Inferred requirements raw stderr: %s", stderr_raw)
 
         return stdout_raw.decode("utf-8").split("\n")
     except Exception as e:

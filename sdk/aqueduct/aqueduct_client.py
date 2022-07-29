@@ -37,12 +37,12 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
+    _infer_requirements,
     generate_ui_url,
     generate_uuid,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
-    _infer_requirements,
 )
 
 

@@ -128,7 +128,11 @@ def wrap_spec(
     return output_artifact
 
 
-def _type_check_decorator_arguments(description: Optional[str], file_dependencies: Optional[Union[str, List[str]]], requirements: List[str]):
+def _type_check_decorator_arguments(
+    description: Optional[str],
+    file_dependencies: Optional[List[str]],
+    requirements: Optional[Union[str, List[str]]],
+) -> None:
     """
     Raises an InvalidUserArgumentException if any issues are found.
     """
@@ -144,7 +148,9 @@ def _type_check_decorator_arguments(description: Optional[str], file_dependencie
     if requirements is not None:
         is_list = isinstance(requirements, list)
         if not isinstance(requirements, str) and not is_list:
-            raise InvalidUserArgumentException("Requirements must either be a path string or a list of pip requirements specifiers.")
+            raise InvalidUserArgumentException(
+                "Requirements must either be a path string or a list of pip requirements specifiers."
+            )
         if is_list and any(not isinstance(req, str) for req in requirements):
             raise InvalidUserArgumentException("Each pip requirements specifier must be a string.")
 
@@ -214,7 +220,8 @@ def op(
              - python_version.txt
              - <any file dependencies>
             """
-
+            assert isinstance(name, str)
+            assert isinstance(description, str)
             zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
