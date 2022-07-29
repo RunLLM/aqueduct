@@ -82,8 +82,12 @@ def handle_param(spec: param_spec.ParamSpec, run_id: str):
 
 with DAG(
     dag_id='{{ dag_id }}',
+    default_args={
+        'retries': 0,
+    }
     start_date=datetime(2022, 1, 1, 1),
     schedule_interval='{{ schedule }}',
+    tags=['aqueduct'],
 ) as dag:
     # Constants to handle JSON serialization
     null = None
