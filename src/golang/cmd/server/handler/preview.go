@@ -172,24 +172,30 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}
 
 	eng, err := engine.NewAqEngine(
-		workflowDag,
 		h.Database,
 		h.GithubManager,
 		h.Vault,
 		h.JobManager,
+		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,
 			ExecTimeout:          engine.DefaultExecutionTimeout,
 			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		false, /* shouldPersistResults */
+		workflow_dag_result.NewNoopWriter(true),
+		operator_result.NewNoopWriter(true),
+		artifact_result.NewNoopWriter(true),
+		notification.NewNoopWriter(true),
+		workflow.NewNoopReader(true),
+		user.NewNoopReader(true),
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
 	}
-
+	//TODO: Hari fix CleanupWorkflow
 	defer eng.CleanupWorkflow(ctx, workflowDag)
-	status, err := eng.ExecuteWorkflow(ctx, workflowDag)
+	status, err := eng.ExecuteWorkflow(ctx, dagSummary.Dag)
 	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
