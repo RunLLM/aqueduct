@@ -66,7 +66,11 @@ def get_apikey() -> str:
 
 
 def infer_requirements() -> List[str]:
-    """TODO(kenxu):"""
+    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+
+    Returns:
+        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
+    """
     return _infer_requirements()
 
 

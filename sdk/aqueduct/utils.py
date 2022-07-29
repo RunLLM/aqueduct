@@ -162,9 +162,14 @@ def serialize_function(
         func:
             The function to package
         file_dependencies:
-            List of file dependencies the function uses
-        reqs_path:
-            A path to file that specify requirements
+            A list of relative paths to files that the function needs to access.
+        requirements:
+            Defines the python package requirements that this function will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Returns:
         filepath of zip file in string format
@@ -209,12 +214,13 @@ def _package_files_and_requirements(
         dir_path:
             Absolute path of directory we'll be using
         file_dependencies:
-            Paths of file dependencies the function uses. Note that the paths are relative to the
-            file the function is defined in.
-        reqs_path:
-            A path of file that specifies the requirements of the operator.
-            Default path: /requirements.txt in the folder where the function is located
-
+            A list of relative paths to files that the function needs to access.
+        requirements:
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
     """
     if not file_dependencies:
         file_dependencies = []
@@ -296,7 +302,11 @@ def _package_files_and_requirements(
 
 
 def _infer_requirements() -> List[str]:
-    """TODO(kenxu): documentation"""
+    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+
+    Returns:
+        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
+    """
     try:
         process = subprocess.Popen(
             "pip freeze",

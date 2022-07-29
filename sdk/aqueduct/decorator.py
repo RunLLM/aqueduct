@@ -128,6 +128,27 @@ def wrap_spec(
     return output_artifact
 
 
+def _type_check_decorator_arguments(description: Optional[str], file_dependencies: Optional[Union[str, List[str]]], requirements: List[str]):
+    """
+    Raises an InvalidUserArgumentException if any issues are found.
+    """
+    if description is not None and isinstance(description, str):
+        raise InvalidUserArgumentException("A supplied description must be of string type.")
+
+    if file_dependencies is not None:
+        if not isinstance(file_dependencies, list):
+            raise InvalidUserArgumentException("File dependencies must be specified as a list.")
+        if any(not isinstance(file_dep, str) for file_dep in file_dependencies):
+            raise InvalidUserArgumentException("Each file dependency must be a string.")
+
+    if requirements is not None:
+        is_list = isinstance(requirements, list)
+        if not isinstance(requirements, str) and not is_list:
+            raise InvalidUserArgumentException("Requirements must either be a path string or a list of pip requirements specifiers.")
+        if is_list and any(not isinstance(req, str) for req in requirements):
+            raise InvalidUserArgumentException("Each pip requirements specifier must be a string.")
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -139,23 +160,25 @@ def op(
     Calling the decorated function returns a TableArtifact. The decorated function
     can take any number of artifact inputs.
 
-    The requirements.txt file in the current directory is used, if it exists.
-
     To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
     >>> compute_recommendations.local(customer_profiles, recent_clicks)
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the operator.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-        TODO(kenxu): documentation
-        reqs_path:
-            A path to file that specifies requirements for this specific operator.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -172,14 +195,12 @@ def op(
 
         >>> recommendations.get()
     """
-    # TODO(kenxu): test and flesh this out.
-    # if name is not None and not isinstance(name, str):
-    #     raise InvalidUserArgumentException("Name must be a string.")
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
@@ -227,6 +248,8 @@ def op(
 def metric(
     name: Optional[Union[str, MetricFunction]] = None,
     description: Optional[str] = None,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -240,9 +263,20 @@ def metric(
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the metric.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -258,11 +292,12 @@ def metric(
 
         >>> churn_metric.get()
     """
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: MetricFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
@@ -324,13 +359,13 @@ def check(
     name: Optional[Union[str, CheckFunction]] = None,
     description: Optional[str] = None,
     severity: CheckSeverity = CheckSeverity.WARNING,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
     Calling the decorated function returns a CheckArtifact. The decorated python function
     can have any number of artifact inputs.
-
-    The requirements.txt file in the current directory is used, if it exists.
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
     will fail the workflow when run in our system.
@@ -340,11 +375,22 @@ def check(
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the check.
         severity:
             The severity level of the check if it fails.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -362,11 +408,12 @@ def check(
 
         >>> churn_is_low_check.get()
     """
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: CheckFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
