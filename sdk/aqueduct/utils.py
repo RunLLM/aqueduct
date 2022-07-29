@@ -273,9 +273,6 @@ def _package_files_and_requirements(
                     "Installing requirements found at {path}".format(path=requirements)
                 )
                 shutil.copy(requirements, packaged_requirements_path)
-
-                with open(packaged_requirements_path, "r") as f:
-                    print(str(f.read()))
             else:
                 raise FileNotFoundError(
                     "Requirements file provided at %s does not exist." % requirements
