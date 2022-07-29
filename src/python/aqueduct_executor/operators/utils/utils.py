@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -69,7 +70,10 @@ def _read_metadata_key(
 
 # TODO: Can also the input metadata here if we wanted to use it.
 def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
-    input_bytes = storage.get(path)
+    try:
+        input_bytes = storage.get(path)
+    except Exception as e:
+        logging.error("Unable to read tabular input from path: %s. Got error %s", path, e)
     return pd.read_json(io.BytesIO(input_bytes), orient="table")
 
 
