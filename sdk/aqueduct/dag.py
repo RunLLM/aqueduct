@@ -22,8 +22,6 @@ from aqueduct.operators import (
 from pydantic import BaseModel
 
 
-__GLOBAL_DAG__ = None
-
 class Schedule(BaseModel):
     trigger: Optional[TriggerType] = None
     cron_schedule: str = ""
@@ -544,3 +542,7 @@ def apply_deltas_to_dag(dag: DAG, deltas: List[DAGDelta], make_copy: bool = Fals
         delta.apply(dag)
 
     return dag
+
+
+# Initialize a module-level dag object, to be accessed and modified when the user construct the flow.
+__GLOBAL_DAG__ = DAG(metadata=Metadata())

@@ -3,9 +3,7 @@ from typing import Any, Callable, List, Optional, Union
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
-from aqueduct import dag as dag_module
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct import api_client as api_client_module
 from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException
 from aqueduct.metric_artifact import MetricArtifact
@@ -21,6 +19,8 @@ from aqueduct.utils import (
     serialize_function,
 )
 from pandas import DataFrame
+
+from aqueduct import dag as dag_module
 
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
@@ -79,13 +79,7 @@ def wrap_spec(
                 "Artifact fetched from flow run can not be reused for computation"
             )
 
-    if len(input_artifacts) == 0:
-        print("This operator takes no artifact input.")
-        dag = dag_module.__GLOBAL_DAG__
-        api_client = api_client_module.__GLOBAL_API_CLIENT__
-    else:
-        dag = input_artifacts[0]._dag
-        api_client = input_artifacts[0]._api_client
+    dag = dag_module.__GLOBAL_DAG__
 
     # Check that all the artifact ids exist in the dag.
     for artifact in input_artifacts:
@@ -98,19 +92,13 @@ def wrap_spec(
 
     if spec.metric:
         artifact_spec = ArtifactSpec(float={})
-        output_artifact = MetricArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.function:
         artifact_spec = ArtifactSpec(table={})
-        output_artifact = TableArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = TableArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.check:
         artifact_spec = ArtifactSpec(bool={})
-        output_artifact = CheckArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
     else:
         raise AqueductError("Operator spec not supported.")
 
