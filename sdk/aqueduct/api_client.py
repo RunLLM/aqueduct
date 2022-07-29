@@ -137,8 +137,8 @@ class APIClient:
             else:
                 self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
         except Exception as e:
-            print(e)
             self.configured = False
+            raise e
 
     def _check_config(self) -> None:
         if not self.configured:
