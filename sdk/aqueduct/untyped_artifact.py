@@ -13,14 +13,7 @@ from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check
 from aqueduct.enums import SerializationType
-from aqueduct.deserialize import (
-    read_tabular_content,
-    read_json_content,
-    read_pickle_content,
-    read_image_content,
-    read_standard_content,
-    read_bytes_content,
-)
+from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.operators import SaveConfig
 
 class UntypedArtifact(Artifact):
@@ -35,22 +28,6 @@ class UntypedArtifact(Artifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-
-    def _deserialize_content(self, serialization_type: SerializationType, content: bytes) -> Any:
-        if serialization_type == SerializationType.TABULAR:
-            return read_tabular_content(content)
-        elif serialization_type == SerializationType.JSON:
-            return read_json_content(content)
-        elif serialization_type == SerializationType.PICKLE:
-            return read_pickle_content(content)
-        elif serialization_type == SerializationType.IMAGE:
-            return read_image_content(content)
-        elif serialization_type == SerializationType.STANDARD:
-            return read_standard_content(content)
-        elif serialization_type == SerializationType.BYTES:
-            return read_bytes_content(content)
-        else:
-            raise Exception("Unsupported serialization type %s." % serialization_type)
 
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
@@ -83,8 +60,11 @@ class UntypedArtifact(Artifact):
 
         serialization_type = artifact_response.serialization_type
         artifact_content = base64.b64decode(artifact_response.content)
+
+        if serialization_type not in deserialization_function_mapping:
+            raise Exception("Unsupported serialization type %s." % serialization_type)
         
-        return self._deserialize_content(serialization_type, artifact_content)
+        return deserialization_function_mapping[serialization_type](artifact_content)
 
 
     def describe(self) -> None:
