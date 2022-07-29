@@ -11,6 +11,7 @@ import aqueduct
 
 class TestBackend:
     GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
+    GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -41,6 +42,9 @@ class TestBackend:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
                 cls.flows[workflow] = out.strip().split()[-1]
+        
+        integration = cls.client.integration(name=pytest.integration)
+        cls.integration = integration
 
     @classmethod
     def teardown_class(cls):
@@ -74,3 +78,9 @@ class TestBackend:
         # Check all in same integration
         assert len(set([item["integration_id"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
+    
+    def test_testintegration(self):
+        resp = self.get_response_class(
+            self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
+        )
+        assert resp.ok

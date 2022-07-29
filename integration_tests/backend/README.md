@@ -16,7 +16,7 @@ At the very end, the tests **require** you to print the flow id (e.g. `print(flo
 ## Usage
 
 Running all the tests in this repo:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest . -rP`
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=<integraiton name> pytest . -rP`
 
 Running all the tests in a single file:
 - `<your env variables> pytest <path to test file> -rP`
