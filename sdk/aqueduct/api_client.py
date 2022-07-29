@@ -186,7 +186,6 @@ class APIClient:
                 self._test_url(url)
                 return False
             except Exception as e:
-                print(e)
                 Logger.logger.info(
                     "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
                 )
