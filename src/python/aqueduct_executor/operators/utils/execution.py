@@ -26,9 +26,7 @@ TIP_LOAD = "We couldn't load to the integration. Please make sure the target exi
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
 # Assumption: only check operators will use this tip.
-TIP_BLACKLISTED_OUTPUT = (
-    "The check did not pass and has ERROR level severity, so the entire workflow failed."
-)
+TIP_CHECK_DID_NOT_PASS = "The check did not pass (returned False)."
 
 
 class Error(BaseModel):
@@ -85,7 +83,7 @@ class ExecutionState(BaseModel):
                     # Include the stack trace within the user's code.
                     _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
                     self.status = ExecutionStatus.FAILED
-                    self.failure_type = FailureType.USER
+                    self.failure_type = FailureType.USER_FATAL
                     self.error = Error(
                         context=stack_traceback(
                             offset=1

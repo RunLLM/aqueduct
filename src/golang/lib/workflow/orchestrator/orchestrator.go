@@ -146,11 +146,16 @@ func waitForInProgressOperators(
 func opFailureError(failureType shared.FailureType, op operator.Operator) error {
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
-	} else if failureType == shared.UserFailure {
+	} else if failureType == shared.UserFatalFailure {
 		log.Errorf("Failed due to user error. Operator name %s, id %s.", op.Name(), op.ID())
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
+}
+
+// We should only stop orchestration on system or fatal user errors.
+func shouldStopExecution(execState *shared.ExecutionState) bool {
+	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
 }
 
 func (orch *aqOrchestrator) execute(
@@ -214,11 +219,12 @@ func (orch *aqOrchestrator) execute(
 				}
 			}
 
-			if execState.Status == shared.FailedExecutionStatus {
+			// We can continue orchestration on non-fatal errors.
+			if shouldStopExecution(execState) {
 				return opFailureError(*execState.FailureType, op)
 			}
 
-			// The operator has succeeded! Add the operator to the completed stack, and remove it from the in-progress one.
+			// Add the operator to the completed stack, and remove it from the in-progress one.
 			if _, ok := completedOps[op.ID()]; ok {
 				return errors.Newf("Internal error: operator %s was completed twice.", op.Name())
 			}

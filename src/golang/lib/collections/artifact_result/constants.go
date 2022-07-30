@@ -10,8 +10,13 @@ const (
 	WorkflowDagResultIdColumn = "workflow_dag_result_id"
 	ArtifactIdColumn          = "artifact_id"
 	ContentPathColumn         = "content_path"
-	StatusColumn              = "status"
-	MetadataColumn            = "metadata"
+
+	// `Status` is initialized to "PENDING" for each new artifact result.
+	StatusColumn   = "status"
+	MetadataColumn = "metadata"
+
+	// `ExecState` is initialized to nil. Expected to be set on updates only.
+	ExecStateColumn = "execution_state"
 )
 
 // Returns a joined string of all ArtifactResult columns.
@@ -24,6 +29,7 @@ func allColumns() string {
 			ContentPathColumn,
 			StatusColumn,
 			MetadataColumn,
+			ExecStateColumn,
 		},
 		",",
 	)
