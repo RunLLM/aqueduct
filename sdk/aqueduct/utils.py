@@ -16,18 +16,11 @@ from aqueduct.enums import OperatorType
 from aqueduct.operators import Operator
 from croniter import croniter
 
-from ._version import __version__
 from .dag import DAG, RetentionPolicy, Schedule
 from .enums import TriggerType
 from .error import *
 from .logger import Logger
 from .templates import op_file_content
-
-# Auth headers
-API_KEY_HEADER = "api-key"
-
-# Client version header
-CLIENT_VERSION = "sdk-client-version"
 
 
 def format_header_for_print(header: str) -> str:
@@ -42,10 +35,6 @@ def format_header_for_print(header: str) -> str:
     prefix_len = 20
     full_len = 80
     return f"{'=' * prefix_len} {header} {'=' * max(0, full_len - prefix_len - len(header))}"
-
-
-def generate_auth_headers(api_key: str) -> Dict[str, str]:
-    return {API_KEY_HEADER: api_key, CLIENT_VERSION: str(__version__)}
 
 
 def generate_uuid() -> uuid.UUID:
