@@ -151,7 +151,9 @@ class Flow:
         Returns:
             A dictionary mapping the integration id to the list of table names/storage path.
         """
-        workflow_objects = api_client.__GLOBAL_API_CLIENT__.list_saved_objects(self._id).object_details
+        workflow_objects = api_client.__GLOBAL_API_CLIENT__.list_saved_objects(
+            self._id
+        ).object_details
         object_mapping = defaultdict(list)
         for item in workflow_objects:
             object_mapping[item.integration_name].append(item)
