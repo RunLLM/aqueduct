@@ -24,7 +24,7 @@ func newPostgresWriter() Writer {
 	return &postgresWriterImpl{standardWriterImpl{}}
 }
 
-func (r *postgresReaderImpl) ObjectTouchedByWorkflow(
+func (r *postgresReaderImpl) GetLoadOperatorsForWorkflowAndIntegration(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,

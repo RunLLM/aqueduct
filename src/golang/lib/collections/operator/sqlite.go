@@ -71,7 +71,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 	return &operator, err
 }
 
-func (r *sqliteReaderImpl) ObjectTouchedByWorkflow(
+func (r *sqliteReaderImpl) GetLoadOperatorsForWorkflowAndIntegration(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	integrationId uuid.UUID,

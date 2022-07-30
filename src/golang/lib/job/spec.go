@@ -149,7 +149,7 @@ type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
 	ConnectorName     map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	Parameters        map[string][]string            `json:"parameters"  yaml:"parameters"`
+	IntegrationToObject        map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
 	OutputContentPath string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
@@ -351,7 +351,7 @@ func NewDeleteSavedObjectsSpec(
 	metadataPath string,
 	connectorName map[string]integration.Service,
 	connectorConfig map[string]auth.Config,
-	parameters map[string][]string,
+	integrationToObject map[string][]string,
 	outputContentPath string,
 ) Spec {
 	return &DeleteSavedObjectsSpec{
@@ -365,7 +365,7 @@ func NewDeleteSavedObjectsSpec(
 		},
 		ConnectorName:     connectorName,
 		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
+		IntegrationToObject:        integrationToObject,
 		OutputContentPath: outputContentPath,
 	}
 }
