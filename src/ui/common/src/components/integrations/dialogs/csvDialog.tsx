@@ -28,18 +28,33 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     const allRows = file.data.split(/\r?\n/);
     const parsedHeader = ['id'];
     parsedHeader.push(...allRows[0].split(/,/));
+
     const width = 25;
     const parsedColumns = parsedHeader.map((headerName) => {
+      let hideColumn = false;
+      if (headerName === 'id') {
+        hideColumn = true;
+      }
+
       return {
         field: headerName,
         headerName: headerName,
         width: width * headerName.length,
+        hide: hideColumn,
       };
     });
+
     const parsedRows = allRows.slice(1).map((line, id) => {
       const row = line.split(/,/);
-      const parsedRow = { id: id };
-      parsedHeader.forEach((headerName, i) => (parsedRow[headerName] = row[i]));
+      const parsedRow = {};
+      parsedHeader.forEach((headerName, i) => {
+        if (headerName === 'id') {
+          parsedRow[headerName] = id;
+        } else {
+          parsedRow[headerName] = row[i - 1];
+        }
+      });
+
       return parsedRow;
     });
 

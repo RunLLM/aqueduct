@@ -11,6 +11,8 @@
 **Aqueduct automates the engineering required to make data science operational**. 
 With Aqueduct, data scientists can instantaneously deploy machine learning models to the cloud, connect those models to data and business systems, and gain visibility into everything from inference latency to model accuracy -- all with Python. 
 
+Check out our [docs](https://docs.aqueducthq.com), [ask us anything](https://slack.aqueducthq.com), and [share your feedback](https://github.com/aqueducthq/aqueduct/issues/new/choose)!
+
 ```python
 from aqueduct import Client, op, metric, get_apikey
 

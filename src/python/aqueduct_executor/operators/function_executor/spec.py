@@ -29,10 +29,10 @@ class FunctionSpec(BaseModel):
     output_metadata_paths: List[str]
     input_artifact_types: List[enums.InputArtifactType]
     output_artifact_types: List[enums.OutputArtifactType]
+    operator_type: enums.OperatorType
 
-    # If the function produces one of these blacklisted outputs exactly,
-    # we will error out the workflow.
-    blacklisted_outputs: Optional[List[str]] = None  # Optional for backwards compatability.
+    # This is specific to the check operator. This is left unset by any other function type.
+    check_severity: Optional[enums.CheckSeverityLevel]
 
     class Config:
         extra = Extra.forbid
@@ -54,5 +54,4 @@ def parse_spec(spec_json: bytes) -> FunctionSpec:
     Parses a JSON string into a FunctionSpec.
     """
     data = json.loads(spec_json)
-
     return parse_obj_as(FunctionSpec, data)
