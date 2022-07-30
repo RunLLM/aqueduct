@@ -36,7 +36,7 @@ class S3Integration(Integration):
         description: str = "",
     ) -> TableArtifact:
         """
-        Retrieves a file from the S3 integration.
+        Reads one or more files from the S3 integration into a single TableArtifact.
 
         Args:
             filepaths:
@@ -47,13 +47,16 @@ class S3Integration(Integration):
                 all matched files and concatenate them into a single file.
                 2) a list of strings representing the file name. Note that in this case, we do not
                 accept directory names in the list.
+            format:
+                The format of the S3 files. We currently support JSON, CSV, and Parquet. Note that currently,
+                when multiple files are retrieved, these files must have the same format.
             name:
                 Name of the query.
             description:
                 Description of the query.
 
         Returns:
-            TableArtifact representing the S3 File.
+            TableArtifact representing the concatenated S3 Files.
         """
         integration_info = self._metadata
 

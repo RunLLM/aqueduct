@@ -25,7 +25,7 @@ import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSid
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import LogViewer from '../log_viewer';
-import Status from '../workflowStatus';
+import NodeStatus from '../nodes/NodeStatus';
 
 interface Props {
   user: UserProfile;
@@ -52,7 +52,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   };
 
   const operatorSpec = operator.spec;
-  const status = workflow.operatorResults[currentNode.id]?.result?.status;
+  const execState = workflow.operatorResults[currentNode.id]?.result;
 
   let spec, integration, actions;
 
@@ -322,13 +322,13 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
 
       <Box sx={{ height: tabContentHeight, p: 1 }}>
         <Box role="tabpanel" hidden={selectedIndex !== 0}>
-          {status && (
+          {execState && (
             <Box sx={{ display: 'flex', flexDirection: 'row', mb: 2 }}>
               <Typography variant="body1" style={{ fontWeight: 'bold' }}>
                 Status:
               </Typography>
               <Box sx={{ ml: 2 }}>
-                <Status status={status} />
+                <NodeStatus execState={execState} />
               </Box>
             </Box>
           )}

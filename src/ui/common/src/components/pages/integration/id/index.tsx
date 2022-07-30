@@ -16,13 +16,16 @@ import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
+import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
+import { handleLoadIntegrationOperators } from '../../../../reducers/integrationOperators';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   handleLoadIntegrationTable,
   tableKeyFn,
 } from '../../../../reducers/integrationTableData';
 import { handleLoadIntegrationTables } from '../../../../reducers/integrationTables';
+import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
@@ -54,6 +57,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         integrationId: integrationId,
       })
     );
+    dispatch(
+      handleLoadIntegrationOperators({
+        apiKey: user.apiKey,
+        integrationId: integrationId,
+      })
+    );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, []);
 
   const integrations = useSelector(
@@ -297,6 +307,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         )}
       </Box>
       {preview}
+      <Typography variant="h4" gutterBottom component="div">
+        Workflows
+      </Typography>
+      <OperatorsOnIntegration />
     </Layout>
   );
 };

@@ -100,6 +100,11 @@ import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
 } from './reducers/dataPreview';
+import integrationOperators, {
+  handleLoadIntegrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
+} from './reducers/integrationOperators';
 import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
@@ -380,6 +385,7 @@ export {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleLoadIntegrationOperators,
   handleLoadIntegrations,
   handleLoadIntegrationTable,
   handleLoadIntegrationTables,
@@ -392,6 +398,9 @@ export {
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
+  integrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
   integrations,
   IntegrationsPage,
   integrationsSlice,

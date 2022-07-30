@@ -9,11 +9,14 @@ import (
 )
 
 type OperatorResult struct {
-	Id                  uuid.UUID                 `db:"id" json:"id"`
-	WorkflowDagResultId uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	OperatorId          uuid.UUID                 `db:"operator_id" json:"operator_id"`
-	Status              shared.ExecutionStatus    `db:"status" json:"status"`
-	ExecState           shared.NullExecutionState `db:"execution_state" json:"execution_state"`
+	Id                  uuid.UUID `db:"id" json:"id"`
+	WorkflowDagResultId uuid.UUID `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	OperatorId          uuid.UUID `db:"operator_id" json:"operator_id"`
+
+	// TODO(ENG-1453): Remove status. This field is redundant now that ExecState exists.
+	//  Avoid using status in new code.
+	Status    shared.ExecutionStatus    `db:"status" json:"status"`
+	ExecState shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 
 type Reader interface {

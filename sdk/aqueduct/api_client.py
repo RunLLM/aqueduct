@@ -347,7 +347,7 @@ class APIClient:
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
     def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
-        """Returns an empty string if the artifact failed to be computed."""
+        """Returns an empty string if the operator was not successfully executed."""
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(
             self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id)
@@ -355,7 +355,7 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
-        if resp.json()["status"] != ExecutionStatus.SUCCEEDED:
+        if resp.json()["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
             return ""
         return str(resp.json()["data"])
 

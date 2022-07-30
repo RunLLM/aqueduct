@@ -279,7 +279,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   return (
-    <Layout user={user}>
+    <Layout user={user} layoutType="workspace">
       <Box
         sx={{
           display: 'flex',
