@@ -147,10 +147,10 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName     map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	IntegrationToObject        map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
-	OutputContentPath string                         `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName       map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig     map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	IntegrationToObject map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
+	OutputContentPath   string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -363,10 +363,10 @@ func NewDeleteSavedObjectsSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		IntegrationToObject:        integrationToObject,
-		OutputContentPath: outputContentPath,
+		ConnectorName:       connectorName,
+		ConnectorConfig:     connectorConfig,
+		IntegrationToObject: integrationToObject,
+		OutputContentPath:   outputContentPath,
 	}
 }
 

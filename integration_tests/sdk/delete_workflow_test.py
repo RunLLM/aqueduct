@@ -3,12 +3,7 @@ from time import sleep
 import pytest
 from aqueduct.error import InvalidRequestError
 from constants import SENTIMENT_SQL_QUERY
-from utils import (
-    delete_flow,
-    generate_new_flow_name,
-    get_integration_name,
-    run_flow_test,
-)
+from utils import delete_flow, generate_new_flow_name, get_integration_name, run_flow_test
 
 from aqueduct import LoadUpdateMode
 
