@@ -333,7 +333,7 @@ class APIClient:
         return workflow_response
 
     def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = utils._generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
