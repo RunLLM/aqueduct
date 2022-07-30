@@ -21,15 +21,15 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	RequiredSchemaVersion = 8
+	RequiredSchemaVersion = 15
 
 	accountOrganizationId = "aqueduct"
 )

@@ -17,6 +17,7 @@ type DBWorkflowDag struct {
 	WorkflowId    uuid.UUID            `db:"workflow_id" json:"workflow_id"`
 	CreatedAt     time.Time            `db:"created_at" json:"created_at"`
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
+	EngineConfig  shared.EngineConfig  `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
 	Metadata  *workflow.Workflow                `json:"metadata"`
@@ -59,6 +60,7 @@ type Writer interface {
 		ctx context.Context,
 		workflowId uuid.UUID,
 		storageConfig *shared.StorageConfig,
+		engineConfig *shared.EngineConfig,
 		db database.Database,
 	) (*DBWorkflowDag, error)
 	UpdateWorkflowDag(
