@@ -91,6 +91,8 @@ export type AirflowConfig = {
   host: string;
   username: string;
   password: string;
+  s3_credentials_path: string;
+  s3_credentials_profile: string;
 };
 
 export type IntegrationConfig =

@@ -8,6 +8,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -109,11 +111,10 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
 
-	// If the function outputs a value that exists in this list, we will fail the entire workflow.
-	// This list contains the json-serialized version of the offending values.
-	// Must be set to nil if there are no blacklisted outputs expected.
-	BlacklistedOutputs []string `json:"blacklisted_outputs" yaml:"blacklisted_outputs"`
+	// Specific to the check operator. This is left unset by any other function type.
+	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
 }
 
 type ParamSpec struct {
