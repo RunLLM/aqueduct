@@ -108,7 +108,7 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   };
 
   return (
-    <Dialog open={true} onClose={onCloseDialog}>
+    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
         {serviceDialog}
