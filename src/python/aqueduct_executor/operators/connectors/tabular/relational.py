@@ -37,9 +37,10 @@ class RelationalConnector(connector.TabularConnector):
             try:
                 sql_table = metadata.tables[table]
                 Base.metadata.drop_all(self.engine, [sql_table], checkfirst=True)
-                results.append(SavedObjectDelete(name=table, succeeded=True))
             except:
                 results.append(SavedObjectDelete(name=table, succeeded=False))
+                continue
+            results.append(SavedObjectDelete(name=table, succeeded=True))
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
