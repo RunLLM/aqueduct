@@ -9,7 +9,7 @@ endif
 # This command can be used to temporarily link a version of the component
 # library that you've developed locally into the app UI.
 link-dev:
-	cd common && rm -rf node_modules && npm install && sudo npm link
+	cd common && npm install && sudo npm link
 	cd app && npm link @aqueducthq/common
 
 dev: link-dev
@@ -31,4 +31,10 @@ dist:
 	cd app && echo "SERVER_ADDRESS=/proxy/8080" > .env
 	cd app && npm run build-sagemaker
 
+lint:
+	cd common && npm run lint:fix
+	cd app && npm run lint:fix
 
+clean:
+	cd common && rm -rf node_modules && rm -rf dist && rm -rf .parcel-cache
+	cd app && rm -rf node_modules && rm -rf dist && rm -rf .parcel-cache

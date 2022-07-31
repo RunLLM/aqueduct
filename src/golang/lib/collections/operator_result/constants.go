@@ -11,8 +11,12 @@ const (
 	IdColumn                  = "id"
 	WorkflowDagResultIdColumn = "workflow_dag_result_id"
 	OperatorIdColumn          = "operator_id"
-	StatusColumn              = "status"
-	ExecStateColumn           = "execution_state"
+
+	// `Status` is initialized to "PENDING" for each new operator result.
+	StatusColumn = "status"
+
+	// `ExecState` is initialized to nil. Expected to be set on updates only.
+	ExecStateColumn = "execution_state"
 )
 
 // Returns a joined string of all OperatorResult columns.

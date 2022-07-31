@@ -20,12 +20,8 @@ func newFunctionOperator(
 ) (Operator, error) {
 	base.jobName = generateFunctionJobName()
 
-	inputs := base.inputs
 	outputs := base.outputs
 
-	if len(inputs) == 0 {
-		return nil, errWrongNumInputs
-	}
 	if len(outputs) == 0 {
 		return nil, errWrongNumOutputs
 	}
@@ -37,5 +33,5 @@ func newFunctionOperator(
 
 func (fo *functionOperatorImpl) JobSpec() job.Spec {
 	fn := fo.dbOperator.Spec.Function()
-	return fo.jobSpec(fn)
+	return fo.jobSpec(fn, nil /* checkSeverity */)
 }

@@ -89,7 +89,10 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
 
 class FailureType(Enum, metaclass=MetaEnum):
     SYSTEM = 1
-    USER = 2
+    USER_FATAL = 2
+    # For failures that don't stop execution.
+    # Eg. check operator with WARNING severity fails.
+    USER_NON_FATAL = 3
 
 
 class SalesforceExtractType(str, Enum, metaclass=MetaEnum):

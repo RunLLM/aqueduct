@@ -232,3 +232,18 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]) -> No
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
+
+
+def check_passed(content: Any) -> bool:
+    """Given the output of a check operator, return whether the check passed or not."""
+    if isinstance(content, bool) or isinstance(content, np.bool_):
+        return bool(content)
+    elif isinstance(content, pd.Series) and content.dtype == "bool":
+        # We only write True if every boolean in the series is True.
+        series = pd.Series(content)
+        return bool(series.size - series.sum().item() == 0)
+    else:
+        raise Exception(
+            "Expected output type of check to be either a bool or a series of booleans, "
+            "instead got %s" % type(content).__name__
+        )

@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import dataPreviewReducer from '../reducers/dataPreview';
+import integrationOperatorsReducer from '../reducers/integrationOperators';
 import integrationsReducer from '../reducers/integrations';
 import integrationTableDataReducer from '../reducers/integrationTableData';
 import integrationTablesReducer from '../reducers/integrationTables';
@@ -29,6 +30,7 @@ export const store = configureStore({
     listWorkflowReducer,
     dataPreviewReducer,
     integrationsReducer,
+    integrationOperatorsReducer,
     integrationTablesReducer,
     integrationTableDataReducer,
     workflowReducer,
