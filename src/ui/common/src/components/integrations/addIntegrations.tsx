@@ -15,11 +15,11 @@ type Props = {
 
 const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
   return (
-    <Box sx={{ maxWidth: '950px' }}>
+    <Box sx={{ maxWidth: '616px' }}>
       <Grid
         container
-        spacing={2}
-        sx={{ my: '20px', width: '100%' }}
+        spacing={1}
+        sx={{ my: '16px', width: '100%' }}
         columns={4}
       >
         {Object.entries(supportedIntegrations)
@@ -32,7 +32,7 @@ const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
               <Box
                 onClick={() => setShowDialog(integration.activated)}
                 sx={{
-                  width: '170px',
+                  width: '160px',
                   height: '128px',
                   px: 2,
                   py: 2,
@@ -52,8 +52,8 @@ const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
                   style={{
                     opacity: integration.activated ? 1.0 : 0.3,
                     height: '85px',
-                    width: '170px',
-                    maxWidth: '170px',
+                    width: '160px',
+                    maxWidth: '160px',
                     maxHeight: '85px',
                     objectFit: 'contain',
                   }}
