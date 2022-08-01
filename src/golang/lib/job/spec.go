@@ -421,7 +421,17 @@ func NewCompileAirflowSpec(
 	cronSchedule string,
 	taskSpecs map[string]Spec,
 	taskEdges map[string][]string,
-) Spec {
+) (Spec, error) {
+	for _, taskSpec := range taskSpecs {
+		if taskSpec.Type() != ExtractJobType &&
+			taskSpec.Type() != FunctionJobType &&
+			taskSpec.Type() != ParamJobType &&
+			taskSpec.Type() != SystemMetricJobType &&
+			taskSpec.Type() != LoadJobType {
+			return nil, errors.Newf("Task specs cannot be of type %v", taskSpec.Type())
+		}
+	}
+
 	return &CompileAirflowSpec{
 		BasePythonSpec: BasePythonSpec{
 			BaseSpec: BaseSpec{
@@ -436,7 +446,7 @@ func NewCompileAirflowSpec(
 		CronSchedule:      cronSchedule,
 		TaskSpecs:         taskSpecs,
 		TaskEdges:         taskEdges,
-	}
+	}, nil
 }
 
 // `EncodeSpec` first serialize `spec` according to `SerializationType` and returns the base64 encoded string.

@@ -160,7 +160,7 @@ func ScheduleWorkflow(
 	}()
 
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())
-	jobSpec := job.NewCompileAirflowSpec(
+	jobSpec, err := job.NewCompileAirflowSpec(
 		jobName,
 		storageConfig,
 		operatorMetadataPath,
@@ -170,6 +170,9 @@ func ScheduleWorkflow(
 		taskToJobSpec,
 		taskEdges,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := jobManager.Launch(ctx, jobSpec.JobName(), jobSpec); err != nil {
 		return nil, err
