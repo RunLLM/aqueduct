@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Callable, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.enums import ExecutionStatus
@@ -12,8 +12,6 @@ from pandas import DataFrame
 # Should be set before each test runs.
 from test_functions.sentiment.model import sentiment_model, sentiment_model_multiple_input
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
-from test_functions.sentiment.function import sentiment_model_function
-from test_functions.simple.function import dummy_sentiment_model_function
 
 import aqueduct
 from aqueduct import Flow
@@ -55,11 +53,6 @@ def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
     else:
         return dummy_sentiment_model(artifact)
 
-def run_sentiment_model_function() -> Callable:
-    if should_run_complex_models():
-        return sentiment_model_function
-    else:
-        return dummy_sentiment_model_function
 
 def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
     """

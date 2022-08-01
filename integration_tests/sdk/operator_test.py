@@ -2,7 +2,7 @@ from aqueduct.decorator import to_operator
 from constants import SENTIMENT_SQL_QUERY
 from aqueduct import op
 from utils import get_integration_name, run_sentiment_model, run_sentiment_model_function
-from function import dummy_sentiment_model_function
+from test_function import dummy_sentiment_model_function
 
 
 def test_to_operator_local_function(client):
@@ -34,7 +34,10 @@ def test_to_operator_imported_function(client):
     def decorated_func(df):
         df = dummy_sentiment_model_function(df)
         return df
+
     df_decorate = decorated_func(sql_artifact).get()
-    df_function = to_operator(dummy_sentiment_model_function,file_dependencies=["function.py"])(sql_artifact).get()
+    df_function = to_operator(
+        dummy_sentiment_model_function, file_dependencies=["test_function.py"]
+    )(sql_artifact).get()
 
     assert df_decorate["positivity"].equals(df_function["positivity"])
