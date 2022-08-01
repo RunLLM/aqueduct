@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.7
+Released on 8/1/2022
+
+### Enhancements
+* Upgrades to go-chi v5.
+* Removes need to provide API key and server address when running client and server on same machine.
+* Adds support for operators with no input data.
+
+### Bugfixes
+* Fixes bug where imported functions were not executed correctly.
+* Improves CSV upload UI to make data preview accurate and more legible.
+* Fixes bug where requirements.txt was not consistently used.
+* Fixes bug where bottom sidesheet and DAG viewer were misaligned and improperly sized.
+
 ## 0.0.6
 Released on 7/25/2022
 
