@@ -3,7 +3,7 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from aqueduct.artifact import Artifact, get_artifact_type
+from aqueduct.artifact import Artifact
 from aqueduct.enums import ArtifactType, OperatorType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
@@ -203,9 +203,7 @@ class DAG(BaseModel):
             artifacts = self.must_get_artifacts(list(artifact_ids))
 
         if filter_to is not None:
-            artifacts = [
-                artifact for artifact in artifacts if get_artifact_type(artifact) in filter_to
-            ]
+            artifacts = [artifact for artifact in artifacts if artifact.type in filter_to]
 
         return artifacts
 

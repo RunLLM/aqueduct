@@ -10,16 +10,3 @@ class Artifact(BaseModel):
     id: uuid.UUID
     name: str
     type: ArtifactType
-
-
-def get_artifact_type(artifact: Artifact) -> ArtifactType:
-    if artifact.spec.table is not None:
-        return ArtifactType.TABLE
-    if artifact.spec.float is not None:
-        return ArtifactType.NUMBER
-    if artifact.spec.bool is not None:
-        return ArtifactType.BOOL
-    if artifact.spec.jsonable is not None:
-        return ArtifactType.PARAM
-    else:
-        raise AqueductError("Invalid operator type")

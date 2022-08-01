@@ -92,13 +92,13 @@ class FlowRun:
 
         if artifact_from_dag is None:
             return None
-        elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
+        elif artifact_from_dag.type is ArtifactType.TABULAR:
             return TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:
+        elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return MetricArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif get_artifact_type(artifact_from_dag) is ArtifactType.BOOL:
+        elif artifact_from_dag.type is ArtifactType.BOOL:
             return CheckArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif get_artifact_type(artifact_from_dag) is ArtifactType.PARAM:
+        elif artifact_from_dag.type is ArtifactType.PARAM:
             return ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
 
         raise InternalAqueductError("The artifact's type can not be recognized.")
