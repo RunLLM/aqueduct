@@ -3,8 +3,10 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -17,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -66,6 +69,36 @@ type workflowRunMetadata struct {
 	status              shared.ExecutionStatus
 }
 
+type WorkflowPreviewResult struct {
+	Status    shared.ExecutionStatus
+	Operators map[uuid.UUID]shared.ExecutionState
+	Artifacts map[uuid.UUID]PreviewArtifactResults
+}
+
+type previewFloatArtifactResponse struct {
+	Val float64 `json:"val"`
+}
+
+type previewBoolArtifactResponse struct {
+	Passed bool `json:"passed"`
+}
+
+type previewParamArtifactResponse struct {
+	Val string `json:"val"`
+}
+
+type previewTableArtifactResponse struct {
+	TableSchema []map[string]string `json:"table_schema"`
+	Data        string              `json:"data"`
+}
+
+type PreviewArtifactResults struct {
+	Table  *previewTableArtifactResponse `json:"table"`
+	Metric *previewFloatArtifactResponse `json:"metric"`
+	Check  *previewBoolArtifactResponse  `json:"check"`
+	Param  *previewParamArtifactResponse `json:"param"`
+}
+
 func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
@@ -80,21 +113,22 @@ func NewAqEngine(
 	notificationWriter notification.Writer,
 	workflowReader workflow.Reader,
 	userReader user.Reader,
-) (Engine, error) {
+) (*aqEngine, error) {
 
 	return &aqEngine{
 		database:                database,
 		githubManager:           githubManager,
 		vault:                   vault,
+		jobManager:              jobManager,
+		storageConfig:           storageConfig,
+		timeConfig:              &timeConfig,
+		shouldPersistResults:    shouldPersistResults,
 		workflowDagResultWriter: workflowDagResultWriter,
 		operatorResultWriter:    operatorResultWriter,
 		artifactResultWriter:    artifactResultWriter,
 		notificationWriter:      notificationWriter,
 		workflowReader:          workflowReader,
 		userReader:              userReader,
-		storageConfig:           storageConfig,
-		timeConfig:              &timeConfig,
-		shouldPersistResults:    shouldPersistResults,
 	}, nil
 }
 
@@ -167,6 +201,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
 
+	defer eng.CleanupWorkflow(ctx, dag)
+
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
 		inputs, err := dag.OperatorInputs(op)
@@ -212,7 +248,139 @@ func (eng *aqEngine) ExecuteWorkflow(
 	} else {
 		workflowRunMetadata.status = shared.SucceededExecutionStatus
 	}
+
 	return workflowRunMetadata.status, err
+}
+
+func (eng *aqEngine) PreviewWorkflow(ctx context.Context,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+) (*WorkflowPreviewResult, error) {
+	dag, err := dag_utils.NewWorkflowDag(
+		ctx,
+		dbWorkflowDag,
+		eng.workflowDagResultWriter,
+		eng.operatorResultWriter,
+		eng.artifactResultWriter,
+		eng.workflowReader,
+		eng.notificationWriter,
+		eng.userReader,
+		eng.jobManager,
+		eng.vault,
+		eng.storageConfig,
+		eng.database,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create NewWorkflowDag.")
+	}
+
+	defer eng.CleanupWorkflow(ctx, dag)
+
+	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
+	for _, op := range dag.Operators() {
+		inputs, err := dag.OperatorInputs(op)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to initialize operator inputs.")
+		}
+		opToDependencyCount[op.ID()] = len(inputs)
+	}
+
+	workflowRunMetadata := &workflowRunMetadata{
+		opToDependencyCount: opToDependencyCount,
+		inProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		completedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		status:              shared.PendingExecutionStatus,
+	}
+
+	workflowRunMetadata.status = shared.RunningExecutionStatus
+	err = eng.execute(
+		ctx,
+		dag,
+		workflowRunMetadata,
+		eng.timeConfig,
+		eng.jobManager,
+		eng.shouldPersistResults,
+	)
+	if err != nil {
+		workflowRunMetadata.status = shared.FailedExecutionStatus
+	} else {
+		workflowRunMetadata.status = shared.SucceededExecutionStatus
+	}
+
+	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
+	for _, op := range dag.Operators() {
+		execState, err := op.GetExecState(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get operator execution state.")
+		}
+		execStateByOp[op.ID()] = *execState
+	}
+
+	// Only include artifact results that were successfully computed.
+	artifactResults := make(map[uuid.UUID]PreviewArtifactResults)
+	for _, artf := range dag.Artifacts() {
+		if artf.Computed(ctx) {
+			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to convert artifact result.")
+			}
+			artifactResults[artf.ID()] = *artifactResp
+		}
+	}
+
+	return &WorkflowPreviewResult{
+		Status:    workflowRunMetadata.status,
+		Operators: execStateByOp,
+		Artifacts: artifactResults,
+	}, nil
+}
+
+func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*PreviewArtifactResults, error) {
+	content, err := artf.GetContent(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if artf.Type() == db_artifact.FloatType {
+		val, err := strconv.ParseFloat(string(content), 32)
+		if err != nil {
+			return nil, err
+		}
+
+		return &PreviewArtifactResults{
+			Metric: &previewFloatArtifactResponse{
+				Val: val,
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.BoolType {
+		passed, err := strconv.ParseBool(string(content))
+		if err != nil {
+			return nil, err
+		}
+
+		return &PreviewArtifactResults{
+			Check: &previewBoolArtifactResponse{
+				Passed: passed,
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.JsonType {
+		return &PreviewArtifactResults{
+			Param: &previewParamArtifactResponse{
+				Val: string(content),
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.TableType {
+		metadata, err := artf.GetMetadata(ctx)
+		if err != nil {
+			metadata = &artifact_result.Metadata{}
+		}
+		return &PreviewArtifactResults{
+			Table: &previewTableArtifactResponse{
+				TableSchema: metadata.Schema,
+				Data:        string(content),
+			},
+		}, nil
+	}
+	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
 func waitForInProgressOperators(
@@ -263,6 +431,11 @@ func (eng *aqEngine) execute(
 	completedOps := workflowRunMetadata.completedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.opToDependencyCount
+
+	log.Info("Inside execute()")
+	log.Info(inProgressOps)
+	log.Info(completedOps)
+	log.Info(opToDependencyCount)
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
