@@ -30,7 +30,7 @@ def test_to_operator_imported_function(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
-    @op(file_dependencies=["function.py"])
+    @op(file_dependencies=["test_function.py"])
     def decorated_func(df):
         df = dummy_sentiment_model_function(df)
         return df
