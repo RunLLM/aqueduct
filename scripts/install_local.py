@@ -176,4 +176,10 @@ if __name__ == "__main__":
             join(server_directory, "bin")
         ])
 
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/operators/airflow/dag.template",
+            join(server_directory, "bin")
+        ])
+
     print("Successfully installed aqueduct from local repo!")
