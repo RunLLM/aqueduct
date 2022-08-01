@@ -282,7 +282,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
   },
   ['SQLite']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite_banner.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite-square-icon-256x256.png',
     activated: true,
   },
   ['Airflow']: {
