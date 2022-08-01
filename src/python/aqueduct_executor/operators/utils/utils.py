@@ -1,14 +1,18 @@
 import io
 import json
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
+import cloudpickle as pickle
 import numpy as np
 import pandas as pd
-import cloudpickle as pickle
-from PIL import Image
-from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType, artifact_to_serialization
+from aqueduct_executor.operators.utils.enums import (
+    ArtifactType,
+    SerializationType,
+    artifact_to_serialization,
+)
 from aqueduct_executor.operators.utils.execution import ExecutionState
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
@@ -203,16 +207,17 @@ def write_artifact(
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert(output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] in artifact_to_serialization[artifact_type])
+    assert (
+        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
+        in artifact_to_serialization[artifact_type]
+    )
     _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
         storage,
         output_path,
         content,
     )
-    
-    storage.put(
-        output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING)
-    )
+
+    storage.put(output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING))
 
 
 def write_exec_state(

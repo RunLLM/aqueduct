@@ -1,11 +1,11 @@
-import pandas as pd
 import io
-from PIL import Image
-from typing import Any
 import json
-import cloudpickle as pickle
+from typing import Any
 
+import cloudpickle as pickle
+import pandas as pd
 from aqueduct.enums import SerializationType
+from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
 

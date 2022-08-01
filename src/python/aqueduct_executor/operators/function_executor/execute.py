@@ -5,11 +5,8 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-from PIL import Image
-import numpy as np
 import cloudpickle as pickle
-
-from aqueduct_executor.operators.function_executor.spec import FunctionSpec
+import numpy as np
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
@@ -33,6 +30,7 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
 from aqueduct_executor.operators.utils.utils import check_passed
 from pandas import DataFrame
+from PIL import Image
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:

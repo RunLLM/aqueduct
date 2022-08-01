@@ -96,9 +96,7 @@ def wrap_spec(
         output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.function:
         artifact_spec = ArtifactSpec(type=ArtifactType.UNTYPED)
-        output_artifact = UntypedArtifact(
-            dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = UntypedArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.check:
         artifact_spec = ArtifactSpec(bool={})
         output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)

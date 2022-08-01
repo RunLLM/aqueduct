@@ -3,6 +3,7 @@ import uuid
 from typing import Any, List, Optional, Union
 
 from aqueduct.enums import (
+    ArtifactType,
     CheckSeverity,
     FunctionGranularity,
     FunctionType,
@@ -13,7 +14,6 @@ from aqueduct.enums import (
     S3TabularFormat,
     SalesforceExtractType,
     ServiceType,
-    ArtifactType,
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo

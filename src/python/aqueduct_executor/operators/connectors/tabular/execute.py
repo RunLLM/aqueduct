@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract
@@ -24,7 +25,6 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from typing import Any
 
 
 def run(spec: Spec) -> None:
@@ -78,7 +78,7 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    op: connector.StorageConnector,
+    op: connector.DataConnector,
     exec_state: ExecutionState,
     is_demo: bool,
 ) -> None:
@@ -92,7 +92,7 @@ def run_authenticate(
 
 
 def run_extract(
-    spec: ExtractSpec, op: connector.StorageConnector, storage: Storage, exec_state: ExecutionState
+    spec: ExtractSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
     extract_params = spec.parameters
 
@@ -138,7 +138,7 @@ def run_extract(
 
 
 def run_load(
-    spec: LoadSpec, op: connector.StorageConnector, storage: Storage, exec_state: ExecutionState
+    spec: LoadSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
     inputs, input_types = utils.read_artifacts(
         storage,
@@ -155,19 +155,19 @@ def run_load(
     _load()
 
 
-def run_load_table(spec: LoadTableSpec, op: connector.StorageConnector, storage: Storage) -> None:
+def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
 
 
-def run_discover(spec: DiscoverSpec, op: connector.StorageConnector, storage: Storage) -> None:
+def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)
 
 
 def setup_connector(
     connector_name: common.Name, connector_config: config.Config
-) -> connector.StorageConnector:
+) -> connector.DataConnector:
     # prevent isort from moving around type: ignore comments which will cause mypy issues.
     # isort: off
     if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:

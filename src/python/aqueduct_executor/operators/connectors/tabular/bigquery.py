@@ -3,12 +3,12 @@ from typing import Any, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from aqueduct_executor.operators.utils.enums import ArtifactType
 
 
-class BigQueryConnector(connector.StorageConnector):
+class BigQueryConnector(connector.DataConnector):
     def __init__(self, config: config.BigQueryConfig):
         self.project_id = config.project_id
 
@@ -35,8 +35,10 @@ class BigQueryConnector(connector.StorageConnector):
 
     def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
         if artifact_type != ArtifactType.TABULAR:
-            raise Exception("The data being loaded must be of type tabular, found %s" % artifact_type)
-            
+            raise Exception(
+                "The data being loaded must be of type tabular, found %s" % artifact_type
+            )
+
         update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default
         if update_mode == common.UpdateMode.APPEND:

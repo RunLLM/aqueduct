@@ -144,11 +144,11 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     PICKLABLE = "picklable"
 
+
 class SerializationType(str, Enum, metaclass=MetaEnum):
     TABULAR = "tabular"
     JSON = "json"
     PICKLE = "pickle"
     IMAGE = "image"
-    STANDARD = "standard"
+    STRING = "string"
     BYTES = "bytes"
-    

@@ -36,7 +36,7 @@ class S3Integration(Integration):
         description: str = "",
     ) -> UntypedArtifact:
         """
-        Reads one or more files from the S3 integration into a single TableArtifact.
+        Reads one or more files from the S3 integration.
 
         Args:
             filepaths:
@@ -47,16 +47,24 @@ class S3Integration(Integration):
                 all matched files and concatenate them into a single file.
                 2) a list of strings representing the file name. Note that in this case, we do not
                 accept directory names in the list.
+            artifact_type:
+                The expected type of the S3 files. The `ArtifactType` class in `enums.py` contains all
+                supported types, except for ArtifactType.UNTYPED. Note that when multiple files are
+                retrieved, they must have the same artifact type.
             format:
-                The format of the S3 files. We currently support JSON, CSV, and Parquet. Note that currently,
-                when multiple files are retrieved, these files must have the same format.
+                If the artifact type is ArtifactType.TABULAR, the user has to specify the table format.
+                We currently support JSON, CSV, and Parquet. Note that when multiple files are retrieved,
+                they must have the same format.
+            merge:
+                If the artifact type is ArtifactType.TABULAR, we can optionally merge multiple tables
+                into a single DataFrame if this flag is set to True.
             name:
                 Name of the query.
             description:
                 Description of the query.
 
         Returns:
-            UntypedArtifact representing the concatenated S3 Files.
+            Artifact or a tuple of artifacts representing the S3 Files.
         """
         integration_info = self._metadata
 

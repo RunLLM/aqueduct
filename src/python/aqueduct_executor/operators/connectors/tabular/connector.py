@@ -6,7 +6,7 @@ from aqueduct_executor.operators.connectors.tabular import extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
 
 
-class StorageConnector(ABC):
+class DataConnector(ABC):
     @abstractmethod
     def authenticate(self) -> None:
         """Authenticates connector configuration. Raises a ConnectionError if there is an error."""

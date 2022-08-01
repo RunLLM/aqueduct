@@ -2,12 +2,12 @@ from typing import Any, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
-from aqueduct_executor.operators.utils.enums import ArtifactType
 
 
-class RelationalConnector(connector.StorageConnector):
+class RelationalConnector(connector.DataConnector):
     def __init__(self, conn_engine: engine.Engine):
         self.engine = conn_engine
 
@@ -29,7 +29,9 @@ class RelationalConnector(connector.StorageConnector):
 
     def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
         if artifact_type != ArtifactType.TABULAR:
-            raise Exception("The data being loaded must be of type tabular, found %s" % artifact_type)
+            raise Exception(
+                "The data being loaded must be of type tabular, found %s" % artifact_type
+            )
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,
         # since pandas will pass multiple rows in a single INSERT. If this still remains an issue, we can pass in a
         # callable function for `method` that does bulk loading.

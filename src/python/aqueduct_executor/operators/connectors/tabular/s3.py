@@ -1,20 +1,20 @@
 import io
 import json
 from typing import Any, List
-from PIL import Image
-import cloudpickle as pickle
-import numpy as np
 
 import boto3
+import cloudpickle as pickle
+import numpy as np
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
+from PIL import Image
 
 _DEFAULT_JSON_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
 
 
-class S3Connector(connector.StorageConnector):
+class S3Connector(connector.DataConnector):
     def __init__(self, config: config.S3Config):
         self.s3 = boto3.resource(
             "s3",
@@ -55,31 +55,55 @@ class S3Connector(connector.StorageConnector):
             # specify custom encoding in the future.
             json_data = data.decode(_DEFAULT_JSON_ENCODING)
             # Make sure the data is a valid json object.
-            json.loads(json_data)
-            return json_data
+            try:
+                json.loads(json_data)
+                return json_data
+            except:
+                raise Exception("The file is not a valid JSON object.")
         elif params.artifact_type == ArtifactType.IMAGE:
             return Image.open(io.BytesIO(data))
         elif params.artifact_type == ArtifactType.BYTES:
             return data
-        elif (params.artifact_type == ArtifactType.STRING or
-              params.artifact_type == ArtifactType.BOOL or
-              params.artifact_type == ArtifactType.NUMERIC or
-              params.artifact_type == ArtifactType.DICT or
-              params.artifact_type == ArtifactType.TUPLE or
-              params.artifact_type == ArtifactType.PICKLABLE):
+        elif (
+            params.artifact_type == ArtifactType.STRING
+            or params.artifact_type == ArtifactType.BOOL
+            or params.artifact_type == ArtifactType.NUMERIC
+            or params.artifact_type == ArtifactType.DICT
+            or params.artifact_type == ArtifactType.TUPLE
+            or params.artifact_type == ArtifactType.PICKLABLE
+        ):
             unpickled_data = pickle.loads(data)
 
             if params.artifact_type == ArtifactType.STRING:
-                assert(isinstance(unpickled_data, str))
+                if not isinstance(unpickled_data, str):
+                    raise Exception(
+                        "The file is expected to be a string, got %s." % type(unpickled_data)
+                    )
             elif params.artifact_type == ArtifactType.BOOL:
-                assert(isinstance(unpickled_data, bool) or isinstance(unpickled_data, np.bool_))
+                if not (isinstance(unpickled_data, bool) or isinstance(unpickled_data, np.bool_)):
+                    raise Exception(
+                        "The file is expected to be a bool, got %s." % type(unpickled_data)
+                    )
             elif params.artifact_type == ArtifactType.NUMERIC:
-                assert(isinstance(unpickled_data, int) or isinstance(unpickled_data, float) or isinstance(unpickled_data, np.number))
+                if not (
+                    isinstance(unpickled_data, int)
+                    or isinstance(unpickled_data, float)
+                    or isinstance(unpickled_data, np.number)
+                ):
+                    raise Exception(
+                        "The file is expected to be a numeric, got %s." % type(unpickled_data)
+                    )
             elif params.artifact_type == ArtifactType.DICT:
-                assert(isinstance(unpickled_data, dict))
+                if not isinstance(unpickled_data, dict):
+                    raise Exception(
+                        "The file is expected to be a dictionary, got %s." % type(unpickled_data)
+                    )
             elif params.artifact_type == ArtifactType.TUPLE:
-                assert(isinstance(unpickled_data, tuple))
-            
+                if not isinstance(unpickled_data, tuple):
+                    raise Exception(
+                        "The file is expected to be a tuple, got %s." % type(unpickled_data)
+                    )
+
             return unpickled_data
         else:
             raise Exception("Unsupported data type %s." % params.artifact_type)
@@ -113,7 +137,7 @@ class S3Connector(connector.StorageConnector):
                 if key[-1] == "/":
                     raise Exception("Each key in the list must not be a directory, found %s." % key)
                 files.append(self._fetch_object(key, params))
-            
+
             if params.artifact_type == ArtifactType.TABULAR and params.merge:
                 return pd.concat(files)
             else:
@@ -143,12 +167,14 @@ class S3Connector(connector.StorageConnector):
             serialized_data = img_bytes.getvalue()
         elif artifact_type == ArtifactType.BYTES:
             serialized_data = data
-        elif (artifact_type == ArtifactType.STRING or
-              artifact_type == ArtifactType.BOOL or
-              artifact_type == ArtifactType.NUMERIC or
-              artifact_type == ArtifactType.DICT or
-              artifact_type == ArtifactType.TUPLE or
-              artifact_type == ArtifactType.PICKLABLE):
+        elif (
+            artifact_type == ArtifactType.STRING
+            or artifact_type == ArtifactType.BOOL
+            or artifact_type == ArtifactType.NUMERIC
+            or artifact_type == ArtifactType.DICT
+            or artifact_type == ArtifactType.TUPLE
+            or artifact_type == ArtifactType.PICKLABLE
+        ):
             serialized_data = pickle.dumps(data)
         else:
             raise Exception("Unsupported data type %s." % artifact_type)
