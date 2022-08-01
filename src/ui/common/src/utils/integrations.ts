@@ -236,10 +236,14 @@ export async function connectIntegration(
       throw new Error(message.error);
     }
   } catch (err) {
-    if (err instanceof TypeError) { // This happens when we fail to fetch.
-      throw new Error("Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.")
-    } else { // This should never happen.
-      throw err
+    if (err instanceof TypeError) {
+      // This happens when we fail to fetch.
+      throw new Error(
+        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
+      );
+    } else {
+      // This should never happen.
+      throw err;
     }
   }
 }

@@ -272,7 +272,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         {serviceDialog}
 
         {errMsg && (
-          <Alert sx={{ mt: 2}} severity="error">
+          <Alert sx={{ mt: 2 }} severity="error">
             <AlertTitle>Unable to connect to {service}</AlertTitle>
             <pre>{errMsg}</pre>
           </Alert>
