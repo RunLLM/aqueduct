@@ -219,11 +219,14 @@ def run_with_setup(spec: FunctionSpec) -> None:
         spec.function_extract_path = fn_extract_path
 
     op_path = get_extract_path.run(spec)
+
     extract_function.run(spec)
 
     requirements_path = os.path.join(op_path, "requirements.txt")
     if os.path.exists(requirements_path):
         os.system("pip3 install -r {}".format(requirements_path))
+    
+    run(spec)
 
     if fn_extract_path:
         # Delete extracted function
