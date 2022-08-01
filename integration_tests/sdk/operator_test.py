@@ -35,6 +35,6 @@ def test_to_operator_imported_function(client):
         df = dummy_sentiment_model_function(df)
         return df
     df_decorate = decorated_func(sql_artifact).get()
-    df_function = to_operator(dummy_sentiment_model_function)(sql_artifact).get()
+    df_function = to_operator(dummy_sentiment_model_function,file_dependencies=["function.py"])(sql_artifact).get()
 
     assert df_decorate["positivity"].equals(df_function["positivity"])
