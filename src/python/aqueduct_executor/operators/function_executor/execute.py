@@ -1,11 +1,11 @@
 import importlib
 import json
 import os
+import shutil
 import sys
 import tracemalloc
-from typing import Any, Callable, Dict, List, Tuple
 import uuid
-import shutil
+from typing import Any, Callable, Dict, List, Tuple
 
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -219,10 +219,9 @@ def run_with_setup(spec: FunctionSpec) -> None:
     requirements_path = os.path.join(op_path, "requirements.txt")
     if os.path.exists(requirements_path):
         os.system("pip3 install -r {}".format(requirements_path))
-    
+
     run(spec)
 
     if fn_extract_path:
         # Delete extracted function
         shutil.rmtree(fn_extract_path)
-

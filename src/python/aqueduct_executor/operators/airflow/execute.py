@@ -61,7 +61,7 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
         i += 1
 
         task_to_alias[task_id] = alias
-    
+
     edges = flatten_task_edges(spec.task_edges)
 
     home = os.environ.get("HOME")
@@ -90,5 +90,5 @@ def flatten_task_edges(edges: Dict[str, List[str]]) -> List[Tuple[str, str]]:
     for src, dests in edges.items():
         for dest in dests:
             pairs.append((src, dest))
-    
+
     return pairs
