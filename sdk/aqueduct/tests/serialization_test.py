@@ -1,9 +1,10 @@
 import json
 import uuid
 
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
+    ArtifactType,
     ExecutionStatus,
     FunctionGranularity,
     FunctionType,
@@ -37,7 +38,7 @@ from aqueduct.utils import generate_uuid
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = Artifact(id=artifact_id, name=artifact_name, spec=ArtifactSpec(table={}))
+    extract_artifact = Artifact(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
 
     assert extract_artifact.json() == json.dumps(
         {

@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
@@ -91,14 +91,15 @@ def wrap_spec(
 
     output_artifact: UntypedArtifact
 
+    # TODO(cgwu): revisit this when implementing eager execution.
     if spec.metric:
-        artifact_spec = ArtifactSpec(float={})
+        artifact_type = ArtifactType.UNTYPED
         output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.function:
-        artifact_spec = ArtifactSpec(type=ArtifactType.UNTYPED)
+        artifact_type = ArtifactType.UNTYPED
         output_artifact = UntypedArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.check:
-        artifact_spec = ArtifactSpec(bool={})
+        artifact_type = ArtifactType.UNTYPED
         output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
     else:
         raise AqueductError("Operator spec not supported.")
@@ -119,7 +120,7 @@ def wrap_spec(
                     Artifact(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
-                        spec=artifact_spec,
+                        type=artifact_type,
                     )
                 ],
             ),

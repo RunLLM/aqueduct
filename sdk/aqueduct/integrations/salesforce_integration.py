@@ -1,9 +1,9 @@
 import uuid
 from typing import Optional
 
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import SalesforceExtractType
+from aqueduct.enums import ArtifactType, SalesforceExtractType
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -126,7 +126,7 @@ class SalesforceIntegration(Integration):
                         Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            spec=ArtifactSpec(table={}),
+                            type=ArtifactType.TABULAR,
                         ),
                     ],
                 )

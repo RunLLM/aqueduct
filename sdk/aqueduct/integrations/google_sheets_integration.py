@@ -1,8 +1,7 @@
 from typing import Optional
 
-from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import GoogleSheetsSaveMode
+from aqueduct.enums import ArtifactType, GoogleSheetsSaveMode
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -72,7 +71,7 @@ class GoogleSheetsIntegration(Integration):
                         Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            spec=ArtifactSpec(table={}),
+                            type=ArtifactType.TABULAR,
                         ),
                     ],
                 )

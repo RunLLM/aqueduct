@@ -10,7 +10,7 @@ from aqueduct.generic_artifact import Artifact as GenericArtifact
 
 from aqueduct import api_client, dag
 
-from .artifact import Artifact, ArtifactSpec
+from .artifact import Artifact
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -19,7 +19,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import ArtifactType, RelationalDBServices, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -164,7 +164,8 @@ class Client:
                         Artifact(
                             id=output_artifact_id,
                             name=name,
-                            spec=ArtifactSpec(jsonable={}),
+                            # TODO(cgwu): revisit the type here.
+                            type=ArtifactType.JSON,
                         ),
                     ],
                 )

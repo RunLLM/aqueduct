@@ -5,7 +5,6 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
-from aqueduct.artifact import ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.dag import (
@@ -16,7 +15,13 @@ from aqueduct.dag import (
     UpdateParametersDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType, OperatorType
+from aqueduct.enums import (
+    ArtifactType,
+    CheckSeverity,
+    FunctionGranularity,
+    FunctionType,
+    OperatorType,
+)
 from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
@@ -557,10 +562,10 @@ class TableArtifact(Artifact):
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
         if op_spec.metric or op_spec.system_metric:
-            artifact_spec = ArtifactSpec(float={})
+            artifact_type = ArtifactType.NUMERIC
             output_artifact = MetricArtifact(dag=self._dag, artifact_id=output_artifact_id)
         elif op_spec.check:
-            artifact_spec = ArtifactSpec(bool={})
+            artifact_type = ArtifactType.BOOL
             output_artifact = CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
         else:
             raise AqueductError("Operator spec not supported.")
@@ -581,7 +586,7 @@ class TableArtifact(Artifact):
                         aqueduct.artifact.Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            spec=artifact_spec,
+                            type=artifact_type,
                         )
                     ],
                 ),

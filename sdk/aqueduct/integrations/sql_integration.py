@@ -3,9 +3,9 @@ import re
 from typing import Optional, Union
 
 import pandas as pd
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import LoadUpdateMode, ServiceType
+from aqueduct.enums import ArtifactType, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
@@ -191,7 +191,7 @@ class RelationalDBIntegration(Integration):
                         Artifact(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
-                            spec=ArtifactSpec(table={}),
+                            type=ArtifactType.TABULAR,
                         ),
                     ],
                 ),

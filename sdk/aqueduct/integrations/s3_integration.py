@@ -1,7 +1,7 @@
 import json
 from typing import List, Optional, Union
 
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, S3TabularFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
@@ -98,7 +98,7 @@ class S3Integration(Integration):
                         Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            spec=ArtifactSpec(type=ArtifactType.UNTYPED),
+                            type=ArtifactType.UNTYPED,
                         ),
                     ],
                 )

@@ -6,14 +6,10 @@ from aqueduct.error import AqueductError
 from pydantic import BaseModel
 
 
-class ArtifactSpec(BaseModel):
-    type: ArtifactType
-
-
 class Artifact(BaseModel):
     id: uuid.UUID
     name: str
-    spec: ArtifactSpec
+    type: ArtifactType
 
 
 def get_artifact_type(artifact: Artifact) -> ArtifactType:

@@ -4,7 +4,6 @@ import json
 import uuid
 from typing import Any, Callable, Dict, List, Optional
 
-from aqueduct.artifact import ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import (
     DAG,
@@ -14,7 +13,7 @@ from aqueduct.dag import (
     UpdateParametersDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
+from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
@@ -241,7 +240,7 @@ class MetricArtifact(Artifact):
                         aqueduct.artifact.Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(check_name),
-                            spec=ArtifactSpec(bool={}),
+                            type=ArtifactType.BOOL,
                         )
                     ],
                 ),

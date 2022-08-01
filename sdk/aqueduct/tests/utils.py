@@ -1,9 +1,10 @@
 import uuid
 from typing import List
 
-from aqueduct.artifact import Artifact, ArtifactSpec
+from aqueduct.artifact import Artifact
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
+    ArtifactType,
     CheckSeverity,
     FunctionGranularity,
     FunctionType,
@@ -126,7 +127,7 @@ def default_load_spec() -> OperatorSpec:
 
 
 def default_artifact(id: uuid.UUID, name: str) -> Artifact:
-    return Artifact(id=id, name=name, spec=ArtifactSpec(table={}))
+    return Artifact(id=id, name=name, type=ArtifactType.TABULAR)
 
 
 def default_table_artifact(
@@ -139,7 +140,7 @@ def default_table_artifact(
         operator_id = generate_uuid()
     if not artifact_id:
         artifact_id = generate_uuid()
-    artifact = Artifact(id=artifact_id, name=artifact_name, spec=ArtifactSpec(table={}))
+    artifact = Artifact(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
     op = _construct_operator(
         id=operator_id,
         name=operator_name,
