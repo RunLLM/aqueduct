@@ -1,6 +1,7 @@
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
+  AlertTitle,
   Box,
   DialogActions,
   DialogContent,
@@ -228,6 +229,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const confirmConnect = () => {
     setIsConnecting(true);
     setErrMsg(null);
+
     connectIntegration(user, service, name, config)
       .then(() => {
         setShowSuccessToast(true);
@@ -263,13 +265,15 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const [errMsg, setErrMsg] = useState(null);
 
   return (
-    <Dialog open={true} onClose={onCloseDialog}>
+    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
         {nameInput}
         {serviceDialog}
+
         {errMsg && (
-          <Alert severity="error">
+          <Alert sx={{ mt: 2}} severity="error">
+            <AlertTitle>Unable to connect to {service}</AlertTitle>
             <pre>{errMsg}</pre>
           </Alert>
         )}
