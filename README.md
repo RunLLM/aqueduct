@@ -36,9 +36,9 @@ client.publish_flow(name="review_strlen", artifacts=[strlen_table])
 
 You can run the full Aqueduct server in a Google Colab notebook [here](https://colab.research.google.com/drive/1EyKTF9tXjgnlBHVQzgt5Yr79e_8ef27M). Our [`examples`](examples/) directory has a few, more detailed prediction pipelines:
 
-* [Churn Ensemble](examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
-* [Sentiment Analysis](examples/sentiment_analysis/Sentiment%20Model.ipynb)
-* [Impute Missing Wine Data](examples/training_and_inference/Training%20and%20Inference%20in%20a%20Single%20Workflow.ipynb)
+* [Churn Ensemble](https://github.com/aqueducthq/aqueduct/blob/main/examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
+* [Sentiment Analysis](https://github.com/aqueducthq/aqueduct/blob/main/examples/sentiment_analysis/Sentiment%20Model.ipynb)
+* [Impute Missing Wine Data](https://github.com/aqueducthq/aqueduct/blob/main/examples/training_and_inference/Training%20and%20Inference%20in%20a%20Single%20Workflow.ipynb)
 * more coming soon!
 
 
