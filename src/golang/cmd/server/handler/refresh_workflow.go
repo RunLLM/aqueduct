@@ -24,7 +24,7 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -118,6 +118,19 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error reading dag object from database.")
+	}
+
+	if args.Parameters != nil {
+		for name, newVal := range args.Parameters {
+			op := dag.GetOperatorByName(name)
+			if op == nil {
+				continue
+			}
+			if !op.Spec.IsParam() {
+				return nil, http.StatusInternalServerError, errors.Newf("Cannot set parameters on a non-parameter operator %s", name)
+			}
+			dag.Operators[op.Id].Spec.Param().Val = newVal
+		}
 	}
 
 	workflowDag, err := dag_utils.NewWorkflowDag(
