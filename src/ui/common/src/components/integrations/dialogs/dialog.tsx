@@ -12,8 +12,11 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   addTable,
@@ -158,6 +161,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   service,
   onCloseDialog,
 }) => {
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const [config, setConfig] = useState<IntegrationConfig>({});
   const [disableConnect, setDisableConnect] = useState(true);
@@ -235,6 +239,13 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         setShowSuccessToast(true);
         setSuccessMessage('Successfully connected to ' + service + '!');
         setIsConnecting(false);
+
+        // Load the list of integrations again.
+        // Force the load because we've added a new integration.
+        dispatch(
+          handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+        );
+
         onCloseDialog();
         navigate('/integrations');
       })
