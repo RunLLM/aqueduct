@@ -41,7 +41,10 @@ func ScheduleWorkflow(
 	workflowDagWriter workflow_dag.Writer,
 ) ([]byte, error) {
 	// Generate an Airflow DAG ID
-	dagId := generateDagId(dag.Metadata.Name)
+	dagId, err := generateDagId(dag.Metadata.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	// Prepare the storage credentials, so it can be accessed from Airflow
 	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, storageConfig, vault)
@@ -155,7 +158,10 @@ func ScheduleWorkflow(
 		// Generate the job spec for this operator
 		jobSpec := airflowOperator.JobSpec()
 
-		taskId := generateTaskId(airflowOperator.Name())
+		taskId, err := generateTaskId(airflowOperator.Name())
+		if err != nil {
+			return nil, err
+		}
 
 		operatorToTask[airflowOperator.ID()] = taskId
 		taskToJobSpec[taskId] = jobSpec
