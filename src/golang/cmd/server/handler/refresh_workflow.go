@@ -106,7 +106,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 
-	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+	dbWorkflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		args.WorkflowId,
 		h.WorkflowReader,
@@ -122,20 +122,20 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	if args.Parameters != nil {
 		for name, newVal := range args.Parameters {
-			op := dag.GetOperatorByName(name)
+			op := dbWorkflowDag.GetOperatorByName(name)
 			if op == nil {
 				continue
 			}
 			if !op.Spec.IsParam() {
 				return nil, http.StatusInternalServerError, errors.Newf("Cannot set parameters on a non-parameter operator %s", name)
 			}
-			dag.Operators[op.Id].Spec.Param().Val = newVal
+			dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 		}
 	}
 
 	workflowDag, err := dag_utils.NewWorkflowDag(
 		ctx,
-		dag,
+		dbWorkflowDag,
 		h.WorkflowDagResultWriter,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,
