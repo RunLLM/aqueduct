@@ -261,7 +261,13 @@ def generate_welcome_message(expose, port):
     if not expose:
         expose_ip = "localhost"
     else:
-        expose_ip = "<IP_ADDRESS>"
+        try:
+            expose_ip = requests.get(
+                "http://169.254.169.254/latest/meta-data/public-ipv4",
+                timeout=0.25).content
+        except: # If you're not running on EC2, this will return an error.
+            expose_ip = "<IP_ADDRESS>"
+
     apikey = get_apikey()
     return (
         welcome_message % (apikey, expose_ip, port, apikey), 
