@@ -29,7 +29,7 @@ const IntegrationsPage: React.FC<Props> = ({
   return (
     <Layout user={user}>
       <Box>
-        <Breadcrumbs>
+        {/*<Breadcrumbs>
           <Link
             underline="hover"
             color="inherit"
@@ -38,16 +38,8 @@ const IntegrationsPage: React.FC<Props> = ({
           >
             Home
           </Link>
-          <Link
-            underline="hover"
-            color="inherit"
-            to="/integrations"
-            component={RouterLink as any}
-          >
-            Integrations
-          </Link>
-          <Typography color="text.primary">All</Typography>
-        </Breadcrumbs>
+          <Typography color="text.primary">Integrations</Typography>
+        </Breadcrumbs>*/}
 
         <Typography variant="h2" gutterBottom component="div">
           Integrations
