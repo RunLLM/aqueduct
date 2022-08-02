@@ -3,10 +3,8 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
@@ -19,13 +17,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /preview
@@ -50,34 +48,10 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-type previewFloatArtifactResponse struct {
-	Val float64 `json:"val"`
-}
-
-type previewBoolArtifactResponse struct {
-	Passed bool `json:"passed"`
-}
-
-type previewParamArtifactResponse struct {
-	Val string `json:"val"`
-}
-
-type previewTableArtifactResponse struct {
-	TableSchema []map[string]string `json:"table_schema"`
-	Data        string              `json:"data"`
-}
-
-type previewArtifactResponse struct {
-	Table  *previewTableArtifactResponse `json:"table"`
-	Metric *previewFloatArtifactResponse `json:"metric"`
-	Check  *previewBoolArtifactResponse  `json:"check"`
-	Param  *previewParamArtifactResponse `json:"param"`
-}
-
 type previewResponse struct {
-	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
+	Status          shared.ExecutionStatus                      `json:"status"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState         `json:"operator_results"`
+	ArtifactResults map[uuid.UUID]engine.PreviewArtifactResults `json:"artifact_results"`
 }
 
 type PreviewHandler struct {
@@ -89,6 +63,7 @@ type PreviewHandler struct {
 	JobManager        job.JobManager
 	GithubManager     github.Manager
 	Vault             vault.Vault
+	AqPath            string
 }
 
 func (*PreviewHandler) Name() string {
@@ -153,46 +128,33 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	workflowDag, err := dag_utils.NewWorkflowDag(
-		ctx,
-		dagSummary.Dag,
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		workflow.NewNoopReader(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
-		h.JobManager,
-		h.Vault,
-		h.StorageConfig,
-		h.Database,
-	)
-	if err != nil {
-		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
-	}
-
 	eng, err := engine.NewAqEngine(
-		workflowDag,
 		h.Database,
 		h.GithubManager,
 		h.Vault,
-		h.JobManager,
+		h.AqPath,
+		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,
 			ExecTimeout:          engine.DefaultExecutionTimeout,
 			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		false, /* shouldPersistResults */
+		workflow_dag_result.NewNoopWriter(true),
+		operator_result.NewNoopWriter(true),
+		artifact_result.NewNoopWriter(true),
+		notification.NewNoopWriter(true),
+		workflow.NewNoopReader(true),
+		user.NewNoopReader(true),
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
 	}
-
-	defer eng.CleanupWorkflow(ctx, workflowDag)
-	status, err := eng.ExecuteWorkflow(ctx, workflowDag)
+	workflowPreviewResult, err := eng.PreviewWorkflow(ctx, dagSummary.Dag)
 	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
+	log.Info(workflowPreviewResult)
 
 	statusCode := http.StatusOK
 	if err == engine.ErrOpExecSystemFailure {
@@ -201,81 +163,11 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		statusCode = http.StatusBadRequest
 	}
 
-	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(workflowDag.Operators()))
-	for _, op := range workflowDag.Operators() {
-		execState, err := op.GetExecState(ctx)
-		if err != nil {
-			return errorRespPtr, http.StatusInternalServerError, err
-		}
-		execStateByOp[op.ID()] = *execState
-	}
-
-	// Only include artifact results that were successfully computed.
-	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
-	for _, artf := range workflowDag.Artifacts() {
-		if artf.Computed(ctx) {
-			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
-			if err != nil {
-				return errorRespPtr, http.StatusInternalServerError, err
-			}
-			artifactResults[artf.ID()] = *artifactResp
-		}
-	}
-
 	return &previewResponse{
-		Status:          status,
-		OperatorResults: execStateByOp,
-		ArtifactResults: artifactResults,
+		Status:          workflowPreviewResult.Status,
+		OperatorResults: workflowPreviewResult.Operators,
+		ArtifactResults: workflowPreviewResult.Artifacts,
 	}, statusCode, nil
-}
-
-func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*previewArtifactResponse, error) {
-	content, err := artf.GetContent(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if artf.Type() == db_artifact.FloatType {
-		val, err := strconv.ParseFloat(string(content), 32)
-		if err != nil {
-			return nil, err
-		}
-
-		return &previewArtifactResponse{
-			Metric: &previewFloatArtifactResponse{
-				Val: val,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.BoolType {
-		passed, err := strconv.ParseBool(string(content))
-		if err != nil {
-			return nil, err
-		}
-
-		return &previewArtifactResponse{
-			Check: &previewBoolArtifactResponse{
-				Passed: passed,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.JsonType {
-		return &previewArtifactResponse{
-			Param: &previewParamArtifactResponse{
-				Val: string(content),
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.TableType {
-		metadata, err := artf.GetMetadata(ctx)
-		if err != nil {
-			metadata = &artifact_result.Metadata{}
-		}
-		return &previewArtifactResponse{
-			Table: &previewTableArtifactResponse{
-				TableSchema: metadata.Schema,
-				Data:        string(content),
-			},
-		}, nil
-	}
-	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {

@@ -52,6 +52,7 @@ type RegisterWorkflowHandler struct {
 	GithubManager github.Manager
 	Vault         vault.Vault
 	StorageConfig *shared.StorageConfig
+	AqPath        string
 
 	ArtifactReader    artifact.Reader
 	IntegrationReader integration.Reader
@@ -188,39 +189,45 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	args.dbWorkflowDag.Metadata.Id = workflowId
 
-	workflowDag, err := dag_utils.NewWorkflowDag(
-		ctx,
-		args.dbWorkflowDag,
-		h.WorkflowDagResultWriter,
-		h.OperatorResultWriter,
-		h.ArtifactResultWriter,
-		h.WorkflowReader,
-		h.NotificationWriter,
-		h.UserReader,
-		h.JobManager,
-		h.Vault,
-		h.StorageConfig,
-		h.Database,
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
-	}
+	// workflowDag, err := dag_utils.NewWorkflowDag(
+	// 	ctx,
+	// 	args.dbWorkflowDag,
+	// 	h.WorkflowDagResultWriter,
+	// 	h.OperatorResultWriter,
+	// 	h.ArtifactResultWriter,
+	// 	h.WorkflowReader,
+	// 	h.NotificationWriter,
+	// 	h.UserReader,
+	// 	h.JobManager,
+	// 	h.Vault,
+	// 	h.StorageConfig,
+	// 	h.Database,
+	// )
+	// if err != nil {
+	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
+	// }
 
 	eng, err := engine.NewAqEngine(
-		workflowDag,
 		h.Database,
 		h.GithubManager,
 		h.Vault,
-		h.JobManager,
+		h.AqPath,
+		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,
 			ExecTimeout:          engine.DefaultExecutionTimeout,
 			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		true, /* shouldPersistResults */
+		h.WorkflowDagResultWriter,
+		h.OperatorResultWriter,
+		h.ArtifactResultWriter,
+		h.NotificationWriter,
+		h.WorkflowReader,
+		h.UserReader,
 	)
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error creating engine.")
 	}
 
 	if args.isUpdate {
@@ -248,8 +255,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 			err = eng.ScheduleWorkflow(
 				ctx,
-				workflowDag,
-				args.dbWorkflowDag.Metadata.Id.String(),
+				args.dbWorkflowDag,
 				shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
 				string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
@@ -264,7 +270,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	_, err = eng.ExecuteWorkflow(ctx, workflowDag)
+	_, err = eng.ExecuteWorkflow(ctx, args.dbWorkflowDag)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
 	}

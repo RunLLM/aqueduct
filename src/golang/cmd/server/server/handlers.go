@@ -120,6 +120,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			GithubManager:     s.GithubManager,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
+			AqPath:            s.AqPath,
 		},
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:          s.Database,
@@ -161,6 +162,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			GithubManager: s.GithubManager,
 			Vault:         s.Vault,
 			StorageConfig: s.StorageConfig,
+			AqPath:        s.AqPath,
 
 			ArtifactReader:    s.ArtifactReader,
 			IntegrationReader: s.IntegrationReader,
