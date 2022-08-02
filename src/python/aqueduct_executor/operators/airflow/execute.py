@@ -35,16 +35,15 @@ def run(spec: spec.CompileAirflowSpec) -> None:
 
     try:
         dag_file = compile(spec)
-        data = str.encode(dag_file)
-        utils.write_compile_airflow_output(storage, spec.output_content_path, data)
+        utils.write_compile_airflow_output(storage, spec.output_content_path, dag_file)
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 
-def compile(spec: spec.CompileAirflowSpec) -> str:
+def compile(spec: spec.CompileAirflowSpec) -> bytes:
     """
     Takes a CompileAirflowSpec and generates an Airflow DAG specification Python file.
     It returns the DAG file.
@@ -77,7 +76,7 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
         task_to_alias=task_to_alias,
     )
 
-    return r
+    return str.encode(r)
 
 
 def flatten_task_edges(edges: Dict[str, List[str]]) -> List[Tuple[str, str]]:
