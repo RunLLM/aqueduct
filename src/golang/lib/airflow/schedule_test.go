@@ -2,6 +2,7 @@ package airflow
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -87,5 +88,5 @@ func TestComputeEdges(t *testing.T) {
 	edges, err := computeEdges(testOperators, testOperatorToTask)
 
 	require.Nil(t, err)
-	require.Equal(t, expectedEdges, edges)
+	require.True(t, reflect.DeepEqual(expectedEdges, edges))
 }
