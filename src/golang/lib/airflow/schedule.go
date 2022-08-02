@@ -40,24 +40,34 @@ func ScheduleWorkflow(
 	db database.Database,
 	workflowDagWriter workflow_dag.Writer,
 ) ([]byte, error) {
+	// Generate an Airflow DAG ID
 	dagId := generateDagId(dag.Metadata.Name)
 
+	// Prepare the storage credentials, so it can be accessed from Airflow
 	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, storageConfig, vault)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
+	operatorIDs := make([]uuid.UUID, 0, len(dag.Operators))
+	for id := range dag.Operators {
+		operatorIDs = append(operatorIDs, id)
+	}
+
+	artifactIDs := make([]uuid.UUID, 0, len(dag.Artifacts))
+	for id := range dag.Artifacts {
+		artifactIDs = append(artifactIDs, id)
+	}
 
 	// Generate storage path prefixes for operator metadata, artifact content,
 	// and artifact metadata. At runtime, the Airflow DAG run ID is appended to
 	// the relevant path prefix to form a unique storage path without requiring
 	// coordination between Airflow and the Aqueduct server.
-	storagePathPrefixes := utils.GenerateWorkflowStoragePaths(dag)
-	operatorToMetadataPathPrefix := storagePathPrefixes.OperatorMetadataPaths
-	artifactToContentPathPrefix := storagePathPrefixes.ArtifactPaths
-	artifactToMetadataPathPrefix := storagePathPrefixes.ArtifactMetadataPaths
+	operatorToMetadataPathPrefix := generateStoragePathPrefixes(operatorIDs)
+	artifactToContentPathPrefix := generateStoragePathPrefixes(artifactIDs)
+	artifactToMetadataPathPrefix := generateStoragePathPrefixes(artifactIDs)
 
+	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
 
 	// Generate job spec for each Airflow task
@@ -261,6 +271,15 @@ func prepareStorageConfig(
 			CredentialsProfile: airflowConf.S3CredentialsProfile,
 		},
 	}, nil
+}
+
+// generateStoragePathPrefixes generates a storage path prefix for each ID.
+func generateStoragePathPrefixes(ids []uuid.UUID) map[uuid.UUID]string {
+	paths := make(map[uuid.UUID]string, len(ids))
+	for _, id := range ids {
+		paths[id] = uuid.NewString()
+	}
+	return paths
 }
 
 func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
