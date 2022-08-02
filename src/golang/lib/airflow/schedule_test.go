@@ -1,7 +1,6 @@
 package airflow
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -84,5 +83,21 @@ func TestComputeEdges(t *testing.T) {
 	edges, err := computeEdges(testOperators, testOperatorToTask)
 
 	require.Nil(t, err)
-	require.True(t, reflect.DeepEqual(expectedEdges, edges))
+	require.True(t, compareEdges(expectedEdges, edges, t))
+}
+
+// compareEdges returns whether `a` and `b` contain the same key-value pairs
+// without regard for their order.
+func compareEdges(a, b map[string][]string, t *testing.T) bool {
+	require.Equal(t, len(a), len(b))
+
+	for k1, v1 := range a {
+		v2, ok := b[k1]
+		if !ok {
+			return false
+		}
+		require.ElementsMatch(t, v1, v2)
+	}
+
+	return true
 }
