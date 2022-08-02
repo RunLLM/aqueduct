@@ -11,6 +11,7 @@ from aqueduct_executor.operators.connectors.tabular.spec import (
     Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 from aqueduct_executor.operators.utils.execution import (
     TIP_DEMO_CONNECTION,
     TIP_EXTRACT,
@@ -24,7 +25,6 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 
 
 def run(spec: Spec) -> None:
@@ -171,7 +171,9 @@ def setup_connector(
         try:
             import psycopg2
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the Postgres connector. Have you run `aqueduct install postgres`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Postgres connector. Have you run `aqueduct install postgres`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.postgres import (
             PostgresConnector as OpConnector,
@@ -180,7 +182,9 @@ def setup_connector(
         try:
             from snowflake import sqlalchemy
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the Snowflake connector. Have you run `aqueduct install snowflake`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Snowflake connector. Have you run `aqueduct install snowflake`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.snowflake import (  # type: ignore
             SnowflakeConnector as OpConnector,
@@ -189,7 +193,9 @@ def setup_connector(
         try:
             from google.cloud import bigquery
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.bigquery import (  # type: ignore
             BigQueryConnector as OpConnector,
@@ -198,7 +204,9 @@ def setup_connector(
         try:
             import psycopg2
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.redshift import (  # type: ignore
             RedshiftConnector as OpConnector,
@@ -207,8 +215,10 @@ def setup_connector(
         try:
             import pyodbc
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the SQL Server connector. Have you run `aqueduct install sqlserver`?")
-            
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the SQL Server connector. Have you run `aqueduct install sqlserver`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
@@ -216,7 +226,9 @@ def setup_connector(
         try:
             import MySQLdb
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
@@ -225,7 +237,9 @@ def setup_connector(
         try:
             import MySQLdb
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.maria_db import (  # type: ignore
             MariaDbConnector as OpConnector,
@@ -234,7 +248,9 @@ def setup_connector(
         try:
             import pyodbc
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the Azure SQL connector. Have you run `aqueduct install azuresql`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Azure SQL connector. Have you run `aqueduct install azuresql`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.azure_sql import (  # type: ignore
             AzureSqlConnector as OpConnector,
@@ -243,7 +259,9 @@ def setup_connector(
         try:
             import pyarrow
         except:
-            raise MissingConnectorDependencyException("Unable to initialize the S3 connector. Have you run `aqueduct install s3`?")
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the S3 connector. Have you run `aqueduct install s3`?"
+            )
 
         from aqueduct_executor.operators.connectors.tabular.s3 import (  # type: ignore
             S3Connector as OpConnector,
