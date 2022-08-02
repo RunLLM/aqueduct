@@ -57,11 +57,11 @@ class S3Integration(Integration):
             TableArtifact representing the concatenated S3 Files.
         """
         lowercased_format = format.lower()
-        if lowercased_format == "csv":
+        if lowercased_format == S3FileFormat.CSV.value.lower():
             format_enum = S3FileFormat.CSV
-        elif lowercased_format == "json":
+        elif lowercased_format == S3FileFormat.JSON.value.lower():
             format_enum = S3FileFormat.JSON
-        elif lowercased_format == "parquet":
+        elif lowercased_format == S3FileFormat.PARQUET.value.lower():
             format_enum = S3FileFormat.PARQUET
         else:
             raise Exception("Unsupport file format %s." % format)
