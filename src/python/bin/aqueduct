@@ -11,13 +11,13 @@ import string
 import subprocess
 import sys
 import time
-from tqdm import tqdm
 import webbrowser
 import zipfile
 
 import distro
 import requests
 import yaml
+from tqdm import tqdm
 
 SCHEMA_VERSION = "15"
 CHUNK_SIZE = 4096
