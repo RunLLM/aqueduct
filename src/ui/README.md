@@ -92,7 +92,7 @@ When developing, please use the following pattern:
 
 The suffix ```-rc0``` signifies that the current version is a release candidate for version 0.0.1. 
 
-When finished developing, update the version number to ```0.0.1``` and release alongside the Aqueduct client.
+When finished developing, update the version number to ```0.0.1``` and release alongside other Aqueduct components.
 
 ### Future Work:
 - Use npm/yarn workspaces for a better development workflow to handle getting latest changes from @aqueducthq/common.
