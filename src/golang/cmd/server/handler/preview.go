@@ -63,6 +63,7 @@ type PreviewHandler struct {
 	JobManager        job.JobManager
 	GithubManager     github.Manager
 	Vault             vault.Vault
+	AqPath            string
 }
 
 func (*PreviewHandler) Name() string {
@@ -131,7 +132,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.Database,
 		h.GithubManager,
 		h.Vault,
-		h.JobManager,
+		h.AqPath,
 		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,

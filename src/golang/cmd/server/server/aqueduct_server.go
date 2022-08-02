@@ -45,6 +45,7 @@ type AqServer struct {
 	GithubManager github.Manager
 	JobManager    job.JobManager
 	Vault         vault.Vault
+	AqPath        string
 	*Readers
 	*Writers
 }
@@ -98,6 +99,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
 		Vault:         vault,
+		AqPath:        aqPath,
 		Readers:       readers,
 		Writers:       writers,
 	}

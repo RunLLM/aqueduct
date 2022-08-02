@@ -52,6 +52,7 @@ type RegisterWorkflowHandler struct {
 	GithubManager github.Manager
 	Vault         vault.Vault
 	StorageConfig *shared.StorageConfig
+	AqPath        string
 
 	ArtifactReader    artifact.Reader
 	IntegrationReader integration.Reader
@@ -210,7 +211,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		h.Database,
 		h.GithubManager,
 		h.Vault,
-		h.JobManager,
+		h.AqPath,
 		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,

@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"path"
 	"strconv"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
-	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -50,7 +50,7 @@ type aqEngine struct {
 	timeConfig           *AqueductTimeConfig
 	shouldPersistResults bool
 
-	//Writers and readers needed for workflow execution
+	// Writers and readers needed for workflow execution
 	workflowDagResultWriter workflow_dag_result.Writer
 	operatorResultWriter    operator_result.Writer
 	artifactResultWriter    artifact_result.Writer
@@ -103,7 +103,7 @@ func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
 	vault vault.Vault,
-	jobManager job.JobManager,
+	aqPath string,
 	storageConfig *shared.StorageConfig,
 	timeConfig AqueductTimeConfig,
 	shouldPersistResults bool,
@@ -114,6 +114,16 @@ func NewAqEngine(
 	workflowReader workflow.Reader,
 	userReader user.Reader,
 ) (*aqEngine, error) {
+
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create JobManager.")
+	}
 
 	return &aqEngine{
 		database:                database,
@@ -132,14 +142,7 @@ func NewAqEngine(
 	}, nil
 }
 
-func (eng *aqEngine) CleanupWorkflow(ctx context.Context, workflowDag dag.WorkflowDag) {
-	for _, op := range workflowDag.Operators() {
-		op.Finish(ctx)
-	}
-}
-
 func (eng *aqEngine) ScheduleWorkflow(ctx context.Context, dbWorkflowDag *workflow_dag.DBWorkflowDag, name string, period string) error {
-
 	cronjobManager := cronjob.NewProcessCronjobManager()
 	err := cronjobManager.DeployCronJob(
 		ctx,
@@ -151,38 +154,12 @@ func (eng *aqEngine) ScheduleWorkflow(ctx context.Context, dbWorkflowDag *workfl
 		return errors.Wrap(err, "Unable to schedule workflow.")
 	}
 	return nil
-
-	// spec := job.NewWorkflowSpec(
-	// 	name,
-	// 	workflowId,
-	// 	eng.database.Config(),
-	// 	eng.vault.Config(),
-	// 	eng.jobManager.Config(),
-	// 	eng.githubManager.Config(),
-	// 	nil, /* parameters */
-	// )
-
-	// // Note: Change implementation of Schedule to not rely on JobManager
-	// err := eng.jobManager.DeployCronJob(
-	// 	ctx,
-	// 	name,
-	// 	period,
-	// 	spec,
-	// )
-	// if err != nil {
-	// 	return errors.Wrap(err, "Unable to schedule workflow.")
-	// }
-
-	// return nil
 }
-
-func (eng *aqEngine) SyncWorkflow(ctx context.Context, dbWorkflowDag *workflow_dag.DBWorkflowDag) {}
 
 func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 ) (shared.ExecutionStatus, error) {
-
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dbWorkflowDag,
@@ -200,8 +177,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
-
-	defer eng.CleanupWorkflow(ctx, dag)
 
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
@@ -252,6 +227,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 	return workflowRunMetadata.status, err
 }
 
+func (eng *aqEngine) SyncWorkflow(ctx context.Context, dbWorkflowDag *workflow_dag.DBWorkflowDag) {}
+
 func (eng *aqEngine) PreviewWorkflow(ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 ) (*WorkflowPreviewResult, error) {
@@ -273,7 +250,7 @@ func (eng *aqEngine) PreviewWorkflow(ctx context.Context,
 		return nil, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
 
-	defer eng.CleanupWorkflow(ctx, dag)
+	defer eng.cleanupWorkflow(ctx, dag)
 
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
@@ -334,53 +311,10 @@ func (eng *aqEngine) PreviewWorkflow(ctx context.Context,
 	}, nil
 }
 
-func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*PreviewArtifactResults, error) {
-	content, err := artf.GetContent(ctx)
-	if err != nil {
-		return nil, err
+func (eng *aqEngine) cleanupWorkflow(ctx context.Context, workflowDag dag_utils.WorkflowDag) {
+	for _, op := range workflowDag.Operators() {
+		op.Finish(ctx)
 	}
-
-	if artf.Type() == db_artifact.FloatType {
-		val, err := strconv.ParseFloat(string(content), 32)
-		if err != nil {
-			return nil, err
-		}
-
-		return &PreviewArtifactResults{
-			Metric: &previewFloatArtifactResponse{
-				Val: val,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.BoolType {
-		passed, err := strconv.ParseBool(string(content))
-		if err != nil {
-			return nil, err
-		}
-
-		return &PreviewArtifactResults{
-			Check: &previewBoolArtifactResponse{
-				Passed: passed,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.JsonType {
-		return &PreviewArtifactResults{
-			Param: &previewParamArtifactResponse{
-				Val: string(content),
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.TableType {
-		metadata, err := artf.GetMetadata(ctx)
-		if err != nil {
-			metadata = &artifact_result.Metadata{}
-		}
-		return &PreviewArtifactResults{
-			Table: &previewTableArtifactResponse{
-				TableSchema: metadata.Schema,
-				Data:        string(content),
-			},
-		}, nil
-	}
-	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
 func waitForInProgressOperators(
@@ -420,7 +354,7 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 
 func (eng *aqEngine) execute(
 	ctx context.Context,
-	workflowDag dag.WorkflowDag,
+	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
@@ -431,11 +365,6 @@ func (eng *aqEngine) execute(
 	completedOps := workflowRunMetadata.completedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.opToDependencyCount
-
-	log.Info("Inside execute()")
-	log.Info(inProgressOps)
-	log.Info(completedOps)
-	log.Info(opToDependencyCount)
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -552,4 +481,53 @@ func (eng *aqEngine) generateWorkflowCronFunction(ctx context.Context, name stri
 			log.Infof("Launched cron job %s", jobName)
 		}
 	}
+}
+
+func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*PreviewArtifactResults, error) {
+	content, err := artf.GetContent(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if artf.Type() == db_artifact.FloatType {
+		val, err := strconv.ParseFloat(string(content), 32)
+		if err != nil {
+			return nil, err
+		}
+
+		return &PreviewArtifactResults{
+			Metric: &previewFloatArtifactResponse{
+				Val: val,
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.BoolType {
+		passed, err := strconv.ParseBool(string(content))
+		if err != nil {
+			return nil, err
+		}
+
+		return &PreviewArtifactResults{
+			Check: &previewBoolArtifactResponse{
+				Passed: passed,
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.JsonType {
+		return &PreviewArtifactResults{
+			Param: &previewParamArtifactResponse{
+				Val: string(content),
+			},
+		}, nil
+	} else if artf.Type() == db_artifact.TableType {
+		metadata, err := artf.GetMetadata(ctx)
+		if err != nil {
+			metadata = &artifact_result.Metadata{}
+		}
+		return &PreviewArtifactResults{
+			Table: &previewTableArtifactResponse{
+				TableSchema: metadata.Schema,
+				Data:        string(content),
+			},
+		}, nil
+	}
+	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
