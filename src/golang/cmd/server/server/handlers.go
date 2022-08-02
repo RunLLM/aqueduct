@@ -143,6 +143,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			GithubManager: s.GithubManager,
 			Vault:         s.Vault,
 			StorageConfig: s.StorageConfig,
+			AqPath:        s.AqPath,
 
 			OperatorReader:        s.OperatorReader,
 			ArtifactReader:        s.ArtifactReader,

@@ -21,7 +21,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -45,6 +44,7 @@ type RefreshWorkflowHandler struct {
 	GithubManager github.Manager
 	Vault         vault.Vault
 	StorageConfig *shared.StorageConfig
+	AqPath        string
 
 	OperatorReader        operator.Reader
 	ArtifactReader        artifact.Reader
@@ -133,42 +133,30 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		}
 	}
 
-	workflowDag, err := dag_utils.NewWorkflowDag(
-		ctx,
-		dbWorkflowDag,
-		h.WorkflowDagResultWriter,
-		h.OperatorResultWriter,
-		h.ArtifactResultWriter,
-		h.WorkflowReader,
-		h.NotificationWriter,
-		h.UserReader,
-		h.JobManager,
-		h.Vault,
-		h.StorageConfig,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
-	}
-
 	eng, err := engine.NewAqEngine(
-		workflowDag,
 		h.Database,
 		h.GithubManager,
 		h.Vault,
-		h.JobManager,
+		h.AqPath,
+		h.StorageConfig,
 		engine.AqueductTimeConfig{
 			OperatorPollInterval: previewPollIntervalMillisec,
 			ExecTimeout:          engine.DefaultExecutionTimeout,
 			CleanupTimeout:       engine.DefaultCleanupTimeout,
 		},
 		true,
+		h.WorkflowDagResultWriter,
+		h.OperatorResultWriter,
+		h.ArtifactResultWriter,
+		h.NotificationWriter,
+		h.WorkflowReader,
+		h.UserReader,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error creating Aqueduct Engine.")
 	}
 
-	_, err = eng.ExecuteWorkflow(ctx, workflowDag)
+	_, err = eng.ExecuteWorkflow(ctx, dbWorkflowDag)
 
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
