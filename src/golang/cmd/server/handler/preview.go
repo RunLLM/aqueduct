@@ -48,6 +48,7 @@ type PreviewHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
+	ArtifactCacheManager artifact.PreviewCacheManager
 	StorageConfig     *shared.StorageConfig
 	GithubManager     github.Manager
 	AqEngine          engine.AqEngine

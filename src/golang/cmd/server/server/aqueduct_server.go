@@ -20,6 +20,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -46,6 +47,7 @@ type AqServer struct {
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
+	PreviewArtifactCacheManager artifact.PreviewCacheManager
 	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
@@ -97,7 +99,15 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
-	eng, err := engine.NewAqEngine(
+	previewArtifactCacheManager, err := artifact.NewPreviewCacheManager(
+		conf.StorageConfig,
+		db,
+	)
+	if err != nil {
+		log.Fatal("Unable to create preview artifact cache: ", err)
+	}
+
+		eng, err := engine.NewAqEngine(
 		db,
 		githubManager,
 		vault,
@@ -116,6 +126,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
+		PreviewArtifactCacheManager: previewArtifactCacheManager,
 		Vault:         vault,
 		AqPath:        aqPath,
 		AqEngine:      eng,

@@ -3,6 +3,7 @@ module github.com/aqueducthq/aqueduct
 go 1.16
 
 require (
+	github.com/allegro/bigcache/v3 v3.0.2
 	github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0
 	github.com/aws/aws-sdk-go v1.40.33
 	github.com/dropbox/godropbox v0.0.0-20200228041828-52ad444d3502
@@ -14,6 +15,7 @@ require (
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/justinas/alice v1.2.0
 	github.com/kr/text v0.2.0 // indirect

@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -47,44 +48,56 @@ func NewOperator(
 	ctx context.Context,
 	dbOperator operator.DBOperator,
 	inputs []artifact.Artifact,
-	inputContentPaths []string,
-	inputMetadataPaths []string,
 	outputs []artifact.Artifact,
-	outputContentPaths []string,
-	outputMetadataPaths []string,
+	inputExecPaths []*utils.ExecPaths,
+	outputExecPaths []*utils.ExecPaths,
 	opResultWriter operator_result.Writer, // A nil value means the operator is run in preview mode.
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
+	previewArtifactCacheManager artifact.PreviewCacheManager,
 	isPreview bool,
 	db database.Database,
 ) (Operator, error) {
-	if len(inputs) != len(inputContentPaths) || len(inputs) != len(inputMetadataPaths) {
+	if len(inputs) != len(inputExecPaths) {
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
 	}
-	if len(outputs) != len(outputContentPaths) || len(outputs) != len(outputMetadataPaths) {
-		return nil, errors.New("Internal error: mismatched number of output arguments.")
+
+	if len(outputs) != len(outputExecPaths) {
+		return nil, errors.New("Internal error: mismatched number of input arguments.")
+	}
+
+	if len(outputs) > 1 || len(outputExecPaths) > 1 {
+		return nil, errors.New("Operator cannot have multiple artifact outputs.")
+	}
+
+	// If this operator has no outputs, we will need to allocate a new metadata path.
+	// This is because the operator's metadata path is defined on the operator's outputs.
+	metadataPath := uuid.New().String()
+	if len(outputExecPaths) > 0 {
+		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
 	baseOp := baseOperator{
 		dbOperator:   &dbOperator,
 		resultWriter: opResultWriter,
 		resultID:     uuid.Nil,
-		metadataPath: uuid.New().String(),
+
+		metadataPath: metadataPath,
 		jobName:      "", /* Must be set by the specific type constructors below. */
 
-		inputs:              inputs,
-		outputs:             outputs,
-		inputContentPaths:   inputContentPaths,
-		inputMetadataPaths:  inputMetadataPaths,
-		outputContentPaths:  outputContentPaths,
-		outputMetadataPaths: outputMetadataPaths,
+		inputs:          inputs,
+		outputs:         outputs,
+		inputExecPaths:  inputExecPaths,
+		outputExecPaths: outputExecPaths,
 
-		jobManager:    jobManager,
-		vaultObject:   vaultObject,
-		storageConfig: storageConfig,
-		db:            db,
+		previewArtifactCacheManager: previewArtifactCacheManager,
+		jobManager:                  jobManager,
+		vaultObject:                 vaultObject,
+		storageConfig:               storageConfig,
+		db:                          db,
 
+		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,
 		isPreview:        isPreview,
 	}

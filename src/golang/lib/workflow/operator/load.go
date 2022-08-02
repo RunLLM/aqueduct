@@ -27,6 +27,10 @@ func newLoadOperator(
 ) (Operator, error) {
 	base.jobName = generateLoadJobName()
 
+	if base.previewArtifactCacheManager != nil {
+		return nil, errors.Newf("A load operator cannot be part of a cache-aware workflow execution, since it is non-preview only.")
+	}
+
 	inputs := base.inputs
 	outputs := base.outputs
 
@@ -55,7 +59,7 @@ func newLoadOperator(
 	}, nil
 }
 
-func (lo *loadOperatorImpl) JobSpec() job.Spec {
+func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := lo.dbOperator.Spec.Load()
 
 	return &job.LoadSpec{
@@ -68,8 +72,8 @@ func (lo *loadOperatorImpl) JobSpec() job.Spec {
 		ConnectorName:     spec.Service,
 		ConnectorConfig:   lo.config,
 		Parameters:        spec.Parameters,
-		InputContentPath:  lo.inputContentPaths[0],
-		InputMetadataPath: lo.inputMetadataPaths[0],
+		InputContentPath:  lo.inputExecPaths[0].ArtifactContentPath,
+		InputMetadataPath: lo.inputExecPaths[0].ArtifactMetadataPath,
 	}
 }
 

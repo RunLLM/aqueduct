@@ -117,6 +117,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.PreviewRoute: &handler.PreviewHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
+			ArtifactCacheManager: s.PreviewArtifactCacheManager,
 			StorageConfig:     s.StorageConfig,
 			GithubManager:     s.GithubManager,
 			AqEngine:          s.AqEngine,

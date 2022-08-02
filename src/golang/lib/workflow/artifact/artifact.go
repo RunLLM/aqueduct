@@ -18,6 +18,7 @@ import (
 // produced by a workflow run.
 type Artifact interface {
 	ID() uuid.UUID
+	LogicalID() uuid.UUID
 	Type() artifact.Type
 	Name() string
 
@@ -33,6 +34,9 @@ type Artifact interface {
 
 	// Computed indicates whether this artifact has been computed or not.
 	// An artifact is only considered "computed" if its results have been written to storage.
+	// This is *NOT* the same as having the operator's execution state == SUCCEEDED. For example,
+	// for check operators, the artifact could have been computed even if the check operator did not
+	// pass (returned false).
 	Computed(ctx context.Context) bool
 
 	// GetMetadata fetches the metadata for this artifact.
@@ -45,47 +49,67 @@ type Artifact interface {
 }
 
 type ArtifactImpl struct {
-	id           uuid.UUID
+	// This is the ID that will be stored in our database. It is the canonical handle
+	// to this artifact throughout our system.
+	id uuid.UUID
+
+	// This is a special ID that also encodes important structural/parameter information.
+	// This can be used as a unique handle to a specific artifact **for a specific dag execution**.
+	logicalID uuid.UUID
+
 	name         string
 	description  string
 	artifactType artifact.Type
 
-	contentPath  string
-	metadataPath string
+	execPaths *utils.ExecPaths
 
-	resultWriter     artifact_result.Writer
-	resultID         uuid.UUID
-	resultsPersisted bool
+	resultWriter artifact_result.Writer
+	resultID     uuid.UUID
+
+	// If this is not nil, this artifact should be written to the cache.
+	// An artifact cannot be both cache-aware and persisted.
+	previewArtifactCacheManager PreviewCacheManager
+	resultsPersisted            bool
 
 	storageConfig *shared.StorageConfig
 	db            database.Database
 }
 
 func NewArtifact(
+	logicalID uuid.UUID,
 	dbArtifact artifact.DBArtifact,
-	contentPath string,
-	metadataPath string,
+	execPaths *utils.ExecPaths,
 	artifactResultWriter artifact_result.Writer,
 	storageConfig *shared.StorageConfig,
+	artifactCacheManager PreviewCacheManager,
 	db database.Database,
 ) (Artifact, error) {
+	if artifactCacheManager != nil && logicalID == uuid.Nil {
+		return nil, errors.Newf("Logical ID must be provided for a cache-aware artifact.")
+	}
+
 	return &ArtifactImpl{
-		id:               dbArtifact.Id,
-		name:             dbArtifact.Name,
-		description:      dbArtifact.Description,
-		artifactType:     dbArtifact.Spec.Type(),
-		contentPath:      contentPath,
-		metadataPath:     metadataPath,
-		resultWriter:     artifactResultWriter,
-		resultID:         uuid.Nil,
-		resultsPersisted: false,
-		storageConfig:    storageConfig,
-		db:               db,
+		id:                          dbArtifact.Id,
+		logicalID:                   logicalID,
+		name:                        dbArtifact.Name,
+		description:                 dbArtifact.Description,
+		artifactType:                dbArtifact.Spec.Type(),
+		execPaths:                   execPaths,
+		resultWriter:                artifactResultWriter,
+		resultID:                    uuid.Nil,
+		previewArtifactCacheManager: artifactCacheManager,
+		resultsPersisted:            false,
+		storageConfig:               storageConfig,
+		db:                          db,
 	}, nil
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
 	return a.id
+}
+
+func (a *ArtifactImpl) LogicalID() uuid.UUID {
+	return a.logicalID
 }
 
 func (a *ArtifactImpl) Type() artifact.Type {
@@ -97,11 +121,11 @@ func (a *ArtifactImpl) Name() string {
 }
 
 func (a *ArtifactImpl) Computed(ctx context.Context) bool {
-	// An artifact is only considered computed if its metadata path has been populated.
+	// An artifact is only considered computed if its results have been written.
 	res := utils.ObjectExistsInStorage(
 		ctx,
 		a.storageConfig,
-		a.metadataPath,
+		a.execPaths.ArtifactMetadataPath,
 	)
 	return res
 }
@@ -115,7 +139,7 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 		ctx,
 		dagResultID,
 		a.ID(),
-		a.contentPath,
+		a.execPaths.ArtifactContentPath,
 		a.db,
 	)
 	if err != nil {
@@ -141,7 +165,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 		err := utils.ReadFromStorage(
 			ctx,
 			a.storageConfig,
-			a.metadataPath,
+			a.execPaths.ArtifactMetadataPath,
 			&artifactResultMetadata,
 		)
 		if err != nil {
@@ -167,6 +191,10 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 }
 
 func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.ExecutionState) error {
+	if a.previewArtifactCacheManager != nil {
+		return errors.Newf("Artifact %s is cache-aware, so it cannot be persisted.", a.Name())
+	}
+
 	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
@@ -180,17 +208,22 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.Exec
 }
 
 func (a *ArtifactImpl) Finish(ctx context.Context) {
-	// There is nothing to clean up if the artifact was never computed.
+	// There is nothing to do if the artifact was never even computed.
 	if !a.Computed(ctx) {
 		return
 	}
 
-	utils.CleanupStorageFile(ctx, a.storageConfig, a.metadataPath)
+	// Do not update the cache or clean anything up if the artifact result was persisted.
+	if a.resultsPersisted {
+		return
+	}
 
-	// If the artifact was persisted to the DB, don't cleanup the storage content paths,
-	// since we may need that data later.
-	if !a.resultsPersisted {
-		utils.CleanupStorageFile(ctx, a.storageConfig, a.contentPath)
+	// Update the artifact cache, performing any necessary deletions.
+	if a.previewArtifactCacheManager != nil {
+		err := a.previewArtifactCacheManager.Put(context.TODO(), a.LogicalID(), a.execPaths)
+		if err != nil {
+			log.Errorf("Error when updating the result of artifact %s: %v", a.ID(), err)
+		}
 	}
 }
 
@@ -200,7 +233,7 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metada
 	}
 
 	var metadata artifact_result.Metadata
-	err := utils.ReadFromStorage(ctx, a.storageConfig, a.metadataPath, &metadata)
+	err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +244,7 @@ func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
 	if !a.Computed(ctx) {
 		return nil, errors.Newf("Cannot get content of Artifact %s, it has not yet been computed.", a.Name())
 	}
-	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.contentPath)
+	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.execPaths.ArtifactContentPath)
 	if err != nil {
 		return nil, err
 	}

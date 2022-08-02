@@ -30,18 +30,19 @@ type baseOperator struct {
 	metadataPath string
 	jobName      string
 
-	inputs              []artifact.Artifact
-	outputs             []artifact.Artifact
-	inputContentPaths   []string
-	inputMetadataPaths  []string
-	outputContentPaths  []string
-	outputMetadataPaths []string
+	inputs          []artifact.Artifact
+	outputs         []artifact.Artifact
+	inputExecPaths  []*utils.ExecPaths
+	outputExecPaths []*utils.ExecPaths
 
-	jobManager    job.JobManager
-	vaultObject   vault.Vault
-	storageConfig *shared.StorageConfig
-	db            database.Database
+	// The operator is cache-aware if this is non-nil.
+	previewArtifactCacheManager artifact.PreviewCacheManager
+	jobManager                  job.JobManager
+	vaultObject                 vault.Vault
+	storageConfig               *shared.StorageConfig
+	db                          database.Database
 
+	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
 	isPreview        bool
 }
@@ -78,7 +79,53 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 	}
 }
 
+// For each output artifact, copy over the contents of the content and metadata paths.
+// This should only ever be used for preview routes. Returns whether this operator has succeeded.
+// If it does not, the operator will fall back on traditional execution, overwriting anything we did here.
+func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, cachedResultByLogicalID map[uuid.UUID]artifact.PreviewCacheEntry) bool {
+	// Assumption: there is only one output artifact.
+	for i, outputArtifact := range bo.outputs {
+		cachedResult := cachedResultByLogicalID[outputArtifact.LogicalID()]
+		err := utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
+		if err != nil {
+			return false
+		}
+
+		err = utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.ArtifactMetadataPath, bo.outputExecPaths[i].ArtifactMetadataPath)
+		if err != nil {
+			return false
+		}
+
+		err = utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.OpMetadataPath, bo.outputExecPaths[i].OpMetadataPath)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	// Check if this operator can use previously cached results instead of computing for scratch.
+	if bo.previewArtifactCacheManager != nil {
+		outputArtifactLogicalIDs := make([]uuid.UUID, 0, len(bo.outputs))
+		for _, outputArtifact := range bo.outputs {
+			outputArtifactLogicalIDs = append(outputArtifactLogicalIDs, outputArtifact.LogicalID())
+		}
+
+		allCached, cachedResultByID, err := bo.previewArtifactCacheManager.GetMulti(ctx, outputArtifactLogicalIDs)
+		if err != nil {
+			log.Errorf("Unable to fetch output artifact ids %v. Error: %v", outputArtifactLogicalIDs, err)
+		}
+
+		// Only use cached results immediately if all output artifacts are cached.
+		if allCached {
+			succeeded := bo.executeUsingCachedResult(ctx, cachedResultByID)
+			if succeeded {
+				return nil
+			}
+		}
+	}
+
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
@@ -111,11 +158,13 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 
 	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
-		// If the job does not exist, this could mean that is hasn't been run yet (pending),
-		// or that it has run already at sometime in the past, but has been garbage collected
-		// (succeeded/failed).
+		// If the job does not exist, this could mean that
+		// 1) it is hasn't been run yet (pending),
+		// 2) it has run already at sometime in the past, but has been garbage collected
+		// 3) it has run already at sometime in the past, but did not go through the job manager.
+		//    (this can happen when the output artifacts have already been cached).
 		if err == job.ErrJobNotExist {
-			// Check whether the operator actually ran.
+			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
 				return bo.fetchExecState(ctx), nil
 			}
@@ -189,7 +238,11 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	if bo.isPreview {
 		// Don't persist any result for preview operators.
-		return nil
+		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.")
+	}
+
+	if bo.previewArtifactCacheManager != nil {
+		return errors.Newf("Operator %s is cache-aware, so it cannot be persisted.", bo.Name())
 	}
 
 	if bo.resultsPersisted {
@@ -224,7 +277,11 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 }
 
 func (bo *baseOperator) Finish(ctx context.Context) {
-	utils.CleanupStorageFile(ctx, bo.storageConfig, bo.metadataPath)
+	// Delete the operator's metadata path only if it was already copied into the operator_result's table.
+	// Otherwise, the artifact preview cache manager will handle the deletion.
+	if bo.resultsPersisted {
+		utils.CleanupStorageFile(ctx, bo.storageConfig, bo.metadataPath)
+	}
 
 	for _, outputArtifact := range bo.outputs {
 		outputArtifact.Finish(ctx)
@@ -273,6 +330,8 @@ func (bfo *baseFunctionOperator) jobSpec(
 		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
 	}
 
+	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
+	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
 	return &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
@@ -286,10 +345,10 @@ func (bfo *baseFunctionOperator) jobSpec(
 		EntryPointClass:     entryPoint.ClassName,
 		EntryPointMethod:    entryPoint.Method,
 		CustomArgs:          fn.CustomArgs,
-		InputContentPaths:   bfo.inputContentPaths,
-		InputMetadataPaths:  bfo.inputMetadataPaths,
-		OutputContentPaths:  bfo.outputContentPaths,
-		OutputMetadataPaths: bfo.outputMetadataPaths,
+		InputContentPaths:   inputContentPaths,
+		InputMetadataPaths:  inputMetadataPaths,
+		OutputContentPaths:  outputContentPaths,
+		OutputMetadataPaths: outputMetadataPaths,
 		InputArtifactTypes:  inputArtifactTypes,
 		OutputArtifactTypes: outputArtifactTypes,
 		OperatorType:        bfo.Type(),
