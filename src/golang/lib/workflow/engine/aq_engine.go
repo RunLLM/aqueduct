@@ -114,7 +114,6 @@ func NewAqEngine(
 	workflowReader workflow.Reader,
 	userReader user.Reader,
 ) (*aqEngine, error) {
-
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(aqPath, job.BinaryDir),
