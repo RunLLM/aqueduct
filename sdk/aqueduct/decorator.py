@@ -136,7 +136,7 @@ def _type_check_decorator_arguments(
     """
     Raises an InvalidUserArgumentException if any issues are found.
     """
-    if description is not None and isinstance(description, str):
+    if description is not None and not isinstance(description, str):
         raise InvalidUserArgumentException("A supplied description must be of string type.")
 
     if file_dependencies is not None:
