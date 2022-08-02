@@ -47,9 +47,14 @@ def run(spec: Spec) -> None:
     try:
         _execute(spec, storage, exec_state)
         # Write operator execution metadata
-        if exec_state.status != enums.ExecutionStatus.FAILED:
+        # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
+        # certain that the operator succeeded.
+        if exec_state.status == enums.ExecutionStatus.FAILED:
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            sys.exit(1)
+        else:
             exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception as e:
         exec_state.status = enums.ExecutionStatus.FAILED
         exec_state.failure_type = enums.FailureType.SYSTEM
