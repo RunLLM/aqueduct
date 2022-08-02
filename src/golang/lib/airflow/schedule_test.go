@@ -1,7 +1,6 @@
 package airflow
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -32,9 +31,6 @@ func TestComputeEdges(t *testing.T) {
 	for _, artifact := range artifacts {
 		artifactsToId[artifact] = uuid.New()
 	}
-
-	fmt.Println(operatorsToId)
-	fmt.Println(artifactsToId)
 
 	testOperators := map[uuid.UUID]operator.DBOperator{
 		operatorsToId["A"]: {
