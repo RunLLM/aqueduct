@@ -70,8 +70,10 @@ func ScheduleWorkflow(
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
 
-	// Generate job spec for each Airflow task
+	// For each operator, generate a job spec that can be used to turn an operator
+	// into an Airflow task.
 	for _, op := range dag.Operators {
+		// Prepare `op`'s input artifacts
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
 		inputContentPathPrefixes := make([]string, 0, len(op.Inputs))
 		inputMetadataPathPrefixes := make([]string, 0, len(op.Inputs))
@@ -101,6 +103,7 @@ func ScheduleWorkflow(
 			inputMetadataPathPrefixes = append(inputMetadataPathPrefixes, metadataPath)
 		}
 
+		// Prepare `op`'s output artifacts
 		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
 		outputContentPathPrefixes := make([]string, 0, len(op.Outputs))
 		outputMetadataPathPrefixes := make([]string, 0, len(op.Outputs))
@@ -149,6 +152,7 @@ func ScheduleWorkflow(
 			return nil, err
 		}
 
+		// Generate the job spec for this operator
 		jobSpec := airflowOperator.JobSpec()
 
 		taskId := generateTaskId(airflowOperator.Name())
@@ -157,6 +161,8 @@ func ScheduleWorkflow(
 		taskToJobSpec[taskId] = jobSpec
 	}
 
+	// Airflow needs to know the explicit dependencies between operators, so there can
+	// only be operator to operator edges.
 	taskEdges, err := computeEdges(dag.Operators, operatorToTask)
 	if err != nil {
 		return nil, err
