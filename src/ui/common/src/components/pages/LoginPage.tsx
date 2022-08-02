@@ -35,10 +35,8 @@ export const LoginPage: React.FC = () => {
   // is, then we automatically try to login with that API key.
   useEffect(() => {
     const key = searchParams.get(apiKeyQueryParam);
-    console.log('in useeffect, key is', key);
 
     if (key && key.length > 0) {
-      console.log('executing the if?');
       setApiKey(key);
       onGetStartedClicked(key);
     }
