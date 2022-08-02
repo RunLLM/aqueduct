@@ -1,4 +1,4 @@
-import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   Alert,
@@ -30,7 +30,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
-import { Button } from '../../../primitives/Button.styles';
+import IntegrationButtonGroup from '../../../integrations/buttonGroup';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -287,15 +287,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
         </Typography>
-
-        <DetailIntegrationCard integration={selectedIntegration} />
-
-        {selectedIntegration.name === 'aqueduct_demo' && (
-          <Button variant="contained" onClick={() => setShowDialog(true)}>
-            <FontAwesomeIcon icon={faUpload} />
-            <Typography sx={{ ml: 1 }}>Add CSV</Typography>
-          </Button>
-        )}
+        <Box display='flex' flexDirection='row'>
+          <DetailIntegrationCard integration={selectedIntegration} />
+          <IntegrationButtonGroup
+            integration={selectedIntegration}
+            onUploadCsv={() => setShowDialog(true)}
+          />
+        </Box>
 
         {showDialog && (
           <AddTableDialog
