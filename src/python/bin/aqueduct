@@ -415,7 +415,7 @@ def install_sqlserver():
 
 
 def install(system):
-    if system == "postgres":
+    if system == "postgres" or system == "redshift":
         install_postgres()
     elif system == "bigquery":
         install_bigquery()
@@ -423,9 +423,9 @@ def install(system):
         install_snowflake()
     elif system == "s3":
         install_s3()
-    elif system == "mysql":
+    elif system == "mysql" or system == "mariadb":
         install_mysql()
-    elif system == "sqlserver":
+    elif system == "sqlserver" or system == "azuresql":
         install_sqlserver()
     else:
         raise Exception("Unsupported system: %s" % system)
@@ -557,7 +557,7 @@ if __name__ == "__main__":
     install_args.add_argument(
         "system",
         nargs=1,
-        help="Supported integrations: postgres, mysql, sqlserver, s3, snowflake, bigquery.",
+        help="Supported integrations: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, snowflake, bigquery.",
     )
 
     apikey_args = subparsers.add_parser("apikey", help="Display your Aqueduct API key.")
