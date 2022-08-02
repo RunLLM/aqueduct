@@ -6,8 +6,17 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import React from 'react';
+import { Profiler } from "react";
 
 import { Data, DataColumn } from '../../utils/data';
+
+const logTimes = (id, phase, actualTime, baseTime, startTime, commitTime) => {
+  console.log(`${id}'s ${phase} phase:`);
+  console.log(`Actual time: ${actualTime}`);
+  console.log(`Base time: ${baseTime}`);
+  console.log(`Start time: ${startTime}`);
+  console.log(`Commit time: ${commitTime}`);
+};
 
 type Props = {
   data: Data;
@@ -56,7 +65,10 @@ const DataTable: React.FC<Props> = ({ data, width }) => {
     );
   });
 
-  const body = data.data.map((row, rowIdx) => {
+  //console.log(data.data)
+  const sliced = data.data.slice(0, 100);
+
+  const body = sliced.map((row, rowIdx) => {
     return (
       <TintedTableRow key={'row-' + rowIdx}>
         {Object.keys(row).map((value, idx) => {
@@ -67,21 +79,23 @@ const DataTable: React.FC<Props> = ({ data, width }) => {
   });
 
   return (
-    <Box
-      sx={{
-        overflow: 'auto',
-        maxHeight: '100%',
-        width: { width: width ? width : 'fit-content' },
-        maxWidth: '100%',
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow>{headers}</TableRow>
-        </TableHead>
-        <TableBody>{body}</TableBody>
-      </Table>
-    </Box>
+    <Profiler id="DataTable" onRender={logTimes}>
+      <Box
+        sx={{
+          overflow: 'auto',
+          maxHeight: '100%',
+          width: { width: width ? width : 'fit-content' },
+          maxWidth: '100%',
+        }}
+      >
+        <Table>
+          <TableHead>
+            <TableRow>{headers}</TableRow>
+          </TableHead>
+          <TableBody>{body}</TableBody>
+        </Table>
+      </Box>
+    </Profiler>
   );
 };
 

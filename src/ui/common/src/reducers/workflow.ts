@@ -117,6 +117,7 @@ export const handleGetArtifactResults = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey, workflowDagResultId, artifactId } = args;
+    console.log("fetching artifact:", artifactId)
     const res = await fetch(
       `${apiAddress}/api/artifact_result/${workflowDagResultId}/${artifactId}`,
       {

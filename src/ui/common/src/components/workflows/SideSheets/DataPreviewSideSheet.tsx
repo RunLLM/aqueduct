@@ -11,6 +11,7 @@ type Props = {
 };
 
 const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
+  console.log("preview for artifact id:", artifactId)
   const workflowState = useSelector(
     (state: RootState) => state.workflowReducer
   );
