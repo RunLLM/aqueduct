@@ -34,6 +34,7 @@ from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
+from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
@@ -59,7 +60,7 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print(
+            logger().error(
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
@@ -81,7 +82,7 @@ class Client:
         self,
         api_key: str = "",
         aqueduct_address: str = "http://localhost:8080",
-        log_level: int = logging.ERROR,
+        logging_level: int = logging.WARNING,
     ):
         """Creates an instance of Client.
 
@@ -94,17 +95,18 @@ class Client:
                 The address of the Aqueduct Server service. If no address is
                 provided, the client attempts to connect to
                 http://localhost:8080.
-            log_level:
+            logging_level:
                 A indication of what level and above to print logs from the sdk.
-                Defaults to printing error and above only. Types defined in: https://docs.python.org/3/howto/logging.html
+                Defaults to printing warning and above only. Types defined in: https://docs.python.org/3/howto/logging.html
 
         Returns:
             A Client instance.
         """
+        logger().setLevel(level=logging_level)
+
         if api_key == "":
             api_key = get_apikey()
 
-        logging.basicConfig(level=log_level)
         api_client.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
             str, IntegrationInfo
