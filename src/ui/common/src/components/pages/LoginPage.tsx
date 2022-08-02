@@ -2,10 +2,13 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
+import { useSearchParams } from 'react-router-dom';
 
 import fetchUser from '../../utils/fetchUser';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { Button } from '../primitives/Button.styles';
+
+const apiKeyQueryParam = 'apiKey';
 
 export const LoginPage: React.FC = () => {
   useEffect(() => {
@@ -17,7 +20,29 @@ export const LoginPage: React.FC = () => {
   const [isAuthed, setIsAuthed] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [apiKey, setApiKey] = useState<string>(cookies['aqueduct-api-key']);
+
+  // The cookies library is kinda dumb and sometimes returns the word
+  // undefined as a string rather than returning an undefined value, hence the
+  // extra check here.
+  const [apiKey, setApiKey] = useState<string>(
+    cookies['aqueduct-api-key'] && cookies['aqueduct-api-key'] !== 'undefined'
+      ? cookies['aqueduct-api-key']
+      : ''
+  );
+
+  const [searchParams, _] = useSearchParams();
+  // On page load, check if there's a query parameter with the API key. If there
+  // is, then we automatically try to login with that API key.
+  useEffect(() => {
+    const key = searchParams.get(apiKeyQueryParam);
+    console.log('in useeffect, key is', key);
+
+    if (key && key.length > 0) {
+      console.log('executing the if?');
+      setApiKey(key);
+      onGetStartedClicked(key);
+    }
+  }, []);
 
   const onApiKeyTextFieldChanged = (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -33,9 +58,8 @@ export const LoginPage: React.FC = () => {
     setApiKey(input);
   };
 
-  const onGetStartedClicked = async (event: React.MouseEvent) => {
-    event.preventDefault();
-    const { success } = await fetchUser(apiKey);
+  const onGetStartedClicked = async (key: string) => {
+    const { success } = await fetchUser(key);
 
     if (!success) {
       setValidationError(true);
@@ -43,7 +67,7 @@ export const LoginPage: React.FC = () => {
         'Invalid API Key. You can find your API Key by running `aqueduct apikey` on the machine where Aqueduct is running.'
       );
     } else {
-      setCookie('aqueduct-api-key', apiKey, { path: '/' });
+      setCookie('aqueduct-api-key', key, { path: '/' });
       await new Promise((r) => setTimeout(r, 100));
       setValidationError(false);
 
@@ -84,6 +108,7 @@ export const LoginPage: React.FC = () => {
           />
           <TextField
             error={validationError}
+            value={apiKey ?? ''}
             sx={{ marginTop: 2 }}
             fullWidth={true}
             size="small"
@@ -95,7 +120,7 @@ export const LoginPage: React.FC = () => {
           />
         </Box>
         <Button
-          onClick={onGetStartedClicked}
+          onClick={() => onGetStartedClicked(apiKey)}
           sx={{ marginTop: 1 }}
           fullWidth={true}
           color="primary"
