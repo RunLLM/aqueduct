@@ -1,10 +1,13 @@
 # Aqueduct UI
 
+### Introduction
 The Aqueduct UI is implemented in React and Typescript. Once you've installed the Aqueduct
-package, you can start the aqueduct server and a production build of the UI by running `aqueduct start`.
+package via pip, you can start the aqueduct server and a production build of the UI by running `aqueduct start`.
 
-For information on how to run the UI in development mode, please refer to the Development Guide section below.
+Please note that the UI provided by `aqueduct start` is different than what you would use for developing new UI features.
+For that, you will need to use npm and other Typescript tools. Please refer to the Development Guide section below for more information.
 
+### Prerequisites
 The Aqueduct UI code is organized into two directories -- a component library in
 `common/` that is published to npm as a package called `@aqueducthq/common`, and an application server in `app/`
 that consumes `@aqueducthq/common`. This package is also shared with the enterprise edition of Aqueduct.
