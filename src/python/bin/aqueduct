@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import math
 import os
 import platform
 import random
@@ -19,6 +20,7 @@ import requests
 import yaml
 
 SCHEMA_VERSION = "15"
+CHUNK_SIZE = 4096
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
@@ -98,31 +100,42 @@ def update_executable_permissions():
     os.chmod(os.path.join(server_directory, "bin", "executor"), 0o755)
     os.chmod(os.path.join(server_directory, "bin", "migrator"), 0o755)
 
+def _download_file(s3_url, f, prefix=None):
+    response = requests.get(s3_url, stream=True)
+    total_length = response.headers.get('content-length')
+
+    if not total_length: # content-length header was not included
+        f.write(response.content)
+    else: 
+        total_length = int(total_length)
+        for data in tqdm(response.iter_content(chunk_size=CHUNK_SIZE),
+                         total=math.ceil(total_length/CHUNK_SIZE),
+                         unit="KB", unit_scale=(CHUNK_SIZE / 1024),
+                         colour='#002F5E', ncols=100, desc=prefix):
+            f.write(data)
+
 
 def download_server_binaries(architecture):
+    print("Downloading server binaries...")
     with open(os.path.join(server_directory, "bin/server"), "wb") as f:
-        f.write(requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/server")).content)
+        _download_file(os.path.join(s3_server_prefix,
+                                    f"bin/{architecture}/server"), f, "Server")
     with open(os.path.join(server_directory, "bin/executor"), "wb") as f:
-        f.write(
-            requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/executor")).content
-        )
+        _download_file(os.path.join(s3_server_prefix,
+                                    f"bin/{architecture}/executor"), f, "Executor")
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
-        f.write(
-            requests.get(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator")).content
-        )
+        _download_file(os.path.join(s3_server_prefix,
+                                    f"bin/{architecture}/migrator"), f, "Migrator")
+
+    print("Downloading integration set up scripts...")
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
-        f.write(
-            requests.get(os.path.join(s3_server_prefix, "bin/start-function-executor.sh")).content
-        )
+        _download_file(os.path.join(s3_server_prefix, f"bin/start-function-executor.sh"), f)
     with open(os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh"), "wb") as f:
-        f.write(
-            requests.get(os.path.join(s3_server_prefix, "bin/install_sqlserver_ubuntu.sh")).content
-        )
-    print("Downloaded server binaries.")
+        _download_file(os.path.join(s3_server_prefix, f"bin/install_sqlserver_ubuntu.sh"), f)
+    print("Downloaded server binaries...")
 
 
 def setup_server_binaries():
-    print("Downloading server binaries.")
     server_bin_path = os.path.join(server_directory, "bin")
     shutil.rmtree(server_bin_path, ignore_errors=True)
     os.mkdir(server_bin_path)
@@ -145,7 +158,7 @@ def setup_server_binaries():
 
 
 def update_ui_version():
-    print("Updating UI version to %s" % package_version)
+    print("Updating UI version to %s..." % package_version)
     try:
         shutil.rmtree(ui_directory, ignore_errors=True)
         os.mkdir(ui_directory)
@@ -156,9 +169,11 @@ def update_ui_version():
             # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
             # solution at the moment.
             if os.path.isdir(os.path.join(os.sep, "home", "ec2-user", "SageMaker")):
-                f.write(requests.get(os.path.join(s3_ui_prefix, "sagemaker", "ui.zip")).content)
+                s3_path = os.path.join(s3_ui_prefix, "sagemaker", "ui.zip")
             else:
-                f.write(requests.get(os.path.join(s3_ui_prefix, "default", "ui.zip")).content)
+                s3_path = os.path.join(s3_ui_prefix, 'default', 'ui.zip')
+
+            _download_file(s3_path, f, "UI")
         with zipfile.ZipFile(ui_zip_path, "r") as zip:
             zip.extractall(ui_directory)
         os.remove(ui_zip_path)
@@ -169,7 +184,7 @@ def update_ui_version():
 
 
 def update_server_version():
-    print("Updating server version to %s" % package_version)
+    print("Updating server version to %s..." % package_version)
 
     version_file = os.path.join(server_directory, "__version__")
     if os.path.isfile(version_file):
