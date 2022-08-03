@@ -136,7 +136,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         )}
         <IntegrationObjectList user={user} integration={selectedIntegration} />
-        <Typography variant="h4" gutterBottom component="div">
+        <Typography
+          variant="h4"
+          gutterBottom
+          component="div"
+          sx={{ marginY: 4 }}
+        >
           Workflows
         </Typography>
         <OperatorsOnIntegration />
