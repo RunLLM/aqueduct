@@ -38,18 +38,18 @@ const (
 )
 
 const (
-	WorkflowJobType       JobType = "workflow"
-	FunctionJobType       JobType = "function"
-	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "system_metric"
-	AuthenticateJobType   JobType = "authenticate"
-	ExtractJobType        JobType = "extract"
-	LoadJobType           JobType = "load"
-	LoadTableJobType      JobType = "load-table"
+	WorkflowJobType           JobType = "workflow"
+	FunctionJobType           JobType = "function"
+	ParamJobType              JobType = "param"
+	SystemMetricJobType       JobType = "system_metric"
+	AuthenticateJobType       JobType = "authenticate"
+	ExtractJobType            JobType = "extract"
+	LoadJobType               JobType = "load"
+	LoadTableJobType          JobType = "load-table"
 	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
-	DiscoverJobType       JobType = "discover"
-	WorkflowRetentionType JobType = "workflow_retention"
-	CompileAirflowJobType JobType = "compile_airflow"
+	DiscoverJobType           JobType = "discover"
+	WorkflowRetentionType     JobType = "workflow_retention"
+	CompileAirflowJobType     JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
