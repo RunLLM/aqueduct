@@ -54,6 +54,7 @@ import AqueductSidebar, {
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
+import ArtifactDetailsPage from './components/pages/artifact/id';
 import DataPage from './components/pages/data';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
@@ -296,6 +297,7 @@ export {
   AqueductStraight,
   archiveNotification,
   Artifact,
+  ArtifactDetailsPage,
   ArtifactResult,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
