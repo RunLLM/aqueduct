@@ -1,10 +1,13 @@
 import importlib
 import json
 import os
+import shutil
 import sys
 import tracemalloc
+import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
+from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
@@ -76,7 +79,9 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     custom_args_str = spec.custom_args
 
     # Invoke the function and parse out the result object.
+
     module = importlib.import_module(import_path)
+
     if not class_name:
         return getattr(module, method_name)  # type: ignore
 
@@ -195,3 +200,28 @@ def run(spec: FunctionSpec) -> None:
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
+
+
+def run_with_setup(spec: FunctionSpec) -> None:
+    """
+    Performs the setup needed for a Function operator and then executes it.
+    """
+    # Generate a unique function extract path if one does not exist already
+    fn_extract_path = None
+    if not spec.function_extract_path:
+        fn_extract_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
+        spec.function_extract_path = fn_extract_path
+
+    op_path = get_extract_path.run(spec)
+
+    extract_function.run(spec)
+
+    requirements_path = os.path.join(op_path, "requirements.txt")
+    if os.path.exists(requirements_path):
+        os.system("pip3 install -r {}".format(requirements_path))
+
+    run(spec)
+
+    if fn_extract_path:
+        # Delete extracted function
+        shutil.rmtree(fn_extract_path)

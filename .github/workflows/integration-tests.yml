@@ -89,6 +89,7 @@ jobs:
         working-directory: integration_tests/backend
         env:
           SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
         run: pytest . -rP -n 1
 
       - uses: actions/upload-artifact@v3
