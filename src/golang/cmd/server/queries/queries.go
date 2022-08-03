@@ -40,13 +40,13 @@ type ArtifactCheckResponse struct {
 	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	Status              shared.ExecutionStatus `db:"status" json:"status"`
 	Name                string                 `db:"name" json:"name"`
-	Metadata            shared.ExecutionState  `db:"metadata" json:"metadata"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
 }
 
 type ArtifactOperatorResponse struct {
-	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
-	Metadata            shared.ExecutionState `db:"metadata" json:"metadata"`
-	WorkflowDagResultId uuid.UUID             `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
+	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 }
 
 type WorkflowLastRunResponse struct {
