@@ -29,7 +29,7 @@ class S3Integration(Integration):
     def file(
         self,
         filepaths: Union[List[str], str],
-        format: S3FileFormat,
+        format: str,
         name: Optional[str] = None,
         description: str = "",
     ) -> TableArtifact:
@@ -56,6 +56,16 @@ class S3Integration(Integration):
         Returns:
             TableArtifact representing the concatenated S3 Files.
         """
+        lowercased_format = format.lower()
+        if lowercased_format == S3FileFormat.CSV.value.lower():
+            format_enum = S3FileFormat.CSV
+        elif lowercased_format == S3FileFormat.JSON.value.lower():
+            format_enum = S3FileFormat.JSON
+        elif lowercased_format == S3FileFormat.PARQUET.value.lower():
+            format_enum = S3FileFormat.PARQUET
+        else:
+            raise Exception("Unsupport file format %s." % format)
+
         integration_info = self._metadata
 
         op_name = generate_extract_op_name(self._dag, integration_info.name, name)
@@ -75,7 +85,7 @@ class S3Integration(Integration):
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
                                 parameters=S3ExtractParams(
-                                    filepath=json.dumps(filepaths), format=format
+                                    filepath=json.dumps(filepaths), format=format_enum
                                 ),
                             )
                         ),
