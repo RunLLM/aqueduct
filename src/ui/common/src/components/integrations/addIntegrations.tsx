@@ -11,9 +11,10 @@ import { IntegrationDialog } from './dialogs/dialog';
 type Props = {
   user: UserProfile;
   supportedIntegrations: ServiceInfoMap;
+  category: string;
 };
 
-const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
+const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations, category }) => {
   return (
     <Box sx={{ maxWidth: '616px' }}>
       <Grid
@@ -25,6 +26,10 @@ const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations }) => {
         {Object.entries(supportedIntegrations)
           .filter(([svc]) => svc !== 'Aqueduct Demo')
           .map(([svc, integration]) => {
+            if (integration.category !== category) {
+              return null;
+            }
+
             const service = svc as Service;
             const [showDialog, setShowDialog] = useState(false);
 
