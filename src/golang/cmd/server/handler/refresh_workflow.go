@@ -2,17 +2,18 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -28,11 +29,14 @@ type RefreshWorkflowArgs struct {
 type RefreshWorkflowHandler struct {
 	PostHandler
 
-	Database       database.Database
-	JobManager     job.JobManager
-	GithubManager  github.Manager
-	Vault          vault.Vault
-	WorkflowReader workflow.Reader
+	Database database.Database
+	Engine   engine.Engine
+
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -79,44 +83,25 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}, http.StatusOK, nil
 }
 
-func generateWorkflowJobName() string {
-	return fmt.Sprintf("workflow-adhoc-%s", uuid.New().String())
-}
-
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 
-	workflowObject, err := h.WorkflowReader.GetWorkflow(
-		ctx,
-		args.WorkflowId,
-		h.Database,
-	)
-	if err != nil {
-		if err == database.ErrNoRows {
-			return nil, http.StatusBadRequest, errors.New("Unable to find workflow.")
-		}
-		return nil, http.StatusInternalServerError, errors.New("Unable to find workflow.")
+	timeConfig := &engine.AqueductTimeConfig{
+		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
+		ExecTimeout:          engine.DefaultExecutionTimeout,
+		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	jobName := generateWorkflowJobName()
-
-	jobSpec := job.NewWorkflowSpec(
-		workflowObject.Name,
-		workflowObject.Id.String(),
-		h.Database.Config(),
-		h.Vault.Config(),
-		h.JobManager.Config(),
-		h.GithubManager.Config(),
+	_, err := h.Engine.ExecuteWorkflow(
+		ctx,
+		args.WorkflowId,
+		timeConfig,
 		args.Parameters,
 	)
 
-	err = h.JobManager.Launch(
-		ctx,
-		jobName,
-		jobSpec,
-	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger this workflow.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
+
 	return struct{}{}, http.StatusOK, nil
 }
