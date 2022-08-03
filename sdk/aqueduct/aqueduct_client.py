@@ -445,7 +445,9 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        resp = api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id, saved_objects_to_delete, force)
+        resp = api_client.__GLOBAL_API_CLIENT__.delete_workflow(
+            flow_id, saved_objects_to_delete, force
+        )
 
         failed_deletions = {}
         counts = 0
