@@ -13,8 +13,7 @@ class TestBackend:
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-        integration = cls.client.integration(name=pytest.integration)
-        cls.integration = integration
+        cls.integration = cls.client.integration(name=pytest.integration)
         cls.flows = {"changing_saves": setup_changing_saves(cls.client, pytest.integration)}
         for flow in cls.flows.values():
             utils.wait_for_flow_runs(cls.client, flow, 4)
