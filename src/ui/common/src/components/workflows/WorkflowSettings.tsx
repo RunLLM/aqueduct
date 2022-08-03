@@ -1,5 +1,19 @@
-import { faXmark, faCircleXmark, faCircleCheck, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleCheck,
+  faCircleInfo,
+  faCircleXmark,
+  faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  Checkbox,
+  FormGroup,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+} from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -20,9 +34,12 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { theme } from '../../styles/theme/theme';
 
+import { handleListWorkflowSavedObjects } from '../../reducers/workflow';
+import { AppDispatch, RootState } from '../../stores/store';
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import {
   createCronString,
@@ -32,15 +49,13 @@ import {
   PeriodUnit,
 } from '../../utils/cron';
 import {
-  handleListWorkflowSavedObjects
-} from '../../reducers/workflow';
-import { SavedObject, WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+  SavedObject,
+  WorkflowDag,
+  WorkflowUpdateTrigger,
+} from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
-import { AppDispatch, RootState } from '../../stores/store';
-import { useDispatch, useSelector } from 'react-redux';
-import { Checkbox, FormGroup, List, ListItem, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -164,13 +179,13 @@ type WorkflowSettingsProps = {
 };
 
 type SavedObjectResult = {
-  name: string,
-  succeeded: boolean,
-}
+  name: string;
+  succeeded: boolean;
+};
 
 type DeleteWorkflowResponse = {
-  saved_object_deletion_results: { [id: string]: SavedObjectResult[] }
-}
+  saved_object_deletion_results: { [id: string]: SavedObjectResult[] };
+};
 
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
@@ -184,16 +199,24 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(handleListWorkflowSavedObjects({ apiKey: user.apiKey, workflowId: workflowDag.workflow_id }));
+    dispatch(
+      handleListWorkflowSavedObjects({
+        apiKey: user.apiKey,
+        workflowId: workflowDag.workflow_id,
+      })
+    );
   }, []);
 
   const savedObjects = useSelector(
     (state: RootState) => state.workflowReducer.savedObjects
   );
 
-  const [selectedObjects, setSelectedObjects] = useState(new Set<SavedObject>());
-  const [deleteWorkflowResults, setDeleteWorkflowResults] = useState({saved_object_deletion_results:{}} as DeleteWorkflowResponse);
-  
+  const [selectedObjects, setSelectedObjects] = useState(
+    new Set<SavedObject>()
+  );
+  const [deleteWorkflowResults, setDeleteWorkflowResults] = useState({
+    saved_object_deletion_results: {},
+  } as DeleteWorkflowResponse);
 
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
@@ -286,7 +309,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   }
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showSavedObjectDeletionResultsDialog, setShowSavedObjectDeletionResultsDialog] = useState(false);
+  const [
+    showSavedObjectDeletionResultsDialog,
+    setShowSavedObjectDeletionResultsDialog,
+  ] = useState(false);
   const [deleteValidation, setDeleteValidation] = useState('');
   const handleDeleteClicked = (event) => {
     event.preventDefault();
@@ -309,17 +335,19 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const handleDeleteWorkflow = (event) => {
     event.preventDefault();
-    
+
     setIsDeleting(true);
 
-    let data = {force: true};
+    const data = { force: true };
     data['external_delete'] = {};
 
     selectedObjects.forEach((object) => {
       if (data['external_delete'][object.integration_name]) {
-        data['external_delete'][object.integration_name].push(object.object_name)
+        data['external_delete'][object.integration_name].push(
+          object.object_name
+        );
       } else {
-        data['external_delete'][object.integration_name] = [object.object_name]
+        data['external_delete'][object.integration_name] = [object.object_name];
       }
     });
 
@@ -328,7 +356,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       headers: {
         'api-key': user.apiKey,
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     }).then((res) => {
       res.json().then((body) => {
         setIsDeleting(false);
@@ -401,9 +429,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const updateSelectedObjects = (event) => {
     if (event.target.checked) {
-      setSelectedObjects(prev => new Set(prev.add(savedObjects[event.target.id][0])));
+      setSelectedObjects(
+        (prev) => new Set(prev.add(savedObjects[event.target.id][0]))
+      );
     } else {
-      setSelectedObjects(prev => new Set( Array.from(prev).filter(x => x !== savedObjects[event.target.id][0])));
+      setSelectedObjects(
+        (prev) =>
+          new Set(
+            Array.from(prev).filter(
+              (x) => x !== savedObjects[event.target.id][0]
+            )
+          )
+      );
     }
   };
 
@@ -420,61 +457,76 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           ?{' '}
         </Typography>
       </DialogTitle>
-      
+
       <DialogContent>
         <Typography variant="body1">
-        The following objects had been saved by{' '}
-        <span style={{ fontFamily: 'Monospace' }}>
+          The following objects had been saved by{' '}
+          <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
-        </span>
-        {' '}and can be removed when deleting the workflow. 
+          </span>{' '}
+          and can be removed when deleting the workflow.
         </Typography>
 
         <Typography variant="body1">
-        Please select the saved objects you wish to delete:
+          Please select the saved objects you wish to delete:
         </Typography>
 
         <Box sx={{ my: 2 }}>
           <FormGroup>
-            {
-              Object.entries(savedObjects).map(([integrationTableKey, savedObjectsList]) => (
-                  <FormControlLabel 
-                  control={<Checkbox 
-                    id={integrationTableKey}
-                    onChange={updateSelectedObjects}
-                  />} 
-                  label={
-                  <Box>
-                    <Typography variant="body1">
-                      <b>{savedObjectsList[0].integration_name}</b>: {savedObjectsList[0].object_name}
-                    </Typography>
-
-                    <Typography style={{color:theme.palette.gray[600], paddingRight:"8px"}} variant="body2" display="inline">
-                      Update Mode: {savedObjectsList.map(object=>object.update_mode).join(", ")}
-                    </Typography>
-
-                    <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
-                      <Typography display="inline">
-                        <FontAwesomeIcon
-                            icon={faCircleInfo}
-                            style={{ color:theme.palette.Info }}
-                          />
-                      </Typography>
-                    </Tooltip>
-                  </Box>
+            {Object.entries(savedObjects).map(
+              ([integrationTableKey, savedObjectsList]) => (
+                <FormControlLabel
+                  key={integrationTableKey}
+                  control={
+                    <Checkbox
+                      id={integrationTableKey}
+                      onChange={updateSelectedObjects}
+                    />
                   }
-                  />
-                  )
-                )
-            }
+                  label={
+                    <Box>
+                      <Typography variant="body1">
+                        <b>{savedObjectsList[0].integration_name}</b>:{' '}
+                        {savedObjectsList[0].object_name}
+                      </Typography>
+
+                      <Typography
+                        style={{
+                          color: theme.palette.gray[600],
+                          paddingRight: '8px',
+                        }}
+                        variant="body2"
+                        display="inline"
+                      >
+                        Update Mode:{' '}
+                        {savedObjectsList
+                          .map((object) => object.update_mode)
+                          .join(', ')}
+                      </Typography>
+
+                      <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
+                        <Typography display="inline">
+                          <FontAwesomeIcon
+                            icon={faCircleInfo}
+                            style={{ color: theme.palette.Info }}
+                          />
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              )
+            )}
           </FormGroup>
         </Box>
-      
+
         <Typography variant="body1">
-          Are you sure you want to <span style={{color:theme.palette.red[500]}}>delete</span>{' '}
+          Are you sure you want to{' '}
+          <span style={{ color: theme.palette.red[500] }}>delete</span>{' '}
           <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
-          is not reversible. The workflow and all <b>{selectedObjects.size}</b> selected object(s) {' '}
-          <b>regardless of update mode</b> will be <b>completely removed</b>.
+          is not reversible. The workflow and all <b>{selectedObjects.size}</b>{' '}
+          selected object(s) <b>regardless of update mode</b> will be{' '}
+          <b>completely removed</b>.
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -514,46 +566,50 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   );
 
   const savedObjectDeletionResultsDialog = (
-    <Dialog open={showSavedObjectDeletionResultsDialog} onClose={() => setShowSavedObjectDeletionResultsDialog(false)}>
+    <Dialog
+      open={showSavedObjectDeletionResultsDialog}
+      onClose={() => setShowSavedObjectDeletionResultsDialog(false)}
+    >
       <DialogTitle>
-        <Typography variant="h5">
-          Saved Object Deletion Results
-        </Typography>
+        <Typography variant="h5">Saved Object Deletion Results</Typography>
       </DialogTitle>
-      
+
       <DialogContent>
         <List dense={false}>
-          {Object.entries(deleteWorkflowResults.saved_object_deletion_results).map(([integrationName, objectResults]) => (
-            (objectResults).map((objectResult)=>(
-              <ListItem>
-                <ListItemIcon>
-                  {objectResult.succeeded? 
-                  <FontAwesomeIcon
-                    icon={faCircleCheck}
-                    style={{ color:theme.palette.green[500] }}
+          {Object.entries(deleteWorkflowResults.saved_object_deletion_results)
+            .map(([integrationName, objectResults]) =>
+              objectResults.map((objectResult) => (
+                <ListItem key={`${integrationName}-${objectResult.name}`}>
+                  <ListItemIcon>
+                    {objectResult.succeeded ? (
+                      <FontAwesomeIcon
+                        icon={faCircleCheck}
+                        style={{ color: theme.palette.green[500] }}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={faCircleXmark}
+                        style={{ color: theme.palette.red[500] }}
+                      />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <>
+                        <b>{integrationName}</b>: {objectResult.name}
+                      </>
+                    }
+                    secondary={objectResult.succeeded}
                   />
-                  :
-                  <FontAwesomeIcon
-                    icon={faCircleXmark}
-                    style={{ color:theme.palette.red[500] }}
-                  />
-                  }
-                </ListItemIcon>
-                <ListItemText
-                  primary={<><b>{integrationName}</b>: {objectResult.name}</>}
-                  secondary={objectResult.succeeded}
-                />
-              </ListItem>
-            ))
-          )).flat()}
+                </ListItem>
+              ))
+            )
+            .flat()}
         </List>
       </DialogContent>
 
       <DialogActions>
-        <Button
-          variant="contained"
-          onClick={() => navigate('/workflows')}
-        >
+        <Button variant="contained" onClick={() => navigate('/workflows')}>
           Close
         </Button>
       </DialogActions>

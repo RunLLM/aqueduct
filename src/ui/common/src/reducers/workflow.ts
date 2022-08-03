@@ -18,8 +18,8 @@ import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import {
   GetWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
-  SavedObject,
   normalizeGetWorkflowResponse,
+  SavedObject,
   WorkflowDag,
   WorkflowDagResultSummary,
 } from '../utils/workflows';
@@ -171,9 +171,9 @@ export const handleGetWorkflow = createAsyncThunk<
 );
 
 export const handleListWorkflowSavedObjects = createAsyncThunk<
-ListWorkflowSavedObjectsResponse,
+  ListWorkflowSavedObjectsResponse,
   { apiKey: string; workflowId: string }
-  >(
+>(
   'workflowReducer/getObjects',
   async (
     args: {
@@ -181,15 +181,18 @@ ListWorkflowSavedObjectsResponse,
       workflowId: string;
     },
     thunkAPI
-  )  => {
+  ) => {
     const { apiKey, workflowId } = args;
 
-    const res = await fetch(`${apiAddress}/api/workflow/${workflowId}/objects`, {
-      method: 'GET',
-      headers: {
-        'api-key': apiKey,
-      },
-    });
+    const res = await fetch(
+      `${apiAddress}/api/workflow/${workflowId}/objects`,
+      {
+        method: 'GET',
+        headers: {
+          'api-key': apiKey,
+        },
+      }
+    );
 
     const body = await res.json();
     if (!res.ok) {
@@ -335,19 +338,22 @@ export const workflowSlice = createSlice({
       };
     });
 
-    builder.addCase(handleListWorkflowSavedObjects.fulfilled, (state, action) => {
-      const response = action.payload;
-      let savedObjects = {};
-      response.object_details.map(object => {
-        const key = String([object.integration_name, object.object_name])
-        if (savedObjects[key]) {
-          savedObjects[key].push(object)
-        } else {
-          savedObjects[key] = [object]
-        }
-      })
-      state.savedObjects = savedObjects;
-    });
+    builder.addCase(
+      handleListWorkflowSavedObjects.fulfilled,
+      (state, action) => {
+        const response = action.payload;
+        const savedObjects = {};
+        response.object_details.map((object) => {
+          const key = String([object.integration_name, object.object_name]);
+          if (savedObjects[key]) {
+            savedObjects[key].push(object);
+          } else {
+            savedObjects[key] = [object];
+          }
+        });
+        state.savedObjects = savedObjects;
+      }
+    );
 
     builder.addCase(handleGetWorkflow.pending, (state) => {
       state.loadingStatus = { loading: LoadingStatusEnum.Loading, err: '' };
