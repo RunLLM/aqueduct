@@ -7,6 +7,8 @@ from aqueduct_executor.operators.function_executor import execute as func_execut
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import execute as param_execute
 from aqueduct_executor.operators.param_executor import spec as param_spec
+from aqueduct_executor.operators.system_metric_executor import execute as sys_metric_execute
+from aqueduct_executor.operators.system_metric_executor import spec as sys_metric_spec
 from aqueduct_executor.operators.connectors.tabular import execute as conn_execute
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
@@ -31,6 +33,9 @@ def invoke_task(spec, **kwargs):
     elif spec_type == enums.JobType.PARAM:
         spec = param_spec.ParamSpec(**spec)
         handle_param(spec, dag_run_id)
+    elif spec_type == enums.JobType.SYSTEM_METRIC:
+        spec = sys_metric_spec.SystemMetricSpec(**spec)
+        handle_system_metric(spec, dag_run_id)
 
 def handle_function(spec: func_spec.FunctionSpec, run_id: str):
     """
@@ -78,6 +83,18 @@ def handle_param(spec: param_spec.ParamSpec, run_id: str):
     spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
 
     param_execute.run(spec)
+
+def handle_system_metric(spec: sys_metric_spec.SystemMetricSpec, run_id: str):
+    """
+    Invokes a SystemMetric operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.input_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.input_metadata_paths]
+    spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
+    spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
+
+    sys_metric_execute.run(spec)
 
 
 with DAG(

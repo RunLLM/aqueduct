@@ -7,13 +7,14 @@ from aqueduct_executor.operators.airflow import spec
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
+from aqueduct_executor.operators.system_metric_executor import spec as system_metric_spec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.execution import ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage import parse
 from jinja2 import Environment, FileSystemLoader
 
 TaskSpec = Union[
-    conn_spec.ExtractSpec, conn_spec.LoadSpec, func_spec.FunctionSpec, param_spec.ParamSpec
+    conn_spec.ExtractSpec, conn_spec.LoadSpec, func_spec.FunctionSpec, param_spec.ParamSpec, system_metric_spec.SystemMetricSpec,
 ]
 
 
