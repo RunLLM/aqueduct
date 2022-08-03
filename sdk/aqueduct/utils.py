@@ -2,6 +2,7 @@ import inspect
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import uuid
@@ -16,18 +17,11 @@ from aqueduct.enums import OperatorType
 from aqueduct.operators import Operator
 from croniter import croniter
 
-from ._version import __version__
 from .dag import DAG, RetentionPolicy, Schedule
 from .enums import TriggerType
 from .error import *
-from .logger import Logger
+from .logger import logger
 from .templates import op_file_content
-
-# Auth headers
-API_KEY_HEADER = "api-key"
-
-# Client version header
-CLIENT_VERSION = "sdk-client-version"
 
 
 def format_header_for_print(header: str) -> str:
@@ -42,10 +36,6 @@ def format_header_for_print(header: str) -> str:
     prefix_len = 20
     full_len = 80
     return f"{'=' * prefix_len} {header} {'=' * max(0, full_len - prefix_len - len(header))}"
-
-
-def generate_auth_headers(api_key: str) -> Dict[str, str]:
-    return {API_KEY_HEADER: api_key, CLIENT_VERSION: str(__version__)}
 
 
 def generate_uuid() -> uuid.UUID:
@@ -163,7 +153,7 @@ def make_zip_dir() -> str:
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> bytes:
     """
     Takes a user-defined function and packages it into a zip file structure expected by the backend.
@@ -172,9 +162,14 @@ def serialize_function(
         func:
             The function to package
         file_dependencies:
-            List of file dependencies the function uses
-        reqs_path:
-            A path to file that specify requirements
+            A list of relative paths to files that the function needs to access.
+        requirements:
+            Defines the python package requirements that this function will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Returns:
         filepath of zip file in string format
@@ -182,21 +177,23 @@ def serialize_function(
     dir_path = None
     try:
         dir_path = make_zip_dir()
-        zip_file_path = get_zip_file_path(dir_path)
-
         _package_files_and_requirements(
-            func, os.path.join(os.getcwd(), dir_path), file_dependencies, reqs_path
+            func, os.path.join(os.getcwd(), dir_path), file_dependencies, requirements
         )
+
+        # Figure out the python version
+        python_version = ".".join((str(x) for x in sys.version_info[:2]))
+        with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
+            f.write(python_version)
 
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
             cp.dump(func, f)
 
+        zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
-
         return open(zip_file_path, "rb").read()
-
     finally:
         if dir_path:
             delete_zip_folder_and_file(dir_path)
@@ -206,24 +203,24 @@ def _package_files_and_requirements(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     dir_path: str,
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> None:
     """
-    Creates the temporary directory for the function with all file dependencies and
-    requirements.txt.
+    Populates the given dir_path directory with all the file dependencies and requirements.txt.
 
     Arguments:
         func:
             User-defined function to package
         dir_path:
-            Absolute path of directory to create.
+            Absolute path of directory we'll be using
         file_dependencies:
-            Paths of file dependencies the function uses. Note that the paths are relative to the
-            file the function is defined in.
-        reqs_path:
-            A path of file that specifies the requirements of the operator.
-            Default path: /requirements.txt in the folder where the function is located
-
+            A list of relative paths to files that the function needs to access.
+        requirements:
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
     """
     if not file_dependencies:
         file_dependencies = []
@@ -264,29 +261,65 @@ def _package_files_and_requirements(
         if not os.path.exists(dstfolder):
             os.makedirs(dstfolder)
         shutil.copy(file_path, os.path.join(dir_path, file_path))
-    if reqs_path:
-        if os.path.exists(reqs_path):
-            Logger.logger.info("Installing requirements found at {path}".format(path=reqs_path))
-            shutil.copy(reqs_path, os.path.join(dir_path, REQUIREMENTS_FILE))
+
+    # This is the absolute path to the requirements file we are sending to the backend.
+    packaged_requirements_path = os.path.join(dir_path, REQUIREMENTS_FILE)
+    if requirements is not None:
+        assert isinstance(requirements, str) or all(isinstance(req, str) for req in requirements)
+
+        if isinstance(requirements, str):
+            if os.path.exists(requirements):
+                logger().info("Installing requirements found at {path}".format(path=requirements))
+                shutil.copy(requirements, packaged_requirements_path)
+            else:
+                raise FileNotFoundError(
+                    "Requirements file provided at %s does not exist." % requirements
+                )
         else:
-            raise FileNotFoundError("Requirement file provided does not exist.")
+            # User has given us a list of pip requirement strings.
+            with open(packaged_requirements_path, "x") as f:
+                f.write("\n".join(requirements))
+
+    # If there already exists a requirements.txt in the same directory as the function.
     elif os.path.exists(REQUIREMENTS_FILE):
-        Logger.logger.info(
+        logger().info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
             % (os.getcwd(), func.__name__)
         )
         shutil.copy(REQUIREMENTS_FILE, os.path.join(dir_path, REQUIREMENTS_FILE))
+
+    # No requirements have been provided, so we do our best to infer.
     else:
-        Logger.logger.info(
+        logger().info(
             "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
             % func.__name__
         )
-    # Figure out the python version
-    python_version = ".".join((str(x) for x in sys.version_info[:2]))
-    with open(os.path.join(dir_path, PYTHON_VERSION_FILE_NAME), "w") as f:
-        f.write(python_version)
+        with open(packaged_requirements_path, "x") as f:
+            f.write("\n".join(_infer_requirements()))
 
     os.chdir(current_directory_path)
+
+
+def _infer_requirements() -> List[str]:
+    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+
+    Returns:
+        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
+    """
+    try:
+        process = subprocess.Popen(
+            "pip freeze",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout_raw, stderr_raw = process.communicate()
+        logger().debug("Inferred requirements raw stdout: %s", stdout_raw)
+        logger().debug("Inferred requirements raw stderr: %s", stderr_raw)
+
+        return stdout_raw.decode("utf-8").split("\n")
+    except Exception as e:
+        raise InternalAqueductError("Unable to infer requirements. Error: %s" % e)
 
 
 def _make_archive(source: str, destination: str) -> None:

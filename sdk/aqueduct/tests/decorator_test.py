@@ -72,6 +72,7 @@ def test_serialize_function():
         "python_version.txt",
         "model.py",
         "model.pkl",
+        "requirements.txt",
     ]
     zip_files = [name.split("/")[-1] for name in zip_file.namelist() if name.split("/")[-1]]
     assert set(zip_files) == set(files)
