@@ -1,11 +1,12 @@
 import logging
 
 
-class Logger:
+def logger() -> logging.Logger:
     """
-    This class is the logger used by the Aqueduct SDK client.
+    This is the logger shared within the aqueduct module.
     ref: https://docs.python.org/3/howto/logging.html
 
+    The log level is configured by the Aqueduct client. If not configured, it will default
+    to level WARNING.
     """
-
-    logger = logging.getLogger(__name__)
+    return logging.getLogger(__name__)

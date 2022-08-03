@@ -65,6 +65,10 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusBadRequest, err
 	}
 
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
+	}
+
 	config, err := auth.ReadConfigFromSecret(ctx, id, h.Vault)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
