@@ -13,7 +13,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
