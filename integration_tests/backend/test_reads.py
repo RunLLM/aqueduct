@@ -1,50 +1,20 @@
-import os
-import subprocess
-import sys
-from pathlib import Path
-
 import pytest
 import requests
 import utils
+from setup.changing_saves_workflow import setup_changing_saves
 
 import aqueduct
 
 
-class TestReads:
-    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
-    WORKFLOW_PATH = Path(__file__).parent / "setup"
+class TestBackend:
+    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/objects"
 
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-        cls.flows = {}
-
-        workflow_files = [
-            f
-            for f in os.listdir(cls.WORKFLOW_PATH)
-            if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))
-        ]
-        for workflow in workflow_files:
-            proc = subprocess.Popen(
-                [
-                    "python3",
-                    os.path.join(cls.WORKFLOW_PATH, workflow),
-                    pytest.api_key,
-                    pytest.server_address,
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            out, err = proc.communicate()
-            out = out.decode("utf-8")
-            err = err.decode("utf-8")
-            if err:
-                raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
-            else:
-                parsed = out.strip().split()
-                cls.flows[workflow] = parsed[-2]
-                n_runs = int(parsed[-1])
-                utils.wait_for_flow_runs(cls.client, cls.flows[workflow], n_runs)
+        cls.flows = {"changing_saves": setup_changing_saves(cls.client)}
+        for flow in cls.flows.values():
+            utils.wait_for_flow_runs(cls.client, flow, 4)
 
     @classmethod
     def teardown_class(cls):
@@ -59,8 +29,8 @@ class TestReads:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_list_workflow_tables(self):
-        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
+    def test_endpoint_getworkflowtables(self):
+        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves"]
         data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
