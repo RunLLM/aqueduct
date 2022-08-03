@@ -2,10 +2,11 @@ import io
 from contextlib import redirect_stdout
 
 import pytest
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import get_integration_name
 
 import aqueduct
+from aqueduct import op
 
 
 @aqueduct.op()
@@ -41,3 +42,11 @@ def test_handle_bad_op_error(client):
         processed_artifact.get()
     except AqueductError as e:
         assert TIP_OP_EXECUTION in e.message
+
+
+def test_file_dependencies_invalid(client):
+    with pytest.raises(InvalidUserArgumentException):
+
+        @op(file_dependencies=123)
+        def wrong_file_dependencies_type(table):
+            return table

@@ -13,7 +13,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
@@ -175,8 +175,9 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
     <>
       <Box className={styles['menu-sidebar-popover-container']}>
         <Link
-          href={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
+          to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
           underline="none"
+          component={RouterLink as any}
         >
           <Typography variant="h3" sx={{ color: 'white' }}>
             Aqueduct
@@ -225,9 +226,10 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           open={userPopoverOpen}
         >
           <Link
-            href={`${getPathPrefix()}/account`}
+            to={`${getPathPrefix()}/account`}
             underline="none"
             sx={{ color: 'blue.800' }}
+            component={RouterLink as any}
           >
             <MenuItem sx={{ width: '190px' }} disableRipple>
               <Box sx={{ fontSize: '20px', mr: 1 }}>
@@ -263,9 +265,10 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           />
 
           <Link
-            href={`${getPathPrefix()}/workflows`}
+            to={`${getPathPrefix()}/workflows`}
             className={styles['menu-sidebar-link']}
             underline="none"
+            component={RouterLink as any}
           >
             <SidebarButton
               icon={
@@ -280,9 +283,10 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           </Link>
 
           <Link
-            href={`${getPathPrefix()}/integrations`}
+            to={`${getPathPrefix()}/integrations`}
             className={styles['menu-sidebar-link']}
             underline="none"
+            component={RouterLink as any}
           >
             <SidebarButton
               icon={
@@ -297,9 +301,10 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           </Link>
 
           <Link
-            href={`${getPathPrefix()}/data`}
+            to={`${getPathPrefix()}/data`}
             className={styles['menu-sidebar-link']}
             underline="none"
+            component={RouterLink as any}
           >
             <SidebarButton
               icon={

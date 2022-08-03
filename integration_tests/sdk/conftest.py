@@ -13,6 +13,7 @@ import aqueduct
 FLAGS = [
     "complex_models",
     "publish",
+    "requirements",
 ]
 
 
