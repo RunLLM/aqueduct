@@ -37,7 +37,7 @@ const TestConnectDialog: React.FC<Props> = ({ onCloseDialog }) => {
   if (isFailed(status)) {
     dialogBody = (
       <Alert severity="error">
-        {`Test-connect failed with error: ${status.err}\n Please confirm that your integration is running.`}
+        {`Test-connect failed with error: ${status.err} . Please confirm your integration is available.`}
       </Alert>
     );
   }
@@ -60,13 +60,14 @@ const TestConnectDialog: React.FC<Props> = ({ onCloseDialog }) => {
             color="secondary"
             href={GithubIssueLink}
             onClick={onCloseDialog}
+            sx={{ marginRight: 1 }}
           >
             {'File an issue'}
           </Button>
         )}
         {(isSucceeded(status) || isFailed(status)) && (
           <Button
-            color={isSucceeded ? 'success' : 'primary'}
+            color={isSucceeded(status) ? 'success' : 'primary'}
             autoFocus
             onClick={onCloseDialog}
           >
