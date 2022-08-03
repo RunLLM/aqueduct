@@ -14,7 +14,11 @@ from aqueduct_executor.operators.utils.storage import parse
 from jinja2 import Environment, FileSystemLoader
 
 TaskSpec = Union[
-    conn_spec.ExtractSpec, conn_spec.LoadSpec, func_spec.FunctionSpec, param_spec.ParamSpec, system_metric_spec.SystemMetricSpec,
+    conn_spec.ExtractSpec,
+    conn_spec.LoadSpec,
+    func_spec.FunctionSpec,
+    param_spec.ParamSpec,
+    system_metric_spec.SystemMetricSpec,
 ]
 
 
