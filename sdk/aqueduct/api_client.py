@@ -14,7 +14,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.logger import Logger
+from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     DeleteWorkflowResponse,
@@ -181,7 +181,7 @@ class APIClient:
                 self._test_url(url)
                 return True
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 
@@ -191,7 +191,7 @@ class APIClient:
                 self._test_url(url)
                 return False
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 

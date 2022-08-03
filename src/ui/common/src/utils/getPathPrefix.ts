@@ -5,7 +5,7 @@
 //
 // If no prefix is present, `getPathPrefix` returns an empty string.
 export const getPathPrefix = () => {
-  const location = window.location.pathname;
+  const location = window && window.location ? window.location.pathname : '';
 
   const result = location.match(SageMakerProxyRegex);
   if (!result) {

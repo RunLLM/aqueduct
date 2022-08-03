@@ -11,7 +11,7 @@ from aqueduct import api_client
 
 from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
-from .logger import Logger
+from .logger import logger
 from .operators import OperatorSpec, ParamSpec
 from .responses import SavedObjectUpdate, WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
@@ -78,7 +78,7 @@ class Flow:
 
             # Skip the parameter update if the parameter was never computed.
             if len(param_val) == 0:
-                Logger.logger.error(
+                logger().warning(
                     "The parameter %s was not successfully computed. If you triggered this flow run with custom "
                     "parameters, those parameter values will not be reflected in `FlowRun.describe()."
                     % param_artifact.name
