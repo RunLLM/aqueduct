@@ -1,10 +1,7 @@
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Divider from '@mui/material/Divider';
-import Link from '@mui/material/Link';
 import React, { useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';

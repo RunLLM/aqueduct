@@ -258,47 +258,47 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Snowflake']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/51-513957_periscope-data-partners-snowflake-computing-logo.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['Redshift']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/amazon-redshift.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['BigQuery']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-bigquery-logo-1.svg',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['MySQL']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mysql.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['MariaDB']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mariadb.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['S3']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['Aqueduct Demo']: {
     logo: '/assets/aqueduct.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['SQLite']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite-square-icon-256x256.png',
     activated: true,
-    category: 'data'
+    category: 'data',
   },
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: false,
-    category: 'compute'
+    category: 'compute',
   },
 };
 

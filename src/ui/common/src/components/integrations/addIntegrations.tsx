@@ -14,7 +14,11 @@ type Props = {
   category: string;
 };
 
-const AddIntegrations: React.FC<Props> = ({ user, supportedIntegrations, category }) => {
+const AddIntegrations: React.FC<Props> = ({
+  user,
+  supportedIntegrations,
+  category,
+}) => {
   return (
     <Box sx={{ maxWidth: '616px' }}>
       <Grid
