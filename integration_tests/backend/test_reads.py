@@ -8,11 +8,13 @@ import aqueduct
 
 class TestBackend:
     GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/objects"
+    GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
 
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-        cls.flows = {"changing_saves": setup_changing_saves(cls.client)}
+        cls.integration = cls.client.integration(name=pytest.integration)
+        cls.flows = {"changing_saves": setup_changing_saves(cls.client, pytest.integration)}
         for flow in cls.flows.values():
             utils.wait_for_flow_runs(cls.client, flow, 4)
 
@@ -48,3 +50,9 @@ class TestBackend:
         # Check all in same integration
         assert len(set([item["integration_id"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
+
+    def test_testintegration(self):
+        resp = self.get_response_class(
+            self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
+        )
+        assert resp.ok

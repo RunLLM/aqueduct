@@ -8,9 +8,9 @@ import aqueduct
 ###
 
 
-def setup_changing_saves(client: aqueduct.Client) -> str:
+def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Changing Saves"
-    integration = client.integration(name="aqueduct_demo")
+    integration = client.integration(name=integration_name)
 
     ###
 

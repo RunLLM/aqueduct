@@ -16,6 +16,7 @@ const (
 	CreateTableRoute                 = "/api/integration/{integrationId}/create"
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
+	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 
