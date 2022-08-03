@@ -1,7 +1,6 @@
 import json
 from typing import List, Optional, Union
 
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import S3FileFormat
@@ -23,15 +22,14 @@ class S3Integration(Integration):
     Class for S3 integration.
     """
 
-    def __init__(self, api_client: APIClient, dag: DAG, metadata: IntegrationInfo):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, metadata: IntegrationInfo):
         self._dag = dag
         self._metadata = metadata
 
     def file(
         self,
         filepaths: Union[List[str], str],
-        format: S3FileFormat,
+        format: str,
         name: Optional[str] = None,
         description: str = "",
     ) -> TableArtifact:
@@ -58,6 +56,16 @@ class S3Integration(Integration):
         Returns:
             TableArtifact representing the concatenated S3 Files.
         """
+        lowercased_format = format.lower()
+        if lowercased_format == S3FileFormat.CSV.value.lower():
+            format_enum = S3FileFormat.CSV
+        elif lowercased_format == S3FileFormat.JSON.value.lower():
+            format_enum = S3FileFormat.JSON
+        elif lowercased_format == S3FileFormat.PARQUET.value.lower():
+            format_enum = S3FileFormat.PARQUET
+        else:
+            raise Exception("Unsupport file format %s." % format)
+
         integration_info = self._metadata
 
         op_name = generate_extract_op_name(self._dag, integration_info.name, name)
@@ -77,7 +85,7 @@ class S3Integration(Integration):
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
                                 parameters=S3ExtractParams(
-                                    filepath=json.dumps(filepaths), format=format
+                                    filepath=json.dumps(filepaths), format=format_enum
                                 ),
                             )
                         ),
@@ -95,7 +103,6 @@ class S3Integration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
         )

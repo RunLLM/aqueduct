@@ -11,6 +11,7 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
+from aqueduct.logger import logger
 from aqueduct.operators import (
     Operator,
     OperatorSpec,
@@ -335,8 +336,8 @@ class AddOrReplaceOperatorDelta(DAGDelta):
                         "because it is a dependency of the new operator." % self.op.name,
                     )
 
-            print(
-                "Warning: You are overwriting the previously defined operator `%s`. Any downstream "
+            logger().info(
+                "The previously defined operator `%s` is being overwritten. Any downstream "
                 "artifacts of that operator will need to be recomputed and re-saved." % self.op.name
             )
             for op_id in downstream_op_ids:
@@ -542,3 +543,7 @@ def apply_deltas_to_dag(dag: DAG, deltas: List[DAGDelta], make_copy: bool = Fals
         delta.apply(dag)
 
     return dag
+
+
+# Initialize a module-level dag object, to be accessed and modified when the user construct the flow.
+__GLOBAL_DAG__ = DAG(metadata=Metadata())

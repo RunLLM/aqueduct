@@ -3,6 +3,7 @@ import json
 from typing import IO, Any, Dict, List, Optional, Tuple
 
 import requests
+from aqueduct._version import __version__
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
@@ -12,7 +13,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.logger import Logger
+from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
@@ -107,7 +108,14 @@ class APIClient:
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
-    def __init__(self, api_key: str, aqueduct_address: str):
+    # Auth header
+    API_KEY_HEADER = "api-key"
+    # Client version header
+    CLIENT_VERSION_HEADER = "sdk-client-version"
+
+    configured = False
+
+    def configure(self, api_key: str, aqueduct_address: str) -> None:
         self.api_key = api_key
         self.aqueduct_address = aqueduct_address
 
@@ -115,33 +123,47 @@ class APIClient:
         if self.aqueduct_address.endswith("/"):
             self.aqueduct_address = self.aqueduct_address[:-1]
 
-        # If a dummy client is initialized, don't perform validation.
-        if self.api_key == "" and self.aqueduct_address == "":
-            Logger.logger.info(
-                "Neither api key or server address were specified. This is a dummy client."
-            )
-            return
+        self.configured = True
 
         # Check that the connection with the backend is working.
-        if self.aqueduct_address.startswith(self.HTTP_PREFIX):
-            self.aqueduct_address = self.aqueduct_address[len(self.HTTP_PREFIX) :]
-            self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
-        elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
-            self.aqueduct_address = self.aqueduct_address[len(self.HTTPS_PREFIX) :]
-            self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
-        else:
-            self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
+        try:
+            if self.aqueduct_address.startswith(self.HTTP_PREFIX):
+                self.aqueduct_address = self.aqueduct_address[len(self.HTTP_PREFIX) :]
+                self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
+            elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
+                self.aqueduct_address = self.aqueduct_address[len(self.HTTPS_PREFIX) :]
+                self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
+            else:
+                self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
+        except Exception as e:
+            self.configured = False
+            raise e
+
+    def _check_config(self) -> None:
+        if not self.configured:
+            raise Exception(
+                "API client has not been configured, please complete the configuration \
+                by initializing an Aqueduct client with the api key and the server address."
+            )
+
+    def _generate_auth_headers(self) -> Dict[str, str]:
+        self._check_config()
+        return {self.API_KEY_HEADER: self.api_key, self.CLIENT_VERSION_HEADER: str(__version__)}
 
     def construct_base_url(self, use_https: Optional[bool] = None) -> str:
+        self._check_config()
         if use_https is None:
             use_https = self.use_https
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
         return "%s%s" % (protocol_prefix, self.aqueduct_address)
 
     def construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
+        self._check_config()
         if use_https is None:
             use_https = self.use_https
-        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
+        url = "%s%s" % (self.construct_base_url(use_https), route_suffix)
+        logger().debug("Constructed full URL %s", url)
+        return url
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -156,7 +178,7 @@ class APIClient:
                 self._test_url(url)
                 return True
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 
@@ -166,7 +188,7 @@ class APIClient:
                 self._test_url(url)
                 return False
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 
@@ -180,16 +202,17 @@ class APIClient:
 
         We don't are about the value of the response, as long as the request succeeds.
         """
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
     def url_prefix(self) -> str:
+        self._check_config()
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
         if len(resp.json()) == 0:
@@ -204,14 +227,14 @@ class APIClient:
 
     def list_github_repos(self) -> List[str]:
         url = self.construct_full_url(self.LIST_GITHUB_REPO_ROUTE)
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
 
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["repos"]]
 
     def list_github_branches(self, repo_url: str) -> List[str]:
         url = self.construct_full_url(self.LIST_GITHUB_BRANCH_ROUTE)
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         headers["github-repo"] = repo_url
 
         resp = requests.get(url, headers=headers)
@@ -219,7 +242,7 @@ class APIClient:
 
     def list_tables(self, limit: int) -> List[Tuple[str, str]]:
         url = self.construct_full_url(self.LIST_TABLES_ROUTE)
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         headers["limit"] = str(limit)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
@@ -240,9 +263,7 @@ class APIClient:
         Returns:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
-        headers = {
-            **utils.generate_auth_headers(self.api_key),
-        }
+        headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
         }
@@ -265,7 +286,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
         }
@@ -287,7 +308,7 @@ class APIClient:
         flow_id: str,
         serialized_params: Optional[str] = None,
     ) -> None:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
         body = {}
@@ -298,13 +319,13 @@ class APIClient:
         utils.raise_errors(response)
 
     def delete_workflow(self, flow_id: str) -> None:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         response = requests.post(url, headers=headers)
         utils.raise_errors(response)
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
@@ -312,7 +333,7 @@ class APIClient:
         return workflow_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         url = self.construct_full_url(self.LIST_WORKFLOWS_ROUTE)
         response = requests.get(url, headers=headers)
         utils.raise_errors(response)
@@ -321,7 +342,7 @@ class APIClient:
 
     def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
         """Returns an empty string if the operator was not successfully executed."""
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         url = self.construct_full_url(
             self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id)
         )
@@ -350,9 +371,7 @@ class APIClient:
             The first mapping is for operators and the second is for artifacts.
         """
         url = self.construct_full_url(self.NODE_POSITION_ROUTE)
-        headers = {
-            **utils.generate_auth_headers(self.api_key),
-        }
+        headers = self._generate_auth_headers()
         data = json.dumps(operator_mapping, sort_keys=False)
         resp = requests.post(url, headers=headers, data=data)
         utils.raise_errors(resp)
@@ -362,7 +381,11 @@ class APIClient:
         return resp_json["operator_positions"], resp_json["artifact_positions"]
 
     def export_serialized_function(self, operator: Operator) -> bytes:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
         operator_resp = requests.get(operator_url, headers=headers)
         return operator_resp.content
+
+
+# Initialize a unconfigured api client. It will be configured when the user construct an Aqueduct client.
+__GLOBAL_API_CLIENT__ = APIClient()
