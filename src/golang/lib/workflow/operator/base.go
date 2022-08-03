@@ -78,6 +78,10 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 	}
 }
 
+func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
+}
+
 // fetchExecState assumes that the operator has been computed already.
 func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionState {
 	var execState shared.ExecutionState

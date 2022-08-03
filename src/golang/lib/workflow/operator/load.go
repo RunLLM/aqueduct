@@ -72,3 +72,7 @@ func (lo *loadOperatorImpl) JobSpec() job.Spec {
 		InputMetadataPath: lo.inputMetadataPaths[0],
 	}
 }
+
+func (lo *loadOperatorImpl) Launch(ctx context.Context) error {
+	return lo.launch(ctx, lo.JobSpec())
+}
