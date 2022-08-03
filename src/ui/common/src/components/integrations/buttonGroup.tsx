@@ -22,13 +22,17 @@ const IntegrationButtonGroup: React.FC<Props> = ({
     <ButtonGroup>
       <Tooltip title="test-connect this integration">
         <IconButton sx={{ marginRight: '2px' }} onClick={onTestConnection}>
-          <FontAwesomeIcon icon={faFlask} color='black'/>
+          <FontAwesomeIcon icon={faFlask} color="black" />
         </IconButton>
       </Tooltip>
       {integration.name === 'aqueduct_demo' && (
         <Tooltip title="upload a csv file">
           <IconButton>
-            <FontAwesomeIcon icon={faFileCsv} onClick={onUploadCsv} color='black' />
+            <FontAwesomeIcon
+              icon={faFileCsv}
+              onClick={onUploadCsv}
+              color="black"
+            />
           </IconButton>
         </Tooltip>
       )}

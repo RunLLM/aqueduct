@@ -67,7 +67,7 @@ import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
-import DataTable from './components/tables/data_table';
+import DataTable from './components/tables/dataTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -101,25 +101,18 @@ import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
 } from './reducers/dataPreview';
-import integrationOperators, {
+import integration, {
+  handleListIntegrationObjects,
+  handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
-} from './reducers/integrationOperators';
+  integrationSlice,
+  IntegrationState,
+  objectKeyFn,
+} from './reducers/integration';
 import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
 } from './reducers/integrations';
-import integrationTableData, {
-  handleLoadIntegrationTable,
-  integrationTableDataSlice,
-  tableKeyFn,
-} from './reducers/integrationTableData';
-import integrationTables, {
-  handleLoadIntegrationTables,
-  integrationTablesSlice,
-  IntegrationTablesState,
-} from './reducers/integrationTables';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -386,30 +379,25 @@ export {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleListIntegrationObjects,
+  handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
   handleLoadIntegrations,
-  handleLoadIntegrationTable,
-  handleLoadIntegrationTables,
   HeightTransition,
   HomePage,
   IconButton,
   Integration,
+  integration,
   IntegrationCard,
   IntegrationConfig,
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
-  integrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
   integrations,
+  integrationSlice,
   IntegrationsPage,
   integrationsSlice,
-  integrationTableData,
-  integrationTableDataSlice,
-  integrationTables,
-  integrationTablesSlice,
-  IntegrationTablesState,
+  IntegrationState,
   IntegrationTextInputField,
   listNotifications,
   ListWorkflowResponse,
@@ -453,6 +441,7 @@ export {
   notificationsSlice,
   NotificationStatus,
   NotificationWorkflowMetadata,
+  objectKeyFn,
   openSideSheet,
   openSideSheetSlice,
   Operator,
@@ -506,7 +495,6 @@ export {
   SupportedIntegrations,
   Tab,
   TableArtifactNode,
-  tableKeyFn,
   Tabs,
   theme,
   TransitionLengthInMs,

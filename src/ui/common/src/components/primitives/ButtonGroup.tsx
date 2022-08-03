@@ -8,7 +8,7 @@ type Props = {
 const ButtonGroup: React.FC<Props> = ({ children }) => {
   return (
     <Box
-      display='flex'
+      display="flex"
       flexDirection="row"
       alignContent="center"
       alignItems="center"
