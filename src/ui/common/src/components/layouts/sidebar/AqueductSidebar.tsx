@@ -151,9 +151,8 @@ export const AqueductSidebar: React.FC<Props> = ({
     // open bottom to top
     bottomAligned: {
       position: 'absolute',
-      right: bottomSideSheetOffset,
+      left: MenuSidebarOffset,
       bottom: 0,
-      mx: `${BottomSidebarMarginInPx}px`,
       transition: AllTransition,
       width: bottomSideSheetWidth,
       height: `${BottomSidebarHeightInPx}px`,

@@ -29,7 +29,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -156,7 +156,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorReader.ObjectTouchedByWorkflow(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			touchedOperators, err := h.OperatorReader.GetLoadOperatorsForWorkflowAndIntegration(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}

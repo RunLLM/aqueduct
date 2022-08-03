@@ -25,8 +25,8 @@ type Artifact interface {
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult updates the artifact result in the database.
-	// Errors if the artifact has not yet been computed, or InitializeResult() hasn't been called yet.
-	PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error
+	// Errors if InitializeResult() hasn't been called yet.
+	PersistResult(ctx context.Context, execState *shared.ExecutionState) error
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
@@ -106,51 +106,6 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	return res
 }
 
-func updateArtifactResultAfterComputation(
-	ctx context.Context,
-	opStatus shared.ExecutionStatus,
-	storageConfig *shared.StorageConfig,
-	artifactMetadataPath string,
-	artifactResultWriter artifact_result.Writer,
-	artifactResultID uuid.UUID,
-	db database.Database,
-) {
-	changes := map[string]interface{}{
-		artifact_result.StatusColumn:   opStatus,
-		artifact_result.MetadataColumn: nil,
-	}
-
-	var artifactResultMetadata artifact_result.Metadata
-	if opStatus == shared.SucceededExecutionStatus {
-		err := utils.ReadFromStorage(
-			ctx,
-			storageConfig,
-			artifactMetadataPath,
-			&artifactResultMetadata,
-		)
-		if err != nil {
-			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
-			return
-		}
-
-		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
-	}
-
-	_, err := artifactResultWriter.UpdateArtifactResult(
-		ctx,
-		artifactResultID,
-		changes,
-		db,
-	)
-	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update artifact result metadata: %v", err)
-	}
-}
-
 func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
 	if a.resultWriter == nil {
 		return errors.New("Artifact's result writer cannot be nil.")
@@ -171,23 +126,55 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 	return nil
 }
 
-func (a *ArtifactImpl) PersistResult(ctx context.Context, opStatus shared.ExecutionStatus) error {
+func (a *ArtifactImpl) updateArtifactResultAfterComputation(
+	ctx context.Context,
+	execState *shared.ExecutionState,
+) {
+	changes := map[string]interface{}{
+		artifact_result.StatusColumn:    execState.Status,
+		artifact_result.ExecStateColumn: execState,
+		artifact_result.MetadataColumn:  nil,
+	}
+
+	if a.Computed(ctx) {
+		var artifactResultMetadata artifact_result.Metadata
+		err := utils.ReadFromStorage(
+			ctx,
+			a.storageConfig,
+			a.metadataPath,
+			&artifactResultMetadata,
+		)
+		if err != nil {
+			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
+			return
+		}
+		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
+	}
+
+	_, err := a.resultWriter.UpdateArtifactResult(
+		ctx,
+		a.resultID,
+		changes,
+		a.db,
+	)
+	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"changes": changes,
+			},
+		).Errorf("Unable to update artifact result metadata: %v", err)
+	}
+}
+
+func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.ExecutionState) error {
 	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
-	if !a.Computed(ctx) {
-		return errors.Newf("Artifact %s cannot be persisted because it has not been computed.", a.name)
+	if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+		return errors.Newf("Artifact %s has unexpected execution state: %s", a.Name(), execState.Status)
 	}
 
-	updateArtifactResultAfterComputation(
-		ctx,
-		opStatus,
-		a.storageConfig,
-		a.metadataPath,
-		a.resultWriter,
-		a.resultID,
-		a.db,
-	)
+	a.updateArtifactResultAfterComputation(ctx, execState)
 	a.resultsPersisted = true
 	return nil
 }

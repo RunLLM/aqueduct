@@ -32,7 +32,7 @@ type Reader interface {
 		workflowId uuid.UUID,
 		db database.Database,
 	) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error)
-	ObjectTouchedByWorkflow(
+	GetLoadOperatorsForWorkflowAndIntegration(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		integrationId uuid.UUID,

@@ -142,7 +142,7 @@ class DeleteSavedObjectsSpec(models.BaseSpec):
     metadata_path: str
     connector_name: Dict[str, common.Name]
     connector_config: Dict[str, config.Config]
-    parameters: Dict[str, List[str]]
+    integration_to_object: Dict[str, List[str]]
     output_content_path: str
 
     # validators

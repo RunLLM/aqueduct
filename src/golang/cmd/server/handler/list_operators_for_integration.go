@@ -9,7 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -123,6 +123,5 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 			IsActive:      active,
 		})
 	}
-
 	return listOperatorsForIntegrationResponse{OperatorWithIds: results}, http.StatusOK, nil
 }

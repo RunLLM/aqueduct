@@ -8,9 +8,8 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
-import { ArtifactType } from '../../../utils/artifacts';
 import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
-import ExecutionStatus, { CheckStatus } from '../../../utils/shared';
+import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
 
 type Props = {
@@ -35,43 +34,42 @@ export const Node: React.FC<Props> = ({
   );
   const selected = currentNode.id === data.nodeId;
 
-  let status: CheckStatus | ExecutionStatus;
+  let execState: ExecState;
   if (data.nodeType === ReactflowNodeType.Operator) {
-    status = workflowState.operatorResults[data.nodeId]?.result?.status;
+    execState = workflowState.operatorResults[data.nodeId]?.result;
   } else {
-    const artifactResult = workflowState.artifactResults[data.nodeId];
-    if (
-      workflowState.selectedDag.artifacts[data.nodeId]?.spec.type ===
-      ArtifactType.Bool
-    ) {
-      status = artifactResult?.result?.data as CheckStatus;
-    } else {
-      status = artifactResult?.result?.status;
-    }
+    execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
 
-  let borderColor, backgroundColor, hoverColor, textColor;
-  switch (status) {
-    case CheckStatus.Succeeded:
-    case ExecutionStatus.Succeeded:
-      borderColor = 'green.600';
-      backgroundColor = selected ? 'green.200' : 'green.25';
-      hoverColor = 'green.100';
-      textColor = 'green.800';
-      break;
-    case CheckStatus.Failed:
-    case ExecutionStatus.Failed:
-      borderColor = 'red.500';
-      backgroundColor = selected ? 'red.300' : 'red.25';
-      hoverColor = 'red.100';
-      textColor = 'red.800';
-      break;
-    default:
-      borderColor = 'gray.600';
-      backgroundColor = selected ? 'gray.300' : 'gray.100';
-      hoverColor = 'gray.200';
-      textColor = 'black';
-      break;
+  const textColor = selected
+    ? theme.palette.DarkContrast50
+    : theme.palette.DarkContrast;
+  const borderColor = textColor;
+
+  let backgroundColor, hoverColor;
+  if (execState?.status === ExecutionStatus.Succeeded) {
+    backgroundColor = selected
+      ? theme.palette.DarkSuccessMain50
+      : theme.palette.DarkSuccessMain;
+    hoverColor = theme.palette.DarkSuccessMain75;
+
+    // Warning color for non-fatal errors.
+  } else if (
+    execState?.status === ExecutionStatus.Failed &&
+    execState.failure_type == FailureType.UserNonFatal
+  ) {
+    backgroundColor = selected
+      ? theme.palette.DarkWarningMain50
+      : theme.palette.DarkWarningMain;
+    hoverColor = theme.palette.DarkWarningMain75;
+  } else if (execState?.status === ExecutionStatus.Failed) {
+    backgroundColor = selected
+      ? theme.palette.DarkErrorMain50
+      : theme.palette.DarkErrorMain;
+    hoverColor = theme.palette.DarkErrorMain75;
+  } else {
+    backgroundColor = selected ? 'gray.300' : 'gray.100';
+    hoverColor = 'gray.200';
   }
 
   return (

@@ -279,7 +279,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   return (
-    <Layout user={user}>
+    <Layout user={user} layoutType="workspace">
       <Box
         sx={{
           display: 'flex',
@@ -300,13 +300,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             mt: 2,
             p: 3,
             mb: contentBottomOffsetInPx,
+            width: '100%',
+            boxSizing: 'border-box',
             backgroundColor: 'gray.50',
           }}
         >
           <ReactFlowProvider>
             <ReactFlowCanvas
-              nodes={dagPosition.result?.nodes}
-              edges={dagPosition.result?.edges}
               switchSideSheet={switchSideSheet}
               onPaneClicked={onPaneClicked}
             />

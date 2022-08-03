@@ -8,6 +8,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -47,6 +49,7 @@ const (
 	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
 	DiscoverJobType           JobType = "discover"
 	WorkflowRetentionType     JobType = "workflow_retention"
+	CompileAirflowJobType     JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -109,11 +112,10 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
 
-	// If the function outputs a value that exists in this list, we will fail the entire workflow.
-	// This list contains the json-serialized version of the offending values.
-	// Must be set to nil if there are no blacklisted outputs expected.
-	BlacklistedOutputs []string `json:"blacklisted_outputs" yaml:"blacklisted_outputs"`
+	// Specific to the check operator. This is left unset by any other function type.
+	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
 }
 
 type ParamSpec struct {
@@ -147,10 +149,10 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName     map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	Parameters        map[string][]string            `json:"parameters"  yaml:"parameters"`
-	OutputContentPath string                         `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName       map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig     map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	IntegrationToObject map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
+	OutputContentPath   string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -181,6 +183,15 @@ type DiscoverSpec struct {
 	ConnectorName     integration.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   auth.Config         `json:"connector_config"  yaml:"connector_config"`
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
+}
+
+type CompileAirflowSpec struct {
+	BasePythonSpec
+	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
+	DagId             string              `json:"dag_id"  yaml:"dag_id"`
+	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
+	TaskSpecs         map[string]Spec     `json:"task_specs"  yaml:"task_specs"`
+	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
 }
 
 func (*WorkflowRetentionSpec) Type() JobType {
@@ -225,6 +236,10 @@ func (*DeleteSavedObjectsSpec) Type() JobType {
 
 func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
+}
+
+func (*CompileAirflowSpec) Type() JobType {
+	return CompileAirflowJobType
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
@@ -351,7 +366,7 @@ func NewDeleteSavedObjectsSpec(
 	metadataPath string,
 	connectorName map[string]integration.Service,
 	connectorConfig map[string]auth.Config,
-	parameters map[string][]string,
+	integrationToObject map[string][]string,
 	outputContentPath string,
 ) Spec {
 	return &DeleteSavedObjectsSpec{
@@ -363,10 +378,10 @@ func NewDeleteSavedObjectsSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		ConnectorName:     connectorName,
-		ConnectorConfig:   connectorConfig,
-		Parameters:        parameters,
-		OutputContentPath: outputContentPath,
+		ConnectorName:       connectorName,
+		ConnectorConfig:     connectorConfig,
+		IntegrationToObject: integrationToObject,
+		OutputContentPath:   outputContentPath,
 	}
 }
 
@@ -434,6 +449,43 @@ func NewDiscoverSpec(
 		ConnectorConfig:   connectorConfig,
 		OutputContentPath: outputContentPath,
 	}
+}
+
+func NewCompileAirflowSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	outputContentPath string,
+	dagId string,
+	cronSchedule string,
+	taskSpecs map[string]Spec,
+	taskEdges map[string][]string,
+) (Spec, error) {
+	for _, taskSpec := range taskSpecs {
+		if taskSpec.Type() != ExtractJobType &&
+			taskSpec.Type() != FunctionJobType &&
+			taskSpec.Type() != ParamJobType &&
+			taskSpec.Type() != SystemMetricJobType &&
+			taskSpec.Type() != LoadJobType {
+			return nil, errors.Newf("Task specs cannot be of type %v", taskSpec.Type())
+		}
+	}
+
+	return &CompileAirflowSpec{
+		BasePythonSpec: BasePythonSpec{
+			BaseSpec: BaseSpec{
+				Type: CompileAirflowJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		OutputContentPath: outputContentPath,
+		DagId:             dagId,
+		CronSchedule:      cronSchedule,
+		TaskSpecs:         taskSpecs,
+		TaskEdges:         taskEdges,
+	}, nil
 }
 
 // `EncodeSpec` first serialize `spec` according to `SerializationType` and returns the base64 encoded string.

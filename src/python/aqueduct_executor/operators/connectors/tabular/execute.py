@@ -13,6 +13,7 @@ from aqueduct_executor.operators.connectors.tabular.spec import (
     Spec,
 )
 from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 from aqueduct_executor.operators.utils.execution import (
     TIP_DEMO_CONNECTION,
     TIP_EXTRACT,
@@ -49,14 +50,23 @@ def run(spec: Spec) -> None:
     try:
         _execute(spec, storage, exec_state)
         # Write operator execution metadata
-        if exec_state.status != enums.ExecutionStatus.FAILED:
+        # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
+        # certain that the operator succeeded.
+        if exec_state.status == enums.ExecutionStatus.FAILED:
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            sys.exit(1)
+        else:
             exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception as e:
         exec_state.status = enums.ExecutionStatus.FAILED
-        exec_state.failure_type = enums.FailureType.SYSTEM
-        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        if isinstance(e, MissingConnectorDependencyException):
+            exec_state.failure_type = enums.FailureType.USER_FATAL
+            exec_state.error = Error(context=exception_traceback(e), tip=str(e))
+        else:
+            exec_state.failure_type = enums.FailureType.SYSTEM
+            exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+            print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
@@ -139,7 +149,7 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
     assert isinstance(spec.connector_name, dict)
     for integration in spec.connector_name:
         op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.parameters[integration])
+        results[integration] = op.delete(spec.integration_to_object[integration])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
@@ -178,38 +188,101 @@ def setup_connector(
     # prevent isort from moving around type: ignore comments which will cause mypy issues.
     # isort: off
     if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:
+        try:
+            import psycopg2
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Postgres connector. Have you run `aqueduct install postgres`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.postgres import (
             PostgresConnector as OpConnector,
         )
     elif connector_name == common.Name.SNOWFLAKE:
+        try:
+            from snowflake import sqlalchemy
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Snowflake connector. Have you run `aqueduct install snowflake`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.snowflake import (  # type: ignore
             SnowflakeConnector as OpConnector,
         )
     elif connector_name == common.Name.BIG_QUERY:
+        try:
+            from google.cloud import bigquery
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.bigquery import (  # type: ignore
             BigQueryConnector as OpConnector,
         )
     elif connector_name == common.Name.REDSHIFT:
+        try:
+            import psycopg2
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.redshift import (  # type: ignore
             RedshiftConnector as OpConnector,
         )
     elif connector_name == common.Name.SQL_SERVER:
+        try:
+            import pyodbc
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the SQL Server connector. Have you run `aqueduct install sqlserver`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
     elif connector_name == common.Name.MYSQL:
+        try:
+            import MySQLdb
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
         )
     elif connector_name == common.Name.MARIA_DB:
+        try:
+            import MySQLdb
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.maria_db import (  # type: ignore
             MariaDbConnector as OpConnector,
         )
     elif connector_name == common.Name.AZURE_SQL:
+        try:
+            import pyodbc
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Azure SQL connector. Have you run `aqueduct install azuresql`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.azure_sql import (  # type: ignore
             AzureSqlConnector as OpConnector,
         )
     elif connector_name == common.Name.S3:
+        try:
+            import pyarrow
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the S3 connector. Have you run `aqueduct install s3`?"
+            )
+
         from aqueduct_executor.operators.connectors.tabular.s3 import (  # type: ignore
             S3Connector as OpConnector,
         )
