@@ -1,7 +1,10 @@
 package airflow
 
 import (
+	"net/http"
 	"strings"
+
+	"github.com/dropbox/godropbox/errors"
 )
 
 // generateDagId generates an Airflow DAG ID for a workflow.
@@ -36,4 +39,10 @@ func prepareId(s string) (string, error) {
 	}
 
 	return result.String(), nil
+}
+
+// wrapApiErrors wraps an error from the Airflow API using the error returned
+// and the HTTP response.
+func wrapApiError(err error, api string, resp *http.Response) error {
+	return errors.Wrapf(err, "Airflow %v error with status: %v", api, resp.Status)
 }
