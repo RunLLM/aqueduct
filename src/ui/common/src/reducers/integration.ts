@@ -41,14 +41,14 @@ type DiscoverResponse = {
 };
 
 export interface IntegrationState {
-  connection: LoadingStatus;
+  connectionStatus: LoadingStatus;
   operators: IntegrationOperatorsState;
   objectNames: ListObjectsState;
   objects: Record<string, ObjectState>;
 }
 
 const initialState: IntegrationState = {
-  connection: { loading: LoadingStatusEnum.Initial, err: '' },
+  connectionStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   operators: {
     status: { loading: LoadingStatusEnum.Initial, err: '' },
     operators: [],
@@ -193,6 +193,38 @@ export const handleListIntegrationObjects = createAsyncThunk<
   }
 );
 
+export const handleTestConnectIntegration = createAsyncThunk<
+  void,
+  { apiKey: string; integrationId: string }
+>(
+  'integration/testConnect',
+  async (
+    args: {
+      apiKey: string;
+      integrationId: string;
+      forceLoad?: boolean;
+    },
+    thunkAPI
+  ) => {
+    const { apiKey, integrationId } = args;
+    const response = await fetch(
+      `${apiAddress}/api/integration/${integrationId}/test`,
+      {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+        },
+      }
+    );
+
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      return thunkAPI.rejectWithValue(responseBody.error);
+    }
+  }
+);
+
 export const integrationSlice = createSlice({
   name: 'integrationTablesReducer',
   initialState: initialState,
@@ -273,6 +305,24 @@ export const integrationSlice = createSlice({
           err: '',
         };
         state.objectNames.names = payload;
+      }
+    );
+    builder.addCase(handleTestConnectIntegration.pending, (state) => {
+      state.connectionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+    });
+    builder.addCase(handleTestConnectIntegration.fulfilled, (state) => {
+      state.connectionStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+    });
+    builder.addCase(
+      handleTestConnectIntegration.rejected,
+      (state, { payload }) => {
+        state.connectionStatus = {
+          loading: LoadingStatusEnum.Failed,
+          err: payload as string,
+        };
       }
     );
   },

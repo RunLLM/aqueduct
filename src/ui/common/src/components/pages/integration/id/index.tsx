@@ -5,13 +5,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
-import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
+import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
+import TestConnectDialog from '../../../../components/integrations/dialogs/testConnectDialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
+  handleTestConnectIntegration,
 } from '../../../../reducers/integration';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
@@ -33,7 +35,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;
-  const [showDialog, setShowDialog] = useState(false);
+  const [showAddTableDialog, setShowAddTableDialog] = useState(false);
+  const [showTestConnectDialog, setShowTestConnectDialog] = useState(false);
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
@@ -86,23 +89,32 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   return (
     <Layout user={user}>
-      <Box>
+      <Box sx={{ paddingBottom: '4px' }}>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
         </Typography>
-        <Box display="flex" flexDirection="row">
+        <Box display="flex" flexDirection="row" alignContent="top">
           <DetailIntegrationCard integration={selectedIntegration} />
           <IntegrationButtonGroup
             integration={selectedIntegration}
-            onUploadCsv={() => setShowDialog(true)}
+            onUploadCsv={() => setShowAddTableDialog(true)}
+            onTestConnection={() => {
+              dispatch(
+                handleTestConnectIntegration({
+                  apiKey: user.apiKey,
+                  integrationId: selectedIntegration.id,
+                })
+              );
+              setShowTestConnectDialog(true);
+            }}
           />
         </Box>
 
-        {showDialog && (
+        {showAddTableDialog && (
           <AddTableDialog
             user={user}
             integrationId={selectedIntegration.id}
-            onCloseDialog={() => setShowDialog(false)}
+            onCloseDialog={() => setShowAddTableDialog(false)}
             onConnect={() => {
               if (!isListObjectsLoading) {
                 dispatch(
@@ -114,16 +126,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 );
               }
 
-              setShowDialog(false);
+              setShowAddTableDialog(false);
             }}
           />
         )}
+        {showTestConnectDialog && (
+          <TestConnectDialog
+            onCloseDialog={() => setShowTestConnectDialog(false)}
+          />
+        )}
+        <IntegrationObjectList user={user} integration={selectedIntegration} />
+        <Typography variant="h4" gutterBottom component="div">
+          Workflows
+        </Typography>
+        <OperatorsOnIntegration />
       </Box>
-      <IntegrationObjectList user={user} integration={selectedIntegration} />
-      <Typography variant="h4" gutterBottom component="div">
-        Workflows
-      </Typography>
-      <OperatorsOnIntegration />
     </Layout>
   );
 };

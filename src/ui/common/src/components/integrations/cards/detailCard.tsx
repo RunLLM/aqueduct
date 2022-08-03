@@ -58,8 +58,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         width: '900px',
-        mt: 2,
-        mb: 2,
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
