@@ -48,6 +48,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import { LoadingStatusEnum } from '../../utils/shared';
 import {
   SavedObject,
   WorkflowDag,
@@ -207,9 +208,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     );
   }, []);
 
-  const savedObjects = useSelector(
+  const savedObjectsResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjects
   );
+
+  const savedObjects = savedObjectsResponse.result;
+  const savedObjectsStatus = savedObjectsResponse.loadingStatus.loading;
 
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
@@ -444,18 +448,77 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }
   };
 
+  const listSavedObjects = (
+    <FormGroup>
+      {Object.entries(savedObjects).map(
+        ([integrationTableKey, savedObjectsList]) => (
+          <FormControlLabel
+            key={integrationTableKey}
+            control={
+              <Checkbox
+                id={integrationTableKey}
+                onChange={updateSelectedObjects}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body1">
+                  <b>{savedObjectsList[0].integration_name}</b>:{' '}
+                  {savedObjectsList[0].object_name}
+                </Typography>
+
+                <Typography
+                  style={{
+                    color: theme.palette.gray[600],
+                    paddingRight: '8px',
+                  }}
+                  variant="body2"
+                  display="inline"
+                >
+                  Update Mode:{' '}
+                  {savedObjectsList
+                    .map((object) => object.update_mode)
+                    .join(', ')}
+                </Typography>
+
+                <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
+                  <Typography display="inline">
+                    <FontAwesomeIcon
+                      icon={faCircleInfo}
+                      style={{ color: theme.palette.Info }}
+                    />
+                  </Typography>
+                </Tooltip>
+              </Box>
+            }
+          />
+        )
+      )}
+    </FormGroup>
+  );
+
   const deleteDialog = (
     <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
       <DialogTitle>
-        <Typography variant="h5">
-          {' '}
-          {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-          Delete{' '}
-          <span style={{ fontFamily: 'Monospace' }}>
-            {workflowDag.metadata?.name}
-          </span>
-          ?{' '}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h5">
+              {' '}
+              {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
+              Delete{' '}
+              <span style={{ fontFamily: 'Monospace' }}>
+                {workflowDag.metadata?.name}
+              </span>
+              ?{' '}
+            </Typography>
+          </Box>
+
+          <FontAwesomeIcon
+            icon={faXmark}
+            onClick={() => setShowDeleteDialog(false)}
+            style={{ cursor: 'pointer' }}
+          />
+        </Box>
       </DialogTitle>
 
       <DialogContent>
@@ -472,52 +535,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Typography>
 
         <Box sx={{ my: 2 }}>
-          <FormGroup>
-            {Object.entries(savedObjects).map(
-              ([integrationTableKey, savedObjectsList]) => (
-                <FormControlLabel
-                  key={integrationTableKey}
-                  control={
-                    <Checkbox
-                      id={integrationTableKey}
-                      onChange={updateSelectedObjects}
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography variant="body1">
-                        <b>{savedObjectsList[0].integration_name}</b>:{' '}
-                        {savedObjectsList[0].object_name}
-                      </Typography>
-
-                      <Typography
-                        style={{
-                          color: theme.palette.gray[600],
-                          paddingRight: '8px',
-                        }}
-                        variant="body2"
-                        display="inline"
-                      >
-                        Update Mode:{' '}
-                        {savedObjectsList
-                          .map((object) => object.update_mode)
-                          .join(', ')}
-                      </Typography>
-
-                      <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
-                        <Typography display="inline">
-                          <FontAwesomeIcon
-                            icon={faCircleInfo}
-                            style={{ color: theme.palette.Info }}
-                          />
-                        </Typography>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              )
-            )}
-          </FormGroup>
+          {savedObjectsStatus === LoadingStatusEnum.Succeeded &&
+            listSavedObjects}
+          {savedObjectsStatus === LoadingStatusEnum.Failed && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {`Unable to retrieve list of saved objects. Failed with error: ${savedObjectsResponse.loadingStatus.err}`}
+            </Alert>
+          )}
         </Box>
 
         <Typography variant="body1">
@@ -571,7 +595,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       onClose={() => setShowSavedObjectDeletionResultsDialog(false)}
     >
       <DialogTitle>
-        <Typography variant="h5">Saved Object Deletion Results</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h5">
+              {' '}
+              Saved Object Deletion Results{' '}
+            </Typography>
+          </Box>
+        </Box>
       </DialogTitle>
 
       <DialogContent>
@@ -599,7 +630,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                         <b>{integrationName}</b>: {objectResult.name}
                       </>
                     }
-                    secondary={objectResult.succeeded}
+                    secondary={<>{objectResult.succeeded}</>}
                   />
                 </ListItem>
               ))

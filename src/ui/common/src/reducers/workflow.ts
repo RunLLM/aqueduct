@@ -46,9 +46,14 @@ export type OperatorResult = {
   result?: GetOperatorResultResponse;
 };
 
+export type SavedObjectResponse = {
+  loadingStatus: LoadingStatus;
+  result: Record<string, SavedObject[]>;
+};
+
 export type WorkflowState = {
   loadingStatus: LoadingStatus;
-  savedObjects: { [id: string]: SavedObject[] };
+  savedObjects: SavedObjectResponse;
   dags: { [id: string]: WorkflowDag };
   dagResults: WorkflowDagResultSummary[];
   watcherAuthIds: string[];
@@ -62,7 +67,10 @@ export type WorkflowState = {
 
 const initialState: WorkflowState = {
   loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
-  savedObjects: {},
+  savedObjects: {
+    loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+    result: {},
+  },
   dags: {},
   dagResults: [],
   artifactResults: {},
@@ -351,7 +359,23 @@ export const workflowSlice = createSlice({
             savedObjects[key] = [object];
           }
         });
-        state.savedObjects = savedObjects;
+
+        state.savedObjects.loadingStatus = {
+          loading: LoadingStatusEnum.Succeeded,
+          err: '',
+        };
+        state.savedObjects.result = savedObjects;
+      }
+    );
+
+    builder.addCase(
+      handleListWorkflowSavedObjects.rejected,
+      (state, action) => {
+        const payload = action.payload;
+        state.savedObjects.loadingStatus = {
+          loading: LoadingStatusEnum.Failed,
+          err: payload as string,
+        };
       }
     );
 
