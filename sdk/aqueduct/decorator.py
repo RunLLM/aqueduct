@@ -499,6 +499,6 @@ def to_operator(
             A path to file that specifies requirements for this specific operator.
     """
     func_op = op(
-        name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path
+        name=name, description=description, file_dependencies=file_dependencies, requirements=reqs_path
     )
     return func_op(func)
