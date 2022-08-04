@@ -90,8 +90,7 @@ export const Node: React.FC<Props> = ({
           maxWidth: '200px',
           minWidth: '140px',
           overflow: 'clip',
-          textOverflow: 'wrap',
-          overflowWrap: 'normal',
+          overflowWrap: 'break-word',
           textAlign: 'center',
         }}
       >
