@@ -206,6 +206,7 @@ export const handleTestConnectIntegration = createAsyncThunk<
     },
     thunkAPI
   ) => {
+    return thunkAPI.rejectWithValue('failed_hack');
     const { apiKey, integrationId } = args;
     const response = await fetch(
       `${apiAddress}/api/integration/${integrationId}/test`,

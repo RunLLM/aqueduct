@@ -1,12 +1,13 @@
-import { Typography } from '@mui/material';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Snackbar from '@mui/material/Snackbar';
+import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
-import TestConnectDialog from '../../../../components/integrations/dialogs/testConnectDialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
@@ -20,8 +21,8 @@ import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkfl
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
-import { isLoading } from '../../../../utils/shared';
-import IntegrationButtonGroup from '../../../integrations/buttonGroup';
+import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
+import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -36,7 +37,29 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
-  const [showTestConnectDialog, setShowTestConnectDialog] = useState(false);
+
+  const [showTestConnectToast, setShowTestConnectToast] = useState(false);
+  const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
+
+  const handleCloseConnectSuccessToast = () => {
+    setShowConnectSuccessToast(false);
+  };
+
+  const handleCloseTestConnectToast = () => {
+    setShowTestConnectToast(false);
+  };
+
+  const testConnectStatus = useSelector(
+    (state: RootState) => state.integrationReducer.connectionStatus
+  );
+
+  const integrations = useSelector(
+    (state: RootState) => state.integrationsReducer.integrations
+  );
+
+  const isListObjectsLoading = useSelector((state: RootState) =>
+    isLoading(state.integrationReducer.objectNames.status)
+  );
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
@@ -57,13 +80,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, []);
 
-  const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
-  );
+  useEffect(() => {
+    if (!isLoading(testConnectStatus)) {
+      setShowTestConnectToast(false);
+    }
 
-  const isListObjectsLoading = useSelector((state: RootState) =>
-    isLoading(state.integrationReducer.objectNames.status)
-  );
+    if (isSucceeded(testConnectStatus)) {
+      setShowConnectSuccessToast(true);
+    }
+  }, [testConnectStatus]);
 
   let selectedIntegration = null;
 
@@ -94,10 +119,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           Integration Details
         </Typography>
         <Box display="flex" flexDirection="row" alignContent="top">
-          <DetailIntegrationCard integration={selectedIntegration} />
-          <IntegrationButtonGroup
+          <DetailIntegrationCard
             integration={selectedIntegration}
-            onUploadCsv={() => setShowAddTableDialog(true)}
+            connectStatus={testConnectStatus}
+          />
+          <IntegrationOptions
+            integration={selectedIntegration}
             onTestConnection={() => {
               dispatch(
                 handleTestConnectIntegration({
@@ -105,37 +132,20 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                   integrationId: selectedIntegration.id,
                 })
               );
-              setShowTestConnectDialog(true);
+              setShowTestConnectToast(true);
             }}
           />
         </Box>
-
-        {showAddTableDialog && (
-          <AddTableDialog
-            user={user}
-            integrationId={selectedIntegration.id}
-            onCloseDialog={() => setShowAddTableDialog(false)}
-            onConnect={() => {
-              if (!isListObjectsLoading) {
-                dispatch(
-                  handleListIntegrationObjects({
-                    apiKey: user.apiKey,
-                    integrationId: integrationId,
-                    forceLoad: true,
-                  })
-                );
-              }
-
-              setShowAddTableDialog(false);
-            }}
-          />
+        {testConnectStatus && isFailed(testConnectStatus) && (
+          <Alert severity="error" sx={{ marginTop: 2 }}>
+            {`Test-connect failed with error: ${testConnectStatus.err} . Please verify if the integration is available.`}
+          </Alert>
         )}
-        {showTestConnectDialog && (
-          <TestConnectDialog
-            onCloseDialog={() => setShowTestConnectDialog(false)}
-          />
-        )}
-        <IntegrationObjectList user={user} integration={selectedIntegration} />
+        <IntegrationObjectList
+          user={user}
+          integration={selectedIntegration}
+          onUploadCsv={() => setShowAddTableDialog(true)}
+        />
         <Typography
           variant="h4"
           gutterBottom
@@ -146,6 +156,56 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         </Typography>
         <OperatorsOnIntegration />
       </Box>
+      {showAddTableDialog && (
+        <AddTableDialog
+          user={user}
+          integrationId={selectedIntegration.id}
+          onCloseDialog={() => setShowAddTableDialog(false)}
+          onConnect={() => {
+            if (!isListObjectsLoading) {
+              dispatch(
+                handleListIntegrationObjects({
+                  apiKey: user.apiKey,
+                  integrationId: integrationId,
+                  forceLoad: true,
+                })
+              );
+            }
+
+            setShowAddTableDialog(false);
+          }}
+        />
+      )}
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showTestConnectToast}
+        onClose={handleCloseTestConnectToast}
+        key={'workflowheader-success-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseTestConnectToast}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          Testing connection for this integration.
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showConnectSuccessToast}
+        onClose={handleCloseConnectSuccessToast}
+        key={'workflowheader-error-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseConnectSuccessToast}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          Test-connect was successful!
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };
