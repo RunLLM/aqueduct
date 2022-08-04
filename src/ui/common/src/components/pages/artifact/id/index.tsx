@@ -3,6 +3,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
+import KeyValueTable from '../../../tables/KeyValueTable';
 
 import UserProfile from '../../../../utils/auth';
 import { useAqueductConsts } from '../../../hooks/useAqueductConsts';
@@ -43,6 +44,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     }, []);
 
     const { apiAddress } = useAqueductConsts();
+
     return (
         <Layout user={user}>
             <Box width={'800px'}>
@@ -54,6 +56,16 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                     <Box width="100%" marginTop="12px">
                         <Typography variant="h5" component="div" marginBottom="8px">Preview</Typography>
                         <StickyHeaderTable />
+                    </Box>
+                    <Box display="flex" width="100%" paddingTop="40px">
+                        <Box width="100%">
+                            <Typography variant="h5" component="div" marginBottom="8px">Metrics</Typography>
+                            <KeyValueTable />
+                        </Box>
+                        <Box width="100%">
+                            <Typography variant="h5" component="div" marginBottom="8px">Checks</Typography>
+                            <KeyValueTable />
+                        </Box>
                     </Box>
                 </Box>
             </Box>

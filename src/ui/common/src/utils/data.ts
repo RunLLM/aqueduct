@@ -21,7 +21,7 @@ export type DataSchema = {
 
 export type Data = {
   schema?: DataSchema;
-  data: any[];
+  data: (string | number | boolean)[][];
 };
 
 export type DataPreviewLoadSpec = {
