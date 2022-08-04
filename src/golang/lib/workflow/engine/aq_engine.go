@@ -132,7 +132,6 @@ func NewAqEngine(
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
 ) (*aqEngine, error) {
-
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
@@ -171,8 +170,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
-
-	//TODO: Generalize JobManager type from user input.
+	// TODO: Generalize JobManager type from user input.
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.aqPath, job.BinaryDir),
@@ -287,7 +285,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		workflowRunMetadata,
 		timeConfig,
 		jobManager,
-		true, //should persist results
+		true, // should persist results
 	)
 	if err != nil {
 		workflowRunMetadata.status = shared.FailedExecutionStatus
@@ -303,7 +301,6 @@ func (eng *aqEngine) PreviewWorkflow(
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
-
 	// previewing workflows always happens using the ProcessJobManager
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
@@ -358,7 +355,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		workflowRunMetadata,
 		timeConfig,
 		jobManager,
-		false, //should not persist results
+		false, // should not persist results
 	)
 	if err != nil {
 		workflowRunMetadata.status = shared.FailedExecutionStatus

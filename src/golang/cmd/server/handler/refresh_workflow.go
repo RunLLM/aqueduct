@@ -98,7 +98,6 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		timeConfig,
 		args.Parameters,
 	)
-
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
