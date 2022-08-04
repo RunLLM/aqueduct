@@ -104,9 +104,15 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 
 func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*editWorkflowArgs)
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to create update workflow transaction.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	err := h.Engine.EditWorkflow(
+	err = h.Engine.EditWorkflow(
 		ctx,
+		txn,
 		args.workflowId,
 		args.workflowName,
 		args.workflowDescription,

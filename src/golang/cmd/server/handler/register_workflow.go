@@ -195,6 +195,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		// If we're updating an existing workflow, first update the metadata.
 		err := h.Engine.EditWorkflow(
 			ctx,
+			txn,
 			workflowId,
 			args.dbWorkflowDag.Metadata.Name,
 			args.dbWorkflowDag.Metadata.Description,

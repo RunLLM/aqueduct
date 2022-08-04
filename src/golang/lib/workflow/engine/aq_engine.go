@@ -580,6 +580,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 func (eng *aqEngine) EditWorkflow(
 	ctx context.Context,
+	txn database.Database,
 	workflowId uuid.UUID,
 	workflowName string,
 	workflowDescription string,
@@ -603,7 +604,7 @@ func (eng *aqEngine) EditWorkflow(
 		changes["schedule"] = schedule
 	}
 
-	_, err := eng.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, eng.database)
+	_, err := eng.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update workflow.")
 	}

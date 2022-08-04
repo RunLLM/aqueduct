@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -44,6 +45,7 @@ type Engine interface {
 
 	EditWorkflow(
 		ctx context.Context,
+		txn database.Database,
 		workflowId uuid.UUID,
 		workflowName string,
 		workflowDescription string,
