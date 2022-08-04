@@ -261,39 +261,3 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
 }
-
-// CreateWorkflowCronJob creates a k8s cron job
-// that will run the workflow on the specified schedule.
-func CreateWorkflowCronJob(
-	ctx context.Context,
-	workflow *workflow.Workflow,
-	dbConfig *database.DatabaseConfig,
-	vaultObject vault.Vault,
-	jobManager job.JobManager,
-	githubManager github.Manager,
-) error {
-	workflowId := workflow.Id.String()
-	name := shared_utils.AppendPrefix(workflowId)
-	period := string(workflow.Schedule.CronSchedule)
-
-	spec := job.NewWorkflowSpec(
-		workflow.Name,
-		workflowId,
-		dbConfig,
-		vaultObject.Config(),
-		jobManager.Config(),
-		githubManager.Config(),
-		nil, /* parameters */
-	)
-
-	err := jobManager.DeployCronJob(
-		ctx,
-		name,
-		period,
-		spec,
-	)
-	if err != nil {
-		return errors.Wrap(err, "unable to deploy workflow cron job")
-	}
-	return nil
-}
