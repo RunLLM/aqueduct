@@ -46,7 +46,7 @@ type artifactVersion struct {
 type CheckResult struct {
 	Name     string                 `json:"name"`
 	Status   shared.ExecutionStatus `json:"status"`
-	Metadata shared.ExecutionState  `json:"metadata"`
+	Metadata *shared.ExecutionState `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
@@ -247,14 +247,14 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		for _, failedOperatorResult := range failedOperatorResults {
 			if _, ok := latestVersions[failedOperatorResult.ArtifactId]; ok {
 				artifactVersionObject := latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				if failedOperatorResult.Metadata.Error != nil {
+				if failedOperatorResult.Metadata != nil && failedOperatorResult.Metadata.Error != nil {
 					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
 				}
 
 				latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
 			} else {
 				artifactVersionObject := historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				if failedOperatorResult.Metadata.Error != nil {
+				if failedOperatorResult.Metadata != nil && failedOperatorResult.Metadata.Error != nil {
 					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
 				}
 
