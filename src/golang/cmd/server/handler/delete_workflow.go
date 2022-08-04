@@ -250,7 +250,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// Delete storage files (artifact content and function files)
 	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIds))
 	for _, op := range operatorsToDelete {
-		if op.Spec.IsFunction() {
+		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
 		}
 	}
