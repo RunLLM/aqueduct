@@ -6,16 +6,18 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { Integration } from '../../utils/integrations';
+import { Integration, isDemo } from '../../utils/integrations';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
   integration: Integration;
+  onUploadCsv?: () => void;
   onTestConnection?: () => void;
 };
 
 const IntegrationOptions: React.FC<Props> = ({
   integration,
+  onUploadCsv,
   onTestConnection,
 }) => {
   // Menu control based on
@@ -24,7 +26,16 @@ const IntegrationOptions: React.FC<Props> = ({
     setAnchorEl(null);
   };
   return (
-    <Box>
+    <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
+      {isDemo(integration) && (
+        <Button
+          variant="outlined"
+          onClick={onUploadCsv}
+          sx={{ width: '140px', marginRight: 1 }}
+        >
+          Upload CSV
+        </Button>
+      )}
       <Button
         color="primary"
         id={`options-${integration.id}`}
@@ -32,7 +43,7 @@ const IntegrationOptions: React.FC<Props> = ({
           setAnchorEl(event.currentTarget);
         }}
         endIcon={<FontAwesomeIcon icon={faCaretDown} size="sm" />}
-        sx={{ width: '150px' }}
+        sx={{ width: '120px' }}
       >
         Options
       </Button>

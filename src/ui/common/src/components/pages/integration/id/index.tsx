@@ -125,6 +125,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
           <IntegrationOptions
             integration={selectedIntegration}
+            onUploadCsv={() => setShowAddTableDialog(true)}
             onTestConnection={() => {
               dispatch(
                 handleTestConnectIntegration({
@@ -138,14 +139,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         </Box>
         {testConnectStatus && isFailed(testConnectStatus) && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
-            {`Test-connect failed with error: ${testConnectStatus.err} . Please verify if the integration is available.`}
+            Test-connect failed with error:
+            <br></br>
+            <pre>{testConnectStatus.err}</pre>
           </Alert>
         )}
-        <IntegrationObjectList
-          user={user}
-          integration={selectedIntegration}
-          onUploadCsv={() => setShowAddTableDialog(true)}
-        />
+        <IntegrationObjectList user={user} integration={selectedIntegration} />
         <Typography
           variant="h4"
           gutterBottom
@@ -188,7 +187,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           severity="info"
           sx={{ width: '100%' }}
         >
-          Testing connection for this integration.
+          {`Attempting to connect to ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
       <Snackbar
@@ -203,7 +202,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           severity="success"
           sx={{ width: '100%' }}
         >
-          Test-connect was successful!
+          {`Successfully connected to ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
     </Layout>

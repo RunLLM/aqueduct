@@ -3,7 +3,11 @@ import UserProfile from './auth';
 
 const { apiAddress } = useAqueductConsts();
 
-export const aqueductDemoName = 'aqueduct_demo';
+const aqueductDemoName = 'aqueduct_demo';
+
+export function isDemo(integration: Integration): boolean {
+  return integration.name === aqueductDemoName;
+}
 
 export type Integration = {
   id: string;

@@ -11,7 +11,6 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Button } from '../../components/primitives/Button.styles';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationObject,
@@ -19,7 +18,7 @@ import {
 } from '../../reducers/integration';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
-import { aqueductDemoName, Integration } from '../../utils/integrations';
+import { Integration } from '../../utils/integrations';
 import { isLoading } from '../../utils/shared';
 import IntegrationObjectPreview from './integrationObjectPreview';
 
@@ -29,11 +28,7 @@ type Props = {
   onUploadCsv?: () => void;
 };
 
-const IntegrationObjectList: React.FC<Props> = ({
-  user,
-  integration,
-  onUploadCsv,
-}) => {
+const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
   const listObjectNamesState = useSelector(
     (state: RootState) => state.integrationReducer.objectNames
   );
@@ -140,17 +135,6 @@ const IntegrationObjectList: React.FC<Props> = ({
             }
           }}
         />
-        {/* Right-align the button */}
-        {integration.name === aqueductDemoName && <Box sx={{ flexGrow: 1 }} />}
-        {integration.name === aqueductDemoName && (
-          <Button
-            variant="outlined"
-            onClick={onUploadCsv}
-            sx={{ width: '150px' }}
-          >
-            Upload CSV
-          </Button>
-        )}
       </Box>
 
       {hasObject && (
