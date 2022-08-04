@@ -24,6 +24,7 @@ export const OperatorTypeToNodeTypeMap: { [key in OperatorType]: NodeType } = {
   [OperatorType.Function]: NodeType.FunctionOp,
   [OperatorType.Check]: NodeType.CheckOp,
   [OperatorType.Param]: NodeType.ParamOp,
+  [OperatorType.SystemMetric]: NodeType.MetricOp,
 } as const;
 
 export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {

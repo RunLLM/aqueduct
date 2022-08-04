@@ -11,7 +11,8 @@ const BaseNode = styled(Box)({
   borderWidth: '2px',
   padding: '10px',
   maxWidth: '250px',
-  height: '140px',
+  minHeight: '140px',
+  maxHeight: '250px',
 });
 
 export { BaseNode };

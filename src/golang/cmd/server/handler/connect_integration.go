@@ -8,7 +8,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/backend/airflow"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -92,7 +92,14 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	emptyResp := ConnectIntegrationResponse{}
 
 	// Validate integration config
-	statusCode, err := ValidateConfig(ctx, args, h.JobManager, h.StorageConfig)
+	statusCode, err := ValidateConfig(
+		ctx,
+		args.RequestId,
+		args.Config,
+		args.Service,
+		h.JobManager,
+		h.StorageConfig,
+	)
 	if err != nil {
 		return emptyResp, statusCode, err
 	}
@@ -163,18 +170,20 @@ func ConnectIntegration(
 // It returns a status code and an error, if any.
 func ValidateConfig(
 	ctx context.Context,
-	args *ConnectIntegrationArgs,
+	requestId string,
+	config auth.Config,
+	service integration.Service,
 	jobManager job.JobManager,
 	storageConfig *shared.StorageConfig,
 ) (int, error) {
-	if args.Service == integration.Airflow {
+	if service == integration.Airflow {
 		// Airflow authentication is performed via the Go client
 		// instead of the Python client, so we don't launch a job for it.
-		return validateAirflowConfig(ctx, args)
+		return validateAirflowConfig(ctx, config)
 	}
 
 	// Schedule authenticate job
-	jobMetadataPath := fmt.Sprintf("authenticate-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
 
 	defer func() {
 		// Delete storage files created for authenticate job metadata
@@ -186,8 +195,8 @@ func ValidateConfig(
 		jobName,
 		storageConfig,
 		jobMetadataPath,
-		args.Service,
-		args.Config,
+		service,
+		config,
 	)
 
 	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
@@ -232,9 +241,9 @@ func ValidateConfig(
 // It returns a status code and an error, if any.
 func validateAirflowConfig(
 	ctx context.Context,
-	args *ConnectIntegrationArgs,
+	config auth.Config,
 ) (int, error) {
-	if err := airflow.Authenticate(ctx, args.Config); err != nil {
+	if err := airflow.Authenticate(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 
