@@ -9,7 +9,7 @@ export enum OperatorType {
   Metric = 'metric',
   Check = 'check',
   Param = 'param',
-  SystemMetric = 'system_metric'
+  SystemMetric = 'system_metric',
 }
 
 export enum FunctionType {
