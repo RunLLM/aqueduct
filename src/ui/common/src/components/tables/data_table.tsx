@@ -1,12 +1,13 @@
 import Box from '@mui/material/Box';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+//import { styled } from '@mui/material/styles';
+//import Table from '@mui/material/Table';
+//import TableBody from '@mui/material/TableBody';
+//import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+//import TableHead from '@mui/material/TableHead';
+//import TableRow from '@mui/material/TableRow';
 import React from 'react';
 import { Profiler } from "react";
+import {AutoSizer, Table, Column} from 'react-virtualized';
 
 import { Data, DataColumn } from '../../utils/data';
 
@@ -23,7 +24,7 @@ type Props = {
   width?: string;
 };
 
-function renderCell(
+/*function renderCell(
   key: number,
   column: DataColumn,
   value: string | number | boolean
@@ -34,9 +35,9 @@ function renderCell(
       {typeof value === 'boolean' ? value.toString() : value}
     </TableCell>
   );
-}
+}*/
 
-const TintedTableRow = styled(TableRow)({
+/*const TintedTableRow = styled(TableRow)({
   '&:nth-of-type(odd)': {
     backgroundColor: 'white',
   },
@@ -44,31 +45,28 @@ const TintedTableRow = styled(TableRow)({
     backgroundColor: 'gray50',
   },
   color: 'darkGray',
-});
+});*/
 
 const DataTable: React.FC<Props> = ({ data, width }) => {
-  const tableHeaderClasses = {
+  /*const tableHeaderClasses = {
     [`&.${tableCellClasses.head}`]: {
       fontFamily: 'monospace',
       backgroundColor: 'blue.900',
       color: 'white',
     },
-  };
+  };*/
 
   const columnSchema = data.schema.fields;
   const headers = columnSchema.map((column, idx) => {
     return (
-      <TableCell sx={tableHeaderClasses} key={'header-' + idx}>
-        <span style={{ fontSize: '16px' }}>{column.name}</span> <br />{' '}
-        <span style={{ fontSize: '12px' }}> {column.type} </span>
-      </TableCell>
+      <Column label={column.name} dataKey={'header-' + idx} width={100} />
     );
   });
 
   //console.log(data.data)
   const sliced = data.data.slice(0, 100);
 
-  const body = sliced.map((row, rowIdx) => {
+  /*const body = sliced.map((row, rowIdx) => {
     return (
       <TintedTableRow key={'row-' + rowIdx}>
         {Object.keys(row).map((value, idx) => {
@@ -76,7 +74,7 @@ const DataTable: React.FC<Props> = ({ data, width }) => {
         })}
       </TintedTableRow>
     );
-  });
+  });*/
 
   return (
     <Profiler id="DataTable" onRender={logTimes}>
@@ -88,12 +86,19 @@ const DataTable: React.FC<Props> = ({ data, width }) => {
           maxWidth: '100%',
         }}
       >
-        <Table>
-          <TableHead>
-            <TableRow>{headers}</TableRow>
-          </TableHead>
-          <TableBody>{body}</TableBody>
-        </Table>
+        <AutoSizer>
+          {({height, width}) => (
+            <Table
+            width={width}
+            height={height}
+            headerHeight={20}
+            rowHeight={30}
+            rowCount={sliced.length}
+            rowGetter={({index}) => sliced[index]}>
+            {headers}
+          </Table>
+          )}
+        </AutoSizer>,
       </Box>
     </Profiler>
   );
