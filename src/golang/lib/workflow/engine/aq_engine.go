@@ -683,11 +683,12 @@ func (eng *aqEngine) execute(
 				}
 			}
 
-			if execState.Status == shared.FailedExecutionStatus {
+			// We can continue orchestration on non-fatal errors.
+			if shouldStopExecution(execState) {
 				return opFailureError(*execState.FailureType, op)
 			}
 
-			// The operator has succeeded! Add the operator to the completed stack, and remove it from the in-progress one.
+			// Add the operator to the completed stack, and remove it from the in-progress one.
 			if _, ok := completedOps[op.ID()]; ok {
 				return errors.Newf("Internal error: operator %s was completed twice.", op.Name())
 			}

@@ -43,11 +43,16 @@ func waitForInProgressOperators(
 func opFailureError(failureType shared.FailureType, op operator.Operator) error {
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
-	} else if failureType == shared.UserFailure {
+	} else if failureType == shared.UserFatalFailure {
 		log.Errorf("Failed due to user error. Operator name %s, id %s.", op.Name(), op.ID())
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
+}
+
+// We should only stop orchestration on system or fatal user errors.
+func shouldStopExecution(execState *shared.ExecutionState) bool {
+	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
 }
 
 func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*PreviewArtifactResults, error) {
