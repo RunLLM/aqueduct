@@ -19,13 +19,13 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
         <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
           <CircularProgress size={30} />
           <Typography sx={{ ml: 2 }}>
-            Loading table <b>{objectName}</b>...
+            Loading object <b>{objectName}</b>...
           </Typography>
         </Box>
       )}
       {isFailed(object.status) && (
         <Alert style={{ marginTop: '10px' }} severity="error">
-          Table <b>{objectName}</b> failed to load. Try refreshing the page.{' '}
+          Object <b>{objectName}</b> failed to load. Try refreshing the page.{' '}
           <br />
           Error: {object.status.err}
         </Alert>
