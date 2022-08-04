@@ -68,6 +68,7 @@ import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import DataTable from './components/tables/DataTable';
+import StickyHeaderTable from './components/tables/StickyHeaderTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -342,6 +343,7 @@ export {
   DataPreviewVersion,
   DataSchema,
   DataTable,
+  StickyHeaderTable,
   dateString,
   DayOfWeek,
   deconstructCronString,
