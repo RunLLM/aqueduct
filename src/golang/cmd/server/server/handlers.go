@@ -19,6 +19,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:             s.Vault,
 			StorageConfig:     s.StorageConfig,
 		},
+		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
+			Database:                s.Database,
+			Vault:             s.Vault,
+			OperatorReader:          s.OperatorReader,
+			IntegrationReader: s.IntegrationReader,
+			IntegrationWriter: s.IntegrationWriter,
+		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:                s.Database,
 			JobManager:              s.JobManager,

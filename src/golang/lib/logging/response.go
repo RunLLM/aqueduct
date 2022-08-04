@@ -32,6 +32,7 @@ func LogRoute(
 	serviceName string,
 	err error,
 ) {
+
 	headers := make(map[string][]string, len(r.Header)-len(excludedHeaderFields))
 	for k, v := range r.Header {
 		if _, ok := excludedHeaderFields[k]; !ok {
