@@ -12,6 +12,21 @@ export type LoadingStatus = {
   err: string;
 };
 
+export function isLoading(status: LoadingStatus) {
+  return (
+    status.loading === LoadingStatusEnum.Initial ||
+    status.loading === LoadingStatusEnum.Loading
+  );
+}
+
+export function isSucceeded(status: LoadingStatus) {
+  return status.loading === LoadingStatusEnum.Succeeded;
+}
+
+export function isFailed(status: LoadingStatus) {
+  return status.loading === LoadingStatusEnum.Failed;
+}
+
 export enum ExecutionStatus {
   Unknown = 'unknown',
   Succeeded = 'succeeded',
@@ -19,9 +34,17 @@ export enum ExecutionStatus {
   Pending = 'pending',
 }
 
+export type ExecState = {
+  status: ExecutionStatus;
+  failure_type?: FailureType;
+  error?: Error;
+  user_logs?: Logs;
+};
+
 export enum FailureType {
   System = 1,
-  User = 2,
+  UserFatal = 2,
+  UserNonFatal = 3,
 }
 
 export enum CheckStatus {

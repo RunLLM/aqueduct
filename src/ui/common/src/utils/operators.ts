@@ -1,6 +1,6 @@
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import ExecutionStatus, { Error, FailureType, Logs } from './shared';
+import { Error, ExecState } from './shared';
 
 export enum OperatorType {
   Function = 'function',
@@ -9,6 +9,7 @@ export enum OperatorType {
   Metric = 'metric',
   Check = 'check',
   Param = 'param',
+  SystemMetric = 'system_metric',
 }
 
 export enum FunctionType {
@@ -139,12 +140,7 @@ export function normalizeOperator(op): Operator {
   return op;
 }
 
-export type GetOperatorResultResponse = {
-  status: ExecutionStatus;
-  failure_type?: FailureType;
-  error?: Error;
-  user_logs?: Logs;
-};
+export type GetOperatorResultResponse = ExecState;
 
 const { apiAddress } = useAqueductConsts();
 

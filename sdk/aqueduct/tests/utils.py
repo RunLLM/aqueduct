@@ -1,7 +1,6 @@
 import uuid
 from typing import List
 
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
@@ -25,6 +24,8 @@ from aqueduct.operators import (
 )
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid
+
+from aqueduct import dag as dag_module
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:
@@ -133,10 +134,7 @@ def default_table_artifact(
     operator_id=None,
     artifact_name="table_artifact",
     artifact_id=None,
-    api_client=None,
 ) -> TableArtifact:
-    if not api_client:
-        api_client = APIClient("", "")
     if not operator_id:
         operator_id = generate_uuid()
     if not artifact_id:
@@ -149,8 +147,8 @@ def default_table_artifact(
         inputs=[],
         outputs=[artifact_id],
     )
-    dag = _construct_dag(
+    dag_module.__GLOBAL_DAG__ = _construct_dag(
         operators=[op],
         artifacts=[artifact],
     )
-    return TableArtifact(api_client=api_client, dag=dag, artifact_id=artifact_id)
+    return TableArtifact(dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id)

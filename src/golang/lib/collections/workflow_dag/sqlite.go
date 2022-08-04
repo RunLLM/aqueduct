@@ -30,9 +30,10 @@ func (w *sqliteWriterImpl) CreateWorkflowDag(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	storageConfig *shared.StorageConfig,
+	engineConfig *shared.EngineConfig,
 	db database.Database,
 ) (*DBWorkflowDag, error) {
-	insertColumns := []string{IdColumn, WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn}
+	insertColumns := []string{IdColumn, WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, EngineConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
@@ -40,7 +41,7 @@ func (w *sqliteWriterImpl) CreateWorkflowDag(
 		return nil, err
 	}
 
-	args := []interface{}{id, workflowId, time.Now(), storageConfig}
+	args := []interface{}{id, workflowId, time.Now(), storageConfig, engineConfig}
 
 	var workflowDag DBWorkflowDag
 	err = db.Query(ctx, &workflowDag, insertWorkflowDagStmt, args...)
