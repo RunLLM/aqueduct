@@ -53,6 +53,8 @@ type Engine interface {
 	) error
 }
 
+// AqEngine should be implemented by aqEngine
+// which is used by all aqueduct-orchestrated engines.
 type AqEngine interface {
 	Engine
 
@@ -63,6 +65,8 @@ type AqEngine interface {
 	) (*WorkflowPreviewResult, error)
 }
 
+// SelfOrchestratedEngine should be implemented for each self-orchestrated engine.
+// ie airflowEngine, rayEngine
 type SelfOrchestratedEngine interface {
 	Engine
 

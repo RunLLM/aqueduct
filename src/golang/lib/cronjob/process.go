@@ -12,9 +12,6 @@ import (
 type cronMetadata struct {
 	// If the cronJob is nil, it means the corresponding workflow has been paused.
 	cronJob *gocron.Job
-	// We need to store the job spec because when the workflow is resumed from the pause state, we
-	// need the spec to redeploy the cron job.
-	// jobSpec Spec
 }
 
 // Please use thread-safe read / insert / remove APIs to maintain maps.

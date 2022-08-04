@@ -71,12 +71,12 @@ type EngineWriters struct {
 }
 
 type aqEngine struct {
-	database       database.Database
-	githubManager  github.Manager
-	vault          vault.Vault
-	cronjobManager cronjob.CronjobManager
-	storageConfig  *shared.StorageConfig
-	aqPath         string
+	Database       database.Database
+	GithubManager  github.Manager
+	Vault          vault.Vault
+	CronjobManager cronjob.CronjobManager
+	StorageConfig  *shared.StorageConfig
+	AqPath         string
 
 	// Readers and Writers needed for workflow management
 	*EngineReaders
@@ -87,10 +87,10 @@ type workflowRunMetadata struct {
 	// Maps every operator to the number of its immediate dependencies
 	// that still needs to be computed. When this hits 0 during execution,
 	// then the operator is ready to be scheduled.
-	opToDependencyCount map[uuid.UUID]int
-	inProgressOps       map[uuid.UUID]operator.Operator
-	completedOps        map[uuid.UUID]operator.Operator
-	status              shared.ExecutionStatus
+	OpToDependencyCount map[uuid.UUID]int
+	InProgressOps       map[uuid.UUID]operator.Operator
+	CompletedOps        map[uuid.UUID]operator.Operator
+	Status              shared.ExecutionStatus
 }
 
 type WorkflowPreviewResult struct {
@@ -135,12 +135,12 @@ func NewAqEngine(
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
-		database:       database,
-		githubManager:  githubManager,
-		vault:          vault,
-		cronjobManager: cronjobManager,
-		storageConfig:  storageConfig,
-		aqPath:         aqPath,
+		Database:       database,
+		GithubManager:  githubManager,
+		Vault:          vault,
+		CronjobManager: cronjobManager,
+		StorageConfig:  storageConfig,
+		AqPath:         aqPath,
 		EngineReaders:  engineReaders,
 		EngineWriters:  engineWriters,
 	}, nil
@@ -152,7 +152,7 @@ func (eng *aqEngine) ScheduleWorkflow(
 	name string,
 	period string,
 ) error {
-	err := eng.cronjobManager.DeployCronJob(
+	err := eng.CronjobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
@@ -173,8 +173,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 	// TODO: Generalize JobManager type from user input.
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.aqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.aqPath, job.OperatorStorageDir),
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
 		},
 	)
 	if err != nil {
@@ -189,13 +189,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorReader,
 		eng.ArtifactReader,
 		eng.WorkflowDagEdgeReader,
-		eng.database,
+		eng.Database,
 	)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowdag.")
 	}
 
-	githubClient, err := eng.githubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
+	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
 	}
@@ -214,7 +214,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.WorkflowDagEdgeWriter,
 		eng.ArtifactReader,
 		eng.ArtifactWriter,
-		eng.database,
+		eng.Database,
 	)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error updating workflowdag to latest.")
@@ -241,9 +241,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.NotificationWriter,
 		eng.UserReader,
 		jobManager,
-		eng.vault,
-		eng.storageConfig,
-		eng.database,
+		eng.Vault,
+		eng.StorageConfig,
+		eng.Database,
 	)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -259,10 +259,10 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	workflowRunMetadata := &workflowRunMetadata{
-		opToDependencyCount: opToDependencyCount,
-		inProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		completedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		status:              shared.PendingExecutionStatus,
+		OpToDependencyCount: opToDependencyCount,
+		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		Status:              shared.PendingExecutionStatus,
 	}
 
 	err = dag.InitializeResults(ctx)
@@ -272,13 +272,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	// Make sure to persist the dag results on exit.
 	defer func() {
-		err = dag.PersistResult(ctx, workflowRunMetadata.status)
+		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
 		if err != nil {
 			log.Errorf("Error when persisting dag resutls: %v", err)
 		}
 	}()
 
-	workflowRunMetadata.status = shared.RunningExecutionStatus
+	workflowRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
@@ -288,12 +288,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		true, // should persist results
 	)
 	if err != nil {
-		workflowRunMetadata.status = shared.FailedExecutionStatus
+		workflowRunMetadata.Status = shared.FailedExecutionStatus
 	} else {
-		workflowRunMetadata.status = shared.SucceededExecutionStatus
+		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
-	return workflowRunMetadata.status, err
+	return workflowRunMetadata.Status, err
 }
 
 func (eng *aqEngine) PreviewWorkflow(
@@ -304,8 +304,8 @@ func (eng *aqEngine) PreviewWorkflow(
 	// previewing workflows always happens using the ProcessJobManager
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.aqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.aqPath, job.OperatorStorageDir),
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
 		},
 	)
 	if err != nil {
@@ -322,9 +322,9 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.NotificationWriter,
 		eng.UserReader,
 		jobManager,
-		eng.vault,
-		eng.storageConfig,
-		eng.database,
+		eng.Vault,
+		eng.StorageConfig,
+		eng.Database,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -342,13 +342,13 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	workflowRunMetadata := &workflowRunMetadata{
-		opToDependencyCount: opToDependencyCount,
-		inProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		completedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		status:              shared.PendingExecutionStatus,
+		OpToDependencyCount: opToDependencyCount,
+		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		Status:              shared.PendingExecutionStatus,
 	}
 
-	workflowRunMetadata.status = shared.RunningExecutionStatus
+	workflowRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
@@ -358,9 +358,9 @@ func (eng *aqEngine) PreviewWorkflow(
 		false, // should not persist results
 	)
 	if err != nil {
-		workflowRunMetadata.status = shared.FailedExecutionStatus
+		workflowRunMetadata.Status = shared.FailedExecutionStatus
 	} else {
-		workflowRunMetadata.status = shared.SucceededExecutionStatus
+		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
 	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
@@ -385,7 +385,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	return &WorkflowPreviewResult{
-		Status:    workflowRunMetadata.status,
+		Status:    workflowRunMetadata.Status,
 		Operators: execStateByOp,
 		Artifacts: artifactResults,
 	}, nil
@@ -395,7 +395,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 ) error {
-	txn, err := eng.database.BeginTx(ctx)
+	txn, err := eng.Database.BeginTx(ctx)
 	if err != nil {
 		return errors.Wrap(err, "Unable to delete workflow.")
 	}
@@ -547,7 +547,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	// Delete storage files (artifact content and function files)
 	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIds))
 	for _, op := range operatorsToDelete {
-		if op.Spec.IsFunction() {
+		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
 		}
 	}
@@ -570,7 +570,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	// Delete the cron job if it had one.
 	if workflowObject.Schedule.CronSchedule != "" {
 		cronjobName := shared_utils.AppendPrefix(workflowObject.Id.String())
-		err = eng.cronjobManager.DeleteCronJob(ctx, cronjobName)
+		err = eng.CronjobManager.DeleteCronJob(ctx, cronjobName)
 		if err != nil {
 			return errors.Wrap(err, "Failed to delete workflow's cronjob.")
 		}
@@ -627,10 +627,10 @@ func (eng *aqEngine) execute(
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
-	inProgressOps := workflowRunMetadata.inProgressOps
-	completedOps := workflowRunMetadata.completedOps
+	inProgressOps := workflowRunMetadata.InProgressOps
+	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
-	opToDependencyCount := workflowRunMetadata.opToDependencyCount
+	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -771,7 +771,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	// How we update the workflow schedule depends on whether a cron job already exists.
 	// A manually triggered workflow does not have a cron job. If we're editing it to have a periodic
 	// schedule, we'll need to create a new cron job.
-	if !eng.cronjobManager.CronJobExists(ctx, cronjobName) {
+	if !eng.CronjobManager.CronJobExists(ctx, cronjobName) {
 		if newSchedule.CronSchedule != "" {
 
 			err := eng.ScheduleWorkflow(
@@ -798,7 +798,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			newCronSchedule = ""
 		}
 
-		err := eng.cronjobManager.EditCronJob(
+		err := eng.CronjobManager.EditCronJob(
 			ctx,
 			cronjobName,
 			newCronSchedule,
