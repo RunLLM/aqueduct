@@ -2,12 +2,13 @@ import Box from '@mui/material/Box';
 //import { styled } from '@mui/material/styles';
 //import Table from '@mui/material/Table';
 //import TableBody from '@mui/material/TableBody';
-//import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 //import TableHead from '@mui/material/TableHead';
 //import TableRow from '@mui/material/TableRow';
 import React from 'react';
 import { Profiler } from "react";
 import {AutoSizer, Table, Column} from 'react-virtualized';
+import 'react-virtualized/styles.css'; // only needs to be imported once
 
 import { Data, DataColumn } from '../../utils/data';
 
@@ -48,23 +49,41 @@ type Props = {
 });*/
 
 const DataTable: React.FC<Props> = ({ data, width }) => {
-  /*const tableHeaderClasses = {
+  const tableHeaderClasses = {
     [`&.${tableCellClasses.head}`]: {
       fontFamily: 'monospace',
       backgroundColor: 'blue.900',
       color: 'white',
     },
-  };*/
+  };
+
+  function customHeaderRenderer({
+    columnData,
+    dataKey,
+    disableSort,
+    label,
+    sortBy,
+    sortDirection,
+  }) {
+    console.log(label.name);
+    console.log(label.type);
+    return (
+      <TableCell sx={tableHeaderClasses} >
+        <span style={{ fontSize: '16px' }}>{label.name}</span> <br />{' '}
+        <span style={{ fontSize: '12px' }}> {label.type} </span>
+      </TableCell>
+    )
+  }
 
   const columnSchema = data.schema.fields;
   const headers = columnSchema.map((column, idx) => {
     return (
-      <Column label={column.name} dataKey={'header-' + idx} width={100} />
+      <Column label={column} dataKey={column.name} width={50} flexGrow={1} headerRenderer={customHeaderRenderer} />
     );
   });
 
   //console.log(data.data)
-  const sliced = data.data.slice(0, 100);
+  //const sliced = data.data.slice(0, 100);
 
   /*const body = sliced.map((row, rowIdx) => {
     return (
@@ -76,30 +95,26 @@ const DataTable: React.FC<Props> = ({ data, width }) => {
     );
   });*/
 
+  const MIN_TABLE_WIDTH = 100 * columnSchema.length;
+
   return (
     <Profiler id="DataTable" onRender={logTimes}>
-      <Box
-        sx={{
-          overflow: 'auto',
-          maxHeight: '100%',
-          width: { width: width ? width : 'fit-content' },
-          maxWidth: '100%',
-        }}
-      >
-        <AutoSizer>
-          {({height, width}) => (
-            <Table
-            width={width}
-            height={height}
-            headerHeight={20}
-            rowHeight={30}
-            rowCount={sliced.length}
-            rowGetter={({index}) => sliced[index]}>
-            {headers}
-          </Table>
-          )}
-        </AutoSizer>,
-      </Box>
+      <AutoSizer>
+        {({height, width}) => (
+          <Table
+          headerStyle={tableHeaderClasses}
+          width={width < MIN_TABLE_WIDTH ? MIN_TABLE_WIDTH : width}
+          height={height}
+          headerHeight={100}
+          rowHeight={30}
+          rowCount={data.data.length}
+          rowGetter={({index}) => {
+            return data.data[index]
+          }}>
+          {headers}
+        </Table>
+        )}
+      </AutoSizer>
     </Profiler>
   );
 };
