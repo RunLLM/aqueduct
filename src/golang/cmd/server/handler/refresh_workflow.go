@@ -6,11 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
@@ -29,14 +25,9 @@ type RefreshWorkflowArgs struct {
 type RefreshWorkflowHandler struct {
 	PostHandler
 
-	Database database.Database
-	Engine   engine.Engine
-
-	ArtifactReader        artifact.Reader
-	OperatorReader        operator.Reader
-	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	Database       database.Database
+	WorkflowReader workflow.Reader
+	Engine         engine.Engine
 }
 
 func (*RefreshWorkflowHandler) Name() string {

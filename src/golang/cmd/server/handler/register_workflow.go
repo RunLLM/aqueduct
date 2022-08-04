@@ -6,17 +6,12 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -54,24 +49,17 @@ type RegisterWorkflowHandler struct {
 	StorageConfig *shared.StorageConfig
 	Engine        engine.Engine
 
-	ArtifactReader        artifact.Reader
-	IntegrationReader     integration.Reader
-	OperatorReader        operator.Reader
-	UserReader            user.Reader
-	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	ArtifactReader    artifact.Reader
+	IntegrationReader integration.Reader
+	OperatorReader    operator.Reader
+	WorkflowReader    workflow.Reader
 
-	ArtifactWriter          artifact.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	NotificationWriter      notification.Writer
-	OperatorWriter          operator.Writer
-	OperatorResultWriter    operator_result.Writer
-	WorkflowWriter          workflow.Writer
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	WorkflowWatcherWriter   workflow_watcher.Writer
+	ArtifactWriter        artifact.Writer
+	OperatorWriter        operator.Writer
+	WorkflowWriter        workflow.Writer
+	WorkflowDagWriter     workflow_dag.Writer
+	WorkflowDagEdgeWriter workflow_dag_edge.Writer
+	WorkflowWatcherWriter workflow_watcher.Writer
 }
 
 type registerWorkflowArgs struct {

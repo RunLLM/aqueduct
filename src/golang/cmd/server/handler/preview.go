@@ -9,15 +9,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /preview
@@ -52,9 +49,7 @@ type PreviewHandler struct {
 	Database          database.Database
 	IntegrationReader integration.Reader
 	StorageConfig     *shared.StorageConfig
-	JobManager        job.JobManager
 	GithubManager     github.Manager
-	Vault             vault.Vault
 	AqEngine          engine.AqEngine
 }
 
@@ -134,7 +129,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
-	log.Info(workflowPreviewResult)
 
 	statusCode := http.StatusOK
 	if err == engine.ErrOpExecSystemFailure {
