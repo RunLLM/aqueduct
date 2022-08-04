@@ -389,11 +389,8 @@ export {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
-<<<<<<< HEAD
   handleListWorkflowSavedObjects,
-=======
   handleLoadIntegrationOperators,
->>>>>>> b09606ed8b0190fbd8e5706958f68c3c89955d3e
   handleLoadIntegrations,
   handleLoadIntegrationTable,
   handleLoadIntegrationTables,
