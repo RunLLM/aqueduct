@@ -122,5 +122,9 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
 	}
 
+	if err := txn.Commit(ctx); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to commit update workflow transaction.")
+	}
+
 	return struct{}{}, http.StatusOK, nil
 }
