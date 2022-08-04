@@ -15,6 +15,7 @@ const ButtonGroup: React.FC<Props> = ({ children }) => {
       sx={{
         paddingX: '2px',
         margin: '2px',
+        height: 'fit-content',
       }}
     >
       {children}

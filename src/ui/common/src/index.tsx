@@ -15,12 +15,10 @@ import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
+import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
-import {
-  AddTableDialog,
-  IntegrationDialog,
-} from './components/integrations/dialogs/dialog';
+import { IntegrationDialog } from './components/integrations/dialogs/dialog';
 import {
   FileEventTarget,
   IntegrationFileUploadField,

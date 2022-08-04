@@ -25,6 +25,7 @@ import IntegrationObjectPreview from './integrationObjectPreview';
 type Props = {
   user: UserProfile;
   integration: Integration;
+  onUploadCsv?: () => void;
 };
 
 const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
@@ -79,7 +80,12 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
       <Typography variant="h4" gutterBottom component="div">
         Preview
       </Typography>
-      <Box>
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignContent="center"
+        alignItems="center"
+      >
         <Autocomplete
           disablePortal
           value={selectedObject}
