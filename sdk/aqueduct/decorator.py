@@ -480,7 +480,7 @@ def to_operator(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
@@ -499,6 +499,6 @@ def to_operator(
             A path to file that specifies requirements for this specific operator.
     """
     func_op = op(
-        name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path
+        name=name, description=description, file_dependencies=file_dependencies, requirements=requirements
     )
     return func_op(func)
