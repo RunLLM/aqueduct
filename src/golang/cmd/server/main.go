@@ -31,6 +31,7 @@ func main() {
 	}
 
 	log.SetFormatter(&log.TextFormatter{DisableQuote: true})
+	log.SetLevel(log.ErrorLevel)
 
 	serverConfig := config.ParseServerConfiguration(*confPath)
 
