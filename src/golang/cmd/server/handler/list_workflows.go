@@ -4,12 +4,25 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/queries"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflows
@@ -35,8 +48,26 @@ type workflowResponse struct {
 type ListWorkflowsHandler struct {
 	GetHandler
 
-	Database       database.Database
-	WorkflowReader workflow.Reader
+	Database database.Database
+	Vault    vault.Vault
+
+	UserReader            user.Reader
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	CustomReader          queries.Reader
+
+	ArtifactWriter          artifact.Writer
+	OperatorWriter          operator.Writer
+	WorkflowWriter          workflow.Writer
+	WorkflowDagWriter       workflow_dag.Writer
+	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
+	WorkflowDagResultWriter workflow_dag_result.Writer
+	OperatorResultWriter    operator_result.Writer
+	ArtifactResultWriter    artifact_result.Writer
+	NotificationWriter      notification.Writer
 }
 
 func (*ListWorkflowsHandler) Name() string {
@@ -54,6 +85,41 @@ func (*ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*aq_context.AqContext)
+
+	// Sync workflows running on self-orchestrated engines
+	airflowWorkflowDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+		ctx,
+		args.OrganizationId,
+		shared.AirflowEngineType,
+		h.Database,
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
+	}
+
+	airflowWorkflowDagUUIDs := make([]uuid.UUID, 0, len(airflowWorkflowDagIds))
+	for _, workflowDagId := range airflowWorkflowDagIds {
+		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
+	}
+
+	if err := airflow.SyncWorkflowDags(
+		ctx,
+		airflowWorkflowDagUUIDs,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.WorkflowDagResultWriter,
+		h.OperatorResultWriter,
+		h.ArtifactResultWriter,
+		h.NotificationWriter,
+		h.UserReader,
+		h.Vault,
+		h.Database,
+	); err != nil {
+		log.Errorf("Unable to sync Airflow workflows: %v", err)
+	}
 
 	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrganizationId, h.Database)
 	if err != nil {

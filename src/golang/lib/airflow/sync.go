@@ -4,25 +4,34 @@ import (
 	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
-// SyncWorkflows syncs all workflows using an Airflow engine with any new
+// SyncWorkflowDags syncs all dags in `workflowDagIds` with any new
 // Airflow dag runs since the last sync. It returns an error, if any.
-func SyncWorkflows(
+func SyncWorkflowDags(
 	ctx context.Context,
+	workflowDagIds []uuid.UUID,
 	workflowReader workflow.Reader,
 	workflowDagReader workflow_dag.Reader,
+	operatorReader operator.Reader,
+	artifactReader artifact.Reader,
+	workflowDagEdgeReader workflow_dag_edge.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -31,8 +40,25 @@ func SyncWorkflows(
 	vault vault.Vault,
 	db database.Database,
 ) error {
-	// Read all workflows where the latest DAG is for an Airflow engine
-	var dbDags []workflow_dag.DBWorkflowDag
+	// Read each workflow dag from the database that needs to be synced
+	dbDags := make([]workflow_dag.DBWorkflowDag, 0, len(workflowDagIds))
+	for _, workflowDagId := range workflowDagIds {
+		dbDag, err := utils.ReadWorkflowDagFromDatabase(
+			ctx,
+			workflowDagId,
+			workflowReader,
+			workflowDagReader,
+			operatorReader,
+			artifactReader,
+			workflowDagEdgeReader,
+			db,
+		)
+		if err != nil {
+			return err
+		}
+
+		dbDags = append(dbDags, *dbDag)
+	}
 
 	// TODO: What happens if a workflow was updated and there are runs that haven't been synced
 	// yet for a previous run.
