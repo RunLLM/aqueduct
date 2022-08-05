@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -274,13 +275,31 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
 
       return (
-        <Button
-          onClick={() =>
-            exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
-          }
-        >
-          Export CSV
-        </Button>
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              console.log("View Artifact details clicked");
+              // TODO: Get workflowDagResultId:
+              //workflow.selectedResult.id
+              // Then get artifact id:
+              // TODO: Get artifact ID
+              // Finally, construct URL to be used here:
+              // TODO: Build URL here:
+              // `/${pathPrefix}/workflow/:workflowDagResultId/artifact/:artifactId`
+              //exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+            }}
+          >
+            View Artifact Details
+          </Button>
+          <Button
+            onClick={() =>
+              exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+            }
+          >
+            Export CSV
+          </Button>
+        </Box >
       );
     }
 

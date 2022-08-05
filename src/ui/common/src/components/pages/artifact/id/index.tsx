@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
 import KeyValueTable from '../../../tables/KeyValueTable';
 
@@ -9,7 +9,11 @@ import UserProfile from '../../../../utils/auth';
 import { useAqueductConsts } from '../../../hooks/useAqueductConsts';
 import DefaultLayout from '../../../layouts/default';
 import { LayoutProps } from '../../types';
-import { Button } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArtifactResult, handleGetArtifactResults, handleGetWorkflow } from '../../../../reducers/workflow';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../../../../stores/store';
 
 type ArtifactDetailsHeaderProps = {
     artifactName: string;
@@ -38,6 +42,22 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     user,
     Layout = DefaultLayout,
 }) => {
+    const workflow = useSelector((state: RootState) => state.workflowReducer);
+    const navigate = useNavigate();
+    const dispatch: AppDispatch = useDispatch();
+    const { workflowId, workflowDagResultId, artifactId } = useParams();
+    const artifactResult: ArtifactResult | null = useSelector(
+        (state: RootState) => {
+            // First, check if there are any keys in the artifactResults object.
+            const artifactResults = state.workflowReducer.artifactResults;
+            if (Object.keys(artifactResults).length < 1) {
+                return null;
+            }
+
+            return artifactResults[artifactId];
+        }
+    );
+
     const { apiAddress } = useAqueductConsts();
 
     // Set the title of the page on page load.
@@ -48,7 +68,40 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     // TODO: Fetch artifact data and render here.
     useEffect(() => {
         console.log('Fetching artifact data ...');
+        console.log('Url params: ');
+        console.log('workflowId: ', workflowId);
+        console.log('workflowDagResultId: ', workflowDagResultId);
+        console.log('artifactId: ', artifactId);
+        console.log('workflow regular useEffect: ', workflow);
+        //console.log('artifactResult: ', artifactResult);
+
+        // Fetching the workflow by Id:
+        // TODO: Might not need this call after all.
+        //dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+
+        console.log('fetching the artifact Result')
+        dispatch(handleGetArtifactResults({
+            apiKey: user.apiKey,
+            workflowDagResultId,
+            artifactId
+        }))
     }, []);
+
+    useEffect(() => {
+        console.log('workflow workflowUseEffect: ', workflow);
+        //console.log('artifactResult: ', artifactResult);
+    }, [workflow])
+
+    if (!artifactResult || !artifactResult.result) {
+        return (
+            <Layout user={user}>
+                <CircularProgress />
+            </Layout>
+        )
+    }
+
+    const parsedData = JSON.parse(artifactResult.result.data);
+    console.log('artifact details parsedData: ', parsedData);
 
     return (
         <Layout user={user}>
@@ -56,11 +109,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 <Box width="100%">
                     <Box width="100%" display='flex'>
                         <ArtifactDetailsHeader artifactName="churn_table" lastUpdated="3/17/2022 10:00pm" sourceLocation="s3/myBucket" />
-                        <Button variant="contained" sx={{ maxHeight: '36px' }}>EXPORT</Button>
+                        <Button variant="contained" sx={{ maxHeight: '32px' }}>EXPORT</Button>
                     </Box>
                     <Box width="100%" marginTop="12px">
                         <Typography variant="h5" component="div" marginBottom="8px">Preview</Typography>
-                        <StickyHeaderTable />
+                        <StickyHeaderTable data={parsedData} />
                     </Box>
                     <Box display="flex" width="100%" paddingTop="40px">
                         <Box width="100%">
