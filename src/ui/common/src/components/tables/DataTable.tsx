@@ -155,6 +155,7 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
     columnIndex,
   }: TableHeaderProps & { columnIndex: number }) => {
     const { headerHeight, columns } = this.props;
+    console.log("test")
 
     return (
       <TableCell

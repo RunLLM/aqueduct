@@ -18,7 +18,7 @@ jobs:
 
       - name: Install @aqueducthq/common dependencies and build @aqueducthq/common
         working-directory: ./src/ui/common
-        run: npm install --legacy-peer-deps
+        run: npm install --force
 
       - name: Lint @aqueducthq/common
         working-directory: ./src/ui/common

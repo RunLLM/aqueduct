@@ -121,7 +121,7 @@ if __name__ == "__main__":
         execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_COMMON_PATH))
-        execute_command(["npm", "install", "--legacy-peer-deps"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "install", "--force"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["npm", "link"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_APP_PATH))
