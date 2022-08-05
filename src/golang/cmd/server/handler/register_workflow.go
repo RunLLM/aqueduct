@@ -222,6 +222,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	emptyParams := make(map[string]string)
 
 	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
+	//nolint:errcheck
 	go h.Engine.ExecuteWorkflow(
 		executeContext,
 		workflowId,

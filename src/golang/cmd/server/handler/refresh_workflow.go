@@ -84,6 +84,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	}
 
 	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
+	//nolint:errcheck
 	go h.Engine.ExecuteWorkflow(
 		executeContext,
 		args.WorkflowId,
