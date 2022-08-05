@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
@@ -17,6 +18,24 @@ type sqliteReaderImpl struct {
 
 func newSqliteReader() Reader {
 	return &sqliteReaderImpl{standardReaderImpl{}}
+}
+
+func (r *sqliteReaderImpl) GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+	ctx context.Context,
+	organizationId string,
+	engine shared.EngineType,
+	db database.Database,
+) ([]WorkflowDagId, error) {
+	query := `
+		 SELECT workflow_dag.id FROM workflow_dag WHERE created_at IN (
+		 SELECT MAX(workflow_dag.created_at) FROM app_user, workflow, workflow_dag 
+		 WHERE app_user.id = workflow.user_id AND workflow.id = workflow_dag.workflow_id AND 
+		 app_user.organization_id = $1 AND json_extract(workflow_dag.engine_config, '$.type') = $2
+		 GROUP BY workflow.id);`
+
+	var workflowDags []WorkflowDagId
+	err := db.Query(ctx, &workflowDags, query, organizationId, engine)
+	return workflowDags, err
 }
 
 func (r *sqliteReaderImpl) GetLoadOperatorSpecByOrganization(

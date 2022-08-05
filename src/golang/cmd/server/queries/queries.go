@@ -72,6 +72,14 @@ type Reader interface {
 		organizationId string,
 		db database.Database,
 	) ([]WorkflowDagId, error)
+	// GetLatestWorkflowDagIdsByOrganizationAndEngine returns a list of workflow dag IDs for each
+	// workflow created by the organization if the workflow dag is running on `engine`.
+	GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+		ctx context.Context,
+		organizationId string,
+		engine shared.EngineType,
+		db database.Database,
+	) ([]WorkflowDagId, error)
 	GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds(
 		ctx context.Context,
 		operatorIds []uuid.UUID,
