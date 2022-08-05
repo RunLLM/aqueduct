@@ -1,11 +1,11 @@
-import { Alert, Typography } from '@mui/material';
+import { Alert, AlertTitle, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import React from 'react';
 
 import { ObjectState } from '../../reducers/integration';
 import { isFailed, isLoading, isSucceeded } from '../../utils/shared';
-import VirtualizedTable from '../tables/virtualizedTable';
+import DataTable from '../tables/DataTable';
 
 type Props = {
   objectName: string;
@@ -24,15 +24,16 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
       </Box>
     );
   }
+
   if (isFailed(object.status)) {
     content = (
       <Alert style={{ marginTop: '10px' }} severity="error">
-        Object <b>{objectName}</b> failed to load. Try refreshing the page.{' '}
-        <br />
-        Error: {object.status.err}
+        <AlertTitle>Object <b>{objectName}</b> failed to load. Try refreshing the page.</AlertTitle>
+        <pre>Error: {object.status.err}</pre>
       </Alert>
     );
   }
+
   if (isSucceeded(object.status) && !!object.data) {
     const columnsContent = object.data.schema.fields.map((column) => {
       return {
@@ -41,6 +42,7 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
         type: column.type,
       };
     });
+
     content = (
       <Box
         sx={{
@@ -50,7 +52,7 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
           overflowY: 'hidden',
         }}
       >
-        <VirtualizedTable
+        <DataTable
           rowCount={object.data.data.length}
           rowGetter={({ index }) => object.data.data[index]}
           columns={columnsContent}

@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
 import clsx from 'clsx';
-import * as React from 'react';
+import React from "react";
 import {
   AutoSizer,
   Column,
@@ -17,6 +17,11 @@ const classes = {
   tableRowHover: 'ReactVirtualizedDemo-tableRowHover',
   tableCell: 'ReactVirtualizedDemo-tableCell',
   noClick: 'ReactVirtualizedDemo-noClick',
+  headerRow: 'ReactVirtualized__Table__headerRow',
+  headerColumn: 'ReactVirtualized__Table__headerColumn',
+  rowColumn: 'ReactVirtualized__Table__rowColumn',
+  headerColumnFirstOfType: 'ReactVirtualized__Table__headerColumn:first-of-type',
+  rowColumnFirstOfType: 'ReactVirtualized__Table__rowColumn:first-of-type',
 };
 
 const columnWidthMultiplier = 13;
@@ -25,7 +30,7 @@ const styles = ({ theme }: { theme: Theme }) =>
   ({
     // temporary right-to-left patch, waiting for
     // https://github.com/bvaughn/react-virtualized/issues/454
-    '& .ReactVirtualized__Table__headerRow': {
+    [`& .${classes.headerRow}`]: {
       ...(theme.direction === 'rtl' && {
         paddingLeft: '0 !important',
       }),
@@ -33,22 +38,22 @@ const styles = ({ theme }: { theme: Theme }) =>
         paddingRight: undefined,
       }),
     },
-    '& .ReactVirtualized__Table__headerColumn': {
+    [`& .${classes.headerColumn}`]: {
       ...{
         marginRight: '0px',
       },
     },
-    '& .ReactVirtualized__Table__rowColumn': {
+    [`& .${classes.rowColumn}`]: {
       ...{
         marginRight: '0px',
       },
     },
-    '& .ReactVirtualized__Table__headerColumn:first-of-type': {
+    [`& .${classes.headerColumnFirstOfType}`]: {
       ...{
         marginLeft: '0px',
       },
     },
-    '& .ReactVirtualized__Table__rowColumn:first-of-type': {
+    [`& .${classes.rowColumnFirstOfType}`]: {
       ...{
         marginLeft: '0px',
       },
@@ -86,7 +91,7 @@ interface Row {
   index: number;
 }
 
-interface MuiVirtualizedTableProps {
+interface DataTableProps {
   columns: readonly ColumnData[];
   headerHeight?: number;
   minColumnWidth?: number;
@@ -96,7 +101,7 @@ interface MuiVirtualizedTableProps {
   rowHeight?: number;
 }
 
-class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> {
+class PreStyledDataTable extends React.PureComponent<DataTableProps> {
   static defaultProps = {
     headerHeight: 72,
     rowHeight: 48,
@@ -247,6 +252,6 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
   }
 }
 
-const VirtualizedTable = styled(MuiVirtualizedTable)(styles);
+const DataTable = styled(PreStyledDataTable)(styles);
 
-export default React.memo(VirtualizedTable);
+export default React.memo(DataTable);

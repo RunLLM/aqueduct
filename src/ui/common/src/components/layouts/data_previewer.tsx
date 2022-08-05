@@ -8,7 +8,7 @@ import React from 'react';
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
-import VirtualizedTable from '../tables/virtualizedTable';
+import DataTable from '../tables/DataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {
@@ -94,7 +94,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
             overflowY: 'hidden',
           }}
         >
-          <VirtualizedTable
+          <DataTable
             rowCount={parsedData.data.length}
             rowGetter={({ index }) => parsedData.data[index]}
             columns={columnsContent}
