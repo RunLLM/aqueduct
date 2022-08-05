@@ -118,14 +118,14 @@ if __name__ == "__main__":
         UI_APP_PATH = UI_PATH + "/app"
         
         print("Updating UI files...")
+        execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["npm", "install"], cwd=join(cwd, UI_COMMON_PATH))
-        execute_command(["npm", "run", "build"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["npm", "link"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_APP_PATH))
-        execute_command(["npm", "install"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["make", "dist"], cwd=join(cwd, "src/ui"))
 
