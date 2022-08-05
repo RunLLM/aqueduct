@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -40,25 +39,29 @@ func main() {
 		ForceColors:  true,
 	})
 
-	if !*verbose {
-		log.SetOutput(ioutil.Discard) // Send all logs to nowhere by default
+	// Always store all logs to a log file.
+	// With lumberjack.Logger we can do log rotation to prevent it from growing infinitely.
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   serverLogPath,
+		MaxSize:    100, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28, // days
+	})
 
-		log.AddHook(&writer.Hook{ // Send logs with level higher than error to stderr
-			Writer: os.Stderr,
-			LogLevels: []log.Level{
-				log.PanicLevel,
-				log.FatalLevel,
-				log.ErrorLevel,
-			},
-		})
-		log.AddHook(&writer.Hook{ // Send info, debug, warning logs to the log file
-			// With lumberjack.Logger we can do log rotation to prevent it from growing infinitely.
-			Writer: &lumberjack.Logger{
-				Filename:   serverLogPath,
-				MaxSize:    100, // megabytes
-				MaxBackups: 3,
-				MaxAge:     28, // days
-			},
+	// Send logs with level higher than error to stderr.
+	log.AddHook(&writer.Hook{
+		Writer: os.Stderr,
+		LogLevels: []log.Level{
+			log.PanicLevel,
+			log.FatalLevel,
+			log.ErrorLevel,
+		},
+	})
+
+	if *verbose {
+		// If verbose, also send info, debug, warning logs to stdout.
+		log.AddHook(&writer.Hook{
+			Writer: os.Stdout,
 			LogLevels: []log.Level{
 				log.InfoLevel,
 				log.DebugLevel,
