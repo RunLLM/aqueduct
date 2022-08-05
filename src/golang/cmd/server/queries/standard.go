@@ -89,7 +89,10 @@ func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResult
 	}
 
 	query := fmt.Sprintf(
-		`SELECT DISTINCT workflow_dag_edge.to_id AS artifact_id, operator_result.metadata, operator_result.workflow_dag_result_id  
+		`SELECT DISTINCT
+			workflow_dag_edge.to_id AS artifact_id,
+			operator_result.execution_state as metadata,
+			operator_result.workflow_dag_result_id  
 		 FROM workflow_dag_edge, operator_result 
 		 WHERE workflow_dag_edge.from_id = operator_result.operator_id AND workflow_dag_edge.to_id IN (%s) AND 
 		 operator_result.workflow_dag_result_id IN (%s);`,

@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -98,23 +97,18 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	fmt.Print("\n\nStart DeleteIntegration\n\n")
 	err = h.IntegrationWriter.DeleteIntegration(ctx, args.integrationId, txn)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
 
-	fmt.Print("\n\nDone DeleteIntegration\n\n")
 	if err := txn.Commit(ctx); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
 
-	fmt.Print("\n\nStart delete Vault\n\n")
 	if err := h.Vault.Delete(ctx, args.integrationId.String()); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
-
-	fmt.Print("\n\nDone delete Vault\n\n")
 
 	return emptyResp, http.StatusOK, nil
 }

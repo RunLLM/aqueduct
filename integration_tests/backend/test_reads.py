@@ -8,12 +8,14 @@ from pathlib import Path
 import pytest
 import requests
 import utils
+from setup.changing_saves_workflow import setup_changing_saves
 
 import aqueduct
 
 
-class TestReads:
+class TestBackend:
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
+    GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
     CONNECT_INTEGRATION_TEMPLATE = "/api/integration/connect"
     DELETE_INTEGRATION_TEMPLATE = "/api/integration/%s/delete"
@@ -23,39 +25,15 @@ class TestReads:
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
-        cls.flows = {}
-
-        workflow_files = [
-            f
-            for f in os.listdir(cls.WORKFLOW_PATH)
-            if os.path.isfile(os.path.join(cls.WORKFLOW_PATH, f))
-        ]
-        for workflow in workflow_files:
-            proc = subprocess.Popen(
-                [
-                    "python3",
-                    os.path.join(cls.WORKFLOW_PATH, workflow),
-                    pytest.api_key,
-                    pytest.server_address,
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            out, err = proc.communicate()
-            out = out.decode("utf-8")
-            err = err.decode("utf-8")
-            if err:
-                raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
-            else:
-                parsed = out.strip().split()
-                cls.flows[workflow] = parsed[-2]
-                n_runs = int(parsed[-1])
-                utils.wait_for_flow_runs(cls.client, cls.flows[workflow], n_runs)
+        cls.integration = cls.client.integration(name=pytest.integration)
+        cls.flows = {"changing_saves": setup_changing_saves(cls.client, pytest.integration)}
+        for flow, n_runs in cls.flows.values():
+            utils.wait_for_flow_runs(cls.client, flow, n_runs)
 
     @classmethod
     def teardown_class(cls):
-        for flow in cls.flows:
-            utils.delete_flow(cls.client, cls.flows[flow])
+        for flow, _ in cls.flows.values():
+            utils.delete_flow(cls.client, flow)
 
     @classmethod
     def response(cls, endpoint, additional_headers):
@@ -77,7 +55,7 @@ class TestReads:
         return r
 
     def test_endpoint_list_workflow_tables(self):
-        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
+        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves"][0]
         data = self.get_response(endpoint).json()["object_details"]
 
         assert len(data) == 3
@@ -128,3 +106,9 @@ class TestReads:
         # Check integration does not exist
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
         assert integration_name not in set([integration["name"] for integration in data])
+
+    def test_endpoint_test_integration(self):
+        resp = self.get_response(
+            self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
+        )
+        assert resp.ok

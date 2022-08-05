@@ -49,8 +49,12 @@ func (r *sqliteReaderImpl) GetCheckResultsByArtifactIds(
 	}
 
 	query := fmt.Sprintf(
-		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, operator.name AS name, operator_result.status, 
-		 operator_result.metadata, operator_result.workflow_dag_result_id 
+		`SELECT DISTINCT
+			workflow_dag_edge.from_id AS artifact_id,
+			operator.name AS name,
+			operator_result.status, 
+		 	operator_result.execution_state as metadata,
+			operator_result.workflow_dag_result_id 
 		 FROM workflow_dag_edge, operator, operator_result 
 		 WHERE workflow_dag_edge.to_id = operator.id AND operator.id = operator_result.operator_id AND 
 		 workflow_dag_edge.from_id IN (%s) AND json_extract(operator.spec, '$.type') = '%s';`,

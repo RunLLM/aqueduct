@@ -5,7 +5,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integrationOperators';
+import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { RootState } from '../../stores/store';
 import { isFailed, isLoading } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
@@ -16,19 +16,19 @@ const OperatorsOnIntegration: React.FC = () => {
     (state: RootState) => state.listWorkflowReducer
   );
   const operatorsState = useSelector((state: RootState) => {
-    return state.integrationOperatorsReducer;
+    return state.integrationReducer.operators;
   });
   const [expandedWf, setExpandedWf] = useState<string>('');
 
   if (
-    isLoading(operatorsState.loadingStatus) ||
+    isLoading(operatorsState.status) ||
     isLoading(listWorkflowState.loadingStatus)
   ) {
     return <CircularProgress />;
   }
 
   if (
-    isFailed(operatorsState.loadingStatus) ||
+    isFailed(operatorsState.status) ||
     isFailed(listWorkflowState.loadingStatus)
   ) {
     return (
