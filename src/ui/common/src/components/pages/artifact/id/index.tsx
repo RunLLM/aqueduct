@@ -66,6 +66,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     user,
     Layout = DefaultLayout,
 }) => {
+    const { apiAddress } = useAqueductConsts();
+
     const dispatch: AppDispatch = useDispatch();
     const { workflowDagResultId, artifactId } = useParams();
     const artifactResult: ArtifactResult | null = useSelector(
