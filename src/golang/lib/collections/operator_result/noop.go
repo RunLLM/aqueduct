@@ -3,6 +3,7 @@ package operator_result
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
@@ -28,6 +29,16 @@ func (w *noopWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
+	db database.Database,
+) (*OperatorResult, error) {
+	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
+}
+
+func (w *noopWriterImpl) InsertOperatorResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	operatorId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*OperatorResult, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
