@@ -8,7 +8,7 @@ import React from 'react';
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
-import VirtualizedTable from '../tables/virtualized_table';
+import VirtualizedTable from '../tables/virtualizedTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {

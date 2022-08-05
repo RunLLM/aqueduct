@@ -480,7 +480,7 @@ def to_operator(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
@@ -495,10 +495,18 @@ def to_operator(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-        reqs_path:
-            A path to file that specifies requirements for this specific operator.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
     """
     func_op = op(
-        name=name, description=description, file_dependencies=file_dependencies, reqs_path=reqs_path
+        name=name,
+        description=description,
+        file_dependencies=file_dependencies,
+        requirements=requirements,
     )
     return func_op(func)
