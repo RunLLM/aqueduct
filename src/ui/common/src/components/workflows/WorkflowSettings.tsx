@@ -496,10 +496,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
           </span>{' '}
-          and can be removed when deleting the workflow.
-        </Typography>
-
-        <Typography variant="body1">
+          and can be removed when deleting the workflow.{' '}
           Please select the saved objects you wish to delete:
         </Typography>
 
@@ -576,22 +573,36 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const savedObjectDeletionResultsDialog = (
     <Dialog
       open={showSavedObjectDeletionResultsDialog}
-      onClose={() => setShowSavedObjectDeletionResultsDialog(false)}
+      onClose={() => navigate('/workflows')}
+      maxWidth={false}
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5">
               {' '}
-              Saved Object Deletion Results{' '}
+              {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
+              <span style={{ fontFamily: 'Monospace' }}>
+                {workflowDag.metadata?.name}
+              </span>{' '}
+              successfully deleted{' '}
             </Typography>
           </Box>
+
+          <FontAwesomeIcon
+            icon={faXmark}
+            onClick={() => navigate('/workflows')}
+            style={{ cursor: 'pointer' }}
+          />
         </Box>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent sx={{ width: '600px' }}>
         <Typography>
-            Workflow successfully deleted. Here are the results of the saved object deletion.
+        <span style={{ fontFamily: 'Monospace' }}>
+          {workflowDag.metadata?.name}
+        </span>{' '}
+        has been successfully deleted. Here are the results of the saved object deletion.
         </Typography>
 
         <List dense={false}>
@@ -648,7 +659,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose}>
+      <Dialog open={open} onClose={onClose} maxWidth={false}>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ flex: 1 }}>
