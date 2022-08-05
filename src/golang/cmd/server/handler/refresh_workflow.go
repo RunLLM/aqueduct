@@ -83,15 +83,13 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err := h.Engine.ExecuteWorkflow(
-		ctx,
+	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
+	go h.Engine.ExecuteWorkflow(
+		executeContext,
 		args.WorkflowId,
 		timeConfig,
 		args.Parameters,
 	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
-	}
 
 	return struct{}{}, http.StatusOK, nil
 }

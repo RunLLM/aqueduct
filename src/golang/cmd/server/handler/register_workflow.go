@@ -220,15 +220,14 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 	emptyParams := make(map[string]string)
-	_, err = h.Engine.ExecuteWorkflow(
-		ctx,
+
+	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
+	go h.Engine.ExecuteWorkflow(
+		executeContext,
 		workflowId,
 		timeConfig,
 		emptyParams,
 	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
-	}
 
 	if !args.isUpdate {
 		// If this workflow is newly created, automatically add the user to the workflow's
