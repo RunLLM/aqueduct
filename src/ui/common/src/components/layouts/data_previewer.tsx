@@ -8,7 +8,7 @@ import React from 'react';
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
-import DataTable from '../tables/data_table';
+import DataTable from '../tables/dataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {
