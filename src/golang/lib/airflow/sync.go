@@ -77,7 +77,7 @@ func SyncWorkflowDags(
 			vault,
 			db,
 		); err != nil {
-			log.Errorf("Unable to sync with Airflow for WorkflowDag %v", dbDag.Id)
+			log.Errorf("Unable to sync with Airflow for WorkflowDag %v: %v", dbDag.Id, err)
 		}
 	}
 

@@ -231,6 +231,7 @@ func ScheduleWorkflow(
 
 	// Update the AirflowRuntimeConfig for `dag`
 	newRuntimeConfig := dag.EngineConfig
+	newRuntimeConfig.AirflowConfig.DagId = dagId
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
 	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix

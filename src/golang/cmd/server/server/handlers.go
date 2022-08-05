@@ -91,6 +91,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorReader:          s.OperatorReader,
 			WorkflowReader:          s.WorkflowReader,
 			WorkflowDagReader:       s.WorkflowDagReader,
+			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			CustomReader:            s.CustomReader,
 			ArtifactWriter:          s.ArtifactWriter,
 			OperatorWriter:          s.OperatorWriter,
