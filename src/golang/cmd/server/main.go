@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/connection"
 	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/writer"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
@@ -17,8 +20,10 @@ var (
 		"",
 		"The path to .yml config file",
 	)
-	expose = flag.Bool("expose", false, "Whether you want to expose the server to the public.")
-	port   = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
+	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal.")
+	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server_log")
 )
 
 func main() {
@@ -30,8 +35,37 @@ func main() {
 		*confPath = filepath.Join(cwd, "config", "server.yml")
 	}
 
-	log.SetFormatter(&log.TextFormatter{DisableQuote: true})
-	log.SetLevel(log.ErrorLevel)
+	log.SetFormatter(&log.TextFormatter{
+		DisableQuote: true,
+		ForceColors:  true,
+	})
+
+	if !*verbose {
+		log.SetOutput(ioutil.Discard) // Send all logs to nowhere by default
+
+		log.AddHook(&writer.Hook{ // Send logs with level higher than error to stderr
+			Writer: os.Stderr,
+			LogLevels: []log.Level{
+				log.PanicLevel,
+				log.FatalLevel,
+				log.ErrorLevel,
+			},
+		})
+		log.AddHook(&writer.Hook{ // Send info, debug, warning logs to the log file
+			// With lumberjack.Logger we can do log rotation to prevent it from growing infinitely.
+			Writer: &lumberjack.Logger{
+				Filename:   serverLogPath,
+				MaxSize:    100, // megabytes
+				MaxBackups: 3,
+				MaxAge:     28, // days
+			},
+			LogLevels: []log.Level{
+				log.InfoLevel,
+				log.DebugLevel,
+				log.WarnLevel,
+			},
+		})
+	}
 
 	serverConfig := config.ParseServerConfiguration(*confPath)
 
