@@ -30,7 +30,7 @@ func WriteConfigToSecret(
 	secrets := make(map[string]string, 2)
 
 	switch c := config.(type) {
-	case *staticConfig:
+	case *StaticConfig:
 		secrets[secretConfigTypeKey] = string(staticConfigType)
 	case *OAuthConfig:
 		secrets[secretConfigTypeKey] = string(oauthConfigType)
@@ -79,7 +79,7 @@ func ReadConfigFromSecret(
 	var config Config
 	switch typ {
 	case staticConfigType:
-		config = &staticConfig{}
+		config = &StaticConfig{}
 	case oauthConfigType:
 		config = &OAuthConfig{}
 	default:

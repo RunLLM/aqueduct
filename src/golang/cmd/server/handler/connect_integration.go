@@ -66,7 +66,12 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	service, name, configMap, userOnly, err := request.ParseIntegrationConfigFromRequest(r)
+	service, userOnly, err := request.ParseIntegrationServiceFromRequest(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -152,7 +157,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	// Store config (including confidential information) as k8s secret
+	// Store config (including confidential information) in vault
 	if err := auth.WriteConfigToSecret(
 		ctx,
 		integrationObject.Id,
