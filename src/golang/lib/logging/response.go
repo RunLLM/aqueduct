@@ -55,18 +55,33 @@ func LogRoute(
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
-		"ServiceName":   serviceName,
-		"URL":           r.URL,
-		"Headers":       headers,
-		"Status":        status,
-		"Code":          statusCode,
-		"Component":     component,
-		"Route":         routeName,
-		"UserId":        ctx.Value(aq_context.UserIdKey),
-		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-		"Error":         errMsg,
-	}).Info()
+	if status == "ERROR" {
+		log.WithFields(log.Fields{
+			"ServiceName":   serviceName,
+			"URL":           r.URL,
+			"Headers":       headers,
+			"Status":        status,
+			"Code":          statusCode,
+			"Component":     component,
+			"Route":         routeName,
+			"UserId":        ctx.Value(aq_context.UserIdKey),
+			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+			"Error":         errMsg,
+		}).Error()
+	} else {
+		log.WithFields(log.Fields{
+			"ServiceName":   serviceName,
+			"URL":           r.URL,
+			"Headers":       headers,
+			"Status":        status,
+			"Code":          statusCode,
+			"Component":     component,
+			"Route":         routeName,
+			"UserId":        ctx.Value(aq_context.UserIdKey),
+			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+			"Error":         errMsg,
+		}).Info()
+	}
 }
 
 func LogAsyncEvent(
@@ -82,14 +97,25 @@ func LogAsyncEvent(
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
-		"ServiceName":   serviceName,
-		"Status":        status,
-		"Component":     component,
-		"UserId":        ctx.Value(aq_context.UserIdKey),
-		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-		"Error":         errMsg,
-	}).Info()
+	if status == "ERROR" {
+		log.WithFields(log.Fields{
+			"ServiceName":   serviceName,
+			"Status":        status,
+			"Component":     component,
+			"UserId":        ctx.Value(aq_context.UserIdKey),
+			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+			"Error":         errMsg,
+		}).Error()
+	} else {
+		log.WithFields(log.Fields{
+			"ServiceName":   serviceName,
+			"Status":        status,
+			"Component":     component,
+			"UserId":        ctx.Value(aq_context.UserIdKey),
+			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+			"Error":         errMsg,
+		}).Info()
+	}
 }
 
 // Replaces the password in an integration config string into the equivalent * string.
