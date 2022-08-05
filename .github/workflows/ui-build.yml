@@ -18,7 +18,7 @@ jobs:
 
       - name: Install @aqueducthq/common dependencies and build @aqueducthq/common
         working-directory: ./src/ui/common
-        run: npm install react-virtualized --force && npm install
+        run: npm install --legacy-peer-deps
 
       - name: Lint @aqueducthq/common
         working-directory: ./src/ui/common
