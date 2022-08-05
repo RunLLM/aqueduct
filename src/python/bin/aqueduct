@@ -296,7 +296,7 @@ def is_port_in_use(port: int) -> bool:
         return s.connect_ex(("localhost", port)) == 0
 
 
-def start(expose, port):
+def start(expose, port, verbose):
     update()
 
     if port is None:
@@ -312,27 +312,21 @@ def start(expose, port):
         server_port = int(port)
         print("Server will use the user-specified port %d" % server_port)
 
+    command = [
+        os.path.join(server_directory, "bin", "server"),
+        "--config",
+        os.path.join(server_directory, "config", "config.yml"),
+        "--port",
+        str(server_port),
+    ]
+
     if expose:
-        popen_handle = execute_command_nonblocking(
-            [
-                os.path.join(server_directory, "bin", "server"),
-                "--config",
-                os.path.join(server_directory, "config", "config.yml"),
-                "--expose",
-                "--port",
-                str(server_port),
-            ],
-        )
-    else:
-        popen_handle = execute_command_nonblocking(
-            [
-                os.path.join(server_directory, "bin", "server"),
-                "--config",
-                os.path.join(server_directory, "config", "config.yml"),
-                "--port",
-                str(server_port),
-            ],
-        )
+        command.append("--expose")
+    
+    if verbose:
+        command.append("--verbose")
+
+    popen_handle = execute_command_nonblocking(command)
     return popen_handle, server_port
 
 
@@ -520,6 +514,14 @@ if __name__ == "__main__":
         help="Use this option to expose the server to the public.",
     )
     start_args.add_argument(
+        "--verbose",
+        default=False,
+        action="store_true",
+        help="""If set to true, all log messages will be printed on stdout. By default, only error
+                and warning-level logs are routed to stdout. All log messages can be found at
+                $HOME/.aqueduct/server/logs/server""",
+    )
+    start_args.add_argument(
         "--port", dest="port", help="Specify the port on which the Aqueduct server runs."
     )
     server_args = subparsers.add_parser(
@@ -612,7 +614,7 @@ if __name__ == "__main__":
 
     if args.command == "start":
         try:
-            popen_handle, server_port = start(args.expose, args.port)
+            popen_handle, server_port = start(args.expose, args.port, args.verbose)
             time.sleep(1)
             terminated = popen_handle.poll()
             if terminated:

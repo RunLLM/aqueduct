@@ -21,10 +21,10 @@ func SendErrorResponse(w http.ResponseWriter, errorMsg string, errorCode int) {
 	SendJsonResponse(w, response, errorCode)
 }
 
-//	Internal utility function to send a JSON response by automatically
-//	serializing the provided response object and adding the provided statusCode
-//	as the response's status code. The response object is expected to be
-//	JSON-serializable.
+// Internal utility function to send a JSON response by automatically
+// serializing the provided response object and adding the provided statusCode
+// as the response's status code. The response object is expected to be
+// JSON-serializable.
 func SendJsonResponse(w http.ResponseWriter, response interface{}, statusCode int) {
 	jsonBlob, err := json.Marshal(response)
 	if err != nil {
