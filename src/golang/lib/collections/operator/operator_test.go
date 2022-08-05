@@ -2,8 +2,9 @@ package operator_test
 
 import (
 	"encoding/json"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"testing"
+
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/google/uuid"

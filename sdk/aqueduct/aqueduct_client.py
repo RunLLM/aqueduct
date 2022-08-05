@@ -8,7 +8,8 @@ import __main__ as main
 import yaml
 from aqueduct.generic_artifact import Artifact as GenericArtifact
 
-from .api_client import APIClient
+from aqueduct import api_client, dag
+
 from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
@@ -33,9 +34,11 @@ from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
+from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
 from .utils import (
+    _infer_requirements,
     generate_ui_url,
     generate_uuid,
     parse_user_supplied_id,
@@ -57,10 +60,19 @@ def get_apikey() -> str:
         try:
             return str(yaml.safe_load(f)["apiKey"])
         except yaml.YAMLError as exc:
-            print(
+            logger().error(
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
+
+
+def infer_requirements() -> List[str]:
+    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+
+    Returns:
+        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
+    """
+    return _infer_requirements()
 
 
 class Client:
@@ -68,30 +80,38 @@ class Client:
 
     def __init__(
         self,
-        api_key: str,
-        aqueduct_address: str,
-        log_level: int = logging.ERROR,
+        api_key: str = "",
+        aqueduct_address: str = "http://localhost:8080",
+        logging_level: int = logging.WARNING,
     ):
         """Creates an instance of Client.
 
         Args:
             api_key:
-                The user unique API key provided by Aqueduct.
+                The user unique API key provided by Aqueduct. If no key is
+                provided, the client attempts to read the key stored on the
+                local server and errors if non exists.
             aqueduct_address:
-                The address of the Aqueduct Server service.
-            log_level:
+                The address of the Aqueduct Server service. If no address is
+                provided, the client attempts to connect to
+                http://localhost:8080.
+            logging_level:
                 A indication of what level and above to print logs from the sdk.
-                Defaults to printing error and above only. Types defined in: https://docs.python.org/3/howto/logging.html
+                Defaults to printing warning and above only. Types defined in: https://docs.python.org/3/howto/logging.html
 
         Returns:
             A Client instance.
         """
-        logging.basicConfig(level=log_level)
-        self._api_client = APIClient(api_key, aqueduct_address)
+        logger().setLevel(level=logging_level)
+
+        if api_key == "":
+            api_key = get_apikey()
+
+        api_client.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
             str, IntegrationInfo
-        ] = self._api_client.list_integrations()
-        self._dag = DAG(metadata=Metadata())
+        ] = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        self._dag = dag.__GLOBAL_DAG__
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
@@ -114,7 +134,7 @@ class Client:
             A github integration object linked to the repo and branch.
 
         """
-        return Github(client=self._api_client, repo_url=repo, branch=branch)
+        return Github(repo_url=repo, branch=branch)
 
     def create_param(self, name: str, default: Any, description: str = "") -> ParamArtifact:
         """Creates a parameter artifact that can be fed into other operators.
@@ -163,7 +183,6 @@ class Client:
             ],
         )
         return ParamArtifact(
-            self._api_client,
             self._dag,
             output_artifact_id,
         )
@@ -174,7 +193,7 @@ class Client:
         Returns:
             A dictionary mapping from integration name to additional info.
         """
-        self._connected_integrations = self._api_client.list_integrations()
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
         return self._connected_integrations
 
     def integration(
@@ -206,25 +225,21 @@ class Client:
         integration_info = self._connected_integrations[name]
         if integration_info.service in RelationalDBServices:
             return RelationalDBIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.SALESFORCE:
             return SalesforceIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.GOOGLE_SHEETS:
             return GoogleSheetsIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.S3:
             return S3Integration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
@@ -243,7 +258,8 @@ class Client:
             the flow further in the UI or SDK.
         """
         return [
-            workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
+            workflow_resp.to_readable_dict()
+            for workflow_resp in api_client.__GLOBAL_API_CLIENT__.list_workflows()
         ]
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
@@ -259,11 +275,13 @@ class Client:
         """
         flow_id = parse_user_supplied_id(flow_id)
 
-        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+        if all(
+            uuid.UUID(flow_id) != workflow.id
+            for workflow in api_client.__GLOBAL_API_CLIENT__.list_workflows()
+        ):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
         return Flow(
-            self._api_client,
             flow_id,
             self._in_notebook_or_console_context,
         )
@@ -334,16 +352,15 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = self._api_client.register_workflow(dag).id
+        flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
-            self._api_client.construct_base_url(),
+            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
             str(flow_id),
         )
         print("Url: ", url)
 
         return Flow(
-            self._api_client,
             str(flow_id),
             self._in_notebook_or_console_context,
         )
@@ -393,7 +410,7 @@ class Client:
             )
 
         flow_id = parse_user_supplied_id(flow_id)
-        self._api_client.refresh_workflow(flow_id, serialized_params)
+        api_client.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.
@@ -413,7 +430,7 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        self._api_client.delete_workflow(flow_id)
+        api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
@@ -439,14 +456,14 @@ class Client:
                 ],
                 make_copy=True,
             )
-        _show_dag(self._api_client, dag)
+        _show_dag(dag)
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
         print("============================= Aqueduct Client =============================")
-        print("Connected endpoint: %s" % self._api_client.aqueduct_address)
+        print("Connected endpoint: %s" % api_client.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
-        self._connected_integrations = self._api_client.list_integrations()
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)

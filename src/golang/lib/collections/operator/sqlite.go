@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -22,6 +23,30 @@ func newSqliteReader() Reader {
 
 func newSqliteWriter() Writer {
 	return &sqliteWriterImpl{standardWriterImpl{}}
+}
+
+func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
+	ctx context.Context,
+	integrationId uuid.UUID,
+	db database.Database,
+) ([]DBOperator, error) {
+	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
+		`SELECT %s FROM %s
+		WHERE json_extract(spec, '$.load.integration_id') = $1
+		OR json_extract(spec, '$.extract.integration_id') = $2`,
+		allColumns(),
+		tableName,
+	)
+
+	var operators []DBOperator
+	err := db.Query(
+		ctx,
+		&operators,
+		getOperatorsByIntegrationIdQuery,
+		integrationId,
+		integrationId,
+	)
+	return operators, err
 }
 
 func (w *sqliteWriterImpl) CreateOperator(
@@ -53,15 +78,17 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 ) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error) {
 	query := `
 	SELECT DISTINCT
-			name, 
-			json_extract(spec, '$.load.integration_id') AS integration_id, 
-			json_extract(spec, '$.load.service') AS service, 
-			json_extract(spec, '$.load.parameters.table') AS table_name, 
-			json_extract(spec, '$.load.parameters.update_mode') AS update_mode
+			operator.name AS operator_name, 
+			integration.name AS integration_name, 
+			json_extract(operator.spec, '$.load.integration_id') AS integration_id, 
+			json_extract(operator.spec, '$.load.service') AS service, 
+			json_extract(operator.spec, '$.load.parameters.table') AS table_name, 
+			json_extract(operator.spec, '$.load.parameters.update_mode') AS update_mode
 		FROM 
-			operator 
+			operator, integration
 		WHERE (
 			json_extract(spec, '$.type')='load' AND 
+			integration.id = json_extract(operator.spec, '$.load.integration_id') AND
 			EXISTS (
 				SELECT 1 
 				FROM 

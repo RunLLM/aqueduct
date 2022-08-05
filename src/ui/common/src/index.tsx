@@ -13,6 +13,7 @@ import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
+import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
@@ -100,6 +101,11 @@ import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
 } from './reducers/dataPreview';
+import integrationOperators, {
+  handleLoadIntegrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
+} from './reducers/integrationOperators';
 import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
@@ -380,6 +386,7 @@ export {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleLoadIntegrationOperators,
   handleLoadIntegrations,
   handleLoadIntegrationTable,
   handleLoadIntegrationTables,
@@ -392,6 +399,9 @@ export {
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
+  integrationOperators,
+  integrationOperatorsSlice,
+  IntegrationOperatorsState,
   integrations,
   IntegrationsPage,
   integrationsSlice,
@@ -487,6 +497,7 @@ export {
   SnowflakeConfig,
   SnowflakeDialog,
   Spec,
+  SqlServerCard,
   SqlServerConfig,
   Status,
   StatusBarHeaderHeightInPx,

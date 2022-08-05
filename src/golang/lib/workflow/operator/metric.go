@@ -42,5 +42,5 @@ func newMetricOperator(base baseFunctionOperator) (Operator, error) {
 
 func (mo *metricOperatorImpl) JobSpec() job.Spec {
 	fn := mo.dbOperator.Spec.Metric().Function
-	return mo.jobSpec(&fn)
+	return mo.jobSpec(&fn, nil /* checkSeverity */)
 }

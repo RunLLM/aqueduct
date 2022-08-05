@@ -8,6 +8,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -46,6 +48,7 @@ const (
 	LoadTableJobType      JobType = "load-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
+	CompileAirflowJobType JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -62,23 +65,23 @@ type Spec interface {
 	JobName() string
 }
 
-// baseSpec defines fields shared by all job specs.
-type baseSpec struct {
+// BaseSpec defines fields shared by all job specs.
+type BaseSpec struct {
 	Type JobType `json:"type"  yaml:"type"`
 	Name string  `json:"name"  yaml:"name"`
 }
 
-func (bs *baseSpec) JobName() string {
+func (bs *BaseSpec) JobName() string {
 	return bs.Name
 }
 
 type WorkflowRetentionSpec struct {
-	baseSpec
+	BaseSpec
 	ExecutorConfig *ExecutorConfiguration
 }
 
 type WorkflowSpec struct {
-	baseSpec
+	BaseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
 	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
 	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
@@ -89,7 +92,7 @@ type WorkflowSpec struct {
 // These Python jobs can be one-off jobs (e.g. Authenticate, Discover)
 // or Workflow operators (e.g. Function, Extract, Load).
 type BasePythonSpec struct {
-	baseSpec
+	BaseSpec
 	StorageConfig shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
 }
@@ -108,6 +111,10 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
+
+	// Specific to the check operator. This is left unset by any other function type.
+	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
 }
 
 type ParamSpec struct {
@@ -169,6 +176,15 @@ type DiscoverSpec struct {
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 }
 
+type CompileAirflowSpec struct {
+	BasePythonSpec
+	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
+	DagId             string              `json:"dag_id"  yaml:"dag_id"`
+	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
+	TaskSpecs         map[string]Spec     `json:"task_specs"  yaml:"task_specs"`
+	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -209,6 +225,10 @@ func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
 }
 
+func (*CompileAirflowSpec) Type() JobType {
+	return CompileAirflowJobType
+}
+
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
 func NewWorkflowRetentionJobSpec(
 	database *database.DatabaseConfig,
@@ -216,7 +236,7 @@ func NewWorkflowRetentionJobSpec(
 	jobManager Config,
 ) Spec {
 	return &WorkflowRetentionSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: WorkflowRetentionType,
 			Name: WorkflowRetentionName,
 		},
@@ -240,7 +260,7 @@ func NewWorkflowSpec(
 	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: WorkflowJobType,
 			Name: name,
 		},
@@ -262,7 +282,7 @@ func NewBasePythonSpec(
 	metadataPath string,
 ) BasePythonSpec {
 	return BasePythonSpec{
-		baseSpec: baseSpec{
+		BaseSpec: BaseSpec{
 			Type: jobType,
 			Name: name,
 		},
@@ -280,7 +300,7 @@ func NewAuthenticateSpec(
 ) Spec {
 	return &AuthenticateSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: AuthenticateJobType,
 				Name: name,
 			},
@@ -308,7 +328,7 @@ func NewExtractSpec(
 ) Spec {
 	return &ExtractSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: ExtractJobType,
 				Name: name,
 			},
@@ -340,7 +360,7 @@ func NewLoadTableSpec(
 ) Spec {
 	return &LoadTableSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: LoadTableJobType,
 				Name: name,
 			},
@@ -352,7 +372,7 @@ func NewLoadTableSpec(
 		CSV:             csv,
 		LoadParameters: LoadSpec{
 			BasePythonSpec: BasePythonSpec{
-				baseSpec: baseSpec{
+				BaseSpec: BaseSpec{
 					Type: LoadJobType,
 					Name: name,
 				},
@@ -379,7 +399,7 @@ func NewDiscoverSpec(
 ) Spec {
 	return &DiscoverSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: DiscoverJobType,
 				Name: name,
 			},
@@ -390,6 +410,43 @@ func NewDiscoverSpec(
 		ConnectorConfig:   connectorConfig,
 		OutputContentPath: outputContentPath,
 	}
+}
+
+func NewCompileAirflowSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	outputContentPath string,
+	dagId string,
+	cronSchedule string,
+	taskSpecs map[string]Spec,
+	taskEdges map[string][]string,
+) (Spec, error) {
+	for _, taskSpec := range taskSpecs {
+		if taskSpec.Type() != ExtractJobType &&
+			taskSpec.Type() != FunctionJobType &&
+			taskSpec.Type() != ParamJobType &&
+			taskSpec.Type() != SystemMetricJobType &&
+			taskSpec.Type() != LoadJobType {
+			return nil, errors.Newf("Task specs cannot be of type %v", taskSpec.Type())
+		}
+	}
+
+	return &CompileAirflowSpec{
+		BasePythonSpec: BasePythonSpec{
+			BaseSpec: BaseSpec{
+				Type: CompileAirflowJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		OutputContentPath: outputContentPath,
+		DagId:             dagId,
+		CronSchedule:      cronSchedule,
+		TaskSpecs:         taskSpecs,
+		TaskEdges:         taskEdges,
+	}, nil
 }
 
 // `EncodeSpec` first serialize `spec` according to `SerializationType` and returns the base64 encoded string.
@@ -424,7 +481,7 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 
 	var spec Spec
 	if serializationType == JsonSerializationType {
-		var base baseSpec
+		var base BaseSpec
 		if err := json.Unmarshal(specBytes, &base); err != nil {
 			return nil, err
 		}

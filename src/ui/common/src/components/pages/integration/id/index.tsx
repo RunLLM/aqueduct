@@ -16,25 +16,31 @@ import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
+import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
+import { handleLoadIntegrationOperators } from '../../../../reducers/integrationOperators';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   handleLoadIntegrationTable,
   tableKeyFn,
 } from '../../../../reducers/integrationTableData';
 import { handleLoadIntegrationTables } from '../../../../reducers/integrationTables';
+import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
 import ExecutionStatus from '../../../../utils/shared';
 import { Button } from '../../../primitives/Button.styles';
+import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
 const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   user,
+  Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const integrationId: string = useParams().id;
@@ -51,6 +57,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         integrationId: integrationId,
       })
     );
+    dispatch(
+      handleLoadIntegrationOperators({
+        apiKey: user.apiKey,
+        integrationId: integrationId,
+      })
+    );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, []);
 
   const integrations = useSelector(
@@ -269,7 +282,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user}>
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
@@ -289,12 +302,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             onCloseDialog={() => setShowDialog(false)}
-            onConnect={() => forceLoadTableList()}
+            onConnect={() => {
+              forceLoadTableList();
+              setShowDialog(false);
+            }}
           />
         )}
       </Box>
       {preview}
-    </DefaultLayout>
+      <Typography variant="h4" gutterBottom component="div">
+        Workflows
+      </Typography>
+      <OperatorsOnIntegration />
+    </Layout>
   );
 };
 

@@ -10,12 +10,14 @@ import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import WorkflowCard from '../../workflows/workflowCard';
+import { LayoutProps } from '../types';
 
 type Props = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
-const WorkflowsPage: React.FC<Props> = ({ user }) => {
+const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dispatch: AppDispatch = useDispatch();
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
@@ -72,13 +74,12 @@ const WorkflowsPage: React.FC<Props> = ({ user }) => {
     );
 
   return (
-    <DefaultLayout user={user}>
-      <></>
+    <Layout user={user}>
       <Box p={2}>
         {heading}
         {workflowList}
       </Box>
-    </DefaultLayout>
+    </Layout>
   );
 };
 

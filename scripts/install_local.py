@@ -14,6 +14,7 @@ takes longer to update.
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,7 +26,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "12"
+SCHEMA_VERSION = "15"
 
 
 def execute_command(args, cwd=None):
@@ -112,12 +113,20 @@ if __name__ == "__main__":
 
     # Build and replace UI files.
     if args.update_ui:
+        UI_PATH = "src/ui"
+        UI_COMMON_PATH = UI_PATH + "/common"
+        UI_APP_PATH = UI_PATH + "/app"
+        
         print("Updating UI files...")
-        execute_command(["npm", "install"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["npm", "run", "build"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["sudo", "npm", "link"], cwd=join(cwd, "src/ui/common"))
-        execute_command(["npm", "install"], cwd=join(cwd, "src/ui/app"))
-        execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, "src/ui/app"))
+        execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "install"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "run", "build"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["npm", "link"], cwd=join(cwd, UI_COMMON_PATH))
+        execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["npm", "install"], cwd=join(cwd, UI_APP_PATH))
+        execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["make", "dist"], cwd=join(cwd, "src/ui"))
 
         files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]
@@ -137,6 +146,14 @@ if __name__ == "__main__":
                 join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
             )
 
+        # To prevent unnecessary files from getting into our releases
+        # Will replace the react-code-block component soon (next week) to avoid this concern completely
+        files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]
+        fileNameRegex = re.compile(r'^(python|core|markup|clike|javascript|css|index|favicon)\..*(html|js|css|map|ico)$')
+        for f in files:
+            if not fileNameRegex.search(f) and not f == "__version__":
+                execute_command(["rm", f], cwd=ui_directory)
+
     # Install the local SDK.
     if args.update_sdk:
         print("Updating the Python SDK...")
@@ -152,5 +169,11 @@ if __name__ == "__main__":
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
+        
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/start-function-executor.sh",
+            join(server_directory, "bin")
+        ])
 
     print("Successfully installed aqueduct from local repo!")

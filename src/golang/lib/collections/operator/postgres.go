@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
@@ -23,6 +24,30 @@ func newPostgresWriter() Writer {
 	return &postgresWriterImpl{standardWriterImpl{}}
 }
 
+func (r *postgresReaderImpl) GetOperatorsByIntegrationId(
+	ctx context.Context,
+	integrationId uuid.UUID,
+	db database.Database,
+) ([]DBOperator, error) {
+	getOperatorsByIntegrationIdQuery := fmt.Sprintf(
+		`SELECT %s FROM %s
+		WHERE json_extract_text(spec, 'load', 'integration_id') = $1
+		OR json_extract_text(spec, 'extract', 'integration_id') = $2`,
+		allColumns(),
+		tableName,
+	)
+
+	var operators []DBOperator
+	err := db.Query(
+		ctx,
+		&operators,
+		getOperatorsByIntegrationIdQuery,
+		integrationId,
+		integrationId,
+	)
+	return operators, err
+}
+
 func (r *postgresReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,
@@ -30,13 +55,16 @@ func (r *postgresReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 ) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error) {
 	query := `
 	SELECT DISTINCT 
-		name, 
-		json_extract_path_text(spec, 'load', 'integration_id') AS integration_id,
-		json_extract_path_text(spec, 'load', 'service') AS service, 
-		json_extract_path_text(spec, 'load', 'parameters', 'table') AS table_name, 
-		json_extract_path_text(spec, 'load', 'parameters', 'update_mode')  AS update_mode
-	FROM operator WHERE (
+		operator.name AS operator_name, 
+		integration.name AS integration_name, 
+		json_extract_path_text(operator.spec, 'load', 'integration_id') AS integration_id,
+		json_extract_path_text(operator.spec, 'load', 'service') AS service, 
+		json_extract_path_text(operator.spec, 'load', 'parameters', 'table') AS table_name, 
+		json_extract_path_text(operator.spec, 'load', 'parameters', 'update_mode')  AS update_mode
+	FROM operator, integration 
+	WHERE (
 		json_extract_path_text(spec, 'type') = 'load' AND 
+		integration.id = json_extract_path_text(operator.spec, 'load', 'integration_id') AND
 		EXISTS (
 			SELECT 1 
 			FROM 

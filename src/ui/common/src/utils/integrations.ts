@@ -91,6 +91,8 @@ export type AirflowConfig = {
   host: string;
   username: string;
   password: string;
+  s3_credentials_path: string;
+  s3_credentials_profile: string;
 };
 
 export type IntegrationConfig =
@@ -217,19 +219,32 @@ export async function connectIntegration(
       config[k] = '';
     }
   });
-  const res = await fetch(`${apiAddress}/api/integration/connect`, {
-    method: 'POST',
-    headers: {
-      'api-key': user.apiKey,
-      'integration-name': name,
-      'integration-service': service,
-      'integration-config': JSON.stringify(config),
-    },
-  });
 
-  if (!res.ok) {
-    const message = await res.json();
-    throw new Error(message.error);
+  try {
+    const res = await fetch(`${apiAddress}/api/integration/connect`, {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+        'integration-name': name,
+        'integration-service': service,
+        'integration-config': JSON.stringify(config),
+      },
+    });
+
+    if (!res.ok) {
+      const message = await res.json();
+      throw new Error(message.error);
+    }
+  } catch (err) {
+    if (err instanceof TypeError) {
+      // This happens when we fail to fetch.
+      throw new Error(
+        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
+      );
+    } else {
+      // This should never happen.
+      throw err;
+    }
   }
 }
 
@@ -272,7 +287,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
-    activated: true,
+    activated: false,
   },
 };
 

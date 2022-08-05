@@ -1,5 +1,3 @@
-import argparse
-import base64
 import importlib
 import json
 import os
@@ -7,11 +5,17 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
+from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
+from aqueduct_executor.operators.utils.enums import (
+    CheckSeverityLevel,
+    ExecutionStatus,
+    FailureType,
+    OperatorType,
+)
 from aqueduct_executor.operators.utils.execution import (
+    TIP_CHECK_DID_NOT_PASS,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
@@ -21,6 +25,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
+from aqueduct_executor.operators.utils.utils import check_passed
 from pandas import DataFrame
 
 
@@ -41,17 +46,35 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
 
     if file_path.startswith("/"):
         file_path = file_path[1:]
-    return ".".join([OP_DIR, file_path.replace("/", ".")])
+    return file_path.replace("/", ".")
 
 
 def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
+    """
+    `_import_invoke_method` imports the model object.
+    it assumes the operator has been extracted to `<storage>/operators/<id>/op`
+    and imports the route from the above path.
+    """
+
+    # fn_path should be `<storage>/operators/<id>`
     fn_path = spec.function_extract_path
-    os.chdir(os.path.join(fn_path, OP_DIR))
-    sys.path.append(fn_path)
+
+    # work_dir should be `<storage>/operators/<id>/op`
+    work_dir = os.path.join(fn_path, OP_DIR)
+    print(f"listdir(workdir): {os.listdir(work_dir)}")
+    print(f"listdir(fn_path): {os.listdir(fn_path)}")
+
+    # this ensures any file manipulation happens with respect to work_dir
+    os.chdir(work_dir)
+    # adds work_dir to sys.path to support relative imports from work_dir
+    sys.path.append(work_dir)
+
     import_path = _get_py_import_path(spec)
+    print(f"import_path: {import_path}")
     class_name = spec.entry_point_class
     method_name = spec.entry_point_method
     custom_args_str = spec.custom_args
+
     # Invoke the function and parse out the result object.
     module = importlib.import_module(import_path)
     if not class_name:
@@ -106,6 +129,7 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
+    print("Started %s job: %s" % (spec.type, spec.name))
 
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
@@ -136,9 +160,30 @@ def run(spec: FunctionSpec) -> None:
             system_metadata=system_metadata,
         )
 
-        exec_state.status = ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
-        print(f"Succeeded! Full logs: {exec_state.json()}")
+        # For check operators, we want to fail the operator based on the exact output of the user's function.
+        # Assumption: the check operator only has a single output.
+        if spec.operator_type == OperatorType.CHECK and not check_passed(results[0]):
+            check_severity = spec.check_severity
+            if spec.check_severity is None:
+                print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
+                check_severity = CheckSeverityLevel.ERROR
+
+            failure_type = FailureType.USER_FATAL
+            if check_severity == CheckSeverityLevel.WARNING:
+                failure_type = FailureType.USER_NON_FATAL
+
+            exec_state.status = ExecutionStatus.FAILED
+            exec_state.failure_type = failure_type
+            exec_state.error = Error(
+                context="",
+                tip=TIP_CHECK_DID_NOT_PASS,
+            )
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            print(f"Check Operator did not pass. Full logs: {exec_state.json()}")
+        else:
+            exec_state.status = ExecutionStatus.SUCCEEDED
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            print(f"Succeeded! Full logs: {exec_state.json()}")
 
     except Exception as e:
         exec_state.status = ExecutionStatus.FAILED
@@ -150,16 +195,3 @@ def run(spec: FunctionSpec) -> None:
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--spec", required=True)
-    args = parser.parse_args()
-
-    spec_json = base64.b64decode(args.spec)
-    spec = parse_spec(spec_json)
-
-    print("Started %s job: %s" % (spec.type, spec.name))
-
-    run(spec)
