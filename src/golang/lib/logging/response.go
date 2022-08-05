@@ -14,6 +14,7 @@ type Component string
 
 const (
 	ServerComponent Component = "Server"
+	errorStatus     string    = "ERROR"
 )
 
 // We register an obfuscation function to alter the header value before logging it
@@ -51,11 +52,11 @@ func LogRoute(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	if status == "ERROR" {
+	if status == errorStatus {
 		log.WithFields(log.Fields{
 			"ServiceName":   serviceName,
 			"URL":           r.URL,
@@ -93,11 +94,11 @@ func LogAsyncEvent(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	if status == "ERROR" {
+	if status == errorStatus {
 		log.WithFields(log.Fields{
 			"ServiceName":   serviceName,
 			"Status":        status,
