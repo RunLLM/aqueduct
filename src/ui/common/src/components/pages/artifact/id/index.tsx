@@ -38,12 +38,17 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     user,
     Layout = DefaultLayout,
 }) => {
+    const { apiAddress } = useAqueductConsts();
+
     // Set the title of the page on page load.
     useEffect(() => {
         document.title = 'Artifact | Aqueduct';
     }, []);
 
-    const { apiAddress } = useAqueductConsts();
+    // TODO: Fetch artifact data and render here.
+    useEffect(() => {
+        console.log('Fetching artifact data ...');
+    }, []);
 
     return (
         <Layout user={user}>
@@ -62,6 +67,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                             <Typography variant="h5" component="div" marginBottom="8px">Metrics</Typography>
                             <KeyValueTable />
                         </Box>
+                        <Box width="96px" />
                         <Box width="100%">
                             <Typography variant="h5" component="div" marginBottom="8px">Checks</Typography>
                             <KeyValueTable />
