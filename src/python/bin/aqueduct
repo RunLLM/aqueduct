@@ -517,8 +517,9 @@ if __name__ == "__main__":
         "--verbose",
         default=False,
         action="store_true",
-        help="""Use this option to see all logs in the terminal. By default, only error logs are 
-                    shown and other logs are stored into a log file.""",
+        help="""If set to true, all log messages will be printed on stdout. By default, only error
+                and warning-level logs are routed to stdout. All log messages can be found at
+                $HOME/.aqueduct/server/logs/server""",
     )
     start_args.add_argument(
         "--port", dest="port", help="Specify the port on which the Aqueduct server runs."

@@ -56,32 +56,23 @@ func LogRoute(
 		errMsg = err.Error()
 	}
 
+	logFields := log.Fields{
+		"ServiceName":   serviceName,
+		"URL":           r.URL,
+		"Headers":       headers,
+		"Status":        status,
+		"Code":          statusCode,
+		"Component":     component,
+		"Route":         routeName,
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+		"Error":         errMsg,
+	}
+
 	if status == errorStatus {
-		log.WithFields(log.Fields{
-			"ServiceName":   serviceName,
-			"URL":           r.URL,
-			"Headers":       headers,
-			"Status":        status,
-			"Code":          statusCode,
-			"Component":     component,
-			"Route":         routeName,
-			"UserId":        ctx.Value(aq_context.UserIdKey),
-			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-			"Error":         errMsg,
-		}).Error()
+		log.WithFields(logFields).Error()
 	} else {
-		log.WithFields(log.Fields{
-			"ServiceName":   serviceName,
-			"URL":           r.URL,
-			"Headers":       headers,
-			"Status":        status,
-			"Code":          statusCode,
-			"Component":     component,
-			"Route":         routeName,
-			"UserId":        ctx.Value(aq_context.UserIdKey),
-			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-			"Error":         errMsg,
-		}).Info()
+		log.WithFields(logFields).Info()
 	}
 }
 
@@ -98,24 +89,19 @@ func LogAsyncEvent(
 		errMsg = err.Error()
 	}
 
+	logFields := log.Fields{
+		"ServiceName":   serviceName,
+		"Status":        status,
+		"Component":     component,
+		"UserId":        ctx.Value(aq_context.UserIdKey),
+		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
+		"Error":         errMsg,
+	}
+
 	if status == errorStatus {
-		log.WithFields(log.Fields{
-			"ServiceName":   serviceName,
-			"Status":        status,
-			"Component":     component,
-			"UserId":        ctx.Value(aq_context.UserIdKey),
-			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-			"Error":         errMsg,
-		}).Error()
+		log.WithFields(logFields).Error()
 	} else {
-		log.WithFields(log.Fields{
-			"ServiceName":   serviceName,
-			"Status":        status,
-			"Component":     component,
-			"UserId":        ctx.Value(aq_context.UserIdKey),
-			"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
-			"Error":         errMsg,
-		}).Info()
+		log.WithFields(logFields).Info()
 	}
 }
 

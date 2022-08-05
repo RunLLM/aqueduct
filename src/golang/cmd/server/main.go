@@ -22,7 +22,7 @@ var (
 	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
 	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal.")
 	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
-	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server_log")
+	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
 )
 
 func main() {
@@ -48,24 +48,24 @@ func main() {
 		MaxAge:     28, // days
 	})
 
-	// Send logs with level higher than error to stderr.
+	// Send logs with level higher than warning to stderr.
 	log.AddHook(&writer.Hook{
 		Writer: os.Stderr,
 		LogLevels: []log.Level{
 			log.PanicLevel,
 			log.FatalLevel,
 			log.ErrorLevel,
+			log.WarnLevel,
 		},
 	})
 
 	if *verbose {
-		// If verbose, also send info, debug, warning logs to stdout.
+		// If verbose, also send info and debug logs to stdout.
 		log.AddHook(&writer.Hook{
 			Writer: os.Stdout,
 			LogLevels: []log.Level{
 				log.InfoLevel,
 				log.DebugLevel,
-				log.WarnLevel,
 			},
 		})
 	}
