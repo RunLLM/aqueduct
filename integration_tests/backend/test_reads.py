@@ -1,9 +1,9 @@
+import json
 import os
 import subprocess
-import json
 import sys
-from pathlib import Path
 import uuid
+from pathlib import Path
 
 import pytest
 import requests
@@ -69,7 +69,7 @@ class TestReads:
         url, headers = cls.response(endpoint, additional_headers)
         r = requests.get(url, headers=headers)
         return r
-    
+
     @classmethod
     def post_response(cls, endpoint, additional_headers={}):
         url, headers = cls.response(endpoint, additional_headers)
@@ -97,35 +97,34 @@ class TestReads:
         assert len(set([item["service"] for item in data])) == 1
 
     def test_endpoint_delete_integration(self):
-        integration_name = f'test_delete_integration_{uuid.uuid4().hex[:8]}'
+        integration_name = f"test_delete_integration_{uuid.uuid4().hex[:8]}"
 
         # Check integration did not exist
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        assert integration_name not in set([integration['name'] for integration in data])
+        assert integration_name not in set([integration["name"] for integration in data])
 
         # Create integration
-        status = self.post_response(self.CONNECT_INTEGRATION_TEMPLATE, additional_headers={
-            'integration-name': integration_name,
-            'integration-service': 'SQLite',
-            'integration-config': json.dumps({
-                "database": self.DEMO_DB_PATH
-            }),
-        }).status_code
+        status = self.post_response(
+            self.CONNECT_INTEGRATION_TEMPLATE,
+            additional_headers={
+                "integration-name": integration_name,
+                "integration-service": "SQLite",
+                "integration-config": json.dumps({"database": self.DEMO_DB_PATH}),
+            },
+        ).status_code
         assert status == 200
 
         # Check integration created
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        integration_data = {
-            integration['name']: integration['id']
-            for integration in data
-        }
+        integration_data = {integration["name"]: integration["id"] for integration in data}
         assert integration_name in set(integration_data.keys())
 
         # Delete integration
-        status = self.post_response(self.DELETE_INTEGRATION_TEMPLATE % integration_data[integration_name]).status_code
+        status = self.post_response(
+            self.DELETE_INTEGRATION_TEMPLATE % integration_data[integration_name]
+        ).status_code
         assert status == 200
 
         # Check integration does not exist
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        assert integration_name not in set([integration['name'] for integration in data])
-
+        assert integration_name not in set([integration["name"] for integration in data])

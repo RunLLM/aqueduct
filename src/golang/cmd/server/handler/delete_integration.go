@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
-	"net/http"
 	"fmt"
+	"fmt"
+	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -35,11 +36,11 @@ type deleteIntegrationResponse struct{}
 type DeleteIntegrationHandler struct {
 	PostHandler
 
-	Database                database.Database
+	Database          database.Database
 	Vault             vault.Vault
-	OperatorReader          operator.Reader
-	IntegrationReader    integration.Reader
-	IntegrationWriter	integration.Writer
+	OperatorReader    operator.Reader
+	IntegrationReader integration.Reader
+	IntegrationWriter integration.Writer
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -81,7 +82,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &deleteIntegrationArgs{
-		AqContext:  aqContext,
+		AqContext:     aqContext,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }

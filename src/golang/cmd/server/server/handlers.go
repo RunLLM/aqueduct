@@ -20,9 +20,9 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			StorageConfig:     s.StorageConfig,
 		},
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
-			Database:                s.Database,
+			Database:          s.Database,
 			Vault:             s.Vault,
-			OperatorReader:          s.OperatorReader,
+			OperatorReader:    s.OperatorReader,
 			IntegrationReader: s.IntegrationReader,
 			IntegrationWriter: s.IntegrationWriter,
 		},
