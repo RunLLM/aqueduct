@@ -6,6 +6,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -30,6 +32,9 @@ import (
 
 type RegisterAirflowWorkflowHandler struct {
 	RegisterWorkflowHandler
+
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 }
 
 type registerAirflowWorkflowArgs struct {
@@ -143,9 +148,24 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	args.dbWorkflowDag.Metadata.Id = workflowId
 
+	// Hack to get the correct operator and artifact IDs for the workflow dag
+	workflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		workflowId,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
+
 	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
-		args.dbWorkflowDag,
+		workflowDag,
 		h.StorageConfig,
 		h.JobManager,
 		h.Vault,

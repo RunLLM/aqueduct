@@ -177,6 +177,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 				WorkflowWatcherWriter: s.WorkflowWatcherWriter,
 			},
+			WorkflowDagReader:     s.WorkflowDagReader,
+			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database:   s.Database,
