@@ -1,13 +1,15 @@
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { Data, DataSchema } from 'src/utils/data';
-import { Button } from '../../../primitives/Button.styles';
+import React, { useEffect, useId } from 'react';
+import StickyHeaderTable from '../../../tables/StickyHeaderTable';
+import KeyValueTable from '../../../tables/KeyValueTable';
 
 import {
     ArtifactResult,
@@ -22,6 +24,12 @@ import KeyValueTable, {
 } from '../../../tables/KeyValueTable';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
 import { LayoutProps } from '../../types';
+import { Button, CircularProgress } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArtifactResult, handleGetArtifactResults, handleGetWorkflow } from '../../../../reducers/workflow';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../../../../stores/store';
+import { useAqueductConsts } from '../../../hooks/useAqueductConsts';
 
 type ArtifactDetailsHeaderProps = {
     artifactName: string;
@@ -48,11 +56,11 @@ const ArtifactDetailsHeader: React.FC<ArtifactDetailsHeaderProps> = ({
                 {artifactName}
             </Typography>
             {/* <Typography marginTop="4px" variant="caption" component="div">
-                Created: {createdAt}
-            </Typography>
-            <Typography variant="caption" component="div">
-                Source: <Link>{sourceLocation}</Link>
-            </Typography> */}
+            Created: {createdAt}
+        </Typography>
+        <Typography variant="caption" component="div">
+            Source: <Link>{sourceLocation}</Link>
+        </Typography> */}
         </Box>
     );
 };
@@ -66,10 +74,9 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     user,
     Layout = DefaultLayout,
 }) => {
-    const { apiAddress } = useAqueductConsts();
-
     const dispatch: AppDispatch = useDispatch();
-    const { workflowDagResultId, artifactId } = useParams();
+    const { workflowId, workflowDagResultId, artifactId } = useParams();
+    const workflow = useSelector((state: RootState) => state.workflowReducer);
     const artifactResult: ArtifactResult | null = useSelector(
         (state: RootState) => {
             // First, check if there are any keys in the artifactResults object.
@@ -166,18 +173,20 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                             <Typography variant="h5" component="div" marginBottom="8px">
                                 Metrics
                             </Typography>
-                            {mockMetrics.data.length > 0 ? (
-                                <KeyValueTable
-                                    schema={kvSchema}
-                                    rows={mockMetrics}
-                                    tableType={KeyValueTableType.Metric}
-                                />
-                            ) : (
-                                <Typography variant="body2">
-                                    This artifact has no associated downstream Metrics.
-                                </Typography>
-                            )}
-                        </Box>
+                            {
+                                mockMetrics.data.length > 0 ? (
+                                    <KeyValueTable
+                                        schema={kvSchema}
+                                        rows={mockMetrics}
+                                        tableType={KeyValueTableType.Metric}
+                                    />
+                                ) : (
+                                    <Typography variant="body2">
+                                        This artifact has no associated downstream Metrics.
+                                    </Typography>
+                                )
+                            }
+                        </Box >
                         <Box width="96px" />
                         <Box width="100%">
                             <Typography variant="h5" component="div" marginBottom="8px">
@@ -195,11 +204,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                                 </Typography>
                             )}
                         </Box>
-                    </Box>
-                </Box>
+                    </Box >
+                </Box >
             </Box>
         </Layout>
     );
-};
+}
 
 export default ArtifactDetailsPage;
