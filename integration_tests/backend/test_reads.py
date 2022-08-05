@@ -108,7 +108,5 @@ class TestBackend:
         assert integration_name not in set([integration["name"] for integration in data])
 
     def test_endpoint_test_integration(self):
-        resp = self.get_response(
-            self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
-        )
+        resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id)
         assert resp.ok
