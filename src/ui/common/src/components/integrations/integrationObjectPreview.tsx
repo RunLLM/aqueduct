@@ -28,7 +28,7 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
   if (isFailed(object.status)) {
     content = (
       <Alert style={{ marginTop: '10px' }} severity="error">
-        <AlertTitle>Object <b>{objectName}</b> failed to load. Try refreshing the page.</AlertTitle>
+        <AlertTitle>Object <b>{objectName}</b> failed to load.</AlertTitle>
         <pre>Error: {object.status.err}</pre>
       </Alert>
     );

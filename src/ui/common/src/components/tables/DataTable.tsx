@@ -203,7 +203,7 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
 
     let MIN_TABLE_WIDTH = 0;
     columns.forEach((column) => {
-      if (column.columnWidth == null) {
+      if (!column.columnWidth) {
         column.columnWidth = Math.max(
           column.label.length * columnWidthMultiplier,
           minColumnWidth
