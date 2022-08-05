@@ -80,16 +80,26 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
       const parsedData = JSON.parse(previewData.result.data);
       const columnsContent = parsedData.schema.fields.map((column) => {
         return {
-          label: column,
           dataKey: column.name,
+          label: column.name,
+          type: column.type,
         };
       });
       data = (
-        <VirtualizedTable
-          rowCount={parsedData.data.length}
-          rowGetter={({ index }) => parsedData.data[index]}
-          columns={columnsContent}
-        />
+        <Box
+          sx={{
+            height: '100%',
+            width: '100%',
+            overflow: 'auto',
+            overflowY: 'hidden',
+          }}
+        >
+          <VirtualizedTable
+            rowCount={parsedData.data.length}
+            rowGetter={({ index }) => parsedData.data[index]}
+            columns={columnsContent}
+          />
+        </Box>
       );
     } else {
       data = (

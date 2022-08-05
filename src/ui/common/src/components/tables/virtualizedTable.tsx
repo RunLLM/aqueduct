@@ -76,7 +76,8 @@ const styles = ({ theme }: { theme: Theme }) =>
 
 interface ColumnData {
   dataKey: string;
-  label: any;
+  label: string;
+  type: string;
   numeric?: boolean;
   columnWidth?: number;
 }
@@ -110,7 +111,7 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
     });
   };
 
-  cellRenderer: TableCellRenderer = ({ cellData, columnIndex }) => {
+  cellRenderer: TableCellRenderer = ({ columnData, cellData, columnIndex }) => {
     const { columns, rowHeight, onRowClick } = this.props;
     return (
       <TableCell
@@ -119,20 +120,32 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
           [classes.noClick]: onRowClick == null,
         })}
         variant="body"
-        style={{ height: rowHeight }}
+        style={{
+          height: rowHeight,
+        }}
         align={
           (columnIndex != null && columns[columnIndex].numeric) || false
             ? 'right'
             : 'left'
         }
       >
-        {cellData}
+        <Typography
+          variant="body1"
+          noWrap
+          sx={{
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            width: columnData.columnWidth * 0.8,
+          }}
+        >
+          {cellData}
+        </Typography>
       </TableCell>
     );
   };
 
   headerRenderer = ({
-    label,
+    columnData,
     columnIndex,
   }: TableHeaderProps & { columnIndex: number }) => {
     const { headerHeight, columns } = this.props;
@@ -162,7 +175,7 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
               fontSize: '16px',
             }}
           >
-            {label.name}
+            {columnData.label}
           </Typography>
           <Typography
             variant="caption"
@@ -172,7 +185,7 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
               fontSize: '12px',
             }}
           >
-            {label.type}
+            {columnData.type}
           </Typography>
         </Box>
       </TableCell>
@@ -187,19 +200,18 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
     columns.forEach((column) => {
       if (column.columnWidth == null) {
         column.columnWidth = Math.max(
-          column.label.name.length * columnWidthMultiplier,
+          column.label.length * columnWidthMultiplier,
           minColumnWidth
         );
       }
       MIN_TABLE_WIDTH += column.columnWidth;
     });
-    console.log(MIN_TABLE_WIDTH);
 
     return (
       <AutoSizer>
-        {({ height, width }) => (
+        {({ height }) => (
           <Table
-            height={height - 8}
+            height={height}
             width={MIN_TABLE_WIDTH}
             rowHeight={rowHeight!}
             gridStyle={{
@@ -214,6 +226,7 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
                 <Column
                   key={dataKey}
                   width={columnWidth}
+                  columnData={columns[index]}
                   headerRenderer={(headerProps) =>
                     this.headerRenderer({
                       ...headerProps,
