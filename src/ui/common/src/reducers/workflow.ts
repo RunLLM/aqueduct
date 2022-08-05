@@ -55,9 +55,8 @@ export type SavedObjectResult = {
 
 export type SavedObjectDeletionResult = {
   loadingStatus: LoadingStatus;
-  result:  Record<string, SavedObjectDeletion[]>;
+  result: Record<string, SavedObjectDeletion[]>;
 };
-
 
 export type WorkflowState = {
   loadingStatus: LoadingStatus;
@@ -224,16 +223,15 @@ export const handleListWorkflowSavedObjects = createAsyncThunk<
   }
 );
 
-
 export const handleDeleteWorkflow = createAsyncThunk<
-DeleteWorkflowResponse,
+  DeleteWorkflowResponse,
   { apiKey: string; workflowId: string; selectedObjects: Set<SavedObject> }
 >(
   'workflowReducer/deleteWorkflow',
   async (
     args: {
       apiKey: string;
-      workflowId: string; 
+      workflowId: string;
       selectedObjects: Set<SavedObject>;
     },
     thunkAPI
@@ -254,12 +252,12 @@ DeleteWorkflowResponse,
     });
 
     const res = await fetch(`${apiAddress}/api/workflow/${workflowId}/delete`, {
-          method: 'POST',
-          headers: {
-            'api-key': apiKey,
-          },
-          body: JSON.stringify(data),
-        })
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(data),
+    });
 
     const body = await res.json();
     if (!res.ok) {

@@ -37,7 +37,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { handleDeleteWorkflow, handleListWorkflowSavedObjects } from '../../reducers/workflow';
+import {
+  handleDeleteWorkflow,
+  handleListWorkflowSavedObjects,
+} from '../../reducers/workflow';
 import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
@@ -48,7 +51,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { isLoading, LoadingStatusEnum } from '../../utils/shared';
+import { LoadingStatusEnum } from '../../utils/shared';
 import {
   SavedObject,
   WorkflowDag,
@@ -323,16 +326,19 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [showUpdateMessage, setShowUpdateMessage] = useState(false);
   const [updateSucceeded, setUpdateSucceeded] = useState(false);
 
-
   const savedObjectsDeletionResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjectDeletion
   );
 
   const deleteWorkflowResults = savedObjectsDeletionResponse.result;
-  const deleteWorkflowResultsStatus = savedObjectsDeletionResponse.loadingStatus.loading;
+  const deleteWorkflowResultsStatus =
+    savedObjectsDeletionResponse.loadingStatus.loading;
 
   let deleteSucceeded = false;
-  if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded || deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
+  if (
+    deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
+    deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
+  ) {
     if (showDeleteDialog) {
       setShowDeleteDialog(false);
     }
@@ -496,8 +502,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
           </span>{' '}
-          and can be removed when deleting the workflow.{' '}
-          Please select the saved objects you wish to delete:
+          and can be removed when deleting the workflow. Aqueduct cannot
+          guarantee that the underlying data will be successfully deleted. The
+          workflow will be deleted regardless. Please select the saved objects
+          you wish to delete:
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -511,12 +519,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
 
         <Typography variant="body1">
-          Are you sure you want to{' '}
-          <b>delete</b>{' '}
+          Are you sure you want to <b>delete</b>{' '}
           <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
           is not reversible. The workflow and all <b>{selectedObjects.size}</b>{' '}
-          selected object(s) <b>regardless of update mode</b> will be{' '}
-          <b>completely removed</b>.
+          selected object(s) will be <b>completely removed</b>. Please note we
+          cannot guarantee we are only deleting Aqueduct-written data when
+          removing external objects.
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -549,7 +557,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           disabled={deleteValidation !== name}
           onClick={(event) => {
             event.preventDefault();
-            dispatch(handleDeleteWorkflow({ apiKey: user.apiKey, workflowId: workflowDag.workflow_id, selectedObjects: selectedObjects }));
+            dispatch(
+              handleDeleteWorkflow({
+                apiKey: user.apiKey,
+                workflowId: workflowDag.workflow_id,
+                selectedObjects: selectedObjects,
+              })
+            );
           }}
         >
           Delete
@@ -561,15 +575,15 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   let successfullyDeleted = 0;
   let unsuccessfullyDeleted = 0;
 
-  Object.entries(deleteWorkflowResults)
-  .map(([_, objectResults]) =>
+  Object.entries(deleteWorkflowResults).map(([_, objectResults]) =>
     objectResults.map((objectResult) => {
       if (objectResult.succeeded) {
         successfullyDeleted += 1;
       } else {
         unsuccessfullyDeleted += 1;
       }
-    }));
+    })
+  );
   const savedObjectDeletionResultsDialog = (
     <Dialog
       open={showSavedObjectDeletionResultsDialog}
@@ -599,10 +613,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
       <DialogContent sx={{ width: '600px' }}>
         <Typography>
-        <span style={{ fontFamily: 'Monospace' }}>
-          {workflowDag.metadata?.name}
-        </span>{' '}
-        has been successfully deleted. Here are the results of the saved object deletion.
+          <span style={{ fontFamily: 'Monospace' }}>
+            {workflowDag.metadata?.name}
+          </span>{' '}
+          has been successfully deleted. Here are the results of the saved
+          object deletion.
         </Typography>
 
         <List dense={false}>
@@ -610,20 +625,20 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <ListItem key={`${integrationName}-${objectResult.name}`}>
-                  <ListItemIcon style={{minWidth:  "30px"}}>
+                  <ListItemIcon style={{ minWidth: '30px' }}>
                     {objectResult.succeeded ? (
                       <FontAwesomeIcon
                         icon={faCircleCheck}
-                        style={{ 
-                          color: theme.palette.green[500]
-                         }}
+                        style={{
+                          color: theme.palette.green[500],
+                        }}
                       />
                     ) : (
                       <FontAwesomeIcon
                         icon={faCircleXmark}
-                        style={{ 
-                          color: theme.palette.red[500]
-                         }}
+                        style={{
+                          color: theme.palette.red[500],
+                        }}
                       />
                     )}
                   </ListItemIcon>
