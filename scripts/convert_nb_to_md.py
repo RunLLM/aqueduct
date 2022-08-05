@@ -1,5 +1,3 @@
-
-
 def load_notepbook(notebook_path):
     """
     Read the jupyter notebook as json.
