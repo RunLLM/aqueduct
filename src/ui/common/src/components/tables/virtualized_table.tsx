@@ -1,7 +1,8 @@
-import * as React from 'react';
-import clsx from 'clsx';
-import { Theme, styled } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+import { styled, Theme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
+import clsx from 'clsx';
+import * as React from 'react';
 import {
   AutoSizer,
   Column,
@@ -9,7 +10,6 @@ import {
   TableCellRenderer,
   TableHeaderProps,
 } from 'react-virtualized';
-import { Box, Typography } from '@mui/material';
 
 const classes = {
   flexContainer: 'ReactVirtualizedDemo-flexContainer',
@@ -34,24 +34,24 @@ const styles = ({ theme }: { theme: Theme }) =>
       }),
     },
     '& .ReactVirtualized__Table__headerColumn': {
-        ...{
-            marginRight: '0px',
-        },
+      ...{
+        marginRight: '0px',
+      },
     },
     '& .ReactVirtualized__Table__rowColumn': {
-        ...{
-            marginRight: '0px',
-        },
+      ...{
+        marginRight: '0px',
+      },
     },
     '& .ReactVirtualized__Table__headerColumn:first-of-type': {
-        ...{
-            marginLeft: '0px',
-        },
+      ...{
+        marginLeft: '0px',
+      },
     },
     '& .ReactVirtualized__Table__rowColumn:first-of-type': {
-        ...{
-            marginLeft: '0px',
-        },
+      ...{
+        marginLeft: '0px',
+      },
     },
     [`& .${classes.flexContainer}`]: {
       display: 'flex',
@@ -140,41 +140,66 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
     return (
       <TableCell
         sx={{
-            backgroundColor: 'blue.900',
-            color: 'white',
+          backgroundColor: 'blue.900',
+          color: 'white',
         }}
         component="div"
-        className={clsx(classes.tableCell, classes.flexContainer, classes.noClick)}
+        className={clsx(
+          classes.tableCell,
+          classes.flexContainer,
+          classes.noClick
+        )}
         variant="head"
         style={{ height: headerHeight }}
         align={columns[columnIndex].numeric || false ? 'right' : 'left'}
       >
-        <Box style={{ display: "flex", flexDirection: "column" }}>
-            <Typography variant="body1" sx={{textTransform: "none", fontFamily: 'monospace', fontSize: '16px'}}>{label.name}</Typography>
-            <Typography variant="caption" sx={{textTransform: "none", fontFamily: 'monospace', fontSize: '12px'}}>{label.type}</Typography>
+        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+          <Typography
+            variant="body1"
+            sx={{
+              textTransform: 'none',
+              fontFamily: 'monospace',
+              fontSize: '16px',
+            }}
+          >
+            {label.name}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              textTransform: 'none',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+            }}
+          >
+            {label.type}
+          </Typography>
         </Box>
       </TableCell>
     );
   };
 
-
   render() {
-    const { columns, rowHeight, headerHeight, minColumnWidth, ...tableProps } = this.props;
+    const { columns, rowHeight, headerHeight, minColumnWidth, ...tableProps } =
+      this.props;
 
-    var MIN_TABLE_WIDTH = 0
+    let MIN_TABLE_WIDTH = 0;
     columns.forEach((column) => {
-        if (column.columnWidth == null) {
-            column.columnWidth = Math.max(column.label.name.length * columnWidthMultiplier, minColumnWidth);
-        }
-        MIN_TABLE_WIDTH += column.columnWidth;
-    })
+      if (column.columnWidth == null) {
+        column.columnWidth = Math.max(
+          column.label.name.length * columnWidthMultiplier,
+          minColumnWidth
+        );
+      }
+      MIN_TABLE_WIDTH += column.columnWidth;
+    });
     console.log(MIN_TABLE_WIDTH);
 
     return (
       <AutoSizer>
         {({ height, width }) => (
           <Table
-            height={height-8}
+            height={height - 8}
             width={MIN_TABLE_WIDTH}
             rowHeight={rowHeight!}
             gridStyle={{

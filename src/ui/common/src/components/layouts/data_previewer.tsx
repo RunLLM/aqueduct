@@ -8,8 +8,8 @@ import React from 'react';
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
-import LogBlock, { LogLevel } from '../text/LogBlock';
 import VirtualizedTable from '../tables/virtualized_table';
+import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {
   previewData: ArtifactResult;
@@ -79,20 +79,18 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
     if (previewData.result.schema.length > 0) {
       const parsedData = JSON.parse(previewData.result.data);
       const columnsContent = parsedData.schema.fields.map((column) => {
-        return (
-          {
-            label: column,
-            dataKey: column.name,
-          }
-        );
+        return {
+          label: column,
+          dataKey: column.name,
+        };
       });
       data = (
         <VirtualizedTable
-        rowCount={parsedData.data.length}
-        rowGetter={({ index }) => parsedData.data[index]}
-        columns={columnsContent}
-      />
-      )
+          rowCount={parsedData.data.length}
+          rowGetter={({ index }) => parsedData.data[index]}
+          columns={columnsContent}
+        />
+      );
     } else {
       data = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>

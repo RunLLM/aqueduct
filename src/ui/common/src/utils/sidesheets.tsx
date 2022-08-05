@@ -11,7 +11,6 @@ import {
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
 import { ReactFlowNodeData } from './reactflow';
-import { Profiler } from "react";
 
 /**
  * This function takes in a dispatch call (which must be created in a
@@ -27,14 +26,6 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
   };
 };
 
-const logTimes = (id, phase, actualTime, baseTime, startTime, commitTime) => {
-  console.log(`${id}'s ${phase} phase:`);
-  console.log(`Actual time: ${actualTime}`);
-  console.log(`Base time: ${baseTime}`);
-  console.log(`Start time: ${startTime}`);
-  console.log(`Commit time: ${commitTime}`);
-};
-
 export function getDataSideSheetContent(
   user: UserProfile,
   currentNode: SelectedNode
@@ -44,11 +35,7 @@ export function getDataSideSheetContent(
     case NodeType.FloatArtifact:
     case NodeType.TableArtifact:
     case NodeType.JsonArtifact:
-      return (
-        <Profiler id="DataPreviewSideSheet" onRender={logTimes}>
-          <DataPreviewSideSheet artifactId={currentNode.id} />
-        </Profiler>
-      );
+      return <DataPreviewSideSheet artifactId={currentNode.id} />;
     case NodeType.CheckOp:
     case NodeType.MetricOp:
     case NodeType.ExtractOp:
