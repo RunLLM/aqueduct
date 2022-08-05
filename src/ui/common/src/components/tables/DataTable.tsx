@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
 import clsx from 'clsx';
-import React from "react";
+import React from 'react';
 import {
   AutoSizer,
   Column,
@@ -20,7 +20,8 @@ const classes = {
   headerRow: 'ReactVirtualized__Table__headerRow',
   headerColumn: 'ReactVirtualized__Table__headerColumn',
   rowColumn: 'ReactVirtualized__Table__rowColumn',
-  headerColumnFirstOfType: 'ReactVirtualized__Table__headerColumn:first-of-type',
+  headerColumnFirstOfType:
+    'ReactVirtualized__Table__headerColumn:first-of-type',
   rowColumnFirstOfType: 'ReactVirtualized__Table__rowColumn:first-of-type',
 };
 
