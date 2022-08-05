@@ -169,7 +169,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	workflowId uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
-) (shared.ExecutionStatus, error) {
+) {
 	// TODO: Generalize JobManager type from user input.
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
@@ -178,7 +178,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		},
 	)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+		log.Errorf("Unable to create JobManager: %v", err)
 	}
 
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
@@ -192,12 +192,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.Database,
 	)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowdag.")
+		log.Errorf("Error reading latest workflowDag: %v", err)
 	}
 
 	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
+		log.Errorf("Error getting github client: %v", err)
 	}
 
 	dbWorkflowDag, err = workflow_utils.UpdateWorkflowDagToLatest(
@@ -217,7 +217,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.Database,
 	)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Error updating workflowdag to latest.")
+		log.Errorf("Error updating workflowDag to latest: %v", err)
 	}
 
 	for name, newVal := range parameters {
@@ -226,7 +226,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			continue
 		}
 		if !op.Spec.IsParam() {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
+			log.Errorf("Cannot set parameters on a non-parameter operator: %v", err)
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
@@ -246,14 +246,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.Database,
 	)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
+		log.Errorf("Unable to create NewWorkflowDag: %v", err)
 	}
 
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
 		inputs, err := dag.OperatorInputs(op)
 		if err != nil {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize operator inputs.")
+			log.Errorf("Unable to initialize operator inputs: %v", err)
 		}
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
@@ -267,14 +267,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	err = dag.InitializeResults(ctx)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
+		log.Errorf("Unable to initialize dag results: %v", err)
 	}
 
 	// Make sure to persist the dag results on exit.
 	defer func() {
 		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
 		if err != nil {
-			log.Errorf("Error when persisting dag resutls: %v", err)
+			log.Errorf("Error when persisting dag results: %v", err)
 		}
 	}()
 
@@ -292,8 +292,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	} else {
 		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
-
-	return workflowRunMetadata.Status, err
+	log.Errorf("Error when executing workflow: %v", err)
 }
 
 func (eng *aqEngine) PreviewWorkflow(
@@ -748,17 +747,13 @@ func (eng *aqEngine) generateWorkflowCronFunction(ctx context.Context, name stri
 		}
 		emptyParams := make(map[string]string)
 
-		_, err := eng.ExecuteWorkflow(
+		log.Infof("Launched cron job %s", jobName)
+		eng.ExecuteWorkflow(
 			ctx,
 			workflowId,
 			timeConfig,
 			emptyParams,
 		)
-		if err != nil {
-			log.Errorf("Error running cron job %s: %v", jobName, err)
-		} else {
-			log.Infof("Launched cron job %s", jobName)
-		}
 	}
 }
 

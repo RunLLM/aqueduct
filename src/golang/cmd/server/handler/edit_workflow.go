@@ -106,7 +106,7 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 	args := interfaceArgs.(*editWorkflowArgs)
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to create update workflow transaction.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
@@ -123,7 +123,7 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to commit update workflow transaction.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
 	}
 
 	return struct{}{}, http.StatusOK, nil
