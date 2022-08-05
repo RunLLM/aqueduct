@@ -37,7 +37,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { handleListWorkflowSavedObjects } from '../../reducers/workflow';
+import { handleDeleteWorkflow, handleListWorkflowSavedObjects } from '../../reducers/workflow';
 import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
@@ -48,7 +48,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { LoadingStatusEnum } from '../../utils/shared';
+import { isLoading, LoadingStatusEnum } from '../../utils/shared';
 import {
   SavedObject,
   WorkflowDag,
@@ -179,15 +179,6 @@ type WorkflowSettingsProps = {
   onClose: () => void;
 };
 
-type SavedObjectResult = {
-  name: string;
-  succeeded: boolean;
-};
-
-type DeleteWorkflowResponse = {
-  saved_object_deletion_results: { [id: string]: SavedObjectResult[] };
-};
-
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
   workflowDag,
@@ -218,9 +209,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
   );
-  const [deleteWorkflowResults, setDeleteWorkflowResults] = useState({
-    saved_object_deletion_results: {},
-  } as DeleteWorkflowResponse);
 
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
@@ -325,10 +313,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   };
 
   // State that controls the Snackbar for an attempted workflow deletion.
-  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
   const [showDeleteMessage, setShowDeleteMessage] = useState(false);
-  const [deleteSucceeded, setDeleteSucceeded] = useState(false);
 
   // State that controls the Snackbar for an attempted workflow settings
   // update.
@@ -337,58 +323,41 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [showUpdateMessage, setShowUpdateMessage] = useState(false);
   const [updateSucceeded, setUpdateSucceeded] = useState(false);
 
-  const handleDeleteWorkflow = (event) => {
-    event.preventDefault();
 
-    setIsDeleting(true);
+  const savedObjectsDeletionResponse = useSelector(
+    (state: RootState) => state.workflowReducer.savedObjectDeletion
+  );
 
-    const data = { force: true };
-    data['external_delete'] = {};
+  const deleteWorkflowResults = savedObjectsDeletionResponse.result;
+  const deleteWorkflowResultsStatus = savedObjectsDeletionResponse.loadingStatus.loading;
 
-    selectedObjects.forEach((object) => {
-      if (data['external_delete'][object.integration_name]) {
-        data['external_delete'][object.integration_name].push(
-          object.object_name
-        );
-      } else {
-        data['external_delete'][object.integration_name] = [object.object_name];
-      }
-    });
-
-    fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/delete`, {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-      },
-      body: JSON.stringify(data),
-    }).then((res) => {
-      res.json().then((body) => {
-        setIsDeleting(false);
-        setShowDeleteDialog(false);
-
-        if (res.ok) {
-          setDeleteSucceeded(true);
-          if (selectedObjects.size > 0) {
-            setShowSavedObjectDeletionResultsDialog(true);
-            setDeleteWorkflowResults(body as DeleteWorkflowResponse);
-          } else {
-            setDeleteMessage(
-              'Successfully deleted your workflow. Redirecting you to the workflows page...'
-            );
-            setShowDeleteMessage(true);
-            navigate('/workflows');
-          }
-        } else {
-          setDeleteSucceeded(false);
-          setDeleteMessage(
-            `We were unable to delete your workflow: ${body.error}`
-          );
-          setShowDeleteMessage(true);
-          setDeleteValidation('');
+  let deleteSucceeded = false;
+  if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded || deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
+    if (showDeleteDialog) {
+      setShowDeleteDialog(false);
+    }
+    if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
+      deleteSucceeded = true;
+      if (selectedObjects.size > 0) {
+        if (!showSavedObjectDeletionResultsDialog) {
+          setShowSavedObjectDeletionResultsDialog(true);
         }
-      });
-    });
-  };
+      } else {
+        setDeleteMessage(
+          'Successfully deleted your workflow. Redirecting you to the workflows page...'
+        );
+        setShowDeleteMessage(true);
+        navigate('/workflows');
+      }
+    } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
+      deleteSucceeded = false;
+      setDeleteMessage(
+        `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
+      );
+      setShowDeleteMessage(true);
+      setDeleteValidation('');
+    }
+  }
 
   const updateSettings = (event) => {
     event.preventDefault();
@@ -546,7 +515,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
         <Typography variant="body1">
           Are you sure you want to{' '}
-          <span style={{ color: theme.palette.red[500] }}>delete</span>{' '}
+          <b>delete</b>{' '}
           <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
           is not reversible. The workflow and all <b>{selectedObjects.size}</b>{' '}
           selected object(s) <b>regardless of update mode</b> will be{' '}
@@ -579,9 +548,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         <LoadingButton
           variant="contained"
           color="error"
-          loading={isDeleting}
+          loading={deleteWorkflowResultsStatus === LoadingStatusEnum.Loading}
           disabled={deleteValidation !== name}
-          onClick={handleDeleteWorkflow}
+          onClick={(event) => {
+            event.preventDefault();
+            dispatch(handleDeleteWorkflow({ apiKey: user.apiKey, workflowId: workflowDag.workflow_id, selectedObjects: selectedObjects }));
+          }}
         >
           Delete
         </LoadingButton>
@@ -589,6 +561,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     </Dialog>
   );
 
+  let successfullyDeleted = 0;
+  let unsuccessfullyDeleted = 0;
+
+  Object.entries(deleteWorkflowResults)
+  .map(([_, objectResults]) =>
+    objectResults.map((objectResult) => {
+      if (objectResult.succeeded) {
+        successfullyDeleted += 1;
+      } else {
+        unsuccessfullyDeleted += 1;
+      }
+    }));
   const savedObjectDeletionResultsDialog = (
     <Dialog
       open={showSavedObjectDeletionResultsDialog}
@@ -606,21 +590,29 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </DialogTitle>
 
       <DialogContent>
+        <Typography>
+            Workflow successfully deleted. Here are the results of the saved object deletion.
+        </Typography>
+
         <List dense={false}>
-          {Object.entries(deleteWorkflowResults.saved_object_deletion_results)
+          {Object.entries(deleteWorkflowResults)
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <ListItem key={`${integrationName}-${objectResult.name}`}>
-                  <ListItemIcon>
+                  <ListItemIcon style={{minWidth:  "30px"}}>
                     {objectResult.succeeded ? (
                       <FontAwesomeIcon
                         icon={faCircleCheck}
-                        style={{ color: theme.palette.green[500] }}
+                        style={{ 
+                          color: theme.palette.green[500]
+                         }}
                       />
                     ) : (
                       <FontAwesomeIcon
                         icon={faCircleXmark}
-                        style={{ color: theme.palette.red[500] }}
+                        style={{ 
+                          color: theme.palette.red[500]
+                         }}
                       />
                     )}
                   </ListItemIcon>
@@ -637,6 +629,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             )
             .flat()}
         </List>
+
+        <Typography>
+          <b>Successfully Deleted</b>: {successfullyDeleted}
+        </Typography>
+        <Typography>
+          <b>Unable To Delete</b>: {unsuccessfullyDeleted}
+        </Typography>
       </DialogContent>
 
       <DialogActions>

@@ -94,6 +94,15 @@ export type ListWorkflowSavedObjectsResponse = {
   object_details: SavedObject[];
 };
 
+export type SavedObjectDeletion = {
+  name: string;
+  succeeded: boolean;
+};
+
+export type DeleteWorkflowResponse = {
+  saved_object_deletion_results: { [id: string]: SavedObjectDeletion[] };
+};
+
 export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {
   const dags: WorkflowDag[] = Object.values(resp.workflow_dags ?? {});
   resp.workflow_dags = {};

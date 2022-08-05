@@ -16,10 +16,12 @@ import {
 } from '../utils/reactflow';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import {
+  DeleteWorkflowResponse,
   GetWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
   normalizeGetWorkflowResponse,
   SavedObject,
+  SavedObjectDeletion,
   WorkflowDag,
   WorkflowDagResultSummary,
 } from '../utils/workflows';
@@ -46,14 +48,21 @@ export type OperatorResult = {
   result?: GetOperatorResultResponse;
 };
 
-export type SavedObjectResponse = {
+export type SavedObjectResult = {
   loadingStatus: LoadingStatus;
   result: Record<string, SavedObject[]>;
 };
 
+export type SavedObjectDeletionResult = {
+  loadingStatus: LoadingStatus;
+  result:  Record<string, SavedObjectDeletion[]>;
+};
+
+
 export type WorkflowState = {
   loadingStatus: LoadingStatus;
-  savedObjects: SavedObjectResponse;
+  savedObjects: SavedObjectResult;
+  savedObjectDeletion: SavedObjectDeletionResult;
   dags: { [id: string]: WorkflowDag };
   dagResults: WorkflowDagResultSummary[];
   watcherAuthIds: string[];
@@ -68,6 +77,10 @@ export type WorkflowState = {
 const initialState: WorkflowState = {
   loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   savedObjects: {
+    loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+    result: {},
+  },
+  savedObjectDeletion: {
     loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
     result: {},
   },
@@ -208,6 +221,52 @@ export const handleListWorkflowSavedObjects = createAsyncThunk<
     }
 
     return body as ListWorkflowSavedObjectsResponse;
+  }
+);
+
+
+export const handleDeleteWorkflow = createAsyncThunk<
+DeleteWorkflowResponse,
+  { apiKey: string; workflowId: string; selectedObjects: Set<SavedObject> }
+>(
+  'workflowReducer/deleteWorkflow',
+  async (
+    args: {
+      apiKey: string;
+      workflowId: string; 
+      selectedObjects: Set<SavedObject>;
+    },
+    thunkAPI
+  ) => {
+    const { apiKey, workflowId, selectedObjects } = args;
+
+    const data = { force: true };
+    data['external_delete'] = {};
+
+    selectedObjects.forEach((object) => {
+      if (data['external_delete'][object.integration_name]) {
+        data['external_delete'][object.integration_name].push(
+          object.object_name
+        );
+      } else {
+        data['external_delete'][object.integration_name] = [object.object_name];
+      }
+    });
+
+    const res = await fetch(`${apiAddress}/api/workflow/${workflowId}/delete`, {
+          method: 'POST',
+          headers: {
+            'api-key': apiKey,
+          },
+          body: JSON.stringify(data),
+        })
+
+    const body = await res.json();
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(body.error);
+    }
+
+    return body as DeleteWorkflowResponse;
   }
 );
 
@@ -403,6 +462,23 @@ export const workflowSlice = createSlice({
         loading: LoadingStatusEnum.Failed,
         err: payload as string,
       };
+    });
+
+    builder.addCase(handleDeleteWorkflow.rejected, (state, action) => {
+      const payload = action.payload;
+      state.savedObjectDeletion.loadingStatus = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
+    });
+
+    builder.addCase(handleDeleteWorkflow.fulfilled, (state, action) => {
+      const response = action.payload;
+      state.savedObjectDeletion.loadingStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+      state.savedObjectDeletion.result = response.saved_object_deletion_results;
     });
   },
 });
