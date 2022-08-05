@@ -8,8 +8,7 @@ class AirflowIntegration(Integration):
     Class for Airflow integration.
     """
 
-    def __init__(self, api_client: APIClient, dag: DAG, metadata: IntegrationInfo):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, metadata: IntegrationInfo):
         self._dag = dag
         self._metadata = metadata
 

@@ -250,7 +250,6 @@ class Client:
             )
         elif integration_info.service == ServiceType.AIRFLOW:
             return AirflowIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )

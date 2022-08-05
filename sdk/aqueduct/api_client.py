@@ -310,7 +310,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
-        headers = utils.generate_auth_headers(self.api_key)
+        headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
         }
