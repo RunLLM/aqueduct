@@ -60,30 +60,5 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
   }
   return <Box sx={{ mt: 3 }}>{content}</Box>;
 };
-/*return (
-    <Box sx={{ mt: 3 }}>
-      {isLoading(object.status) && (
-        <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
-          <CircularProgress size={30} />
-          <Typography sx={{ ml: 2 }}>
-            Loading object <b>{objectName}</b>...
-          </Typography>
-        </Box>
-      )}
-      {isFailed(object.status) && (
-        <Alert style={{ marginTop: '10px' }} severity="error">
-          Object <b>{objectName}</b> failed to load. Try refreshing the page.{' '}
-          <br />
-          Error: {object.status.err}
-        </Alert>
-      )}
-      {isSucceeded(object.status) && !!object.data && (
-        <Box sx={{ height: '50vh', width: '100%' }}>
-          <DataTable data={object.data} />
-        </Box>
-      )}
-    </Box>
-  );
-};*/
 
 export default IntegrationObjectPreview;
