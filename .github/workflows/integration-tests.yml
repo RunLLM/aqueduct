@@ -1,15 +1,13 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [ eng-1508-investigate-why-some-old-workflows ]
   workflow_call:
   workflow_dispatch:
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     strategy:
       matrix:
         # These are all the Python versions that we support.
@@ -70,7 +68,7 @@ jobs:
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 30
+        timeout-minutes: 15
         working-directory: integration_tests/sdk
         env:
           SERVER_ADDRESS: localhost:8080
