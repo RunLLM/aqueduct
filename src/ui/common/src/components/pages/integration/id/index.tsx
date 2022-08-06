@@ -4,7 +4,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
@@ -12,6 +12,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import {
+  handleDeleteIntegration,
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
   handleTestConnectIntegration,
@@ -35,22 +36,38 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
   const integrationId: string = useParams().id;
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
+  const [showDeleteIntegrationToast, setShowDeleteIntegrationToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
+  const [showDeleteSuccessToast, setShowDeleteSuccessToast] = useState(false);
+  console.log(showDeleteIntegrationToast);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
+  };
+
+  const handleCloseDeleteSuccessToast = () => {
+    setShowDeleteSuccessToast(false);
   };
 
   const handleCloseTestConnectToast = () => {
     setShowTestConnectToast(false);
   };
 
+  const handleCloseDeleteIntegrationToast = () => {
+    setShowDeleteIntegrationToast(false);
+  };
+
   const testConnectStatus = useSelector(
     (state: RootState) => state.integrationReducer.connectionStatus
+  );
+
+  const deleteIntegrationStatus = useSelector(
+    (state: RootState) => state.integrationReducer.deletionStatus
   );
 
   const integrations = useSelector(
@@ -89,6 +106,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       setShowConnectSuccessToast(true);
     }
   }, [testConnectStatus]);
+
+
+  useEffect(() => {
+    if (!isLoading(deleteIntegrationStatus)) {
+      setShowDeleteIntegrationToast(false);
+    }
+
+    if (isSucceeded(deleteIntegrationStatus)) {
+      setShowDeleteSuccessToast(true);
+      // Reload integrations because deleted
+      dispatch(handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true }));
+      // Integration no longer exists. Navigate back to integration list after a short pause.
+      setTimeout(() => navigate('/integrations'), 2000);
+    }
+  }, [deleteIntegrationStatus]);
 
   let selectedIntegration = null;
 
@@ -135,6 +167,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               );
               setShowTestConnectToast(true);
             }}
+            onDeleteIntegration={() => {
+              // dispatch(
+              //   handleDeleteIntegration({
+              //     apiKey: user.apiKey,
+              //     integrationId: selectedIntegration.id,
+              //   })
+              // );
+              setShowDeleteIntegrationToast(true);
+            }}
           />
         </Box>
         {testConnectStatus && isFailed(testConnectStatus) && (
@@ -144,12 +185,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             <pre>{testConnectStatus.err}</pre>
           </Alert>
         )}
+        {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
+          <Alert severity="error" sx={{ marginTop: 2 }}>
+            Integration deletion failed with error:
+            <br></br>
+            <pre>{deleteIntegrationStatus.err}</pre>
+          </Alert>
+        )}
         <IntegrationObjectList user={user} integration={selectedIntegration} />
         <Typography
           variant="h4"
           gutterBottom
           component="div"
-          sx={{ marginY: 4 }}
+          sx={{ marginY: 4, mt: 4 }}
         >
           Workflows
         </Typography>
@@ -179,7 +227,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showTestConnectToast}
         onClose={handleCloseTestConnectToast}
-        key={'workflowheader-success-snackbar'}
+        key={'workflowheader-connect-attempt-info-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
@@ -192,9 +240,24 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       </Snackbar>
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showDeleteIntegrationToast}
+        onClose={handleCloseDeleteIntegrationToast}
+        key={'workflowheader-delete-attempt-info-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseDeleteIntegrationToast}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          {`Attempting to delete ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showConnectSuccessToast}
         onClose={handleCloseConnectSuccessToast}
-        key={'workflowheader-error-snackbar'}
+        key={'workflowheader-connect-success-error-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
@@ -203,6 +266,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           sx={{ width: '100%' }}
         >
           {`Successfully connected to ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showDeleteSuccessToast}
+        onClose={handleCloseDeleteSuccessToast}
+        key={'workflowheader-delete-success-error-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseDeleteSuccessToast}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {`Successfully deleted ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
     </Layout>
