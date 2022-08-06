@@ -1,6 +1,8 @@
 name: Integration Tests
 
 on:
+  push:
+    branches: [ eng-1508-investigate-why-some-old-workflows ]
   workflow_call:
   workflow_dispatch:
 
