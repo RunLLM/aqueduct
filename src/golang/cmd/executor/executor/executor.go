@@ -20,17 +20,6 @@ type Executor interface {
 
 func NewExecutor(spec job.Spec) (Executor, error) {
 	switch spec.Type() {
-	case job.WorkflowJobType:
-		workflowSpec, ok := spec.(*job.WorkflowSpec)
-		if !ok {
-			return nil, job.ErrInvalidJobSpec
-		}
-
-		base, err := NewBaseExecutor(workflowSpec.ExecutorConfig)
-		if err != nil {
-			return nil, err
-		}
-		return NewWorkflowExecutor(workflowSpec, base)
 	case job.WorkflowRetentionType:
 		workflowRetentionSpec, ok := spec.(*job.WorkflowRetentionSpec)
 		if !ok {
