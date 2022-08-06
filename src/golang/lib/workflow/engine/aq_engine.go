@@ -243,6 +243,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.StorageConfig,
+		false, // not preview
 		eng.Database,
 	)
 	if err != nil {
@@ -285,7 +286,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		workflowRunMetadata,
 		timeConfig,
 		jobManager,
-		true, // should persist results
 	)
 	if err != nil {
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
@@ -323,6 +323,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.StorageConfig,
+		true, // preview
 		eng.Database,
 	)
 	if err != nil {
@@ -354,7 +355,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		workflowRunMetadata,
 		timeConfig,
 		jobManager,
-		false, // should not persist results
 	)
 	if err != nil {
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
@@ -623,7 +623,6 @@ func (eng *aqEngine) execute(
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
-	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
@@ -673,11 +672,9 @@ func (eng *aqEngine) execute(
 			}
 
 			// From here on we can assume that the operator has terminated.
-			if shouldPersistResults {
-				err = op.PersistResult(ctx)
-				if err != nil {
-					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
-				}
+			err = op.PersistResult(ctx)
+			if err != nil {
+				return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 			}
 
 			// We can continue orchestration on non-fatal errors.
