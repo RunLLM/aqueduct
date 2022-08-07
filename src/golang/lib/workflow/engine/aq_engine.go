@@ -289,10 +289,10 @@ func (eng *aqEngine) ExecuteWorkflow(
 	)
 	if err != nil {
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
+		log.Errorf("Error when executing workflow: %v", err)
 	} else {
 		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
-	log.Errorf("Error when executing workflow: %v", err)
 }
 
 func (eng *aqEngine) PreviewWorkflow(
