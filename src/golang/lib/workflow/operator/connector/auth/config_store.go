@@ -63,7 +63,7 @@ func ReadConfigFromSecret(
 	if !ok {
 		// This means this secret has not yet been migrated to the new format,
 		// so it must contain a staticConfig.
-		return &staticConfig{Conf: secrets}, nil
+		return &StaticConfig{Conf: secrets}, nil
 	}
 
 	typ, err := parseConfigType(typStr)

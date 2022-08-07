@@ -19,6 +19,12 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	ErrInvalidServiceType          = errors.New("Editing for this integration type is not currently supported.")
+	ErrEditDemoIntegration         = errors.New("You cannot edit demo DB credentials.")
+	ErrEditIntegrationWithDemoName = errors.New("aqueduct_demo is reserved for demo integration. Please use another name.")
+)
+
 // ConnectIntegrationHandler connects a new integration for the organization.
 type EditIntegrationHandler struct {
 	PostHandler
@@ -29,6 +35,36 @@ type EditIntegrationHandler struct {
 	Vault             vault.Vault
 	JobManager        job.JobManager
 	StorageConfig     *shared.StorageConfig
+}
+
+var serviceToReadOnlyFields = map[integration.Service]map[string]bool{
+	integration.Airflow:  {"host": true},
+	integration.BigQuery: {"project_id": true},
+	integration.MariaDb: {
+		"host":     true,
+		"port":     true,
+		"database": true,
+	},
+	integration.MySql: {
+		"host":     true,
+		"port":     true,
+		"database": true,
+	},
+	integration.Postgres: {
+		"host":     true,
+		"port":     true,
+		"database": true,
+	},
+	integration.Redshift: {
+		"host":     true,
+		"port":     true,
+		"database": true,
+	},
+	integration.Snowflake: {
+		"account_identifier": true,
+		"warehouse":          true,
+		"database":           true,
+	},
 }
 
 func (*EditIntegrationHandler) Headers() []string {
@@ -51,6 +87,47 @@ func (*EditIntegrationHandler) Name() string {
 	return "EditIntegration"
 }
 
+// `updateConfig` updates `curConfigToUpdate` *in-place* with `newConfig` with
+// the same behavior as map updates.
+// It returns 3 values:
+//  - whether there's actually an update
+//  - http status code
+//  - error if there's any
+//
+// If trying to update a 'read only' field defined by `ServerToReadOnlyFieldsMap`,
+// `updateConfig` will return a 400 and an error.
+func updateConfig(
+	curConfigToUpdate map[string]string,
+	service integration.Service,
+	newConfig map[string]string,
+) (bool, int, error) {
+	readOnlyFields := serviceToReadOnlyFields[service]
+	updated := false
+	for k, v := range newConfig {
+		_, isReadonlyField := readOnlyFields[k]
+		curValue, existsInCurConfig := curConfigToUpdate[k]
+		if isReadonlyField && existsInCurConfig && curValue != v {
+			// Throw if:
+			// * field is read-only, and
+			// * field both exists in cur and new, and
+			// * field values are different in cur and new
+			return false, http.StatusBadRequest, errors.Newf(
+				"Error updating read-only field %s. For %s, %v are read-only fields which cannot be edited.",
+				k,
+				service,
+				readOnlyFields,
+			)
+		}
+
+		if !existsInCurConfig || curValue != v {
+			updated = true
+			curConfigToUpdate[k] = v
+		}
+	}
+
+	return updated, http.StatusOK, nil
+}
+
 func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
@@ -66,6 +143,10 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to edit integration.")
+	}
+
+	if name == integration.DemoDbIntegrationName {
+		return nil, http.StatusBadRequest, ErrEditIntegrationWithDemoName
 	}
 
 	return &EditIntegrationArgs{
@@ -91,18 +172,52 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
 	}
 
+	if integrationObject.Name == integration.DemoDbIntegrationName {
+		return emptyResp, http.StatusBadRequest, ErrEditDemoIntegration
+	}
+
 	config, err := auth.ReadConfigFromSecret(ctx, id, h.Vault)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}
 
-	staticConfig, ok := config.()
+	staticConfig, ok := config.(*auth.StaticConfig)
+	if !ok {
+		return emptyResp, http.StatusInternalServerError, ErrInvalidServiceType
+	}
+
+	configUpdated, status, err := updateConfig(staticConfig.Conf, integrationObject.Service, args.UpdatedFields)
+	if err != nil {
+		// Do not wrap err here since `updateConfig` returns a proper top-level message.
+		return emptyResp, status, err
+	}
+
+	if !configUpdated {
+		// handle name update if necessary:
+		if args.Name != "" && args.Name != integrationObject.Name {
+			status, err = UpdateIntegration(
+				ctx,
+				integrationObject.Id,
+				args.Name,
+				nil,
+				h.IntegrationWriter,
+				h.Database,
+				h.Vault,
+			)
+			if err != nil {
+				return emptyResp, status, err
+			}
+		}
+
+		return emptyResp, http.StatusOK, nil
+	}
+
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
 		args.RequestId,
-		args.Config,
-		args.Service,
+		staticConfig,
+		integrationObject.Service,
 		h.JobManager,
 		h.StorageConfig,
 	)
@@ -110,7 +225,15 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, statusCode, err
 	}
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, h.Database, h.Vault); err != nil {
+	if statusCode, err := UpdateIntegration(
+		ctx,
+		integrationObject.Id,
+		args.Name,
+		staticConfig,
+		h.IntegrationWriter,
+		h.Database,
+		h.Vault,
+	); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -119,54 +242,48 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 // ConnectIntegration connects a new integration specified by `args`. It returns a status code for the request
 // and an error, if any.
-func ConnectIntegration(
+func UpdateIntegration(
 	ctx context.Context,
-	args *ConnectIntegrationArgs,
+	integrationId uuid.UUID,
+	newName string,
+	newConfig auth.Config,
 	integrationWriter integration.Writer,
 	db database.Database,
 	vaultObject vault.Vault,
 ) (int, error) {
-	// Extract non-confidential config
-	publicConfig := args.Config.PublicConfig()
-
-	var integrationObject *integration.Integration
-	var err error
-	if args.UserOnly {
-		// This is a user-specific integration
-		integrationObject, err = integrationWriter.CreateIntegrationForUser(
-			ctx,
-			args.OrganizationId,
-			args.Id,
-			args.Service,
-			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
-			true,
-			db,
-		)
-	} else {
-		integrationObject, err = integrationWriter.CreateIntegration(
-			ctx,
-			args.OrganizationId,
-			args.Service,
-			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
-			true,
-			db,
-		)
+	changedFields := make(map[string]interface{}, 2)
+	if newName != "" {
+		changedFields[integration.NameColumn] = newName
 	}
+
+	if newConfig != nil {
+		// Extract non-confidential config
+		publicConfig := newConfig.PublicConfig()
+		changedFields[integration.ConfigColumn] = (*postgres_utils.Config)(&publicConfig)
+	}
+
+	// This is a user-specific integration
+	_, err := integrationWriter.UpdateIntegration(
+		ctx,
+		integrationId,
+		changedFields,
+		db,
+	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
 	}
 
 	// Store config (including confidential information) as in vault
-	if err := auth.WriteConfigToSecret(
-		ctx,
-		integrationObject.Id,
-		args.Config,
-		vaultObject,
-	); err != nil {
-		// TODO ENG-498: Rollback integration write
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	if newConfig != nil {
+		if err := auth.WriteConfigToSecret(
+			ctx,
+			integrationId,
+			newConfig,
+			vaultObject,
+		); err != nil {
+			// TODO ENG-498: Rollback integration write
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+		}
 	}
 
 	return http.StatusOK, nil

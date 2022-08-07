@@ -40,6 +40,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactWriter:          s.ArtifactWriter,
 			ArtifactResultWriter:    s.ArtifactResultWriter,
 		},
+		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
+			Database:          s.Database,
+			IntegrationReader: s.IntegrationReader,
+			IntegrationWriter: s.IntegrationWriter,
+			JobManager:        s.JobManager,
+			Vault:             s.Vault,
+			StorageConfig:     s.StorageConfig,
+		},
 		routes.EditWorkflowRoute: &handler.EditWorkflowHandler{
 			Database:       s.Database,
 			WorkflowReader: s.WorkflowReader,

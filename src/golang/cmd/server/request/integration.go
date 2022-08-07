@@ -9,8 +9,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-var ErrNoIntegrationName = errors.New("Integration name is not provided")
-
 // ParseIntegrationServiceFromRequest parses the integration service, and whether the
 // service is user only.
 func ParseIntegrationServiceFromRequest(r *http.Request) (integration.Service, bool, error) {
@@ -26,19 +24,16 @@ func ParseIntegrationServiceFromRequest(r *http.Request) (integration.Service, b
 // ParseIntegrationConfigFromRequest parses the integration name and configuration,
 // from the request
 func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]string, error) {
-
 	configHeader := r.Header.Get(routes.IntegrationConfigHeader)
 	var configuration map[string]string
-	err := json.Unmarshal([]byte(configHeader), &configuration)
-	if err != nil {
-		return "", nil, errors.Wrap(err, "Unable to parse integration configuration: %v")
+	if len(configHeader) > 0 {
+		err := json.Unmarshal([]byte(configHeader), &configuration)
+		if err != nil {
+			return "", nil, errors.Wrap(err, "Unable to parse integration configuration: %v")
+		}
 	}
 
 	integrationName := r.Header.Get(routes.IntegrationNameHeader)
-	if integrationName == "" {
-		return "", nil, ErrNoIntegrationName
-	}
-
 	return integrationName, configuration, nil
 }
 

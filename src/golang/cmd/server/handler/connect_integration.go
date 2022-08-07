@@ -27,6 +27,8 @@ const (
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
 
+var ErrNoIntegrationName = errors.New("Integration name is not provided")
+
 // ConnectIntegrationHandler connects a new integration for the organization.
 type ConnectIntegrationHandler struct {
 	PostHandler
@@ -74,6 +76,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	if name == "" {
+		return nil, http.StatusBadRequest, ErrNoIntegrationName
 	}
 
 	if service == integration.Github || service == integration.GoogleSheets {
