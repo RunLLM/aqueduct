@@ -105,6 +105,10 @@ func updateConfig(
 	readOnlyFields := serviceToReadOnlyFields[service]
 	updated := false
 	for k, v := range newConfig {
+		if v == "" {
+			continue // no update occurs
+		}
+
 		_, isReadonlyField := readOnlyFields[k]
 		curValue, existsInCurConfig := curConfigToUpdate[k]
 		if isReadonlyField && existsInCurConfig && curValue != v {
