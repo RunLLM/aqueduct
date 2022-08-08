@@ -51,6 +51,7 @@ func NewOperator(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
+	isPreview bool,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputContentPaths) || len(inputs) != len(inputMetadataPaths) {
@@ -80,6 +81,7 @@ func NewOperator(
 		db:            db,
 
 		resultsPersisted: false,
+		isPreview:        isPreview,
 	}
 
 	if dbOperator.Spec.IsFunction() {
