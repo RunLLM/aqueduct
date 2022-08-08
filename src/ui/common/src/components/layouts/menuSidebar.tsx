@@ -180,8 +180,8 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           component={RouterLink as any}
         >
           <img
-            style={{ maxWidth: '130px', width: '130px' }}
-            src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_horizontal.png"
+            style={{ maxWidth: '125px', width: '125px', marginLeft: '4px' }}
+            src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-horizontal-light-transparent-resized.png"
           />
         </Link>
 
