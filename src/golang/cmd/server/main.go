@@ -79,10 +79,10 @@ func main() {
 		log.Fatalf("Failed to start workflow retention cronjob: %v", err)
 	}
 
-	err = s.RunMissedCronJobs()
-	if err != nil {
-		log.Errorf("Failed to run missed workflows: %v", err)
-	}
+	// err = s.RunMissedCronJobs()
+	// if err != nil {
+	// 	log.Errorf("Failed to run missed workflows: %v", err)
+	// }
 
 	// Start the HTTP server and listen for requests indefinitely.
 	log.Infof("You can use api key %s to connect to the server", serverConfig.ApiKey)
