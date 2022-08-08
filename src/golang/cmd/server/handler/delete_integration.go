@@ -61,6 +61,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		r.Context(),
 		integrationId,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.Database,
 	)
 	if err != nil {
