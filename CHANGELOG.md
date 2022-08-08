@@ -1,7 +1,51 @@
 # Changelog
 
+## 0.0.8
+Released on August 8, 2022.
+
+### Enhancements
+
+* Uses `pip freeze` to detect and capture local Python requirements when an
+    explicit set of requirements is not specified during function creation.
+* Adds download bars to CLI to demonstrate progress when downloading files from
+    S3.
+    <img src="https://user-images.githubusercontent.com/867892/182453985-d0f5408b-8858-46c5-a8bc-e4e198e092ee.png" />
+* When running the Aqueduct server locally, the CLI now automatically opens a
+    browser tab with the Aqueduct UI on `aqueduct start` and passes the local
+    API key as a query parameter to automatically log in.
+* When running on EC2 with `--expose`, detects and populates the public IP 
+    address of the current machine in CLI output on `aqueduct start`.
+* Makes the file format parameter in the S3 integration a string, so users can
+    specify file format by passing in `"csv"`, `"json"`, etc.
+* Improves the layout and readability of the integrations UI page by adding
+    explicit cards for each integration and also labeling each one with its
+    name.
+    **VIKRAM TO ADD IMAGE**
+* Allows users to create operators from existing functions without redefining
+    the operator with a decorator -- using `aqueduct.to_operator`, an existing
+    function can be converted into an Aqueduct operator.
+* Reduces CLI log output by redirecting info and debug logs to a log file; adds
+    a corresponding `--verbose` flag to the CLI so users can see log output in
+    terminal if desired.
+* Reorganizes integration management behind a dropdown menu, adding option to
+    test whether the integration connection still works or not.
+    **VIKRAM TO ADD IMAGE**
+
+### Bugfixes
+* Fixes bug where where interacting with the UI when the Aqueduct server was
+    off resulted in an unhelp error message ("Failed to fetch.") and explicitly
+    detects instead when the server is unreachable.
+* Fixes bug where missing dependencies for integrations (e.g., requiring a
+    Python package to access Postgres) were not explicitly surfaced to the user
+    -- a cryptic import error message has been replaced with an explicit
+    notification that a dependency needs to be installed.
+* Fixes bug where metric nodes were misformatted.
+* Fixes bug where loading large tables caused UI to significantly slow down
+    because React was blindly rendering all cells -- using virtualized tables,
+    the UI now only renders the data that is being shown on screen.
+
 ## 0.0.7
-Released on 8/1/2022
+Released on August 1, 2022.
 
 ### Enhancements
 * Upgrades to go-chi v5.
@@ -15,7 +59,7 @@ Released on 8/1/2022
 * Fixes bug where bottom sidesheet and DAG viewer were misaligned and improperly sized.
 
 ## 0.0.6
-Released on 7/25/2022
+Released on July 25, 2022.
 
 ### Enhancements
 * Prints error message as part of preview execution stack trace, not above it.
@@ -28,7 +72,7 @@ Released on 7/25/2022
 * Fixes bug where error and warning checks aren't properly distinguished.
 
 ## 0.0.5
-Released on 7/14/2022
+Released on July 14, 2022.
 
 ### Enhancements
 * Makes password optional when creating a Postgres connection.
@@ -44,9 +88,8 @@ Released on 7/14/2022
 
 None! :tada:
 
-
 ## 0.0.4
-Released on 7/7/2022
+Released on July 7, 2022.
 
 ### Key Features
 * Workflows can now have custom parameters! A workflow can have any numbers of parameters which can be used in Python operators or
@@ -71,7 +114,7 @@ Released on 7/7/2022
 * Deprecates use of ipynbname in the SDK, which prevented the SDK from running in some notebook environments.
 
 ## 0.0.3
-Released on 6/21/2022
+Released on June 21, 2022.
 
 ### Key Features
 * View what tables are present in an integration by clicking on the integration in the UI.
@@ -105,7 +148,7 @@ Released on 6/21/2022
 * [Boyuan Deng](https://github.com/Boyuan-Deng)
 
 ## 0.0.2
-Released on 6/9/2022
+Released on June 9, 2022.
 
 ### Enhancements
 * Allows users to start both the backend server and UI with `aqueduct start`
@@ -136,6 +179,6 @@ Released on 6/9/2022
 * [Wei Chen](https://github.com/likawind)
 
 ## 0.0.1
-Released on 5/26/2022
+Released on May 26, 2022.
 
 Initial release of the Aqueduct open-source project.
