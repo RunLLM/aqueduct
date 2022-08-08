@@ -41,10 +41,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
-  const [showDeleteIntegrationToast, setShowDeleteIntegrationToast] = useState(false);
+  const [showDeleteIntegrationToast, setShowDeleteIntegrationToast] =
+    useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
   const [showDeleteSuccessToast, setShowDeleteSuccessToast] = useState(false);
-  console.log(showDeleteIntegrationToast);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
@@ -107,7 +107,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [testConnectStatus]);
 
-
   useEffect(() => {
     if (!isLoading(deleteIntegrationStatus)) {
       setShowDeleteIntegrationToast(false);
@@ -116,7 +115,9 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     if (isSucceeded(deleteIntegrationStatus)) {
       setShowDeleteSuccessToast(true);
       // Reload integrations because deleted
-      dispatch(handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true }));
+      dispatch(
+        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+      );
       // Integration no longer exists. Navigate back to integration list after a short pause.
       setTimeout(() => navigate('/integrations'), 2000);
     }
@@ -168,12 +169,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               setShowTestConnectToast(true);
             }}
             onDeleteIntegration={() => {
-              // dispatch(
-              //   handleDeleteIntegration({
-              //     apiKey: user.apiKey,
-              //     integrationId: selectedIntegration.id,
-              //   })
-              // );
+              dispatch(
+                handleDeleteIntegration({
+                  apiKey: user.apiKey,
+                  integrationId: selectedIntegration.id,
+                })
+              );
               setShowDeleteIntegrationToast(true);
             }}
           />

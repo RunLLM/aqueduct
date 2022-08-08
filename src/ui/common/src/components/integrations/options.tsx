@@ -1,4 +1,8 @@
-import { faCaretDown, faFlask, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCaretDown,
+  faFlask,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
@@ -6,10 +10,10 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../stores/store';
-import { LoadingStatusEnum } from '../../utils/shared';
 
+import { RootState } from '../../stores/store';
 import { Integration, isDemo } from '../../utils/integrations';
+import { LoadingStatusEnum } from '../../utils/shared';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
@@ -34,7 +38,10 @@ const IntegrationOptions: React.FC<Props> = ({
     return state.integrationReducer.operators;
   });
   let inUse = true;
-  if (operatorsState.status.loading === LoadingStatusEnum.Succeeded && operatorsState.operators.length === 0) {
+  if (
+    operatorsState.status.loading === LoadingStatusEnum.Succeeded &&
+    operatorsState.operators.length === 0
+  ) {
     inUse = false;
   }
   return (

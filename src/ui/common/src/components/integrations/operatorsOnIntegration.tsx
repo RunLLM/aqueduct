@@ -63,7 +63,7 @@ const OperatorsOnIntegration: React.FC = () => {
     }
     operatorsByWorkflow[op.workflow_id].operators.push(op);
   });
-  
+
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
       <Box>

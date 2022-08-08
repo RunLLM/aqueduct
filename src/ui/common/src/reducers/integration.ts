@@ -196,8 +196,8 @@ export const handleListIntegrationObjects = createAsyncThunk<
 );
 
 export const handleDeleteIntegration = createAsyncThunk<
-void,
-{ apiKey: string; integrationId: string }
+  void,
+  { apiKey: string; integrationId: string }
 >(
   'integration/delete',
   async (
@@ -210,7 +210,7 @@ void,
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/delete`,
+      `${apiAddress}/api/integration/${integrationId}/test`,
       {
         method: 'POST',
         headers: {
@@ -220,10 +220,28 @@ void,
     );
 
     const responseBody = await response.json();
+    console.log(responseBody);
+    console.log(response.ok);
 
     if (!response.ok) {
       return thunkAPI.rejectWithValue(responseBody.error);
     }
+    // const { apiKey, integrationId } = args;
+    // const response = await fetch(
+    //   `${apiAddress}/api/integration/${integrationId}/delete`,
+    //   {
+    //     method: 'POST',
+    //     headers: {
+    //       'api-key': apiKey,
+    //     },
+    //   }
+    // );
+
+    // const responseBody = await response.json();
+
+    // if (!response.ok) {
+    //   return thunkAPI.rejectWithValue(responseBody.error);
+    // }
   }
 );
 
@@ -345,24 +363,18 @@ export const integrationSlice = createSlice({
     builder.addCase(handleDeleteIntegration.pending, (state) => {
       state.deletionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(
-      handleDeleteIntegration.rejected,
-      (state, { payload }) => {
-        state.deletionStatus = {
-          loading: LoadingStatusEnum.Failed,
-          err: payload as string,
-        };
-      }
-    );
-    builder.addCase(
-      handleDeleteIntegration.fulfilled,
-      (state) => {
-        state.deletionStatus = {
-          loading: LoadingStatusEnum.Succeeded,
-          err: '',
-        };
-      }
-    );
+    builder.addCase(handleDeleteIntegration.rejected, (state, { payload }) => {
+      state.deletionStatus = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
+    });
+    builder.addCase(handleDeleteIntegration.fulfilled, (state) => {
+      state.deletionStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+    });
     builder.addCase(handleTestConnectIntegration.pending, (state) => {
       state.connectionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
