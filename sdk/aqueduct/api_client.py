@@ -1,5 +1,6 @@
 import io
 import json
+import uuid
 from typing import IO, Any, Dict, List, Optional, Tuple
 
 import requests
@@ -16,12 +17,14 @@ from aqueduct.integrations.integration import IntegrationInfo
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    ArtifactResult,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
 )
+from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
 
@@ -247,6 +250,34 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
+    def _construct_preview_response(self, response: requests.Response) -> PreviewResponse:
+        artifact_results = {}
+        artifact_result = {}
+        preview_response = {}
+        multipart_data = decoder.MultipartDecoder.from_response(response)
+
+        for part in multipart_data.parts:
+            field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+            field_name = field_name.split("name=")[1][1:-1]
+
+            if field_name == "metadata":
+                metadata = json.loads(part.content.decode(multipart_data.encoding))
+            elif field_name.startswith("serialization_type"):
+                artifact_uuid = uuid.UUID(field_name.split("serialization_type")[1])
+                artifact_result["serialization_type"] = part.content.decode(multipart_data.encoding)
+                artifact_results[artifact_uuid] = ArtifactResult(**artifact_result)
+                artifact_result = {}
+            elif utils.is_string_valid_uuid(field_name):
+                artifact_result["content"] = part.content
+            else:
+                raise AqueductError("Unable to get correct preview response")
+
+        preview_response["status"] = metadata["status"]
+        preview_response["operator_results"] = metadata["operator_results"]
+        preview_response["artifact_results"] = artifact_results
+
+        return PreviewResponse(**preview_response)
+
     def preview(
         self,
         dag: DAG,
@@ -276,7 +307,7 @@ class APIClient:
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
-        preview_resp = PreviewResponse(**resp.json())
+        preview_resp = self._construct_preview_response(resp)
         _handle_preview_resp(preview_resp, dag)
         return preview_resp
 

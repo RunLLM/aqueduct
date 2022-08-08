@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import base64
-import json
 import uuid
 from typing import Any, Dict, Optional
 
@@ -56,12 +54,11 @@ class UntypedArtifact(Artifact):
         artifact_response = preview_resp.artifact_results[self._artifact_id]
 
         serialization_type = artifact_response.serialization_type
-        artifact_content = base64.b64decode(artifact_response.content)
 
         if serialization_type not in deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s." % serialization_type)
 
-        return deserialization_function_mapping[serialization_type](artifact_content)
+        return deserialization_function_mapping[serialization_type](artifact_response.content)
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""

@@ -53,7 +53,7 @@ class OperatorResult(BaseModel):
 
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
-    content: str
+    content: bytes
 
 
 class PreviewResponse(BaseModel):

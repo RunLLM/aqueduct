@@ -4,7 +4,7 @@ from textwrap import wrap
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
-from aqueduct.artifact import Artifact, get_artifact_type
+from aqueduct.artifact import Artifact
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType

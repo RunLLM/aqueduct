@@ -2,7 +2,8 @@ package handler
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/json"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -50,13 +51,18 @@ type previewArgs struct {
 
 type previewArtifactResponse struct {
 	SerializationType string `json:"serialization_type"`
-	Content           string `json:"content"`
+	Content           []byte `json:"content"`
 }
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
 	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
+}
+
+type previewResponseNoArtifacts struct {
+	Status          shared.ExecutionStatus                `json:"status"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
 }
 
 type PreviewHandler struct {
@@ -72,6 +78,59 @@ type PreviewHandler struct {
 
 func (*PreviewHandler) Name() string {
 	return "Preview"
+}
+
+func checkError (w http.ResponseWriter, err error) {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{}) {
+
+	structResponse := response.(previewResponse)
+
+	responseNoArtifacts := previewResponseNoArtifacts{
+		Status: structResponse.Status,
+		OperatorResults: structResponse.OperatorResults,
+	}
+
+	jsonBlob, err := json.Marshal(responseNoArtifacts)
+	checkError(w, err)
+
+	mw := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mw.FormDataContentType())
+
+	fw, errA := mw.CreateFormField("metadata")
+	checkError(w, errA)
+
+	_, errB := fw.Write(jsonBlob)
+	checkError(w, errB)
+
+	for id, art := range structResponse.ArtifactResults {
+
+		art_content := art.Content
+		art_serialization := art.SerializationType
+		serialization_type := "serialization_type" + id.String()
+
+		fw, errC := mw.CreateFormField(id.String())
+		checkError(w, errC)
+
+		_, errD := fw.Write(art_content)
+		checkError(w, errD)
+
+		fw, errE := mw.CreateFormField(serialization_type)
+		checkError(w, errE)
+
+		_, errF := fw.Write([]byte(art_serialization))
+		checkError(w, errF)
+	}
+
+	if err := mw.Close(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -201,12 +260,12 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			}
 			artifactResults[artf.ID()] = previewArtifactResponse{
 				SerializationType: artifact_metadata.SerializationType,
-				Content:           base64.StdEncoding.EncodeToString(content),
+				Content:           content,
 			}
 		}
 	}
 
-	return &previewResponse{
+	return previewResponse{
 		Status:          status,
 		OperatorResults: execStateByOp,
 		ArtifactResults: artifactResults,

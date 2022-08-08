@@ -62,6 +62,14 @@ def generate_ui_url(
     return url
 
 
+def is_string_valid_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except ValueError:
+        return False
+
+
 def raise_errors(response: requests.Response) -> None:
     def _extract_err_msg() -> str:
         resp_json = response.json()
