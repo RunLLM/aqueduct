@@ -50,7 +50,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   };
 
   const testConnectStatus = useSelector(
-    (state: RootState) => state.integrationReducer.connectionStatus
+    (state: RootState) => state.integrationReducer.testConnectStatus
   );
 
   const integrations = useSelector(

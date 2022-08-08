@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box';
+import { Stringifiable } from 'query-string';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -16,27 +17,11 @@ const Placeholders: SnowflakeConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof SnowflakeConfig, value: Stringifiable) => void;
+  value?: SnowflakeConfig;
 };
 
-export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [accountIdentifier, setAccountIdentifier] = useState<string>(null);
-  const [warehouse, setWarehouse] = useState<string>(null);
-  const [database, setDatabase] = useState<string>(null);
-  const [username, setUsername] = useState<string>(null);
-  const [password, setPassword] = useState<string>(null);
-
-  useEffect(() => {
-    const config: SnowflakeConfig = {
-      account_identifier: accountIdentifier,
-      warehouse: warehouse,
-      database: database,
-      username: username,
-      password: password,
-    };
-    setDialogConfig(config);
-  }, [accountIdentifier, warehouse, database, username, password]);
-
+export const SnowflakeDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -45,8 +30,8 @@ export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Account Identifier *"
         description="An account identifier for your Snowflake account."
         placeholder={Placeholders.account_identifier}
-        onChange={(event) => setAccountIdentifier(event.target.value)}
-        value={accountIdentifier}
+        onChange={(event) => onUpdateField('account_identifier', event.target.value)}
+        value={value?.account_identifier}
       />
 
       <IntegrationTextInputField
@@ -55,8 +40,8 @@ export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Warehouse *"
         description="The name of the Snowflake warehouse to connect to."
         placeholder={Placeholders.warehouse}
-        onChange={(event) => setWarehouse(event.target.value)}
-        value={warehouse}
+        onChange={(event) => onUpdateField("warehouse", event.target.value)}
+        value={value?.warehouse}
       />
 
       <IntegrationTextInputField
@@ -65,8 +50,8 @@ export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Database *"
         description="The name of the database to connect to."
         placeholder={Placeholders.database}
-        onChange={(event) => setDatabase(event.target.value)}
-        value={database}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database}
       />
 
       <IntegrationTextInputField
@@ -75,8 +60,8 @@ export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Username *"
         description="The username of a user with permission to access the database above."
         placeholder={Placeholders.username}
-        onChange={(event) => setUsername(event.target.value)}
-        value={username}
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username}
       />
 
       <IntegrationTextInputField
@@ -86,8 +71,8 @@ export const SnowflakeDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setPassword(event.target.value)}
-        value={password}
+        onChange={(event) => onUpdateField('password', event.target.value)}
+        value={value?.password}
       />
     </Box>
   );

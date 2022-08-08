@@ -3,7 +3,7 @@ import UserProfile from './auth';
 
 const { apiAddress } = useAqueductConsts();
 
-const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'aqueduct_demo';
 
 export function isDemo(integration: Integration): boolean {
   return integration.name === aqueductDemoName;
@@ -212,46 +212,6 @@ export async function fetchBranches(
     return [body.branches, ''];
   } catch (err) {
     return [[], err];
-  }
-}
-
-export async function connectIntegration(
-  user: UserProfile,
-  service: Service,
-  name: string,
-  config: IntegrationConfig
-): Promise<void> {
-  Object.keys(config).forEach((k) => {
-    if (config[k] === undefined) {
-      config[k] = '';
-    }
-  });
-
-  try {
-    const res = await fetch(`${apiAddress}/api/integration/connect`, {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-        'integration-name': name,
-        'integration-service': service,
-        'integration-config': JSON.stringify(config),
-      },
-    });
-
-    if (!res.ok) {
-      const message = await res.json();
-      throw new Error(message.error);
-    }
-  } catch (err) {
-    if (err instanceof TypeError) {
-      // This happens when we fail to fetch.
-      throw new Error(
-        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
-      );
-    } else {
-      // This should never happen.
-      throw err;
-    }
   }
 }
 

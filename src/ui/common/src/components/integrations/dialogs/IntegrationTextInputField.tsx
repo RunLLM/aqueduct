@@ -7,7 +7,7 @@ type IntegrationTextFieldProps = {
   description: string;
   spellCheck: boolean;
   required: boolean;
-  placeholder: string;
+  placeholder?: string;
   onChange: (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => void;

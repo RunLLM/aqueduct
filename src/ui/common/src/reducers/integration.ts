@@ -3,6 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Data } from '../utils/data';
+import { IntegrationConfig, Service } from '../utils/integrations';
 import { Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
@@ -41,14 +42,18 @@ type DiscoverResponse = {
 };
 
 export interface IntegrationState {
-  connectionStatus: LoadingStatus;
+  connectNewStatus: LoadingStatus;
+  editStatus: LoadingStatus;
+  testConnectStatus: LoadingStatus;
   operators: IntegrationOperatorsState;
   objectNames: ListObjectsState;
   objects: Record<string, ObjectState>;
 }
 
 const initialState: IntegrationState = {
-  connectionStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+  connectNewStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+  editStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+  testConnectStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   operators: {
     status: { loading: LoadingStatusEnum.Initial, err: '' },
     operators: [],
@@ -202,7 +207,6 @@ export const handleTestConnectIntegration = createAsyncThunk<
     args: {
       apiKey: string;
       integrationId: string;
-      forceLoad?: boolean;
     },
     thunkAPI
   ) => {
@@ -220,6 +224,96 @@ export const handleTestConnectIntegration = createAsyncThunk<
     const responseBody = await response.json();
 
     if (!response.ok) {
+      return thunkAPI.rejectWithValue(responseBody.error);
+    }
+  }
+);
+
+export const handleConnectToNewIntegration = createAsyncThunk<
+  void,
+  {
+    apiKey: string;
+    service: Service;
+    name: string;
+    config: IntegrationConfig;
+  }
+>(
+  'integration/connect',
+  async (
+    args: {
+      apiKey: string;
+      service: Service;
+      name: string;
+      config: IntegrationConfig;
+    },
+    thunkAPI
+  ) => {
+    const { apiKey, service, name, config } = args;
+    Object.keys(config).forEach((k) => {
+      if (config[k] === undefined) {
+        config[k] = '';
+      }
+    });
+
+    const res = await fetch(`${apiAddress}/api/integration/connect`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'integration-name': name,
+        'integration-service': service,
+        'integration-config': JSON.stringify(config),
+      },
+    });
+
+    const responseBody = await res.json();
+
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(responseBody.error);
+    }
+  }
+);
+
+export const handleEditIntegrtion = createAsyncThunk<
+  void,
+  {
+    apiKey: string;
+    integrationId: string;
+    name: string;
+    config: IntegrationConfig;
+  }
+>(
+  'integration/edit',
+  async (
+    args: {
+      apiKey: string;
+      integrationId: string;
+      name: string;
+      config: IntegrationConfig;
+    },
+    thunkAPI
+  ) => {
+    const { apiKey, integrationId, name, config } = args;
+    Object.keys(config).forEach((k) => {
+      if (config[k] === undefined) {
+        config[k] = '';
+      }
+    });
+
+    const res = await fetch(
+      `${apiAddress}/api/integration/${integrationId}/edit`,
+      {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'integration-name': name,
+          'integration-config': JSON.stringify(config),
+        },
+      }
+    );
+
+    const responseBody = await res.json();
+
+    if (!res.ok) {
       return thunkAPI.rejectWithValue(responseBody.error);
     }
   }
@@ -308,10 +402,10 @@ export const integrationSlice = createSlice({
       }
     );
     builder.addCase(handleTestConnectIntegration.pending, (state) => {
-      state.connectionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+      state.testConnectStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
     builder.addCase(handleTestConnectIntegration.fulfilled, (state) => {
-      state.connectionStatus = {
+      state.testConnectStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
@@ -319,12 +413,45 @@ export const integrationSlice = createSlice({
     builder.addCase(
       handleTestConnectIntegration.rejected,
       (state, { payload }) => {
-        state.connectionStatus = {
+        state.testConnectStatus = {
           loading: LoadingStatusEnum.Failed,
           err: payload as string,
         };
       }
     );
+    builder.addCase(handleConnectToNewIntegration.pending, (state) => {
+      state.connectNewStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+    });
+    builder.addCase(handleConnectToNewIntegration.fulfilled, (state) => {
+      state.connectNewStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+    });
+    builder.addCase(
+      handleConnectToNewIntegration.rejected,
+      (state, { payload }) => {
+        state.connectNewStatus = {
+          loading: LoadingStatusEnum.Failed,
+          err: payload as string,
+        };
+      }
+    );
+    builder.addCase(handleEditIntegrtion.pending, (state) => {
+      state.editStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+    });
+    builder.addCase(handleEditIntegrtion.fulfilled, (state) => {
+      state.editStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+    });
+    builder.addCase(handleEditIntegrtion.rejected, (state, { payload }) => {
+      state.editStatus = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
+    });
   },
 });
 
