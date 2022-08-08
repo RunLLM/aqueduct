@@ -67,7 +67,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
 	}
-	
+
 	if !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
 	}
