@@ -19,7 +19,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -44,11 +43,8 @@ type AqServer struct {
 	StorageConfig *shared.StorageConfig
 	Database      database.Database
 	GithubManager github.Manager
-	// TODO ENG-1483: Move JobManager from Server to Handlers
-	JobManager job.JobManager
-	Vault      vault.Vault
-	AqEngine   engine.AqEngine
-	AqPath     string
+	JobManager    job.JobManager
+	Vault         vault.Vault
 	*Readers
 	*Writers
 }
@@ -62,8 +58,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
-
-	githubManager := github.NewUnimplementedManager()
 
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
@@ -97,19 +91,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
-	eng, err := engine.NewAqEngine(
-		db,
-		githubManager,
-		vault,
-		aqPath,
-		conf.StorageConfig,
-		GetEngineReaders(readers),
-		GetEngineWriters(writers),
-	)
-	if err != nil {
-		log.Fatal("Unable to create aqEngine: ", err)
-	}
-
 	s := &AqServer{
 		Router:        chi.NewRouter(),
 		StorageConfig: conf.StorageConfig,
@@ -117,8 +98,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
 		Vault:         vault,
-		AqPath:        aqPath,
-		AqEngine:      eng,
 		Readers:       readers,
 		Writers:       writers,
 	}
