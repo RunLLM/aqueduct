@@ -8,8 +8,12 @@ Released on August 8, 2022.
 * Uses `pip freeze` to detect and capture local Python requirements when an
     explicit set of requirements is not specified during function creation.
 * Adds download bars to CLI to demonstrate progress when downloading files from
-    S3.
-    <img src="https://user-images.githubusercontent.com/867892/182453985-d0f5408b-8858-46c5-a8bc-e4e198e092ee.png" />
+    S3. 
+    <img 
+         alt="Aqueduct now has progress bars when downloading compiled binaries from S3."
+         src="https://user-images.githubusercontent.com/867892/182453985-d0f5408b-8858-46c5-a8bc-e4e198e092ee.png" 
+         height="400px"
+     />
 * When running the Aqueduct server locally, the CLI now automatically opens a
     browser tab with the Aqueduct UI on `aqueduct start` and passes the local
     API key as a query parameter to automatically log in.
@@ -19,8 +23,12 @@ Released on August 8, 2022.
     specify file format by passing in `"csv"`, `"json"`, etc.
 * Improves the layout and readability of the integrations UI page by adding
     explicit cards for each integration and also labeling each one with its
-    name.
-    **VIKRAM TO ADD IMAGE**
+    name. <br />
+    <img 
+         alt="The integrations page has been reorganized to have a border around each image and a corresponding label." 
+         src="https://user-images.githubusercontent.com/867892/183465351-fe7724a3-049a-428c-acea-00413a5eea4e.png" 
+         height="400px"
+    />
 * Allows users to create operators from existing functions without redefining
     the operator with a decorator -- using `aqueduct.to_operator`, an existing
     function can be converted into an Aqueduct operator.
@@ -28,8 +36,12 @@ Released on August 8, 2022.
     a corresponding `--verbose` flag to the CLI so users can see log output in
     terminal if desired.
 * Reorganizes integration management behind a dropdown menu, adding option to
-    test whether the integration connection still works or not.
-    **VIKRAM TO ADD IMAGE**
+    test whether the integration connection still works or not. <br />
+    <img
+         src="https://user-images.githubusercontent.com/867892/183466408-ffb9f69b-8080-4ce5-ae7e-884f11aae39b.png"
+         height="200px"
+         alt="A new organization for the integration details page adds an options dropdown next to the upload CSV button."
+     />
 
 ### Bugfixes
 * Fixes bug where where interacting with the UI when the Aqueduct server was
