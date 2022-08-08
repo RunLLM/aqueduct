@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/gorhill/cronexpr"
@@ -27,10 +28,8 @@ func (s *AqServer) triggerMissedCronJobs(
 		// So we manually trigger the workflow here.
 		_, _, err := (&handler.RefreshWorkflowHandler{
 			Database:       s.Database,
-			JobManager:     s.JobManager,
-			GithubManager:  s.GithubManager,
-			Vault:          s.Vault,
 			WorkflowReader: s.WorkflowReader,
+			Engine:         s.AqEngine,
 		}).Perform(
 			ctx,
 			&handler.RefreshWorkflowArgs{
@@ -101,14 +100,14 @@ func (s *AqServer) initializeWorkflowCronJobs(ctx context.Context) error {
 			if wf.Schedule.Paused {
 				wf.Schedule.CronSchedule = ""
 			}
+			name := shared_utils.AppendPrefix(wf.Id.String())
+			period := string(wf.Schedule.CronSchedule)
 
-			err = handler.CreateWorkflowCronJob(
+			err = s.AqEngine.ScheduleWorkflow(
 				ctx,
-				&wf,
-				s.Database.Config(),
-				s.Vault,
-				s.JobManager,
-				s.GithubManager,
+				wf.Id,
+				name,
+				period,
 			)
 			if err != nil {
 				return err

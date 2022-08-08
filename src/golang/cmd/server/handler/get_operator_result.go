@@ -18,12 +18,17 @@ import (
 // Route: /operator_result/{workflowDagResultId}/{operatorId}
 // Method: GET
 // Params:
+//
 //	`workflowDagResultId`: ID for `workflow_dag_result` object
 //	`operatorId`: ID for `operator` object
+//
 // Request:
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response:
+//
 //	Body:
 //		serialized `getOperatorResultResponse`,
 //		metadata and content of the result of `operatorId` on the given workflow_dag_result object.

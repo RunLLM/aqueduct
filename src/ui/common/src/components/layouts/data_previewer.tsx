@@ -8,7 +8,7 @@ import React from 'react';
 import { ArtifactResult } from '../../reducers/workflow';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
-import DataTable from '../tables/dataTable';
+import DataTable from '../tables/DataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
 
 type Props = {
@@ -78,7 +78,29 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   if (previewData.result && previewData.result.data) {
     if (previewData.result.schema.length > 0) {
       const parsedData = JSON.parse(previewData.result.data);
-      data = <DataTable data={parsedData} />;
+      const columnsContent = parsedData.schema.fields.map((column) => {
+        return {
+          dataKey: column.name,
+          label: column.name,
+          type: column.type,
+        };
+      });
+      data = (
+        <Box
+          sx={{
+            height: '100%',
+            width: '100%',
+            overflow: 'auto',
+            overflowY: 'hidden',
+          }}
+        >
+          <DataTable
+            rowCount={parsedData.data.length}
+            rowGetter={({ index }) => parsedData.data[index]}
+            columns={columnsContent}
+          />
+        </Box>
+      );
     } else {
       data = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
