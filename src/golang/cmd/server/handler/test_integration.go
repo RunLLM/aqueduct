@@ -17,6 +17,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var ErrNoAccessPermission = errors.New("You don't have permission to access this integration.")
+
 // TestIntegrationHandler tries to connect to an existing integration.
 type TestIntegrationHandler struct {
 	PostHandler
@@ -49,6 +51,20 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+	}
+
+	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
+		r.Context(),
+		integrationId,
+		aqContext.OrganizationId,
+		h.Database,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating integraiton ownership.")
+	}
+
+	if !hasPermission {
+		return nil, http.StatusForbidden, ErrNoAccessPermission
 	}
 
 	return &TestIntegrationArgs{AqContext: aqContext, IntegrationId: integrationId}, http.StatusOK, nil

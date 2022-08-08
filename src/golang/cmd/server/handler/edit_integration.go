@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	ErrNoEditPermission            = errors.New("You don't have permission to edit this integration")
 	ErrInvalidServiceType          = errors.New("Editing for this integration type is not currently supported.")
 	ErrEditDemoIntegration         = errors.New("You cannot edit demo DB credentials.")
 	ErrEditIntegrationWithDemoName = errors.New("aqueduct_demo is reserved for demo integration. Please use another name.")
@@ -138,6 +139,20 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+	}
+
+	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
+		r.Context(),
+		integrationId,
+		aqContext.OrganizationId,
+		h.Database,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating integraiton ownership.")
+	}
+
+	if !hasPermission {
+		return nil, http.StatusForbidden, ErrNoEditPermission
 	}
 
 	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
@@ -262,12 +277,18 @@ func UpdateIntegration(
 		changedFields[integration.ConfigColumn] = (*postgres_utils.Config)(&publicConfig)
 	}
 
+	txn, err := db.BeginTx(ctx)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	// This is a user-specific integration
-	_, err := integrationWriter.UpdateIntegration(
+	_, err = integrationWriter.UpdateIntegration(
 		ctx,
 		integrationId,
 		changedFields,
-		db,
+		txn,
 	)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
@@ -281,9 +302,12 @@ func UpdateIntegration(
 			newConfig,
 			vaultObject,
 		); err != nil {
-			// TODO ENG-498: Rollback integration write
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
 		}
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
 	}
 
 	return http.StatusOK, nil
