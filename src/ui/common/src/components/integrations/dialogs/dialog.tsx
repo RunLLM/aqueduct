@@ -5,7 +5,6 @@ import {
   Box,
   DialogActions,
   DialogContent,
-  Snackbar,
   Typography,
 } from '@mui/material';
 import Button from '@mui/material/Button';
@@ -27,6 +26,7 @@ import {
   Integration,
   IntegrationConfig,
   Service,
+  SnowflakeConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
@@ -44,13 +44,15 @@ type Props = {
   user: UserProfile;
   service: Service;
   onCloseDialog: () => void;
+  onSuccess: () => void;
   integrationToEdit?: Integration;
 };
 
-export const IntegrationDialog: React.FC<Props> = ({
+const IntegrationDialog: React.FC<Props> = ({
   user,
   service,
   onCloseDialog,
+  onSuccess,
   integrationToEdit = undefined,
 }) => {
   const editMode = !!integrationToEdit;
@@ -63,12 +65,6 @@ export const IntegrationDialog: React.FC<Props> = ({
   const [name, setName] = useState<string>(
     editMode ? integrationToEdit.name : ''
   );
-  const [disableConnect, setDisableConnect] = useState(true);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-
-  const handleSuccessToastClose = () => {
-    setShowSuccessToast(false);
-  };
 
   const connectNewStatus = useSelector(
     (state: RootState) => state.integrationReducer.connectNewStatus
@@ -79,20 +75,20 @@ export const IntegrationDialog: React.FC<Props> = ({
   );
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
-
-  useEffect(() => {
-    setDisableConnect(
-      service !== 'Aqueduct Demo' &&
-        (!isConfigComplete(config) || name === '' || name === aqueductDemoName)
-    );
-  }, [config, name]);
+  const disableConnect =
+    !editMode &&
+    (!isConfigComplete(config) || name === '' || name === aqueductDemoName);
+  const setConfigField = (field: string, value: string) =>
+    setConfig((config) => {
+      return { ...config, [field]: value };
+    });
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
       );
-      setShowSuccessToast(true);
+      onSuccess();
       onCloseDialog();
     }
   }, [connectStatus]);
@@ -122,7 +118,12 @@ export const IntegrationDialog: React.FC<Props> = ({
       serviceDialog = <PostgresDialog setDialogConfig={setConfig} />;
       break;
     case 'Snowflake':
-      serviceDialog = <SnowflakeDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <SnowflakeDialog
+          onUpdateField={setConfigField}
+          value={config as SnowflakeConfig}
+        />
+      );
       break;
     case 'Aqueduct Demo':
       serviceDialog = null;
@@ -200,23 +201,6 @@ export const IntegrationDialog: React.FC<Props> = ({
             <pre>{connectStatus.err}</pre>
           </Alert>
         )}
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={showSuccessToast}
-          onClose={handleSuccessToastClose}
-          key={'integrations-dialog-success-snackbar'}
-          autoHideDuration={6000}
-        >
-          <Alert
-            onClose={handleSuccessToastClose}
-            severity="success"
-            sx={{ width: '100%' }}
-          >
-            {editMode
-              ? `Successfully updated ${integrationToEdit.name}!`
-              : `Successfully connected to ${service}!`}
-          </Alert>
-        </Snackbar>
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={onCloseDialog}>
@@ -239,5 +223,10 @@ export const IntegrationDialog: React.FC<Props> = ({
 export function isConfigComplete(
   config: IntegrationConfig | CSVConfig
 ): boolean {
-  return Object.values(config).every((x) => x === undefined || (x && x !== ''));
+  return (
+    Object.values(config).length > 0 &&
+    Object.values(config).every((x) => x === undefined || (x && x !== ''))
+  );
 }
+
+export default IntegrationDialog;

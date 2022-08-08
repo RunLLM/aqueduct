@@ -5,7 +5,12 @@ import React from 'react';
 
 import DataTable from '../../components/tables/dataTable';
 import { ObjectState } from '../../reducers/integration';
-import { isFailed, isLoading, isSucceeded } from '../../utils/shared';
+import {
+  isFailed,
+  isInitial,
+  isLoading,
+  isSucceeded,
+} from '../../utils/shared';
 
 type Props = {
   objectName: string;
@@ -13,6 +18,10 @@ type Props = {
 };
 
 const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
+  if (isInitial(object.status)) {
+    return null;
+  }
+
   return (
     <Box sx={{ mt: 3 }}>
       {isLoading(object.status) && (

@@ -273,7 +273,7 @@ export const handleConnectToNewIntegration = createAsyncThunk<
   }
 );
 
-export const handleEditIntegrtion = createAsyncThunk<
+export const handleEditIntegration = createAsyncThunk<
   void,
   {
     apiKey: string;
@@ -322,7 +322,17 @@ export const handleEditIntegrtion = createAsyncThunk<
 export const integrationSlice = createSlice({
   name: 'integrationTablesReducer',
   initialState: initialState,
-  reducers: {},
+  reducers: {
+    resetTestConnectStatus: (state) => {
+      state.testConnectStatus = { loading: LoadingStatusEnum.Initial, err: '' };
+    },
+    resetConnectNewStatus: (state) => {
+      state.connectNewStatus = { loading: LoadingStatusEnum.Initial, err: '' };
+    },
+    resetEditStatus: (state) => {
+      state.editStatus = { loading: LoadingStatusEnum.Initial, err: '' };
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(handleLoadIntegrationObject.pending, (state, { meta }) => {
       const object = meta.arg.object;
@@ -437,16 +447,16 @@ export const integrationSlice = createSlice({
         };
       }
     );
-    builder.addCase(handleEditIntegrtion.pending, (state) => {
+    builder.addCase(handleEditIntegration.pending, (state) => {
       state.editStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(handleEditIntegrtion.fulfilled, (state) => {
+    builder.addCase(handleEditIntegration.fulfilled, (state) => {
       state.editStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
     });
-    builder.addCase(handleEditIntegrtion.rejected, (state, { payload }) => {
+    builder.addCase(handleEditIntegration.rejected, (state, { payload }) => {
       state.editStatus = {
         loading: LoadingStatusEnum.Failed,
         err: payload as string,
@@ -454,5 +464,11 @@ export const integrationSlice = createSlice({
     });
   },
 });
+
+export const {
+  resetTestConnectStatus,
+  resetConnectNewStatus,
+  resetEditStatus,
+} = integrationSlice.actions;
 
 export default integrationSlice.reducer;

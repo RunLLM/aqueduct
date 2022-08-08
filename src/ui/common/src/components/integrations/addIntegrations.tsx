@@ -1,12 +1,17 @@
 import { Typography } from '@mui/material';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
+import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 
+import { resetConnectNewStatus } from '../../reducers/integration';
+import { AppDispatch } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { Service, ServiceInfoMap } from '../../utils/integrations';
-import { IntegrationDialog } from './dialogs/dialog';
+import IntegrationDialog from './dialogs/dialog';
 
 type Props = {
   user: UserProfile;
@@ -19,6 +24,12 @@ const AddIntegrations: React.FC<Props> = ({
   supportedIntegrations,
   category,
 }) => {
+  const dispatch: AppDispatch = useDispatch();
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const handleSuccessToastClose = () => {
+    setShowSuccessToast(false);
+  };
+
   return (
     <Box sx={{ maxWidth: '616px' }}>
       <Grid
@@ -85,10 +96,31 @@ const AddIntegrations: React.FC<Props> = ({
                     <IntegrationDialog
                       user={user}
                       service={service}
-                      onCloseDialog={() => setShowDialog(false)}
+                      onSuccess={() => {
+                        setShowSuccessToast(true);
+                      }}
+                      onCloseDialog={() => {
+                        setShowDialog(false);
+                        dispatch(resetConnectNewStatus());
+                      }}
                     />
                   )}
                 </Box>
+                <Snackbar
+                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  open={showSuccessToast}
+                  onClose={handleSuccessToastClose}
+                  key={'integrations-dialog-success-snackbar'}
+                  autoHideDuration={6000}
+                >
+                  <Alert
+                    onClose={handleSuccessToastClose}
+                    severity="success"
+                    sx={{ width: '100%' }}
+                  >
+                    {`Successfully connected to ${service}!`}
+                  </Alert>
+                </Snackbar>
               </Grid>
             );
           })}
