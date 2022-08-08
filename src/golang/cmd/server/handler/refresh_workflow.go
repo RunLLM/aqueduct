@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -9,7 +10,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
+	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -26,8 +29,10 @@ type RefreshWorkflowHandler struct {
 	PostHandler
 
 	Database       database.Database
+	JobManager     job.JobManager
+	GithubManager  github.Manager
+	Vault          vault.Vault
 	WorkflowReader workflow.Reader
-	Engine         engine.Engine
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -74,23 +79,44 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}, http.StatusOK, nil
 }
 
+func generateWorkflowJobName() string {
+	return fmt.Sprintf("workflow-adhoc-%s", uuid.New().String())
+}
+
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 
-	timeConfig := &engine.AqueductTimeConfig{
-		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
-		ExecTimeout:          engine.DefaultExecutionTimeout,
-		CleanupTimeout:       engine.DefaultCleanupTimeout,
+	workflowObject, err := h.WorkflowReader.GetWorkflow(
+		ctx,
+		args.WorkflowId,
+		h.Database,
+	)
+	if err != nil {
+		if err == database.ErrNoRows {
+			return nil, http.StatusBadRequest, errors.New("Unable to find workflow.")
+		}
+		return nil, http.StatusInternalServerError, errors.New("Unable to find workflow.")
 	}
 
-	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
-	//nolint:errcheck
-	go h.Engine.ExecuteWorkflow(
-		executeContext,
-		args.WorkflowId,
-		timeConfig,
+	jobName := generateWorkflowJobName()
+
+	jobSpec := job.NewWorkflowSpec(
+		workflowObject.Name,
+		workflowObject.Id.String(),
+		h.Database.Config(),
+		h.Vault.Config(),
+		h.JobManager.Config(),
+		h.GithubManager.Config(),
 		args.Parameters,
 	)
 
+	err = h.JobManager.Launch(
+		ctx,
+		jobName,
+		jobSpec,
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger this workflow.")
+	}
 	return struct{}{}, http.StatusOK, nil
 }

@@ -272,7 +272,3 @@ func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.Execu
 
 	return nil
 }
-
-func (w *workflowDagImpl) GetDbWorkflowDag() *workflow_dag.DBWorkflowDag {
-	return w.dbWorkflowDag
-}

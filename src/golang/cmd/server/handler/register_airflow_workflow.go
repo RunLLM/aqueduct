@@ -103,7 +103,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 	return &registerAirflowWorkflowArgs{
 		registerWorkflowArgs: registerWorkflowArgs{
 			AqContext:                aqContext,
-			dbWorkflowDag:            dagSummary.Dag,
+			workflowDag:              dagSummary.Dag,
 			operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
 		},
 	}, http.StatusOK, nil
@@ -114,7 +114,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	emptyResp := registerAirflowWorkflowResponse{}
 
-	if _, err := operator_utils.UploadOperatorFiles(ctx, args.dbWorkflowDag, args.operatorIdToFileContents); err != nil {
+	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -126,7 +126,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.dbWorkflowDag,
+		args.workflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -141,11 +141,11 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.dbWorkflowDag.Metadata.Id = workflowId
+	args.workflowDag.Metadata.Id = workflowId
 
 	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
-		args.dbWorkflowDag,
+		args.workflowDag,
 		h.StorageConfig,
 		h.JobManager,
 		h.Vault,
