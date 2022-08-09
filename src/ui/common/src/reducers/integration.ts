@@ -220,8 +220,6 @@ export const handleDeleteIntegration = createAsyncThunk<
     );
 
     const responseBody = await response.json();
-    console.log(responseBody);
-    console.log(response.ok);
 
     if (!response.ok) {
       return thunkAPI.rejectWithValue(responseBody.error);
