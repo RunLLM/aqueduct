@@ -55,14 +55,14 @@ type aqOrchestrator struct {
 	completedOps        map[uuid.UUID]operator.Operator
 	status              shared.ExecutionStatus
 
-	shouldPersistResults bool
+	isPreview bool
 }
 
 func NewAqOrchestrator(
 	dag dag.WorkflowDag,
 	jobManager job.JobManager,
 	timeConfig AqueductTimeConfig,
-	shouldPersistResults bool,
+	isPreview bool,
 ) (Orchestrator, error) {
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
@@ -74,21 +74,21 @@ func NewAqOrchestrator(
 	}
 
 	return &aqOrchestrator{
-		dag:                  dag,
-		jobManager:           jobManager,
-		timeConfig:           &timeConfig,
-		opToDependencyCount:  opToDependencyCount,
-		inProgressOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		completedOps:         make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		status:               shared.PendingExecutionStatus,
-		shouldPersistResults: shouldPersistResults,
+		dag:                 dag,
+		jobManager:          jobManager,
+		timeConfig:          &timeConfig,
+		opToDependencyCount: opToDependencyCount,
+		inProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		completedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
+		status:              shared.PendingExecutionStatus,
+		isPreview:           isPreview,
 	}, nil
 }
 
 func (orch *aqOrchestrator) Execute(
 	ctx context.Context,
 ) (shared.ExecutionStatus, error) {
-	if orch.shouldPersistResults {
+	if !orch.isPreview {
 		err := orch.dag.InitializeResults(ctx)
 		if err != nil {
 			return shared.FailedExecutionStatus, err
@@ -108,7 +108,6 @@ func (orch *aqOrchestrator) Execute(
 		ctx,
 		orch.timeConfig,
 		orch.jobManager,
-		orch.shouldPersistResults,
 	)
 	if err != nil {
 		orch.status = shared.FailedExecutionStatus
@@ -162,7 +161,6 @@ func (orch *aqOrchestrator) execute(
 	ctx context.Context,
 	timeConfig *AqueductTimeConfig,
 	jobManager job.JobManager,
-	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := orch.inProgressOps
@@ -212,11 +210,9 @@ func (orch *aqOrchestrator) execute(
 			}
 
 			// From here on we can assume that the operator has terminated.
-			if shouldPersistResults {
-				err = op.PersistResult(ctx)
-				if err != nil {
-					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
-				}
+			err = op.PersistResult(ctx)
+			if err != nil {
+				return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 			}
 
 			// We can continue orchestration on non-fatal errors.

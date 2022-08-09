@@ -11,10 +11,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
-//	The `RequireApiKey` middleware expects a request whose header contains
-//	key `api-key` for authorization purposes. If the authorization is successful,
-//	it forwards the request to the controller. Otherwise, it sends an http response
-//	in JSON format with an `error` message.
+// The `RequireApiKey` middleware expects a request whose header contains
+// key `api-key` for authorization purposes. If the authorization is successful,
+// it forwards the request to the controller. Otherwise, it sends an http response
+// in JSON format with an `error` message.
 func RequireApiKey(userReader user.Reader, db database.Database) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
