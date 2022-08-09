@@ -48,7 +48,9 @@ to the package with npm.
 
 ```cd src/ui/common```
 
-```npm install```
+```npm install --force```
+We need the `--force` flag to resolve the React Virtualized peer dependency. We should look into better ways
+to resolve this conflict but so far this is the only way we found to work.
 
 The install command above will both install dependencies to node_modules and build a JavaScript bundle to be used by ```app```
 

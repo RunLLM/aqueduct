@@ -14,6 +14,7 @@ type Component string
 
 const (
 	ServerComponent Component = "Server"
+	errorStatus     string    = "ERROR"
 )
 
 // We register an obfuscation function to alter the header value before logging it
@@ -51,11 +52,11 @@ func LogRoute(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
+	logFields := log.Fields{
 		"ServiceName":   serviceName,
 		"URL":           r.URL,
 		"Headers":       headers,
@@ -66,7 +67,13 @@ func LogRoute(
 		"UserId":        ctx.Value(aq_context.UserIdKey),
 		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
-	}).Info()
+	}
+
+	if status == errorStatus {
+		log.WithFields(logFields).Error()
+	} else {
+		log.WithFields(logFields).Info()
+	}
 }
 
 func LogAsyncEvent(
@@ -78,18 +85,24 @@ func LogAsyncEvent(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
+	logFields := log.Fields{
 		"ServiceName":   serviceName,
 		"Status":        status,
 		"Component":     component,
 		"UserId":        ctx.Value(aq_context.UserIdKey),
 		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
-	}).Info()
+	}
+
+	if status == errorStatus {
+		log.WithFields(logFields).Error()
+	} else {
+		log.WithFields(logFields).Info()
+	}
 }
 
 // Replaces the password in an integration config string into the equivalent * string.

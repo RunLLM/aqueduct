@@ -10,12 +10,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//	Given an http request, this helper function extract its payload as a
-//	bytestring from its `Body` field. Currently, this function supports two
-//	`contentType`s: `application/octet-stream` and `multipart/form-data`.
-//	For `multipart/form-data`, since the request's `Body` comes from a file
-//	upload, the caller should specify the name of the file in `fileName`.
-//	This argument is ignored for `application/octet-stream`.
+// Given an http request, this helper function extract its payload as a
+// bytestring from its `Body` field. Currently, this function supports two
+// `contentType`s: `application/octet-stream` and `multipart/form-data`.
+// For `multipart/form-data`, since the request's `Body` comes from a file
+// upload, the caller should specify the name of the file in `fileName`.
+// This argument is ignored for `application/octet-stream`.
 func ExtractHttpPayload(contentType, fileName string, isFile bool, r *http.Request) ([]byte, error) {
 	payload := []byte{}
 	var err error

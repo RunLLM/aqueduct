@@ -17,8 +17,10 @@ import (
 // Method: POST
 // Params: notificationId
 // Request:
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response: none
 type ArchiveNotificationHandler struct {
 	PostHandler
