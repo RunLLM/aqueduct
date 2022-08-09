@@ -66,15 +66,18 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
-        lowercased_format = format.lower()
-        if lowercased_format == S3FileFormat.CSV.value.lower():
-            format_enum = S3FileFormat.CSV
-        elif lowercased_format == S3FileFormat.JSON.value.lower():
-            format_enum = S3FileFormat.JSON
-        elif lowercased_format == S3FileFormat.PARQUET.value.lower():
-            format_enum = S3FileFormat.PARQUET
+        if format:
+            lowercased_format = format.lower()
+            if lowercased_format == S3TabularFormat.CSV.value.lower():
+                format_enum = S3TabularFormat.CSV
+            elif lowercased_format == S3TabularFormat.JSON.value.lower():
+                format_enum = S3TabularFormat.JSON
+            elif lowercased_format == S3TabularFormat.PARQUET.value.lower():
+                format_enum = S3TabularFormat.PARQUET
+            else:
+                raise Exception("Unsupport file format %s." % format)
         else:
-            raise Exception("Unsupport file format %s." % format)
+            format_enum = None
 
         integration_info = self._metadata
 
