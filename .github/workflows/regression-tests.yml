@@ -105,7 +105,7 @@ jobs:
       - name: Run Sentiment Notebook
         working-directory: sdk/examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
 
       # # Grabs the pid of the process bound to port 8080 and kills it.
       # - name: Kill the server
