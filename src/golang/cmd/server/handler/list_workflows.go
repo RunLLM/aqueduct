@@ -89,7 +89,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 	// Asynchronously sync self-orchestrated workflow runs
 	go func() {
-		if err := syncSelfOrchestratedWorkflows(ctx, h, args.OrganizationId); err != nil {
+		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrganizationId); err != nil {
 			logging.LogAsyncEvent(ctx, logging.ServerComponent, "Sync Workflows", err)
 		}
 	}()

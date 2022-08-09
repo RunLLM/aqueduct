@@ -131,14 +131,18 @@ func createArtifactResult(
 	}
 	metadataPath := getArtifactMetadataPath(metadataPathPrefix, dagRunId)
 
+	logrus.Warnf("Trying to read artifact metadata for: %v", artifactId)
+
 	var metadata artifact_result.Metadata
-	if err := utils.ReadFromStorage(
-		ctx,
-		&dbDag.StorageConfig,
-		metadataPath,
-		&metadata,
-	); err != nil {
-		return err
+	if utils.ObjectExistsInStorage(ctx, &dbDag.StorageConfig, metadataPath) {
+		if err := utils.ReadFromStorage(
+			ctx,
+			&dbDag.StorageConfig,
+			metadataPath,
+			&metadata,
+		); err != nil {
+			return err
+		}
 	}
 
 	contentPathPrefix, ok := dbDag.EngineConfig.AirflowConfig.ArtifactContentPathPrefix[artifactId]
