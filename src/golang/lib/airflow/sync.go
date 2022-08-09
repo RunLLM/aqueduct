@@ -119,17 +119,11 @@ func syncWorkflowDag(
 	}
 
 	// Get all Airflow DAG runs for `dag`
-	// TODO: Get around Airflow response limit
+	// TODO: ENG-1531 Get around Airflow response limit
 	dagRuns, err := cli.getDagRuns(dbDag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return err
 	}
-
-	txn, err := db.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	workflowDagResults, err := workflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, dbDag.WorkflowId, db)
 	if err != nil {
@@ -210,6 +204,12 @@ func syncWorkflowDagResult(
 	userReader user.Reader,
 	db database.Database,
 ) error {
+	txn, err := db.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	workflowDagResult, err := createWorkflowDagResult(
 		ctx,
 		dbDag,
@@ -220,7 +220,7 @@ func syncWorkflowDagResult(
 		artifactResultWriter,
 		notificationWriter,
 		userReader,
-		db,
+		txn,
 	)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func syncWorkflowDagResult(
 			workflowDagResult.Id,
 			operatorResultWriter,
 			artifactResultWriter,
-			db,
+			txn,
 		); err != nil {
 			return err
 		}
