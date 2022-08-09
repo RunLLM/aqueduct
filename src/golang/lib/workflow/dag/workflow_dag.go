@@ -76,6 +76,7 @@ func NewWorkflowDag(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
+	isPreview bool,
 	db database.Database,
 ) (WorkflowDag, error) {
 	// First, allocate a content and metadata path for each artifact.
@@ -152,6 +153,7 @@ func NewWorkflowDag(
 			jobManager,
 			vaultObject,
 			storageConfig,
+			isPreview,
 			db,
 		)
 		if err != nil {

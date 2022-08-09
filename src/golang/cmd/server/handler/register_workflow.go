@@ -98,6 +98,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.IntegrationReader,
 		h.Database,
 	)

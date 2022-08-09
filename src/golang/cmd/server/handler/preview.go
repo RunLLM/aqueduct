@@ -115,6 +115,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -165,6 +166,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.JobManager,
 		h.Vault,
 		h.StorageConfig,
+		true, // this is a preview
 		h.Database,
 	)
 	if err != nil {
@@ -179,7 +181,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
 			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
 		},
-		false, /* shouldPersistResults */
+		true, // this is a preview
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
