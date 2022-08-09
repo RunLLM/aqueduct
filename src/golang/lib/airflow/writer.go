@@ -27,13 +27,10 @@ func createWorkflowDagResult(
 	run *airflow.DAGRun,
 	workflowReader workflow.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
 	notificationWriter notification.Writer,
 	userReader user.Reader,
 	db database.Database,
 ) (*workflow_dag_result.WorkflowDagResult, error) {
-
 	workflowDagStatus := mapDagStateToStatus(*run.State)
 	if workflowDagStatus != shared.SucceededExecutionStatus &&
 		workflowDagStatus != shared.FailedExecutionStatus {
