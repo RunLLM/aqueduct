@@ -42,6 +42,7 @@ type baseOperator struct {
 	db            database.Database
 
 	resultsPersisted bool
+	isPreview        bool
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -177,6 +178,11 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
+	if bo.isPreview {
+		// Don't persist any result for preview operators.
+		return nil
+	}
+
 	if bo.resultsPersisted {
 		return errors.Newf("Operator %s was already persisted!", bo.Name())
 	}
@@ -222,8 +228,8 @@ type baseFunctionOperator struct {
 }
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
-	// If the operator was not persisted to the DB, cleanup the serialized function.
-	if !bfo.resultsPersisted {
+	// If the operator ran in preview mode, cleanup the serialized function.
+	if bfo.isPreview {
 		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
 	}
 

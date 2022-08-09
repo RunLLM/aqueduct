@@ -30,7 +30,7 @@ class S3Integration(Integration):
         self,
         filepaths: Union[List[str], str],
         artifact_type: ArtifactType,
-        format: Optional[S3TabularFormat] = None,
+        format: Optional[str] = None,
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
@@ -66,6 +66,16 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
+        lowercased_format = format.lower()
+        if lowercased_format == S3FileFormat.CSV.value.lower():
+            format_enum = S3FileFormat.CSV
+        elif lowercased_format == S3FileFormat.JSON.value.lower():
+            format_enum = S3FileFormat.JSON
+        elif lowercased_format == S3FileFormat.PARQUET.value.lower():
+            format_enum = S3FileFormat.PARQUET
+        else:
+            raise Exception("Unsupport file format %s." % format)
+
         integration_info = self._metadata
 
         op_name = generate_extract_op_name(self._dag, integration_info.name, name)
@@ -87,7 +97,7 @@ class S3Integration(Integration):
                                 parameters=S3ExtractParams(
                                     filepath=json.dumps(filepaths),
                                     artifact_type=artifact_type,
-                                    format=format,
+                                    format=format_enum,
                                     merge=merge,
                                 ),
                             )

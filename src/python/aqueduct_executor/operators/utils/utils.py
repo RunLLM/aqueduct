@@ -252,3 +252,10 @@ def check_passed(content: Any) -> bool:
             "Expected output type of check to be either a bool or a series of booleans, "
             "instead got %s" % type(content).__name__
         )
+
+        
+def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:
+    """
+    Writes the provided Airflow DAG file to storage.
+    """
+    storage.put(path, dag_file)

@@ -14,7 +14,7 @@ type config struct {
 	S3CredentialsProfile string `json:"s3_credentials_profile"  yaml:"s3CredentialsProfile"`
 }
 
-// parseConfig takes in an auth.Config and parses into a config struct.
+// parseConfig takes in an auth.Config and parses into a config.
 // It also returns an error, if any.
 func parseConfig(conf auth.Config) (*config, error) {
 	data, err := conf.Marshal()
