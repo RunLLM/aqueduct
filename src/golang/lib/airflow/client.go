@@ -42,7 +42,7 @@ func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
 	dagRunsResp, resp, err := c.apiClient.DAGRunApi.GetDagRuns(
 		c.ctx,
 		dagId,
-	).Execute()
+	).OrderBy("start_date").Execute()
 	if err != nil {
 		return nil, wrapApiError(err, "GetDagRuns", resp)
 	}

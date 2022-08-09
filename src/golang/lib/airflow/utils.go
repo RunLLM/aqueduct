@@ -66,6 +66,20 @@ func mapDagStateToStatus(state airflow.DagState) shared.ExecutionStatus {
 	}
 }
 
+// mapTaskStateToStatus maps an Airflow TaskState to an ExecutionStatus
+func mapTaskStateToStatus(state airflow.TaskState) shared.ExecutionStatus {
+	switch state {
+	case airflow.TASKSTATE_RUNNING:
+		return shared.RunningExecutionStatus
+	case airflow.TASKSTATE_SUCCESS:
+		return shared.SucceededExecutionStatus
+	case airflow.TASKSTATE_FAILED:
+		return shared.FailedExecutionStatus
+	default:
+		return shared.PendingExecutionStatus
+	}
+}
+
 func getOperatorMetadataPath(metadataPathPrefix string, dagRunId string) string {
 	return fmt.Sprintf("%s_%s", metadataPathPrefix, dagRunId)
 }

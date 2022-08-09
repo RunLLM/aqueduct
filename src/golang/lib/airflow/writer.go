@@ -67,6 +67,7 @@ func createOperatorResult(
 	dagRunId string,
 	dbDag *workflow_dag.DBWorkflowDag,
 	dbOp *operator.DBOperator,
+	execStatus shared.ExecutionStatus,
 	workflowDagResultId uuid.UUID,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -81,7 +82,7 @@ func createOperatorResult(
 	}
 	metadataPath := getOperatorMetadataPath(metadataPathPrefix, dagRunId)
 
-	execState := getOperatorExecState(ctx, &dbDag.StorageConfig, metadataPath)
+	execState := getOperatorExecState(ctx, execStatus, &dbDag.StorageConfig, metadataPath)
 
 	logrus.Warnf("Using op exec state: %v", *execState)
 
@@ -164,10 +165,23 @@ func createArtifactResult(
 
 func getOperatorExecState(
 	ctx context.Context,
+	execStatus shared.ExecutionStatus,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 ) *shared.ExecutionState {
 	logrus.Warnf("Trying to read operator metadata from: %v", metadataPath)
+	if execStatus == shared.PendingExecutionStatus {
+		return &shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+		}
+	}
+
+	if !utils.ObjectExistsInStorage(ctx, storageConfig, metadataPath) {
+		// Metadata does not exist, so just use the state determined via the Airflow TaskState
+		return &shared.ExecutionState{
+			Status: execStatus,
+		}
+	}
 
 	var execState shared.ExecutionState
 	err := utils.ReadFromStorage(

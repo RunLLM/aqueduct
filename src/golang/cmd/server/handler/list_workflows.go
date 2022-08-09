@@ -51,13 +51,14 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	UserReader            user.Reader
-	ArtifactReader        artifact.Reader
-	OperatorReader        operator.Reader
-	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
-	CustomReader          queries.Reader
+	UserReader              user.Reader
+	ArtifactReader          artifact.Reader
+	OperatorReader          operator.Reader
+	WorkflowReader          workflow.Reader
+	WorkflowDagReader       workflow_dag.Reader
+	WorkflowDagEdgeReader   workflow_dag_edge.Reader
+	WorkflowDagResultReader workflow_dag_result.Reader
+	CustomReader            queries.Reader
 
 	ArtifactWriter          artifact.Writer
 	OperatorWriter          operator.Writer
@@ -110,6 +111,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,
+		h.WorkflowDagResultReader,
 		h.WorkflowDagResultWriter,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,

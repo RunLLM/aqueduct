@@ -2,6 +2,7 @@ package airflow
 
 import (
 	"context"
+	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -18,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -32,6 +34,7 @@ func SyncWorkflowDags(
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
+	workflowDagResultReader workflow_dag_result.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -60,15 +63,13 @@ func SyncWorkflowDags(
 		dbDags = append(dbDags, *dbDag)
 	}
 
-	// TODO: What happens if a workflow was updated and there are runs that haven't been synced
-	// yet for a previous run.
-
 	for _, dbDag := range dbDags {
 		if err := syncWorkflowDag(
 			ctx,
 			&dbDag,
 			workflowReader,
 			workflowDagReader,
+			workflowDagResultReader,
 			workflowDagResultWriter,
 			operatorResultWriter,
 			artifactResultWriter,
@@ -92,6 +93,7 @@ func syncWorkflowDag(
 	dbDag *workflow_dag.DBWorkflowDag,
 	workflowReader workflow.Reader,
 	workflowDagReader workflow_dag.Reader,
+	workflowDagResultReader workflow_dag_result.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -117,14 +119,11 @@ func syncWorkflowDag(
 	}
 
 	// Get all Airflow DAG runs for `dag`
-	// TODO: Filter based on which runs have already been synced
+	// TODO: Get around Airflow response limit
 	dagRuns, err := cli.getDagRuns(dbDag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return err
 	}
-
-	log.Warnf("Got %v Airflow DagRuns", len(dagRuns))
-	dagRuns = dagRuns[:1]
 
 	txn, err := db.BeginTx(ctx)
 	if err != nil {
@@ -132,7 +131,32 @@ func syncWorkflowDag(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
+	workflowDagResults, err := workflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, dbDag.WorkflowId, db)
+	if err != nil {
+		return err
+	}
+
+	dagCreatedAtTimes := make([]time.Time, 0, len(workflowDagResults))
+	for _, workflowDagResult := range workflowDagResults {
+		dagCreatedAtTimes = append(dagCreatedAtTimes, workflowDagResult.CreatedAt)
+	}
+
+	log.Warnf("Existing Dates: %v", dagCreatedAtTimes)
+
 	for _, dagRun := range dagRuns {
+		// TODO: What if this dagRun corresponds to a previous WorkflowDag?
+
+		// Check if this DagRun has already been synced.
+		// We reasonably assume that no 2 Airflow DagRuns have the same start date, because
+		// the DagRun start date is measured in nanoseconds.
+		if ok := timeInSlice(dagRun.GetStartDate(), dagCreatedAtTimes); ok {
+			// A DagRun with the same start time has already been registered, so skip this
+			log.Warnf("Skipping %v since already synced", dagRun.GetDagRunId())
+			continue
+		} else {
+			log.Warnf("Did not find start date of %v", dagRun.GetStartDate())
+		}
+
 		log.Warnf("Syncing Airflow DAG Run %v", dagRun.GetDagRunId())
 		log.Warnf("Got workflow state: %v", *dagRun.State)
 
@@ -204,12 +228,32 @@ func syncWorkflowDagResult(
 
 	log.Warn("Created workflow dag result in DB")
 
+	// Get Airflow task states
+	taskToState, err := cli.getTaskStates(run.GetDagId(), run.GetDagRunId())
+	if err != nil {
+		return err
+	}
+
 	for _, op := range dbDag.Operators {
+		// Map Airflow task state to operator execution status
+		taskID, ok := dbDag.EngineConfig.AirflowConfig.OperatorToTask[op.Id]
+		if !ok {
+			return errors.Newf("Unable to determine Airflow task ID for operator %v", op.Id)
+		}
+
+		taskState, ok := taskToState[taskID]
+		if !ok {
+			return errors.Newf("Unable to find Airflow task state for task %s", taskID)
+		}
+
+		execStatus := mapTaskStateToStatus(taskState)
+
 		if err := createOperatorResult(
 			ctx,
 			run.GetDagRunId(),
 			dbDag,
 			&op,
+			execStatus,
 			workflowDagResult.Id,
 			operatorResultWriter,
 			artifactResultWriter,
@@ -220,4 +264,14 @@ func syncWorkflowDagResult(
 	}
 
 	return nil
+}
+
+// timeInSlice returns whether `t` is equal to any of the elements in `s`
+func timeInSlice(t time.Time, s []time.Time) bool {
+	for _, tt := range s {
+		if t.Equal(tt) {
+			return true
+		}
+	}
+	return false
 }
