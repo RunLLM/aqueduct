@@ -42,11 +42,12 @@ Released on August 8, 2022.
          height="200px"
          alt="A new organization for the integration details page adds an options dropdown next to the upload CSV button."
      />
+* Adds "Workflows" section in the integration management page to show all workflows and operators associated with the integration.
 
 ### Bugfixes
-* Fixes bug where where interacting with the UI when the Aqueduct server was
-    off resulted in an unhelp error message ("Failed to fetch.") and explicitly
-    detects instead when the server is unreachable.
+* Fixes bug where interacting with the UI when the Aqueduct server was
+    off resulted in an unhelpful error message ("Failed to fetch."). The fix explicitly
+    detects whether the server is unreachable.
 * Fixes bug where missing dependencies for integrations (e.g., requiring a
     Python package to access Postgres) were not explicitly surfaced to the user
     -- a cryptic import error message has been replaced with an explicit
