@@ -108,11 +108,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
 
     if (isSucceeded(deleteIntegrationStatus)) {
-      navigate('/integrations', 
-      { state: { 
-        deleteIntegrationStatus: deleteIntegrationStatus, 
-        deleteIntegrationName: selectedIntegration.name 
-        } 
+      navigate('/integrations', {
+        state: {
+          deleteIntegrationStatus: deleteIntegrationStatus,
+          deleteIntegrationName: selectedIntegration.name,
+        },
       });
     }
   }, [deleteIntegrationStatus]);

@@ -17,12 +17,15 @@ type ConnectedIntegrationsProps = {
 };
 
 export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
-  user, forceLoad,
+  user,
+  forceLoad,
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad }));
+    dispatch(
+      handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad })
+    );
   }, []);
 
   const integrations = useSelector(

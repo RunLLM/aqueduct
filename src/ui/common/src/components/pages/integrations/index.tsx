@@ -2,15 +2,15 @@ import { Alert, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
+import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 import { LayoutProps } from '../types';
-import {useLocation} from 'react-router-dom';
-import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 
 type Props = {
   user: UserProfile;
@@ -18,9 +18,9 @@ type Props = {
 };
 
 type integrationsNavigateState = {
-  deleteIntegrationStatus: LoadingStatus,
-  deleteIntegrationName: string
-}
+  deleteIntegrationStatus: LoadingStatus;
+  deleteIntegrationName: string;
+};
 
 const IntegrationsPage: React.FC<Props> = ({
   user,
@@ -32,19 +32,19 @@ const IntegrationsPage: React.FC<Props> = ({
     document.title = 'Integrations | Aqueduct';
   }, []);
 
-  let deleteIntegrationName = "";
+  let deleteIntegrationName = '';
   let openDeleteIntegrationSuccessSnackbar = false;
   let forceLoad = false;
-  
+
   if (location.state && location.state !== undefined) {
     const navState = location.state as integrationsNavigateState;
     deleteIntegrationName = navState.deleteIntegrationName;
-    openDeleteIntegrationSuccessSnackbar = navState.deleteIntegrationStatus.loading === LoadingStatusEnum.Succeeded;
+    openDeleteIntegrationSuccessSnackbar =
+      navState.deleteIntegrationStatus.loading === LoadingStatusEnum.Succeeded;
     // Reload integrations because deleted
     forceLoad = true;
   }
 
-  
   return (
     <Layout user={user}>
       <Box>
@@ -84,7 +84,7 @@ const IntegrationsPage: React.FC<Props> = ({
 
         <Box sx={{ my: 3, ml: 1 }}>
           <Typography variant="h4">Connected Integrations</Typography>
-          <ConnectedIntegrations user={user} forceLoad={forceLoad}/>
+          <ConnectedIntegrations user={user} forceLoad={forceLoad} />
         </Box>
       </Box>
       <Snackbar
@@ -93,10 +93,7 @@ const IntegrationsPage: React.FC<Props> = ({
         key={'workflowheader-delete-success-error-snackbar'}
         autoHideDuration={6000}
       >
-        <Alert
-          severity="success"
-          sx={{ width: '100%' }}
-        >
+        <Alert severity="success" sx={{ width: '100%' }}>
           {`Successfully deleted ${deleteIntegrationName}`}
         </Alert>
       </Snackbar>
