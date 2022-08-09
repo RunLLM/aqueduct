@@ -224,22 +224,6 @@ export const handleDeleteIntegration = createAsyncThunk<
     if (!response.ok) {
       return thunkAPI.rejectWithValue(responseBody.error);
     }
-    // const { apiKey, integrationId } = args;
-    // const response = await fetch(
-    //   `${apiAddress}/api/integration/${integrationId}/delete`,
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       'api-key': apiKey,
-    //     },
-    //   }
-    // );
-
-    // const responseBody = await response.json();
-
-    // if (!response.ok) {
-    //   return thunkAPI.rejectWithValue(responseBody.error);
-    // }
   }
 );
 
