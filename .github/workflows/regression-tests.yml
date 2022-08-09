@@ -73,7 +73,17 @@ jobs:
       - name: Take screenshot of workflow
         working-directory: regression_tests
         timeout-minutes: 5
-        run: echo "IMG_PATH=regressions_tests/screenshots/old.png" >> $GITHUB_ENV &&  npx playwright test
+        run: npx playwright test
+
+      - name: ls dire
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: ls
+
+      - name: ls dire
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: ls screenshots
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
