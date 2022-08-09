@@ -68,7 +68,7 @@ jobs:
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
 
       - name: Install playwright
-        run: npx playwright install && npx playwright install-deps
+        run: npm install @playwright/test && npx playwright install && npx playwright install-deps
 
       - name: Take screenshot of workflow
         working-directory: regression_tests
