@@ -10,6 +10,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -83,14 +84,16 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
-	//nolint:errcheck
-	go h.Engine.ExecuteWorkflow(
-		executeContext,
+	_, err := h.Engine.TriggerWorkflow(
+		ctx,
 		args.WorkflowId,
+		shared_utils.AppendPrefix(args.WorkflowId.String()),
 		timeConfig,
 		args.Parameters,
 	)
+	if err != nil {
+		return struct{}{}, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	}
 
 	return struct{}{}, http.StatusOK, nil
 }

@@ -146,17 +146,32 @@ func NewAqEngine(
 	}, nil
 }
 
+// TODO ENG-1444: Remove jobSpec/ creation once we get rid of executor
 func (eng *aqEngine) ScheduleWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	name string,
 	period string,
 ) error {
+	jobSpec := job.NewWorkflowSpec(
+		name,
+		workflowId.String(),
+		eng.Database.Config(),
+		eng.Vault.Config(),
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		},
+		eng.GithubManager.Config(),
+		eng.AqPath,
+		eng.StorageConfig,
+		nil,
+	)
 	err := eng.CronjobManager.DeployCronJob(
 		ctx,
 		name,
 		period,
-		eng.generateWorkflowCronFunction(context.Background(), name, workflowId),
+		eng.generateCronFunction(name, jobSpec),
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to schedule workflow.")
@@ -169,16 +184,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 	workflowId uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
-) {
+) (shared.ExecutionStatus, error) {
 	// TODO: Generalize JobManager type from user input.
-	jobManager, err := job.NewProcessJobManager(
+	// engineJobManager depends on the type of engine used.
+	engineJobManager, err := job.NewJobManager(
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
 			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
 		},
 	)
 	if err != nil {
-		log.Errorf("Unable to create JobManager: %v", err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
@@ -192,12 +208,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.Database,
 	)
 	if err != nil {
-		log.Errorf("Error reading latest workflowDag: %v", err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowDag.")
 	}
 
 	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
 	if err != nil {
-		log.Errorf("Error getting github client: %v", err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
 	}
 
 	dbWorkflowDag, err = workflow_utils.UpdateWorkflowDagToLatest(
@@ -217,7 +233,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.Database,
 	)
 	if err != nil {
-		log.Errorf("Error updating workflowDag to latest: %v", err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error updating workflowDag to latest.")
 	}
 
 	for name, newVal := range parameters {
@@ -226,7 +242,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			continue
 		}
 		if !op.Spec.IsParam() {
-			log.Errorf("Cannot set parameters on a non-parameter operator: %v", err)
+			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
@@ -240,21 +256,21 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.WorkflowReader,
 		eng.NotificationWriter,
 		eng.UserReader,
-		jobManager,
+		engineJobManager,
 		eng.Vault,
 		eng.StorageConfig,
-		false, //is not a preview
+		false, // is not preview
 		eng.Database,
 	)
 	if err != nil {
-		log.Errorf("Unable to create NewWorkflowDag: %v", err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
 
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
 		inputs, err := dag.OperatorInputs(op)
 		if err != nil {
-			log.Errorf("Unable to initialize operator inputs: %v", err)
+			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize operator inputs.")
 		}
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
@@ -266,18 +282,20 @@ func (eng *aqEngine) ExecuteWorkflow(
 		Status:              shared.PendingExecutionStatus,
 	}
 
-	err = dag.InitializeResults(ctx)
-	if err != nil {
-		log.Errorf("Unable to initialize dag results: %v", err)
-	}
-
 	// Make sure to persist the dag results on exit.
 	defer func() {
+		log.Info("workflowRunMetadata: ")
+		log.Info(workflowRunMetadata)
 		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
 		if err != nil {
 			log.Errorf("Error when persisting dag results: %v", err)
 		}
 	}()
+
+	err = dag.InitializeResults(ctx)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
+	}
 
 	workflowRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
@@ -285,15 +303,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dag,
 		workflowRunMetadata,
 		timeConfig,
-		jobManager,
+		engineJobManager,
 		true, // should persist results
 	)
 	if err != nil {
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error when executing workflow.")
 	} else {
 		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
-	log.Errorf("Error when executing workflow: %v", err)
+
+	return shared.SucceededExecutionStatus, nil
 }
 
 func (eng *aqEngine) PreviewWorkflow(
@@ -324,7 +344,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.StorageConfig,
-		true, //is a preview
+		true, // is a preview
 		eng.Database,
 	)
 	if err != nil {
@@ -613,6 +633,51 @@ func (eng *aqEngine) EditWorkflow(
 	return nil
 }
 
+// TODO ENG-1444: This function is only used to trigger a Workflow.
+// Remove once executor is done.
+func (eng *aqEngine) TriggerWorkflow(
+	ctx context.Context,
+	workflowId uuid.UUID,
+	name string,
+	timeConfig *AqueductTimeConfig,
+	parameters map[string]string,
+) (shared.ExecutionStatus, error) {
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		},
+	)
+	if err != nil {
+		log.Errorf("Unable to create JobManager: %v", err)
+	}
+
+	jobSpec := job.NewWorkflowSpec(
+		name,
+		workflowId.String(),
+		eng.Database.Config(),
+		eng.Vault.Config(),
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		},
+		eng.GithubManager.Config(),
+		eng.AqPath,
+		eng.StorageConfig,
+		parameters,
+	)
+
+	jobName := fmt.Sprintf("%s-%d", name, time.Now().Unix())
+	err = jobManager.Launch(context.Background(), jobName, jobSpec)
+	if err != nil {
+		log.Errorf("Error running job %s: %v", jobName, err)
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error running job.")
+	} else {
+		log.Infof("Launched job %s", jobName)
+		return shared.PendingExecutionStatus, nil
+	}
+}
+
 func (eng *aqEngine) cleanupWorkflow(ctx context.Context, workflowDag dag_utils.WorkflowDag) {
 	for _, op := range workflowDag.Operators() {
 		op.Finish(ctx)
@@ -739,23 +804,28 @@ func (eng *aqEngine) execute(
 	return nil
 }
 
-func (eng *aqEngine) generateWorkflowCronFunction(ctx context.Context, name string, workflowId uuid.UUID) func() {
+func (eng *aqEngine) generateCronFunction(name string, jobSpec job.Spec) func() {
+	// TODO ENG-1444: Creating this process job manager just to
+	// launch the executor which calls ExecuteWorkflow().
+	// Replace with call to ExecuteWorkflow() once executor is removed.
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		},
+	)
+	if err != nil {
+		log.Errorf("Unable to create JobManager: %v", err)
+	}
+
 	return func() {
 		jobName := fmt.Sprintf("%s-%d", name, time.Now().Unix())
-		timeConfig := &AqueductTimeConfig{
-			OperatorPollInterval: DefaultPollIntervalMillisec,
-			ExecTimeout:          DefaultExecutionTimeout,
-			CleanupTimeout:       DefaultCleanupTimeout,
+		err := jobManager.Launch(context.Background(), jobName, jobSpec)
+		if err != nil {
+			log.Errorf("Error running cron job %s: %v", jobName, err)
+		} else {
+			log.Infof("Launched cron job %s", jobName)
 		}
-		emptyParams := make(map[string]string)
-
-		log.Infof("Launched cron job %s", jobName)
-		eng.ExecuteWorkflow(
-			ctx,
-			workflowId,
-			timeConfig,
-			emptyParams,
-		)
 	}
 }
 
@@ -794,12 +864,27 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			// you set the cron job schedule to an empty string.
 			newCronSchedule = ""
 		}
+		// TODO ENG-1444: Remove jobSpec once executor is removed.
+		jobSpec := job.NewWorkflowSpec(
+			cronjobName,
+			workflowId.String(),
+			eng.Database.Config(),
+			eng.Vault.Config(),
+			&job.ProcessConfig{
+				BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+				OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+			},
+			eng.GithubManager.Config(),
+			eng.AqPath,
+			eng.StorageConfig,
+			nil,
+		)
 
 		err := eng.CronjobManager.EditCronJob(
 			ctx,
 			cronjobName,
 			newCronSchedule,
-			eng.generateWorkflowCronFunction(ctx, cronjobName, workflowId),
+			eng.generateCronFunction(cronjobName, jobSpec),
 		)
 		if err != nil {
 			return errors.Wrap(err, "Unable to change workflow schedule.")

@@ -221,14 +221,16 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 	emptyParams := make(map[string]string)
 
-	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
-	//nolint:errcheck
-	go h.Engine.ExecuteWorkflow(
-		executeContext,
+	_, err = h.Engine.TriggerWorkflow(
+		ctx,
 		workflowId,
+		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
 		timeConfig,
 		emptyParams,
 	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	}
 
 	if !args.isUpdate {
 		// If this workflow is newly created, automatically add the user to the workflow's

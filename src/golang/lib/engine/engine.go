@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -35,7 +36,7 @@ type Engine interface {
 		workflowId uuid.UUID,
 		timeConfig *AqueductTimeConfig,
 		parameters map[string]string,
-	)
+	) (shared.ExecutionStatus, error)
 
 	DeleteWorkflow(
 		ctx context.Context,
@@ -50,6 +51,16 @@ type Engine interface {
 		workflowDescription string,
 		schedule *workflow.Schedule,
 	) error
+
+	// TODO ENG-1444: Used as a wrapper to trigger a workflow via executor binary.
+	// Remove once executor is removed.
+	TriggerWorkflow(
+		ctx context.Context,
+		workflowId uuid.UUID,
+		name string,
+		timeConfig *AqueductTimeConfig,
+		parameters map[string]string,
+	) (shared.ExecutionStatus, error)
 }
 
 // AqEngine should be implemented by aqEngine
