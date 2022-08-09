@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -46,7 +47,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 }
 
 func (ex *WorkflowExecutor) Run(ctx context.Context) error {
-	workflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
+	dbWorkflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		ex.WorkflowId,
 		ex.WorkflowReader,
@@ -60,15 +61,15 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		return err
 	}
 
-	githubClient, err := ex.GithubManager.GetClient(ctx, workflowDag.Metadata.UserId)
+	githubClient, err := ex.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
 	if err != nil {
 		return err
 	}
 
-	workflowDag, err = utils.UpdateWorkflowDagToLatest(
+	dbWorkflowDag, err = utils.UpdateWorkflowDagToLatest(
 		ctx,
 		githubClient,
-		workflowDag,
+		dbWorkflowDag,
 		ex.WorkflowReader,
 		ex.WorkflowWriter,
 		ex.WorkflowDagReader,
@@ -90,7 +91,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	// the default in the db.
 	if ex.Parameters != nil {
 		for name, newVal := range ex.Parameters {
-			op := workflowDag.GetOperatorByName(name)
+			op := dbWorkflowDag.GetOperatorByName(name)
 			if op == nil {
 				continue
 			}
@@ -98,37 +99,52 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 			if !op.Spec.IsParam() {
 				return errors.Newf("Cannot set parameters on a non-parameter operator %s", name)
 			}
-			workflowDag.Operators[op.Id].Spec.Param().Val = newVal
+			dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 		}
 	}
 
-	workflowStoragePaths := utils.GenerateWorkflowStoragePaths(workflowDag)
-
-	// Do not clean up artifact contents.
-	defer utils.CleanupWorkflowStorageFiles(ctx, workflowStoragePaths, &workflowDag.StorageConfig, true /* metadataOnly */)
-
-	status, err := orchestrator.Execute(
+	workflowDag, err := dag.NewWorkflowDag(
 		ctx,
-		workflowDag,
-		workflowStoragePaths,
-		pollingIntervalMS,
-		ex.WorkflowReader,
+		dbWorkflowDag,
 		ex.WorkflowDagResultWriter,
 		ex.OperatorResultWriter,
 		ex.ArtifactResultWriter,
+		ex.WorkflowReader,
 		ex.NotificationWriter,
 		ex.UserReader,
-		ex.Database,
 		ex.JobManager,
 		ex.Vault,
+		&dbWorkflowDag.StorageConfig,
+		false, // this is not a preview
+		ex.Database,
 	)
 	if err != nil {
 		return err
 	}
 
+	orch, err := orchestrator.NewAqOrchestrator(
+		workflowDag,
+		ex.JobManager,
+		orchestrator.AqueductTimeConfig{
+			OperatorPollInterval: pollingIntervalMS,
+			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
+			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
+		},
+		false, // this is not a preview
+	)
+	if err != nil {
+		return err
+	}
+
+	defer orch.Finish(ctx)
+	status, err := orch.Execute(ctx)
+	if err != nil {
+		return err
+	}
+
 	log.WithFields(log.Fields{
-		"WorkflowId":    workflowDag.WorkflowId,
-		"WorkflowDagId": workflowDag.Id,
+		"WorkflowId":    dbWorkflowDag.WorkflowId,
+		"WorkflowDagId": dbWorkflowDag.Id,
 		"Parameters":    ex.Parameters,
 	}).Infof("Workflow run completed with status: %v", status)
 

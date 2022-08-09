@@ -1,20 +1,21 @@
 import textwrap
 import uuid
 from textwrap import wrap
-from typing import Dict, Any, Mapping, Optional, Union, List
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, get_artifact_type
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import DAG
-from aqueduct.enums import OperatorType, DisplayNodeType, ExecutionStatus, ArtifactType
+from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
-from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
+from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
+
+from aqueduct import api_client
 
 
 class FlowRun:
@@ -22,7 +23,6 @@ class FlowRun:
 
     def __init__(
         self,
-        api_client: APIClient,
         flow_id: str,
         run_id: str,
         in_notebook_or_console_context: bool,
@@ -31,7 +31,6 @@ class FlowRun:
         status: ExecutionStatus,
     ):
         assert run_id is not None
-        self._api_client = api_client
         self._flow_id = flow_id
         self._id = run_id
         self._in_notebook_or_console_context = in_notebook_or_console_context
@@ -51,8 +50,7 @@ class FlowRun:
         """Prints out a human-readable description of the flow run."""
 
         url = generate_ui_url(
-            self._api_client.url_prefix(),
-            self._api_client.aqueduct_address,
+            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
             self._flow_id,
             self._id,
         )
@@ -95,21 +93,13 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
         elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
-            return TableArtifact(
-                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
-            )
+            return TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:
-            return MetricArtifact(
-                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
-            )
+            return MetricArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif get_artifact_type(artifact_from_dag) is ArtifactType.BOOL:
-            return CheckArtifact(
-                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
-            )
+            return CheckArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif get_artifact_type(artifact_from_dag) is ArtifactType.PARAM:
-            return ParamArtifact(
-                self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
-            )
+            return ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
 
         raise InternalAqueductError("The artifact's type can not be recognized.")
 
@@ -118,7 +108,6 @@ class FlowRun:
 #  a circular dependency with `api_client.py`. We should move `api_client.py` to an
 #  internal directory.
 def _show_dag(
-    api_client: APIClient,
     dag: DAG,
     label_width: int = 20,
     markersize: int = 50,
@@ -152,7 +141,9 @@ def _show_dag(
         artifact_by_id[str(artifact_uuid.id)] = artifact_uuid
 
     # Mapping of operator/artifact UUID to X, Y coordinates on the graph.
-    operator_positions, artifact_positions = api_client.get_node_positions(operator_mapping)
+    operator_positions, artifact_positions = api_client.__GLOBAL_API_CLIENT__.get_node_positions(
+        operator_mapping
+    )
 
     # Remove any parameter operators, since we don't want those being displayed to the user.
     for param_op in dag.list_operators(filter_to=[OperatorType.PARAM]):

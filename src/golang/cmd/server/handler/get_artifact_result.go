@@ -13,19 +13,24 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 // Route: /artifact_result/{workflowDagResultId}/{artifactId}
 // Method: GET
 // Params:
+//
 //	`workflowDagResultId`: ID for `workflow_dag_result` object
 //	`artifactId`: ID for `artifact` object
+//
 // Request:
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response:
+//
 //	Body:
 //		serialized `getArtifactResultResponse`,
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
@@ -36,9 +41,13 @@ type getArtifactResultArgs struct {
 }
 
 type getArtifactResultResponse struct {
-	Status shared.ExecutionStatus `json:"status"`
-	Schema []map[string]string    `json:"schema"`
-	Data   string                 `json:"data"`
+	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
+	// We are incurring this tech debt right now since there are quite a few usages of
+	// `status` in the UI.
+	Status    shared.ExecutionStatus `json:"status"`
+	ExecState shared.ExecutionState  `json:"exec_state"`
+	Schema    []map[string]string    `json:"schema"`
+	Data      string                 `json:"data"`
 }
 
 type GetArtifactResultHandler struct {
@@ -116,8 +125,18 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
-	response := getArtifactResultResponse{
+	execState := shared.ExecutionState{
 		Status: dbArtifactResult.Status,
+	}
+	if !dbArtifactResult.ExecState.IsNull {
+		execState.FailureType = dbArtifactResult.ExecState.FailureType
+		execState.Error = dbArtifactResult.ExecState.Error
+		execState.UserLogs = dbArtifactResult.ExecState.UserLogs
+	}
+
+	response := getArtifactResultResponse{
+		Status:    execState.Status,
+		ExecState: execState,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {

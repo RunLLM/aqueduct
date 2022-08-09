@@ -148,22 +148,6 @@ func (r *standardReaderImpl) GetIntegrationsByServiceAndUser(
 	return integrations, err
 }
 
-func (r *standardReaderImpl) GetIntegrationsByConfigField(
-	ctx context.Context,
-	fieldName string,
-	fieldValue string,
-	db database.Database,
-) ([]Integration, error) {
-	getIntegrationsQuery := fmt.Sprintf(
-		"SELECT %s FROM integration WHERE config->>$1 = $2;",
-		allColumns(),
-	)
-	var integrations []Integration
-
-	err := db.Query(ctx, &integrations, getIntegrationsQuery, fieldName, fieldValue)
-	return integrations, err
-}
-
 func (w *standardWriterImpl) UpdateIntegration(
 	ctx context.Context,
 	id uuid.UUID,

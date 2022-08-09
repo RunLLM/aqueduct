@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -15,6 +16,15 @@ import (
 type standardReaderImpl struct{}
 
 type standardWriterImpl struct{}
+
+type GetDistinctLoadOperatorsByWorkflowIdResponse struct {
+	OperatorName    string              `db:"operator_name" json:"operator_name"`
+	IntegrationName string              `db:"integration_name" json:"integration_name"`
+	Integration_id  uuid.UUID           `db:"integration_id" json:"integration_id"`
+	Service         integration.Service `db:"service" json:"service"`
+	TableName       string              `db:"table_name" json:"object_name"`
+	UpdateMode      string              `db:"update_mode" json:"update_mode"`
+}
 
 func (w *standardWriterImpl) CreateOperator(
 	ctx context.Context,

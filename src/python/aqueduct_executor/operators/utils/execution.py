@@ -25,6 +25,9 @@ TIP_EXTRACT = "We couldn't execute the provided query. Please double check your 
 TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
+# Assumption: only check operators will use this tip.
+TIP_CHECK_DID_NOT_PASS = "The check did not pass (returned False)."
+
 
 class Error(BaseModel):
     tip: str = ""  # Information about how the user could fix the error.
@@ -78,9 +81,9 @@ class ExecutionState(BaseModel):
                         result = user_fn(*args, **kwargs)
                 except Exception:
                     # Include the stack trace within the user's code.
-                    _get_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                    _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
                     self.status = ExecutionStatus.FAILED
-                    self.failure_type = FailureType.USER
+                    self.failure_type = FailureType.USER_FATAL
                     self.error = Error(
                         context=stack_traceback(
                             offset=1
@@ -91,7 +94,7 @@ class ExecutionState(BaseModel):
                     return None
 
                 # Include the stack trace within the user's code.
-                _get_redirected_logs(stdout_log, stderr_log, self.user_logs)
+                _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
                 print(f"User execution succeeded. Full log: {self.json()}")
                 return result
 
@@ -100,7 +103,7 @@ class ExecutionState(BaseModel):
         return wrapper
 
 
-def _get_redirected_logs(
+def _set_redirected_logs(
     stdout: io.StringIO,
     stderr: io.StringIO,
     logs: Logs,

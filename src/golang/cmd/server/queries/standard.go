@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
@@ -12,26 +12,6 @@ import (
 )
 
 type standardReaderImpl struct{}
-
-func (r *standardReaderImpl) GetLoadOperatorSpecByOrganization(
-	ctx context.Context,
-	organizationId string,
-	db database.Database,
-) ([]LoadOperatorSpecResponse, error) {
-	query := fmt.Sprintf(
-		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, artifact.name AS artifact_name, operator.id AS load_operator_id, workflow.name AS workflow_name, workflow.id AS workflow_id, operator.spec 
-		 FROM app_user, workflow, workflow_dag, workflow_dag_edge, operator, artifact
-		 WHERE app_user.id = workflow.user_id AND workflow.id = workflow_dag.workflow_id AND 
-		 workflow_dag.id = workflow_dag_edge.workflow_dag_id AND workflow_dag_edge.to_id = operator.id AND 
-		 artifact.id = workflow_dag_edge.from_id AND
-		 operator.spec->>'type' = '%s' AND app_user.organization_id = $1;`,
-		operator.LoadType,
-	)
-
-	var response []LoadOperatorSpecResponse
-	err := db.Query(ctx, &response, query, organizationId)
-	return response, err
-}
 
 func (r *standardReaderImpl) GetLatestWorkflowDagIdsByOrganizationId(
 	ctx context.Context,
@@ -99,32 +79,6 @@ func (r *standardReaderImpl) GetArtifactResultsByArtifactIds(
 	return response, err
 }
 
-func (r *standardReaderImpl) GetCheckResultsByArtifactIds(
-	ctx context.Context,
-	artifactIds []uuid.UUID,
-	db database.Database,
-) ([]ArtifactCheckResponse, error) {
-	if len(artifactIds) == 0 {
-		return nil, errors.New("Provided empty IDs list.")
-	}
-
-	query := fmt.Sprintf(
-		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, operator.name AS name, operator_result.status, 
-		 operator_result.metadata, operator_result.workflow_dag_result_id 
-		 FROM workflow_dag_edge, operator, operator_result 
-		 WHERE workflow_dag_edge.to_id = operator.id AND operator.id = operator_result.operator_id AND 
-		 workflow_dag_edge.from_id IN (%s) AND operator.spec->>'type' = '%s';`,
-		stmt_preparers.GenerateArgsList(len(artifactIds), 1),
-		operator.CheckType,
-	)
-
-	args := stmt_preparers.CastIdsListToInterfaceList(artifactIds)
-
-	var response []ArtifactCheckResponse
-	err := db.Query(ctx, &response, query, args...)
-	return response, err
-}
-
 func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResultIds(
 	ctx context.Context,
 	artifactIds, workflowDagResultIds []uuid.UUID,
@@ -135,7 +89,10 @@ func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResult
 	}
 
 	query := fmt.Sprintf(
-		`SELECT DISTINCT workflow_dag_edge.to_id AS artifact_id, operator_result.metadata, operator_result.workflow_dag_result_id  
+		`SELECT DISTINCT
+			workflow_dag_edge.to_id AS artifact_id,
+			operator_result.execution_state as metadata,
+			operator_result.workflow_dag_result_id  
 		 FROM workflow_dag_edge, operator_result 
 		 WHERE workflow_dag_edge.from_id = operator_result.operator_id AND workflow_dag_edge.to_id IN (%s) AND 
 		 operator_result.workflow_dag_result_id IN (%s);`,
@@ -169,4 +126,94 @@ func (r *standardReaderImpl) GetWorkflowLastRun(
 
 	err := db.Query(ctx, &response, query)
 	return response, err
+}
+
+func (r *standardReaderImpl) GetWorkflowIdsFromOperatorIds(
+	ctx context.Context,
+	operatorIds []uuid.UUID,
+	db database.Database,
+) ([]WorkflowIdsFromOperatorIdsResponse, error) {
+	// This query looks up all operators with at least one upstream
+	query := fmt.Sprintf(
+		`
+			SELECT
+				workflow.id as workflow_id,
+				workflow_dag.id as workflow_dag_id,
+				workflow_dag_edge.from_id as operator_id
+			FROM
+				workflow,
+				workflow_dag,
+				workflow_dag_edge 
+			WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.from_id IN (%s)
+		UNION
+			SELECT
+				workflow.id as workflow_id,
+				workflow_dag.id as workflow_dag_id,
+				workflow_dag_edge.to_id as operator_id
+			FROM
+				workflow,
+				workflow_dag,
+				workflow_dag_edge 
+			WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.to_id IN (%s)
+		`,
+		workflow_dag_edge.OperatorToArtifactType,
+		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
+		workflow_dag_edge.ArtifactToOperatorType,
+		stmt_preparers.GenerateArgsList(len(operatorIds), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(operatorIds)
+
+	var results []WorkflowIdsFromOperatorIdsResponse
+
+	err := db.Query(ctx, &results, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (r *standardReaderImpl) GetLatestWorkflowDagIdsFromWorkflowIds(
+	ctx context.Context,
+	workflowIds []uuid.UUID,
+	db database.Database,
+) (map[uuid.UUID]uuid.UUID, error) {
+	getLatestWorkflowDagIdsQuery := fmt.Sprintf(
+		`
+		SELECT workflow_dag_id, workflow_id FROM (
+			SELECT
+				id as workflow_dag_id,
+				workflow_id,
+				MAX(created_at) as created_at
+			FROM workflow_dag
+			WHERE workflow_id IN (%s)
+			GROUP BY workflow_id
+		)`,
+		stmt_preparers.GenerateArgsList(len(workflowIds), 1),
+	)
+
+	var ids []struct {
+		WorkflowDagId uuid.UUID `db:"workflow_dag_id" json:"workflow_dag_id"`
+		WorkflowId    uuid.UUID `db:"workflow_id" json:"workflow_id"`
+	}
+
+	args := stmt_preparers.CastIdsListToInterfaceList(workflowIds)
+	err := db.Query(ctx, &ids, getLatestWorkflowDagIdsQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[uuid.UUID]uuid.UUID, len(ids))
+	for _, item := range ids {
+		results[item.WorkflowId] = item.WorkflowDagId
+	}
+
+	return results, nil
 }

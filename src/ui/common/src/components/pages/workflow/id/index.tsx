@@ -43,12 +43,17 @@ import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
 import WorkflowHeader from '../../../workflows/workflowHeader';
+import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
   user: UserProfile;
+  Layout?: React.FC<LayoutProps>;
 };
 
-const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
+const WorkflowPage: React.FC<WorkflowPageProps> = ({
+  user,
+  Layout = DefaultLayout,
+}) => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
@@ -274,7 +279,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
   };
 
   return (
-    <DefaultLayout user={user}>
+    <Layout user={user} layoutType="workspace">
       <Box
         sx={{
           display: 'flex',
@@ -295,13 +300,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
             mt: 2,
             p: 3,
             mb: contentBottomOffsetInPx,
+            width: '100%',
+            boxSizing: 'border-box',
             backgroundColor: 'gray.50',
           }}
         >
           <ReactFlowProvider>
             <ReactFlowCanvas
-              nodes={dagPosition.result?.nodes}
-              edges={dagPosition.result?.edges}
               switchSideSheet={switchSideSheet}
               onPaneClicked={onPaneClicked}
             />
@@ -321,7 +326,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({ user }) => {
       )}
 
       <WorkflowStatusBar user={user} />
-    </DefaultLayout>
+    </Layout>
   );
 };
 

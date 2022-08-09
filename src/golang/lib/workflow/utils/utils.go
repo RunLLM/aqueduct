@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -29,63 +27,22 @@ type WorkflowStoragePaths struct {
 	ArtifactMetadataPaths map[uuid.UUID]string
 }
 
-func GenerateWorkflowStoragePaths(dag *workflow_dag.DBWorkflowDag) *WorkflowStoragePaths {
-	workflowStoragePaths := WorkflowStoragePaths{
-		OperatorMetadataPaths: make(map[uuid.UUID]string),
-		ArtifactPaths:         make(map[uuid.UUID]string),
-		ArtifactMetadataPaths: make(map[uuid.UUID]string),
-	}
-
-	for id := range dag.Operators {
-		workflowStoragePaths.OperatorMetadataPaths[id] = uuid.New().String()
-	}
-
-	for id := range dag.Artifacts {
-		workflowStoragePaths.ArtifactPaths[id] = uuid.New().String()
-		workflowStoragePaths.ArtifactMetadataPaths[id] = uuid.New().String()
-	}
-
-	return &workflowStoragePaths
-}
-
-func CleanupWorkflowStorageFiles(
-	ctx context.Context,
-	workflowStoragePaths *WorkflowStoragePaths,
-	storageConfig *shared.StorageConfig,
-	metadataOnly bool,
-) {
-	// Clean up generated workflow storage files.
-	// If `metadataOnly` is turned on, clean up only metadata files and preserve content files.
-	numFiles := len(workflowStoragePaths.ArtifactMetadataPaths) + len(workflowStoragePaths.OperatorMetadataPaths)
-	if !metadataOnly {
-		numFiles += len(workflowStoragePaths.ArtifactPaths)
-	}
-
-	paths := make([]string, 0, numFiles)
-	for _, path := range workflowStoragePaths.ArtifactMetadataPaths {
-		paths = append(paths, path)
-	}
-
-	for _, path := range workflowStoragePaths.OperatorMetadataPaths {
-		paths = append(paths, path)
-	}
-
-	if !metadataOnly {
-		for _, path := range workflowStoragePaths.ArtifactPaths {
-			paths = append(paths, path)
-		}
-	}
-
-	CleanupStorageFiles(ctx, storageConfig, paths)
+func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
+	CleanupStorageFiles(ctx, storageConfig, []string{key})
 }
 
 func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfig, keys []string) {
 	for _, key := range keys {
 		err := storage.NewStorage(storageConfig).Delete(ctx, key)
 		if err != nil {
-			log.Errorf("Unable to clean up storage file with key: %s. %v.", key, err)
+			log.Errorf("Unable to clean up storage file with key: %s. %v. \n %s", key, err, errors.New("").GetStack())
 		}
 	}
+}
+
+func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
+	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
+	return err != storage.ErrObjectDoesNotExist
 }
 
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
@@ -142,6 +99,7 @@ func WriteWorkflowDagToDatabase(
 		ctx,
 		workflowId,
 		&dag.StorageConfig,
+		&dag.EngineConfig,
 		db,
 	)
 	if err != nil {
@@ -451,119 +409,5 @@ func UpdateWorkflowDagResultMetadata(
 				"changes": changes,
 			},
 		).Errorf("Unable to update workflow dag result metadata: %v", err)
-	}
-}
-
-// This helper function is called after executing each operator for non-preview execution.
-// It pulls artifact results from storage and writes the operator and its output artifact results into the database.
-// It logs any error that occurs during these steps.
-func UpdateOperatorAndArtifactResults(
-	ctx context.Context,
-	operator *operator.DBOperator,
-	storageConfig *shared.StorageConfig,
-	operatorState *shared.ExecutionState,
-	artifactMetadataPaths map[uuid.UUID]string,
-	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
-	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
-) {
-	artifactStatuses := make(map[uuid.UUID]shared.ExecutionStatus, len(operator.Outputs))
-	artifactIdToArtifactMetadata := make(map[uuid.UUID]*artifact_result.Metadata, len(operator.Outputs))
-	// Initialize the map.
-	for _, artifactId := range operator.Outputs {
-		artifactStatuses[artifactId] = shared.FailedExecutionStatus
-		artifactIdToArtifactMetadata[artifactId] = nil
-	}
-
-	if operatorState.Status == shared.SucceededExecutionStatus {
-		for _, artifactId := range operator.Outputs {
-			var artifactResultMetadata artifact_result.Metadata
-			err := ReadFromStorage(
-				ctx,
-				storageConfig,
-				artifactMetadataPaths[artifactId],
-				&artifactResultMetadata,
-			)
-			if err != nil {
-				log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
-				continue
-			}
-
-			artifactIdToArtifactMetadata[artifactId] = &artifactResultMetadata
-			artifactStatuses[artifactId] = shared.SucceededExecutionStatus
-		}
-	}
-
-	updateOperatorAndArtifactResults(
-		ctx,
-		operator,
-		operatorState,
-		artifactStatuses,
-		artifactIdToArtifactMetadata,
-		operatorToOperatorResult,
-		artifactToArtifactResult,
-		operatorResultWriter,
-		artifactResultWriter,
-		db,
-	)
-}
-
-func updateOperatorAndArtifactResults(
-	ctx context.Context,
-	operator *operator.DBOperator,
-	operatorState *shared.ExecutionState,
-	artifactStatuses map[uuid.UUID]shared.ExecutionStatus,
-	artifactResultsMetadata map[uuid.UUID]*artifact_result.Metadata,
-	operatorToOperatorResult map[uuid.UUID]uuid.UUID,
-	artifactToArtifactResult map[uuid.UUID]uuid.UUID,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
-) {
-	changes := map[string]interface{}{
-		operator_result.StatusColumn: operatorState.Status,
-	}
-
-	changes[operator_result.ExecStateColumn] = operatorState
-
-	_, err := operatorResultWriter.UpdateOperatorResult(
-		ctx,
-		operatorToOperatorResult[operator.Id],
-		changes,
-		db,
-	)
-	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update operator exec state: %v", err)
-	}
-
-	// Write the artifact results.
-	for _, artifactId := range operator.Outputs {
-		artifactResultMap := map[string]interface{}{
-			artifact_result.StatusColumn: artifactStatuses[artifactId],
-		}
-
-		if artifactResultsMetadata[artifactId] != nil {
-			artifactResultMap[artifact_result.MetadataColumn] = artifactResultsMetadata[artifactId]
-		}
-
-		_, err := artifactResultWriter.UpdateArtifactResult(
-			ctx,
-			artifactToArtifactResult[artifactId],
-			artifactResultMap,
-			db,
-		)
-		if err != nil {
-			log.WithFields(
-				log.Fields{
-					"changes": artifactResultMap,
-				},
-			).Errorf("Unable to update artifact result metadata: %v", err)
-		}
 	}
 }

@@ -40,19 +40,25 @@ type ArtifactCheckResponse struct {
 	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	Status              shared.ExecutionStatus `db:"status" json:"status"`
 	Name                string                 `db:"name" json:"name"`
-	Metadata            shared.ExecutionState  `db:"metadata" json:"metadata"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
 }
 
 type ArtifactOperatorResponse struct {
-	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
-	Metadata            shared.ExecutionState `db:"metadata" json:"metadata"`
-	WorkflowDagResultId uuid.UUID             `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
+	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 }
 
 type WorkflowLastRunResponse struct {
 	WorkflowId uuid.UUID         `db:"workflow_id" json:"workflow_id"`
 	Schedule   workflow.Schedule `db:"schedule" json:"schedule"`
 	LastRunAt  time.Time         `db:"last_run_at" json:"last_run_at"`
+}
+
+type WorkflowIdsFromOperatorIdsResponse struct {
+	WorkflowId    uuid.UUID `db:"workflow_id" json:"workflow_id"`
+	WorkflowDagId uuid.UUID `db:"workflow_dag_id" json:"workflow_dag_id"`
+	OperatorId    uuid.UUID `db:"operator_id" json:"operator_id"`
 }
 
 type Reader interface {
@@ -91,6 +97,18 @@ type Reader interface {
 		ctx context.Context,
 		db database.Database,
 	) ([]WorkflowLastRunResponse, error)
+	GetWorkflowIdsFromOperatorIds(
+		ctx context.Context,
+		operatorIds []uuid.UUID,
+		db database.Database,
+	) ([]WorkflowIdsFromOperatorIdsResponse, error)
+	// `GetLatestWorkflowDagIdsFromWorkflowIds` returns a map
+	// from each workflowId to its latest dag id.
+	GetLatestWorkflowDagIdsFromWorkflowIds(
+		ctx context.Context,
+		workflowIds []uuid.UUID,
+		db database.Database,
+	) (map[uuid.UUID]uuid.UUID, error)
 }
 
 func NewReader(dbConf *database.DatabaseConfig) (Reader, error) {

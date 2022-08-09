@@ -1,6 +1,7 @@
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
+  AlertTitle,
   Box,
   DialogActions,
   DialogContent,
@@ -11,8 +12,11 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   addTable,
@@ -108,7 +112,7 @@ export const AddTableDialog: React.FC<AddTableDialogProps> = ({
   };
 
   return (
-    <Dialog open={true} onClose={onCloseDialog}>
+    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
         {serviceDialog}
@@ -157,6 +161,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   service,
   onCloseDialog,
 }) => {
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const [config, setConfig] = useState<IntegrationConfig>({});
   const [disableConnect, setDisableConnect] = useState(true);
@@ -228,11 +233,19 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const confirmConnect = () => {
     setIsConnecting(true);
     setErrMsg(null);
+
     connectIntegration(user, service, name, config)
       .then(() => {
         setShowSuccessToast(true);
         setSuccessMessage('Successfully connected to ' + service + '!');
         setIsConnecting(false);
+
+        // Load the list of integrations again.
+        // Force the load because we've added a new integration.
+        dispatch(
+          handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+        );
+
         onCloseDialog();
         navigate('/integrations');
       })
@@ -263,13 +276,15 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const [errMsg, setErrMsg] = useState(null);
 
   return (
-    <Dialog open={true} onClose={onCloseDialog}>
+    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
         {nameInput}
         {serviceDialog}
+
         {errMsg && (
-          <Alert severity="error">
+          <Alert sx={{ mt: 2 }} severity="error">
+            <AlertTitle>Unable to connect to {service}</AlertTitle>
             <pre>{errMsg}</pre>
           </Alert>
         )}
@@ -307,6 +322,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 };
 
 // Helper function to check if the Integration config is completely filled
-function isConfigComplete(config: IntegrationConfig | CSVConfig): boolean {
+export function isConfigComplete(
+  config: IntegrationConfig | CSVConfig
+): boolean {
   return Object.values(config).every((x) => x === undefined || (x && x !== ''));
 }

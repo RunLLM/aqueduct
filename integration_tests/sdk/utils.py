@@ -3,6 +3,7 @@ import uuid
 from typing import Dict, List, Optional, Union
 
 from aqueduct.check_artifact import CheckArtifact
+from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
@@ -96,6 +97,7 @@ def run_flow_test(
     schedule: str = "",
     num_runs: int = 1,
     delete_flow_after: bool = True,
+    expect_success: bool = True,
 ) -> Optional[Flow]:
     """
     Actually publishes the flow if tests are run with --publish flag. This flow can be deleted
@@ -120,14 +122,19 @@ def run_flow_test(
     print("Workflow registration succeeded. Workflow ID: %s" % flow.id())
 
     try:
-        wait_for_flow_runs(client, flow.id(), num_runs)
+        wait_for_flow_runs(client, flow.id(), num_runs, expect_success)
     finally:
         if delete_flow_after:
             delete_flow(client, flow.id())
     return flow
 
 
-def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: int = 1) -> int:
+def wait_for_flow_runs(
+    client: aqueduct.Client,
+    flow_id: uuid.UUID,
+    num_runs: int = 1,
+    expect_success: bool = True,
+) -> int:
     """
     Returns only when the specified flow has run successfully at least `num_runs` times.
     Any run failure is not tolerated. Will timeout after a few minutes.
@@ -135,12 +142,15 @@ def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: in
     Returns:
         The number of successful runs this flow has performed.
     """
-    timeout = 300
+    timeout = 500
     poll_threshold = 5
     begin = time.time()
 
     while True:
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
+
+        if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
+            continue
 
         time.sleep(poll_threshold)
 
@@ -152,17 +162,27 @@ def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: in
             continue
 
         statuses = [flow_run["status"] for flow_run in flow_runs]
-        assert all(status != "failed" for status in statuses), "At least one workflow run failed!"
+
+        # Continue checking as long as there are still runs pending.
+        if any(status == ExecutionStatus.PENDING for status in statuses):
+            continue
 
         if len(flow_runs) < num_runs:
             continue
 
-        # Continue checking as long as there are still runs pending.
-        if any(status == "pending" for status in statuses):
-            continue
+        if expect_success:
+            assert all(
+                status == ExecutionStatus.SUCCEEDED for status in statuses
+            ), "At least one workflow run failed!"
+        else:
+            # We expect them all to fail.
+            assert all(
+                status == ExecutionStatus.FAILED for status in statuses
+            ), "At least one workflow succeeded!"
 
         print(
-            "Workflow %s was created and ran successfully at %s times!" % (flow_id, len(flow_runs))
+            "Workflow %s was created and ran successfully at least %s times!"
+            % (flow_id, len(flow_runs))
         )
         return len(flow_runs)
     return -1

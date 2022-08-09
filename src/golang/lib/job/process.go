@@ -24,6 +24,7 @@ const (
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
 	systemMetricPythonPath       = "operators.system_metric_executor.main"
+	compileAirflowPythonPath     = "operators.airflow.main"
 	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
@@ -235,6 +236,19 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		), nil
+	} else if spec.Type() == CompileAirflowJobType {
+		specStr, err := EncodeSpec(spec, JsonSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		return exec.Command(
+			"python3",
+			"-m",
+			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, compileAirflowPythonPath),
+			"--spec",
+			specStr,
+		), nil
 	} else {
 		return nil, errors.New("Unsupported JobType was passed in.")
 	}
@@ -304,7 +318,7 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 	}
 
 	if status == processRunningStatus {
-		return shared.PendingExecutionStatus, nil
+		return shared.RunningExecutionStatus, nil
 	}
 
 	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success

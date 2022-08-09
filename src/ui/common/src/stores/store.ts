@@ -1,9 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import dataPreviewReducer from '../reducers/dataPreview';
+import integrationReducer from '../reducers/integration';
 import integrationsReducer from '../reducers/integrations';
-import integrationTableDataReducer from '../reducers/integrationTableData';
-import integrationTablesReducer from '../reducers/integrationTables';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
 import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
@@ -29,8 +28,7 @@ export const store = configureStore({
     listWorkflowReducer,
     dataPreviewReducer,
     integrationsReducer,
-    integrationTablesReducer,
-    integrationTableDataReducer,
+    integrationReducer,
     workflowReducer,
   },
 });

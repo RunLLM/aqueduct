@@ -70,6 +70,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorResultReader: s.OperatorResultReader,
 		},
 		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
+		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
+			Database:       s.Database,
+			OperatorReader: s.OperatorReader,
+			WorkflowReader: s.WorkflowReader,
+		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database:                s.Database,
 			ArtifactReader:          s.ArtifactReader,
@@ -91,6 +96,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:           s.Database,
 			NotificationReader: s.NotificationReader,
 			WorkflowReader:     s.WorkflowReader,
+		},
+		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
+			Database:       s.Database,
+			OperatorReader: s.OperatorReader,
+			CustomReader:   s.CustomReader,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:       s.Database,
@@ -152,9 +162,37 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 			WorkflowWatcherWriter: s.WorkflowWatcherWriter,
 		},
+		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
+			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{
+				Database:      s.Database,
+				JobManager:    s.JobManager,
+				GithubManager: s.GithubManager,
+				Vault:         s.Vault,
+				StorageConfig: s.StorageConfig,
+
+				ArtifactReader:    s.ArtifactReader,
+				IntegrationReader: s.IntegrationReader,
+				OperatorReader:    s.OperatorReader,
+				WorkflowReader:    s.WorkflowReader,
+
+				ArtifactWriter:        s.ArtifactWriter,
+				OperatorWriter:        s.OperatorWriter,
+				WorkflowWriter:        s.WorkflowWriter,
+				WorkflowDagWriter:     s.WorkflowDagWriter,
+				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
+				WorkflowWatcherWriter: s.WorkflowWatcherWriter,
+			},
+		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database:   s.Database,
 			UserWriter: s.UserWriter,
+		},
+		routes.TestIntegrationRoute: &handler.TestIntegrationHandler{
+			Database:          s.Database,
+			IntegrationReader: s.IntegrationReader,
+			JobManager:        s.JobManager,
+			Vault:             s.Vault,
+			StorageConfig:     s.StorageConfig,
 		},
 	}
 }

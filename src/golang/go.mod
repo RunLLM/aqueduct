@@ -6,7 +6,7 @@ require (
 	github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0
 	github.com/aws/aws-sdk-go v1.40.33
 	github.com/dropbox/godropbox v0.0.0-20200228041828-52ad444d3502
-	github.com/go-chi/chi v1.5.4
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.0
 	github.com/go-co-op/gocron v1.13.0
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -27,5 +27,6 @@ require (
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.4.0
 )

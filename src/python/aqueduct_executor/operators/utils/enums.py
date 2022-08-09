@@ -13,6 +13,21 @@ class MetaEnum(EnumMeta):
         return item in [v.value for v in cast(Iterable[Enum], cls.__members__.values())]
 
 
+class OperatorType(str, Enum, metaclass=MetaEnum):
+    FUNCTION = "function"
+    METRIC = "metric"
+    CHECK = "check"
+    EXTRACT = "extract"
+    LOAD = "load"
+    PARAM = "param"
+    SYSTEM_METRIC = "system_metric"
+
+
+class CheckSeverityLevel(str, Enum, metaclass=MetaEnum):
+    ERROR = "error"
+    WARNING = "warning"
+
+
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     PENDING = "pending"
@@ -22,7 +37,10 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
 
 class FailureType(Enum, metaclass=MetaEnum):
     SYSTEM = 1
-    USER = 2
+    USER_FATAL = 2
+    # For failures that don't stop execution.
+    # Eg. check operator with WARNING severity fails.
+    USER_NON_FATAL = 3
 
 
 class JobType(str, Enum, metaclass=MetaEnum):
@@ -34,6 +52,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     DISCOVER = "discover"
     PARAM = "param"
     SYSTEM_METRIC = "system_metric"
+    COMPILE_AIRFLOW = "compile_airflow"
 
 
 class InputArtifactType(str, Enum, metaclass=MetaEnum):

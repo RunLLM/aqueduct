@@ -127,6 +127,21 @@ def write_artifacts(
         )
 
 
+def check_passed(content: Any) -> bool:
+    """Given the output of a check operator, return whether the check passed or not."""
+    if isinstance(content, bool) or isinstance(content, np.bool_):
+        return bool(content)
+    elif isinstance(content, pd.Series) and content.dtype == "bool":
+        # We only write True if every boolean in the series is True.
+        series = pd.Series(content)
+        return bool(series.size - series.sum().item() == 0)
+    else:
+        raise Exception(
+            "Expected output type of check to be either a bool or a series of booleans, "
+            "instead got %s" % type(content).__name__
+        )
+
+
 def write_artifact(
     storage: Storage,
     artifact_type: OutputArtifactType,
@@ -160,22 +175,9 @@ def write_artifact(
                 "Expected output type to be numeric, instead got %s" % type(content).__name__
             )
     elif artifact_type == OutputArtifactType.BOOL:
-        if isinstance(content, bool) or isinstance(content, np.bool_):
-            _write_bool_output(
-                storage, output_path, output_metadata_path, bool(content), output_metadata
-            )
-        elif isinstance(content, pd.Series) and content.dtype == "bool":
-            # We only write True if every boolean in the series is True.
-            series = pd.Series(content)
-            all_true = series.size - series.sum().item() == 0
-            _write_bool_output(
-                storage, output_path, output_metadata_path, all_true, output_metadata
-            )
-        else:
-            raise Exception(
-                "Expected output type to either a bool or a series of booleans, "
-                "instead got %s" % type(content).__name__
-            )
+        _write_bool_output(
+            storage, output_path, output_metadata_path, check_passed(content), output_metadata
+        )
 
     elif artifact_type == OutputArtifactType.JSON:
         if not isinstance(content, str):
@@ -263,3 +265,10 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]) -> No
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
+
+
+def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:
+    """
+    Writes the provided Airflow DAG file to storage.
+    """
+    storage.put(path, dag_file)
