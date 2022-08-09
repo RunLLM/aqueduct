@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -52,23 +53,21 @@ func ScheduleWorkflow(
 		return nil, err
 	}
 
-	operatorIDs := make([]uuid.UUID, 0, len(dag.Operators))
-	for id := range dag.Operators {
-		operatorIDs = append(operatorIDs, id)
-	}
-
 	artifactIDs := make([]uuid.UUID, 0, len(dag.Artifacts))
 	for id := range dag.Artifacts {
 		artifactIDs = append(artifactIDs, id)
 	}
 
-	// Generate storage path prefixes for operator metadata, artifact content,
-	// and artifact metadata. At runtime, the Airflow DAG run ID is appended to
+	// Generate storage path prefixes for artifact content and artifact metadata.
+	// At runtime, the Airflow DAG run ID is appended to
 	// the relevant path prefix to form a unique storage path without requiring
 	// coordination between Airflow and the Aqueduct server.
-	operatorToMetadataPathPrefix := generateStoragePathPrefixes(operatorIDs)
 	artifactToContentPathPrefix := generateStoragePathPrefixes(artifactIDs)
 	artifactToMetadataPathPrefix := generateStoragePathPrefixes(artifactIDs)
+
+	// Storage path prefixes for operator metadata are generated below and stored
+	// in this map.
+	operatorToMetadataPathPrefix := make(map[uuid.UUID]string, len(dag.Operators))
 
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
@@ -164,6 +163,7 @@ func ScheduleWorkflow(
 			return nil, err
 		}
 
+		operatorToMetadataPathPrefix[airflowOperator.ID()] = airflowOperator.MetadataPath()
 		operatorToTask[airflowOperator.ID()] = taskId
 		taskToJobSpec[taskId] = jobSpec
 	}
@@ -236,6 +236,8 @@ func ScheduleWorkflow(
 	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix = artifactToMetadataPathPrefix
+
+	logrus.Warnf("Writing op to metadata path prefixes: %v", newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix)
 
 	_, err = workflowDagWriter.UpdateWorkflowDag(
 		ctx,

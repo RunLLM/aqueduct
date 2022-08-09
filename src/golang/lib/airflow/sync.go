@@ -123,6 +123,9 @@ func syncWorkflowDag(
 		return err
 	}
 
+	log.Warnf("Got %v Airflow DagRuns", len(dagRuns))
+	dagRuns = dagRuns[:1]
+
 	txn, err := db.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -130,6 +133,9 @@ func syncWorkflowDag(
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	for _, dagRun := range dagRuns {
+		log.Warnf("Syncing Airflow DAG Run %v", dagRun.GetDagRunId())
+		log.Warnf("Got workflow state: %v", *dagRun.State)
+
 		if *dagRun.State != airflow.DAGSTATE_SUCCESS &&
 			*dagRun.State != airflow.DAGSTATE_FAILED {
 			// DagRun is in either DAGSTATE_QUEUED or DAGSTATE_RUNNING,
@@ -195,6 +201,8 @@ func syncWorkflowDagResult(
 	if err != nil {
 		return err
 	}
+
+	log.Warn("Created workflow dag result in DB")
 
 	for _, op := range dbDag.Operators {
 		if err := createOperatorResult(

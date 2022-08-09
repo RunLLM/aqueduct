@@ -157,7 +157,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,
-		h.Database,
+		txn,
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
