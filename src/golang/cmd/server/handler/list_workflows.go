@@ -19,10 +19,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflows
@@ -87,41 +87,12 @@ func (*ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error) 
 func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*aq_context.AqContext)
 
-	// Sync workflows running on self-orchestrated engines
-	airflowWorkflowDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
-		ctx,
-		args.OrganizationId,
-		shared.AirflowEngineType,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
-	}
-
-	airflowWorkflowDagUUIDs := make([]uuid.UUID, 0, len(airflowWorkflowDagIds))
-	for _, workflowDagId := range airflowWorkflowDagIds {
-		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
-	}
-
-	if err := airflow.SyncWorkflowDags(
-		ctx,
-		airflowWorkflowDagUUIDs,
-		h.WorkflowReader,
-		h.WorkflowDagReader,
-		h.OperatorReader,
-		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
-		h.WorkflowDagResultReader,
-		h.WorkflowDagResultWriter,
-		h.OperatorResultWriter,
-		h.ArtifactResultWriter,
-		h.NotificationWriter,
-		h.UserReader,
-		h.Vault,
-		h.Database,
-	); err != nil {
-		log.Errorf("Unable to sync Airflow workflows: %v", err)
-	}
+	// Asynchronously sync self-orchestrated workflow runs
+	go func() {
+		if err := syncSelfOrchestratedWorkflows(ctx, h, args.OrganizationId); err != nil {
+			logging.LogAsyncEvent(ctx, logging.ServerComponent, "Sync Workflows", err)
+		}
+	}()
 
 	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrganizationId, h.Database)
 	if err != nil {
@@ -164,4 +135,46 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	}
 
 	return workflows, http.StatusOK, nil
+}
+
+// syncSelfOrchestratedWorkflows syncs any workflow DAG results for any workflows running on a
+// self-orchestrated engine for the user's organization.
+func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, organizationID string) error {
+	// Sync workflows running on self-orchestrated engines
+	airflowWorkflowDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+		ctx,
+		organizationID,
+		shared.AirflowEngineType,
+		h.Database,
+	)
+	if err != nil {
+		return err
+	}
+
+	airflowWorkflowDagUUIDs := make([]uuid.UUID, 0, len(airflowWorkflowDagIds))
+	for _, workflowDagId := range airflowWorkflowDagIds {
+		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
+	}
+
+	if err := airflow.SyncWorkflowDags(
+		ctx,
+		airflowWorkflowDagUUIDs,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.WorkflowDagResultReader,
+		h.WorkflowDagResultWriter,
+		h.OperatorResultWriter,
+		h.ArtifactResultWriter,
+		h.NotificationWriter,
+		h.UserReader,
+		h.Vault,
+		h.Database,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
