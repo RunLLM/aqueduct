@@ -20,6 +20,45 @@ func newSqliteReader() Reader {
 	return &sqliteReaderImpl{standardReaderImpl{}}
 }
 
+func (r *sqliteReaderImpl) GetWorkflowLastRunByEngine(
+	ctx context.Context,
+	engine shared.EngineType,
+	db database.Database,
+) ([]WorkflowLastRunResponse, error) {
+	query := `
+		SELECT 
+			workflow.id AS workflow_id, 
+			workflow.schedule, 
+			workflow_dag_result.created_at AS last_run_at 
+		FROM 
+			workflow, 
+			workflow_dag, 
+			workflow_dag_result, 
+			(
+				SELECT 
+					workflow.id, 
+					MAX(workflow_dag_result.created_at) AS created_at 
+				FROM 
+					workflow, 
+					workflow_dag, 
+					workflow_dag_result 
+				WHERE workflow.id = workflow_dag.workflow_id 
+				AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+				GROUP BY workflow.id
+			) AS workflow_latest_run 
+		WHERE workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		AND workflow.id = workflow_latest_run.id 
+		AND workflow_dag_result.created_at = workflow_latest_run.created_at
+		AND json_extract(workflow_dag.engine_config, '$.type') = $1;`
+
+	var response []WorkflowLastRunResponse
+	args := []interface{}{engine}
+
+	err := db.Query(ctx, &response, query, args...)
+	return response, err
+}
+
 func (r *sqliteReaderImpl) GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
 	ctx context.Context,
 	organizationId string,

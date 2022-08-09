@@ -101,8 +101,9 @@ type Reader interface {
 		artifactIds, workflowDagResultIds []uuid.UUID,
 		db database.Database,
 	) ([]ArtifactOperatorResponse, error)
-	GetWorkflowLastRun(
+	GetWorkflowLastRunByEngine(
 		ctx context.Context,
+		engine shared.EngineType,
 		db database.Database,
 	) ([]WorkflowLastRunResponse, error)
 	GetWorkflowIdsFromOperatorIds(
