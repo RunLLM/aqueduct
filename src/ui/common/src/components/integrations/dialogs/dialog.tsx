@@ -168,8 +168,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const [successMessage, setSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  const namePrefix = formatService(service) + '/';
-  const [name, setName] = useState(namePrefix);
+  const [name, setName] = useState('');
 
   const handleSuccessToastClose = () => {
     setShowSuccessToast(false);
@@ -177,8 +176,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
   useEffect(() => {
     setDisableConnect(
-      service !== 'Aqueduct Demo' &&
-        (!isConfigComplete(config) || name === '' || name === namePrefix)
+      service !== 'Aqueduct Demo' && (!isConfigComplete(config) || name === '')
     );
   }, [config, name]);
 
@@ -261,10 +259,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       required={true}
       label="Name*"
       description="Provide a unique name to refer to this integration."
-      placeholder={namePrefix}
+      placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
-        const input = event.target.value;
-        event.target.value = namePrefix + input.substr(namePrefix.length);
         setName(event.target.value);
       }}
       value={name}
