@@ -133,8 +133,6 @@ func syncWorkflowDag(
 		dagCreatedAtTimes = append(dagCreatedAtTimes, workflowDagResult.CreatedAt)
 	}
 
-	log.Warnf("Existing Dates: %v", dagCreatedAtTimes)
-
 	for _, dagRun := range dagRuns {
 		// TODO: What if this dagRun corresponds to a previous WorkflowDag?
 
@@ -143,14 +141,8 @@ func syncWorkflowDag(
 		// the DagRun start date is measured in nanoseconds.
 		if ok := timeInSlice(dagRun.GetStartDate(), dagCreatedAtTimes); ok {
 			// A DagRun with the same start time has already been registered, so skip this
-			log.Warnf("Skipping %v since already synced", dagRun.GetDagRunId())
 			continue
-		} else {
-			log.Warnf("Did not find start date of %v", dagRun.GetStartDate())
 		}
-
-		log.Warnf("Syncing Airflow DAG Run %v", dagRun.GetDagRunId())
-		log.Warnf("Got workflow state: %v", *dagRun.State)
 
 		if *dagRun.State != airflow.DAGSTATE_SUCCESS &&
 			*dagRun.State != airflow.DAGSTATE_FAILED {
@@ -215,8 +207,6 @@ func syncWorkflowDagResult(
 	if err != nil {
 		return err
 	}
-
-	log.Warn("Created workflow dag result in DB")
 
 	// Get Airflow task states
 	taskToState, err := cli.getTaskStates(run.GetDagId(), run.GetDagRunId())

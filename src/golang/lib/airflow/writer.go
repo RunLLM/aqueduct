@@ -18,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 func createWorkflowDagResult(
@@ -70,8 +69,6 @@ func createOperatorResult(
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 ) error {
-	logrus.Warnf("Creating Result for Operator ID: %v", dbOp.Id)
-
 	// Read Operator metadata to determine ExecutionState
 	metadataPathPrefix, ok := dbDag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[dbOp.Id]
 	if !ok {
@@ -79,9 +76,8 @@ func createOperatorResult(
 	}
 	metadataPath := getOperatorMetadataPath(metadataPathPrefix, dagRunId)
 
+	// Use combination of the Airflow Task State and operator metadata to determine execution state
 	execState := getOperatorExecState(ctx, execStatus, &dbDag.StorageConfig, metadataPath)
-
-	logrus.Warnf("Using op exec state: %v", *execState)
 
 	// Insert OperatorResult
 	_, err := operatorResultWriter.InsertOperatorResult(
@@ -131,8 +127,6 @@ func createArtifactResult(
 	}
 	metadataPath := getArtifactMetadataPath(metadataPathPrefix, dagRunId)
 
-	logrus.Warnf("Trying to read artifact metadata for: %v", artifactId)
-
 	var metadata artifact_result.Metadata
 	if utils.ObjectExistsInStorage(ctx, &dbDag.StorageConfig, metadataPath) {
 		if err := utils.ReadFromStorage(
@@ -170,7 +164,6 @@ func getOperatorExecState(
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 ) *shared.ExecutionState {
-	logrus.Warnf("Trying to read operator metadata from: %v", metadataPath)
 	if execStatus == shared.PendingExecutionStatus {
 		return &shared.ExecutionState{
 			Status: shared.PendingExecutionStatus,
