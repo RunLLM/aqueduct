@@ -65,7 +65,7 @@ jobs:
       - name: Run Sentiment Notebook on previous release
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
 
       - name: Take screenshot of workflow
         working-directory: regression_tests
