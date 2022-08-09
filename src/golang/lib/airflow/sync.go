@@ -174,14 +174,10 @@ func syncWorkflowDag(
 			artifactResultWriter,
 			notificationWriter,
 			userReader,
-			txn,
+			db,
 		); err != nil {
 			return err
 		}
-	}
-
-	if err := txn.Commit(ctx); err != nil {
-		return err
 	}
 
 	return nil
@@ -261,6 +257,10 @@ func syncWorkflowDagResult(
 		); err != nil {
 			return err
 		}
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return err
 	}
 
 	return nil
