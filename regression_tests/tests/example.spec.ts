@@ -8,5 +8,5 @@ test('Check Workflow page', async ({ page }) => {
   await page.locator("text=Workflows").first().click();
   await page.locator("text=Demo Customer Sentiment").click();
   await page.locator("text=Notifications").click();
-  await page.screenshot({path: process.env.IMG_PATH });
+  await page.screenshot({path: './screenshots/old.png' });
 });
