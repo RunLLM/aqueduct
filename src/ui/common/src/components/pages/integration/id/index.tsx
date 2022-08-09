@@ -44,14 +44,9 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showDeleteIntegrationToast, setShowDeleteIntegrationToast] =
     useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
-  const [showDeleteSuccessToast, setShowDeleteSuccessToast] = useState(false);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
-  };
-
-  const handleCloseDeleteSuccessToast = () => {
-    setShowDeleteSuccessToast(false);
   };
 
   const handleCloseTestConnectToast = () => {
@@ -106,20 +101,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       setShowConnectSuccessToast(true);
     }
   }, [testConnectStatus]);
-
+  console.log(showDeleteIntegrationToast);
   useEffect(() => {
     if (!isLoading(deleteIntegrationStatus)) {
       setShowDeleteIntegrationToast(false);
     }
 
     if (isSucceeded(deleteIntegrationStatus)) {
-      setShowDeleteSuccessToast(true);
-      // Reload integrations because deleted
-      dispatch(
-        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
-      );
-      // Integration no longer exists. Navigate back to integration list after a short pause.
-      setTimeout(() => navigate('/integrations'), 2000);
+      navigate('/integrations', 
+      { state: { 
+        deleteIntegrationStatus: deleteIntegrationStatus, 
+        deleteIntegrationName: selectedIntegration.name 
+        } 
+      });
     }
   }, [deleteIntegrationStatus]);
 
@@ -267,21 +261,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           sx={{ width: '100%' }}
         >
           {`Successfully connected to ${selectedIntegration.name}`}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showDeleteSuccessToast}
-        onClose={handleCloseDeleteSuccessToast}
-        key={'workflowheader-delete-success-error-snackbar'}
-        autoHideDuration={6000}
-      >
-        <Alert
-          onClose={handleCloseDeleteSuccessToast}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {`Successfully deleted ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
     </Layout>

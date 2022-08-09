@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Alert, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import React, { useEffect } from 'react';
@@ -9,20 +9,42 @@ import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 import { LayoutProps } from '../types';
+import {useLocation} from 'react-router-dom';
+import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 
 type Props = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
 
+type integrationsNavigateState = {
+  deleteIntegrationStatus: LoadingStatus,
+  deleteIntegrationName: string
+}
+
 const IntegrationsPage: React.FC<Props> = ({
   user,
   Layout = DefaultLayout,
 }) => {
+  const location = useLocation();
+
   useEffect(() => {
     document.title = 'Integrations | Aqueduct';
   }, []);
 
+  let deleteIntegrationName = "";
+  let openDeleteIntegrationSuccessSnackbar = false;
+  let forceLoad = false;
+  
+  if (location.state && location.state !== undefined) {
+    const navState = location.state as integrationsNavigateState;
+    deleteIntegrationName = navState.deleteIntegrationName;
+    openDeleteIntegrationSuccessSnackbar = navState.deleteIntegrationStatus.loading === LoadingStatusEnum.Succeeded;
+    // Reload integrations because deleted
+    forceLoad = true;
+  }
+
+  
   return (
     <Layout user={user}>
       <Box>
@@ -62,9 +84,22 @@ const IntegrationsPage: React.FC<Props> = ({
 
         <Box sx={{ my: 3, ml: 1 }}>
           <Typography variant="h4">Connected Integrations</Typography>
-          <ConnectedIntegrations user={user} />
+          <ConnectedIntegrations user={user} forceLoad={forceLoad}/>
         </Box>
       </Box>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={openDeleteIntegrationSuccessSnackbar}
+        key={'workflowheader-delete-success-error-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {`Successfully deleted ${deleteIntegrationName}`}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

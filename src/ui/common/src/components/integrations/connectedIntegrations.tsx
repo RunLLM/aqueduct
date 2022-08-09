@@ -13,15 +13,16 @@ import { Card } from '../layouts/card';
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;
+  forceLoad: boolean;
 };
 
 export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
-  user,
+  user, forceLoad,
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad }));
   }, []);
 
   const integrations = useSelector(
