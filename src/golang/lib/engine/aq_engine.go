@@ -188,9 +188,22 @@ func (eng *aqEngine) ExecuteWorkflow(
 	// TODO: Generalize JobManager type from user input.
 	// engineJobManager depends on the type of engine used.
 	engineJobManager, err := job.NewJobManager(
-		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		// 	&job.ProcessConfig{
+		// 		BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+		// 		OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		// 	},
+		&job.K8sConfig{
+			KubeConfigPath:                   "~/.kube/config",
+			FunctionDockerImage:              "spiralco/function-executor",
+			ParameterDockerImage:             "spiralco/param-executor",
+			PostgresConnectorDockerImage:     "spiralco/postgres-connector",
+			SnowflakeConnectorDockerImage:    "spiralco/snowflake-connector",
+			MySqlConnectorDockerImage:        "spiralco/mysql-connector",
+			SqlServerConnectorDockerImage:    "spiralco/sqlserver-connector",
+			BigQueryConnectorDockerImage:     "spiralco/bigquery-connector",
+			GoogleSheetsConnectorDockerImage: "spiralco/googlesheets-connector",
+			SalesforceConnectorDockerImage:   "spiralco/salesforce-connector",
+			S3ConnectorDockerImage:           "spiralco/s3-connector",
 		},
 	)
 	if err != nil {
@@ -689,7 +702,7 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
-	jobManager job.JobManager,
+	engineJobManager job.JobManager,
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
@@ -727,7 +740,7 @@ func (eng *aqEngine) execute(
 
 			if execState.Status == shared.PendingExecutionStatus {
 				spec := op.JobSpec()
-				err = jobManager.Launch(ctx, spec.JobName(), spec)
+				err = engineJobManager.Launch(ctx, spec.JobName(), spec)
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
