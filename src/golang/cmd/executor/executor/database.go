@@ -129,7 +129,7 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	worklowWatcherWriter, err := workflow_watcher.NewWriter(dbConf)
+	workflowWatcherWriter, err := workflow_watcher.NewWriter(dbConf)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		WorkflowDagWriter:       workflowDagWriter,
 		WorkflowDagResultWriter: workflowDagResultWriter,
 		WorkflowDagEdgeWriter:   workflowDagEdgeWriter,
-		WorkflowWatcherWriter:   worklowWatcherWriter,
+		WorkflowWatcherWriter:   workflowWatcherWriter,
 		OperatorWriter:          operatorWriter,
 		OperatorResultWriter:    operatorResultWriter,
 		ArtifactWriter:          artifactWriter,

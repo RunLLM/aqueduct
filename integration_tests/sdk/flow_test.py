@@ -228,14 +228,12 @@ def test_multiple_flows_with_same_schedule(client):
             artifacts=[output_artifact],
             schedule="* * * * *",
         )
-        print("flow_1 id: ", str(flow_1.id()))
 
         flow_2 = client.publish_flow(
             name=generate_new_flow_name(),
             artifacts=[output_artifact_2],
             schedule="* * * * *",
         )
-        print("flow_2 id: ", str(flow_2.id()))
 
         wait_for_flow_runs(client, flow_1.id(), 2, True)
         wait_for_flow_runs(client, flow_2.id(), 2, True)
