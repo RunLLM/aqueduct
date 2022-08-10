@@ -37,8 +37,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
-github.com/allegro/bigcache/v3 v3.0.2 h1:AKZCw+5eAaVyNTBmI2fgyPVJhHkdWder3O9IrprcQfI=
-github.com/allegro/bigcache/v3 v3.0.2/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
 github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0 h1:/fOxIKhBcDI8a8xb+KrqYwWRNyB4C/dKD9G0uxxQTFY=
 github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0/go.mod h1:x2yDpHvQTpMyFzvwqnroMtzVgG9qFp/eJWA6kw5KTMM=
 github.com/aws/aws-sdk-go v1.40.33 h1:I9CCcb+jCC73//P+5mqeHzIMwTzJ6MDEZm8b/XoSg/w=

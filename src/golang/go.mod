@@ -3,7 +3,6 @@ module github.com/aqueducthq/aqueduct
 go 1.16
 
 require (
-	github.com/allegro/bigcache/v3 v3.0.2
 	github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0
 	github.com/aws/aws-sdk-go v1.40.33
 	github.com/dropbox/godropbox v0.0.0-20200228041828-52ad444d3502
