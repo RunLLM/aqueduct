@@ -58,6 +58,10 @@ func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
+func (bo *baseOperator) MetadataPath() string {
+	return bo.metadataPath
+}
+
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {

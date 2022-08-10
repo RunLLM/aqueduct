@@ -21,6 +21,7 @@ type Operator interface {
 	Name() string
 	ID() uuid.UUID
 	JobSpec() job.Spec
+	MetadataPath() string
 
 	// GetExecState performs a non-blocking fetch for the execution state of this operator.
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)

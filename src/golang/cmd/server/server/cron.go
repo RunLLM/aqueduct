@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -43,12 +44,16 @@ func (s *AqServer) triggerMissedCronJobs(
 }
 
 // RunMissedCronJobs first gets the latest workflow run timestamp of all deployed workflows that are
-// on a schedule and are not paused. For each workflow, it compares the latest workflow run's timestamp with the
-// expected trigger timestamp calculated based on the cron schedule, and manually triggers the workflow
-// if the cron triggering did not happen.
+// running on Aqueduct, on a schedule, and are not paused. For each workflow, it compares the latest workflow
+// run's timestamp with the expected trigger timestamp calculated based on the cron schedule, and manually
+// triggers the workflow if the cron triggering did not happen.
 func (s *AqServer) RunMissedCronJobs() error {
 	ctx := context.Background()
-	workflowLastRunResponse, err := s.CustomReader.GetWorkflowLastRun(ctx, s.Database)
+	workflowLastRunResponse, err := s.CustomReader.GetWorkflowLastRunByEngine(
+		ctx,
+		shared.AqueductEngineType,
+		s.Database,
+	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get workflow last run data from database.")
 	}
