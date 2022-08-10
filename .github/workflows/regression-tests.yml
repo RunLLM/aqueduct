@@ -98,7 +98,7 @@ jobs:
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
 
-      - name: Take screenshot of workflow
+      - name: Take screenshot of new workflow
         working-directory: regression_tests
         timeout-minutes: 5
         run: imgpath=screenshots/new.png npx playwright test
