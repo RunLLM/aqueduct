@@ -96,7 +96,7 @@ jobs:
       #   run: git checkout $PREV_COMMIT
 
       - name: Update aqueduct with current version release
-        run: python3 scripts/install_local.py
+        run: python3 scripts/install_local.py --sdk --executor
 
       - name: Start the server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
