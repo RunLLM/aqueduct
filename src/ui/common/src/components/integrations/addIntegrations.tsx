@@ -25,9 +25,9 @@ const AddIntegrations: React.FC<Props> = ({
   category,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState<Service>(null);
   const handleSuccessToastClose = () => {
-    setShowSuccessToast(false);
+    setShowSuccessToast(null);
   };
 
   return (
@@ -97,7 +97,7 @@ const AddIntegrations: React.FC<Props> = ({
                       user={user}
                       service={service}
                       onSuccess={() => {
-                        setShowSuccessToast(true);
+                        setShowSuccessToast(service);
                       }}
                       onCloseDialog={() => {
                         setShowDialog(false);
@@ -108,7 +108,7 @@ const AddIntegrations: React.FC<Props> = ({
                 </Box>
                 <Snackbar
                   anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                  open={showSuccessToast}
+                  open={showSuccessToast === service}
                   onClose={handleSuccessToastClose}
                   key={'integrations-dialog-success-snackbar'}
                   autoHideDuration={6000}

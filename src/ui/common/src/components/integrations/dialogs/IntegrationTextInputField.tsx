@@ -5,6 +5,7 @@ import React, { ChangeEvent } from 'react';
 type IntegrationTextFieldProps = {
   label: string;
   description: string;
+  warning?: string;
   spellCheck: boolean;
   required: boolean;
   placeholder?: string;
@@ -14,11 +15,13 @@ type IntegrationTextFieldProps = {
   value: string;
   type?: string;
   disabled?: boolean;
+  disableReason?: string;
 };
 
 export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   label,
   description,
+  warning,
   spellCheck,
   required,
   placeholder,
@@ -26,6 +29,7 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   value,
   type,
   disabled,
+  disableReason,
 }) => {
   return (
     <Box sx={{ mt: 2 }}>
@@ -36,6 +40,11 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
         <Typography variant="body2" sx={{ color: 'darkGray' }}>
           {description}
         </Typography>
+        {warning && (
+          <Typography variant="body2" sx={{ color: 'orange.600' }}>
+            {warning}
+          </Typography>
+        )}
       </Box>
       <Box>
         <TextField
@@ -48,6 +57,7 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
           fullWidth={true}
           size={'small'}
           disabled={disabled}
+          helperText={disabled ? disableReason : undefined}
         />
       </Box>
     </Box>

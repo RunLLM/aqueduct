@@ -74,6 +74,12 @@ const IntegrationDialog: React.FC<Props> = ({
     (state: RootState) => state.integrationReducer.editStatus
   );
 
+  const operators = useSelector(
+    (state: RootState) => state.integrationReducer.operators.operators
+  );
+
+  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
+
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
     !editMode &&
@@ -122,6 +128,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <SnowflakeDialog
           onUpdateField={setConfigField}
           value={config as SnowflakeConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -188,6 +195,13 @@ const IntegrationDialog: React.FC<Props> = ({
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
+        {editMode && numWorkflows > 0 && (
+          <Alert sx={{ mb: 2 }} severity="info">
+            {`The update will take effect for all ${numWorkflows} ${
+              numWorkflows === 1 ? 'workflow' : 'workflows'
+            } using this integration.`}
+          </Alert>
+        )}
         {nameInput}
         {serviceDialog}
 

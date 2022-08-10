@@ -3,6 +3,7 @@ import { Stringifiable } from 'query-string';
 import React from 'react';
 
 import { SnowflakeConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: SnowflakeConfig = {
@@ -16,9 +17,14 @@ const Placeholders: SnowflakeConfig = {
 type Props = {
   onUpdateField: (field: keyof SnowflakeConfig, value: Stringifiable) => void;
   value?: SnowflakeConfig;
+  editMode: boolean;
 };
 
-export const SnowflakeDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const SnowflakeDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -31,6 +37,9 @@ export const SnowflakeDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           onUpdateField('account_identifier', event.target.value)
         }
         value={value?.account_identifier ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disabled={editMode}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -41,6 +50,9 @@ export const SnowflakeDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.warehouse}
         onChange={(event) => onUpdateField('warehouse', event.target.value)}
         value={value?.warehouse ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disabled={editMode}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -51,6 +63,9 @@ export const SnowflakeDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
         value={value?.database ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disabled={editMode}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
