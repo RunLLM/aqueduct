@@ -10,25 +10,20 @@ import Link from '@mui/material/Link';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
-import { theme } from '../../styles/theme/theme';
 
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 
-const sharedCardStyling = {
-  display: 'flex',
-  borderWidth: '2px',
-  borderColor: '#002F5E',
-  borderRadius: '5px',
-  borderStyle: 'solid',
-  width: '100%',
-};
-
 const InfoCard = styled(Box)({
   ['&.MuiBox-root']: {
-    ...sharedCardStyling,
-    marginTop: '8px',
     display: 'flex',
+    borderWidth: '2px',
+    borderColor: '#002F5E',
+    borderRadius: '5px',
+    borderStyle: 'solid',
+    width: '100%',
+    marginTop: '8px',
     alignItems: 'center',
     padding: '16px 8px 16px 8px',
     '&:hover': {
@@ -50,23 +45,29 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
   }
 
   const waveEmoji = () => {
-    const emojiElement = document.getElementById("greet-emoji");
+    const emojiElement = document.getElementById('greet-emoji');
     emojiElement.style.transitionDuration = '.4s';
     emojiElement.style.transformOrigin = 'right bottom';
- 
+
     const delayIncrement = 400;
     let delay = 100;
-    for(let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {
       if (i % 2 === 0) {
-        setTimeout(() => emojiElement.style.transform = 'rotate(30deg)', delay)
+        setTimeout(
+          () => (emojiElement.style.transform = 'rotate(30deg)'),
+          delay
+        );
       } else {
-        setTimeout(() => emojiElement.style.transform = 'rotate(-30deg)', delay)
+        setTimeout(
+          () => (emojiElement.style.transform = 'rotate(-30deg)'),
+          delay
+        );
       }
 
       delay += delayIncrement;
     }
 
-    setTimeout(() => emojiElement.style.transform = 'rotate(0deg)', delay)
+    setTimeout(() => (emojiElement.style.transform = 'rotate(0deg)'), delay);
   };
 
   useEffect(waveEmoji, []);
@@ -84,7 +85,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
     >
       <img
         src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-two-tone/1x/aqueduct-logo-two-tone-1x.png"
-        width='300px'
+        width="300px"
       />
 
       <Box
@@ -100,7 +101,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
         }}
       >
         {user && (
-          <InfoCard sx={{ mb: '32px' }} onMouseOver={() => waveEmoji()}>
+          <InfoCard sx={{ mb: '32px' }} onMouseEnter={() => waveEmoji()}>
             <Box
               sx={{
                 display: 'flex',
@@ -109,7 +110,13 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
                 alignItems: 'center',
               }}
             >
-              <Typography sx={{ width: 'min-content'}} variant="h4" id="greet-emoji">👋</Typography>
+              <Typography
+                sx={{ width: 'min-content' }}
+                variant="h4"
+                id="greet-emoji"
+              >
+                👋
+              </Typography>
               <Typography variant="h4">{greeting}</Typography>
 
               <Typography variant="h6">
@@ -148,7 +155,9 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
                   <li>
                     <Typography variant="body1">
                       Go to the{' '}
-                      <Link href={`${getPathPrefix()}/workflows`}>workflows</Link>{' '}
+                      <Link href={`${getPathPrefix()}/workflows`}>
+                        workflows
+                      </Link>{' '}
                       page to see a visualization of the workflow you just
                       created.
                     </Typography>
