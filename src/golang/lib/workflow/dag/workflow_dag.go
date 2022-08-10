@@ -93,6 +93,7 @@ func computeLogicalArtifactIDs(
 	}
 
 	processedArtifactIds := make(map[uuid.UUID]bool, len(dbArtifacts))
+
 	for len(q) > 0 {
 		// Pop the first operator off of the queue.
 		currOp := dbOperators[q[0]]
@@ -132,8 +133,10 @@ func computeLogicalArtifactIDs(
 
 		// Find the next downstream operators. We must have already visited all the operator's inputs.
 		for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
+			nextOp := dbOperators[nextOpID]
+
 			depsComputed := true
-			for _, inputArtifactID := range dbOperators[nextOpID].Inputs {
+			for _, inputArtifactID := range nextOp.Inputs {
 				if _, ok := processedArtifactIds[inputArtifactID]; !ok {
 					depsComputed = false
 					break
@@ -141,7 +144,7 @@ func computeLogicalArtifactIDs(
 			}
 
 			if depsComputed {
-				q = append(q, opIDsByInputArtifact[outputArtifactID]...)
+				q = append(q, nextOpID)
 			}
 		}
 	}
