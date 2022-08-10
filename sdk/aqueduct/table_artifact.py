@@ -630,10 +630,10 @@ class TableArtifact(Artifact):
             }
         )
 
-        return f'''
+        return f"""
 {format_header_for_print(f"'{input_operator.name}' Table Artifact")}
 {json.dumps(readable_dict, sort_keys=False, indent=4)}
-        '''
+        """
 
     def describe(self) -> None:
         """Prints the stringified description of the table artifact to stdout."""
