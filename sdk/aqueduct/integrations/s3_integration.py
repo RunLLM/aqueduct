@@ -17,7 +17,6 @@ from aqueduct.operators import (
 from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 from aqueduct.preview import preview_artifact
-from aqueduct.artifact_utils import to_typed_artifact
 
 
 class S3Integration(Integration):
@@ -122,8 +121,7 @@ class S3Integration(Integration):
         )
 
         # Issue preview request since this is an eager execution
-        artifact_response = preview_artifact(self._dag, output_artifact_id)
-        artifact = to_typed_artifact(self._dag, output_artifact_id, artifact_response)
+        artifact = preview_artifact(self._dag, output_artifact_id)
         self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
         return artifact

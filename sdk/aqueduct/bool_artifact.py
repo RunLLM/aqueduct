@@ -12,7 +12,7 @@ from aqueduct.utils import format_header_for_print, get_description_for_check
 from aqueduct import api_client
 
 
-class CheckArtifact(Artifact):
+class BoolArtifact(Artifact):
     """This class represents a check within the flow's DAG.
 
     Any `@check`-annotated python function that returns a boolean will

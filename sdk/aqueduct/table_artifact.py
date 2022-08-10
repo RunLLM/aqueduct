@@ -25,6 +25,7 @@ from aqueduct.enums import (
 from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.generic_artifact import Artifact
 from aqueduct.numeric_artifact import NumericArtifact
+from aqueduct.bool_artifact import BoolArtifact
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -58,9 +59,8 @@ from ruamel import yaml
 import aqueduct
 from aqueduct import api_client
 from aqueduct.preview import preview_artifact
-from aqueduct.artifact_utils import to_typed_artifact
 
-OutputArtifact = Union[NumericArtifact, CheckArtifact]
+OutputArtifact = Union[NumericArtifact, BoolArtifact]
 
 
 class TableArtifact(Artifact):
@@ -110,10 +110,10 @@ class TableArtifact(Artifact):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         if parameters:
-            artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
-            if artifact_response.artifact_type != ArtifactType.TABULAR:
-                raise Exception("Error: the computed result is expected to of type tabular, found %s" % artifact_response.artifact_type)
-            return artifact_response.get_deserialized_content()
+            artifact = preview_artifact(self._dag, self._artifact_id, parameters)
+            if artifact.type() != ArtifactType.TABULAR:
+                raise Exception("Error: the computed result is expected to of type tabular, found %s" % artifact.type())
+            return artifact._content()
         else:
             return self._content
 
@@ -547,17 +547,8 @@ class TableArtifact(Artifact):
         op_name: str,
         op_description: str,
     ) -> OutputArtifact:
-        output_artifact: OutputArtifact
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-        if op_spec.metric or op_spec.system_metric:
-            artifact_type = ArtifactType.NUMERIC
-            output_artifact = NumericArtifact(dag=self._dag, artifact_id=output_artifact_id)
-        elif op_spec.check:
-            artifact_type = ArtifactType.BOOL
-            output_artifact = CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
-        else:
-            raise AqueductError("Operator spec not supported.")
 
         apply_deltas_to_dag(
             self._dag,
@@ -583,9 +574,8 @@ class TableArtifact(Artifact):
         )
 
         # Issue preview request since this is an eager execution
-        artifact_response = preview_artifact(self._dag, output_artifact_id)
-        artifact = to_typed_artifact(self._dag, output_artifact_id, artifact_response)
-        dag.must_get_artifact(output_artifact_id).type = artifact.type()
+        artifact = preview_artifact(self._dag, output_artifact_id)
+        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
         return artifact
 

@@ -22,7 +22,6 @@ from aqueduct.utils import (
 from pandas import DataFrame
 from aqueduct.generic_artifact import Artifact as GenericArtifact
 from aqueduct.preview import preview_artifact
-from aqueduct.artifact_utils import to_typed_artifact
 
 from aqueduct import dag as dag_module
 
@@ -116,8 +115,7 @@ def wrap_spec(
     )
 
     # Issue preview request since this is an eager execution
-    artifact_response = preview_artifact(dag, output_artifact_id)
-    artifact = to_typed_artifact(dag, output_artifact_id, artifact_response)
+    artifact = preview_artifact(dag, output_artifact_id)
     dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
     return artifact
