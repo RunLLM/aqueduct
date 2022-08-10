@@ -1,4 +1,3 @@
-import base64
 import uuid
 from typing import Any, Dict, Optional
 
@@ -36,7 +35,7 @@ def preview_artifact(dag: DAG, artifact_id: uuid.UUID, parameters: Optional[Dict
         raise Exception("Unsupported serialization type %s." % serialization_type)
 
     artifact_type = artifact_response.artifact_type
-    content = deserialization_function_mapping[serialization_type](base64.b64decode(artifact_response.content))
+    content = deserialization_function_mapping[serialization_type](artifact_response.content)
     
     if artifact_type == ArtifactType.TABULAR:
         return aqueduct.table_artifact.TableArtifact(dag, artifact_id, content)

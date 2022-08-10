@@ -1,4 +1,3 @@
-import base64
 import textwrap
 import uuid
 from typing import Dict, List, Optional, Any
@@ -58,10 +57,6 @@ class ArtifactResult(BaseModel):
     content: bytes
     artifact_type: ArtifactType
 
-    def get_deserialized_content(self) -> Any:
-        return deserialization_function_mapping[self.serialization_type](base64.b64decode(self.content))
-
-
 
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().
@@ -74,7 +69,7 @@ class PreviewResponse(BaseModel):
             All operators that were run will appear in this map.
 
         artifact_results:
-            A map from an artifact id to its base64 encoded string.
+            A map from an artifact id to its content in bytes.
             Artifact results will only appear in this map if explicitly
             specified in the `target_ids` on the request.
     """
