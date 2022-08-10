@@ -73,17 +73,7 @@ jobs:
       - name: Take screenshot of workflow
         working-directory: regression_tests
         timeout-minutes: 5
-        run: npx playwright test
-
-      - name: ls dire
-        working-directory: regression_tests
-        timeout-minutes: 5
-        run: ls
-
-      - name: ls dire
-        working-directory: regression_tests
-        timeout-minutes: 5
-        run: ls screenshots
+        run: imgpath=screenshots/old.png npx playwright test
 
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
@@ -105,20 +95,25 @@ jobs:
       # - name: Switch to previous release branch
       #   run: git checkout $PREV_COMMIT
 
-      # - name: Update aqueduct with current version release
-      #   run: python3 scripts/install_local.py
+      - name: Update aqueduct with current version release
+        run: python3 scripts/install_local.py
 
-      # - name: Start the server
-      #   run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+      - name: Start the server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
 
-      # - name: Wait for server
-      #   timeout-minutes: 1
-      #   run: while ! echo exit | nc localhost 8080; do sleep 1; done
+      - name: Wait for server
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
-      # - name: Run Sentiment Notebook
-      #   working-directory: sdk/examples
-      #   timeout-minutes: 10
-      #   run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
+      - name: Run Sentiment Notebook
+        working-directory: sdk/examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
+
+      - name: Take screenshot of workflow
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: imgpath=screenshots/new.png npx playwright test
 
       # # Grabs the pid of the process bound to port 8080 and kills it.
       # - name: Kill the server
