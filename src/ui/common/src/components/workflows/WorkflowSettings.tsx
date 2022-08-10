@@ -502,10 +502,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
           </span>{' '}
-          and can be removed when deleting the workflow. Aqueduct cannot
-          guarantee that the underlying data will be successfully deleted. The
-          workflow will be deleted regardless. Please select the saved objects
-          you wish to delete:
+          and can be removed when deleting the workflow:
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -519,12 +516,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
 
         <Typography variant="body1">
-          Are you sure you want to <b>delete</b>{' '}
-          <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
-          is not reversible. The workflow and all <b>{selectedObjects.size}</b>{' '}
-          selected object(s) will be <b>completely removed</b>. Please note we
-          cannot guarantee we are only deleting Aqueduct-written data when
-          removing external objects.
+          Deleting workflow <span style={{ fontFamily: 'Monospace' }}>{name}</span>{' '}
+          and the associated <b>{selectedObjects.size}</b> objects is not reversible. 
+          Please note that we cannot guarantee this will only delete data created by 
+          Aqueduct. The workflow will be deleted even if the underlying objects are not successfully deleted.
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -645,7 +640,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   <ListItemText
                     primary={
                       <>
-                        <b>{integrationName}</b>: {objectResult.name}
+                        [{integrationName}]: <b>{objectResult.name}</b>
                       </>
                     }
                     secondary={<>{objectResult.succeeded}</>}
