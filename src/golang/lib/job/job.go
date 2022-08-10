@@ -32,6 +32,13 @@ func NewJobManager(conf Config) (JobManager, error) {
 		}
 		return NewProcessJobManager(processConfig)
 	}
+	if conf.Type() == K8sType {
+		k8sConfig, ok := conf.(*K8sConfig)
+		if !ok {
+			return nil, ErrInvalidJobManagerConfig
+		}
+		return NewK8sJobManager(k8sConfig)
+	}
 
 	return nil, ErrInvalidJobManagerConfig
 }
