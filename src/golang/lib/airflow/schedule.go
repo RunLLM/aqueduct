@@ -58,6 +58,11 @@ func ScheduleWorkflow(
 		artifactIDs = append(artifactIDs, id)
 	}
 
+	operatorIDs := make([]uuid.UUID, 0, len(dag.Operators))
+	for id := range dag.Operators {
+		operatorIDs = append(operatorIDs, id)
+	}
+
 	// Generate storage path prefixes for artifact content and artifact metadata.
 	// At runtime, the Airflow DAG run ID is appended to
 	// the relevant path prefix to form a unique storage path without requiring
@@ -160,7 +165,7 @@ func ScheduleWorkflow(
 			jobManager,
 			vault,
 			&airflowStorageConfig,
-			nil, /* previewArtifactCacheManager */
+			nil,   /* previewArtifactCacheManager */
 			false, // airflow operator will never run in preview mode
 			db,
 		)
@@ -176,7 +181,6 @@ func ScheduleWorkflow(
 			return nil, err
 		}
 
-		operatorToMetadataPathPrefix[airflowOperator.ID()] = airflowOperator.MetadataPath()
 		operatorToTask[airflowOperator.ID()] = taskId
 		taskToJobSpec[taskId] = jobSpec
 	}

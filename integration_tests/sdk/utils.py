@@ -148,6 +148,8 @@ def wait_for_flow_runs(
     begin = time.time()
 
     while True:
+        time.sleep(poll_threshold)
+
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         time.sleep(poll_threshold)
