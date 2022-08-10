@@ -47,19 +47,22 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                   sx={{
                     backgroundColor: 'blue.900',
                     color: 'white',
-                    minWidth: '80px'
+                    minWidth: '80px',
                   }}
                 >
                   <Box flexDirection="column">
-                    <Typography variant="body1"
+                    <Typography
+                      variant="body1"
                       sx={{
                         textTransform: 'none',
                         fontFamily: 'monospace',
                         fontSize: '16px',
-                      }}>
+                      }}
+                    >
                       {column.name}
                     </Typography>
-                    <Typography variant="caption"
+                    <Typography
+                      variant="caption"
                       sx={{
                         textTransform: 'none',
                         fontFamily: 'monospace',
