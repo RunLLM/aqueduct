@@ -2,21 +2,17 @@ import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import { isLoading, LoadingStatusEnum } from '../../../../utils/shared';
+import { useParams } from 'react-router-dom';
 
 import {
     ArtifactResult,
     handleGetArtifactResults,
-    handleGetWorkflow,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
-import { useAqueductConsts } from '../../../hooks/useAqueductConsts';
 import DefaultLayout from '../../../layouts/default';
 import KeyValueTable from '../../../tables/KeyValueTable';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
@@ -24,27 +20,28 @@ import { LayoutProps } from '../../types';
 
 type ArtifactDetailsHeaderProps = {
     artifactName: string;
-    lastUpdated: string;
-    sourceLocation: string;
+    createdAt?: string;
+    sourceLocation?: string;
 };
 
 const ArtifactDetailsHeader: React.FC<ArtifactDetailsHeaderProps> = ({
     artifactName,
-    lastUpdated,
-    sourceLocation,
+    // TODO: add these back once we have support for getting createdAt and sourceLocation.
+    //createdAt,
+    //sourceLocation,
 }) => {
     return (
-        <Box width="100%">
-            <FontAwesomeIcon icon={faCircleCheck} color={'green'} />
+        <Box width="100%" display="flex" alignItems="center">
+            <FontAwesomeIcon height="24px" width="24px" style={{ marginRight: '8px' }} icon={faCircleCheck} color={'green'} />
             <Typography variant="h4" component="div">
                 {artifactName}
             </Typography>
-            <Typography marginTop="4px" variant="caption" component="div">
-                Last Updated: {lastUpdated}
+            {/* <Typography marginTop="4px" variant="caption" component="div">
+                Created: {createdAt}
             </Typography>
             <Typography variant="caption" component="div">
                 Source: <Link>{sourceLocation}</Link>
-            </Typography>
+            </Typography> */}
         </Box>
     );
 };
@@ -58,10 +55,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     user,
     Layout = DefaultLayout,
 }) => {
-    const workflow = useSelector((state: RootState) => state.workflowReducer);
-    const navigate = useNavigate();
     const dispatch: AppDispatch = useDispatch();
-    const { workflowId, workflowDagResultId, artifactId } = useParams();
+    const { workflowDagResultId, artifactId } = useParams();
     const artifactResult: ArtifactResult | null = useSelector(
         (state: RootState) => {
             // First, check if there are any keys in the artifactResults object.
@@ -74,20 +69,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         }
     );
 
-    // TODO: Fetch artifact data and render here.
     useEffect(() => {
         document.title = 'Artifact | Aqueduct';
 
-        console.log('Fetching artifact data ...');
-        console.log('Url params: ');
-        console.log('workflowId: ', workflowId);
-        console.log('workflowDagResultId: ', workflowDagResultId);
-        console.log('artifactId: ', artifactId);
-        console.log('workflow regular useEffect: ', workflow);
-        //console.log('artifactResult: ', artifactResult);
-        console.log('fetching the artifact Result');
-
-        // Check and see if we are loading the artifact result 
+        // Check and see if we are loading the artifact result
         if (!artifactResult) {
             dispatch(
                 handleGetArtifactResults({
@@ -99,37 +84,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         }
     }, []);
 
-    // After artifact details are fetched, get the workflow details
-    useEffect(() => {
-        // Fetch workflow details
-        console.log('other useEffect workflow: ', workflow);
-        // only get workflow if it's not currently loading one.
-        const artifactLoadingStatus = artifactResult ? artifactResult.loadingStatus : null;
-        const workflowLoadingStatus = workflow ? workflow.loadingStatus : null;
-        //console.log('artifactLoadingStatus: ', artifactLoadingStatus.loading);
-
-
-        const workflowDagResultFiltered = workflow?.dagResults.filter((dagResult) => {
-            return dagResult.id === workflowDagResultId
-        });
-
-        console.log('workflowDagResultFiltered: ', workflowDagResultFiltered);
-
-
-        if (workflowLoadingStatus && workflowLoadingStatus.loading === LoadingStatusEnum.Initial && artifactLoadingStatus && artifactLoadingStatus.loading === LoadingStatusEnum.Succeeded) {
-            console.log('Fetching workflow inside if statement ...');
-            dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-        }
-
-    }, [artifactResult]);
-
-    const artifactMetadata = workflow?.dagResults[workflowDagResultId].artifacts[artifactId];
-
-
-
-    console.log('artifactMetadata: ', artifactMetadata);
-    console.log('artifactResult: ', artifactResult);
-
     if (!artifactResult || !artifactResult.result) {
         return (
             <Layout user={user}>
@@ -139,7 +93,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     }
 
     const parsedData = JSON.parse(artifactResult.result.data);
-    console.log('artifact details parsedData: ', parsedData);
 
     return (
         <Layout user={user}>
@@ -147,9 +100,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 <Box width="100%">
                     <Box width="100%" display="flex">
                         <ArtifactDetailsHeader
-                            artifactName="churn_table"
-                            lastUpdated="3/17/2022 10:00pm"
-                            sourceLocation="s3/myBucket"
+                            artifactName={artifactResult.result.name}
                         />
                         <Button variant="contained" sx={{ maxHeight: '32px' }}>
                             EXPORT
@@ -161,7 +112,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                         </Typography>
                         <StickyHeaderTable data={parsedData} />
                     </Box>
-                    <Box display="flex" width="100%" paddingTop="40px">
+                    {/* <Box display="flex" width="100%" paddingTop="40px">
                         <Box width="100%">
                             <Typography variant="h5" component="div" marginBottom="8px">
                                 Metrics
@@ -175,7 +126,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                             </Typography>
                             <KeyValueTable />
                         </Box>
-                    </Box>
+                    </Box> */}
                 </Box>
             </Box>
         </Layout>
