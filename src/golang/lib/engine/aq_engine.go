@@ -188,9 +188,22 @@ func (eng *aqEngine) ExecuteWorkflow(
 	// TODO: Generalize JobManager type from user input.
 	// engineJobManager depends on the type of engine used.
 	engineJobManager, err := job.NewJobManager(
-		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		// 	&job.ProcessConfig{
+		// 		BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
+		// 		OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
+		// 	},
+		&job.K8sConfig{
+			KubeConfigPath:                   "~/.kube/config",
+			FunctionDockerImage:              "spiralco/function-executor",
+			ParameterDockerImage:             "spiralco/param-executor",
+			PostgresConnectorDockerImage:     "spiralco/postgres-connector",
+			SnowflakeConnectorDockerImage:    "spiralco/snowflake-connector",
+			MySqlConnectorDockerImage:        "spiralco/mysql-connector",
+			SqlServerConnectorDockerImage:    "spiralco/sqlserver-connector",
+			BigQueryConnectorDockerImage:     "spiralco/bigquery-connector",
+			GoogleSheetsConnectorDockerImage: "spiralco/googlesheets-connector",
+			SalesforceConnectorDockerImage:   "spiralco/salesforce-connector",
+			S3ConnectorDockerImage:           "spiralco/s3-connector",
 		},
 	)
 	if err != nil {
