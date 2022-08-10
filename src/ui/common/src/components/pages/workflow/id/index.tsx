@@ -5,7 +5,6 @@ import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
