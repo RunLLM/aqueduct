@@ -5,7 +5,6 @@ import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -26,6 +25,7 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportCsv } from '../../../../utils/preview';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import { ExecutionStatus } from '../../../../utils/shared';
@@ -279,7 +279,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           <Button
             style={{ marginRight: '16px' }}
             onClick={() => {
-              console.log("View Artifact details clicked");
+              console.log('View Artifact details clicked');
               // TODO: Get workflowDagResultId:
               //workflow.selectedResult.id
               // Then get artifact id:
@@ -288,6 +288,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               // TODO: Build URL here:
               // `/${pathPrefix}/workflow/:workflowDagResultId/artifact/:artifactId`
               //exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+              // artifact will be the selected node, so currentNode.id
+              console.log('navigating to artifact ...');
+              console.log('selectedWorkflowResult: ', workflow.selectedResult);
+
+              // All we're really doing here is adding the artifactId onto the end of the URL.
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                }/artifact/${currentNode.id}`
+              );
             }}
           >
             View Artifact Details
@@ -299,7 +308,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             Export CSV
           </Button>
-        </Box >
+        </Box>
       );
     }
 
