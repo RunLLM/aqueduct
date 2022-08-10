@@ -1,3 +1,4 @@
+import base64
 import json
 from typing import List, Optional, Union
 
@@ -15,6 +16,7 @@ from aqueduct.operators import (
 )
 from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.preview import preview_artifact
 
 
 class S3Integration(Integration):
@@ -30,7 +32,7 @@ class S3Integration(Integration):
         self,
         filepaths: Union[List[str], str],
         artifact_type: ArtifactType,
-        format: Optional[S3TabularFormat] = None,
+        format: Optional[str] = None,
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
@@ -66,6 +68,19 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
+        if format:
+            lowercased_format = format.lower()
+            if lowercased_format == S3TabularFormat.CSV.value.lower():
+                format_enum = S3TabularFormat.CSV
+            elif lowercased_format == S3TabularFormat.JSON.value.lower():
+                format_enum = S3TabularFormat.JSON
+            elif lowercased_format == S3TabularFormat.PARQUET.value.lower():
+                format_enum = S3TabularFormat.PARQUET
+            else:
+                raise Exception("Unsupport file format %s." % format)
+        else:
+            format_enum = None
+
         integration_info = self._metadata
 
         op_name = generate_extract_op_name(self._dag, integration_info.name, name)
@@ -87,7 +102,7 @@ class S3Integration(Integration):
                                 parameters=S3ExtractParams(
                                     filepath=json.dumps(filepaths),
                                     artifact_type=artifact_type,
-                                    format=format,
+                                    format=format_enum,
                                     merge=merge,
                                 ),
                             )
@@ -105,10 +120,11 @@ class S3Integration(Integration):
             ],
         )
 
-        return UntypedArtifact(
-            dag=self._dag,
-            artifact_id=output_artifact_id,
-        )
+        # Issue preview request since this is an eager execution
+        artifact = preview_artifact(self._dag, output_artifact_id)
+        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+        return artifact
 
     def config(self, filepath: str, format: Optional[S3TabularFormat] = None) -> SaveConfig:
         """

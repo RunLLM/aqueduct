@@ -3,6 +3,12 @@ import UserProfile from './auth';
 
 const { apiAddress } = useAqueductConsts();
 
+const aqueductDemoName = 'aqueduct_demo';
+
+export function isDemo(integration: Integration): boolean {
+  return integration.name === aqueductDemoName;
+}
+
 export type Integration = {
   id: string;
   service: Service;
@@ -124,6 +130,7 @@ export type Service =
 type Info = {
   logo: string;
   activated: boolean;
+  category: string;
 };
 
 export type ServiceInfoMap = {
@@ -219,19 +226,32 @@ export async function connectIntegration(
       config[k] = '';
     }
   });
-  const res = await fetch(`${apiAddress}/api/integration/connect`, {
-    method: 'POST',
-    headers: {
-      'api-key': user.apiKey,
-      'integration-name': name,
-      'integration-service': service,
-      'integration-config': JSON.stringify(config),
-    },
-  });
 
-  if (!res.ok) {
-    const message = await res.json();
-    throw new Error(message.error);
+  try {
+    const res = await fetch(`${apiAddress}/api/integration/connect`, {
+      method: 'POST',
+      headers: {
+        'api-key': user.apiKey,
+        'integration-name': name,
+        'integration-service': service,
+        'integration-config': JSON.stringify(config),
+      },
+    });
+
+    if (!res.ok) {
+      const message = await res.json();
+      throw new Error(message.error);
+    }
+  } catch (err) {
+    if (err instanceof TypeError) {
+      // This happens when we fail to fetch.
+      throw new Error(
+        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
+      );
+    } else {
+      // This should never happen.
+      throw err;
+    }
   }
 }
 
@@ -239,42 +259,52 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/440px-Postgresql_elephant.svg.png',
     activated: true,
+    category: 'data',
   },
   ['Snowflake']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/51-513957_periscope-data-partners-snowflake-computing-logo.png',
     activated: true,
+    category: 'data',
   },
   ['Redshift']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/amazon-redshift.png',
     activated: true,
+    category: 'data',
   },
   ['BigQuery']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-bigquery-logo-1.svg',
     activated: true,
+    category: 'data',
   },
   ['MySQL']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mysql.png',
     activated: true,
+    category: 'data',
   },
   ['MariaDB']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mariadb.png',
     activated: true,
+    category: 'data',
   },
   ['S3']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
     activated: true,
+    category: 'data',
   },
   ['Aqueduct Demo']: {
     logo: '/assets/aqueduct.png',
     activated: true,
+    category: 'data',
   },
   ['SQLite']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite_banner.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite-square-icon-256x256.png',
     activated: true,
+    category: 'data',
   },
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: false,
+    category: 'compute',
   },
 };
 

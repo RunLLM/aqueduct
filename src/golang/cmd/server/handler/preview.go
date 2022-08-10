@@ -51,6 +51,7 @@ type previewArgs struct {
 
 type previewArtifactResponse struct {
 	SerializationType string `json:"serialization_type"`
+	ArtifactType      string `json:"artifact_type"`
 	Content           []byte `json:"content"`
 }
 
@@ -61,8 +62,8 @@ type previewResponse struct {
 }
 
 type previewResponseNoArtifacts struct {
-	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
+	Status          shared.ExecutionStatus              `json:"status"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
 }
 
 type PreviewHandler struct {
@@ -80,7 +81,7 @@ func (*PreviewHandler) Name() string {
 	return "Preview"
 }
 
-func checkError (w http.ResponseWriter, err error) {
+func checkError(w http.ResponseWriter, err error) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -92,7 +93,7 @@ func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{})
 	structResponse := response.(previewResponse)
 
 	responseNoArtifacts := previewResponseNoArtifacts{
-		Status: structResponse.Status,
+		Status:          structResponse.Status,
 		OperatorResults: structResponse.OperatorResults,
 	}
 
@@ -203,6 +204,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.JobManager,
 		h.Vault,
 		h.StorageConfig,
+		true, // this is a preview
 		h.Database,
 	)
 	if err != nil {
@@ -217,7 +219,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
 			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
 		},
-		false, /* shouldPersistResults */
+		true, // this is a preview
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
@@ -261,6 +263,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			artifactResults[artf.ID()] = previewArtifactResponse{
 				SerializationType: artifact_metadata.SerializationType,
 				Content:           content,
+				ArtifactType:      artifact_metadata.ArtifactType,
 			}
 		}
 	}

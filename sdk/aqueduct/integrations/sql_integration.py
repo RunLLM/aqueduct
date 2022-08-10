@@ -18,6 +18,7 @@ from aqueduct.operators import (
 )
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.preview import preview_artifact
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -191,17 +192,20 @@ class RelationalDBIntegration(Integration):
                         Artifact(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
-                            type=ArtifactType.TABULAR,
+                            type=ArtifactType.UNTYPED,
                         ),
                     ],
                 ),
             ],
         )
 
-        return TableArtifact(
-            dag=self._dag,
-            artifact_id=sql_output_artifact_id,
-        )
+        # Issue preview request since this is an eager execution
+        artifact = preview_artifact(self._dag, sql_output_artifact_id)
+        self._dag.must_get_artifact(sql_output_artifact_id).type = artifact.type()
+
+        assert isinstance(artifact, TableArtifact)
+
+        return artifact
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
         """

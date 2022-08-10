@@ -410,7 +410,6 @@ def test_load_serialization():
         ),
         inputs=[other_ids[0]],
     )
-    print(load_operator_s3.json(exclude_none=True))
     assert load_operator_s3.json(exclude_none=True) == json.dumps(
         {
             "id": str(op_id),

@@ -83,15 +83,12 @@ def test_invalid_file_dependencies(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
-    output_artifact = model_with_invalid_dependencies(sql_artifact)
     with pytest.raises(AqueductError):
-        output_artifact.get()
+        output_artifact = model_with_invalid_dependencies(sql_artifact)
 
-    output_artifact = model_with_missing_file_dependencies(sql_artifact)
     with pytest.raises(AqueductError):
-        output_artifact.get()
+        output_artifact = model_with_missing_file_dependencies(sql_artifact)
 
-    # This one is caught early by the SDK because it's doesn't require execution.
     with pytest.raises(InvalidFunctionException):
         model_with_improper_dependency_path(sql_artifact)
 

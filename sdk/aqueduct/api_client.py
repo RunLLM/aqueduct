@@ -14,7 +14,7 @@ from aqueduct.error import (
     NoConnectedIntegrationsException,
 )
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.logger import Logger
+from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
     ArtifactResult,
@@ -164,7 +164,9 @@ class APIClient:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
-        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
+        url = "%s%s" % (self.construct_base_url(use_https), route_suffix)
+        logger().debug("Constructed full URL %s", url)
+        return url
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -179,7 +181,7 @@ class APIClient:
                 self._test_url(url)
                 return True
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 
@@ -189,7 +191,7 @@ class APIClient:
                 self._test_url(url)
                 return False
             except Exception as e:
-                Logger.logger.info(
+                logger().info(
                     "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
                 )
 

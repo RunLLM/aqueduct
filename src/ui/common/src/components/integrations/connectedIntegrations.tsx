@@ -50,7 +50,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
                 color="inherit"
                 href={`${getPathPrefix()}/integration/${integration.id}`}
               >
-                <Card>
+                <Card sx={{ marginY: 2 }}>
                   <IntegrationCard integration={integration} />
                 </Card>
               </Link>
