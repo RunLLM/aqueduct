@@ -20,12 +20,17 @@ import (
 // Route: /artifact_result/{workflowDagResultId}/{artifactId}
 // Method: GET
 // Params:
+//
 //	`workflowDagResultId`: ID for `workflow_dag_result` object
 //	`artifactId`: ID for `artifact` object
+//
 // Request:
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response:
+//
 //	Body:
 //		serialized `getArtifactResultResponse`,
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.

@@ -142,7 +142,7 @@ def wait_for_flow_runs(
     Returns:
         The number of successful runs this flow has performed.
     """
-    timeout = 300
+    timeout = 500
     poll_threshold = 5
     begin = time.time()
 
@@ -150,6 +150,9 @@ def wait_for_flow_runs(
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         time.sleep(poll_threshold)
+
+        if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
+            continue
 
         # A flow has been successfully published if it makes at least one workflow run, and
         # all its workflow runs have executed successfully.

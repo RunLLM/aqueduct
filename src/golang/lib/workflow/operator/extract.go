@@ -77,3 +77,7 @@ func (eo *extractOperatorImpl) JobSpec() job.Spec {
 		OutputMetadataPath: eo.outputMetadataPaths[0],
 	}
 }
+
+func (eo *extractOperatorImpl) Launch(ctx context.Context) error {
+	return eo.launch(ctx, eo.JobSpec())
+}

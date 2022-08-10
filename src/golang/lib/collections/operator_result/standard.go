@@ -32,6 +32,23 @@ func (w *standardWriterImpl) CreateOperatorResult(
 	return &operatorResult, err
 }
 
+func (w *standardWriterImpl) InsertOperatorResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	operatorId uuid.UUID,
+	execState *shared.ExecutionState,
+	db database.Database,
+) (*OperatorResult, error) {
+	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn, ExecStateColumn}
+	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
+
+	args := []interface{}{workflowDagResultId, operatorId, execState.Status, execState}
+
+	var operatorResult OperatorResult
+	err := db.Query(ctx, &operatorResult, insertOperatorStmt, args...)
+	return &operatorResult, err
+}
+
 func (r *standardReaderImpl) GetOperatorResult(
 	ctx context.Context,
 	id uuid.UUID,
