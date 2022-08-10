@@ -41,17 +41,7 @@ class UntypedArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
-        artifact_response = preview_artifact(self._dag, self._artifact_id)
-
-        serialization_type = artifact_response.serialization_type
-        artifact_type = artifact_response.artifact_type
-        print("artifact type is", artifact_type)
-        artifact_content = base64.b64decode(artifact_response.content)
-
-        if serialization_type not in deserialization_function_mapping:
-            raise Exception("Unsupported serialization type %s." % serialization_type)
-
-        return deserialization_function_mapping[serialization_type](artifact_content)
+        return preview_artifact(self._dag, self._artifact_id)._content
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""
