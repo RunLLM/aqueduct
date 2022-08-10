@@ -1,3 +1,4 @@
+import base64
 import json
 from typing import List, Optional, Union
 
@@ -15,6 +16,8 @@ from aqueduct.operators import (
 )
 from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.preview import preview_artifact
+from aqueduct.artifact_utils import to_typed_artifact
 
 
 class S3Integration(Integration):
@@ -118,10 +121,12 @@ class S3Integration(Integration):
             ],
         )
 
-        return UntypedArtifact(
-            dag=self._dag,
-            artifact_id=output_artifact_id,
-        )
+        # Issue preview request since this is an eager execution
+        artifact_response = preview_artifact(self._dag, output_artifact_id)
+        artifact = to_typed_artifact(self._dag, output_artifact_id, artifact_response)
+        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+        return artifact
 
     def config(self, filepath: str, format: Optional[S3TabularFormat] = None) -> SaveConfig:
         """

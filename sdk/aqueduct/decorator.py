@@ -20,6 +20,9 @@ from aqueduct.utils import (
     serialize_function,
 )
 from pandas import DataFrame
+from aqueduct.generic_artifact import Artifact as GenericArtifact
+from aqueduct.preview import preview_artifact
+from aqueduct.artifact_utils import to_typed_artifact
 
 from aqueduct import dag as dag_module
 
@@ -53,7 +56,7 @@ def wrap_spec(
     *input_artifacts: UntypedArtifact,
     op_name: str,
     description: str = "",
-) -> UntypedArtifact:
+) -> GenericArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -89,21 +92,6 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
 
-    output_artifact: UntypedArtifact
-
-    # TODO(cgwu): revisit this when implementing eager execution.
-    if spec.metric:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.function:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = UntypedArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.check:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
-    else:
-        raise AqueductError("Operator spec not supported.")
-
     apply_deltas_to_dag(
         dag,
         deltas=[
@@ -120,14 +108,19 @@ def wrap_spec(
                     Artifact(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
-                        type=artifact_type,
+                        type=ArtifactType.UNTYPED,
                     )
                 ],
             ),
         ],
     )
 
-    return output_artifact
+    # Issue preview request since this is an eager execution
+    artifact_response = preview_artifact(dag, output_artifact_id)
+    artifact = to_typed_artifact(dag, output_artifact_id, artifact_response)
+    dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+    return artifact
 
 
 def _type_check_decorator_arguments(
@@ -213,7 +206,7 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*input_artifacts: UntypedArtifact) -> UntypedArtifact:
+        def wrapped(*input_artifacts: GenericArtifact) -> GenericArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -235,8 +228,6 @@ def op(
                 *input_artifacts,
                 op_name=name,
             )
-
-            assert isinstance(new_function_artifact, UntypedArtifact)
 
             return new_function_artifact
 

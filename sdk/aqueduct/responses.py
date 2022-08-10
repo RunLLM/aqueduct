@@ -1,13 +1,15 @@
+import base64
 import textwrap
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType, SerializationType
+from aqueduct.enums import ExecutionStatus, FailureType, SerializationType, ArtifactType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
+from aqueduct.deserialize import deserialization_function_mapping
 
 
 class Logs(BaseModel):
@@ -53,7 +55,12 @@ class OperatorResult(BaseModel):
 
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
+    artifact_type: ArtifactType
     content: str
+
+    def get_deserialized_content(self) -> Any:
+        return deserialization_function_mapping[self.serialization_type](base64.b64decode(self.content))
+
 
 
 class PreviewResponse(BaseModel):

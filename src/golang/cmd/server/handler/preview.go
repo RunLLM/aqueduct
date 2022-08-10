@@ -50,6 +50,7 @@ type previewArgs struct {
 
 type previewArtifactResponse struct {
 	SerializationType string `json:"serialization_type"`
+	ArtifactType      string `json:"artifact_type"`
 	Content           string `json:"content"`
 }
 
@@ -202,6 +203,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			}
 			artifactResults[artf.ID()] = previewArtifactResponse{
 				SerializationType: artifact_metadata.SerializationType,
+				ArtifactType:      artifact_metadata.ArtifactType,
 				Content:           base64.StdEncoding.EncodeToString(content),
 			}
 		}

@@ -24,7 +24,7 @@ from aqueduct.enums import (
 )
 from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.generic_artifact import Artifact
-from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.numeric_artifact import NumericArtifact
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -57,8 +57,10 @@ from ruamel import yaml
 
 import aqueduct
 from aqueduct import api_client
+from aqueduct.preview import preview_artifact
+from aqueduct.artifact_utils import to_typed_artifact
 
-OutputArtifact = Union[MetricArtifact, CheckArtifact]
+OutputArtifact = Union[NumericArtifact, CheckArtifact]
 
 
 class TableArtifact(Artifact):
@@ -82,11 +84,13 @@ class TableArtifact(Artifact):
         >>> output_artifact.save(warehouse.config(table_name="output_table"))
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: pd.DataFrame, from_flow_run: Optional[bool] = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
+        self._content = content
+        self._type = ArtifactType.TABULAR
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -105,28 +109,13 @@ class TableArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        dag = apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
-            ],
-            make_copy=True,
-        )
-
-        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
-        artifact_result = preview_resp.artifact_results[self._artifact_id]
-
-        if artifact_result.table:
-            # Translate the previewed table in a dataframe.
-            return pd.DataFrame(json.loads(artifact_result.table.data)["data"])
+        if parameters:
+            artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
+            if artifact_response.artifact_type != ArtifactType.TABULAR:
+                raise Exception("Error: the computed result is expected to of type tabular, found %s" % artifact_response.artifact_type)
+            return artifact_response.get_deserialized_content()
         else:
-            raise AqueductError("Artifact does not have table.")
+            return self._content
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Returns a preview of the table artifact.
@@ -306,7 +295,7 @@ class TableArtifact(Artifact):
         assert isinstance(new_artifact, CheckArtifact)
         return new_artifact
 
-    def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> MetricArtifact:
+    def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> NumericArtifact:
         """Creates a metric that represents the number of missing values over a given column or row.
 
         Note: takes a scalar column_id/row_id and uses pandas.DataFrame.isnull() to compute value.
@@ -320,7 +309,7 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the number of missing values for the row/column on the applied table artifact.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
         if column_id is not None and row_id is not None:
             raise AqueductError(
                 "Cannot choose both a row and a column for counting missing values over"
@@ -338,7 +327,7 @@ class TableArtifact(Artifact):
             metric_name = "num_col_missing_val(%s)" % column_id
             metric_description = "compute number of missing values for col %s on table %s" % (
                 column_id,
-                table_artifact.name,
+                table_name,
             )
         else:
 
@@ -349,7 +338,7 @@ class TableArtifact(Artifact):
             metric_name = "num_row_missing_val(%s)" % row_id
             metric_description = "compute number of missing values for row %s on table %s" % (
                 column_id,
-                table_artifact.name,
+                table_name,
             )
 
         zip_file = serialize_function(metric_func)
@@ -361,10 +350,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def number_of_rows(self) -> MetricArtifact:
+    def number_of_rows(self) -> NumericArtifact:
         """Creates a metric that represents the number of rows of this table
 
         Note: uses len() to determine row count over the pandas.DataFrame.
@@ -372,13 +361,13 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the number of rows on this table.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
 
         def internal_num_rows_metric(table: pd.DataFrame) -> float:
             return float(len(table))
 
         metric_name = "num_rows"
-        metric_description = "compute number of rows for table %s" % table_artifact.name
+        metric_description = "compute number of rows for table %s" % table_name
         zip_file = serialize_function(internal_num_rows_metric)
 
         function_spec = FunctionSpec(
@@ -388,10 +377,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def max(self, column_id: Any) -> MetricArtifact:
+    def max(self, column_id: Any) -> NumericArtifact:
         """Creates a metric that represents the maximum value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.max to compute value.
@@ -403,7 +392,7 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the max for the given column on the applied table artifact.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
 
         def internal_max_metric(table: pd.DataFrame) -> float:
             return float(table[column_id].max())
@@ -411,7 +400,7 @@ class TableArtifact(Artifact):
         metric_name = "max(%s)" % column_id
         metric_description = "Max for column %s for table %s" % (
             column_id,
-            table_artifact.name,
+            table_name,
         )
         zip_file = serialize_function(internal_max_metric)
 
@@ -422,10 +411,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def min(self, column_id: Any) -> MetricArtifact:
+    def min(self, column_id: Any) -> NumericArtifact:
         """Creates a metric that represents the minimum value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.min to compute value.
@@ -437,7 +426,7 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the min for the given column on the applied table artifact.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
 
         def internal_min_metric(table: pd.DataFrame) -> float:
             return float(table[column_id].min())
@@ -445,7 +434,7 @@ class TableArtifact(Artifact):
         metric_name = "min(%s)" % column_id
         metric_description = "Min for column %s for table %s" % (
             column_id,
-            table_artifact.name,
+            table_name,
         )
         zip_file = serialize_function(internal_min_metric)
 
@@ -456,10 +445,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def mean(self, column_id: Any) -> MetricArtifact:
+    def mean(self, column_id: Any) -> NumericArtifact:
         """Creates a metric that represents the mean value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.mean to compute value.
@@ -471,7 +460,7 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the mean for the given column on the applied table artifact.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
 
         def internal_mean_metric(table: pd.DataFrame) -> float:
             return float(table[column_id].mean())
@@ -479,7 +468,7 @@ class TableArtifact(Artifact):
         metric_name = "mean(%s)" % column_id
         metric_description = "Mean for column %s for table %s" % (
             column_id,
-            table_artifact.name,
+            table_name,
         )
         zip_file = serialize_function(internal_mean_metric)
 
@@ -490,10 +479,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def std(self, column_id: Any) -> MetricArtifact:
+    def std(self, column_id: Any) -> NumericArtifact:
         """Creates a metric that represents the standard deviation value over the given column
 
         takes a scalar column_id and uses pandas.DataFrame.std to compute value
@@ -505,7 +494,7 @@ class TableArtifact(Artifact):
         Returns:
             A metric artifact that represents the standard deviation for the given column on the applied table artifact.
         """
-        table_artifact = self._get_table_operator()
+        table_name = self._get_table_name()
 
         def internal_std_metric(table: pd.DataFrame) -> float:
             std: float
@@ -515,7 +504,7 @@ class TableArtifact(Artifact):
         metric_name = "std(%s)" % column_id
         metric_description = "std for column %s for table %s" % (
             column_id,
-            table_artifact.name,
+            table_name,
         )
         zip_file = serialize_function(internal_std_metric)
 
@@ -526,10 +515,10 @@ class TableArtifact(Artifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(op_spec, metric_name, metric_description)
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
-    def system_metric(self, metric_name: str) -> MetricArtifact:
+    def system_metric(self, metric_name: str) -> NumericArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
 
         Args:
@@ -549,7 +538,7 @@ class TableArtifact(Artifact):
         new_artifact = self._apply_operator_to_table(
             op_spec, system_metric_name, system_metric_description
         )
-        assert isinstance(new_artifact, MetricArtifact)
+        assert isinstance(new_artifact, NumericArtifact)
         return new_artifact
 
     def _apply_operator_to_table(
@@ -563,7 +552,7 @@ class TableArtifact(Artifact):
         output_artifact_id = generate_uuid()
         if op_spec.metric or op_spec.system_metric:
             artifact_type = ArtifactType.NUMERIC
-            output_artifact = MetricArtifact(dag=self._dag, artifact_id=output_artifact_id)
+            output_artifact = NumericArtifact(dag=self._dag, artifact_id=output_artifact_id)
         elif op_spec.check:
             artifact_type = ArtifactType.BOOL
             output_artifact = CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
@@ -586,21 +575,22 @@ class TableArtifact(Artifact):
                         aqueduct.artifact.Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            type=artifact_type,
+                            type=ArtifactType.UNTYPED,
                         )
                     ],
                 ),
             ],
         )
 
-        return output_artifact
+        # Issue preview request since this is an eager execution
+        artifact_response = preview_artifact(self._dag, output_artifact_id)
+        artifact = to_typed_artifact(self._dag, output_artifact_id, artifact_response)
+        dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
-    def _get_table_operator(self) -> Operator:
-        table_artifact = self._dag.get_operator(with_output_artifact_id=self._artifact_id)
-        if table_artifact is None:
-            raise AqueductError("table artifact no longer valid to associate metric with")
+        return artifact
 
-        return table_artifact
+    def _get_table_name(self) -> str:
+        return self._dag.must_get_artifact(self._artifact_id).name
 
     def describe(self) -> None:
         """Prints out a human-readable description of the table artifact."""

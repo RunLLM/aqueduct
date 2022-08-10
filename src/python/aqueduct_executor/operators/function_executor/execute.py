@@ -171,6 +171,7 @@ def run(spec: FunctionSpec) -> None:
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
+    print("operator type is:", spec.operator_type)
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:

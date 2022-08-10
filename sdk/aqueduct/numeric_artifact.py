@@ -27,9 +27,10 @@ from aqueduct.utils import (
 
 import aqueduct
 from aqueduct import api_client
+from aqueduct.preview import preview_artifact
 
 
-class MetricArtifact(Artifact):
+class NumericArtifact(Artifact):
     """This class represents a computed metric within the flow's DAG.
 
     Any `@metric`-annotated python function that returns a float will
@@ -46,11 +47,13 @@ class MetricArtifact(Artifact):
         >>> val = metric_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: Any, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
+        self._content = content
+        self._type = ArtifactType.NUMERIC
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> float:
         """Materializes a MetricArtifact into its immediate float value.
@@ -64,27 +67,13 @@ class MetricArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        dag = apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
-            ],
-            make_copy=True,
-        )
-        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
-        artifact_result = preview_resp.artifact_results[self._artifact_id]
-
-        if artifact_result.metric:
-            # Return the metric float.
-            return artifact_result.metric.val
+        if parameters:
+            artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
+            if artifact_response.artifact_type != ArtifactType.NUMERIC:
+                raise Exception("Error: the computed result is expected to of type numeric, found %s" % artifact_response.artifact_type)
+            return artifact_response.get_deserialized_content()
         else:
-            raise AqueductError("Unable to parse execution results.")
+            return self._content
 
     BOUND_LOWER = "bound"
     BOUND_UPPER = "upper"
