@@ -9,6 +9,8 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/connection"
 	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/writer"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
@@ -17,8 +19,10 @@ var (
 		"",
 		"The path to .yml config file",
 	)
-	expose = flag.Bool("expose", false, "Whether you want to expose the server to the public.")
-	port   = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
+	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal.")
+	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
 )
 
 func main() {
@@ -30,7 +34,41 @@ func main() {
 		*confPath = filepath.Join(cwd, "config", "server.yml")
 	}
 
-	log.SetFormatter(&log.TextFormatter{DisableQuote: true})
+	log.SetFormatter(&log.TextFormatter{
+		DisableQuote: true,
+		ForceColors:  true,
+	})
+
+	// Always store all logs to a log file.
+	// With lumberjack.Logger we can do log rotation to prevent it from growing infinitely.
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   serverLogPath,
+		MaxSize:    100, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28, // days
+	})
+
+	// Send logs with level higher than warning to stderr.
+	log.AddHook(&writer.Hook{
+		Writer: os.Stderr,
+		LogLevels: []log.Level{
+			log.PanicLevel,
+			log.FatalLevel,
+			log.ErrorLevel,
+			log.WarnLevel,
+		},
+	})
+
+	if *verbose {
+		// If verbose, also send info and debug logs to stdout.
+		log.AddHook(&writer.Hook{
+			Writer: os.Stdout,
+			LogLevels: []log.Level{
+				log.InfoLevel,
+				log.DebugLevel,
+			},
+		})
+	}
 
 	serverConfig := config.ParseServerConfiguration(*confPath)
 

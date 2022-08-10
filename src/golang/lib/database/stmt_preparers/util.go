@@ -12,10 +12,11 @@ import (
 //
 // Reference: https://stackoverflow.com/questions/45351644/golang-slice-in-mysql-query-with-where-in-clause
 // Example usage, fetching from a list of ids:
-//  query := "SELECT * FROM workflow WHERE id IN (" + GenerateArgsList(len(ids)) + ")"
-//  var workflows []Workflow
-//  args := CastIdsListToInterfaceList(ids)
-//  err := db.QueryToDest(ctx, &workflows, query, args...)
+//
+//	query := "SELECT * FROM workflow WHERE id IN (" + GenerateArgsList(len(ids)) + ")"
+//	var workflows []Workflow
+//	args := CastIdsListToInterfaceList(ids)
+//	err := db.QueryToDest(ctx, &workflows, query, args...)
 func GenerateArgsList(length int, startIdx int) string {
 	args := ""
 

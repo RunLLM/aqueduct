@@ -213,3 +213,30 @@ def test_get_artifact_reuse_for_computation(client):
             output_artifact = run_sentiment_model(artifact_return)
     finally:
         client.delete_flow(flow.id())
+
+
+@pytest.mark.publish
+def test_multiple_flows_with_same_schedule(client):
+    try:
+        db = client.integration(name=get_integration_name())
+        sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+        output_artifact = run_sentiment_model(sql_artifact)
+        output_artifact_2 = dummy_model(sql_artifact)
+
+        flow_1 = client.publish_flow(
+            name=generate_new_flow_name(),
+            artifacts=[output_artifact],
+            schedule="* * * * *",
+        )
+
+        flow_2 = client.publish_flow(
+            name=generate_new_flow_name(),
+            artifacts=[output_artifact_2],
+            schedule="* * * * *",
+        )
+
+        wait_for_flow_runs(client, flow_1.id(), 2, True)
+        wait_for_flow_runs(client, flow_2.id(), 2, True)
+    finally:
+        delete_flow(client, flow_1.id())
+        delete_flow(client, flow_2.id())

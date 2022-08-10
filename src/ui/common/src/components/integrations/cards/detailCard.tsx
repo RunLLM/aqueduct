@@ -6,6 +6,7 @@ import {
   Integration,
   SupportedIntegrations,
 } from '../../../utils/integrations';
+import { LoadingStatus } from '../../../utils/shared';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { MariaDbCard } from './mariadbCard';
@@ -17,10 +18,12 @@ import { SnowflakeCard } from './snowflakeCard';
 
 type DetailIntegrationCardProps = {
   integration: Integration;
+  connectStatus?: LoadingStatus;
 };
 
 export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
   integration,
+  connectStatus = undefined,
 }) => {
   let serviceCard;
   switch (integration.service) {
@@ -58,8 +61,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         width: '900px',
-        mt: 2,
-        mb: 2,
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
@@ -68,12 +69,14 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
           src={SupportedIntegrations[integration.service].logo}
         />
         <Box sx={{ ml: 3 }}>
-          <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
-            {integration.name}
-          </Typography>
+          <Box display="flex" flexDirection="row">
+            <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
+              {integration.name}
+            </Typography>
+          </Box>
 
           <Typography variant="body1">
-            <strong>Connected On: </strong>
+            <strong>Created On: </strong>
             {new Date(integration.createdAt * 1000).toLocaleString()}
           </Typography>
 
