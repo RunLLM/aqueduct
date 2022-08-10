@@ -66,7 +66,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         (state: RootState) => {
             // First, check if there are any keys in the artifactResults object.
             const artifactResults = state.workflowReducer.artifactResults;
-            console.log('artifactResults68: ', artifactResults);
             if (Object.keys(artifactResults).length < 1) {
                 return null;
             }
@@ -75,13 +74,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         }
     );
 
-    // Set the title of the page on page load.
-    useEffect(() => {
-        document.title = 'Artifact | Aqueduct';
-    }, []);
-
     // TODO: Fetch artifact data and render here.
     useEffect(() => {
+        document.title = 'Artifact | Aqueduct';
+
         console.log('Fetching artifact data ...');
         console.log('Url params: ');
         console.log('workflowId: ', workflowId);
@@ -89,21 +85,18 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         console.log('artifactId: ', artifactId);
         console.log('workflow regular useEffect: ', workflow);
         //console.log('artifactResult: ', artifactResult);
-
-        // Fetching the workflow by Id:
-        // TODO: Might not need this call after all.
-        //dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-
         console.log('fetching the artifact Result');
 
-        dispatch(
-            handleGetArtifactResults({
-                apiKey: user.apiKey,
-                workflowDagResultId,
-                artifactId,
-            })
-        );
-
+        // Check and see if we are loading the artifact result 
+        if (!artifactResult) {
+            dispatch(
+                handleGetArtifactResults({
+                    apiKey: user.apiKey,
+                    workflowDagResultId,
+                    artifactId,
+                })
+            );
+        }
     }, []);
 
     // After artifact details are fetched, get the workflow details
@@ -111,17 +104,31 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         // Fetch workflow details
         console.log('other useEffect workflow: ', workflow);
         // only get workflow if it's not currently loading one.
-        const loadingStatus = workflow.loadingStatus;
+        const artifactLoadingStatus = artifactResult ? artifactResult.loadingStatus : null;
+        const workflowLoadingStatus = workflow ? workflow.loadingStatus : null;
+        //console.log('artifactLoadingStatus: ', artifactLoadingStatus.loading);
 
-        if (Object.keys(workflow.dags).length < 1 && !isLoading(loadingStatus)) {
+
+        const workflowDagResultFiltered = workflow?.dagResults.filter((dagResult) => {
+            return dagResult.id === workflowDagResultId
+        });
+
+        console.log('workflowDagResultFiltered: ', workflowDagResultFiltered);
+
+
+        if (workflowLoadingStatus && workflowLoadingStatus.loading === LoadingStatusEnum.Initial && artifactLoadingStatus && artifactLoadingStatus.loading === LoadingStatusEnum.Succeeded) {
             console.log('Fetching workflow inside if statement ...');
             dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
         }
 
-    }, [artifactResult, workflowId]);
+    }, [artifactResult]);
 
-    const artifactMetadata = workflow?.dags[workflowDagResultId]?.artifacts[artifactId];
+    const artifactMetadata = workflow?.dagResults[workflowDagResultId].artifacts[artifactId];
+
+
+
     console.log('artifactMetadata: ', artifactMetadata);
+    console.log('artifactResult: ', artifactResult);
 
     if (!artifactResult || !artifactResult.result) {
         return (
