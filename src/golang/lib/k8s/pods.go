@@ -126,7 +126,7 @@ func generatePod(
 		// as success and the container is considered as successfully started. Otherwise, the
 		// probe fails after StartupProbeFailureThreshold tries, or StartupProbeTimeoutSec seconds.
 		pod.Spec.Containers[0].StartupProbe = &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
+			Handler: corev1.Handler{
 				TCPSocket: &corev1.TCPSocketAction{
 					Port: intstr.IntOrString{Type: intstr.Int, IntVal: int32(probingPort)},
 				},
@@ -151,7 +151,7 @@ func generatePod(
 		//
 		// When the probe failed, it will be removed from the service endpoint
 		pod.Spec.Containers[0].ReadinessProbe = &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
+			Handler: corev1.Handler{
 				TCPSocket: &corev1.TCPSocketAction{
 					Port: intstr.IntOrString{Type: intstr.Int, IntVal: int32(probingPort)},
 				},
