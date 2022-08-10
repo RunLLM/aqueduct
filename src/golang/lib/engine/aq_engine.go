@@ -303,7 +303,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dag,
 		workflowRunMetadata,
 		timeConfig,
-		engineJobManager,
 		true, // should persist results
 	)
 	if err != nil {
@@ -375,7 +374,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		dag,
 		workflowRunMetadata,
 		timeConfig,
-		jobManager,
 		false, // should not persist results
 	)
 	if err != nil {
@@ -689,7 +687,6 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
-	jobManager job.JobManager,
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
@@ -726,8 +723,7 @@ func (eng *aqEngine) execute(
 			}
 
 			if execState.Status == shared.PendingExecutionStatus {
-				spec := op.JobSpec()
-				err = jobManager.Launch(ctx, spec.JobName(), spec)
+				err = op.Launch(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
