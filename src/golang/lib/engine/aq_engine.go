@@ -7,6 +7,10 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
@@ -78,6 +82,9 @@ type aqEngine struct {
 	StorageConfig  *shared.StorageConfig
 	AqPath         string
 
+	// Only used for previews.
+	PreviewCacheManager artifact.PreviewCacheManager
+
 	// Readers and Writers needed for workflow management
 	*EngineReaders
 	*EngineWriters
@@ -126,6 +133,7 @@ type PreviewArtifactResults struct {
 func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
+	previewCacheManager artifact.PreviewCacheManager,
 	vault vault.Vault,
 	aqPath string,
 	storageConfig *shared.StorageConfig,
@@ -135,14 +143,15 @@ func NewAqEngine(
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
-		Database:       database,
-		GithubManager:  githubManager,
-		Vault:          vault,
-		CronjobManager: cronjobManager,
-		StorageConfig:  storageConfig,
-		AqPath:         aqPath,
-		EngineReaders:  engineReaders,
-		EngineWriters:  engineWriters,
+		Database:            database,
+		GithubManager:       githubManager,
+		PreviewCacheManager: previewCacheManager,
+		Vault:               vault,
+		CronjobManager:      cronjobManager,
+		StorageConfig:       storageConfig,
+		AqPath:              aqPath,
+		EngineReaders:       engineReaders,
+		EngineWriters:       engineWriters,
 	}, nil
 }
 
@@ -259,6 +268,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		engineJobManager,
 		eng.Vault,
 		eng.StorageConfig,
+		nil,   /* artifactCacheManager*/
 		false, // is not preview
 		eng.Database,
 	)
@@ -343,6 +353,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.StorageConfig,
+		eng.PreviewCacheManager,
 		true, // is a preview
 		eng.Database,
 	)

@@ -47,7 +47,6 @@ type AqServer struct {
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
-	PreviewArtifactCacheManager artifact.PreviewCacheManager
 	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
@@ -107,9 +106,10 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create preview artifact cache: ", err)
 	}
 
-		eng, err := engine.NewAqEngine(
+	eng, err := engine.NewAqEngine(
 		db,
 		githubManager,
+		previewArtifactCacheManager,
 		vault,
 		aqPath,
 		conf.StorageConfig,
@@ -126,7 +126,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
-		PreviewArtifactCacheManager: previewArtifactCacheManager,
 		Vault:         vault,
 		AqPath:        aqPath,
 		AqEngine:      eng,
