@@ -1,27 +1,17 @@
 name: Regression Test
 
 on:
-  push:
-    branches: [ eng-1240-create-regression-tests-for-package ]
-    paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'integration_tests/**'
-      - 'regressions_tests/**'
-      - 'sdk/aqueduct/**'
-      - '.github/workflows/regression-tests.yml'
-      - "examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
-      - "examples/sentiment_analysis/Sentiment Model.ipynb"
+  workflow_dispatch:
 
 jobs:
   run-tests:
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-latest]
     timeout-minutes: 20
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
     strategy:
       matrix:
         # These are all the Python versions that we want to regression test with.
-        python-version: ['3.8']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     name: Run Regressions Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -30,8 +20,11 @@ jobs:
       - name: Create the logs directory
         run: mkdir -p logs
 
-      - name: Set filename for the server's output logs
-        run: echo "SERVER_LOGS_FILE=logs/server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
+      - name: Set filename for the prev ver server's output logs
+        run: echo "SERVER_LOGS_PREV_FILE=logs/server_logs_prev_ver_${{ matrix.python-version }}" >> $GITHUB_ENV
+      
+      - name: Set filename for the current ver server's output logs
+        run: echo "SERVER_LOGS_CURRENT_FILE=logs/server_logs_curr_ver_${{ matrix.python-version }}" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -49,8 +42,8 @@ jobs:
       - name: Install aqueduct-ml
         run: pip3 install aqueduct-ml
 
-      - name: Start the server
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+      - name: Start the prev ver server
+        run: (aqueduct start > $SERVER_LOGS_PREV_FILE 2>&1 &)
 
       - name: Install Packages needed by the notebooks
         run: pip3 install sklearn transformers torch
@@ -70,12 +63,27 @@ jobs:
       - name: Install playwright
         run: npm install @playwright/test && npx playwright install && npx playwright install-deps
 
-      - name: Take screenshot of old workflow
+      - name: Take screenshot of old workflow run 1
         working-directory: regression_tests
         timeout-minutes: 5
-        run: imgpath=screenshots/old.png npx playwright test
+        run: imgname=old-flow-run-1 npx playwright test tests/screenshot.test.ts
+
+      - name: Trigger new workflow run 
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: npx playwright test tests/trigger.test.ts --project=chromium
+
+      - name: Take screenshot of old workflow run 2
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: imgname=old-flow-run-2 npx playwright test tests/screenshot.test.ts
+
+      - name: Take checkpoint of workflow
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: sleep 5 && python3 tests/workflow_comparer.py --server_address localhost:8080 --checkpoint=create --path=checkpoint
       
-      # Grabs the pid of the process bound to port 8080 and kills it.
+      # Grabs the pid of the process bound to port 8080 and kills it
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
       
@@ -84,7 +92,30 @@ jobs:
         run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start > $SERVER_LOGS_CURRENT_FILE 2>&1 &)
+      
+      - name: Wait for server again
+        timeout-minutes: 5
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
+      
+      - name: Compare checkpoint of workflow
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: python3 tests/workflow_comparer.py --server_address localhost:8080 --checkpoint=diff --path=checkpoint
+
+      - name: Take screenshot of old workflow run 2
+        working-directory: regression_tests
+        timeout-minutes: 5
+        run: imgname=old-flow-run-2 npx playwright test tests/screenshot.test.ts
+      
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+      
+      - name: clear the server
+        run: aqueduct clear
+
+      - name: Start the server again
+        run: (aqueduct start > $SERVER_LOGS_CURRENT_FILE 2>&1 &)
       
       - name: Wait for server again
         timeout-minutes: 5
@@ -93,7 +124,7 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Run Sentiment Notebook on previous release
+      - name: Run Sentiment Notebook on new release
         working-directory: examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
@@ -101,31 +132,7 @@ jobs:
       - name: Take screenshot of new workflow
         working-directory: regression_tests
         timeout-minutes: 5
-        run: imgpath=screenshots/new.png npx playwright test
-
-      # # Grabs the pid of the process bound to port 8080 and kills it.
-      # - name: Kill the server
-      #   run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-
-      # - name: Update aqueduct with current version release
-      #   run: python3 scripts/install_local.py --gobinary --sdk --executor
-
-      # - name: Start the server
-      #   run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
-
-      # - name: Wait for server
-      #   timeout-minutes: 1
-      #   run: while ! echo exit | nc localhost 8080; do sleep 1; done
-
-      # - name: Run Sentiment Notebook
-      #   working-directory: sdk/examples
-      #   timeout-minutes: 10
-      #   run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
-
-      # - name: Take screenshot of workflow
-      #   working-directory: regression_tests
-      #   timeout-minutes: 5
-      #   run: imgpath=screenshots/new.png npx playwright test
+        run: imgname=new-flow-run-1 npx playwright test tests/screenshot.test.ts
 
       - uses: actions/upload-artifact@v3
         if: always()

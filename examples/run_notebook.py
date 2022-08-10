@@ -106,6 +106,7 @@ def infer_flow_ids_from_stdout(
     # Deduplicate before returning
     return list(set(flow_ids))
 
+
 # The name of the python script to create from the notebook. This will be deleted after the notebook runs.
 NOTEBOOK_SCRIPT_NAME = "temp.py"
 CELL_CODE_HEADER_TEMPLATE = 'print("Cell %d")\n'
@@ -176,10 +177,6 @@ if args.flow_id is None:
     flow_ids = infer_flow_ids_from_stdout(client, code_block_list, stdout)
 else:
     flow_ids = [args.flow_id]
-
-flowIds = ", ".join(flow_ids)
-with open("flow_ids.txt", "w") as f:
-    f.write(flowIds)
 
 print(
     "Check that the output flow ids %s have had at least one successful run.\n"
