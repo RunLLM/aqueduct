@@ -24,7 +24,7 @@ type k8sJobManager struct {
 
 func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	return &k8sJobManager{
-		k8sClient: k8s.CreateClientInCluster(),
+		k8sClient: k8s.CreateClientOutsideCluster(conf.KubeConfigPath),
 		conf:      conf,
 	}, nil
 }
@@ -48,13 +48,13 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	// Encode job spec to prevent data loss
 	serializationType := JsonSerializationType
-	if spec.Type() == WorkflowJobType {
-		serializationType = GobSerializationType
-		serviceAccount = k8s.ExecutorServiceAccount
-		for k, v := range generateClusterEnvVar(j.conf) {
-			environmentVariables[k] = v
-		}
-	}
+	// if spec.Type() == WorkflowJobType {
+	// 	serializationType = GobSerializationType
+	// 	serviceAccount = k8s.ExecutorServiceAccount
+	// 	// for k, v := range generateClusterEnvVar(j.conf) {
+	// 	// 	environmentVariables[k] = v
+	// 	// }
+	// }
 
 	encodedSpec, err := EncodeSpec(spec, serializationType)
 	if err != nil {
@@ -116,8 +116,8 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 // Maps a job Spec to Docker image.
 func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 	switch spec.Type() {
-	case WorkflowJobType:
-		return j.conf.ExecutorDockerImage, nil
+	// case WorkflowJobType:
+	// 	return j.conf.ExecutorDockerImage, nil
 	case FunctionJobType:
 		return j.conf.FunctionDockerImage, nil
 	case AuthenticateJobType:
@@ -162,12 +162,12 @@ func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Se
 	}
 }
 
-func generateClusterEnvVar(conf *K8sConfig) map[string]string {
-	return map[string]string{
-		DevBranchKey:          conf.ExecutorDevBranch,
-		ClusterEnvironmentKey: conf.ClusterEnvironment,
-	}
-}
+// func generateClusterEnvVar(conf *K8sConfig) map[string]string {
+// 	return map[string]string{
+// 		DevBranchKey:          conf.ExecutorDevBranch,
+// 		ClusterEnvironmentKey: conf.ClusterEnvironment,
+// 	}
+// }
 
 func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string {
 	resourceRequest := map[string]string{
