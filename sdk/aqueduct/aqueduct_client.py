@@ -28,7 +28,7 @@ from .error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from .flow import Flow
+from .flow import Flow, FlowConfig
 from .flow_run import _show_dag
 from .github import Github
 from .integrations.airflow_integration import AirflowIntegration
@@ -303,7 +303,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
-        engine: AirflowIntegration = None,
+        config: FlowConfig = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -328,6 +328,11 @@ class Client:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
                 computation steps. All checks are on the resulting flow are also included.
+            config:
+                An optional set of config fields for this flow.
+                - engine: Specify where this flow should run with one of your connected integrations.
+                We currently support Airflow.
+
         Raises:
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
@@ -363,12 +368,12 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        if engine:
+        if config and config.engine:
             # This is an Airflow workflow
             dag.engine_config = EngineConfig(
                 type=RuntimeType.AIRFLOW,
                 airflow_config=AirflowEngineConfig(
-                    integration_id=engine._metadata.id,
+                    integration_id=config.engine._metadata.id,
                 )
             )
             resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
