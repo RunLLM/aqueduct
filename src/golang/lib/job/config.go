@@ -23,15 +23,7 @@ type ProcessConfig struct {
 }
 
 type K8sConfig struct {
-	MinikubeSystemPodCpu    string `yaml:"minikubeSystemPodCpu" json:"minikube_system_pod_cpu"`
-	MinikubeSystemPodMemory string `yaml:"minikubeSystemPodMemory" json:"minikube_system_pod_memory"`
-	MinikubeUserPodCpu      string `yaml:"minikubeUserPodCpu" json:"minikube_user_pod_cpu"`
-	MinikubeUserPodMemory   string `yaml:"minikubeUserPodMemory" json:"minikube_user_pod_memory"`
-	ClusterEnvironment      string `yaml:"clusterEnvironment" json:"cluster_environment"`
-
-	ExecutorDockerImage string `yaml:"ExecutorDockerImage" json:"executor_docker_image,omitempty"`
-	ExecutorDevBranch   string `yaml:"ExecutorDevBranch" json:"executor_development_branch,omitempty"`
-
+	KubeConfigPath                   string
 	FunctionDockerImage              string `yaml:"functionDockerImage" json:"function_docker_image"`
 	ParameterDockerImage             string `yaml:"parameterDockerImage" json:"parameter_docker_image"`
 	PostgresConnectorDockerImage     string `yaml:"postgresConnectorDockerImage" json:"postgres_connector_docker_image"`
