@@ -9,4 +9,4 @@ from pydantic import BaseModel
 class Artifact(BaseModel):
     id: uuid.UUID
     name: str
-    type: ArtifactType
+    type: Optional[ArtifactType]

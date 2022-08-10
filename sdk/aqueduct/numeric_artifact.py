@@ -4,7 +4,7 @@ import json
 import uuid
 from typing import Any, Callable, Dict, List, Optional
 
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.bool_artifact import BoolArtifact
 from aqueduct.dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -69,9 +69,9 @@ class NumericArtifact(Artifact):
         """
         if parameters:
             artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
-            if artifact_response.artifact_type != ArtifactType.NUMERIC:
-                raise Exception("Error: the computed result is expected to of type numeric, found %s" % artifact_response.artifact_type)
-            return artifact_response.get_deserialized_content()
+            if artifact.type() != ArtifactType.NUMERIC:
+                raise Exception("Error: the computed result is expected to of type numeric, found %s" % artifact.type())
+            return artifact._content()
         else:
             return self._content
 
@@ -96,7 +96,7 @@ class NumericArtifact(Artifact):
         equal: Optional[float] = None,
         notequal: Optional[float] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
-    ) -> CheckArtifact:
+    ) -> BoolArtifact:
         """Computes a bounds check on this metric with the specified boundary condition.
 
         Only one of `upper` and `lower` can be set.
@@ -202,7 +202,7 @@ class NumericArtifact(Artifact):
         check_name: str,
         check_description: str,
         severity: CheckSeverity = CheckSeverity.WARNING,
-    ) -> CheckArtifact:
+    ) -> BoolArtifact:
         zip_file = serialize_function(check_function)
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -229,14 +229,19 @@ class NumericArtifact(Artifact):
                         aqueduct.artifact.Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(check_name),
-                            type=ArtifactType.BOOL,
+                            type=ArtifactType.UNTYPED,
                         )
                     ],
                 ),
             ],
         )
 
-        return CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
+        # Issue preview request since this is an eager execution
+        artifact = preview_artifact(self._dag, output_artifact_id)
+        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+        assert isinstance(artifact, BoolArtifact)
+        return artifact
 
     def remove_check(self, name: str) -> None:
         apply_deltas_to_dag(

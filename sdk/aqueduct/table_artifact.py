@@ -206,7 +206,7 @@ class TableArtifact(Artifact):
         expectation_name: str,
         expectation_args: Optional[Dict[str, Any]] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
-    ) -> CheckArtifact:
+    ) -> BoolArtifact:
         """Creates a check that validates with the table with great_expectations and its set of internal expectations.
         The expectations supported can be found here:
         https://great-expectations.readthedocs.io/en/latest/reference/glossary_of_expectations.html
@@ -292,7 +292,7 @@ class TableArtifact(Artifact):
         check_name = "ge_table_check: {%s}" % expectation_name
         check_description = "Check table with built in expectations from great expectations"
         new_artifact = self._apply_operator_to_table(check_spec, check_name, check_description)
-        assert isinstance(new_artifact, CheckArtifact)
+        assert isinstance(new_artifact, BoolArtifact)
         return new_artifact
 
     def number_of_missing_values(self, column_id: Any = None, row_id: Any = None) -> NumericArtifact:
@@ -325,7 +325,7 @@ class TableArtifact(Artifact):
 
             metric_func = interal_num_missing_val_col
             metric_name = "num_col_missing_val(%s)" % column_id
-            metric_description = "compute number of missing values for col %s on table %s" % (
+            metric_description = "compute number of missing values for col %s on %s" % (
                 column_id,
                 table_name,
             )
@@ -336,7 +336,7 @@ class TableArtifact(Artifact):
 
             metric_func = interal_num_missing_val_row
             metric_name = "num_row_missing_val(%s)" % row_id
-            metric_description = "compute number of missing values for row %s on table %s" % (
+            metric_description = "compute number of missing values for row %s on %s" % (
                 column_id,
                 table_name,
             )
@@ -367,7 +367,7 @@ class TableArtifact(Artifact):
             return float(len(table))
 
         metric_name = "num_rows"
-        metric_description = "compute number of rows for table %s" % table_name
+        metric_description = "compute number of rows for %s" % table_name
         zip_file = serialize_function(internal_num_rows_metric)
 
         function_spec = FunctionSpec(
@@ -398,7 +398,7 @@ class TableArtifact(Artifact):
             return float(table[column_id].max())
 
         metric_name = "max(%s)" % column_id
-        metric_description = "Max for column %s for table %s" % (
+        metric_description = "Max for column %s for %s" % (
             column_id,
             table_name,
         )
@@ -432,7 +432,7 @@ class TableArtifact(Artifact):
             return float(table[column_id].min())
 
         metric_name = "min(%s)" % column_id
-        metric_description = "Min for column %s for table %s" % (
+        metric_description = "Min for column %s for %s" % (
             column_id,
             table_name,
         )
@@ -466,7 +466,7 @@ class TableArtifact(Artifact):
             return float(table[column_id].mean())
 
         metric_name = "mean(%s)" % column_id
-        metric_description = "Mean for column %s for table %s" % (
+        metric_description = "Mean for column %s for %s" % (
             column_id,
             table_name,
         )
@@ -502,7 +502,7 @@ class TableArtifact(Artifact):
             return std
 
         metric_name = "std(%s)" % column_id
-        metric_description = "std for column %s for table %s" % (
+        metric_description = "std for column %s for %s" % (
             column_id,
             table_name,
         )

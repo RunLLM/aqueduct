@@ -105,6 +105,8 @@ def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str
 ) -> List[Dict[str, Any]]:
     metadata_inputs = [_read_json_input(storage, input_path) for input_path in input_metadata_paths]
+    print("key name is", key_name)
+    print("metadata_inputs is", metadata_inputs)
     if any(key_name not in metadata for metadata in metadata_inputs):
         raise Exception(key_name + " does not exist in input metadata.")
     return [metadata[key_name] for metadata in metadata_inputs]
@@ -239,14 +241,10 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]) -> No
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
 
 
-def check_passed(content: Any) -> bool:
+def check_passed(content: Union[bool, np.bool_]) -> bool:
     """Given the output of a check operator, return whether the check passed or not."""
     if isinstance(content, bool) or isinstance(content, np.bool_):
         return bool(content)
-    elif isinstance(content, pd.Series) and content.dtype == "bool":
-        # We only write True if every boolean in the series is True.
-        series = pd.Series(content)
-        return bool(series.size - series.sum().item() == 0)
     else:
         raise Exception(
             "Expected output type of check to be either a bool or a series of booleans, "

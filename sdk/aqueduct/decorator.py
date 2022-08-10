@@ -2,11 +2,11 @@ from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
 from aqueduct.artifact import Artifact
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.bool_artifact import BoolArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.numeric_artifact import NumericArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
@@ -26,9 +26,9 @@ from aqueduct.preview import preview_artifact
 from aqueduct import dag as dag_module
 
 # Valid inputs and outputs to our operators.
-OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
-InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
+OutputArtifact = Union[TableArtifact, NumericArtifact, BoolArtifact]
+InputArtifact = Union[TableArtifact, NumericArtifact, ParamArtifact]
+InputArtifactLocal = Union[TableArtifact, NumericArtifact, ParamArtifact, DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
@@ -45,14 +45,14 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 def _is_input_artifact(elem: Any) -> bool:
     return (
         isinstance(elem, TableArtifact)
-        or isinstance(elem, MetricArtifact)
+        or isinstance(elem, NumericArtifact)
         or isinstance(elem, ParamArtifact)
     )
 
 
 def wrap_spec(
     spec: OperatorSpec,
-    *input_artifacts: UntypedArtifact,
+    *input_artifacts: GenericArtifact,
     op_name: str,
     description: str = "",
 ) -> GenericArtifact:
@@ -251,7 +251,7 @@ def metric(
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
-    Calling the decorated function returns a MetricArtifact. The decorated function
+    Calling the decorated function returns a NumericArtifact. The decorated function
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
@@ -286,7 +286,7 @@ def metric(
         >>> churn_table = db.sql("SELECT * from churn_table")
         >>> churn_metric = avg_churn(churn_table)
 
-        `churn_metric` is a MetricArtifact representing the result of `avg_churn()`.
+        `churn_metric` is a NumericArtifact representing the result of `avg_churn()`.
 
         >>> churn_metric.get()
     """
@@ -305,8 +305,8 @@ def metric(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> MetricArtifact:
+            *artifacts: GenericArtifact,
+        ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -335,7 +335,7 @@ def metric(
                 description=description,
             )
 
-            assert isinstance(new_metric_artifact, MetricArtifact)
+            assert isinstance(new_metric_artifact, NumericArtifact)
 
             return new_metric_artifact
 
@@ -362,7 +362,7 @@ def check(
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
-    Calling the decorated function returns a CheckArtifact. The decorated python function
+    Calling the decorated function returns a BoolArtifact. The decorated python function
     can have any number of artifact inputs.
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
@@ -402,7 +402,7 @@ def check(
         ...     return churn_table['pred_churn'].mean() < 0.1
         >>> churn_is_low_check = avg_churn_is_low(churn_table_artifact)
 
-        `churn_is_low_check` is a CheckArtifact representing the result of `avg_churn_is_low()`.
+        `churn_is_low_check` is a BoolArtifact representing the result of `avg_churn_is_low()`.
 
         >>> churn_is_low_check.get()
     """
@@ -421,8 +421,8 @@ def check(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> CheckArtifact:
+            *artifacts: GenericArtifact,
+        ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -448,7 +448,7 @@ def check(
                 description=description,
             )
 
-            assert isinstance(new_check_artifact, CheckArtifact)
+            assert isinstance(new_check_artifact, BoolArtifact)
 
             return new_check_artifact
 

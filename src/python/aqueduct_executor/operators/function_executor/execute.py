@@ -8,6 +8,7 @@ import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
 import cloudpickle as pickle
+import pandas as pd
 import numpy as np
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -28,6 +29,8 @@ from aqueduct_executor.operators.utils.execution import (
     ExecutionState,
     Logs,
     exception_traceback,
+    TIP_NOT_NUMERIC,
+    TIP_NOT_BOOL,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
@@ -188,6 +191,38 @@ def run(spec: FunctionSpec) -> None:
             sys.exit(1)
 
         print("Function invoked successfully!")
+        print("result is", result)
+        print("result type is", result_type)
+
+        # Perform type checking for metric and check operators.
+        type_error = False
+        if spec.operator_type == OperatorType.METRIC:
+            if not (isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number)):
+                type_error = True
+                type_error_tip = TIP_NOT_NUMERIC
+        elif spec.operator_type == OperatorType.CHECK:
+            if isinstance(result, pd.Series) and result.dtype == "bool":
+                # Cast pd.Series to a bool.
+                # We only write True if every boolean in the series is True.
+                series = pd.Series(result)
+                result = bool(series.size - series.sum().item() == 0)
+                result_type = ArtifactType.BOOL
+            elif isinstance(result, bool) or isinstance(result, np.bool_):
+                # Cast np.bool_ to a bool.
+                result = bool(result)
+            else:
+                type_error = True
+                type_error_tip = TIP_NOT_BOOL
+
+        if type_error:
+            exec_state.status = ExecutionStatus.FAILED
+            exec_state.failure_type = FailureType.USER_FATAL
+            exec_state.error = Error(
+                context="",
+                tip=type_error_tip,
+            )
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            sys.exit(1)
 
         utils.write_artifact(
             storage,
@@ -200,7 +235,7 @@ def run(spec: FunctionSpec) -> None:
 
         # For check operators, we want to fail the operator based on the exact output of the user's function.
         # Assumption: the check operator only has a single output.
-        if spec.operator_type == OperatorType.CHECK and not check_passed(results[0]):
+        if spec.operator_type == OperatorType.CHECK and not check_passed(result):
             check_severity = spec.check_severity
             if spec.check_severity is None:
                 print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")

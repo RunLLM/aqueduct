@@ -9,6 +9,7 @@ from aqueduct.generic_artifact import Artifact
 from aqueduct.deserialize import deserialization_function_mapping
 import aqueduct.table_artifact
 import aqueduct.numeric_artifact
+import aqueduct.bool_artifact
 from aqueduct.enums import ArtifactType
 
 
@@ -41,5 +42,7 @@ def preview_artifact(dag: DAG, artifact_id: uuid.UUID, parameters: Optional[Dict
         return aqueduct.table_artifact.TableArtifact(dag, artifact_id, content)
     elif artifact_type == ArtifactType.NUMERIC:
         return aqueduct.numeric_artifact.NumericArtifact(dag, artifact_id, content)
+    elif artifact_type == ArtifactType.BOOL:
+        return aqueduct.bool_artifact.BoolArtifact(dag, artifact_id, content)
     else:
         raise Exception("Unimplemented preview result artifact type!")

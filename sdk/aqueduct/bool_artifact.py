@@ -10,6 +10,7 @@ from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 from aqueduct import api_client
+from aqueduct.enums import ArtifactType
 
 
 class BoolArtifact(Artifact):
@@ -31,11 +32,13 @@ class BoolArtifact(Artifact):
         >>> assert check_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: bool, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
+        self._content = content
+        self._type = ArtifactType.BOOL
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
         """Materializes a CheckArtifact into a boolean.
@@ -49,26 +52,13 @@ class BoolArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
-        dag = apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
-            ],
-            make_copy=True,
-        )
-        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
-        artifact_result = preview_resp.artifact_results[self._artifact_id]
-
-        if artifact_result.check:
-            return artifact_result.check.passed
+        if parameters:
+            artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
+            if artifact.type() != ArtifactType.BOOL:
+                raise Exception("Error: the computed result is expected to of type bool, found %s" % artifact.type())
+            return artifact._content()
         else:
-            raise AqueductError("Unable to parse execution results.")
+            return self._content
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""
