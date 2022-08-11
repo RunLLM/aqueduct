@@ -1,6 +1,8 @@
+from enum import Enum
 from typing import Optional, Union
 
 from aqueduct_executor.operators.connectors.tabular import models
+from aqueduct_executor.operators.utils.enums import MetaEnum
 from pydantic import Field
 
 
@@ -25,10 +27,24 @@ class PostgresConfig(models.BaseConfig):
     port: Optional[str] = "5432"
 
 
+class S3CredentialType(str, Enum, metaclass=MetaEnum):
+    ACCESS_KEY = "access_key"
+    CONFIG_FILE = "config_file"
+
+
 class S3Config(models.BaseConfig):
-    access_key_id: str
-    secret_access_key: str
-    bucket: str
+    # default type to ACCESS_KEY mainly for backward compatibility
+    type: S3CredentialType = S3CredentialType.ACCESS_KEY
+
+    # Access key credentials
+    access_key_id: str = ""
+    secret_access_key: str = ""
+
+    # Aws config file credentials
+    config_file_path: str = ""
+    config_file_profile: str = ""
+
+    bucket: str = ""
 
 
 class SnowflakeConfig(models.BaseConfig):

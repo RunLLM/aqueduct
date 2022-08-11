@@ -1,14 +1,24 @@
 import io
 import json
-from typing import List
+import os
+from typing import List, Optional
 
 import boto3
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
+from aqueduct_executor.operators.connectors.tabular import common, connector, extract, load
+from aqueduct_executor.operators.connectors.tabular.config import S3Config, S3CredentialType
 
 
 class S3Connector(connector.TabularConnector):
-    def __init__(self, config: config.S3Config):
+    def __init__(self, config: S3Config):
+        if config.type == S3CredentialType.CONFIG_FILE:
+            os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
+            os.environ["AWS_CONFIG_FILE"] = config.config_file_path
+            session = boto3.Session(profile_name=config.config_file_profile)
+            credentials = session.get_credentials()
+            config.access_key_id = credentials.access_key
+            config.secret_access_key = credentials.secret_key
+
         self.s3 = boto3.resource(
             "s3",
             aws_access_key_id=config.access_key_id,
