@@ -2,11 +2,13 @@ package job
 
 import (
 	"context"
+	"os/exec"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -27,23 +29,27 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
-	err = k8s.CreateServiceAccount(
-		k8s.FunctionServiceAccount,
-		k8s.UserNamespace,
-		generateS3Annotation(
-			k8s.FunctionServiceAccount,
-			k8s.UserNamespace,
-			k8s.AwsFunctionRoleName,
-			&conf.OidcIssuerUri,
-			conf.OidcProviderArn,
-			conf.AwsRegion,
-			conf.ClusterName,
-		),
-		k8sClient,
+	// create function service account
+	// add docker secrets + image pulling
+	// add aws credentials as secrets??? <- might not need if we are adding the service accounts
+
+	// Update kubeconfig file
+	cmd := exec.Command(
+		"aws",
+		"eks",
+		"update-kubeconfig",
+		"--region", conf.AwsRegion,
+		"--name", conf.ClusterName,
+		"--kubeconfig", conf.KubeConfigPath,
 	)
+	err = cmd.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create function service account.")
+		return nil, errors.Wrap(err, "Unable to update kubeconfig.")
 	}
+
+	k8s.CreateNamespaces(k8sClient)
+	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeConfigPath)
+
 	return &k8sJobManager{
 		k8sClient: k8sClient,
 		conf:      conf,
@@ -54,8 +60,9 @@ func (j *k8sJobManager) Config() Config {
 	return j.conf
 }
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+	logrus.Info("In K8sJobManager.Launch()")
+	logrus.Info(spec)
 	resourceRequest := generateResourceRequest(j.conf, spec.Type())
-	serviceAccount := k8s.FunctionServiceAccount
 	environmentVariables := map[string]string{}
 
 	if spec.Type() == FunctionJobType {
@@ -98,14 +105,13 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		&environmentVariables,
 		secretEnvVars,
 		&resourceRequest,
-		serviceAccount,
 		j.k8sClient,
 	)
 }
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(name, j.k8sClient)
 	if err != nil {
-		return shared.FailedExecutionStatus, err
+		return shared.UnknownExecutionStatus, ErrJobNotExist
 	}
 
 	var status shared.ExecutionStatus
