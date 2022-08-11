@@ -1,12 +1,13 @@
 import json
+import base64
 import sys
 from io import StringIO
 from unittest.mock import MagicMock
 
 from aqueduct.decorator import check, metric
-from aqueduct.enums import ExecutionStatus
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.responses import ArtifactResult, MetricArtifactResult, OperatorResult, PreviewResponse
+from aqueduct.enums import ExecutionStatus, ArtifactType, SerializationType
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.responses import ArtifactResult, PreviewResponse
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
 
@@ -38,44 +39,53 @@ def test_metric():
     )
     dag = metric_input._dag
 
+    def mocked_preview(dag):
+        output_artifact_id = None
+        for id in dag.artifacts:
+            if dag.artifacts[id].name == metric_artifact_name:
+                output_artifact_id = id
+                break
+
+        if output_artifact_id is None:
+            raise Exception("Unable to find output artifact from the dag.")
+
+        status = ExecutionStatus.SUCCEEDED
+        artifact_results = {
+            output_artifact_id: ArtifactResult(
+                serialization_type=SerializationType.JSON,
+                artifact_type=ArtifactType.NUMERIC,
+                content=base64.b64encode(json.dumps(output).encode()),
+            ),
+        }
+
+        return PreviewResponse(
+            status=status,
+            operator_results={},
+            artifact_results=artifact_results,
+        )
+
+    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(side_effect=mocked_preview)
+
     try:
-        metric_output: MetricArtifact = metric_fn(metric_input)
+        metric_output: NumericArtifact = metric_fn(metric_input)
     finally:
         delete_zip_folder_and_file(zip_folder)
 
-    status = ExecutionStatus.SUCCEEDED
-    operator_results = {
-        op_id: OperatorResult(),
-    }
-    artifact_results = {
-        metric_output.id(): ArtifactResult(metric=MetricArtifactResult(val=output)),
-    }
-    preview_output = PreviewResponse(
-        status=status,
-        operator_results=operator_results,
-        artifact_results=artifact_results,
-    )
-    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(return_value=preview_output)
 
     metric_val = metric_output.get()
 
-    api_client.__GLOBAL_API_CLIENT__.preview.assert_called_with(dag=dag)
     assert len(dag.operators) == len(dag.artifacts)
     assert len(dag.operators) == 2
 
     artifact_check = {
-        artifact_name: {
-            "float": None,
-            "table": {},
-        },
-        metric_artifact_name: {"float": {}, "table": None},
+        artifact_name: ArtifactType.TABULAR,
+        metric_artifact_name: ArtifactType.NUMERIC,
     }
 
     for artifact in dag.artifacts:
         artifact = dag.artifacts[artifact]
         assert artifact.name in artifact_check.keys()
-        assert artifact.spec.float == artifact_check[artifact.name]["float"]
-        assert artifact.spec.table == artifact_check[artifact.name]["table"]
+        assert artifact.type == artifact_check[artifact.name]
         if artifact.name == metric_artifact_name:
             metric_artifact_id = artifact.id
 
@@ -111,7 +121,7 @@ def test_metrics_and_checks_on_table_describe():
     metric_input = default_table_artifact()
 
     try:
-        metric_output: MetricArtifact = metric_fn(metric_input)
+        metric_output: NumericArtifact = metric_fn(metric_input)
     finally:
         delete_zip_folder_and_file(zip_folder)
 
@@ -122,6 +132,35 @@ def test_metrics_and_checks_on_table_describe():
         return metric_output > 0
 
     check_name = "check_fn"
+    check_artifact_name = f"{check_name} artifact"
+
+    def mocked_preview(dag):
+        output_artifact_id = None
+        for id in dag.artifacts:
+            if dag.artifacts[id].name == check_artifact_name:
+                output_artifact_id = id
+                break
+
+        if output_artifact_id is None:
+            raise Exception("Unable to find output artifact from the dag.")
+
+        status = ExecutionStatus.SUCCEEDED
+        artifact_results = {
+            output_artifact_id: ArtifactResult(
+                serialization_type=SerializationType.JSON,
+                artifact_type=ArtifactType.BOOL,
+                content=base64.b64encode(json.dumps(True).encode()),
+            ),
+        }
+
+        return PreviewResponse(
+            status=status,
+            operator_results={},
+            artifact_results=artifact_results,
+        )
+
+    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(side_effect=mocked_preview)
+
     check_fn(metric_output)
 
     redirect_stdout = StringIO()

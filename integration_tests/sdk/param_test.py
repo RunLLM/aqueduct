@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import pytest
+from pandas.util.testing import assert_frame_equal
 from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
@@ -13,6 +14,8 @@ from aqueduct import metric, op
 
 @metric
 def double_number_input(num: int) -> float:
+    print("input is", num)
+    print(type(num))
     if not isinstance(num, int):
         raise Exception("Expected an integer input.")
     return float(2 * num)
@@ -51,7 +54,9 @@ def test_basic_param_creation(client):
     assert param.get() == kv
 
     kv_df = convert_dict_to_df(param)
-    assert kv_df.get().equals(pd.DataFrame(data=kv))
+    # We don't use df.equals because when comparing floating point values, our internal serialization
+    # may have changed the value's accuracy. assert_frame_equal takes this into account.
+    assert_frame_equal(kv_df.get(), pd.DataFrame(data=kv))
 
 
 def test_non_jsonable_parameter(client):

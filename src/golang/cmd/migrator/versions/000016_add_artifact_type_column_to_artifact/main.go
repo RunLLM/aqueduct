@@ -1,4 +1,4 @@
-package _000014_add_exec_state_column_to_artifact_result
+package _000016_add_artifact_type_column_to_artifact
 
 import (
 	"context"

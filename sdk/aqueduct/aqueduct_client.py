@@ -6,11 +6,11 @@ from typing import Any, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.generic_artifact import Artifact as GenericArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 
 from aqueduct import api_client, dag
 
-from .artifact import Artifact
+from aqueduct.artifacts.artifact import Artifact
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -36,7 +36,7 @@ from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
-from .param_artifact import ParamArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
 from .utils import (
     _infer_requirements,
     generate_ui_url,
@@ -173,7 +173,7 @@ class Client:
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=output_artifact_id,
                             name=name,
                             # TODO(cgwu): revisit the type here.
@@ -293,7 +293,7 @@ class Client:
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
-        artifacts: Optional[List[GenericArtifact]] = None,
+        artifacts: Optional[List[Artifact]] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -433,7 +433,7 @@ class Client:
         #  was successfully deleted.
         api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
 
-    def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
+    def show_dag(self, artifacts: Optional[List[Artifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
 
         A user outside the notebook environment will be redirected to a page in their browser

@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.generic_artifact import Artifact
+from aqueduct.artifacts.artifact import Artifact
 from aqueduct.utils import format_header_for_print
 
 

@@ -32,7 +32,7 @@ func newParamOperator(
 		return nil, errWrongNumOutputs
 	}
 	if outputs[0].Type() != db_artifact.JsonType {
-		return nil, errors.Newf("Internal Error: parameter must output a JSON artifact.")
+		return nil, errors.Newf("Internal Error: parameter must output a JSON artifact, found %s %s.", outputs[0].Name(), outputs[0].Type())
 	}
 
 	return &paramOperatorImpl{

@@ -1,4 +1,5 @@
 import sys
+import json
 
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import enums, utils
@@ -10,6 +11,7 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:
@@ -20,13 +22,21 @@ def run(spec: ParamSpec) -> None:
 
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
+    deserialized_value = json.loads(spec.val)
+    artifact_type = infer_artifact_type(deserialized_value)
+
+    print("writing parameter value")
+    print(deserialized_value)
+    print(type(deserialized_value))
+    print(artifact_type.value)
+
     try:
         utils.write_artifact(
             storage,
-            enums.ArtifactType.JSON,
+            artifact_type,
             spec.output_content_path,
             spec.output_metadata_path,
-            spec.val,
+            deserialized_value,
             system_metadata={},
         )
         exec_state.status = enums.ExecutionStatus.SUCCEEDED

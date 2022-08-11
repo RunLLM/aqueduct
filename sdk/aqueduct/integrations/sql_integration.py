@@ -3,7 +3,7 @@ import re
 from typing import Optional, Union
 
 import pandas as pd
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserArgumentException
@@ -16,9 +16,9 @@ from aqueduct.operators import (
     RelationalDBLoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
-from aqueduct.preview import preview_artifact
+from aqueduct.artifacts import utils as artifact_utils
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -189,7 +189,7 @@ class RelationalDBIntegration(Integration):
                         outputs=[sql_output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
                             type=ArtifactType.UNTYPED,
@@ -200,10 +200,10 @@ class RelationalDBIntegration(Integration):
         )
 
         # Issue preview request since this is an eager execution
-        artifact = preview_artifact(self._dag, sql_output_artifact_id)
-        self._dag.must_get_artifact(sql_output_artifact_id).type = artifact.type()
-
+        artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
         assert isinstance(artifact, TableArtifact)
+
+        self._dag.must_get_artifact(sql_output_artifact_id).type = artifact.type()
 
         return artifact
 

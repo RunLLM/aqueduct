@@ -1,8 +1,7 @@
-import base64
 import json
 from typing import List, Optional, Union
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, S3TabularFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
@@ -14,9 +13,9 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
-from aqueduct.preview import preview_artifact
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.artifact import Artifact
 
 
 class S3Integration(Integration):
@@ -36,7 +35,7 @@ class S3Integration(Integration):
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
-    ) -> UntypedArtifact:
+    ) -> Artifact:
         """
         Reads one or more files from the S3 integration.
 
@@ -110,7 +109,7 @@ class S3Integration(Integration):
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
                             type=ArtifactType.UNTYPED,
@@ -121,7 +120,7 @@ class S3Integration(Integration):
         )
 
         # Issue preview request since this is an eager execution
-        artifact = preview_artifact(self._dag, output_artifact_id)
+        artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
         self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
         return artifact

@@ -11,7 +11,7 @@ from aqueduct.operators import (
     OperatorSpec,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 

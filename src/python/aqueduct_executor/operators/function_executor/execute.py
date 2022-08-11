@@ -37,6 +37,7 @@ from aqueduct_executor.operators.utils.timer import Timer
 from aqueduct_executor.operators.utils.utils import check_passed
 from pandas import DataFrame
 from PIL import Image
+from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -102,36 +103,6 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     return getattr(function, method_name)  # type: ignore
 
 
-def _infer_result_type(result: Any) -> ArtifactType:
-    if isinstance(result, DataFrame):
-        return ArtifactType.TABULAR
-    elif isinstance(result, Image.Image):
-        return ArtifactType.IMAGE
-    elif isinstance(result, bytes):
-        return ArtifactType.BYTES
-    elif isinstance(result, str):
-        # We first check if the result is a valid JSON string.
-        try:
-            json.loads(result)
-            return ArtifactType.JSON
-        except:
-            return ArtifactType.STRING
-    elif isinstance(result, bool) or isinstance(result, np.bool_):
-        return ArtifactType.BOOL
-    elif isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number):
-        return ArtifactType.NUMERIC
-    elif isinstance(result, dict):
-        return ArtifactType.DICT
-    elif isinstance(result, tuple):
-        return ArtifactType.TUPLE
-    else:
-        try:
-            pickle.dumps(result)
-            return ArtifactType.PICKLABLE
-        except:
-            raise Exception("Failed to map type %s to supported artifact type." % type(result))
-
-
 def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
@@ -155,7 +126,7 @@ def _execute_function(
         return invoke(*inputs)
 
     result = _invoke()
-    inferred_result_type = _infer_result_type(result)
+    inferred_result_type = infer_artifact_type(result)
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()

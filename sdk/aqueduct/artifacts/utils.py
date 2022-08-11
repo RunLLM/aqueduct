@@ -5,11 +5,12 @@ from typing import Any, Dict, Optional
 from aqueduct.responses import ArtifactResult
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct import api_client
-from aqueduct.generic_artifact import Artifact
+from aqueduct.artifacts.artifact import Artifact
 from aqueduct.deserialize import deserialization_function_mapping
-import aqueduct.table_artifact
-import aqueduct.numeric_artifact
-import aqueduct.bool_artifact
+from aqueduct.artifacts import table_artifact
+from aqueduct.artifacts import numeric_artifact
+from aqueduct.artifacts import bool_artifact
+from aqueduct.artifacts import generic_artifact
 from aqueduct.enums import ArtifactType
 
 
@@ -39,10 +40,10 @@ def preview_artifact(dag: DAG, artifact_id: uuid.UUID, parameters: Optional[Dict
     content = deserialization_function_mapping[serialization_type](base64.b64decode(artifact_response.content))
     
     if artifact_type == ArtifactType.TABULAR:
-        return aqueduct.table_artifact.TableArtifact(dag, artifact_id, content)
+        return table_artifact.TableArtifact(dag, artifact_id, content)
     elif artifact_type == ArtifactType.NUMERIC:
-        return aqueduct.numeric_artifact.NumericArtifact(dag, artifact_id, content)
+        return numeric_artifact.NumericArtifact(dag, artifact_id, content)
     elif artifact_type == ArtifactType.BOOL:
-        return aqueduct.bool_artifact.BoolArtifact(dag, artifact_id, content)
+        return bool_artifact.BoolArtifact(dag, artifact_id, content)
     else:
-        raise Exception("Unimplemented preview result artifact type!")
+        return generic_artifact.GenericArtifact(dag, artifact_id, artifact_type, content)

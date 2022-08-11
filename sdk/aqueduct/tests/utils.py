@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
     ArtifactType,
@@ -23,10 +23,11 @@ from aqueduct.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid
 
 from aqueduct import dag as dag_module
+import pandas as pd
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:
@@ -35,7 +36,7 @@ def generate_uuids(num: int) -> List[uuid.UUID]:
 
 def _construct_dag(
     operators: List[Operator],
-    artifacts: List[Artifact],
+    artifacts: List[ArtifactMetadata],
 ):
     return DAG(
         operators={**{str(op.id): op for op in operators}},
@@ -126,8 +127,8 @@ def default_load_spec() -> OperatorSpec:
     )
 
 
-def default_artifact(id: uuid.UUID, name: str) -> Artifact:
-    return Artifact(id=id, name=name, type=ArtifactType.TABULAR)
+def default_artifact(id: uuid.UUID, name: str) -> ArtifactMetadata:
+    return ArtifactMetadata(id=id, name=name, type=ArtifactType.TABULAR)
 
 
 def default_table_artifact(
@@ -140,7 +141,7 @@ def default_table_artifact(
         operator_id = generate_uuid()
     if not artifact_id:
         artifact_id = generate_uuid()
-    artifact = Artifact(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
+    artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
     op = _construct_operator(
         id=operator_id,
         name=operator_name,
@@ -152,4 +153,4 @@ def default_table_artifact(
         operators=[op],
         artifacts=[artifact],
     )
-    return TableArtifact(dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id)
+    return TableArtifact(dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame())

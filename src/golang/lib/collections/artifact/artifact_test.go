@@ -15,7 +15,7 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	atf := artifact.DBArtifact{
 		Id:   id,
 		Name: "test",
-		Spec: artifact.Spec{artifact.TabularType},
+		Type: artifact.TabularType,
 	}
 
 	_, err := json.Marshal(atf)

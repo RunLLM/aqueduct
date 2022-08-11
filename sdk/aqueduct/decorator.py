@@ -1,16 +1,15 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-from aqueduct.artifact import Artifact
-from aqueduct.bool_artifact import BoolArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
-from aqueduct.untyped_artifact import UntypedArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -20,8 +19,8 @@ from aqueduct.utils import (
     serialize_function,
 )
 from pandas import DataFrame
-from aqueduct.generic_artifact import Artifact as GenericArtifact
-from aqueduct.preview import preview_artifact
+from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts import utils as artifact_utils
 
 from aqueduct import dag as dag_module
 
@@ -33,7 +32,7 @@ InputArtifactLocal = Union[TableArtifact, NumericArtifact, ParamArtifact, DataFr
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
 # Type declarations for functions
-DecoratedFunction = Callable[[UserFunction], Callable[..., UntypedArtifact]]
+DecoratedFunction = Callable[[UserFunction], Callable[..., Artifact]]
 
 # Type declarations for metrics
 DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
@@ -52,10 +51,10 @@ def _is_input_artifact(elem: Any) -> bool:
 
 def wrap_spec(
     spec: OperatorSpec,
-    *input_artifacts: GenericArtifact,
+    *input_artifacts: Artifact,
     op_name: str,
     description: str = "",
-) -> GenericArtifact:
+) -> Artifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -104,7 +103,7 @@ def wrap_spec(
                     outputs=[output_artifact_id],
                 ),
                 output_artifacts=[
-                    Artifact(
+                    ArtifactMetadata(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
                         type=ArtifactType.UNTYPED,
@@ -115,7 +114,7 @@ def wrap_spec(
     )
 
     # Issue preview request since this is an eager execution
-    artifact = preview_artifact(dag, output_artifact_id)
+    artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
     dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
     return artifact
@@ -156,7 +155,7 @@ def op(
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
-    Calling the decorated function returns an UntypedArtifact. The decorated function
+    Calling the decorated function returns an Artifact. The decorated function
     can take any number of artifact inputs.
 
     To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
@@ -190,7 +189,7 @@ def op(
         >>> recent_clicks = db.sql("SELECT * recent_clicks", db="google_analytics/shopping")
         >>> recommendations = compute_recommendations(customer_profiles, recent_clicks)
 
-        `recommendations` is an UntypedArtifact representing the result of `compute_recommendations()`.
+        `recommendations` is an Artifact representing the result of `compute_recommendations()`.
 
         >>> recommendations.get()
     """
@@ -204,7 +203,7 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*input_artifacts: GenericArtifact) -> GenericArtifact:
+        def wrapped(*input_artifacts: Artifact) -> Artifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -305,7 +304,7 @@ def metric(
 
         @wraps(func)
         def wrapped(
-            *artifacts: GenericArtifact,
+            *artifacts: Artifact,
         ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -421,7 +420,7 @@ def check(
 
         @wraps(func)
         def wrapped(
-            *artifacts: GenericArtifact,
+            *artifacts: Artifact,
         ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:

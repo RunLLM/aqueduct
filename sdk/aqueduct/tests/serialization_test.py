@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
     ArtifactType,
@@ -14,6 +14,7 @@ from aqueduct.enums import (
     S3TabularFormat,
     SalesforceExtractType,
     ServiceType,
+    SerializationType,
 )
 from aqueduct.operators import (
     ExtractSpec,
@@ -30,7 +31,7 @@ from aqueduct.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.responses import Logs, OperatorResult, PreviewResponse, TableArtifactResult
+from aqueduct.responses import Logs, OperatorResult, PreviewResponse, ArtifactResult
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 
@@ -38,13 +39,13 @@ from aqueduct.utils import generate_uuid
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = Artifact(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
+    extract_artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
 
     assert extract_artifact.json() == json.dumps(
         {
             "id": str(artifact_id),
             "name": artifact_name,
-            "spec": {"table": {}, "float": None, "bool": None, "jsonable": None},
+            "type": ArtifactType.TABULAR,
         }
     )
 
@@ -91,9 +92,10 @@ def test_preview_response_loading():
         user_logs=Logs(stdout="These are the operator logs"),
     )
     artifact_id = uuid.uuid4()
-    artifact_result = TableArtifactResult(
-        table_schema=[{"Col 1": "int"}, {"Col 2": "str"}],
-        data=b"This is a serialized pandas dataframe",
+    artifact_result = ArtifactResult(
+        serialization_type=SerializationType.TABULAR,
+        artifact_type=ArtifactType.TABULAR,
+        content="This is a serialized pandas dataframe",
     )
     preview_resp = {
         "status": ExecutionStatus.SUCCEEDED,
@@ -261,6 +263,7 @@ def test_extract_serialization():
                 integration_id=integration_id,
                 parameters=S3ExtractParams(
                     filepath=json.dumps("test.csv"),
+                    artifact_type=ArtifactType.TABULAR,
                     format=S3TabularFormat.CSV,
                 ),
             ),
@@ -278,6 +281,7 @@ def test_extract_serialization():
                     "integration_id": str(integration_id),
                     "parameters": {
                         "filepath": json.dumps("test.csv"),
+                        "artifact_type": ArtifactType.TABULAR,
                         "format": "CSV",
                     },
                 }

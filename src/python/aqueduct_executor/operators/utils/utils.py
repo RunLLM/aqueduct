@@ -12,6 +12,7 @@ from aqueduct_executor.operators.utils.enums import (
 )
 from aqueduct_executor.operators.utils.execution import ExecutionState
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pandas import DataFrame
 from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
@@ -257,3 +258,33 @@ def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -
     Writes the provided Airflow DAG file to storage.
     """
     storage.put(path, dag_file)
+
+
+def infer_artifact_type(value: Any) -> ArtifactType:
+    if isinstance(value, DataFrame):
+        return ArtifactType.TABULAR
+    elif isinstance(value, Image.Image):
+        return ArtifactType.IMAGE
+    elif isinstance(value, bytes):
+        return ArtifactType.BYTES
+    elif isinstance(value, str):
+        # We first check if the value is a valid JSON string.
+        try:
+            json.loads(value)
+            return ArtifactType.JSON
+        except:
+            return ArtifactType.STRING
+    elif isinstance(value, bool) or isinstance(value, np.bool_):
+        return ArtifactType.BOOL
+    elif isinstance(value, int) or isinstance(value, float) or isinstance(value, np.number):
+        return ArtifactType.NUMERIC
+    elif isinstance(value, dict):
+        return ArtifactType.DICT
+    elif isinstance(value, tuple):
+        return ArtifactType.TUPLE
+    else:
+        try:
+            pickle.dumps(value)
+            return ArtifactType.PICKLABLE
+        except:
+            raise Exception("Failed to map type %s to supported artifact type." % type(value))

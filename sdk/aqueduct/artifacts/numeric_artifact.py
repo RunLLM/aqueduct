@@ -3,19 +3,19 @@ from __future__ import annotations
 import json
 import uuid
 from typing import Any, Callable, Dict, List, Optional
+from numbers import Number
 
-from aqueduct.bool_artifact import BoolArtifact
+from aqueduct.artifacts import bool_artifact
 from aqueduct.dag import (
     DAG,
     AddOrReplaceOperatorDelta,
     RemoveCheckOperatorDelta,
-    SubgraphDAGDelta,
-    UpdateParametersDelta,
     apply_deltas_to_dag,
 )
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError
-from aqueduct.generic_artifact import Artifact
+from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -26,8 +26,7 @@ from aqueduct.utils import (
 )
 
 import aqueduct
-from aqueduct import api_client
-from aqueduct.preview import preview_artifact
+from aqueduct.artifacts import utils as artifact_utils
 
 
 class NumericArtifact(Artifact):
@@ -47,19 +46,25 @@ class NumericArtifact(Artifact):
         >>> val = metric_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: Any, from_flow_run: bool = False):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: Optional[Number] = None, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
         self._content = content
+        if self._from_flow_run:
+            # If the artifact is initialized from a flow run, then it should not contain any content.
+            assert(self._content is None)
+        else:
+            assert(self._content is not None)
+
         self._type = ArtifactType.NUMERIC
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> float:
-        """Materializes a MetricArtifact into its immediate float value.
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Number:
+        """Materializes a NumericArtifact into its immediate float value.
 
         Returns:
-            The evaluated metric as a float.
+            The evaluated metric as a number.
 
         Raises:
             InvalidRequestError:
@@ -68,12 +73,15 @@ class NumericArtifact(Artifact):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         if parameters:
-            artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
+            artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.NUMERIC:
                 raise Exception("Error: the computed result is expected to of type numeric, found %s" % artifact.type())
-            return artifact._content()
-        else:
-            return self._content
+            return artifact._content
+
+        if self._content is None:
+            self._content = artifact_utils.preview_artifact(self._dag, self._artifact_id)._content
+
+        return self._content
 
     BOUND_LOWER = "bound"
     BOUND_UPPER = "upper"
@@ -96,7 +104,7 @@ class NumericArtifact(Artifact):
         equal: Optional[float] = None,
         notequal: Optional[float] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
-    ) -> BoolArtifact:
+    ) -> bool_artifact.BoolArtifact:
         """Computes a bounds check on this metric with the specified boundary condition.
 
         Only one of `upper` and `lower` can be set.
@@ -202,7 +210,7 @@ class NumericArtifact(Artifact):
         check_name: str,
         check_description: str,
         severity: CheckSeverity = CheckSeverity.WARNING,
-    ) -> BoolArtifact:
+    ) -> bool_artifact.BoolArtifact:
         zip_file = serialize_function(check_function)
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -226,7 +234,7 @@ class NumericArtifact(Artifact):
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        aqueduct.artifact.Artifact(
+                        ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(check_name),
                             type=ArtifactType.UNTYPED,
@@ -237,10 +245,11 @@ class NumericArtifact(Artifact):
         )
 
         # Issue preview request since this is an eager execution
-        artifact = preview_artifact(self._dag, output_artifact_id)
+        artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
+        assert isinstance(artifact, bool_artifact.BoolArtifact)
+
         self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
-        assert isinstance(artifact, BoolArtifact)
         return artifact
 
     def remove_check(self, name: str) -> None:
@@ -269,7 +278,7 @@ class NumericArtifact(Artifact):
         return readable_dict
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the metric artifact."""
+        """Prints out a human-readable description of the numeric artifact."""
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-        print(format_header_for_print(f"'{input_operator.name}' Metric Artifact"))
+        print(format_header_for_print(f"'{input_operator.name}' Numeric Artifact"))
         print(json.dumps(self._describe(), sort_keys=False, indent=4))

@@ -2,11 +2,11 @@ import time
 import uuid
 from typing import Dict, List, Optional, Union
 
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.enums import ExecutionStatus
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from pandas import DataFrame
 
 # Should be set before each test runs.
@@ -92,7 +92,7 @@ def run_sentiment_model_local_multiple_input(
 
 def run_flow_test(
     client: aqueduct.Client,
-    artifacts: List[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]],
+    artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact, ParamArtifact]],
     name: str = "",
     schedule: str = "",
     num_runs: int = 1,

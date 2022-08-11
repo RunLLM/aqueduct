@@ -30,7 +30,7 @@ func TestGetLoadOperatorSpecByOrganization(t *testing.T) {
 		context.Background(),
 		randString(5),
 		randString(10),
-		&artifact.Spec{artifact.TabularType},
+		artifact.TabularType,
 		db,
 	)
 	require.Nil(t, err)

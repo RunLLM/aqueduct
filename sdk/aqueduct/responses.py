@@ -3,7 +3,7 @@ import textwrap
 import uuid
 from typing import Dict, List, Optional, Any
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
 from aqueduct.enums import ExecutionStatus, FailureType, SerializationType, ArtifactType
 from aqueduct.operators import Operator
@@ -57,10 +57,6 @@ class ArtifactResult(BaseModel):
     serialization_type: SerializationType
     artifact_type: ArtifactType
     content: str
-
-    def get_deserialized_content(self) -> Any:
-        return deserialization_function_mapping[self.serialization_type](base64.b64decode(self.content))
-
 
 
 class PreviewResponse(BaseModel):
@@ -151,7 +147,7 @@ class WorkflowDagResponse(BaseModel):
     workflow_id: uuid.UUID
     metadata: Metadata
     operators: Dict[str, Operator]
-    artifacts: Dict[str, Artifact]
+    artifacts: Dict[str, ArtifactMetadata]
 
 
 class WorkflowDagResultResponse(BaseModel):
