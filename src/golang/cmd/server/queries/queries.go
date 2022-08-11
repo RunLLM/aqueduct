@@ -40,13 +40,13 @@ type ArtifactCheckResponse struct {
 	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	Status              shared.ExecutionStatus `db:"status" json:"status"`
 	Name                string                 `db:"name" json:"name"`
-	Metadata            shared.ExecutionState  `db:"metadata" json:"metadata"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
 }
 
 type ArtifactOperatorResponse struct {
-	ArtifactId          uuid.UUID             `db:"artifact_id" json:"artifact_id"`
-	Metadata            shared.ExecutionState `db:"metadata" json:"metadata"`
-	WorkflowDagResultId uuid.UUID             `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID              `db:"artifact_id" json:"artifact_id"`
+	Metadata            *shared.ExecutionState `db:"metadata" json:"metadata"`
+	WorkflowDagResultId uuid.UUID              `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 }
 
 type WorkflowLastRunResponse struct {
@@ -72,6 +72,14 @@ type Reader interface {
 		organizationId string,
 		db database.Database,
 	) ([]WorkflowDagId, error)
+	// GetLatestWorkflowDagIdsByOrganizationAndEngine returns a list of workflow dag IDs for each
+	// workflow created by the organization if the workflow dag is running on `engine`.
+	GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+		ctx context.Context,
+		organizationId string,
+		engine shared.EngineType,
+		db database.Database,
+	) ([]WorkflowDagId, error)
 	GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds(
 		ctx context.Context,
 		operatorIds []uuid.UUID,
@@ -93,8 +101,9 @@ type Reader interface {
 		artifactIds, workflowDagResultIds []uuid.UUID,
 		db database.Database,
 	) ([]ArtifactOperatorResponse, error)
-	GetWorkflowLastRun(
+	GetWorkflowLastRunByEngine(
 		ctx context.Context,
+		engine shared.EngineType,
 		db database.Database,
 	) ([]WorkflowLastRunResponse, error)
 	GetWorkflowIdsFromOperatorIds(

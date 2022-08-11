@@ -473,3 +473,40 @@ def check(
         return inner_decorator(name)
     else:
         return inner_decorator
+
+
+def to_operator(
+    func: UserFunction,
+    name: Optional[Union[str, UserFunction]] = None,
+    description: Optional[str] = None,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
+) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
+    """Convert a function that returns a dataframe into an Aqueduct operator.
+
+    Args:
+        func:
+            the python function that is to be converted into operator.
+        name:
+            Operator name.
+        description:
+            A description for the operator.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
+    """
+    func_op = op(
+        name=name,
+        description=description,
+        file_dependencies=file_dependencies,
+        requirements=requirements,
+    )
+    return func_op(func)

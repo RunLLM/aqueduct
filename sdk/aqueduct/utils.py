@@ -113,7 +113,7 @@ RESERVED_FILE_NAMES = [
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = "aqueduct"
+BLACKLISTED_REQUIREMENTS = ["aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., pd.DataFrame]
 MetricFunction = Callable[..., float]
@@ -297,7 +297,24 @@ def _package_files_and_requirements(
         with open(packaged_requirements_path, "x") as f:
             f.write("\n".join(_infer_requirements()))
 
+    # Prune out any blacklisted requirements.
+    _filter_out_blacklisted_requirements(packaged_requirements_path)
+
     os.chdir(current_directory_path)
+
+
+def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> None:
+    """Opens the requirements.txt file and removes any packages that we don't support."""
+    with open(packaged_requirements_path, "r") as f:
+        req_lines = f.readlines()
+
+    with open(packaged_requirements_path, "w") as f:
+        for line in req_lines:
+            if any(
+                line.startswith(blacklisted_req) for blacklisted_req in BLACKLISTED_REQUIREMENTS
+            ):
+                continue
+            f.write(line)
 
 
 def _infer_requirements() -> List[str]:
