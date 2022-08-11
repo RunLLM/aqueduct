@@ -20,8 +20,8 @@ class GenericArtifact(Artifact):
         dag: DAG,
         artifact_id: uuid.UUID,
         type: ArtifactType,
-        from_flow_run: bool = False,
         content: Optional[Any] = None,
+        from_flow_run: bool = False,
     ):
         self._dag = dag
         self._artifact_id = artifact_id

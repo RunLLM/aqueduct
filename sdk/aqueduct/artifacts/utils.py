@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import base64
 import uuid
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.artifact import Artifact
@@ -11,15 +13,16 @@ from aqueduct.responses import ArtifactResult
 
 from aqueduct import api_client
 
+if TYPE_CHECKING:
+    from aqueduct.artifacts.bool_artifact import BoolArtifact
+    from aqueduct.artifacts.generic_artifact import GenericArtifact
+    from aqueduct.artifacts.numeric_artifact import NumericArtifact
+    from aqueduct.artifacts.table_artifact import TableArtifact
+
 
 def preview_artifact(
     dag: DAG, artifact_id: uuid.UUID, parameters: Optional[Dict[str, Any]] = None
-) -> Union[
-    table_artifact.TableArtifact,
-    numeric_artifact.NumericArtifact,
-    bool_artifact.BoolArtifact,
-    generic_artifact.GenericArtifact,
-]:
+) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact,]:
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[

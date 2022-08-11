@@ -83,8 +83,8 @@ class TableArtifact(Artifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        from_flow_run: bool = False,
         content: Optional[pd.DataFrame] = None,
+        from_flow_run: bool = False,
     ):
         self._dag = dag
         self._artifact_id = artifact_id
@@ -604,7 +604,7 @@ class TableArtifact(Artifact):
     def _get_table_name(self) -> str:
         return self._dag.must_get_artifact(self._artifact_id).name
 
-    def describe(self) -> None:
+    def __str__(self) -> str:
         """Prints out a human-readable description of the table artifact."""
 
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
@@ -636,8 +636,15 @@ class TableArtifact(Artifact):
                 ],
             }
         )
-        print(format_header_for_print(f"'{input_operator.name}' Table Artifact"))
-        print(json.dumps(readable_dict, sort_keys=False, indent=4))
+
+        return f"""
+{format_header_for_print(f"'{input_operator.name}' Table Artifact")}
+{json.dumps(readable_dict, sort_keys=False, indent=4)}
+        """
+
+    def describe(self) -> None:
+        """Prints the stringified description of the table artifact to stdout."""
+        print(self.__str__())
 
     def remove_check(self, name: str) -> None:
         """Remove a check on this artifact by name.

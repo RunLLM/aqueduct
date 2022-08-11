@@ -169,7 +169,9 @@ def test_metrics_and_checks_on_table_describe():
     describe_table = redirect_stdout.getvalue()
     sys.stdout = stdout
 
-    output_dict = json.loads("\n".join(describe_table.split("\n")[1:]))
+    # There's a newline and then the header line at the beginning of this text,
+    # so we skip the first two entries.
+    output_dict = json.loads("\n".join(describe_table.split("\n")[2:]))
 
     assert len(output_dict["Metrics"]) == 1
     metric_descr = output_dict["Metrics"][0]

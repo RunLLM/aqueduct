@@ -1,7 +1,13 @@
 package airflow
 
 import (
+	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/apache/airflow-client-go/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/dropbox/godropbox/errors"
 )
 
 // generateDagId generates an Airflow DAG ID for a workflow.
@@ -36,4 +42,52 @@ func prepareId(s string) (string, error) {
 	}
 
 	return result.String(), nil
+}
+
+// wrapApiErrors wraps an error from the Airflow API using the error returned
+// and the HTTP response.
+func wrapApiError(err error, api string, resp *http.Response) error {
+	return errors.Wrapf(err, "Airflow %v error with status: %v", api, resp.Status)
+}
+
+// mapDagStateToStatus maps an Airflow DagState to an ExecutionStatus
+func mapDagStateToStatus(state airflow.DagState) shared.ExecutionStatus {
+	switch state {
+	case airflow.DAGSTATE_QUEUED:
+		return shared.PendingExecutionStatus
+	case airflow.DAGSTATE_RUNNING:
+		return shared.RunningExecutionStatus
+	case airflow.DAGSTATE_SUCCESS:
+		return shared.SucceededExecutionStatus
+	case airflow.DAGSTATE_FAILED:
+		return shared.FailedExecutionStatus
+	default:
+		return shared.UnknownExecutionStatus
+	}
+}
+
+// mapTaskStateToStatus maps an Airflow TaskState to an ExecutionStatus
+func mapTaskStateToStatus(state airflow.TaskState) shared.ExecutionStatus {
+	switch state {
+	case airflow.TASKSTATE_RUNNING:
+		return shared.RunningExecutionStatus
+	case airflow.TASKSTATE_SUCCESS:
+		return shared.SucceededExecutionStatus
+	case airflow.TASKSTATE_FAILED:
+		return shared.FailedExecutionStatus
+	default:
+		return shared.PendingExecutionStatus
+	}
+}
+
+func getOperatorMetadataPath(metadataPathPrefix string, dagRunId string) string {
+	return fmt.Sprintf("%s_%s", metadataPathPrefix, dagRunId)
+}
+
+func getArtifactMetadataPath(metadataPathPrefix string, dagRunId string) string {
+	return fmt.Sprintf("%s_%s", metadataPathPrefix, dagRunId)
+}
+
+func getArtifactContentPath(contentPathPrefix string, dagRunId string) string {
+	return fmt.Sprintf("%s_%s", contentPathPrefix, dagRunId)
 }

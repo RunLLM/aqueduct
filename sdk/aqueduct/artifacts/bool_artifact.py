@@ -36,8 +36,8 @@ class BoolArtifact(Artifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        from_flow_run: bool = False,
         content: Optional[bool] = None,
+        from_flow_run: bool = False,
     ):
         self._dag = dag
         self._artifact_id = artifact_id

@@ -1,6 +1,8 @@
 package operator
 
 import (
+	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/job"
 )
 
@@ -28,4 +30,8 @@ func newCheckOperator(base baseFunctionOperator) (Operator, error) {
 func (co *checkOperatorImpl) JobSpec() job.Spec {
 	fn := co.dbOperator.Spec.Check().Function
 	return co.jobSpec(&fn, &co.dbOperator.Spec.Check().Level)
+}
+
+func (co *checkOperatorImpl) Launch(ctx context.Context) error {
+	return co.launch(ctx, co.JobSpec())
 }
