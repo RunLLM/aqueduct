@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
+  AlertTitle,
   Box,
   DialogActions,
   DialogContent,
@@ -71,6 +72,7 @@ const AddTableDialog: React.FC<Props> = ({
   const confirmConnect = () => {
     setIsConnecting(true);
     setErrMsg(null);
+
     addTable(user, integrationId, config)
       .then(() => {
         setShowSuccessToast(true);
@@ -81,8 +83,7 @@ const AddTableDialog: React.FC<Props> = ({
         setIsConnecting(false);
       })
       .catch((err) => {
-        const errorMessage = 'Unable to upload CSV file to the demo database: ';
-        setErrMsg(errorMessage + err.message);
+        setErrMsg(err.message);
         setIsConnecting(false);
       });
   };
@@ -92,7 +93,14 @@ const AddTableDialog: React.FC<Props> = ({
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
         {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
+        {errMsg && (
+          <Alert severity="error">
+            <AlertTitle>
+              Unable to upload CSV file to demo database..
+            </AlertTitle>
+            <pre>{errMsg}</pre>
+          </Alert>
+        )}
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={showSuccessToast}
