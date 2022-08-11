@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/google/uuid"
 	"path/filepath"
+
+	"github.com/google/uuid"
 )
 
 // The subdirectory within the storage directory containing all the outputs of previewed operators.
