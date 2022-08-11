@@ -423,6 +423,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }
   };
 
+  const displayObject = (integration, name) => (
+    <Typography variant="body1">
+    [{integration}] <b>{name}</b>
+    </Typography>
+  );
+
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
@@ -437,10 +443,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             }
             label={
               <Box>
-                <Typography variant="body1">
-                  <b>{savedObjectsList[0].integration_name}</b>:{' '}
-                  {savedObjectsList[0].object_name}
-                </Typography>
+                {displayObject(savedObjectsList[0].integration_name, savedObjectsList[0].object_name)}
 
                 <Typography
                   style={{
@@ -516,10 +519,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
 
         <Typography variant="body1">
-          Deleting workflow <span style={{ fontFamily: 'Monospace' }}>{name}</span>{' '}
-          and the associated <b>{selectedObjects.size}</b> objects is not reversible. 
-          Please note that we cannot guarantee this will only delete data created by 
-          Aqueduct. The workflow will be deleted even if the underlying objects are not successfully deleted.
+          Deleting workflow{' '}
+          <span style={{ fontFamily: 'Monospace' }}>{name}</span> and the
+          associated <b>{selectedObjects.size}</b> objects is not reversible.
+          Please note that we cannot guarantee this will only delete data
+          created by Aqueduct. The workflow will be deleted even if the
+          underlying objects are not successfully deleted.
         </Typography>
 
         <Box sx={{ my: 2 }}>
@@ -638,11 +643,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                     )}
                   </ListItemIcon>
                   <ListItemText
-                    primary={
-                      <>
-                        [{integrationName}]: <b>{objectResult.name}</b>
-                      </>
-                    }
+                    primary={displayObject(integrationName, objectResult.name)}
                     secondary={<>{objectResult.succeeded}</>}
                   />
                 </ListItem>

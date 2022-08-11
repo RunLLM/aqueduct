@@ -12,7 +12,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 )
 
 type Readers struct {
@@ -33,6 +35,7 @@ type Writers struct {
 	WorkflowDagWriter       workflow_dag.Writer
 	WorkflowDagResultWriter workflow_dag_result.Writer
 	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
+	WorkflowWatcherWriter   workflow_watcher.Writer
 	OperatorWriter          operator.Writer
 	OperatorResultWriter    operator_result.Writer
 	ArtifactWriter          artifact.Writer
@@ -126,6 +129,11 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
+	workflowWatcherWriter, err := workflow_watcher.NewWriter(dbConf)
+	if err != nil {
+		return nil, err
+	}
+
 	operatorWriter, err := operator.NewWriter(dbConf)
 	if err != nil {
 		return nil, err
@@ -156,10 +164,40 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		WorkflowDagWriter:       workflowDagWriter,
 		WorkflowDagResultWriter: workflowDagResultWriter,
 		WorkflowDagEdgeWriter:   workflowDagEdgeWriter,
+		WorkflowWatcherWriter:   workflowWatcherWriter,
 		OperatorWriter:          operatorWriter,
 		OperatorResultWriter:    operatorResultWriter,
 		ArtifactWriter:          artifactWriter,
 		ArtifactResultWriter:    artifactResultWriter,
 		NotificationWriter:      notificationWriter,
 	}, nil
+}
+
+func GetEngineReaders(readers *Readers) *engine.EngineReaders {
+	return &engine.EngineReaders{
+		WorkflowReader:          readers.WorkflowReader,
+		WorkflowDagReader:       readers.WorkflowDagReader,
+		WorkflowDagEdgeReader:   readers.WorkflowDagEdgeReader,
+		WorkflowDagResultReader: readers.WorkflowDagResultReader,
+		OperatorReader:          readers.OperatorReader,
+		OperatorResultReader:    readers.OperatorResultReader,
+		ArtifactReader:          readers.ArtifactReader,
+		ArtifactResultReader:    readers.ArtifactResultReader,
+		UserReader:              readers.UserReader,
+	}
+}
+
+func GetEngineWriters(writers *Writers) *engine.EngineWriters {
+	return &engine.EngineWriters{
+		WorkflowWriter:          writers.WorkflowWriter,
+		WorkflowDagWriter:       writers.WorkflowDagWriter,
+		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
+		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
+		WorkflowWatcherWriter:   writers.WorkflowWatcherWriter,
+		OperatorWriter:          writers.OperatorWriter,
+		OperatorResultWriter:    writers.OperatorResultWriter,
+		ArtifactWriter:          writers.ArtifactWriter,
+		ArtifactResultWriter:    writers.ArtifactResultWriter,
+		NotificationWriter:      writers.NotificationWriter,
+	}
 }

@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
@@ -44,7 +45,8 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
       <Link
         underline="none"
         color="inherit"
-        href={`/${getPathPrefix()}/workflow/${workflowId}`}
+        to={`${getPathPrefix()}/workflow/${workflowId}`}
+        component={RouterLink as any}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
           <Box

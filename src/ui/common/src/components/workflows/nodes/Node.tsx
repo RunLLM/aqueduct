@@ -88,9 +88,9 @@ export const Node: React.FC<Props> = ({
         sx={{
           fontSize: '18px',
           maxWidth: '200px',
+          minWidth: '140px',
           overflow: 'clip',
-          textOverflow: 'wrap',
-          overflowWrap: 'normal',
+          overflowWrap: 'break-word',
           textAlign: 'center',
         }}
       >

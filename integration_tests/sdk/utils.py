@@ -15,7 +15,7 @@ from test_functions.sentiment.model import sentiment_model, sentiment_model_mult
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 
 import aqueduct
-from aqueduct import Flow
+from aqueduct import Flow, api_client
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None
@@ -143,7 +143,7 @@ def wait_for_flow_runs(
     Returns:
         The number of successful runs this flow has performed.
     """
-    timeout = 300
+    timeout = 500
     poll_threshold = 5
     begin = time.time()
 
@@ -151,6 +151,9 @@ def wait_for_flow_runs(
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         time.sleep(poll_threshold)
+
+        if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
+            continue
 
         # A flow has been successfully published if it makes at least one workflow run, and
         # all its workflow runs have executed successfully.
@@ -196,8 +199,8 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
 
 
 def get_response(client, endpoint, additional_headers={}):
-    headers = {"api-key": client._api_client.api_key}
+    headers = {"api-key": api_client.__GLOBAL_API_CLIENT__.api_key}
     headers.update(additional_headers)
-    url = client._api_client.construct_full_url(endpoint)
+    url = api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
     r = requests.get(url, headers=headers)
     return r

@@ -43,6 +43,7 @@ type baseOperator struct {
 	db            database.Database
 
 	resultsPersisted bool
+	isPreview        bool
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -55,6 +56,10 @@ func (bo *baseOperator) Name() string {
 
 func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
+}
+
+func (bo *baseOperator) MetadataPath() string {
+	return bo.metadataPath
 }
 
 // A catch-all for execution states that are the system's fault.
@@ -71,6 +76,10 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 			Tip:     shared.TipUnknownInternalError,
 		},
 	}
+}
+
+func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
 // fetchExecState assumes that the operator has been computed already.
@@ -178,6 +187,11 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
+	if bo.isPreview {
+		// Don't persist any result for preview operators.
+		return nil
+	}
+
 	if bo.resultsPersisted {
 		return errors.Newf("Operator %s was already persisted!", bo.Name())
 	}
@@ -223,8 +237,8 @@ type baseFunctionOperator struct {
 }
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
-	// If the operator was not persisted to the DB, cleanup the serialized function.
-	if !bfo.resultsPersisted {
+	// If the operator ran in preview mode, cleanup the serialized function.
+	if bfo.isPreview {
 		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
 	}
 

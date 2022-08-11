@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"context"
 	"fmt"
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -52,4 +53,8 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 		OutputMetadataPath: po.outputMetadataPaths[0],
 		OutputContentPath:  po.outputContentPaths[0],
 	}
+}
+
+func (po *paramOperatorImpl) Launch(ctx context.Context) error {
+	return po.launch(ctx, po.JobSpec())
 }

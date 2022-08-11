@@ -42,6 +42,13 @@ type Writer interface {
 		operatorId uuid.UUID,
 		db database.Database,
 	) (*OperatorResult, error)
+	InsertOperatorResult(
+		ctx context.Context,
+		workflowDagResultId uuid.UUID,
+		operatorId uuid.UUID,
+		execState *shared.ExecutionState,
+		db database.Database,
+	) (*OperatorResult, error)
 	UpdateOperatorResult(
 		ctx context.Context,
 		id uuid.UUID,
