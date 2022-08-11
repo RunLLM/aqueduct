@@ -29,7 +29,8 @@ class PostgresConfig(models.BaseConfig):
 
 class S3CredentialType(str, Enum, metaclass=MetaEnum):
     ACCESS_KEY = "access_key"
-    CONFIG_FILE = "config_file"
+    CONFIG_FILE_PATH = "config_file_path"
+    CONFIG_FILE_CONTENT = "config_file_content"
 
 
 class S3Config(models.BaseConfig):
@@ -40,8 +41,9 @@ class S3Config(models.BaseConfig):
     access_key_id: str = ""
     secret_access_key: str = ""
 
-    # Aws config file credentials
+    # Config credentials
     config_file_path: str = ""
+    config_file_content: str = ""
     config_file_profile: str = ""
 
     bucket: str = ""

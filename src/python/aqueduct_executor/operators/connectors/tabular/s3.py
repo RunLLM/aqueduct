@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import uuid
 from typing import List, Optional
 
 import boto3
@@ -10,14 +11,44 @@ from aqueduct_executor.operators.connectors.tabular.config import S3Config, S3Cr
 
 
 class S3Connector(connector.TabularConnector):
+    def _handle_config_file_path(self, config: S3Config) -> None:
+        """
+        _handle_config_file_path updates config's access_key and secret_access_key
+        based on credentials in config_file_path and config_file_profile.
+        """
+        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
+        os.environ["AWS_CONFIG_FILE"] = config.config_file_path
+        session = boto3.Session(profile_name=config.config_file_profile)
+        credentials = session.get_credentials()
+        config.access_key_id = credentials.access_key
+        config.secret_access_key = credentials.secret_key
+
+    def _handle_config_file_content(self, config: S3Config) -> None:
+        """
+        _handle_config_file_content updates config's access_key and secret_access_key
+        based on credentials in config_file_path and config_file_profile.
+        """
+        # write to temp file assuming the cwd is safe to create such file.
+        temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
+        with open(temp_path, "w") as w:
+            w.write(config.config_file_content)
+        config.config_file_path = temp_path
+
+        try:
+            self._handle_config_file_path(config)
+            os.remove(temp_path)
+        except Exception as e:
+            # remove temp file before throwing original exception.
+            os.remove(temp_path)
+            raise e
+
     def __init__(self, config: S3Config):
-        if config.type == S3CredentialType.CONFIG_FILE:
-            os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
-            os.environ["AWS_CONFIG_FILE"] = config.config_file_path
-            session = boto3.Session(profile_name=config.config_file_profile)
-            credentials = session.get_credentials()
-            config.access_key_id = credentials.access_key
-            config.secret_access_key = credentials.secret_key
+        # Write a temp file
+        if config.type == S3CredentialType.CONFIG_FILE_CONTENT:
+            self._handle_config_file_content(config)
+
+        if config.type == S3CredentialType.CONFIG_FILE_PATH:
+            self._handle_config_file_path(config)
 
         self.s3 = boto3.resource(
             "s3",
