@@ -193,7 +193,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		// 		OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
 		// 	},
 		&job.K8sConfig{
-			KubeConfigPath:                   "~/.kube/config",
+			KubeConfigPath:                   "home/ubuntu/.kube/config",
+			AwsRegion:                        "us-east-2",
+			ClusterName:                      "aqueduct-hari",
+			OidcIssuerUri:                    "https://oidc.eks.us-east-2.amazonaws.com/id/847A07238B311B910759E3D50681CD2D",
+			OidcProviderArn:                  "arn:aws:iam::722407883994:oidc-provider/oidc.eks.us-east-2.amazonaws.com/id/847A07238B311B910759E3D50681CD2D",
 			FunctionDockerImage:              "spiralco/function-executor",
 			ParameterDockerImage:             "spiralco/param-executor",
 			PostgresConnectorDockerImage:     "spiralco/postgres-connector",

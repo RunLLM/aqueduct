@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 
+	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,18 +44,18 @@ func CreateClientInCluster() *kubernetes.Clientset {
 //	is specified (in `enterprise/config/cluster.yml`) as `~/.kube/config`. Please modify
 //	the `cluster.yml` file if you need to change this location. If this
 //	location is misconfigured, this function will fail.
-func CreateClientOutsideCluster(kubecfgLocation string) *kubernetes.Clientset {
+func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", kubecfgLocation)
 	if err != nil {
-		log.Fatal("Unexpected error while creating Kubernetes client:", err)
+		return nil, errors.Wrap(err, "Unexpected error while creating Kubernetes client.")
 	}
 
 	k8sClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatal("Unexpected error while creating Kubernetes client:", err)
+		return nil, errors.Wrap(err, "Unexpected error while creating Kubernetes client.")
 	}
 
-	return k8sClient
+	return k8sClient, nil
 }
 
 //	This is a helper function that creates the two Kubernetes namespaces
