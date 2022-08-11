@@ -22,4 +22,4 @@ RUN pip3 install pyodbc
 
 ENV PYTHONUNBUFFERED 1
 
-CMD python3 -m aqueduct_executor_enterprise.operators.connectors.tabular.main --spec "$JOB_SPEC"
+CMD python3 -m aqueduct_executor.operators.connectors.tabular.main --spec "$JOB_SPEC"
