@@ -76,14 +76,6 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	// Encode job spec to prevent data loss
 	serializationType := JsonSerializationType
-	// if spec.Type() == WorkflowJobType {
-	// 	serializationType = GobSerializationType
-	// 	serviceAccount = k8s.ExecutorServiceAccount
-	// 	// for k, v := range generateClusterEnvVar(j.conf) {
-	// 	// 	environmentVariables[k] = v
-	// 	// }
-	// }
-
 	encodedSpec, err := EncodeSpec(spec, serializationType)
 	if err != nil {
 		return err
@@ -188,13 +180,6 @@ func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Se
 		return "", errors.Newf("Unknown integration service provided %v", service)
 	}
 }
-
-// func generateClusterEnvVar(conf *K8sConfig) map[string]string {
-// 	return map[string]string{
-// 		DevBranchKey:          conf.ExecutorDevBranch,
-// 		ClusterEnvironmentKey: conf.ClusterEnvironment,
-// 	}
-// }
 
 func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string {
 	resourceRequest := map[string]string{
