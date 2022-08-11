@@ -104,8 +104,6 @@ const (
 
 	// The name of the k8s secret for the AWS credentials.
 	AwsCredentialsSecretName = "awscred"
-<<<<<<< HEAD
-=======
 
 	// The ARN of the default AWS policy that gives a role access to all S3 buckets.
 	AwsS3AccessArn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
@@ -132,5 +130,4 @@ const (
 			}
 		]
 	}`
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 )

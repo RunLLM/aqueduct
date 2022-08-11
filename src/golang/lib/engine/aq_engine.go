@@ -193,15 +193,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		// 		OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
 		// 	},
 		&job.K8sConfig{
-<<<<<<< HEAD
-			KubeConfigPath:                   "~/.kube/config",
-=======
 			KubeConfigPath:                   "home/ubuntu/.kube/config",
 			AwsRegion:                        "us-east-2",
 			ClusterName:                      "aqueduct-hari",
 			OidcIssuerUri:                    "https://oidc.eks.us-east-2.amazonaws.com/id/847A07238B311B910759E3D50681CD2D",
 			OidcProviderArn:                  "arn:aws:iam::722407883994:oidc-provider/oidc.eks.us-east-2.amazonaws.com/id/847A07238B311B910759E3D50681CD2D",
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 			FunctionDockerImage:              "spiralco/function-executor",
 			ParameterDockerImage:             "spiralco/param-executor",
 			PostgresConnectorDockerImage:     "spiralco/postgres-connector",
@@ -708,10 +704,6 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
-<<<<<<< HEAD
-	engineJobManager job.JobManager,
-=======
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 	shouldPersistResults bool,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
@@ -748,12 +740,7 @@ func (eng *aqEngine) execute(
 			}
 
 			if execState.Status == shared.PendingExecutionStatus {
-<<<<<<< HEAD
-				spec := op.JobSpec()
-				err = engineJobManager.Launch(ctx, spec.JobName(), spec)
-=======
 				err = op.Launch(ctx)
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}

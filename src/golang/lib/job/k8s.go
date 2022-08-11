@@ -23,10 +23,6 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
-<<<<<<< HEAD
-	return &k8sJobManager{
-		k8sClient: k8s.CreateClientOutsideCluster(conf.KubeConfigPath),
-=======
 	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeConfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
@@ -50,7 +46,6 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	}
 	return &k8sJobManager{
 		k8sClient: k8sClient,
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 		conf:      conf,
 	}, nil
 }
@@ -203,8 +198,6 @@ func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string
 
 	return resourceRequest
 }
-<<<<<<< HEAD
-=======
 
 // generateS3Annotation generates an annotation to be attached to the service account to allow
 // it to access S3.
@@ -231,4 +224,3 @@ func generateS3Annotation(
 		"eks.amazonaws.com/role-arn": arn,
 	}
 }
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
