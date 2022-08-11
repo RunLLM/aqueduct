@@ -1,9 +1,8 @@
 import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
+import { Tab, Tabs } from '../../../components/primitives/Tabs.styles';
 import {
   FileData,
   IntegrationConfig,
@@ -102,11 +101,14 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const configPathTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
-        Provide the credentials by specifying the path to your aws credentials,
-        together with the name of the profile you would like to use. <br />
-        The path has to be in the same machine as the one you run{' '}
-        <code> aqueduct start </code> . Typically, it&apos;s{' '}
-        <code>~/.aws/credentials</code>. <br />
+        Specify the path to your AWS credentials <strong>on the machine</strong>{' '}
+        where you are running the Aqueduct server.
+      </Typography>
+      <Typography variant="body2" color="gray.700">
+        Typically, this is in <code>~/.aws/credentials</code>. You also need to
+        specify the profile name you would like to use for the credentials file.
+      </Typography>
+      <Typography variant="body2" color="gray.700">
         Once connected, any updates to the file content will automatically apply
         to this integration.
       </Typography>
@@ -127,17 +129,18 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const configUploadTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
-        Upload your aws credentials file and provide the name of the profile you
-        would like to use. Typically, it&apos;s <code>~/.aws/credentials</code>.
-        {/* uncomment once integration edit is ready:
-      <br/>
-      <br/>
+        Upload your AWS credentials file.
+      </Typography>
+      <Typography variant="body2" color="gray.700">
+        Typically, this is in <code>~/.aws/credentials</code>. You also need to
+        specify the profile name you would like to use for the credentials file.
+      </Typography>
+      {/* add these message once integration edit is ready:
         Once connected, you would need to re-upload the file to update the credentials.
       */}
-      </Typography>
       <IntegrationFileUploadField
         label={'AWS Credentials File*'}
-        description={'upload your credentials file here.'}
+        description={'Upload your credentials file here.'}
         required={true}
         file={file}
         placeholder={''}
@@ -169,10 +172,10 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={s3Type} onChange={(_, value) => setS3Type(value)}>
-          <Tab value={S3CredentialType.AccessKey} label="Access Keys" />
+          <Tab value={S3CredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
             value={S3CredentialType.ConfigFilePath}
-            label="Credentials Path"
+            label="Specify Path to Credentials"
           />
           <Tab
             value={S3CredentialType.ConfigFileContent}

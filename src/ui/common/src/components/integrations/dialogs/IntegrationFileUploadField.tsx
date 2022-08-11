@@ -90,7 +90,7 @@ export const IntegrationFileUploadField: React.FC<
     header = (
       <Box>
         <Typography variant="body1" component="span" sx={{ mr: 4 }}>
-          <strong>{label}</strong>: {file.name}
+          <strong>{label}</strong>
         </Typography>
         <Button
           size="small"
