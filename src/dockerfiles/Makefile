@@ -9,6 +9,9 @@ endif
 build-function:
 	docker build . -t aqueducthq/function -f function/function.dockerfile --no-cache
 
+build-function-test:
+	docker build . -t aqueducthq/function-test -f function/test/function.dockerfile --no-cache
+
 build-param:
 	docker build . -t aqueducthq/param -f param/param.dockerfile --no-cache
 
@@ -32,6 +35,9 @@ build-s3-connector:
 
 build-snowflake-connector:
 	docker build . -t aqueducthq/snowflake-connector -f connectors/snowflake.dockerfile --no-cache
+
+build-snowflake-test-connector:
+	docker build . -t aqueducthq/snowflake-test-connector -f connectors/test/snowflake.dockerfile --no-cache
 
 build-sqlserver-connector:
 	docker build . -t aqueducthq/sqlserver-connector -f connectors/sqlserver.dockerfile --no-cache
