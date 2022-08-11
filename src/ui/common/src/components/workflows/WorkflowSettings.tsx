@@ -478,6 +478,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     </FormGroup>
   );
 
+  const hasSavedObjects = Object.keys(savedObjects).length > 0;
+
   const deleteDialog = (
     <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
       <DialogTitle>
@@ -503,13 +505,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </DialogTitle>
 
       <DialogContent>
-        <Typography variant="body1">
+        {hasSavedObjects && <Typography variant="body1">
           The following objects had been saved by{' '}
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
           </span>{' '}
           and can be removed when deleting the workflow:
-        </Typography>
+        </Typography>}
 
         <Box sx={{ my: 2 }}>
           {savedObjectsStatus === LoadingStatusEnum.Succeeded &&
@@ -521,14 +523,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           )}
         </Box>
 
-        <Typography variant="body1">
+        {hasSavedObjects && <Typography variant="body1">
           Deleting workflow{' '}
           <span style={{ fontFamily: 'Monospace' }}>{name}</span> and the
           associated <b>{selectedObjects.size}</b> objects is not reversible.
           Please note that we cannot guarantee this will only delete data
           created by Aqueduct. The workflow will be deleted even if the
           underlying objects are not successfully deleted.
-        </Typography>
+        </Typography>}
+        {!hasSavedObjects && <Typography variant="body1">
+          Are you sure you want to delete{' '}
+          <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action is not reversible.
+        </Typography>}
 
         <Box sx={{ my: 2 }}>
           <Typography variant="body1">
