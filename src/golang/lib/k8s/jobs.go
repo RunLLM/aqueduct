@@ -18,7 +18,6 @@ func LaunchJob(
 	environmentVariables *map[string]string,
 	secretEnvVariables []string,
 	resourceRequests *map[string]string,
-	serviceAccount string,
 	k8sClient *kubernetes.Clientset,
 ) error {
 	// Currently, all jobs run workflow operators, which should be in the user namespace.
@@ -69,13 +68,6 @@ func LaunchJob(
 				},
 			},
 		},
-	}
-
-	podRuntimeClassName := "gvisor"
-	job.Spec.Template.Spec.RuntimeClassName = &podRuntimeClassName
-
-	if serviceAccount != "" {
-		job.Spec.Template.Spec.ServiceAccountName = serviceAccount
 	}
 
 	if len(secretEnvVariables) > 0 {
