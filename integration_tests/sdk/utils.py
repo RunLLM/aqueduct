@@ -8,6 +8,7 @@ from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
+from aqueduct import api_client
 from pandas import DataFrame
 
 # Should be set before each test runs.
@@ -199,8 +200,8 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
 
 
 def get_response(client, endpoint, additional_headers={}):
-    headers = {"api-key": client._api_client.api_key}
+    headers = {"api-key": api_client.__GLOBAL_API_CLIENT__.api_key}
     headers.update(additional_headers)
-    url = client._api_client.construct_full_url(endpoint)
+    url = api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
     r = requests.get(url, headers=headers)
     return r
