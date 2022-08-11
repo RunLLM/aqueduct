@@ -48,6 +48,12 @@ type GetOperatorResultHandler struct {
 	WorkflowDagResultReader workflow_dag_result.Reader
 }
 
+type GetOperatorResultResponse struct {
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Status      shared.ExecutionStatus `json:"status"`
+}
+
 func (*GetOperatorResultHandler) Name() string {
 	return "GetOperatorResult"
 }
@@ -94,6 +100,11 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*getOperatorResultArgs)
 
 	emptyResp := shared.ExecutionState{}
+	dbOperator, err := h.OperatorReader.GetOperator(ctx, args.operatorId, h.Database)
+
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator.")
+	}
 
 	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
 		ctx,
@@ -111,6 +122,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		args.operatorId,
 		h.Database,
 	)
+
 	if err != nil {
 		if err != database.ErrNoRows {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
@@ -119,12 +131,21 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		response.Status = dbWorkflowDagResult.Status
 	} else {
 		response.Status = dbOperatorResult.Status
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
+	}
+
+	executionState := shared.ExecutionState{
+		Status: dbOperatorResult.Status,
 	}
 
 	if dbOperatorResult != nil && !dbOperatorResult.ExecState.IsNull {
-		response.FailureType = dbOperatorResult.ExecState.FailureType
-		response.Error = dbOperatorResult.ExecState.Error
-		response.UserLogs = dbOperatorResult.ExecState.UserLogs
+		executionState.FailureType = dbOperatorResult.ExecState.FailureType
+		executionState.Error = dbOperatorResult.ExecState.Error
+		executionState.UserLogs = dbOperatorResult.ExecState.UserLogs
+	}
+
+	response := GetOperatorResultResponse{
+		Status: executionState.Status, Name: dbOperator.Name, Description: dbOperator.Description,
 	}
 
 	return response, http.StatusOK, nil
