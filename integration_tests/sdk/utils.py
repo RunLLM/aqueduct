@@ -8,7 +8,6 @@ from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
-from aqueduct import api_client
 from pandas import DataFrame
 
 # Should be set before each test runs.
@@ -16,7 +15,7 @@ from test_functions.sentiment.model import sentiment_model, sentiment_model_mult
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 
 import aqueduct
-from aqueduct import Flow
+from aqueduct import Flow, api_client
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None

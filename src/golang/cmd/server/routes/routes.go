@@ -13,7 +13,7 @@ const (
 	ConnectIntegrationRoute          = "/api/integration/connect"
 	DeleteIntegrationRoute           = "/api/integration/{integrationId}/delete"
 	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
-	IntegrationObjectsRoute          = "/api/integration/{integrationId}/objects"
+	ListIntegrationObjectsRoute          = "/api/integration/{integrationId}/objects"
 	CreateTableRoute                 = "/api/integration/{integrationId}/create"
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"

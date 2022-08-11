@@ -33,7 +33,7 @@ import (
 //		objects written by workflows at the integration.
 
 // Get objects from the specified integration.
-type IntegrationObjectsHandler struct {
+type ListIntegrationObjectsHandler struct {
 	GetHandler
 
 	Database          database.Database
@@ -43,39 +43,46 @@ type IntegrationObjectsHandler struct {
 	IntegrationReader integration.Reader
 }
 
-type IntegrationObjectsArgs struct {
+type ListIntegrationObjectsArgs struct {
 	*aq_context.AqContext
 	integrationId uuid.UUID
 }
 
-type IntegrationObjectsResponse struct {
+type ListIntegrationObjectsResponse struct {
 	ObjectNames []string `json:"object_names"`
 }
 
-func (*IntegrationObjectsHandler) Name() string {
+func (*ListIntegrationObjectsHandler) Name() string {
 	return "IntegrationObjects"
 }
 
-func (h *IntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ListIntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
 
 	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	fmt.Print("\n")
+	fmt.Print(r)
+	fmt.Print("\n")
+	fmt.Print(routes.IntegrationIdUrlParam)
+	fmt.Print("\n")
+	fmt.Print(integrationIdStr)
+	fmt.Print("\n")
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	return &IntegrationObjectsArgs{
+	return &ListIntegrationObjectsArgs{
 		AqContext:     aqContext,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }
 
-func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*IntegrationObjectsArgs)
+func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*ListIntegrationObjectsArgs)
 
 	integrationObject, err := h.IntegrationReader.GetIntegration(
 		ctx,
@@ -150,7 +157,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve object names from storage.")
 	}
 
-	return IntegrationObjectsResponse{
+	return ListIntegrationObjectsResponse{
 		ObjectNames: objectNames,
 	}, http.StatusOK, nil
 }

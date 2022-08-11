@@ -132,7 +132,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
-		routes.IntegrationObjectsRoute: &handler.IntegrationObjectsHandler{
+		routes.ListIntegrationObjectsRoute: &handler.ListIntegrationObjectsHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
 			StorageConfig:     s.StorageConfig,
