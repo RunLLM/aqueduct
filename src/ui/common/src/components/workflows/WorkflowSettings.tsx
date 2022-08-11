@@ -425,7 +425,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const displayObject = (integration, name) => (
     <Typography variant="body1">
-    [{integration}] <b>{name}</b>
+      [{integration}] <b>{name}</b>
     </Typography>
   );
 
@@ -443,7 +443,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             }
             label={
               <Box>
-                {displayObject(savedObjectsList[0].integration_name, savedObjectsList[0].object_name)}
+                {displayObject(
+                  savedObjectsList[0].integration_name,
+                  savedObjectsList[0].object_name
+                )}
 
                 <Typography
                   style={{
