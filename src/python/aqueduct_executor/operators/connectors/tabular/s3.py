@@ -26,7 +26,7 @@ class S3Connector(connector.TabularConnector):
     def _handle_config_file_content(self, config: S3Config) -> None:
         """
         _handle_config_file_content updates config's access_key and secret_access_key
-        based on credentials in config_file_path and config_file_profile.
+        based on credentials in config_file_content and config_file_profile.
         """
         # write to temp file assuming the cwd is safe to create such file.
         temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
@@ -36,11 +36,9 @@ class S3Connector(connector.TabularConnector):
 
         try:
             self._handle_config_file_path(config)
+        finally:
+            # always remove
             os.remove(temp_path)
-        except Exception as e:
-            # remove temp file before throwing original exception.
-            os.remove(temp_path)
-            raise e
 
     def __init__(self, config: S3Config):
         # Write a temp file
