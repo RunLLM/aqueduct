@@ -104,4 +104,30 @@ const (
 
 	// The name of the k8s secret for the AWS credentials.
 	AwsCredentialsSecretName = "awscred"
+
+	// The ARN of the default AWS policy that gives a role access to all S3 buckets.
+	AwsS3AccessArn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+
+	// The name of the role we create to give Function pods S3 access.
+	AwsFunctionRoleName = "EKSFunctionS3Access"
+
+	// This is a trust relationship policy document to attach an IAM role
+	// to the specified service account.
+	AwsRoleTrustRelationship = `{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {
+						"Federated": "%s"
+				},
+				"Action": "sts:AssumeRoleWithWebIdentity",
+				"Condition": {
+					"StringEquals": {
+						"%s:sub": "system:serviceaccount:%s:%s"
+					}
+				}
+			}
+		]
+	}`
 )
