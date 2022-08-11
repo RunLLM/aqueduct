@@ -2,8 +2,8 @@ import sys
 from typing import Any
 
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract
-from aqueduct_executor.operators.connectors.tabular.spec import (
+from aqueduct_executor.operators.connectors.data import common, config, connector, extract
+from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
     DiscoverSpec,
     ExtractSpec,
@@ -188,7 +188,7 @@ def setup_connector(
                 "Unable to initialize the Postgres connector. Have you run `aqueduct install postgres`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.postgres import (
+        from aqueduct_executor.operators.connectors.data.postgres import (
             PostgresConnector as OpConnector,
         )
     elif connector_name == common.Name.SNOWFLAKE:
@@ -199,7 +199,7 @@ def setup_connector(
                 "Unable to initialize the Snowflake connector. Have you run `aqueduct install snowflake`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.snowflake import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.snowflake import (  # type: ignore
             SnowflakeConnector as OpConnector,
         )
     elif connector_name == common.Name.BIG_QUERY:
@@ -210,7 +210,7 @@ def setup_connector(
                 "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.bigquery import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.bigquery import (  # type: ignore
             BigQueryConnector as OpConnector,
         )
     elif connector_name == common.Name.REDSHIFT:
@@ -221,7 +221,7 @@ def setup_connector(
                 "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.redshift import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.redshift import (  # type: ignore
             RedshiftConnector as OpConnector,
         )
     elif connector_name == common.Name.SQL_SERVER:
@@ -232,7 +232,7 @@ def setup_connector(
                 "Unable to initialize the SQL Server connector. Have you run `aqueduct install sqlserver`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.sql_server import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
     elif connector_name == common.Name.MYSQL:
@@ -243,7 +243,7 @@ def setup_connector(
                 "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.mysql import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
         )
     elif connector_name == common.Name.MARIA_DB:
@@ -254,7 +254,7 @@ def setup_connector(
                 "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.maria_db import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.maria_db import (  # type: ignore
             MariaDbConnector as OpConnector,
         )
     elif connector_name == common.Name.AZURE_SQL:
@@ -265,7 +265,7 @@ def setup_connector(
                 "Unable to initialize the Azure SQL connector. Have you run `aqueduct install azuresql`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.azure_sql import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.azure_sql import (  # type: ignore
             AzureSqlConnector as OpConnector,
         )
     elif connector_name == common.Name.S3:
@@ -276,11 +276,11 @@ def setup_connector(
                 "Unable to initialize the S3 connector. Have you run `aqueduct install s3`?"
             )
 
-        from aqueduct_executor.operators.connectors.tabular.s3 import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.s3 import (  # type: ignore
             S3Connector as OpConnector,
         )
     elif connector_name == common.Name.SQLITE:
-        from aqueduct_executor.operators.connectors.tabular.sqlite import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.sqlite import (  # type: ignore
             SqliteConnector as OpConnector,
         )
     else:

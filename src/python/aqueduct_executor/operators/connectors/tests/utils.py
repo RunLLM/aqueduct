@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from aqueduct_executor.operators.connectors.tabular import connector
+from aqueduct_executor.operators.connectors.data import connector
 
 
 def authenticate_test(conn: connector.DataConnector):

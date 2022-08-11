@@ -1,6 +1,6 @@
 from typing import Union
 
-from aqueduct_executor.operators.connectors.tabular import common, models
+from aqueduct_executor.operators.connectors.data import common, models
 from pydantic import validator
 
 

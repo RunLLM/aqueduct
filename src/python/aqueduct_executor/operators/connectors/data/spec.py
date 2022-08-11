@@ -8,7 +8,7 @@ except ImportError:
 
 import json
 
-from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
+from aqueduct_executor.operators.connectors.data import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
 from pydantic import parse_obj_as, validator

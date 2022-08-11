@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, List
 
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import extract, load
+from aqueduct_executor.operators.connectors.data import extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
 
 

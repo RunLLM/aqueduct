@@ -1,4 +1,4 @@
-from aqueduct_executor.operators.connectors.tabular import config, relational
+from aqueduct_executor.operators.connectors.data import config, relational
 from sqlalchemy import create_engine, engine
 
 

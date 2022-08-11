@@ -2,7 +2,7 @@ import re
 from datetime import date
 from typing import Any, Dict, Optional, Union
 
-from aqueduct_executor.operators.connectors.tabular import common, models
+from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils import enums
 
 # Regular Expression that matches any substring appearance with

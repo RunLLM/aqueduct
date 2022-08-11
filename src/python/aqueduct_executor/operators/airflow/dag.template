@@ -9,8 +9,8 @@ from aqueduct_executor.operators.param_executor import execute as param_execute
 from aqueduct_executor.operators.param_executor import spec as param_spec
 from aqueduct_executor.operators.system_metric_executor import execute as sys_metric_execute
 from aqueduct_executor.operators.system_metric_executor import spec as sys_metric_spec
-from aqueduct_executor.operators.connectors.tabular import execute as conn_execute
-from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
+from aqueduct_executor.operators.connectors.data import execute as conn_execute
+from aqueduct_executor.operators.connectors.data import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
 
 def invoke_task(spec, **kwargs):
