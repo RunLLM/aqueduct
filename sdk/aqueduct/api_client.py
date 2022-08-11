@@ -1,6 +1,7 @@
 import io
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple
+import uuid
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
 from aqueduct._version import __version__
@@ -12,16 +13,18 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    DeleteWorkflowResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
 
 from aqueduct import utils
@@ -163,9 +166,7 @@ class APIClient:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
-        url = "%s%s" % (self.construct_base_url(use_https), route_suffix)
-        logger().debug("Constructed full URL %s", url)
-        return url
+        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -320,11 +321,25 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(
+        self,
+        flow_id: str,
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        force: bool,
+    ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        body = {
+            "external_delete": {
+                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                for integration in saved_objects_to_delete
+            },
+            "force": force,
+        }
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
+        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        return deleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = self._generate_auth_headers()
