@@ -89,6 +89,11 @@ if __name__ == "__main__":
         print("~/.aqueduct must exist.")
         exit(1)
 
+    # TODO(kenxu): Can be removed once all development environments have this folder already.
+    preview_outputs_directory = os.path.join(server_directory, "storage", "preview")
+    if not os.path.isdir(preview_outputs_directory):
+        os.mkdir(preview_outputs_directory)
+
     # Build and replace backend binaries.
     if args.update_go_binary:
         print("Updating Golang binaries...")
