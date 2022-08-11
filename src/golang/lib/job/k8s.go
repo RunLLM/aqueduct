@@ -23,8 +23,34 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
+<<<<<<< HEAD
 	return &k8sJobManager{
 		k8sClient: k8s.CreateClientOutsideCluster(conf.KubeConfigPath),
+=======
+	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeConfigPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
+	err = k8s.CreateServiceAccount(
+		k8s.FunctionServiceAccount,
+		k8s.UserNamespace,
+		generateS3Annotation(
+			k8s.FunctionServiceAccount,
+			k8s.UserNamespace,
+			k8s.AwsFunctionRoleName,
+			&conf.OidcIssuerUri,
+			conf.OidcProviderArn,
+			conf.AwsRegion,
+			conf.ClusterName,
+		),
+		k8sClient,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to create function service account.")
+	}
+	return &k8sJobManager{
+		k8sClient: k8sClient,
+>>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 		conf:      conf,
 	}, nil
 }
@@ -177,3 +203,32 @@ func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string
 
 	return resourceRequest
 }
+<<<<<<< HEAD
+=======
+
+// generateS3Annotation generates an annotation to be attached to the service account to allow
+// it to access S3.
+func generateS3Annotation(
+	serviceAccount string,
+	namespace string,
+	roleName string,
+	oidcIssuerUri *string,
+	openIDConnectProviderArn string,
+	awsRegion string,
+	clusterName string,
+) map[string]string {
+	arn := k8s.CreateAwsFullS3Role(
+		serviceAccount,
+		namespace,
+		roleName,
+		oidcIssuerUri,
+		openIDConnectProviderArn,
+		awsRegion,
+		clusterName,
+	)
+
+	return map[string]string{
+		"eks.amazonaws.com/role-arn": arn,
+	}
+}
+>>>>>>> b0a0a767f96379556e23ade8002fef916129db80

@@ -3,6 +3,10 @@ package k8s
 import (
 	"context"
 
+<<<<<<< HEAD
+=======
+	"github.com/dropbox/godropbox/errors"
+>>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,18 +47,32 @@ func CreateClientInCluster() *kubernetes.Clientset {
 //	is specified (in `enterprise/config/cluster.yml`) as `~/.kube/config`. Please modify
 //	the `cluster.yml` file if you need to change this location. If this
 //	location is misconfigured, this function will fail.
+<<<<<<< HEAD
 func CreateClientOutsideCluster(kubecfgLocation string) *kubernetes.Clientset {
 	config, err := clientcmd.BuildConfigFromFlags("", kubecfgLocation)
 	if err != nil {
 		log.Fatal("Unexpected error while creating Kubernetes client:", err)
+=======
+func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubecfgLocation)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unexpected error while creating Kubernetes client.")
+>>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 	}
 
 	k8sClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
+<<<<<<< HEAD
 		log.Fatal("Unexpected error while creating Kubernetes client:", err)
 	}
 
 	return k8sClient
+=======
+		return nil, errors.Wrap(err, "Unexpected error while creating Kubernetes client.")
+	}
+
+	return k8sClient, nil
+>>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 }
 
 //	This is a helper function that creates the two Kubernetes namespaces
