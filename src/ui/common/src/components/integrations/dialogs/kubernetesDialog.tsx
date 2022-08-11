@@ -5,7 +5,7 @@ import { KubernetesConfig, IntegrationConfig } from '../../../utils/integrations
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
-  kube_config_path: '/home/user/.kube/config/kube_config_cluster.yml'
+  kube_config_path: 'home/ubuntu/.kube/config'
 };
 
 type Props = {
