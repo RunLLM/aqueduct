@@ -101,6 +101,10 @@ export type AirflowConfig = {
   s3_credentials_profile: string;
 };
 
+export type KubernetesConfig = {
+  kube_config_path: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -113,7 +117,8 @@ export type IntegrationConfig =
   | SalesforceConfig
   | S3Config
   | AqueductDemoConfig
-  | AirflowConfig;
+  | AirflowConfig
+  | KubernetesConfig;
 
 export type Service =
   | 'Postgres'
@@ -125,7 +130,8 @@ export type Service =
   | 'S3'
   | 'CSV'
   | 'Aqueduct Demo'
-  | 'Airflow';
+  | 'Airflow'
+  | 'Kubernetes';
 
 type Info = {
   logo: string;
@@ -304,6 +310,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Airflow']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: false,
+    category: 'compute',
+  },
+  ['Kubernetes']: {
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
+    activated: true,
     category: 'compute',
   },
 };
