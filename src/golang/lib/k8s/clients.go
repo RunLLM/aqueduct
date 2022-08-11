@@ -3,10 +3,7 @@ package k8s
 import (
 	"context"
 
-<<<<<<< HEAD
-=======
 	"github.com/dropbox/godropbox/errors"
->>>>>>> b0a0a767f96379556e23ade8002fef916129db80
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
