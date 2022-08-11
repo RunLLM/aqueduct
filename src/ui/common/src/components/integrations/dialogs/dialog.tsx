@@ -24,6 +24,7 @@ import {
   CSVConfig,
   formatService,
   IntegrationConfig,
+  S3Config,
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
@@ -35,7 +36,7 @@ import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
-import { S3Dialog } from './s3Dialog';
+import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 
 type AddTableDialogProps = {
@@ -321,5 +322,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 export function isConfigComplete(
   config: IntegrationConfig | CSVConfig
 ): boolean {
+  if (isS3ConfigComplete(config as S3Config)) {
+    return true;
+  }
+
   return Object.values(config).every((x) => x === undefined || (x && x !== ''));
 }
