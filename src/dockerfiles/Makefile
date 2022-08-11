@@ -13,7 +13,7 @@ build-param:
 	docker build . -t aqueducthq/param -f param/param.dockerfile --no-cache
 
 build-base-connector:
-	docker build . -t aqueducthq/connector_base -f connectors/base.dockerfile --no-cache
+	docker build . -t aqueducthq/base_connector -f connectors/base.dockerfile --no-cache
 
 build-connectors: build-bigquery-connector build-mysql-connector build-postgres-connector \
 	build-s3-connector build-snowflake-connector build-sqlserver-connector
@@ -35,6 +35,12 @@ build-snowflake-connector:
 
 build-sqlserver-connector:
 	docker build . -t aqueducthq/sqlserver-connector -f connectors/sqlserver.dockerfile --no-cache
+
+publish-function:
+	docker push aqueducthq/function
+
+publish-param:
+	docker push aqueducthq/param
 
 publish-connectors:
 	docker push aqueducthq/bigquery-connector

@@ -1,4 +1,4 @@
-FROM aqueducthq/connector_base:latest
+FROM aqueducthq/base_connector:latest
 
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.1
 
@@ -9,4 +9,4 @@ RUN pip3 install psycopg2-binary
 
 ENV PYTHONUNBUFFERED 1
 
-CMD python3 -m aqueduct_executor.operators.connectors.tabular.main --spec "$JOB_SPEC"
+CMD python3 -m aqueduct_executor.operators.connectors.tabular.main --spec "$JOB_SPEC"   

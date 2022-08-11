@@ -1,4 +1,4 @@
-FROM spiralco/connector_base:latest
+FROM aqueducthq/base_connector:latest
 
 MAINTAINER Aqueduct <hello@spiralai.co> version: 0.1
 

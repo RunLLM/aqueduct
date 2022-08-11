@@ -1,4 +1,4 @@
-FROM aqueducthq/connector_base:latest
+FROM aqueducthq/base_connector:latest
 
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.1
 
