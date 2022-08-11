@@ -79,8 +79,6 @@ def test_delete_workflow_saved_objects(client):
 
         # No SDK function to do this so we query the endpoint directly to see delete_table is properly created at the integration.
         tables_response = get_response(client, endpoint).json()
-        print(endpoint)
-        print(tables_response)
         assert "delete_table" in set(tables_response["object_names"])
 
         # Doesn't work if don't force
