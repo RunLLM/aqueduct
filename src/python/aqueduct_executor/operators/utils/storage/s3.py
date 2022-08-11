@@ -16,7 +16,14 @@ class S3Storage(Storage):
         os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
         os.environ["AWS_PROFILE"] = config.credentials_profile
 
-        self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
+        if os.environ["AWS_ACCESS_KEY_ID"] and os.environ["AWS_SECRET_ACCESS_KEY"]:
+            self._client = boto3.client(
+                's3',
+                aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+                aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+            )
+        else:
+            self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
         self._config = config
 
         bucket, key_prefix = parse_s3_path(self._config.bucket)
