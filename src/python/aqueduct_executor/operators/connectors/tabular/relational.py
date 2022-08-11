@@ -27,7 +27,9 @@ class RelationalConnector(connector.DataConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
 
-    def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
+    def load(
+        self, params: load.RelationalParams, df: pd.DataFrame, artifact_type: ArtifactType
+    ) -> None:
         if artifact_type != ArtifactType.TABULAR:
             raise Exception(
                 "The data being loaded must be of type tabular, found %s" % artifact_type

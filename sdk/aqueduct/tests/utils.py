@@ -1,7 +1,9 @@
 import uuid
 from typing import List
 
+import pandas as pd
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
     ArtifactType,
@@ -23,11 +25,9 @@ from aqueduct.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import generate_uuid
 
 from aqueduct import dag as dag_module
-import pandas as pd
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:
@@ -153,4 +153,6 @@ def default_table_artifact(
         operators=[op],
         artifacts=[artifact],
     )
-    return TableArtifact(dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame())
+    return TableArtifact(
+        dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame()
+    )

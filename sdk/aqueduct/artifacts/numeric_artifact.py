@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Callable, Dict, List, Optional
-from numbers import Number
+from typing import Any, Callable, Dict, List, Optional, Union
 
+import numpy as np
 from aqueduct.artifacts import bool_artifact
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -14,8 +17,6 @@ from aqueduct.dag import (
 )
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError
-from aqueduct.artifacts.artifact import Artifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -26,7 +27,6 @@ from aqueduct.utils import (
 )
 
 import aqueduct
-from aqueduct.artifacts import utils as artifact_utils
 
 
 class NumericArtifact(Artifact):
@@ -46,7 +46,13 @@ class NumericArtifact(Artifact):
         >>> val = metric_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: Optional[Number] = None, from_flow_run: bool = False):
+    def __init__(
+        self,
+        dag: DAG,
+        artifact_id: uuid.UUID,
+        from_flow_run: bool = False,
+        content: Optional[Union[int, float, np.number]] = None,
+    ):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -54,13 +60,13 @@ class NumericArtifact(Artifact):
         self._content = content
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert(self._content is None)
+            assert self._content is None
         else:
-            assert(self._content is not None)
+            assert self._content is not None
 
         self._type = ArtifactType.NUMERIC
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Number:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
 
         Returns:
@@ -75,11 +81,25 @@ class NumericArtifact(Artifact):
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.NUMERIC:
-                raise Exception("Error: the computed result is expected to of type numeric, found %s" % artifact.type())
+                raise Exception(
+                    "Error: the computed result is expected to of type numeric, found %s"
+                    % artifact.type()
+                )
+            assert (
+                isinstance(artifact._content, int)
+                or isinstance(artifact._content, float)
+                or isinstance(artifact._content, np.number)
+            )
             return artifact._content
 
         if self._content is None:
-            self._content = artifact_utils.preview_artifact(self._dag, self._artifact_id)._content
+            previewed_artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id)
+            assert (
+                isinstance(previewed_artifact._content, int)
+                or isinstance(previewed_artifact._content, float)
+                or isinstance(previewed_artifact._content, np.number)
+            )
+            self._content = previewed_artifact._content
 
         return self._content
 

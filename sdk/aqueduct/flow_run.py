@@ -4,17 +4,17 @@ from textwrap import wrap
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
+from aqueduct.artifacts import (
+    bool_artifact,
+    generic_artifact,
+    numeric_artifact,
+    param_artifact,
+    table_artifact,
+)
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
-
-from aqueduct.artifacts import numeric_artifact
-from aqueduct.artifacts import table_artifact
-from aqueduct.artifacts import bool_artifact
-from aqueduct.artifacts import param_artifact
-from aqueduct.artifacts import generic_artifact
-
 from aqueduct.operators import Operator
 from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
@@ -79,7 +79,15 @@ class FlowRun:
 
     def artifact(
         self, name: str
-    ) -> Optional[Union[table_artifact.TableArtifact, numeric_artifact.NumericArtifact, bool_artifact.BoolArtifact, param_artifact.ParamArtifact]]:
+    ) -> Optional[
+        Union[
+            table_artifact.TableArtifact,
+            numeric_artifact.NumericArtifact,
+            bool_artifact.BoolArtifact,
+            param_artifact.ParamArtifact,
+            generic_artifact.GenericArtifact,
+        ]
+    ]:
         """Gets the Artifact from the flow run based on the name of the artifact.
 
         Args:
@@ -102,14 +110,17 @@ class FlowRun:
         if artifact_from_dag.type is ArtifactType.TABULAR:
             return table_artifact.TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
-            return numeric_artifact.NumericArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return numeric_artifact.NumericArtifact(
+                self._dag, artifact_from_dag.id, from_flow_run=True
+            )
         elif artifact_from_dag.type is ArtifactType.BOOL:
             return bool_artifact.BoolArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif artifact_from_dag.type is ArtifactType.PARAM:
             return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         else:
-            return generic_artifact.GenericArtifact(self._dag, artifact_from_dag.id, artifact_from_dag.type, from_flow_run=True)
-
+            return generic_artifact.GenericArtifact(
+                self._dag, artifact_from_dag.id, artifact_from_dag.type, from_flow_run=True
+            )
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of

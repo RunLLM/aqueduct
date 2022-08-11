@@ -1,8 +1,8 @@
 from typing import List, Optional, Tuple
 
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
 

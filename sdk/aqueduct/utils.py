@@ -13,14 +13,13 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 import cloudpickle as cp
 import pandas as pd
 import requests
-from aqueduct.enums import OperatorType, TriggerType
-from aqueduct.operators import Operator
-from croniter import croniter
-
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
+from aqueduct.enums import OperatorType, TriggerType
 from aqueduct.error import *
 from aqueduct.logger import logger
+from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
+from croniter import croniter
 
 
 def format_header_for_print(header: str) -> str:

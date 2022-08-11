@@ -1,5 +1,6 @@
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import config, load, relational
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from sqlalchemy import create_engine, engine
 
 
@@ -8,7 +9,13 @@ class SqlServerConnector(relational.RelationalConnector):
         conn_engine = _create_engine(config)
         super().__init__(conn_engine)
 
-    def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
+    def load(
+        self, params: load.RelationalParams, df: pd.DataFrame, artifact_type: ArtifactType
+    ) -> None:
+        if artifact_type != ArtifactType.TABULAR:
+            raise Exception(
+                "The data being loaded must be of type tabular, found %s" % artifact_type
+            )
         # NOTE (saurav): PyODBC for SQL Server does not support `method="multi"` for `df.to_sql`,
         # which is why SqlServerConnector overrides `load`.
         df.to_sql(

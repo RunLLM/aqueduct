@@ -13,8 +13,8 @@ from aqueduct.enums import (
     OperatorType,
     S3TabularFormat,
     SalesforceExtractType,
-    ServiceType,
     SerializationType,
+    ServiceType,
 )
 from aqueduct.operators import (
     ExtractSpec,
@@ -31,7 +31,7 @@ from aqueduct.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.responses import Logs, OperatorResult, PreviewResponse, ArtifactResult
+from aqueduct.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 
@@ -39,7 +39,9 @@ from aqueduct.utils import generate_uuid
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR)
+    extract_artifact = ArtifactMetadata(
+        id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR
+    )
 
     assert extract_artifact.json() == json.dumps(
         {

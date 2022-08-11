@@ -1,5 +1,5 @@
-import sys
 import json
+import sys
 
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import enums, utils

@@ -4,12 +4,13 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
-from aqueduct.error import AqueductError
+import numpy as np
+from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.artifact import Artifact
-from aqueduct.utils import format_header_for_print, get_description_for_check
-
+from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
+from aqueduct.error import AqueductError
+from aqueduct.utils import format_header_for_print, get_description_for_check
 
 
 class BoolArtifact(Artifact):
@@ -31,7 +32,13 @@ class BoolArtifact(Artifact):
         >>> assert check_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: Optional[bool] = None, from_flow_run: bool = False):
+    def __init__(
+        self,
+        dag: DAG,
+        artifact_id: uuid.UUID,
+        from_flow_run: bool = False,
+        content: Optional[bool] = None,
+    ):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -39,9 +46,9 @@ class BoolArtifact(Artifact):
         self._content = content
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert(self._content is None)
+            assert self._content is None
         else:
-            assert(self._content is not None)
+            assert self._content is not None
 
         self._type = ArtifactType.BOOL
 
@@ -60,11 +67,19 @@ class BoolArtifact(Artifact):
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.BOOL:
-                raise Exception("Error: the computed result is expected to of type bool, found %s" % artifact.type())
+                raise Exception(
+                    "Error: the computed result is expected to of type bool, found %s"
+                    % artifact.type()
+                )
+            assert isinstance(artifact._content, bool) or isinstance(artifact._content, np.bool_)
             return artifact._content
 
         if self._content is None:
-            self._content = artifact_utils.preview_artifact(self._dag, self._artifact_id)._content
+            previewed_artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id)
+            assert isinstance(previewed_artifact._content, bool) or isinstance(
+                previewed_artifact._content, np.bool_
+            )
+            self._content = previewed_artifact._content
 
         return self._content
 

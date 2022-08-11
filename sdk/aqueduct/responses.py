@@ -1,15 +1,15 @@
 import base64
 import textwrap
 import uuid
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType, SerializationType, ArtifactType
+from aqueduct.deserialize import deserialization_function_mapping
+from aqueduct.enums import ArtifactType, ExecutionStatus, FailureType, SerializationType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
-from aqueduct.deserialize import deserialization_function_mapping
 
 
 class Logs(BaseModel):

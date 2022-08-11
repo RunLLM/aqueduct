@@ -1,6 +1,8 @@
 import json
 from typing import List, Optional, Union
 
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.artifact import Artifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, S3TabularFormat
@@ -14,8 +16,6 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
-from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
 
 
 class S3Integration(Integration):

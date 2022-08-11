@@ -1,15 +1,17 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.artifact import Artifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
-from aqueduct.artifacts.param_artifact import ParamArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -19,17 +21,13 @@ from aqueduct.utils import (
     serialize_function,
 )
 from pandas import DataFrame
-from aqueduct.artifacts.artifact import Artifact
-from aqueduct.artifacts import utils as artifact_utils
 
 from aqueduct import dag as dag_module
 
 # Valid inputs and outputs to our operators.
-OutputArtifact = Union[TableArtifact, NumericArtifact, BoolArtifact]
-InputArtifact = Union[TableArtifact, NumericArtifact, ParamArtifact]
 InputArtifactLocal = Union[TableArtifact, NumericArtifact, ParamArtifact, DataFrame]
 
-OutputArtifactFunction = Callable[..., OutputArtifact]
+OutputArtifactFunction = Callable[..., Artifact]
 
 # Type declarations for functions
 DecoratedFunction = Callable[[UserFunction], Callable[..., Artifact]]
@@ -471,7 +469,7 @@ def to_operator(
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
-) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
+) -> Union[Callable[..., Artifact], Artifact]:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
     Args:

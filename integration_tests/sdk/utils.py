@@ -3,10 +3,10 @@ import uuid
 from typing import Dict, List, Optional, Union
 
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.enums import ExecutionStatus
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.param_artifact import ParamArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.enums import ExecutionStatus
 from pandas import DataFrame
 
 # Should be set before each test runs.

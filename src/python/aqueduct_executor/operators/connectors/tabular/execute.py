@@ -167,7 +167,7 @@ def run_load(
 
 def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
-    op.load(spec.load_parameters.parameters, df)
+    op.load(spec.load_parameters.parameters, df, enums.ArtifactType.TABULAR)
 
 
 def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:

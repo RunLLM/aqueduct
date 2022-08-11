@@ -1,18 +1,19 @@
-import pandas as pd
 import base64
 import json
 from unittest.mock import MagicMock
 
+import pandas as pd
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.decorator import check, metric, op
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.decorator import check, metric, op
+from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
+from aqueduct.responses import ArtifactResult, PreviewResponse
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file
-from aqueduct.enums import SerializationType, ExecutionStatus, ArtifactType
-from aqueduct.responses import ArtifactResult, PreviewResponse
 
 from aqueduct import api_client
+
 
 def test_decorators_with_without_parentheses():
     inp = default_table_artifact()
@@ -102,7 +103,9 @@ def test_decorators_with_without_parentheses():
 
                 status = ExecutionStatus.SUCCEEDED
                 if expected_artifact_type == ArtifactType.TABULAR:
-                    serialized_data = expected_content.to_json(orient="table", date_format="iso", index=False).encode()
+                    serialized_data = expected_content.to_json(
+                        orient="table", date_format="iso", index=False
+                    ).encode()
                 else:
                     serialized_data = json.dumps(expected_content).encode()
                 artifact_results = {

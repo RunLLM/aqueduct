@@ -252,7 +252,7 @@ def check_passed(content: Union[bool, np.bool_]) -> bool:
             "instead got %s" % type(content).__name__
         )
 
-        
+
 def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:
     """
     Writes the provided Airflow DAG file to storage.

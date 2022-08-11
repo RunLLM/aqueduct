@@ -6,11 +6,12 @@ from typing import Any, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
+from aqueduct.artifacts.artifact import Artifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.param_artifact import ParamArtifact
 
 from aqueduct import api_client, dag
 
-from aqueduct.artifacts.artifact import Artifact
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -36,7 +37,6 @@ from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
-from aqueduct.artifacts.param_artifact import ParamArtifact
 from .utils import (
     _infer_requirements,
     generate_ui_url,

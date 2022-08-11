@@ -8,8 +8,8 @@ import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
 import cloudpickle as pickle
-import pandas as pd
 import numpy as np
+import pandas as pd
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
@@ -23,21 +23,20 @@ from aqueduct_executor.operators.utils.enums import (
 )
 from aqueduct_executor.operators.utils.execution import (
     TIP_CHECK_DID_NOT_PASS,
+    TIP_NOT_BOOL,
+    TIP_NOT_NUMERIC,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
     ExecutionState,
     Logs,
     exception_traceback,
-    TIP_NOT_NUMERIC,
-    TIP_NOT_BOOL,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import check_passed
+from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
 from pandas import DataFrame
 from PIL import Image
-from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -168,7 +167,11 @@ def run(spec: FunctionSpec) -> None:
         # Perform type checking for metric and check operators.
         type_error = False
         if spec.operator_type == OperatorType.METRIC:
-            if not (isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number)):
+            if not (
+                isinstance(result, int)
+                or isinstance(result, float)
+                or isinstance(result, np.number)
+            ):
                 type_error = True
                 type_error_tip = TIP_NOT_NUMERIC
         elif spec.operator_type == OperatorType.CHECK:

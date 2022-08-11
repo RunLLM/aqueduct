@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
-from aqueduct.error import AqueductError
+from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.artifact import Artifact
-
+from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
+from aqueduct.error import AqueductError
 
 
 class GenericArtifact(Artifact):
@@ -15,7 +15,14 @@ class GenericArtifact(Artifact):
     Currently, a generic artifact can be any artifact other than table, numeric, bool, or parameter.
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, type: ArtifactType, content: Optional[bool] = None, from_flow_run: bool = False):
+    def __init__(
+        self,
+        dag: DAG,
+        artifact_id: uuid.UUID,
+        type: ArtifactType,
+        from_flow_run: bool = False,
+        content: Optional[Any] = None,
+    ):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -23,9 +30,9 @@ class GenericArtifact(Artifact):
         self._content = content
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert(self._content is None)
+            assert self._content is None
         else:
-            assert(self._content is not None)
+            assert self._content is not None
 
         self._type = type
 
@@ -44,7 +51,10 @@ class GenericArtifact(Artifact):
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.BOOL:
-                raise Exception("Error: the computed result is expected to of type bool, found %s" % artifact.type())
+                raise Exception(
+                    "Error: the computed result is expected to of type bool, found %s"
+                    % artifact.type()
+                )
             return artifact._content
 
         if self._content is None:

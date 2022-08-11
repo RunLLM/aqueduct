@@ -1,12 +1,12 @@
-import json
 import base64
+import json
 import sys
 from io import StringIO
 from unittest.mock import MagicMock
 
-from aqueduct.decorator import check, metric
-from aqueduct.enums import ExecutionStatus, ArtifactType, SerializationType
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.decorator import check, metric
+from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
 from aqueduct.responses import ArtifactResult, PreviewResponse
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
@@ -70,7 +70,6 @@ def test_metric():
         metric_output: NumericArtifact = metric_fn(metric_input)
     finally:
         delete_zip_folder_and_file(zip_folder)
-
 
     metric_val = metric_output.get()
 
