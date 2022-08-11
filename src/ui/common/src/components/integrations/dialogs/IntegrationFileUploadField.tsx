@@ -106,7 +106,7 @@ export const IntegrationFileUploadField: React.FC<
 
     const styling = {
       margin: '16px',
-      height: '25vh',
+      maxHeight: '25vh',
       width: `max(100%-16px,${placeholder.length + 8}ch)`,
     };
 
