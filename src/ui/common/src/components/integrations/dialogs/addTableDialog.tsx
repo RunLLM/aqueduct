@@ -95,9 +95,7 @@ const AddTableDialog: React.FC<Props> = ({
         {serviceDialog}
         {errMsg && (
           <Alert severity="error">
-            <AlertTitle>
-              Unable to upload CSV file to demo database.
-            </AlertTitle>
+            <AlertTitle>Unable to upload CSV file to demo database.</AlertTitle>
             <pre>{errMsg}</pre>
           </Alert>
         )}
