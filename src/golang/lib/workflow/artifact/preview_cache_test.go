@@ -73,15 +73,14 @@ func TestPreviewCacheCollision(t *testing.T) {
 	err = cache.Put(ctx, key, execPaths)
 	require.Nil(t, err)
 
-	allCached, resMap, err := cache.GetMulti(ctx, []uuid.UUID{key})
+	found, entry, err := cache.Get(ctx, key)
 	require.Nil(t, err)
-	require.True(t, allCached)
-	require.Len(t, resMap, 1)
+	require.True(t, found)
 	require.Equal(t, PreviewCacheEntry{
 		OpMetadataPath:       execPaths.OpMetadataPath,
 		ArtifactMetadataPath: execPaths.ArtifactMetadataPath,
 		ArtifactContentPath:  execPaths.ArtifactContentPath,
-	}, resMap[key])
+	}, entry)
 
 	// Write the same key to the path.
 	newExecPaths := &utils.ExecPaths{

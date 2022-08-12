@@ -76,6 +76,7 @@ func computeLogicalArtifactIDs(
 ) (map[uuid.UUID]uuid.UUID, error) {
 	artifactIDToLogicalID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
 
+	// Queue that stores the frontier of operators as we perform a BFS over the dag.
 	q := make([]uuid.UUID, 0, 1)
 	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 
@@ -164,7 +165,7 @@ func NewWorkflowDag(
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	artifactCacheManager artifact.PreviewCacheManager,
-	isPreview bool,
+	opExecMode operator.ExecutionMode,
 	db database.Database,
 ) (WorkflowDag, error) {
 	dbArtifacts := dbWorkflowDag.Artifacts
@@ -203,9 +204,9 @@ func NewWorkflowDag(
 	}
 
 	// These artifact <-> operator maps help us remember all dag connections.
-	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
+	artifactIDToOpIDs := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactToOps[dbArtifact.Id] = make([]uuid.UUID, 0, 1)
+		artifactIDToOpIDs[dbArtifact.Id] = make([]uuid.UUID, 0, 1)
 	}
 	opToInputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
 	opToOutputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
@@ -219,7 +220,7 @@ func NewWorkflowDag(
 			inputArtifacts = append(inputArtifacts, artifacts[artifactID])
 			inputExecPaths = append(inputExecPaths, artifactIDToExecPaths[artifactID])
 
-			artifactToOps[artifactID] = append(artifactToOps[artifactID], opID)
+			artifactIDToOpIDs[artifactID] = append(artifactIDToOpIDs[artifactID], opID)
 			opToInputArtifactIDs[opID] = append(opToInputArtifactIDs[opID], artifactID)
 		}
 
@@ -244,7 +245,7 @@ func NewWorkflowDag(
 			vaultObject,
 			storageConfig,
 			artifactCacheManager,
-			isPreview,
+			opExecMode,
 			db,
 		)
 		if err != nil {
@@ -259,7 +260,7 @@ func NewWorkflowDag(
 		artifacts:           artifacts,
 		opToOutputArtifacts: opToOutputArtifactIDs,
 		opToInputArtifacts:  opToInputArtifactIDs,
-		artifactToOps:       artifactToOps,
+		artifactToOps:       artifactIDToOpIDs,
 
 		resultWriter:       dagResultWriter,
 		workflowReader:     workflowReader,

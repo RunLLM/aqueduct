@@ -18,10 +18,12 @@ type PreviewCacheEntry struct {
 }
 
 type PreviewCacheManager interface {
-	// Attempts to fetch the cache entries for the given artifacts, returning them
-	// in a map for easy lookup. An entry that does not exist will not be present in the
-	// returned map. Also returns a boolean indicating whether all artifacts were found in the
-	// cache.
+	// Attempts to fetch the cache entry for the given signature key.
+	// Along with the result, returns a boolean indicating whether this was a cache hit.
+	Get(ctx context.Context, logicalID uuid.UUID) (bool, PreviewCacheEntry, error)
+
+	// Batch version of Get(). Returns a boolean indicating whether all keys had a cache hit
+	// The cached results are returned in a map keyed by the artifact's signature.
 	GetMulti(ctx context.Context, logicalIDs []uuid.UUID) (bool, map[uuid.UUID]PreviewCacheEntry, error)
 
 	// Writes the given entries into the cache. If entries already exist with the same artifact ID,
@@ -47,18 +49,33 @@ func deleteDataForEntry(ctx context.Context, storageConfig *shared.StorageConfig
 	utils.CleanupStorageFile(ctx, storageConfig, entry.OpMetadataPath)
 }
 
+func (c *inMemoryPreviewCacheManagerImpl) Get(ctx context.Context, logicalID uuid.UUID) (bool, PreviewCacheEntry, error) {
+	allFound, entryByID, err := c.GetMulti(ctx, []uuid.UUID{logicalID})
+	if err != nil {
+		return false, PreviewCacheEntry{}, err
+	}
+
+	if !allFound {
+		return false, PreviewCacheEntry{}, nil
+	}
+	return true, entryByID[logicalID], nil
+}
+
 func (c *inMemoryPreviewCacheManagerImpl) GetMulti(_ context.Context, logicalIDs []uuid.UUID) (bool, map[uuid.UUID]PreviewCacheEntry, error) {
-	allCached := true
 	cachedEntries := make(map[uuid.UUID]PreviewCacheEntry, len(logicalIDs))
 	for _, logicalID := range logicalIDs {
 		entry, exists := c.cache.Get(logicalID)
 		if exists {
 			cachedEntries[logicalID] = entry.(PreviewCacheEntry)
-		} else {
-			allCached = false
 		}
 	}
-	return allCached, cachedEntries, nil
+
+	for _, logicalID := range logicalIDs {
+		if _, ok := cachedEntries[logicalID]; !ok {
+			return false, cachedEntries, nil
+		}
+	}
+	return true, cachedEntries, nil
 }
 
 func (c *inMemoryPreviewCacheManagerImpl) Put(ctx context.Context, logicalID uuid.UUID, execPaths *utils.ExecPaths) error {

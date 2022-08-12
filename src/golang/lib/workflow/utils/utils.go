@@ -55,7 +55,7 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 }
 
 // Only to be used when duplicating cached results in the preview artifact cache.
-func CopyPathInStorage(ctx context.Context, storageConfig *shared.StorageConfig, fromPath string, toPath string) error {
+func CopyPathContentsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, fromPath string, toPath string) error {
 	s := storage.NewStorage(storageConfig)
 	content, err := s.Get(ctx, fromPath)
 	if err != nil {

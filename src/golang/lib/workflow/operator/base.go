@@ -44,7 +44,7 @@ type baseOperator struct {
 
 	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
-	isPreview        bool
+	execMode         ExecutionMode
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -76,49 +76,55 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 }
 
 // For each output artifact, copy over the contents of the content and metadata paths.
-// This should only ever be used for preview routes. Returns whether this operator has succeeded.
-// If it does not, the operator will fall back on traditional execution, overwriting anything we did here.
-func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, cachedResultByLogicalID map[uuid.UUID]artifact.PreviewCacheEntry) bool {
-	// Assumption: there is only one output artifact.
-	for i, outputArtifact := range bo.outputs {
-		cachedResult := cachedResultByLogicalID[outputArtifact.LogicalID()]
-		err := utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
+// This should only ever be used for preview routes. Returns an error if this operator did not succeed.
+// If it does not, the operator will fall back on traditional execution, overwriting anything we wrote
+// to the output paths here.
+func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedOutputPaths []artifact.PreviewCacheEntry) error {
+	for i, cachedOutputPaths := range allCachedOutputPaths {
+		err := utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
 		if err != nil {
-			return false
+			return err
 		}
 
-		err = utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.ArtifactMetadataPath, bo.outputExecPaths[i].ArtifactMetadataPath)
+		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactMetadataPath, bo.outputExecPaths[i].ArtifactMetadataPath)
 		if err != nil {
-			return false
+			return err
 		}
 
-		err = utils.CopyPathInStorage(ctx, bo.storageConfig, cachedResult.OpMetadataPath, bo.outputExecPaths[i].OpMetadataPath)
+		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.OpMetadataPath, bo.outputExecPaths[i].OpMetadataPath)
 		if err != nil {
-			return false
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewArtifactCacheManager != nil {
-		outputArtifactLogicalIDs := make([]uuid.UUID, 0, len(bo.outputs))
-		for _, outputArtifact := range bo.outputs {
-			outputArtifactLogicalIDs = append(outputArtifactLogicalIDs, outputArtifact.LogicalID())
+		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))
+		for _, output := range bo.outputs {
+			outputArtifactSignatures = append(outputArtifactSignatures, output.LogicalID())
 		}
 
-		allCached, cachedResultByID, err := bo.previewArtifactCacheManager.GetMulti(ctx, outputArtifactLogicalIDs)
+		allFound, cacheEntryByKey, err := bo.previewArtifactCacheManager.GetMulti(ctx, outputArtifactSignatures)
 		if err != nil {
-			log.Errorf("Unable to fetch output artifact ids %v. Error: %v", outputArtifactLogicalIDs, err)
+			log.Errorf("Unexpected error when querying the preview cache: %v", err)
 		}
 
-		// Only use cached results immediately if all output artifacts are cached.
-		if allCached {
-			succeeded := bo.executeUsingCachedResult(ctx, cachedResultByID)
-			if succeeded {
+		if allFound {
+			allCachedEntries := make([]artifact.PreviewCacheEntry, 0, len(bo.outputs))
+			for _, outputArtifact := range bo.outputs {
+				allCachedEntries = append(allCachedEntries, cacheEntryByKey[outputArtifact.LogicalID()])
+			}
+
+			err = bo.executeUsingCachedResult(ctx, allCachedEntries)
+			if err == nil {
+				// We've successfully used the cached result!
 				return nil
 			}
+			// We've failed to use the cache, so we should fallback on actually computing the function.
+			log.Errorf("Operator %s had a preview cache hit but was unable to execute. Error: %v", bo.Name(), err)
 		}
 	}
 
@@ -232,8 +238,8 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
-	if bo.isPreview {
-		// Don't persist any result for preview operators.
+	if bo.execMode == Preview {
+		// We should not be persisting any result for preview operators.
 		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.", bo.Name())
 	}
 
@@ -290,8 +296,8 @@ type baseFunctionOperator struct {
 }
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
-	// If the operator ran in preview mode, cleanup the serialized function.
-	if bfo.isPreview {
+	// Delete the serialized function only for previews.
+	if bfo.execMode == Preview {
 		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
 	}
 

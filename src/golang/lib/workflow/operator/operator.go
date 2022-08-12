@@ -31,6 +31,7 @@ type Operator interface {
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
 
 	// InitializeResult initializes the operator in the database.
+	// TODO: document.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult writes the results of this operator execution to the database.
@@ -42,6 +43,17 @@ type Operator interface {
 	// Also calls Finish() on all the operator's output artifacts.
 	Finish(ctx context.Context)
 }
+
+// This should only be used within the boundaries of the execution engine.
+// Specifies what we will do with the operator's results.
+// Preview: *does not* persist workflow results or write to third-party integrations.
+// Publish *does* both.
+type ExecutionMode int
+
+const (
+	Preview ExecutionMode = iota
+	Publish
+)
 
 func NewOperator(
 	ctx context.Context,
@@ -55,7 +67,7 @@ func NewOperator(
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	previewArtifactCacheManager artifact.PreviewCacheManager,
-	isPreview bool,
+	execMode ExecutionMode,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
@@ -96,9 +108,10 @@ func NewOperator(
 		storageConfig:               storageConfig,
 		db:                          db,
 
+		execMode: execMode,
+
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,
-		isPreview:        isPreview,
 	}
 
 	if dbOperator.Spec.IsFunction() {

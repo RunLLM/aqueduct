@@ -265,8 +265,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		engineJobManager,
 		eng.Vault,
 		eng.StorageConfig,
-		nil,   /* artifactCacheManager*/
-		false, // is not preview
+		nil, /* artifactCacheManager */
+		operator.Publish,
 		eng.Database,
 	)
 	if err != nil {
@@ -293,6 +293,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	defer func() {
 		log.Info("workflowRunMetadata: ")
 		log.Info(workflowRunMetadata)
+
 		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
 		if err != nil {
 			log.Errorf("Error when persisting dag results: %v", err)
@@ -310,11 +311,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dag,
 		workflowRunMetadata,
 		timeConfig,
-		true, // should persist results
+		operator.Publish,
 	)
 	if err != nil {
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Error when executing workflow.")
+		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
 		workflowRunMetadata.Status = shared.SucceededExecutionStatus
 	}
@@ -351,7 +352,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.Vault,
 		eng.StorageConfig,
 		eng.PreviewCacheManager,
-		true, // is a preview
+		operator.Preview,
 		eng.Database,
 	)
 	if err != nil {
@@ -382,9 +383,10 @@ func (eng *aqEngine) PreviewWorkflow(
 		dag,
 		workflowRunMetadata,
 		timeConfig,
-		false, // should not persist results
+		operator.Preview,
 	)
 	if err != nil {
+		log.Errorf("Workflow failed with error: %v", err)
 		workflowRunMetadata.Status = shared.FailedExecutionStatus
 	} else {
 		workflowRunMetadata.Status = shared.SucceededExecutionStatus
@@ -695,7 +697,7 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
-	shouldPersistResults bool,
+	opExecMode operator.ExecutionMode,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
@@ -744,7 +746,7 @@ func (eng *aqEngine) execute(
 			}
 
 			// From here on we can assume that the operator has terminated.
-			if shouldPersistResults {
+			if opExecMode == operator.Publish {
 				err = op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())

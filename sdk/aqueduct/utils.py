@@ -23,6 +23,8 @@ from .error import *
 from .logger import logger
 from .templates import op_file_content
 
+GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
+
 
 def format_header_for_print(header: str) -> str:
     """Used to print the header of a section in "describe()" with a consistent length.

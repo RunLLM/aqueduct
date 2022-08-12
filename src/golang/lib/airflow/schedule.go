@@ -165,8 +165,8 @@ func ScheduleWorkflow(
 			jobManager,
 			vault,
 			&airflowStorageConfig,
-			nil,   /* previewArtifactCacheManager */
-			false, // airflow operator will never run in preview mode
+			nil,              /* previewArtifactCacheManager */
+			operator.Publish, // airflow operator will never run in preview mode
 			db,
 		)
 		if err != nil {
