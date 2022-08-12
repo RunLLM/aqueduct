@@ -24,6 +24,7 @@ import {
   CSVConfig,
   formatService,
   IntegrationConfig,
+  S3Config,
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
@@ -35,7 +36,7 @@ import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
-import { S3Dialog } from './s3Dialog';
+import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 
 type AddTableDialogProps = {
@@ -168,8 +169,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
   const [successMessage, setSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  const namePrefix = formatService(service) + '/';
-  const [name, setName] = useState(namePrefix);
+  const [name, setName] = useState('');
 
   const handleSuccessToastClose = () => {
     setShowSuccessToast(false);
@@ -177,8 +177,7 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
   useEffect(() => {
     setDisableConnect(
-      service !== 'Aqueduct Demo' &&
-        (!isConfigComplete(config) || name === '' || name === namePrefix)
+      service !== 'Aqueduct Demo' && (!isConfigComplete(config) || name === '')
     );
   }, [config, name]);
 
@@ -261,10 +260,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       required={true}
       label="Name*"
       description="Provide a unique name to refer to this integration."
-      placeholder={namePrefix}
+      placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
-        const input = event.target.value;
-        event.target.value = namePrefix + input.substr(namePrefix.length);
         setName(event.target.value);
       }}
       value={name}
@@ -325,5 +322,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 export function isConfigComplete(
   config: IntegrationConfig | CSVConfig
 ): boolean {
+  if (isS3ConfigComplete(config as S3Config)) {
+    return true;
+  }
+
   return Object.values(config).every((x) => x === undefined || (x && x !== ''));
 }

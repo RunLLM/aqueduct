@@ -16,7 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 )
 
 type Readers struct {

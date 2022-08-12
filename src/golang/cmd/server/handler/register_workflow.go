@@ -15,11 +15,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
-	"github.com/aqueducthq/aqueduct/lib/workflow/engine"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -221,14 +221,16 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 	emptyParams := make(map[string]string)
 
-	executeContext, _ := context.WithTimeout(context.Background(), timeConfig.ExecTimeout)
-	//nolint:errcheck
-	go h.Engine.ExecuteWorkflow(
-		executeContext,
+	_, err = h.Engine.TriggerWorkflow(
+		ctx,
 		workflowId,
+		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
 		timeConfig,
 		emptyParams,
 	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	}
 
 	if !args.isUpdate {
 		// If this workflow is newly created, automatically add the user to the workflow's

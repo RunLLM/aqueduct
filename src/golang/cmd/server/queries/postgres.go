@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
@@ -17,6 +18,64 @@ type postgresReaderImpl struct {
 
 func newPostgresReader() Reader {
 	return &postgresReaderImpl{standardReaderImpl{}}
+}
+
+func (r *postgresReaderImpl) GetWorkflowLastRunByEngine(
+	ctx context.Context,
+	engine shared.EngineType,
+	db database.Database,
+) ([]WorkflowLastRunResponse, error) {
+	query := `
+		SELECT 
+			workflow.id AS workflow_id, 
+			workflow.schedule, 
+			workflow_dag_result.created_at AS last_run_at 
+		FROM 
+			workflow, 
+			workflow_dag, 
+			workflow_dag_result, 
+			(
+				SELECT 
+					workflow.id, 
+					MAX(workflow_dag_result.created_at) AS created_at 
+				FROM 
+					workflow, 
+					workflow_dag, 
+					workflow_dag_result 
+				WHERE workflow.id = workflow_dag.workflow_id 
+				AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+				GROUP BY workflow.id
+			) AS workflow_latest_run 
+		WHERE workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+		AND workflow.id = workflow_latest_run.id 
+		AND workflow_dag_result.created_at = workflow_latest_run.created_at
+		AND json_extract_path_text(workflow_dag.engine_config, 'type') = $1;`
+
+	var response []WorkflowLastRunResponse
+	args := []interface{}{engine}
+
+	err := db.Query(ctx, &response, query, args...)
+	return response, err
+}
+
+func (r *postgresReaderImpl) GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+	ctx context.Context,
+	organizationId string,
+	engine shared.EngineType,
+	db database.Database,
+) ([]WorkflowDagId, error) {
+	query := `
+		 SELECT workflow_dag.id FROM workflow_dag WHERE created_at IN (
+		 SELECT MAX(workflow_dag.created_at) FROM app_user, workflow, workflow_dag 
+		 WHERE app_user.id = workflow.user_id AND workflow.id = workflow_dag.workflow_id 
+		 AND app_user.organization_id = $1 
+		 AND json_extract_path_text(workflow_dag.engine_config, 'type') = $2
+		 GROUP BY workflow.id);`
+
+	var workflowDags []WorkflowDagId
+	err := db.Query(ctx, &workflowDags, query, organizationId, engine)
+	return workflowDags, err
 }
 
 func (r *postgresReaderImpl) GetLoadOperatorSpecByOrganization(
