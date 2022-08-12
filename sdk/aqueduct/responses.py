@@ -226,7 +226,7 @@ class SavedObjectDelete(BaseModel):
     """This is an item in the list returned by DeleteWorkflowResponse."""
 
     name: str
-    succeeded: bool
+    exec_state: OperatorResult
 
 
 class DeleteWorkflowResponse(BaseModel):
