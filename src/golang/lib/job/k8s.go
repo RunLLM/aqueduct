@@ -85,6 +85,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	// TODO: https://linear.app/aqueducthq/issue/ENG-369/create-k8s-service-accounts-for-local-minikube-clusters
 	var secretEnvVars []string
+	secretEnvVars = []string{k8s.AwsCredentialsSecretName}
 
 	containerImage, err := mapJobTypeToDockerImage(j, spec)
 	if err != nil {
