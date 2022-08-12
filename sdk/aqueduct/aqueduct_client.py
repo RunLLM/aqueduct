@@ -20,7 +20,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import ExecutionStatus, RelationalDBServices, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -454,18 +454,16 @@ class Client:
         for integration in resp.saved_object_deletion_results:
             failed_for_integration = []
             for obj in resp.saved_object_deletion_results[integration]:
-                if not obj.succeeded:
+                if not obj.exec_state.status == ExecutionStatus.SUCCEEDED:
                     failed_for_integration.append(obj)
             if len(failed_for_integration) > 0:
                 failed_deletions[str(integration)] = [
-                    res.__dict__ for res in failed_for_integration
+                    json.loads(res.json()) for res in failed_for_integration
                 ]
                 counts += len(failed_for_integration)
         if counts > 0:
             failures = json.dumps(failed_deletions, sort_keys=False, indent=4)
-            raise Exception(
-                f"Workflow-Written Objects' Deletion Failures\n{counts} Failures\n{failures}"
-            )
+            raise Exception(f"Failed to delete {counts} saved objects.\nFailures\n{failures}")
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
