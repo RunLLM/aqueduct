@@ -109,7 +109,7 @@ class NumericArtifact(Artifact):
     BOUND_NOTEQUAL = "notequal"
 
     def list_preset_checks(self) -> List[str]:
-        """Returns a list of all preset checks available on the metric artifact.
+        """Returns a list of all preset checks available on the numeric artifact.
         These preset checks can be set via the bound() method on a artifact.
 
         Returns:
@@ -142,7 +142,7 @@ class NumericArtifact(Artifact):
                 If specified, will set the severity of this check as specified. Defaults to CheckSeverity.WARNING
 
         Returns:
-            A check artifact bound to this metric.
+            A bool artifact bound to this metric.
         """
         input_mapping = {
             self.BOUND_UPPER: upper,

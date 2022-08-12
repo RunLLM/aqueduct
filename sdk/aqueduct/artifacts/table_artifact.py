@@ -240,7 +240,7 @@ class TableArtifact(Artifact):
                 Optional severity associated with the check created with this expectations
 
         Returns:
-            A check artifact that represent the validation result of running the expectation provided on the table.
+            A bool artifact that represent the validation result of running the expectation provided on the table.
         """
 
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
@@ -325,7 +325,7 @@ class TableArtifact(Artifact):
                 row identifier to find missing values for
 
         Returns:
-            A metric artifact that represents the number of missing values for the row/column on the applied table artifact.
+            A numeric artifact that represents the number of missing values for the row/column on the applied table artifact.
         """
         table_name = self._get_table_name()
         if column_id is not None and row_id is not None:
@@ -377,7 +377,7 @@ class TableArtifact(Artifact):
         Note: uses len() to determine row count over the pandas.DataFrame.
 
         Returns:
-            A metric artifact that represents the number of rows on this table.
+            A numeric artifact that represents the number of rows on this table.
         """
         table_name = self._get_table_name()
 
@@ -408,7 +408,7 @@ class TableArtifact(Artifact):
                 column identifier to find max of
 
         Returns:
-            A metric artifact that represents the max for the given column on the applied table artifact.
+            A numeric artifact that represents the max for the given column on the applied table artifact.
         """
         table_name = self._get_table_name()
 
@@ -442,7 +442,7 @@ class TableArtifact(Artifact):
                 column identifier to find min of
 
         Returns:
-            A metric artifact that represents the min for the given column on the applied table artifact.
+            A numeric artifact that represents the min for the given column on the applied table artifact.
         """
         table_name = self._get_table_name()
 
@@ -476,7 +476,7 @@ class TableArtifact(Artifact):
                 column identifier to compute mean of
 
         Returns:
-            A metric artifact that represents the mean for the given column on the applied table artifact.
+            A numeric artifact that represents the mean for the given column on the applied table artifact.
         """
         table_name = self._get_table_name()
 
@@ -510,7 +510,7 @@ class TableArtifact(Artifact):
                 column identifier to compute standard deviation of
 
         Returns:
-            A metric artifact that represents the standard deviation for the given column on the applied table artifact.
+            A numeric artifact that represents the standard deviation for the given column on the applied table artifact.
         """
         table_name = self._get_table_name()
 
@@ -547,7 +547,7 @@ class TableArtifact(Artifact):
                     max_memory: maximum memory usage of previous @op func in Mb
 
         Returns:
-            A metric artifact that represents the requested system metric
+            A numeric artifact that represents the requested system metric
         """
         operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]

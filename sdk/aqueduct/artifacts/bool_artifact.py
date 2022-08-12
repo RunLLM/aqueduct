@@ -27,7 +27,7 @@ class BoolArtifact(Artifact):
         >>>
         >>> check_artifact = check_something(table_artifact, metric_artifact)
 
-        The contents of the check artifact can be manifested locally:
+        The contents of the bool artifact can be manifested locally:
 
         >>> assert check_artifact.get()
     """
