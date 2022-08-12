@@ -20,8 +20,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -36,7 +36,7 @@ const (
 	accountOrganizationId = "aqueduct"
 
 	// The maximum number of entries this cache can have.
-	previewArtifactCacheSize = 200
+	previewCacheSize = 200
 )
 
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
@@ -101,9 +101,9 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
-	previewArtifactCacheManager, err := artifact.NewInMemoryPreviewCacheManager(
+	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
 		conf.StorageConfig,
-		previewArtifactCacheSize,
+		previewCacheSize,
 	)
 	if err != nil {
 		log.Fatal("Unable to create preview artifact cache: ", err)
@@ -112,7 +112,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 	eng, err := engine.NewAqEngine(
 		db,
 		githubManager,
-		previewArtifactCacheManager,
+		previewCacheManager,
 		vault,
 		aqPath,
 		conf.StorageConfig,

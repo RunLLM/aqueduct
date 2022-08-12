@@ -27,7 +27,7 @@ func newLoadOperator(
 ) (Operator, error) {
 	base.jobName = generateLoadJobName()
 
-	if base.previewArtifactCacheManager != nil {
+	if base.previewCacheManager != nil {
 		return nil, errors.Newf("A load operator cannot be part of a cache-aware workflow execution, since it is non-preview only.")
 	}
 

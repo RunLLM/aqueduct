@@ -27,9 +27,9 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from aqueduct.utils import GITHUB_ISSUE_LINK
 
 from aqueduct import utils
-from aqueduct.utils import GITHUB_ISSUE_LINK
 
 
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:

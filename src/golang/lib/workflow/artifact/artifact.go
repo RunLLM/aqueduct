@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -18,7 +19,7 @@ import (
 // produced by a workflow run.
 type Artifact interface {
 	ID() uuid.UUID
-	LogicalID() uuid.UUID
+	Signature() uuid.UUID
 	Type() artifact.Type
 	Name() string
 
@@ -53,9 +54,10 @@ type ArtifactImpl struct {
 	// to this artifact throughout our system.
 	id uuid.UUID
 
-	// This is a special ID that also encodes important structural/parameter information.
-	// This can be used as a unique handle to a specific artifact **for a specific dag execution**.
-	logicalID uuid.UUID
+	// This is a more specific identifier than id, since it also encodes important structural/parameter
+	// information about any upstream dependencies. It can be used as a unique handle to an artifact's
+	// data, which is why it is used as the key in the preview artifact cache.
+	signature uuid.UUID
 
 	name         string
 	description  string
@@ -68,39 +70,39 @@ type ArtifactImpl struct {
 
 	// If this is not nil, this artifact should be written to the cache.
 	// An artifact cannot be both cache-aware and persisted.
-	previewArtifactCacheManager PreviewCacheManager
-	resultsPersisted            bool
+	previewCacheManager preview_cache.CacheManager
+	resultsPersisted    bool
 
 	storageConfig *shared.StorageConfig
 	db            database.Database
 }
 
 func NewArtifact(
-	logicalID uuid.UUID,
+	signature uuid.UUID,
 	dbArtifact artifact.DBArtifact,
 	execPaths *utils.ExecPaths,
 	artifactResultWriter artifact_result.Writer,
 	storageConfig *shared.StorageConfig,
-	artifactCacheManager PreviewCacheManager,
+	previewCacheManager preview_cache.CacheManager,
 	db database.Database,
 ) (Artifact, error) {
-	if artifactCacheManager != nil && logicalID == uuid.Nil {
-		return nil, errors.Newf("Logical ID must be provided for a cache-aware artifact.")
+	if previewCacheManager != nil && signature == uuid.Nil {
+		return nil, errors.Newf("An Artifact signature must be provided for a cache-aware artifact.")
 	}
 
 	return &ArtifactImpl{
-		id:                          dbArtifact.Id,
-		logicalID:                   logicalID,
-		name:                        dbArtifact.Name,
-		description:                 dbArtifact.Description,
-		artifactType:                dbArtifact.Spec.Type(),
-		execPaths:                   execPaths,
-		resultWriter:                artifactResultWriter,
-		resultID:                    uuid.Nil,
-		previewArtifactCacheManager: artifactCacheManager,
-		resultsPersisted:            false,
-		storageConfig:               storageConfig,
-		db:                          db,
+		id:                  dbArtifact.Id,
+		signature:           signature,
+		name:                dbArtifact.Name,
+		description:         dbArtifact.Description,
+		artifactType:        dbArtifact.Spec.Type(),
+		execPaths:           execPaths,
+		resultWriter:        artifactResultWriter,
+		resultID:            uuid.Nil,
+		previewCacheManager: previewCacheManager,
+		resultsPersisted:    false,
+		storageConfig:       storageConfig,
+		db:                  db,
 	}, nil
 }
 
@@ -108,8 +110,8 @@ func (a *ArtifactImpl) ID() uuid.UUID {
 	return a.id
 }
 
-func (a *ArtifactImpl) LogicalID() uuid.UUID {
-	return a.logicalID
+func (a *ArtifactImpl) Signature() uuid.UUID {
+	return a.signature
 }
 
 func (a *ArtifactImpl) Type() artifact.Type {
@@ -191,7 +193,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 }
 
 func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.ExecutionState) error {
-	if a.previewArtifactCacheManager != nil {
+	if a.previewCacheManager != nil {
 		return errors.Newf("Artifact %s is cache-aware, so it cannot be persisted.", a.Name())
 	}
 
@@ -219,8 +221,8 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 	}
 
 	// Update the artifact cache, performing any necessary deletions.
-	if a.previewArtifactCacheManager != nil {
-		err := a.previewArtifactCacheManager.Put(context.TODO(), a.LogicalID(), a.execPaths)
+	if a.previewCacheManager != nil {
+		err := a.previewCacheManager.Put(context.TODO(), a.Signature(), a.execPaths)
 		if err != nil {
 			log.Errorf("Error when updating the result of artifact %s: %v", a.ID(), err)
 		}

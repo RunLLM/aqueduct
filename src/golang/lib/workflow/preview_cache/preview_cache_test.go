@@ -1,4 +1,4 @@
-package artifact
+package preview_cache
 
 import (
 	"context"
@@ -76,7 +76,7 @@ func TestPreviewCacheCollision(t *testing.T) {
 	found, entry, err := cache.Get(ctx, key)
 	require.Nil(t, err)
 	require.True(t, found)
-	require.Equal(t, PreviewCacheEntry{
+	require.Equal(t, Entry{
 		OpMetadataPath:       execPaths.OpMetadataPath,
 		ArtifactMetadataPath: execPaths.ArtifactMetadataPath,
 		ArtifactContentPath:  execPaths.ArtifactContentPath,

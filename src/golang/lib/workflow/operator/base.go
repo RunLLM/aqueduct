@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -36,11 +37,11 @@ type baseOperator struct {
 	outputExecPaths []*utils.ExecPaths
 
 	// The operator is cache-aware if this is non-nil.
-	previewArtifactCacheManager artifact.PreviewCacheManager
-	jobManager                  job.JobManager
-	vaultObject                 vault.Vault
-	storageConfig               *shared.StorageConfig
-	db                          database.Database
+	previewCacheManager preview_cache.CacheManager
+	jobManager          job.JobManager
+	vaultObject         vault.Vault
+	storageConfig       *shared.StorageConfig
+	db                  database.Database
 
 	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
@@ -79,7 +80,7 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 // This should only ever be used for preview routes. Returns an error if this operator did not succeed.
 // If it does not, the operator will fall back on traditional execution, overwriting anything we wrote
 // to the output paths here.
-func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedOutputPaths []artifact.PreviewCacheEntry) error {
+func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedOutputPaths []preview_cache.Entry) error {
 	for i, cachedOutputPaths := range allCachedOutputPaths {
 		err := utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
 		if err != nil {
@@ -101,21 +102,21 @@ func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedO
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	// Check if this operator can use previously cached results instead of computing for scratch.
-	if bo.previewArtifactCacheManager != nil {
+	if bo.previewCacheManager != nil {
 		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))
 		for _, output := range bo.outputs {
-			outputArtifactSignatures = append(outputArtifactSignatures, output.LogicalID())
+			outputArtifactSignatures = append(outputArtifactSignatures, output.Signature())
 		}
 
-		allFound, cacheEntryByKey, err := bo.previewArtifactCacheManager.GetMulti(ctx, outputArtifactSignatures)
+		allFound, cacheEntryByKey, err := bo.previewCacheManager.GetMulti(ctx, outputArtifactSignatures)
 		if err != nil {
 			log.Errorf("Unexpected error when querying the preview cache: %v", err)
 		}
 
 		if allFound {
-			allCachedEntries := make([]artifact.PreviewCacheEntry, 0, len(bo.outputs))
+			allCachedEntries := make([]preview_cache.Entry, 0, len(bo.outputs))
 			for _, outputArtifact := range bo.outputs {
-				allCachedEntries = append(allCachedEntries, cacheEntryByKey[outputArtifact.LogicalID()])
+				allCachedEntries = append(allCachedEntries, cacheEntryByKey[outputArtifact.Signature()])
 			}
 
 			err = bo.executeUsingCachedResult(ctx, allCachedEntries)
@@ -243,7 +244,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.", bo.Name())
 	}
 
-	if bo.previewArtifactCacheManager != nil {
+	if bo.previewCacheManager != nil {
 		return errors.Newf("Operator %s is cache-aware, so it cannot be persisted.", bo.Name())
 	}
 

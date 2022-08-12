@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -67,14 +68,14 @@ type workflowDagImpl struct {
 }
 
 // Assumption: all dag's start with operators.
-// computeLogicalArtifactIDs traverses over the entire dag structure from beginning to end,
-// computing the logical IDs for each artifact. These logical IDs are returned in a map keyed
+// computeArtifactSignatures traverses over the entire dag structure from beginning to end,
+// computing the signatures for each artifact. These logical IDs are returned in a map keyed
 // by the artifact's original ID.
-func computeLogicalArtifactIDs(
+func computeArtifactSignatures(
 	dbOperators map[uuid.UUID]db_operator.DBOperator,
 	dbArtifacts map[uuid.UUID]db_artifact.DBArtifact,
 ) (map[uuid.UUID]uuid.UUID, error) {
-	artifactIDToLogicalID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
 
 	// Queue that stores the frontier of operators as we perform a BFS over the dag.
 	q := make([]uuid.UUID, 0, 1)
@@ -107,11 +108,11 @@ func computeLogicalArtifactIDs(
 
 		bytesToHash := []byte{}
 		for _, inputArtifactID := range currOp.Inputs {
-			inputArtifactLogicalID, ok := artifactIDToLogicalID[inputArtifactID]
+			inputArtifactSignature, ok := artifactIDToSignature[inputArtifactID]
 			if !ok {
 				return nil, errors.Newf("Unable to find logical ID for input artifact %s", inputArtifactID)
 			}
-			bytesToHash = append(bytesToHash, []byte(inputArtifactLogicalID.String())...)
+			bytesToHash = append(bytesToHash, []byte(inputArtifactSignature.String())...)
 		}
 
 		// If the operator produces a parameter artifact, we also need to hash against the parameterized value.
@@ -129,7 +130,7 @@ func computeLogicalArtifactIDs(
 		bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
 
 		// Compute that final hash and add it to the map, then continue traversing.
-		artifactIDToLogicalID[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
+		artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
 		processedArtifactIds[outputArtifactID] = true
 
 		// Find the next downstream operators. We must have already visited all the operator's inputs.
@@ -149,7 +150,7 @@ func computeLogicalArtifactIDs(
 			}
 		}
 	}
-	return artifactIDToLogicalID, nil
+	return artifactIDToSignature, nil
 }
 
 func NewWorkflowDag(
@@ -164,7 +165,7 @@ func NewWorkflowDag(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
-	artifactCacheManager artifact.PreviewCacheManager,
+	artifactCacheManager preview_cache.CacheManager,
 	opExecMode operator.ExecutionMode,
 	db database.Database,
 ) (WorkflowDag, error) {
@@ -178,7 +179,7 @@ func NewWorkflowDag(
 	}
 
 	// Compute logical IDs for each artifact.
-	artifactIDToLogicalID, err := computeLogicalArtifactIDs(dbOperators, dbArtifacts)
+	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, dbArtifacts)
 	if err != nil {
 		return nil, errors.Wrap(err, "Internal error: unable to set up workflow execution.")
 	}
@@ -189,7 +190,7 @@ func NewWorkflowDag(
 	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dbWorkflowDag.Artifacts))
 	for artifactID, dbArtifact := range dbWorkflowDag.Artifacts {
 		newArtifact, err := artifact.NewArtifact(
-			artifactIDToLogicalID[dbArtifact.Id],
+			artifactIDToSignatures[dbArtifact.Id],
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
 			artifactResultWriter,

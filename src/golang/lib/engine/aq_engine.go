@@ -24,10 +24,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -80,7 +80,7 @@ type aqEngine struct {
 	AqPath         string
 
 	// Only used for previews.
-	PreviewCacheManager artifact.PreviewCacheManager
+	PreviewCacheManager preview_cache.CacheManager
 
 	// Readers and Writers needed for workflow management
 	*EngineReaders
@@ -130,7 +130,7 @@ type PreviewArtifactResults struct {
 func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
-	previewCacheManager artifact.PreviewCacheManager,
+	previewCacheManager preview_cache.CacheManager,
 	vault vault.Vault,
 	aqPath string,
 	storageConfig *shared.StorageConfig,
@@ -282,7 +282,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	workflowRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &workflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -292,9 +292,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 	// Make sure to persist the dag results on exit.
 	defer func() {
 		log.Info("workflowRunMetadata: ")
-		log.Info(workflowRunMetadata)
+		log.Info(wfRunMetadata)
 
-		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
+		err = dag.PersistResult(ctx, wfRunMetadata.Status)
 		if err != nil {
 			log.Errorf("Error when persisting dag results: %v", err)
 		}
@@ -305,19 +305,19 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	workflowRunMetadata.Status = shared.RunningExecutionStatus
+	wfRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
-		workflowRunMetadata,
+		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
 	)
 	if err != nil {
-		workflowRunMetadata.Status = shared.FailedExecutionStatus
+		wfRunMetadata.Status = shared.FailedExecutionStatus
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		workflowRunMetadata.Status = shared.SucceededExecutionStatus
+		wfRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
 	return shared.SucceededExecutionStatus, nil
@@ -370,26 +370,26 @@ func (eng *aqEngine) PreviewWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	workflowRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &workflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		Status:              shared.PendingExecutionStatus,
 	}
 
-	workflowRunMetadata.Status = shared.RunningExecutionStatus
+	wfRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
-		workflowRunMetadata,
+		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
-		workflowRunMetadata.Status = shared.FailedExecutionStatus
+		wfRunMetadata.Status = shared.FailedExecutionStatus
 	} else {
-		workflowRunMetadata.Status = shared.SucceededExecutionStatus
+		wfRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
 	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
@@ -414,7 +414,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	return &WorkflowPreviewResult{
-		Status:    workflowRunMetadata.Status,
+		Status:    wfRunMetadata.Status,
 		Operators: execStateByOp,
 		Artifacts: artifactResults,
 	}, nil

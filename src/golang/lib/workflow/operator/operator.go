@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -66,7 +67,7 @@ func NewOperator(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
-	previewArtifactCacheManager artifact.PreviewCacheManager,
+	previewCacheManager preview_cache.CacheManager,
 	execMode ExecutionMode,
 	db database.Database,
 ) (Operator, error) {
@@ -102,11 +103,11 @@ func NewOperator(
 		inputExecPaths:  inputExecPaths,
 		outputExecPaths: outputExecPaths,
 
-		previewArtifactCacheManager: previewArtifactCacheManager,
-		jobManager:                  jobManager,
-		vaultObject:                 vaultObject,
-		storageConfig:               storageConfig,
-		db:                          db,
+		previewCacheManager: previewCacheManager,
+		jobManager:          jobManager,
+		vaultObject:         vaultObject,
+		storageConfig:       storageConfig,
+		db:                  db,
 
 		execMode: execMode,
 

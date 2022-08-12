@@ -143,7 +143,7 @@ func ScheduleWorkflow(
 				artifactIDToExecPaths[artifactId],
 				nil, /* previewArtifactResultWriter */
 				storageConfig,
-				nil, /* previewArtifactCacheManager */
+				nil, /* previewCacheManager */
 				nil, /* db */
 			)
 			if err != nil {
@@ -165,7 +165,7 @@ func ScheduleWorkflow(
 			jobManager,
 			vault,
 			&airflowStorageConfig,
-			nil,              /* previewArtifactCacheManager */
+			nil,              /* previewCacheManager */
 			operator.Publish, // airflow operator will never run in preview mode
 			db,
 		)
