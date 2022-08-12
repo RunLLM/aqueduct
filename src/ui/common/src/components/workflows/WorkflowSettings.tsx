@@ -481,7 +481,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const hasSavedObjects = Object.keys(savedObjects).length > 0;
 
   const deleteDialog = (
-    <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} fullWidth>
+    <Dialog
+      open={showDeleteDialog}
+      onClose={() => setShowDeleteDialog(false)}
+      fullWidth
+    >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: 1 }}>
@@ -671,7 +675,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
                     <Alert icon={false} severity="error">
-                      <AlertTitle>Failed to delete {objectResult.name}.</AlertTitle>
+                      <AlertTitle>
+                        Failed to delete {objectResult.name}.
+                      </AlertTitle>
                       <pre>{objectResult.exec_state.error.context}</pre>
                     </Alert>
                   )}
