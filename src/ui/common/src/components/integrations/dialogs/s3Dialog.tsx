@@ -128,7 +128,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         Upload your AWS credentials file. Typically, this is in{' '}
         <code>~/.aws/credentials</code>. You also need to specify the profile
         name you would like to use for the credentials file. If you are using an
-        SSO profile, you should <code>SPECIFY PATH TO CREDENTIALS</code>
+        SSO profile, you should use <code>SPECIFY PATH TO CREDENTIALS</code>{' '}
         instead.
       </Typography>
       {/* add these message once integration edit is ready:
