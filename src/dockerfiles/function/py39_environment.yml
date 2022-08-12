@@ -13,4 +13,3 @@ dependencies:
   - pydantic==1.9.0
   - pip:
     - scikit_learn==1.0.2
-    - aqueduct-ml==0.0.2

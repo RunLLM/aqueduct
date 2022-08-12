@@ -6,7 +6,7 @@ git checkout -t origin/eng-1510-add-k8s-engine-integration
 
 cd src/python
 
-pip install .
+pip3 install .
 
 cd ../../..
 
@@ -22,15 +22,21 @@ if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 PYTHON_VERSION=$(python3 -m aqueduct_executor.operators.function_executor.set_conda_version "$FUNCTION_EXTRACT_PATH")
 echo "Python version is $PYTHON_VERSION"
 
+cd aqueduct/src/python
+
+conda run -n $PYTHON_VERSION pip3 install .
+
+cd ../../..
+
 if test -f "$FUNCTION_EXTRACT_PATH/op/requirements.txt"
 then
       pip freeze >> "$FUNCTION_EXTRACT_PATH/op/local_deps.txt"
-      python3 -m aqueduct_executor.operators.function_executor.prune_requirements --local_path="$FUNCTION_EXTRACT_PATH/op/local_deps.txt" --requirements_path="$FUNCTION_EXTRACT_PATH/op/requirements.txt" --missing_path="$FUNCTION_EXTRACT_PATH/op/missing.txt"
+      conda run -n $PYTHON_VERSION python3 -m aqueduct_executor.operators.function_executor.prune_requirements --local_path="$FUNCTION_EXTRACT_PATH/op/local_deps.txt" --requirements_path="$FUNCTION_EXTRACT_PATH/op/requirements.txt" --missing_path="$FUNCTION_EXTRACT_PATH/op/missing.txt"
       EXIT_CODE=$?
       if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
       if test -f "$FUNCTION_EXTRACT_PATH/op/missing.txt"
       then
-            pip3 install -r "$FUNCTION_EXTRACT_PATH/op/missing.txt" --no-cache-dir
+            conda run -n $PYTHON_VERSION pip3 install -r "$FUNCTION_EXTRACT_PATH/op/missing.txt" --no-cache-dir
       fi
 fi
 
