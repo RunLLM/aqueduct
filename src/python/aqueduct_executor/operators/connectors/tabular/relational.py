@@ -1,16 +1,9 @@
-from typing import Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
-from aqueduct_executor.operators.utils import enums
-from aqueduct_executor.operators.utils.execution import (
-    TIP_UNKNOWN_ERROR,
-    Error,
-    ExecutionState,
-    Logs,
-    exception_traceback,
-)
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
+from aqueduct_executor.operators.utils.utils import delete_object
 from sqlalchemy import MetaData, engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
@@ -36,24 +29,30 @@ class RelationalConnector(connector.TabularConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         return pd.read_sql(params.query, con=self.engine)
 
+    def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
+        if context:
+            metadata = context["metadata"]
+            base = context["base"]
+        else:
+            raise Exception("Unexpectedly cannot find context for deletion.")
+        sql_table = metadata.tables[name]
+        base.metadata.drop_all(self.engine, [sql_table], checkfirst=True)
+
     def delete(self, tables: List[str]) -> List[SavedObjectDelete]:
         results = []
-        Base = declarative_base()
+        base = declarative_base()
         metadata = MetaData()
         metadata.reflect(bind=self.engine)
+        delete_helper: Callable[[str], None] = lambda name: self._delete_object(
+            name, context={"metadata": metadata, "base": base}
+        )
         for table in tables:
-            exec_state = ExecutionState(user_logs=Logs())
-            try:
-                sql_table = metadata.tables[table]
-                Base.metadata.drop_all(self.engine, [sql_table], checkfirst=True)
-            except Exception as e:
-                exec_state.status = enums.ExecutionStatus.FAILED
-                exec_state.failure_type = enums.FailureType.SYSTEM
-                exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-                results.append(SavedObjectDelete(name=table, exec_state=exec_state))
-                continue
-            exec_state.status = enums.ExecutionStatus.SUCCEEDED
-            results.append(SavedObjectDelete(name=table, exec_state=exec_state))
+            results.append(
+                delete_object(
+                    table,
+                    delete_helper,
+                )
+            )
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:

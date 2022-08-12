@@ -1,19 +1,12 @@
 import io
 import json
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 import boto3
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
-from aqueduct_executor.operators.utils import enums
-from aqueduct_executor.operators.utils.execution import (
-    TIP_UNKNOWN_ERROR,
-    Error,
-    ExecutionState,
-    Logs,
-    exception_traceback,
-)
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
+from aqueduct_executor.operators.utils.utils import delete_object
 
 
 class S3Connector(connector.TabularConnector):
@@ -78,20 +71,13 @@ class S3Connector(connector.TabularConnector):
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
 
+    def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
+        self.s3.Object(self.bucket, name).delete()
+
     def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
         results = []
         for key in objects:
-            exec_state = ExecutionState(user_logs=Logs())
-            try:
-                self.s3.Object(self.bucket, key).delete()
-            except Exception as e:
-                exec_state.status = enums.ExecutionStatus.FAILED
-                exec_state.failure_type = enums.FailureType.SYSTEM
-                exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-                results.append(SavedObjectDelete(name=key, exec_state=exec_state))
-                continue
-            exec_state.status = enums.ExecutionStatus.SUCCEEDED
-            results.append(SavedObjectDelete(name=key, exec_state=exec_state))
+            results.append(delete_object(key, self._delete_object))
         return results
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
