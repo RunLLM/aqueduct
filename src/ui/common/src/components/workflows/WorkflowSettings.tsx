@@ -51,7 +51,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { LoadingStatusEnum } from '../../utils/shared';
+import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
   SavedObject,
   WorkflowDag,
@@ -428,7 +428,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       [{integration}] <b>{name}</b>
     </Typography>
   );
-
+  console.log(savedObjects);
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
@@ -505,13 +505,15 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </DialogTitle>
 
       <DialogContent>
-        {hasSavedObjects && <Typography variant="body1">
-          The following objects had been saved by{' '}
-          <span style={{ fontFamily: 'Monospace' }}>
-            {workflowDag.metadata?.name}
-          </span>{' '}
-          and can be removed when deleting the workflow:
-        </Typography>}
+        {hasSavedObjects && (
+          <Typography variant="body1">
+            The following objects had been saved by{' '}
+            <span style={{ fontFamily: 'Monospace' }}>
+              {workflowDag.metadata?.name}
+            </span>{' '}
+            and can be removed when deleting the workflow:
+          </Typography>
+        )}
 
         <Box sx={{ my: 2 }}>
           {savedObjectsStatus === LoadingStatusEnum.Succeeded &&
@@ -523,18 +525,23 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           )}
         </Box>
 
-        {hasSavedObjects && <Typography variant="body1">
-          Deleting workflow{' '}
-          <span style={{ fontFamily: 'Monospace' }}>{name}</span> and the
-          associated <b>{selectedObjects.size}</b> objects is not reversible.
-          Please note that we cannot guarantee this will only delete data
-          created by Aqueduct. The workflow will be deleted even if the
-          underlying objects are not successfully deleted.
-        </Typography>}
-        {!hasSavedObjects && <Typography variant="body1">
-          Are you sure you want to delete{' '}
-          <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action is not reversible.
-        </Typography>}
+        {hasSavedObjects && (
+          <Typography variant="body1">
+            Deleting workflow{' '}
+            <span style={{ fontFamily: 'Monospace' }}>{name}</span> and the
+            associated <b>{selectedObjects.size}</b> objects is not reversible.
+            Please note that we cannot guarantee this will only delete data
+            created by Aqueduct. The workflow will be deleted even if the
+            underlying objects are not successfully deleted.
+          </Typography>
+        )}
+        {!hasSavedObjects && (
+          <Typography variant="body1">
+            Are you sure you want to delete{' '}
+            <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
+            is not reversible.
+          </Typography>
+        )}
 
         <Box sx={{ my: 2 }}>
           <Typography variant="body1">
@@ -586,7 +593,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   Object.entries(deleteWorkflowResults).map(([_, objectResults]) =>
     objectResults.map((objectResult) => {
-      if (objectResult.succeeded) {
+      if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
         successfullyDeleted += 1;
       } else {
         unsuccessfullyDeleted += 1;
@@ -629,33 +636,44 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           object deletion.
         </Typography>
 
-        <List dense={false}>
+        <List style={{ maxHeight: '200px', overflow: 'auto' }} dense={true}>
           {Object.entries(deleteWorkflowResults)
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
-                <ListItem key={`${integrationName}-${objectResult.name}`}>
-                  <ListItemIcon style={{ minWidth: '30px' }}>
-                    {objectResult.succeeded ? (
-                      <FontAwesomeIcon
-                        icon={faCircleCheck}
-                        style={{
-                          color: theme.palette.green[500],
-                        }}
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faCircleXmark}
-                        style={{
-                          color: theme.palette.red[500],
-                        }}
-                      />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={displayObject(integrationName, objectResult.name)}
-                    secondary={<>{objectResult.succeeded}</>}
-                  />
-                </ListItem>
+                <>
+                  <ListItem key={`${integrationName}-${objectResult.name}`}>
+                    <ListItemIcon style={{ minWidth: '30px' }}>
+                      {objectResult.exec_state.status ===
+                      ExecutionStatus.Succeeded ? (
+                        <FontAwesomeIcon
+                          icon={faCircleCheck}
+                          style={{
+                            color: theme.palette.green[500],
+                          }}
+                        />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faCircleXmark}
+                          style={{
+                            color: theme.palette.red[500],
+                          }}
+                        />
+                      )}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={displayObject(
+                        integrationName,
+                        objectResult.name
+                      )}
+                    />
+                  </ListItem>
+                  {objectResult.exec_state.status ===
+                    ExecutionStatus.Failed && (
+                    <Alert severity="error">
+                      <pre>{objectResult.exec_state.error.context}</pre>
+                    </Alert>
+                  )}
+                </>
               ))
             )
             .flat()}

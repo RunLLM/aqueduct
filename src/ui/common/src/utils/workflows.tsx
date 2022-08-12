@@ -1,6 +1,6 @@
 import { Artifact } from './artifacts';
 import { normalizeOperator, Operator } from './operators';
-import ExecutionStatus from './shared';
+import ExecutionStatus, { ExecState } from './shared';
 
 export type S3Config = {
   region: string;
@@ -96,7 +96,7 @@ export type ListWorkflowSavedObjectsResponse = {
 
 export type SavedObjectDeletion = {
   name: string;
-  succeeded: boolean;
+  exec_state: ExecState;
 };
 
 export type DeleteWorkflowResponse = {
