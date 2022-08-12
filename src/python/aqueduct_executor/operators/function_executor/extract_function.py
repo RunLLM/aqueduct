@@ -78,9 +78,6 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--spec", required=True)
     args = parser.parse_args()
 
-    print("inside extract.py")
-    print(args.spec)
-
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
