@@ -267,7 +267,10 @@ def write_delete_saved_objects_results(
 ) -> None:
     results_str = json.dumps(
         {
-            integration: [result.__dict__ for result in results[integration]]
+            integration: [
+                {"name": result.name, "exec_state": json.loads(result.exec_state.json())}
+                for result in results[integration]
+            ]
             for integration in results
         }
     )

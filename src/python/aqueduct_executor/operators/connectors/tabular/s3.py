@@ -5,6 +5,14 @@ from typing import Dict, List
 import boto3
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
+    Error,
+    ExecutionState,
+    Logs,
+    exception_traceback,
+)
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 
@@ -73,12 +81,17 @@ class S3Connector(connector.TabularConnector):
     def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
         results = []
         for key in objects:
+            exec_state = ExecutionState(user_logs=Logs())
             try:
                 self.s3.Object(self.bucket, key).delete()
-            except:
-                results.append(SavedObjectDelete(name=key, succeeded=False))
+            except Exception as e:
+                exec_state.status = enums.ExecutionStatus.FAILED
+                exec_state.failure_type = enums.FailureType.SYSTEM
+                exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+                results.append(SavedObjectDelete(name=key, exec_state=exec_state))
                 continue
-            results.append(SavedObjectDelete(name=key, succeeded=True))
+            exec_state.status = enums.ExecutionStatus.SUCCEEDED
+            results.append(SavedObjectDelete(name=key, exec_state=exec_state))
         return results
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
