@@ -145,6 +145,15 @@ def _type_check_decorator_arguments(
             raise InvalidUserArgumentException("Each pip requirements specifier must be a string.")
 
 
+def _type_check_decorated_function_arguments(*input_artifacts: Artifact) -> None:
+    for input_artifact in input_artifacts:
+        if not isinstance(input_artifact, Artifact):
+            raise InvalidUserArgumentException(
+                "Input to decorated must be an Aqueduct artifact, got type %s."
+                % type(input_artifact)
+            )
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -213,12 +222,7 @@ def op(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            for input_artifact in input_artifacts:
-                if not isinstance(input_artifact, Artifact):
-                    raise InvalidUserArgumentException(
-                        "Input to decorated function must of an artifact type, got type %s."
-                        % type(input_artifact)
-                    )
+            _type_check_decorated_function_arguments(*input_artifacts)
 
             zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
@@ -323,14 +327,9 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            for input_artifact in input_artifacts:
-                if not isinstance(input_artifact, Artifact):
-                    raise InvalidUserArgumentException(
-                        "Input to decorated function must of an artifact type, got type %s."
-                        % type(input_artifact)
-                    )
+            _type_check_decorated_function_arguments(*input_artifacts)
 
-            zip_file = serialize_function(func)
+            zip_file = serialize_function(func, file_dependencies, requirements)
 
             # TODO(ENG-735): Support granularity=FunctionGranularity.TABLE & granularity=FunctionGranularity.ROW
             function_spec = FunctionSpec(
@@ -447,14 +446,9 @@ def check(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            for input_artifact in input_artifacts:
-                if not isinstance(input_artifact, Artifact):
-                    raise InvalidUserArgumentException(
-                        "Input to decorated function must of an artifact type, got type %s."
-                        % type(input_artifact)
-                    )
+            _type_check_decorated_function_arguments(*input_artifacts)
 
-            zip_file = serialize_function(func)
+            zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
