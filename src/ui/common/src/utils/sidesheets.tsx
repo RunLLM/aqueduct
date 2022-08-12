@@ -33,7 +33,7 @@ export function getDataSideSheetContent(
   switch (currentNode.type) {
     case NodeType.BoolArtifact:
     case NodeType.NumericArtifact:
-    case NodeType.TabularArtifact:
+    case NodeType.TableArtifact:
     case NodeType.JsonArtifact:
       return <DataPreviewSideSheet artifactId={currentNode.id} />;
     case NodeType.CheckOp:

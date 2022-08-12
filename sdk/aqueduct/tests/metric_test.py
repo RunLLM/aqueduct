@@ -77,7 +77,7 @@ def test_metric():
     assert len(dag.operators) == 2
 
     artifact_check = {
-        artifact_name: ArtifactType.TABULAR,
+        artifact_name: ArtifactType.TABLE,
         metric_artifact_name: ArtifactType.NUMERIC,
     }
 

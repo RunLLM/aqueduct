@@ -97,7 +97,7 @@ class TableArtifact(Artifact):
         else:
             assert self._content is not None
 
-        self._type = ArtifactType.TABULAR
+        self._type = ArtifactType.TABLE
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -108,7 +108,7 @@ class TableArtifact(Artifact):
                 this artifact.
 
         Returns:
-            A dataframe containing the tabular contents of this artifact.
+            A dataframe containing the table contents of this artifact.
 
         Raises:
             InvalidRequestError:
@@ -118,9 +118,9 @@ class TableArtifact(Artifact):
         """
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
-            if artifact.type() != ArtifactType.TABULAR:
+            if artifact.type() != ArtifactType.TABLE:
                 raise Exception(
-                    "Error: the computed result is expected to of type tabular, found %s"
+                    "Error: the computed result is expected to of type table, found %s"
                     % artifact.type()
                 )
             assert isinstance(artifact._content, pd.DataFrame)
@@ -145,7 +145,7 @@ class TableArtifact(Artifact):
             n:
                 the number of row previewed. Default to 5.
         Returns:
-            A dataframe containing the tabular contents of this artifact.
+            A dataframe containing the table contents of this artifact.
         """
         df = self.get(parameters=parameters)
         return df.head(n)

@@ -30,7 +30,7 @@ def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
 
 
-def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
+def _read_table_input(storage: Storage, path: str) -> pd.DataFrame:
     input_bytes = storage.get(path)
     return pd.read_json(io.BytesIO(input_bytes), orient="table")
 
@@ -56,7 +56,7 @@ def _read_bytes_input(storage: Storage, path: str) -> bytes:
 
 
 _deserialization_function_mapping = {
-    SerializationType.TABULAR: _read_tabular_input,
+    SerializationType.TABLE: _read_table_input,
     SerializationType.JSON: _read_json_input,
     SerializationType.PICKLE: _read_pickle_input,
     SerializationType.IMAGE: _read_image_input,
@@ -113,7 +113,7 @@ def _read_metadata_key(
     return [metadata[key_name] for metadata in metadata_inputs]
 
 
-def _write_tabular_output(
+def _write_table_output(
     storage: Storage,
     output_path: str,
     output: pd.DataFrame,
@@ -165,7 +165,7 @@ def _write_json_output(
 
 
 _serialization_function_mapping = {
-    SerializationType.TABULAR: _write_tabular_output,
+    SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
     SerializationType.PICKLE: _write_pickle_output,
     SerializationType.IMAGE: _write_image_output,
@@ -188,9 +188,9 @@ def write_artifact(
         _METADATA_ARTIFACT_TYPE_KEY: artifact_type.value,
     }
 
-    if artifact_type == ArtifactType.TABULAR:
+    if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.TABULAR.value
+        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.TABLE.value
     elif artifact_type == ArtifactType.IMAGE:
         output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.IMAGE.value
     elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:
@@ -262,7 +262,7 @@ def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -
 
 def infer_artifact_type(value: Any) -> ArtifactType:
     if isinstance(value, DataFrame):
-        return ArtifactType.TABULAR
+        return ArtifactType.TABLE
     elif isinstance(value, Image.Image):
         return ArtifactType.IMAGE
     elif isinstance(value, bytes):

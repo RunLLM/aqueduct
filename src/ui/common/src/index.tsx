@@ -76,12 +76,12 @@ import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
 import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
 import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
 import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
-import TabularArtifactNode from './components/workflows/nodes/TabularArtifactNode';
+import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
+import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
 import OperatorResultsSideSheet from './components/workflows/SideSheets/OperatorResultsSideSheet';
@@ -345,7 +345,6 @@ export {
   fetchUser,
   FileData,
   FileEventTarget,
-  NumericArtifactNode,
   formatService,
   FunctionGranularity,
   FunctionOp,
@@ -438,6 +437,7 @@ export {
   notificationsSlice,
   NotificationStatus,
   NotificationWorkflowMetadata,
+  NumericArtifactNode,
   objectKeyFn,
   openSideSheet,
   openSideSheetSlice,
@@ -490,7 +490,7 @@ export {
   store,
   SupportedIntegrations,
   Tab,
-  TabularArtifactNode,
+  TableArtifactNode,
   Tabs,
   theme,
   TransitionLengthInMs,

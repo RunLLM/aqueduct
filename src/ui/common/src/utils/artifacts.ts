@@ -7,7 +7,7 @@ export enum ArtifactType {
   Numeric = 'numeric',
   Dict = 'dict',
   Tuple = 'tuple',
-  Tabular = 'tabular',
+  Table = 'table',
   Json = 'json',
   Bytes = 'bytes',
   Image = 'image',

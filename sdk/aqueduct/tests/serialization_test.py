@@ -11,7 +11,7 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    S3TabularFormat,
+    S3TableFormat,
     SalesforceExtractType,
     SerializationType,
     ServiceType,
@@ -39,15 +39,13 @@ from aqueduct.utils import generate_uuid
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = ArtifactMetadata(
-        id=artifact_id, name=artifact_name, type=ArtifactType.TABULAR
-    )
+    extract_artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABLE)
 
     assert extract_artifact.json() == json.dumps(
         {
             "id": str(artifact_id),
             "name": artifact_name,
-            "type": ArtifactType.TABULAR,
+            "type": ArtifactType.TABLE,
         }
     )
 
@@ -95,8 +93,8 @@ def test_preview_response_loading():
     )
     artifact_id = uuid.uuid4()
     artifact_result = ArtifactResult(
-        serialization_type=SerializationType.TABULAR,
-        artifact_type=ArtifactType.TABULAR,
+        serialization_type=SerializationType.TABLE,
+        artifact_type=ArtifactType.TABLE,
         content="This is a serialized pandas dataframe",
     )
     preview_resp = {
@@ -265,8 +263,8 @@ def test_extract_serialization():
                 integration_id=integration_id,
                 parameters=S3ExtractParams(
                     filepath=json.dumps("test.csv"),
-                    artifact_type=ArtifactType.TABULAR,
-                    format=S3TabularFormat.CSV,
+                    artifact_type=ArtifactType.TABLE,
+                    format=S3TableFormat.CSV,
                 ),
             ),
         ),
@@ -283,7 +281,7 @@ def test_extract_serialization():
                     "integration_id": str(integration_id),
                     "parameters": {
                         "filepath": json.dumps("test.csv"),
-                        "artifact_type": ArtifactType.TABULAR,
+                        "artifact_type": ArtifactType.TABLE,
                         "format": "CSV",
                     },
                 }
@@ -410,7 +408,7 @@ def test_load_serialization():
                 integration_id=integration_id,
                 parameters=S3LoadParams(
                     filepath="test.json",
-                    format=S3TabularFormat.JSON,
+                    format=S3TableFormat.JSON,
                 ),
             ),
         ),
@@ -427,7 +425,7 @@ def test_load_serialization():
                     "integration_id": str(integration_id),
                     "parameters": {
                         "filepath": "test.json",
-                        "format": S3TabularFormat.JSON,
+                        "format": S3TableFormat.JSON,
                     },
                 }
             },

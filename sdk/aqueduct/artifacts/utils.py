@@ -49,7 +49,7 @@ def preview_artifact(
         base64.b64decode(artifact_response.content)
     )
 
-    if artifact_type == ArtifactType.TABULAR:
+    if artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(dag, artifact_id, content)
     elif artifact_type == ArtifactType.NUMERIC:
         return numeric_artifact.NumericArtifact(dag, artifact_id, content)

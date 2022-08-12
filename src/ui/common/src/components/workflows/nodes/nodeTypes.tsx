@@ -1,15 +1,15 @@
 import BoolArtifactNode from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
 import DatabaseNode from './DatabaseNode';
-import NumericArtifactNode from './NumericArtifactNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
 import JsonArtifactNode from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
-import TabularArtifactNode from './TabularArtifactNode';
+import NumericArtifactNode from './NumericArtifactNode';
+import TableArtifactNode from './TableArtifactNode';
 
 export const nodeTypes = {
   database: DatabaseNode,
-  tabularArtifact: TabularArtifactNode,
+  tableArtifact: TableArtifactNode,
   numericArtifact: NumericArtifactNode,
   boolArtifact: BoolArtifactNode,
   jsonArtifact: JsonArtifactNode,

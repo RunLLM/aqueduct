@@ -1,5 +1,5 @@
 """
-CONFIG FILE FOR TABULAR CONNECTOR INTEGRATION TESTS
+CONFIG FILE FOR TABLE CONNECTOR INTEGRATION TESTS
 - To skip a particular test set the relevant `SKIP_` flag to False
 - Set the `_CONF` dict for all connectors being tested.
 - Commented out config fields are optional.

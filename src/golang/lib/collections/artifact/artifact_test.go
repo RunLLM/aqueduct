@@ -15,7 +15,7 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	atf := artifact.DBArtifact{
 		Id:   id,
 		Name: "test",
-		Type: artifact.TabularType,
+		Type: artifact.TableType,
 	}
 
 	rawAtf, err := json.Marshal(atf)
@@ -25,5 +25,5 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	var reconstructedAtf artifact.DBArtifact
 	err = json.Unmarshal(rawAtf, &reconstructedAtf)
 	require.Nil(t, err)
-	require.True(t, reconstructedAtf.Type == artifact.TabularType)
+	require.True(t, reconstructedAtf.Type == artifact.TableType)
 }

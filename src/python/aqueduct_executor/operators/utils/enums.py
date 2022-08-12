@@ -61,7 +61,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     NUMERIC = "numeric"
     DICT = "dictionary"
     TUPLE = "tuple"
-    TABULAR = "tabular"
+    TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
     IMAGE = "image"
@@ -69,7 +69,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
-    TABULAR = "tabular"
+    TABLE = "table"
     JSON = "json"
     PICKLE = "pickle"
     IMAGE = "image"
@@ -83,7 +83,7 @@ artifact_to_serialization = {
     ArtifactType.NUMERIC: [SerializationType.JSON],
     ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
     ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABULAR: [SerializationType.TABULAR],
+    ArtifactType.TABLE: [SerializationType.TABLE],
     ArtifactType.JSON: [SerializationType.STRING],
     ArtifactType.BYTES: [SerializationType.BYTES],
     ArtifactType.IMAGE: [SerializationType.IMAGE],

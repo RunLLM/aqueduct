@@ -128,7 +128,7 @@ def run_extract(
 
     output = _extract()
 
-    output_artifact_type = enums.ArtifactType.TABULAR
+    output_artifact_type = enums.ArtifactType.TABLE
     if isinstance(extract_params, extract.S3Params):
         output_artifact_type = extract_params.artifact_type
         # If the type of the output is tuple, then it could be a multi-file S3 request so we
@@ -167,7 +167,7 @@ def run_load(
 
 def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
-    op.load(spec.load_parameters.parameters, df, enums.ArtifactType.TABULAR)
+    op.load(spec.load_parameters.parameters, df, enums.ArtifactType.TABLE)
 
 
 def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:

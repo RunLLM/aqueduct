@@ -10,7 +10,7 @@ from PIL import Image
 _DEFAULT_ENCODING = "utf8"
 
 
-def _read_tabular_content(content: bytes) -> pd.DataFrame:
+def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
 
 
@@ -35,7 +35,7 @@ def _read_bytes_content(content: bytes) -> bytes:
 
 
 deserialization_function_mapping = {
-    SerializationType.TABULAR: _read_tabular_content,
+    SerializationType.TABLE: _read_table_content,
     SerializationType.JSON: _read_json_content,
     SerializationType.PICKLE: _read_pickle_content,
     SerializationType.IMAGE: _read_image_content,

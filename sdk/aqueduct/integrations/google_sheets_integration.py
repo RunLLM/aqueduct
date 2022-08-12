@@ -72,7 +72,7 @@ class GoogleSheetsIntegration(Integration):
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            type=ArtifactType.TABULAR,
+                            type=ArtifactType.TABLE,
                         ),
                     ],
                 )

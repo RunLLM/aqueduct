@@ -5,7 +5,7 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.artifact import Artifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, S3TabularFormat
+from aqueduct.enums import ArtifactType, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -53,11 +53,11 @@ class S3Integration(Integration):
                 supported types, except for ArtifactType.UNTYPED. Note that when multiple files are
                 retrieved, they must have the same artifact type.
             format:
-                If the artifact type is ArtifactType.TABULAR, the user has to specify the table format.
+                If the artifact type is ArtifactType.TABLE, the user has to specify the table format.
                 We currently support JSON, CSV, and Parquet. Note that when multiple files are retrieved,
                 they must have the same format.
             merge:
-                If the artifact type is ArtifactType.TABULAR, we can optionally merge multiple tables
+                If the artifact type is ArtifactType.TABLE, we can optionally merge multiple tables
                 into a single DataFrame if this flag is set to True.
             name:
                 Name of the query.
@@ -69,12 +69,12 @@ class S3Integration(Integration):
         """
         if format:
             lowercased_format = format.lower()
-            if lowercased_format == S3TabularFormat.CSV.value.lower():
-                format_enum = S3TabularFormat.CSV
-            elif lowercased_format == S3TabularFormat.JSON.value.lower():
-                format_enum = S3TabularFormat.JSON
-            elif lowercased_format == S3TabularFormat.PARQUET.value.lower():
-                format_enum = S3TabularFormat.PARQUET
+            if lowercased_format == S3TableFormat.CSV.value.lower():
+                format_enum = S3TableFormat.CSV
+            elif lowercased_format == S3TableFormat.JSON.value.lower():
+                format_enum = S3TableFormat.JSON
+            elif lowercased_format == S3TableFormat.PARQUET.value.lower():
+                format_enum = S3TableFormat.PARQUET
             else:
                 raise Exception("Unsupport file format %s." % format)
         else:
@@ -125,7 +125,7 @@ class S3Integration(Integration):
 
         return artifact
 
-    def config(self, filepath: str, format: Optional[S3TabularFormat] = None) -> SaveConfig:
+    def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
         """
         Configuration for saving to S3 Integration.
 

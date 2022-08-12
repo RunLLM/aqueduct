@@ -78,15 +78,15 @@ class S3Connector(connector.DataConnector):
     def _fetch_object(self, key: str, params: extract.S3Params) -> Any:
         response = self.s3.Object(self.bucket, key).get()
         data = response["Body"].read()
-        if params.artifact_type == ArtifactType.TABULAR:
+        if params.artifact_type == ArtifactType.TABLE:
             if params.format is None:
-                raise Exception("You must specify a file format for tabular data.")
+                raise Exception("You must specify a file format for table data.")
             buf = io.BytesIO(data)
-            if params.format == common.S3TabularFormat.CSV:
+            if params.format == common.S3TableFormat.CSV:
                 return pd.read_csv(buf)
-            elif params.format == common.S3TabularFormat.JSON:
+            elif params.format == common.S3TableFormat.JSON:
                 return pd.read_json(buf)
-            elif params.format == common.S3TabularFormat.PARQUET:
+            elif params.format == common.S3TableFormat.PARQUET:
                 return pd.read_parquet(buf)
             raise Exception("Unknown S3 file format %s." % params.format)
         elif params.artifact_type == ArtifactType.JSON:
@@ -160,7 +160,7 @@ class S3Connector(connector.DataConnector):
                     if (obj.key)[-1] != "/":
                         files.append(self._fetch_object(obj.key, params))
 
-                if params.artifact_type == ArtifactType.TABULAR and params.merge:
+                if params.artifact_type == ArtifactType.TABLE and params.merge:
                     return pd.concat(files)
                 else:
                     return tuple(files)
@@ -177,23 +177,23 @@ class S3Connector(connector.DataConnector):
                     raise Exception("Each key in the list must not be a directory, found %s." % key)
                 files.append(self._fetch_object(key, params))
 
-            if params.artifact_type == ArtifactType.TABULAR and params.merge:
+            if params.artifact_type == ArtifactType.TABLE and params.merge:
                 return pd.concat(files)
             else:
                 return tuple(files)
 
     def load(self, params: load.S3Params, data: Any, artifact_type: ArtifactType) -> None:
-        if artifact_type == ArtifactType.TABULAR:
+        if artifact_type == ArtifactType.TABLE:
             if params.format is None:
-                raise Exception("You must specify a file format for tabular data.")
+                raise Exception("You must specify a file format for table data.")
             buf = io.BytesIO(data)
-            if params.format == common.S3TabularFormat.CSV:
+            if params.format == common.S3TableFormat.CSV:
                 data.to_csv(buf, index=False)
-            elif params.format == common.S3TabularFormat.JSON:
+            elif params.format == common.S3TableFormat.JSON:
                 # Index cannot be False for `to.json` for default orient
                 # See: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html
                 data.to_json(buf)
-            elif params.format == common.S3TabularFormat.PARQUET:
+            elif params.format == common.S3TableFormat.PARQUET:
                 data.to_parquet(buf, index=False)
             else:
                 raise Exception("Unknown S3 file format %s." % params.format)

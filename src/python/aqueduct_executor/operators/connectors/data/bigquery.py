@@ -34,10 +34,8 @@ class BigQueryConnector(connector.DataConnector):
         return df
 
     def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
-        if artifact_type != ArtifactType.TABULAR:
-            raise Exception(
-                "The data being loaded must be of type tabular, found %s" % artifact_type
-            )
+        if artifact_type != ArtifactType.TABLE:
+            raise Exception("The data being loaded must be of type table, found %s" % artifact_type)
 
         update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default

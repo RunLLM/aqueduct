@@ -30,10 +30,8 @@ class RelationalConnector(connector.DataConnector):
     def load(
         self, params: load.RelationalParams, df: pd.DataFrame, artifact_type: ArtifactType
     ) -> None:
-        if artifact_type != ArtifactType.TABULAR:
-            raise Exception(
-                "The data being loaded must be of type tabular, found %s" % artifact_type
-            )
+        if artifact_type != ArtifactType.TABLE:
+            raise Exception("The data being loaded must be of type table, found %s" % artifact_type)
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,
         # since pandas will pass multiple rows in a single INSERT. If this still remains an issue, we can pass in a
         # callable function for `method` that does bulk loading.

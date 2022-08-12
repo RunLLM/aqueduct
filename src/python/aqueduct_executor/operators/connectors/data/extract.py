@@ -84,7 +84,7 @@ class RelationalParams(models.BaseParams):
 class S3Params(models.BaseParams):
     filepath: str
     artifact_type: enums.ArtifactType
-    format: Optional[common.S3TabularFormat]
+    format: Optional[common.S3TableFormat]
     merge: Optional[bool]
 
 

@@ -4,7 +4,7 @@ import { ArtifactType } from '../utils/artifacts';
 import { OperatorType } from '../utils/operators';
 
 export enum NodeType {
-  TabularArtifact = 'tabularArtifact',
+  TableArtifact = 'tableArtifact',
   NumericArtifact = 'numericArtifact',
   BoolArtifact = 'boolArtifact',
   JsonArtifact = 'jsonArtifact',
@@ -29,7 +29,7 @@ export const OperatorTypeToNodeTypeMap: { [key in OperatorType]: NodeType } = {
 } as const;
 
 export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {
-  [ArtifactType.Tabular]: NodeType.TabularArtifact,
+  [ArtifactType.Table]: NodeType.TableArtifact,
   [ArtifactType.Numeric]: NodeType.NumericArtifact,
   [ArtifactType.Bool]: NodeType.BoolArtifact,
   [ArtifactType.Json]: NodeType.JsonArtifact,

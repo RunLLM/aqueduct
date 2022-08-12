@@ -12,10 +12,8 @@ class SqlServerConnector(relational.RelationalConnector):
     def load(
         self, params: load.RelationalParams, df: pd.DataFrame, artifact_type: ArtifactType
     ) -> None:
-        if artifact_type != ArtifactType.TABULAR:
-            raise Exception(
-                "The data being loaded must be of type tabular, found %s" % artifact_type
-            )
+        if artifact_type != ArtifactType.TABLE:
+            raise Exception("The data being loaded must be of type table, found %s" % artifact_type)
         # NOTE (saurav): PyODBC for SQL Server does not support `method="multi"` for `df.to_sql`,
         # which is why SqlServerConnector overrides `load`.
         df.to_sql(

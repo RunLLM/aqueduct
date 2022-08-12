@@ -54,8 +54,8 @@ def test_decorators_with_without_parentheses():
         "op": {
             w_parentheses: op_fn_with_parentheses,
             wo_parentheses: op_fn_without_parentheses,
-            output_artifact_type: ArtifactType.TABULAR,
-            output_serialization_type: SerializationType.TABULAR,
+            output_artifact_type: ArtifactType.TABLE,
+            output_serialization_type: SerializationType.TABLE,
             content: pd.DataFrame(),
             artifact_class: TableArtifact,
             label: lambda name: f"{name}_aqueduct",
@@ -102,7 +102,7 @@ def test_decorators_with_without_parentheses():
                     raise Exception("Unable to find output artifact from the dag.")
 
                 status = ExecutionStatus.SUCCEEDED
-                if expected_artifact_type == ArtifactType.TABULAR:
+                if expected_artifact_type == ArtifactType.TABLE:
                     serialized_data = expected_content.to_json(
                         orient="table", date_format="iso", index=False
                     ).encode()

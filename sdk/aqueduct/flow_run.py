@@ -107,7 +107,7 @@ class FlowRun:
         if not isinstance(artifact_from_dag.type, ArtifactType):
             raise InternalAqueductError("The artifact's type can not be recognized.")
 
-        if artifact_from_dag.type is ArtifactType.TABULAR:
+        if artifact_from_dag.type is ArtifactType.TABLE:
             return table_artifact.TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return numeric_artifact.NumericArtifact(

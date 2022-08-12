@@ -9,7 +9,7 @@ const (
 	NumericType   Type = "numeric"
 	DictType      Type = "dictionary"
 	TupleType     Type = "tuple"
-	TabularType   Type = "tabular"
+	TableType     Type = "table"
 	JsonType      Type = "json"
 	BytesType     Type = "bytes"
 	ImageType     Type = "image"

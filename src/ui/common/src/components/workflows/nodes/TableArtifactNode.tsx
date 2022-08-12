@@ -9,15 +9,15 @@ type Props = {
   isConnectable: boolean;
 };
 
-const TabularArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
+const TableArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faTableColumns}
       data={data}
       isConnectable={isConnectable}
-      defaultLabel="Tabular"
+      defaultLabel="Table"
     />
   );
 };
 
-export default memo(TabularArtifactNode);
+export default memo(TableArtifactNode);
