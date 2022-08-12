@@ -1,13 +1,14 @@
 import textwrap
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType, SerializationType
+from aqueduct.enums import ExecutionStatus, FailureType, SerializationType, ArtifactType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
+from aqueduct.deserialize import deserialization_function_mapping
 
 
 class Logs(BaseModel):
@@ -54,6 +55,7 @@ class OperatorResult(BaseModel):
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
     content: bytes
+    artifact_type: ArtifactType
 
 
 class PreviewResponse(BaseModel):
@@ -67,7 +69,7 @@ class PreviewResponse(BaseModel):
             All operators that were run will appear in this map.
 
         artifact_results:
-            A map from an artifact id to its base64 encoded string.
+            A map from an artifact id to its content in bytes.
             Artifact results will only appear in this map if explicitly
             specified in the `target_ids` on the request.
     """

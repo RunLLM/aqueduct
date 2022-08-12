@@ -2,10 +2,11 @@ import io
 from contextlib import redirect_stdout
 
 import pytest
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import get_integration_name
 
 import aqueduct
+from aqueduct import op
 
 
 @aqueduct.op()
@@ -24,10 +25,9 @@ TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace fo
 
 def test_handle_relational_query_error(client):
     db = client.integration(name=get_integration_name())
-    sql_artifact = db.sql(query=BAD_QUERY)
 
     try:
-        sql_artifact.get()
+        sql_artifact = db.sql(query=BAD_QUERY)
     except AqueductError as e:
         assert TIP_EXTRACT in e.message
 
@@ -35,9 +35,16 @@ def test_handle_relational_query_error(client):
 def test_handle_bad_op_error(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=GOOD_QUERY)
-    processed_artifact = bad_op(sql_artifact)
 
     try:
-        processed_artifact.get()
+        processed_artifact = bad_op(sql_artifact)
     except AqueductError as e:
         assert TIP_OP_EXECUTION in e.message
+
+
+def test_file_dependencies_invalid(client):
+    with pytest.raises(InvalidUserArgumentException):
+
+        @op(file_dependencies=123)
+        def wrong_file_dependencies_type(table):
+            return table

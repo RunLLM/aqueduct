@@ -12,6 +12,7 @@ from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.operators import SaveConfig
 from aqueduct.utils import format_header_for_print, get_description_for_check
+from aqueduct.preview import preview_artifact
 
 from aqueduct import api_client
 
@@ -19,11 +20,12 @@ from aqueduct import api_client
 class UntypedArtifact(Artifact):
     """This class represents an artifact with unknown type within the flow's DAG."""
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: Optional[bool] = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
+        self._type = ArtifactType.UNTYPED
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the untyped artifact.
@@ -37,28 +39,7 @@ class UntypedArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
-        dag = apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                SubgraphDAGDelta(
-                    artifact_ids=[self._artifact_id],
-                    include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
-            ],
-            make_copy=True,
-        )
-        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
-        artifact_response = preview_resp.artifact_results[self._artifact_id]
-
-        serialization_type = artifact_response.serialization_type
-
-        if serialization_type not in deserialization_function_mapping:
-            raise Exception("Unsupported serialization type %s." % serialization_type)
-
-        return deserialization_function_mapping[serialization_type](artifact_response.content)
+        return preview_artifact(self._dag, self._artifact_id)._content
 
     def describe(self) -> None:
         """Prints out a human-readable description of the check artifact."""

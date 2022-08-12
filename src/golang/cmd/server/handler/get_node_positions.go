@@ -70,10 +70,11 @@ func (*GetNodePositionsHandler) Prepare(r *http.Request) (interface{}, int, erro
 // where we compute the DAG topology for rendering its layout.
 
 // It takes a list of operators and returns the following:
-// - Layers, which is a list of layers, where each layer is a list of opId
-// - Number of active edges for each layer. 'active edges' stands for any edges at this layer, that doesn't starts
-// 	from the previous layer, nor ends at current layer. This is used to compute how much `room` one layer
-// 	need to save for rendering edges.
+//   - Layers, which is a list of layers, where each layer is a list of opId
+//   - Number of active edges for each layer. 'active edges' stands for any edges at this layer, that doesn't starts
+//     from the previous layer, nor ends at current layer. This is used to compute how much `room` one layer
+//     need to save for rendering edges.
+//
 // The canvas is assumed to be infinite and spacing between nodes are at an arbitrary constant.
 // The positions may need to be resized or shifted if the canvas view does not automatically adjust to contain everything.
 func orderNodes(operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping) ([][]uuid.UUID, []int) {

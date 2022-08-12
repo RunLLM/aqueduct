@@ -68,3 +68,5 @@ export type Error = {
   context?: string;
   tip?: string;
 };
+
+export const GithubIssueLink = `https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D`;

@@ -2,11 +2,11 @@ from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
 from aqueduct.artifact import Artifact
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.bool_artifact import BoolArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
-from aqueduct.error import AqueductError, InvalidUserActionException
-from aqueduct.metric_artifact import MetricArtifact
+from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.numeric_artifact import NumericArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
@@ -20,13 +20,15 @@ from aqueduct.utils import (
     serialize_function,
 )
 from pandas import DataFrame
+from aqueduct.generic_artifact import Artifact as GenericArtifact
+from aqueduct.preview import preview_artifact
 
 from aqueduct import dag as dag_module
 
 # Valid inputs and outputs to our operators.
-OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
-InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
+OutputArtifact = Union[TableArtifact, NumericArtifact, BoolArtifact]
+InputArtifact = Union[TableArtifact, NumericArtifact, ParamArtifact]
+InputArtifactLocal = Union[TableArtifact, NumericArtifact, ParamArtifact, DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
@@ -43,17 +45,17 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 def _is_input_artifact(elem: Any) -> bool:
     return (
         isinstance(elem, TableArtifact)
-        or isinstance(elem, MetricArtifact)
+        or isinstance(elem, NumericArtifact)
         or isinstance(elem, ParamArtifact)
     )
 
 
 def wrap_spec(
     spec: OperatorSpec,
-    *input_artifacts: UntypedArtifact,
+    *input_artifacts: GenericArtifact,
     op_name: str,
     description: str = "",
-) -> UntypedArtifact:
+) -> GenericArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -89,21 +91,6 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
 
-    output_artifact: UntypedArtifact
-
-    # TODO(cgwu): revisit this when implementing eager execution.
-    if spec.metric:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.function:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = UntypedArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.check:
-        artifact_type = ArtifactType.UNTYPED
-        output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
-    else:
-        raise AqueductError("Operator spec not supported.")
-
     apply_deltas_to_dag(
         dag,
         deltas=[
@@ -120,43 +107,77 @@ def wrap_spec(
                     Artifact(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
-                        type=artifact_type,
+                        type=ArtifactType.UNTYPED,
                     )
                 ],
             ),
         ],
     )
 
-    return output_artifact
+    # Issue preview request since this is an eager execution
+    artifact = preview_artifact(dag, output_artifact_id)
+    dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+    return artifact
+
+
+def _type_check_decorator_arguments(
+    description: Optional[str],
+    file_dependencies: Optional[List[str]],
+    requirements: Optional[Union[str, List[str]]],
+) -> None:
+    """
+    Raises an InvalidUserArgumentException if any issues are found.
+    """
+    if description is not None and not isinstance(description, str):
+        raise InvalidUserArgumentException("A supplied description must be of string type.")
+
+    if file_dependencies is not None:
+        if not isinstance(file_dependencies, list):
+            raise InvalidUserArgumentException("File dependencies must be specified as a list.")
+        if any(not isinstance(file_dep, str) for file_dep in file_dependencies):
+            raise InvalidUserArgumentException("Each file dependency must be a string.")
+
+    if requirements is not None:
+        is_list = isinstance(requirements, list)
+        if not isinstance(requirements, str) and not is_list:
+            raise InvalidUserArgumentException(
+                "Requirements must either be a path string or a list of pip requirements specifiers."
+            )
+        if is_list and any(not isinstance(req, str) for req in requirements):
+            raise InvalidUserArgumentException("Each pip requirements specifier must be a string.")
 
 
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
     Calling the decorated function returns an UntypedArtifact. The decorated function
     can take any number of artifact inputs.
 
-    The requirements.txt file in the current directory is used, if it exists.
-
     To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
     >>> compute_recommendations.local(customer_profiles, recent_clicks)
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the operator.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
-        reqs_path:
-            A path to file that specifies requirements for this specific operator.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -173,16 +194,17 @@ def op(
 
         >>> recommendations.get()
     """
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*input_artifacts: UntypedArtifact) -> UntypedArtifact:
+        def wrapped(*input_artifacts: GenericArtifact) -> GenericArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -192,7 +214,8 @@ def op(
              - <any file dependencies>
             """
             assert isinstance(name, str)
-            zip_file = serialize_function(func, file_dependencies, reqs_path)
+            assert isinstance(description, str)
+            zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
@@ -203,8 +226,6 @@ def op(
                 *input_artifacts,
                 op_name=name,
             )
-
-            assert isinstance(new_function_artifact, UntypedArtifact)
 
             return new_function_artifact
 
@@ -225,10 +246,12 @@ def op(
 def metric(
     name: Optional[Union[str, MetricFunction]] = None,
     description: Optional[str] = None,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
-    Calling the decorated function returns a MetricArtifact. The decorated function
+    Calling the decorated function returns a NumericArtifact. The decorated function
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
@@ -238,9 +261,20 @@ def metric(
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the metric.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -252,15 +286,16 @@ def metric(
         >>> churn_table = db.sql("SELECT * from churn_table")
         >>> churn_metric = avg_churn(churn_table)
 
-        `churn_metric` is a MetricArtifact representing the result of `avg_churn()`.
+        `churn_metric` is a NumericArtifact representing the result of `avg_churn()`.
 
         >>> churn_metric.get()
     """
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: MetricFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
@@ -270,8 +305,8 @@ def metric(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> MetricArtifact:
+            *artifacts: GenericArtifact,
+        ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -300,7 +335,7 @@ def metric(
                 description=description,
             )
 
-            assert isinstance(new_metric_artifact, MetricArtifact)
+            assert isinstance(new_metric_artifact, NumericArtifact)
 
             return new_metric_artifact
 
@@ -322,13 +357,13 @@ def check(
     name: Optional[Union[str, CheckFunction]] = None,
     description: Optional[str] = None,
     severity: CheckSeverity = CheckSeverity.WARNING,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
-    Calling the decorated function returns a CheckArtifact. The decorated python function
+    Calling the decorated function returns a BoolArtifact. The decorated python function
     can have any number of artifact inputs.
-
-    The requirements.txt file in the current directory is used, if it exists.
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
     will fail the workflow when run in our system.
@@ -338,11 +373,22 @@ def check(
 
     Args:
         name:
-            Operator name.
+            Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the check.
         severity:
             The severity level of the check if it fails.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -356,15 +402,16 @@ def check(
         ...     return churn_table['pred_churn'].mean() < 0.1
         >>> churn_is_low_check = avg_churn_is_low(churn_table_artifact)
 
-        `churn_is_low_check` is a CheckArtifact representing the result of `avg_churn_is_low()`.
+        `churn_is_low_check` is a BoolArtifact representing the result of `avg_churn_is_low()`.
 
         >>> churn_is_low_check.get()
     """
+    _type_check_decorator_arguments(description, file_dependencies, requirements)
 
     def inner_decorator(func: CheckFunction) -> OutputArtifactFunction:
         nonlocal name
         nonlocal description
-        if callable(name) or name is None:
+        if name is None or not isinstance(name, str):
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
@@ -374,8 +421,8 @@ def check(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> CheckArtifact:
+            *artifacts: GenericArtifact,
+        ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -401,7 +448,7 @@ def check(
                 description=description,
             )
 
-            assert isinstance(new_check_artifact, CheckArtifact)
+            assert isinstance(new_check_artifact, BoolArtifact)
 
             return new_check_artifact
 
@@ -417,3 +464,40 @@ def check(
         return inner_decorator(name)
     else:
         return inner_decorator
+
+
+def to_operator(
+    func: UserFunction,
+    name: Optional[Union[str, UserFunction]] = None,
+    description: Optional[str] = None,
+    file_dependencies: Optional[List[str]] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
+) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
+    """Convert a function that returns a dataframe into an Aqueduct operator.
+
+    Args:
+        func:
+            the python function that is to be converted into operator.
+        name:
+            Operator name.
+        description:
+            A description for the operator.
+        file_dependencies:
+            A list of relative paths to files that the function needs to access.
+            Python classes/methods already imported within the function's file
+            need not be included.
+        requirements:
+            Defines the python package requirements that this operator will run with.
+            Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
+            (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
+            look for a `requirements.txt` file in the same directory as the decorated function
+            and install those. Otherwise, we'll attempt to infer the requirements with
+            `pip freeze`.
+    """
+    func_op = op(
+        name=name,
+        description=description,
+        file_dependencies=file_dependencies,
+        requirements=requirements,
+    )
+    return func_op(func)

@@ -115,6 +115,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 		ex.JobManager,
 		ex.Vault,
 		&dbWorkflowDag.StorageConfig,
+		false, // this is not a preview
 		ex.Database,
 	)
 	if err != nil {
@@ -129,7 +130,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
 			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
 		},
-		true, /* shouldPersistResults */
+		false, // this is not a preview
 	)
 	if err != nil {
 		return err

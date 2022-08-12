@@ -12,6 +12,7 @@ type Metadata struct {
 	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
 	SystemMetrics     map[string]string `json:"system_metadata,omitempty"`
 	SerializationType string            `json:"serialization_type,omitempty"`
+	ArtifactType      string            `json:"artifact_type,omitempty"`
 }
 
 type NullMetadata struct {

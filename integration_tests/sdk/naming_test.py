@@ -40,7 +40,7 @@ def test_extract_with_explicit_name_collision(client):
     # Cannot preview an artifact with a dependency that has been deleted,
     # since it itself would have been removed from the dag.
     with pytest.raises(ArtifactNotFoundException):
-        fn_artifact.get()
+        client._dag.must_get_artifact(fn_artifact.id())
 
     # Cannot run a function on an artifact that has already been overwritten.
     with pytest.raises(ArtifactNotFoundException):
@@ -70,7 +70,7 @@ def test_function_with_name_collision(client):
     dummy_fn_artifact_new = dummy_model(sql_artifact)
 
     with pytest.raises(ArtifactNotFoundException):
-        dummy_fn_artifact_old.get()
+        client._dag.must_get_artifact(dummy_fn_artifact_old.id())
 
     fn_df = dummy_fn_artifact_new.get()
     assert list(fn_df) == [

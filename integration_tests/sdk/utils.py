@@ -142,12 +142,15 @@ def wait_for_flow_runs(
     Returns:
         The number of successful runs this flow has performed.
     """
-    timeout = 300
+    timeout = 500
     poll_threshold = 5
     begin = time.time()
 
     while True:
         assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
+
+        if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
+            continue
 
         time.sleep(poll_threshold)
 

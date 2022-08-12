@@ -49,7 +49,6 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
@@ -78,7 +77,7 @@ func (*PreviewHandler) Name() string {
 	return "Preview"
 }
 
-func checkError (w http.ResponseWriter, err error) {
+func checkError(w http.ResponseWriter, err error) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -188,6 +187,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		h.JobManager,
 		h.Vault,
 		h.StorageConfig,
+		true, // this is a preview
 		h.Database,
 	)
 	if err != nil {
@@ -202,7 +202,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
 			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
 		},
-		false, /* shouldPersistResults */
+		true, // this is a preview
 	)
 	if err != nil {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
@@ -244,6 +244,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
+
 			artifactContents[artf.ID()] = content
 			artifactSerializationTypes[artf.ID()] = artifact_metadata.SerializationType
 		}

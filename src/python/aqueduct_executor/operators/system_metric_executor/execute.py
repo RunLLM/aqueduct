@@ -24,10 +24,13 @@ def run(spec: SystemMetricSpec) -> None:
         # We currently allow the spec to contain multiple input_metadata paths.
         # A system metric currently spans over a single operator.
         # The scheduler enforces this requirement before the executor is run.
+        print("input metadata path is", spec.input_metadata_paths)
         system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
+        print("spec metric name is", spec.metric_name)
+        print("system metadata map", system_metadata)
         utils.write_artifact(
             storage,
-            enums.ArtifactType.FLOAT,
+            enums.ArtifactType.NUMERIC,
             spec.output_content_path,
             spec.output_metadata_path,
             float(system_metadata[0][spec.metric_name]),
