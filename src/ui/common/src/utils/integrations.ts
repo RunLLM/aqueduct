@@ -325,7 +325,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: 'compute',
   },
   ['Kubernetes']: {
-    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
     activated: true,
     category: 'compute',
   },
