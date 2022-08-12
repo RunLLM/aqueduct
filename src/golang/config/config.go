@@ -6,30 +6,62 @@ import (
 	"path"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	log "github.com/sirupsen/logrus"
+	"github.com/dropbox/godropbox/errors"
 	"gopkg.in/yaml.v2"
 )
 
+// globalConfigPath is set during Init
+var globalConfigPath string
+
+// globalConfig is initialized during Init and updated as changes are made to the fields
+var globalConfig *ServerConfiguration
+
 type ServerConfiguration struct {
-	AqPath             string                `yaml:"aqPath" json:"aq_path"`
-	EncryptionKey      string                `yaml:"encryptionKey" json:"encryption_key"`
+	AqPath             string                `yaml:"aqPath"`
+	EncryptionKey      string                `yaml:"encryptionKey"`
 	RetentionJobPeriod string                `yaml:"retentionJobPeriod"`
 	ApiKey             string                `yaml:"apiKey"`
 	StorageConfig      *shared.StorageConfig `yaml:"storageConfig"`
 }
 
-func ParseServerConfiguration(confPath string) *ServerConfiguration {
-	bts, err := ioutil.ReadFile(confPath)
+// AqueductPath is the filepath to the Aqueduct installation.
+func AqueductPath() string
+
+// EncryptionKey is used for encrypting objects stored in the Aqueduct vault.
+func EncryptionKey() string
+
+// RetentionJobPeriod defines how long to wait before garbage collecting workflow runs.
+func RetentionJobPeriod() string
+
+// APIKey returns the API key the user must use when issueing requests.
+func APIKey() string
+
+// Storage returns the storage layer config.
+func Storage() shared.StorageConfig
+
+// UpdateStorage updates the storage layer config.
+func UpdateStorage(newStorage *shared.StorageConfig) error
+
+// Init initializes the global server configuration. It must be invoked before
+// any config field is accessed, otherwise the value will be incorrect.
+func Init(path string) error {
+	globalConfigPath = path
+	if err := loadConfig(); err != nil {
+		return errors.Wrap(err, "Unable to initialize config. Please check that the config file is correctly formatted and retry.")
+	}
+}
+
+// loadConfig reads the file at `configPath` into `globalConfig`.
+func loadConfig() error {
+	bts, err := ioutil.ReadFile(globalConfigPath)
 	if err != nil {
-		log.Fatal("Unable to read server config.yml. Please make sure that the config is properly configured and retry: ", err)
-		os.Exit(1)
+		return err
 	}
 
 	var config ServerConfiguration
 	err = yaml.Unmarshal(bts, &config)
 	if err != nil {
-		log.Fatal("Unable to correctly parse server config.yml. Please check the config file and retry: ", err)
-		os.Exit(1)
+		return err
 	}
 
 	if config.StorageConfig == nil {
@@ -44,5 +76,10 @@ func ParseServerConfiguration(confPath string) *ServerConfiguration {
 		}
 	}
 
-	return &config
+	globalConfig = &config
+
+	return nil
 }
+
+// dumpConfig writes `globalConfig` to the file at `configPath`.
+func dumpConfig()
