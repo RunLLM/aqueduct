@@ -12,9 +12,6 @@ class S3Storage(Storage):
     _config: S3StorageConfig
 
     def __init__(self, config: S3StorageConfig):
-        # Boto3 uses an environment variable to determine the credentials filepath and profile
-        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
-        os.environ["AWS_PROFILE"] = config.credentials_profile
 
         print("ENV VARS")
         print(os.environ)
@@ -26,6 +23,9 @@ class S3Storage(Storage):
                 aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
             )
         else:
+            # Boto3 uses an environment variable to determine the credentials filepath and profile
+            os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
+            os.environ["AWS_PROFILE"] = config.credentials_profile
             self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
         self._config = config
 
