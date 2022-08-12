@@ -22,7 +22,6 @@ RUN mkdir -p /app/function/
 RUN apt-get update && \
   python3 -m pip install --upgrade pip && \
   pip3 install \
-  aqueduct-ml \
   boto3 \
   pandas \
   pydantic

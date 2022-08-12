@@ -1,5 +1,16 @@
 #!/bin/bash
-JOB_SPEC=$1
+#!/bin/bash
+git clone https://github.com/aqueducthq/aqueduct.git
+cd aqueduct
+git checkout -t origin/eng-1510-add-k8s-engine-integration
+
+cd src/python
+
+pip install .
+
+cd ../../..
+
+echo $JOB_SPEC
 FUNCTION_EXTRACT_PATH=$(python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
@@ -8,7 +19,7 @@ python3 -m aqueduct_executor.operators.function_executor.extract_function --spec
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 
-PYTHON_VERSION=$(python3 -m aqueduct_executor.operators.function_executor.set_conda_version "$OP_PATH")
+PYTHON_VERSION=$(python3 -m aqueduct_executor.operators.function_executor.set_conda_version "$FUNCTION_EXTRACT_PATH")
 echo "Python version is $PYTHON_VERSION"
 
 if test -f "$FUNCTION_EXTRACT_PATH/op/requirements.txt"

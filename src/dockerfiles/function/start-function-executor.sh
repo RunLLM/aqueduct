@@ -8,7 +8,7 @@ python3 -m aqueduct_executor.operators.function_executor.extract_function --spec
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 
-PYTHON_VERSION=$(python3 -m aqueduct_executor.operators.function_executor.set_conda_version "$OP_PATH")
+PYTHON_VERSION=$(python3 -m aqueduct_executor.operators.function_executor.set_conda_version "$FUNCTION_EXTRACT_PATH")
 echo "Python version is $PYTHON_VERSION"
 
 if test -f "$FUNCTION_EXTRACT_PATH/op/requirements.txt"
