@@ -449,21 +449,17 @@ class Client:
             flow_id, saved_objects_to_delete, force
         )
 
-        failed_deletions = {}
-        counts = 0
+        failures = []
         for integration in resp.saved_object_deletion_results:
-            failed_for_integration = []
             for obj in resp.saved_object_deletion_results[integration]:
                 if not obj.exec_state.status == ExecutionStatus.SUCCEEDED:
-                    failed_for_integration.append(obj)
-            if len(failed_for_integration) > 0:
-                failed_deletions[str(integration)] = [
-                    json.loads(res.json()) for res in failed_for_integration
-                ]
-                counts += len(failed_for_integration)
-        if counts > 0:
-            failures = json.dumps(failed_deletions, sort_keys=False, indent=4)
-            raise Exception(f"Failed to delete {counts} saved objects.\nFailures\n{failures}")
+                    context = obj.exec_state.error.context.strip().replace('\n', '\n>\t')
+                    trace = f">\t{context}\n{obj.exec_state.error.tip}"
+                    failure_string = f"[{integration}] {obj.name}\n{trace}"
+                    failures.append(failure_string)
+        if len(failures) > 0:
+            failures_string = '\n'.join(failures)
+            raise Exception(f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}")
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
