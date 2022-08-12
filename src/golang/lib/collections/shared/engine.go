@@ -12,12 +12,14 @@ type EngineType string
 const (
 	AqueductEngineType EngineType = "aqueduct"
 	AirflowEngineType  EngineType = "airflow"
+	K8sConfigType      EngineType = "k8s"
 )
 
 type EngineConfig struct {
 	Type           EngineType      `yaml:"type" json:"type"`
 	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
 	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
+	K8sConfig      *AqueductConfig `yaml:"k8sConfig" json:"k8s_config,omitempty"`
 }
 
 type AqueductConfig struct{}
@@ -29,6 +31,10 @@ type AirflowConfig struct {
 	OperatorMetadataPathPrefix map[uuid.UUID]string `json:"operator_metadata_path_prefix"  yaml:"operator_metadata_path_prefix"`
 	ArtifactContentPathPrefix  map[uuid.UUID]string `json:"artifact_content_path_prefix"  yaml:"artifact_content_path_prefix"`
 	ArtifactMetadataPathPrefix map[uuid.UUID]string `json:"artifact_metadata_path_prefix"  yaml:"artifact_metadata_path_prefix"`
+}
+
+type K8sConfig struct {
+	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 func (e *EngineConfig) Scan(value interface{}) error {
