@@ -140,7 +140,11 @@ export function normalizeOperator(op): Operator {
   return op;
 }
 
-export type GetOperatorResultResponse = ExecState;
+export type GetOperatorResultResponse = {
+  name: string;
+  description: string;
+  status: ExecState;
+};
 
 const { apiAddress } = useAqueductConsts();
 

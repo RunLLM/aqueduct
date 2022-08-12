@@ -61,6 +61,7 @@ import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
+import MetricDetailsPage from './components/pages/metric/id';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -442,6 +443,7 @@ export {
   MenuSidebarOffset,
   MenuSidebarWidth,
   Metric,
+  MetricDetailsPage,
   MetricOperatorNode,
   MySqlCard,
   MySqlConfig,
