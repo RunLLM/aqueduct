@@ -453,9 +453,10 @@ class Client:
         for integration in resp.saved_object_deletion_results:
             for obj in resp.saved_object_deletion_results[integration]:
                 if obj.exec_state.status == ExecutionStatus.FAILED:
-                    assert isinstance(obj.exec_state.error, Error)
-                    context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
-                    trace = f">\t{context}\n{obj.exec_state.error.tip}"
+                    trace = ""
+                    if obj.exec_state.error:
+                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
+                        trace = f">\t{context}\n{obj.exec_state.error.tip}"
                     failure_string = f"[{integration}] {obj.name}\n{trace}"
                     failures.append(failure_string)
         if len(failures) > 0:
