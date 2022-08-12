@@ -41,5 +41,7 @@ def parse_spec(spec_json: bytes) -> FunctionSpec:
     """
     Parses a JSON string into a FunctionSpec.
     """
+    print("inside parse_spec")
+    print(spec_json)
     data = json.loads(spec_json)
     return parse_obj_as(FunctionSpec, data)
