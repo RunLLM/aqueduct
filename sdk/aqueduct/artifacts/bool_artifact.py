@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -23,7 +23,7 @@ class BoolArtifact(Artifact):
     Examples:
         >>> @check
         >>> def check_something(df1, metric) -> bool:
-        >>> return check_result
+        >>>     return check_result
         >>>
         >>> check_artifact = check_something(table_artifact, metric_artifact)
 
@@ -36,7 +36,7 @@ class BoolArtifact(Artifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        content: Optional[bool] = None,
+        content: Optional[Union[bool, np.bool_]] = None,
         from_flow_run: bool = False,
     ):
         self._dag = dag

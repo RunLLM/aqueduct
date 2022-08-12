@@ -212,6 +212,14 @@ def op(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            for input_artifact in input_artifacts:
+                if not isinstance(input_artifact, Artifact):
+                    raise InvalidUserArgumentException(
+                        "Input to decorated function must of an artifact type, got type %s."
+                        % type(input_artifact)
+                    )
+
             zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
@@ -302,7 +310,7 @@ def metric(
 
         @wraps(func)
         def wrapped(
-            *artifacts: Artifact,
+            *input_artifacts: Artifact,
         ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -314,6 +322,14 @@ def metric(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            for input_artifact in input_artifacts:
+                if not isinstance(input_artifact, Artifact):
+                    raise InvalidUserArgumentException(
+                        "Input to decorated function must of an artifact type, got type %s."
+                        % type(input_artifact)
+                    )
+
             zip_file = serialize_function(func)
 
             # TODO(ENG-735): Support granularity=FunctionGranularity.TABLE & granularity=FunctionGranularity.ROW
@@ -327,7 +343,7 @@ def metric(
 
             new_metric_artifact = wrap_spec(
                 OperatorSpec(metric=metric_spec),
-                *artifacts,
+                *input_artifacts,
                 op_name=name,
                 description=description,
             )
@@ -418,7 +434,7 @@ def check(
 
         @wraps(func)
         def wrapped(
-            *artifacts: Artifact,
+            *input_artifacts: Artifact,
         ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -430,6 +446,14 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            for input_artifact in input_artifacts:
+                if not isinstance(input_artifact, Artifact):
+                    raise InvalidUserArgumentException(
+                        "Input to decorated function must of an artifact type, got type %s."
+                        % type(input_artifact)
+                    )
+
             zip_file = serialize_function(func)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
@@ -440,7 +464,7 @@ def check(
 
             new_check_artifact = wrap_spec(
                 OperatorSpec(check=check_spec),
-                *artifacts,
+                *input_artifacts,
                 op_name=name,
                 description=description,
             )

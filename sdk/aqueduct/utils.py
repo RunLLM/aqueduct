@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 import cloudpickle as cp
+import numpy as np
 import pandas as pd
 import requests
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
@@ -114,8 +115,8 @@ REQUIREMENTS_FILE = "requirements.txt"
 BLACKLISTED_REQUIREMENTS = ["aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., Any]
-MetricFunction = Callable[..., float]
-CheckFunction = Callable[..., bool]
+MetricFunction = Callable[..., Union[int, float, np.number]]
+CheckFunction = Callable[..., Union[bool, np.bool_]]
 
 
 def get_zip_file_path(dir_name: str) -> str:
