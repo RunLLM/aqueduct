@@ -234,7 +234,7 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	if bo.isPreview {
 		// Don't persist any result for preview operators.
-		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.")
+		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.", bo.Name())
 	}
 
 	if bo.previewArtifactCacheManager != nil {
