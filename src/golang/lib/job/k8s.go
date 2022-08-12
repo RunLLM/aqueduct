@@ -25,14 +25,6 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeConfigPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
-	}
-	// create function service account
-	// add docker secrets + image pulling
-	// add aws credentials as secrets??? <- might not need if we are adding the service accounts
-
 	// Update kubeconfig file
 	cmd := exec.Command(
 		"aws",
@@ -42,10 +34,18 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 		"--name", conf.ClusterName,
 		"--kubeconfig", conf.KubeConfigPath,
 	)
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to update kubeconfig.")
 	}
+
+	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeConfigPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
+	// create function service account
+	// add docker secrets + image pulling
+	// add aws credentials as secrets??? <- might not need if we are adding the service accounts
 
 	k8s.CreateNamespaces(k8sClient)
 	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeConfigPath)
