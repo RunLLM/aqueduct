@@ -20,8 +20,8 @@ from aqueduct.responses import (
     ListWorkflowResponseEntry,
     OperatorResult,
     PreviewResponse,
-    RegisterWorkflowResponse,
     RegisterAirflowWorkflowResponse,
+    RegisterWorkflowResponse,
 )
 
 from aqueduct import utils
@@ -295,7 +295,6 @@ class APIClient:
 
         return RegisterWorkflowResponse(**resp.json())
 
-    
     def register_airflow_workflow(
         self,
         dag: DAG,
@@ -306,7 +305,7 @@ class APIClient:
         utils.raise_errors(resp)
 
         return RegisterAirflowWorkflowResponse(**resp.json())
-    
+
     def _construct_register_workflow_request(
         self,
         dag: DAG,
@@ -321,7 +320,7 @@ class APIClient:
             file = op.file()
             if file:
                 files[str(op.id)] = io.BytesIO(file)
-        
+
         return headers, body, files
 
     def refresh_workflow(

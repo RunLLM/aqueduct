@@ -5,9 +5,10 @@ from typing import Dict, List, Optional, TypedDict, Union
 
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from pydantic import BaseModel
 
 from aqueduct import api_client
-from aqueduct.integrations.airflow_integration import AirflowIntegration
 
 from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
@@ -173,5 +174,5 @@ class Flow:
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
 
 
-class FlowConfig(TypedDict):
+class FlowConfig(BaseModel):
     engine: Optional[AirflowIntegration]

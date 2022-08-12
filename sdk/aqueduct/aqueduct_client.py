@@ -15,8 +15,8 @@ from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
     AirflowEngineConfig,
-    Metadata,
     EngineConfig,
+    Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
@@ -206,6 +206,7 @@ class Client:
         S3Integration,
         GoogleSheetsIntegration,
         RelationalDBIntegration,
+        AirflowIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -302,7 +303,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
-        config: FlowConfig = None,
+        config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -373,7 +374,7 @@ class Client:
                 type=RuntimeType.AIRFLOW,
                 airflow_config=AirflowEngineConfig(
                     integration_id=config.engine._metadata.id,
-                )
+                ),
             )
             resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
@@ -381,8 +382,12 @@ class Client:
             file = "{}_airflow.py".format(name)
             with open(file, "w") as f:
                 f.write(airflow_file)
-            print('''The Airflow DAG file has been downloaded to: {}. 
-                Please copy it to your Airflow server to begin execution.'''.format(file))
+            print(
+                """The Airflow DAG file has been downloaded to: {}. 
+                Please copy it to your Airflow server to begin execution.""".format(
+                    file
+                )
+            )
         else:
             flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -21,7 +21,6 @@ from aqueduct.operators import (
     serialize_parameter_value,
 )
 from pydantic import BaseModel
-from aqueduct.enums import RuntimeType
 
 
 class Schedule(BaseModel):
@@ -50,10 +49,12 @@ class AqueductEngineConfig(BaseModel):
 class AirflowEngineConfig(BaseModel):
     integration_id: uuid.UUID
 
+
 class EngineConfig(BaseModel):
     type: RuntimeType = RuntimeType.AQUEDUCT
     aqueduct_config: Optional[AqueductEngineConfig]
     airflow_config: Optional[AirflowEngineConfig]
+
 
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}

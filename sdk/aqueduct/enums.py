@@ -142,4 +142,3 @@ class ArtifactType(Enum, metaclass=MetaEnum):
 class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
-    
