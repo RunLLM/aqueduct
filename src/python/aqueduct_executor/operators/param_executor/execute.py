@@ -25,11 +25,6 @@ def run(spec: ParamSpec) -> None:
     deserialized_value = json.loads(spec.val)
     artifact_type = infer_artifact_type(deserialized_value)
 
-    print("writing parameter value")
-    print(deserialized_value)
-    print(type(deserialized_value))
-    print(artifact_type.value)
-
     try:
         utils.write_artifact(
             storage,

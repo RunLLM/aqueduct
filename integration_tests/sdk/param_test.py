@@ -14,8 +14,6 @@ from aqueduct import metric, op
 
 @metric
 def double_number_input(num: int) -> float:
-    print("input is", num)
-    print(type(num))
     if not isinstance(num, int):
         raise Exception("Expected an integer input.")
     return float(2 * num)

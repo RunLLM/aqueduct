@@ -144,7 +144,6 @@ def run(spec: FunctionSpec) -> None:
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
-    print("operator type is:", spec.operator_type)
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
@@ -161,8 +160,6 @@ def run(spec: FunctionSpec) -> None:
             sys.exit(1)
 
         print("Function invoked successfully!")
-        print("result is", result)
-        print("result type is", result_type)
 
         # Perform type checking for metric and check operators.
         type_error = False

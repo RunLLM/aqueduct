@@ -15,7 +15,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /preview
@@ -71,10 +70,6 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	)
 	if err != nil {
 		return nil, statusCode, err
-	}
-
-	for _, artifact := range dagSummary.Dag.Artifacts {
-		log.Infof("artifact name: %s, type %s.", artifact.Name, artifact.Type)
 	}
 
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
