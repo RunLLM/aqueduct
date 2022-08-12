@@ -70,16 +70,6 @@ func LaunchJob(
 		},
 	}
 
-<<<<<<< HEAD
-	podRuntimeClassName := "gvisor"
-	job.Spec.Template.Spec.RuntimeClassName = &podRuntimeClassName
-
-	if serviceAccount != "" {
-		job.Spec.Template.Spec.ServiceAccountName = serviceAccount
-	}
-
-=======
->>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	if len(secretEnvVariables) > 0 {
 		// Assign environment variables from secret references
 		job.Spec.Template.Spec.Containers[0].EnvFrom = generateK8sEnvVarFromSecrets(secretEnvVariables)
