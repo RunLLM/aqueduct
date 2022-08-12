@@ -23,11 +23,13 @@ type ProcessConfig struct {
 }
 
 type K8sConfig struct {
-	KubeConfigPath                   string `yaml:"kubeConfigPath" json:"kube_config_path"`
-	AwsRegion                        string `yaml:"awsRegion" json:"asw_region"`
-	ClusterName                      string `yaml:"clusterName" json:"cluster_name"`
-	OidcIssuerUri                    string `yaml:"oidcIssuerUri" json:"oidc_issuer_uri"`
-	OidcProviderArn                  string `yaml:"oidcProviderArn" json:"oidc_provider_arn"`
+	KubeConfigPath     string `yaml:"kubeConfigPath" json:"kube_config_path"`
+	ClusterName        string `yaml:"clusterName" json:"cluster_name"`
+	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+
+	// System config, will have defaults
+	AwsRegion                        string `yaml:"awsRegion" json:"aws_region"`
 	FunctionDockerImage              string `yaml:"functionDockerImage" json:"function_docker_image"`
 	ParameterDockerImage             string `yaml:"parameterDockerImage" json:"parameter_docker_image"`
 	PostgresConnectorDockerImage     string `yaml:"postgresConnectorDockerImage" json:"postgres_connector_docker_image"`

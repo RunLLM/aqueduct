@@ -30,19 +30,16 @@ type Engine interface {
 		name string,
 		period string,
 	) error
-
 	ExecuteWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
 		timeConfig *AqueductTimeConfig,
 		parameters map[string]string,
 	) (shared.ExecutionStatus, error)
-
 	DeleteWorkflow(
 		ctx context.Context,
 		workflowId uuid.UUID,
 	) error
-
 	EditWorkflow(
 		ctx context.Context,
 		txn database.Database,

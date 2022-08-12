@@ -85,10 +85,20 @@ export type SalesforceConfig = {
   code?: string;
 };
 
+export enum S3CredentialType {
+  AccessKey = 'access_key',
+  ConfigFilePath = 'config_file_path',
+  ConfigFileContent = 'config_file_content',
+}
+
 export type S3Config = {
+  type: S3CredentialType;
   bucket: string;
   access_key_id: string;
   secret_access_key: string;
+  config_file_path: string;
+  config_file_content: string;
+  config_file_profile: string;
 };
 
 export type AqueductDemoConfig = Record<string, never>;
@@ -170,9 +180,10 @@ export async function addTable(
       body: config.csv.data,
     }
   );
+
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message);
+    const body = await res.json();
+    throw new Error(body.error);
   }
 }
 

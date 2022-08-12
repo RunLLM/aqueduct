@@ -13,7 +13,7 @@ import (
 
 func generateK8sEnvVarAndResourceReq(environmentVariables *map[string]string, resourceRequests *map[string]string) ([]corev1.EnvVar, *corev1.ResourceRequirements) {
 	// Convert from a `map[string]string` to the Kubernetes representation of
-	// environment variables, which has its own special struct.
+	// environment varaibles, which has its own special struct.
 	k8sEnvironmentVariables := make([]corev1.EnvVar, len(*environmentVariables))
 	index := 0
 	for key, value := range *environmentVariables {

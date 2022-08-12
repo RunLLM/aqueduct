@@ -2,11 +2,19 @@ package job
 
 import (
 	"context"
+<<<<<<< HEAD
+=======
+	"os/exec"
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
+<<<<<<< HEAD
+=======
+	"github.com/sirupsen/logrus"
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -27,6 +35,7 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
+<<<<<<< HEAD
 	err = k8s.CreateServiceAccount(
 		k8s.FunctionServiceAccount,
 		k8s.UserNamespace,
@@ -44,6 +53,29 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create function service account.")
 	}
+=======
+	// create function service account
+	// add docker secrets + image pulling
+	// add aws credentials as secrets??? <- might not need if we are adding the service accounts
+
+	// Update kubeconfig file
+	cmd := exec.Command(
+		"aws",
+		"eks",
+		"update-kubeconfig",
+		"--region", conf.AwsRegion,
+		"--name", conf.ClusterName,
+		"--kubeconfig", conf.KubeConfigPath,
+	)
+	err = cmd.Run()
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to update kubeconfig.")
+	}
+
+	k8s.CreateNamespaces(k8sClient)
+	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeConfigPath)
+
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	return &k8sJobManager{
 		k8sClient: k8sClient,
 		conf:      conf,
@@ -53,10 +85,17 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 func (j *k8sJobManager) Config() Config {
 	return j.conf
 }
+<<<<<<< HEAD
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
 	resourceRequest := generateResourceRequest(j.conf, spec.Type())
 	serviceAccount := k8s.FunctionServiceAccount
+=======
+func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+	logrus.Info("In K8sJobManager.Launch()")
+	logrus.Info(spec)
+	resourceRequest := generateResourceRequest(j.conf, spec.Type())
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	environmentVariables := map[string]string{}
 
 	if spec.Type() == FunctionJobType {
@@ -70,6 +109,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	// Encode job spec to prevent data loss
 	serializationType := JsonSerializationType
+<<<<<<< HEAD
 	// if spec.Type() == WorkflowJobType {
 	// 	serializationType = GobSerializationType
 	// 	serviceAccount = k8s.ExecutorServiceAccount
@@ -78,6 +118,8 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	// 	// }
 	// }
 
+=======
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	encodedSpec, err := EncodeSpec(spec, serializationType)
 	if err != nil {
 		return err
@@ -87,6 +129,10 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	// TODO: https://linear.app/aqueducthq/issue/ENG-369/create-k8s-service-accounts-for-local-minikube-clusters
 	var secretEnvVars []string
+<<<<<<< HEAD
+=======
+	secretEnvVars = []string{k8s.AwsCredentialsSecretName}
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 
 	containerImage, err := mapJobTypeToDockerImage(j, spec)
 	if err != nil {
@@ -99,6 +145,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		&environmentVariables,
 		secretEnvVars,
 		&resourceRequest,
+<<<<<<< HEAD
 		serviceAccount,
 		j.k8sClient,
 	)
@@ -108,6 +155,15 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 	job, err := k8s.GetJob(name, j.k8sClient)
 	if err != nil {
 		return shared.FailedExecutionStatus, err
+=======
+		j.k8sClient,
+	)
+}
+func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+	job, err := k8s.GetJob(name, j.k8sClient)
+	if err != nil {
+		return shared.UnknownExecutionStatus, ErrJobNotExist
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 	}
 
 	var status shared.ExecutionStatus
@@ -126,6 +182,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 func (j *k8sJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) error {
 	return nil
 }
+<<<<<<< HEAD
 
 func (j *k8sJobManager) CronJobExists(ctx context.Context, name string) bool {
 	return false
@@ -135,6 +192,14 @@ func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString
 	return nil
 }
 
+=======
+func (j *k8sJobManager) CronJobExists(ctx context.Context, name string) bool {
+	return false
+}
+func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
+	return nil
+}
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 	return nil
 }
@@ -188,6 +253,7 @@ func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Se
 	}
 }
 
+<<<<<<< HEAD
 // func generateClusterEnvVar(conf *K8sConfig) map[string]string {
 // 	return map[string]string{
 // 		DevBranchKey:          conf.ExecutorDevBranch,
@@ -195,6 +261,8 @@ func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Se
 // 	}
 // }
 
+=======
+>>>>>>> 7688610a4203aee5c6831d386f7a7d6a8fc78b26
 func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string {
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,

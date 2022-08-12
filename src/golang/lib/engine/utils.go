@@ -52,6 +52,10 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 
 // We should only stop orchestration on system or fatal user errors.
 func shouldStopExecution(execState *shared.ExecutionState) bool {
+	log.Info("StdErr: ")
+	log.Info(execState.UserLogs.StdErr)
+	log.Info("StdOut: ")
+	log.Info(execState.UserLogs.Stdout)
 	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
 }
 

@@ -92,7 +92,7 @@ const (
 	ExecutorServiceAccount = "executor-service"
 	FunctionServiceAccount = "function-service"
 
-	// Cluster constants
+	//Cluster constants
 	DockerSecretName = "regcred"
 	DockerServer     = "https://index.docker.io/v2/" // this corresponds to the Docker Hub server address
 
