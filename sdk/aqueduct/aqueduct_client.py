@@ -38,7 +38,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
-from .responses import SavedObjectDelete, SavedObjectUpdate
+from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_ui_url,
@@ -452,14 +452,17 @@ class Client:
         failures = []
         for integration in resp.saved_object_deletion_results:
             for obj in resp.saved_object_deletion_results[integration]:
-                if not obj.exec_state.status == ExecutionStatus.SUCCEEDED:
-                    context = obj.exec_state.error.context.strip().replace('\n', '\n>\t')
+                if obj.exec_state.status == ExecutionStatus.FAILED:
+                    assert isinstance(obj.exec_state.error, Error)
+                    context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
                     trace = f">\t{context}\n{obj.exec_state.error.tip}"
                     failure_string = f"[{integration}] {obj.name}\n{trace}"
                     failures.append(failure_string)
         if len(failures) > 0:
-            failures_string = '\n'.join(failures)
-            raise Exception(f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}")
+            failures_string = "\n".join(failures)
+            raise Exception(
+                f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
+            )
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
