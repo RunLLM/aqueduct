@@ -431,18 +431,18 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const opStatus = operatorResult.result?.status;
       const opExecState = operatorResult.result;
       if (
-        opStatus === ExecutionStatus.Failed &&
-        opExecState.failure_type === FailureType.UserNonFatal
+        opStatus.status === ExecutionStatus.Failed &&
+        opExecState.status.failure_type === FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Warning for ${operatorName}`;
-        newWorkflowStatusItem.message = opExecState.error?.tip;
-      } else if (opStatus === ExecutionStatus.Failed) {
+        newWorkflowStatusItem.message = opExecState.status.error?.tip;
+      } else if (opStatus.status === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
-        if (!!opExecState.error) {
+        if (!!opExecState.status.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
-          const err = opExecState.error;
+          const err = opExecState.status.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''
           }`;
@@ -450,7 +450,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
         }
-      } else if (opStatus === ExecutionStatus.Succeeded) {
+      } else if (opStatus.status === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `${operatorName} succeeded`;
         newWorkflowStatusItem.message = `Operator successfully executed`;
@@ -463,8 +463,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       normalizedWorkflowStatusItems.push(newWorkflowStatusItem);
 
       // LEFT off here, see the normalize logs function and work from there :)
-      if (!!operatorResult.result?.user_logs) {
-        const logs = operatorResult.result.user_logs;
+      if (!!operatorResult.result?.status.user_logs) {
+        const logs = operatorResult.result.status.user_logs;
         const stdoutLines = (logs.stdout ?? '').split('\n');
         for (let i = 0; i < stdoutLines.length - 1; i++) {
           normalizedWorkflowStatusItems.push({

@@ -39,8 +39,8 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   );
   const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
   const logs =
-    workflow.operatorResults[currentNode.id]?.result?.user_logs ?? {};
-  const operatorError = workflow.operatorResults[currentNode.id]?.result?.error;
+    workflow.operatorResults[currentNode.id]?.result?.status.user_logs ?? {};
+  const operatorError = workflow.operatorResults[currentNode.id]?.result?.status.error;
   const integrations = useSelector(
     (state: RootState) => state.integrationsReducer
   );
@@ -328,7 +328,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
                 Status:
               </Typography>
               <Box sx={{ ml: 2 }}>
-                <NodeStatus execState={execState} />
+                <NodeStatus execState={execState.status} />
               </Box>
             </Box>
           )}
