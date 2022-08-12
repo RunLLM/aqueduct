@@ -1,7 +1,9 @@
 setuptools
 cloudpickle
+multipart
 numpy
 requests
+requests_toolbelt
 pandas
 IPython
 croniter

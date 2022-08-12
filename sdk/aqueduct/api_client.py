@@ -3,6 +3,7 @@ import json
 import uuid
 from typing import IO, Any, Dict, List, Optional, Tuple
 
+import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
@@ -252,23 +253,29 @@ class APIClient:
 
     def _construct_preview_response(self, response: requests.Response) -> PreviewResponse:
         artifact_results = {}
-        artifact_result = {}
+        artifact_result_constructor = {}
         preview_response = {}
+        is_metadata_received = False
         multipart_data = decoder.MultipartDecoder.from_response(response)
+        parse = multipart.parse_options_header
 
         for part in multipart_data.parts:
             field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
-            field_name = field_name.split("name=")[1][1:-1]
+            field_name = parse(field_name)[1]["name"]
 
             if field_name == "metadata":
+                is_metadata_received = True
                 metadata = json.loads(part.content.decode(multipart_data.encoding))
-            elif field_name.startswith("serialization_type"):
-                artifact_uuid = uuid.UUID(field_name.split("serialization_type")[1])
-                artifact_result["serialization_type"] = part.content.decode(multipart_data.encoding)
-                artifact_results[artifact_uuid] = ArtifactResult(**artifact_result)
-                artifact_result = {}
             elif utils.is_string_valid_uuid(field_name):
-                artifact_result["content"] = part.content
+                if is_metadata_received:
+                    artifact_result_constructor["serialization_type"] = metadata[
+                        "artifact_serialization_types"
+                    ][field_name]
+                    artifact_result_constructor["content"] = part.content
+                    artifact_results[field_name] = ArtifactResult(**artifact_result_constructor)
+                    artifact_result_constructor = {}
+                else:
+                    raise AqueductError("Unable to retrieve artifacts metadata")
             else:
                 raise AqueductError("Unable to get correct preview response")
 

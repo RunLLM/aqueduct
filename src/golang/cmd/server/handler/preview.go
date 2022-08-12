@@ -49,20 +49,18 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-type previewArtifactResponse struct {
-	SerializationType string `json:"serialization_type"`
-	Content           []byte `json:"content"`
-}
 
 type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactResults map[uuid.UUID]previewArtifactResponse `json:"artifact_results"`
+	ArtifactContents map[uuid.UUID][]byte 				  `json:"artifact_contents"`
+	ArtifactSerializationTypes map[uuid.UUID]string		  `json:"artifact_serialization_types"`
 }
 
-type previewResponseNoArtifacts struct {
+type previewResponseMetadata struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
+	ArtifactSeriaizationTypes map[uuid.UUID]string		  `json:"artifact_serialization_types"`
 }
 
 type PreviewHandler struct {
@@ -89,48 +87,35 @@ func checkError (w http.ResponseWriter, err error) {
 
 func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{}) {
 
-	structResponse := response.(previewResponse)
-
-	responseNoArtifacts := previewResponseNoArtifacts{
-		Status: structResponse.Status,
-		OperatorResults: structResponse.OperatorResults,
-	}
-
-	jsonBlob, err := json.Marshal(responseNoArtifacts)
-	checkError(w, err)
-
+	resp := response.(*previewResponse)
 	mw := multipart.NewWriter(w)
 	w.Header().Set("Content-Type", mw.FormDataContentType())
 
-	fw, errA := mw.CreateFormField("metadata")
-	checkError(w, errA)
-
-	_, errB := fw.Write(jsonBlob)
-	checkError(w, errB)
-
-	for id, art := range structResponse.ArtifactResults {
-
-		art_content := art.Content
-		art_serialization := art.SerializationType
-		serialization_type := "serialization_type" + id.String()
-
-		fw, errC := mw.CreateFormField(id.String())
-		checkError(w, errC)
-
-		_, errD := fw.Write(art_content)
-		checkError(w, errD)
-
-		fw, errE := mw.CreateFormField(serialization_type)
-		checkError(w, errE)
-
-		_, errF := fw.Write([]byte(art_serialization))
-		checkError(w, errF)
+	responseMetadata := previewResponseMetadata{
+		Status: resp.Status,
+		OperatorResults: resp.OperatorResults,
+		ArtifactSeriaizationTypes: resp.ArtifactSerializationTypes,
 	}
 
-	if err := mw.Close(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	jsonBlob, err := json.Marshal(responseMetadata)
+	checkError(w, err)
+
+	fw, err := mw.CreateFormField("metadata")
+	checkError(w, err)
+
+	_, err = fw.Write(jsonBlob)
+	checkError(w, err)
+
+	for artifact_id, artifact_content := range resp.ArtifactContents {
+		fw, err := mw.CreateFormField(artifact_id.String())
+		checkError(w, err)
+
+		_, err = fw.Write(artifact_content)
+		checkError(w, err)
 	}
+
+	err = mw.Close()
+	checkError(w, err)
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -246,7 +231,8 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}
 
 	// Only include artifact results that were successfully computed.
-	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
+	artifactContents := make(map[uuid.UUID][]byte)
+	artifactSerializationTypes := make(map[uuid.UUID]string)
 	for _, artf := range workflowDag.Artifacts() {
 		if artf.Computed(ctx) {
 			artifact_metadata, err := artf.GetMetadata(ctx)
@@ -258,17 +244,16 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
-			artifactResults[artf.ID()] = previewArtifactResponse{
-				SerializationType: artifact_metadata.SerializationType,
-				Content:           content,
-			}
+			artifactContents[artf.ID()] = content
+			artifactSerializationTypes[artf.ID()] = artifact_metadata.SerializationType
 		}
 	}
 
-	return previewResponse{
+	return &previewResponse{
 		Status:          status,
 		OperatorResults: execStateByOp,
-		ArtifactResults: artifactResults,
+		ArtifactContents: artifactContents,
+		ArtifactSerializationTypes: artifactSerializationTypes,
 	}, statusCode, nil
 }
 
