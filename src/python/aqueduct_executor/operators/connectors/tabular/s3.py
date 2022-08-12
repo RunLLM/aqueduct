@@ -19,9 +19,7 @@ class S3Connector(connector.TabularConnector):
         os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
         os.environ["AWS_CONFIG_FILE"] = config.config_file_path
         session = boto3.Session(profile_name=config.config_file_profile)
-        credentials = session.get_credentials()
-        config.access_key_id = credentials.access_key
-        config.secret_access_key = credentials.secret_key
+        self.s3 = session.resource("s3")
 
     def _handle_config_file_content(self, config: S3Config) -> None:
         """
@@ -40,7 +38,15 @@ class S3Connector(connector.TabularConnector):
             # always remove
             os.remove(temp_path)
 
+    def _handle_access_key(self, config: S3Config) -> None:
+        self.s3 = boto3.resource(
+            "s3",
+            aws_access_key_id=config.access_key_id,
+            aws_secret_access_key=config.secret_access_key,
+        )
+
     def __init__(self, config: S3Config):
+        self.s3 = None
         # Write a temp file
         if config.type == S3CredentialType.CONFIG_FILE_CONTENT:
             self._handle_config_file_content(config)
@@ -48,11 +54,8 @@ class S3Connector(connector.TabularConnector):
         if config.type == S3CredentialType.CONFIG_FILE_PATH:
             self._handle_config_file_path(config)
 
-        self.s3 = boto3.resource(
-            "s3",
-            aws_access_key_id=config.access_key_id,
-            aws_secret_access_key=config.secret_access_key,
-        )
+        if config.type == S3CredentialType.ACCESS_KEY:
+            self._handle_access_key(config)
 
         self.bucket = config.bucket
 
