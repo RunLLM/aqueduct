@@ -31,8 +31,8 @@ const (
 )
 
 type SavedObjectResult struct {
-	Name   string `json:"name"`
-	Result bool   `json:"succeeded"`
+	Name   string                `json:"name"`
+	Result shared.ExecutionState `json:"exec_state"`
 }
 
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
