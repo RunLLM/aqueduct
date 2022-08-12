@@ -53,6 +53,7 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 func (j *k8sJobManager) Config() Config {
 	return j.conf
 }
+
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
 	resourceRequest := generateResourceRequest(j.conf, spec.Type())
 	serviceAccount := k8s.FunctionServiceAccount
@@ -102,6 +103,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		j.k8sClient,
 	)
 }
+
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(name, j.k8sClient)
 	if err != nil {
@@ -124,12 +126,15 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 func (j *k8sJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) error {
 	return nil
 }
+
 func (j *k8sJobManager) CronJobExists(ctx context.Context, name string) bool {
 	return false
 }
+
 func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
 	return nil
 }
+
 func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 	return nil
 }

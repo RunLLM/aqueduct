@@ -103,6 +103,7 @@ export type AirflowConfig = {
 
 export type KubernetesConfig = {
   kube_config_path: string;
+  cluster_name: string;
 };
 
 export type IntegrationConfig =

@@ -16,6 +16,10 @@ export const KubernetesCard: React.FC<Props> = ({ integration }) => {
         <strong>Kubernetes Config Path: </strong>
         {config.kube_config_path}
       </Typography>
+      <Typography variant="body1">
+        <strong>Cluster Name: </strong>
+        {config.cluster_name}
+      </Typography>
     </Box>
   );
 };
