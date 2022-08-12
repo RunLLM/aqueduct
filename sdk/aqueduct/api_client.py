@@ -288,17 +288,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
-        headers = self._generate_auth_headers()
-        body = {
-            "dag": dag.json(exclude_none=True),
-        }
-
-        files: Dict[str, IO[Any]] = {}
-        for op in dag.list_operators():
-            file = op.file()
-            if file:
-                files[str(op.id)] = io.BytesIO(file)
-
+        headers, body, files = self._construct_register_workflow_request(dag)
         url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
@@ -310,6 +300,17 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterAirflowWorkflowResponse(**resp.json())
+    
+    def _construct_register_workflow_request(
+        self,
+        dag: DAG,
+    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
@@ -320,12 +321,8 @@ class APIClient:
             file = op.file()
             if file:
                 files[str(op.id)] = io.BytesIO(file)
-
-        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
-        resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
-
-        return RegisterAirflowWorkflowResponse(**resp.json())
+        
+        return headers, body, files
 
     def refresh_workflow(
         self,
