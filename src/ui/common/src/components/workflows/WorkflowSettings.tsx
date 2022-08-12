@@ -6,6 +6,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  AlertTitle,
   Checkbox,
   FormGroup,
   List,
@@ -480,7 +481,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const hasSavedObjects = Object.keys(savedObjects).length > 0;
 
   const deleteDialog = (
-    <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+    <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: 1 }}>
@@ -604,6 +605,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       open={showSavedObjectDeletionResultsDialog}
       onClose={() => navigate('/workflows')}
       maxWidth={false}
+      fullWidth
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -626,7 +628,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ width: '600px' }}>
+      <DialogContent>
         <Typography>
           <span style={{ fontFamily: 'Monospace' }}>
             {workflowDag.metadata?.name}
@@ -635,7 +637,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           object deletion.
         </Typography>
 
-        <List style={{ maxHeight: '200px', overflow: 'auto' }} dense={true}>
+        <List dense={true}>
           {Object.entries(deleteWorkflowResults)
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
@@ -668,7 +670,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   </ListItem>
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
-                    <Alert severity="error">
+                    <Alert icon={false} severity="error">
+                      <AlertTitle>Failed to delete {objectResult.name}.</AlertTitle>
                       <pre>{objectResult.exec_state.error.context}</pre>
                     </Alert>
                   )}
