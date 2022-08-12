@@ -1,11 +1,12 @@
 #!/bin/bash
 
 git clone https://github.com/aqueducthq/aqueduct.git
+cd aqueduct
 git checkout -t origin/eng-1510-add-k8s-engine-integration
 
-cd aqueduct/src/python
+cd src/python
 
-python3 setup.py
+pip install .
 
 OP_PATH=$(python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 python3 -m aqueduct_executor.operators.function_executor.extract_function --spec "$JOB_SPEC"
