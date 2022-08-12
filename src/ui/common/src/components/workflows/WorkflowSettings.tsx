@@ -428,7 +428,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       [{integration}] <b>{name}</b>
     </Typography>
   );
-  console.log(savedObjects);
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
