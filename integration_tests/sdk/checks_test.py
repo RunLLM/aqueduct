@@ -87,6 +87,7 @@ def test_edit_check(client):
     success_check = check_op(sql_artifact)
     assert success_check.get()
 
+    # Attempting to fetch the previous check artifact should fail, since its been overwritten!
     with pytest.raises(ArtifactNotFoundException):
         client._dag.must_get_artifact(failed_check.id())
 
