@@ -51,7 +51,8 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
 
     if type(values["connector_name"]) == dict:
         for integration in connector_config:
-            connector_config[integration] = connector_config[integration]["conf"]
+            if "conf" in connector_config[integration]:
+                connector_config[integration] = connector_config[integration]["conf"]
 
         return connector_config
     else:

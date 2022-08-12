@@ -3,6 +3,14 @@ from typing import Dict, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
+    Error,
+    ExecutionState,
+    Logs,
+    exception_traceback,
+)
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from google.cloud import bigquery
 from google.oauth2 import service_account
@@ -36,12 +44,17 @@ class BigQueryConnector(connector.TabularConnector):
     def delete(self, tables: List[str]) -> List[SavedObjectDelete]:
         results = []
         for table in tables:
+            exec_state = ExecutionState(user_logs=Logs())
             try:
                 self.client.delete_table(table, not_found_ok=False)
-            except:
-                results.append(SavedObjectDelete(name=table, succeeded=False))
+            except Exception as e:
+                exec_state.status = enums.ExecutionStatus.FAILED
+                exec_state.failure_type = enums.FailureType.SYSTEM
+                exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+                results.append(SavedObjectDelete(name=table, exec_state=exec_state))
                 continue
-            results.append(SavedObjectDelete(name=table, succeeded=True))
+            exec_state.status = enums.ExecutionStatus.SUCCEEDED
+            results.append(SavedObjectDelete(name=table, exec_state=exec_state))
         return results
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
