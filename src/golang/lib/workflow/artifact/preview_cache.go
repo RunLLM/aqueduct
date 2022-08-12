@@ -4,13 +4,11 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	lru "github.com/hashicorp/golang-lru"
+	log "github.com/sirupsen/logrus"
 )
-
-const maxNumEntries = 200
 
 // PreviewCacheEntry is the object that a user of this cache will see when fetching.
 type PreviewCacheEntry struct {
@@ -35,7 +33,18 @@ type inMemoryPreviewCacheManagerImpl struct {
 	cache *lru.Cache
 
 	storageConfig *shared.StorageConfig
-	db            database.Database
+}
+
+func deleteDataForEntry(ctx context.Context, storageConfig *shared.StorageConfig, val interface{}) {
+	entry, ok := val.(PreviewCacheEntry)
+	if !ok {
+		log.Error("Preview Artifact Cache is storing an unexpected data structure. Cannot delete storage paths.")
+		return
+	}
+
+	utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactContentPath)
+	utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactMetadataPath)
+	utils.CleanupStorageFile(ctx, storageConfig, entry.OpMetadataPath)
 }
 
 func (c *inMemoryPreviewCacheManagerImpl) GetMulti(_ context.Context, logicalIDs []uuid.UUID) (bool, map[uuid.UUID]PreviewCacheEntry, error) {
@@ -56,8 +65,14 @@ func (c *inMemoryPreviewCacheManagerImpl) Put(ctx context.Context, logicalID uui
 	return c.putMulti(ctx, []uuid.UUID{logicalID}, []*utils.ExecPaths{execPaths})
 }
 
-func (c *inMemoryPreviewCacheManagerImpl) putMulti(_ context.Context, logicalIDs []uuid.UUID, execPathsList []*utils.ExecPaths) error {
+func (c *inMemoryPreviewCacheManagerImpl) putMulti(ctx context.Context, logicalIDs []uuid.UUID, execPathsList []*utils.ExecPaths) error {
 	for i, logicalID := range logicalIDs {
+		// If the entry already exists, delete the data it points to, since the entry will be overridden.
+		val, ok := c.cache.Peek(logicalID)
+		if ok {
+			deleteDataForEntry(ctx, c.storageConfig, val)
+		}
+
 		c.cache.Add(logicalID, PreviewCacheEntry{
 			ArtifactContentPath:  execPathsList[i].ArtifactContentPath,
 			ArtifactMetadataPath: execPathsList[i].ArtifactMetadataPath,
@@ -67,17 +82,14 @@ func (c *inMemoryPreviewCacheManagerImpl) putMulti(_ context.Context, logicalIDs
 	return nil
 }
 
-func NewPreviewCacheManager(
+func NewInMemoryPreviewCacheManager(
 	storageConfig *shared.StorageConfig,
-	db database.Database,
+	numEntries int,
 ) (PreviewCacheManager, error) {
 	// Cleanup storage paths on eviction.
-	cache, err := lru.NewWithEvict(maxNumEntries, func(key interface{}, val interface{}) {
+	cache, err := lru.NewWithEvict(numEntries, func(key interface{}, val interface{}) {
 		ctx := context.Background()
-		entry := val.(PreviewCacheEntry)
-		utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactContentPath)
-		utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactMetadataPath)
-		utils.CleanupStorageFile(ctx, storageConfig, entry.OpMetadataPath)
+		deleteDataForEntry(ctx, storageConfig, val)
 	})
 	if err != nil {
 		return nil, err
@@ -86,6 +98,5 @@ func NewPreviewCacheManager(
 	return &inMemoryPreviewCacheManagerImpl{
 		cache:         cache,
 		storageConfig: storageConfig,
-		db:            db,
 	}, nil
 }

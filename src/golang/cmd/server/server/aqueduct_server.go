@@ -34,6 +34,9 @@ const (
 	RequiredSchemaVersion = 15
 
 	accountOrganizationId = "aqueduct"
+
+	// The maximum number of entries this cache can have.
+	previewArtifactCacheSize = 200
 )
 
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
@@ -98,9 +101,9 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
-	previewArtifactCacheManager, err := artifact.NewPreviewCacheManager(
+	previewArtifactCacheManager, err := artifact.NewInMemoryPreviewCacheManager(
 		conf.StorageConfig,
-		db,
+		previewArtifactCacheSize,
 	)
 	if err != nil {
 		log.Fatal("Unable to create preview artifact cache: ", err)
