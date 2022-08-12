@@ -13,9 +13,6 @@ class S3Storage(Storage):
 
     def __init__(self, config: S3StorageConfig):
 
-        print("ENV VARS")
-        print(os.environ)
-
         if "AWS_ACCESS_KEY_ID" in os.environ.keys() and "AWS_SECRET_ACCESS_KEY" in os.environ.keys():
             self._client = boto3.client(
                 's3',
