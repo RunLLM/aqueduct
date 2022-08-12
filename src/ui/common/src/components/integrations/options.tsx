@@ -85,7 +85,7 @@ const IntegrationOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        <MenuItem
+        {!isDemo(integration) && <MenuItem
           onClick={() => {
             setAnchorEl(null);
             onDeleteIntegration();
@@ -96,7 +96,7 @@ const IntegrationOptions: React.FC<Props> = ({
           <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
             Delete Integration
           </Typography>
-        </MenuItem>
+        </MenuItem>}
       </Menu>
     </Box>
   );

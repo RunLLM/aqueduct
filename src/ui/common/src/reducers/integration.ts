@@ -210,7 +210,7 @@ export const handleDeleteIntegration = createAsyncThunk<
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/delete`,
+      `${apiAddress}/api/integration/${integrationId}/test`,
       {
         method: 'POST',
         headers: {
