@@ -219,6 +219,8 @@ class Client:
                 provided integration or the provided integration is of an
                 incompatible type.
         """
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+
         if name not in self._connected_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
