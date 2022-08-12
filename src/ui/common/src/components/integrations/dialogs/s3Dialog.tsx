@@ -103,10 +103,10 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <Typography variant="body2" color="gray.700">
         Specify the path to your AWS credentials <strong>on the machine</strong>{' '}
         where you are running the Aqueduct server. Typically, this is in{' '}
-        <code>~/.aws/credentials</code>. You also need to specify the profile
-        name you would like to use for the credentials file. Once connected, any
-        updates to the file content will automatically apply to this
-        integration.
+        <code>~/.aws/credentials</code>, or <code>~/.aws/config</code> for SSO.
+        You also need to specify the profile name you would like to use for the
+        credentials file. Once connected, any updates to the file content will
+        automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
         spellCheck={false}
@@ -127,7 +127,9 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       <Typography variant="body2" color="gray.700">
         Upload your AWS credentials file. Typically, this is in{' '}
         <code>~/.aws/credentials</code>. You also need to specify the profile
-        name you would like to use for the credentials file.
+        name you would like to use for the credentials file. If you are using an
+        SSO profile, you should use <code>SPECIFY PATH TO CREDENTIALS</code>{' '}
+        instead.
       </Typography>
       {/* add these message once integration edit is ready:
         Once connected, you would need to re-upload the file to update the credentials.
