@@ -368,7 +368,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         title: `${artifactName} Failed`,
         message: '',
         nodeId: artifactId,
-        type: 'tableArtifact',
+        type: 'tabularArtifact',
       };
 
       const artifactStatus = artifactResult.result?.status;

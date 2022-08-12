@@ -9,15 +9,15 @@ type Props = {
   isConnectable: boolean;
 };
 
-const FloatArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
+const NumericArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
       icon={faChartLine}
       data={data}
       isConnectable={isConnectable}
-      defaultLabel="Float"
+      defaultLabel="Numeric"
     />
   );
 };
 
-export default memo(FloatArtifactNode);
+export default memo(NumericArtifactNode);

@@ -245,8 +245,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const getNodeLabel = () => {
     if (
-      currentNode.type === NodeType.TableArtifact ||
-      currentNode.type === NodeType.FloatArtifact ||
+      currentNode.type === NodeType.TabularArtifact ||
+      currentNode.type === NodeType.NumericArtifact ||
       currentNode.type === NodeType.BoolArtifact ||
       currentNode.type === NodeType.JsonArtifact
     ) {
@@ -257,7 +257,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const getNodeActionButton = () => {
-    if (currentNode.type === NodeType.TableArtifact) {
+    if (currentNode.type === NodeType.TabularArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
       if (artifactResult?.result && artifactResult.result.data.length > 0) {

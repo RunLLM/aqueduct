@@ -32,8 +32,8 @@ export function getDataSideSheetContent(
 ): React.ReactElement {
   switch (currentNode.type) {
     case NodeType.BoolArtifact:
-    case NodeType.FloatArtifact:
-    case NodeType.TableArtifact:
+    case NodeType.NumericArtifact:
+    case NodeType.TabularArtifact:
     case NodeType.JsonArtifact:
       return <DataPreviewSideSheet artifactId={currentNode.id} />;
     case NodeType.CheckOp:

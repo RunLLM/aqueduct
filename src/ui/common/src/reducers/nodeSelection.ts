@@ -4,10 +4,11 @@ import { ArtifactType } from '../utils/artifacts';
 import { OperatorType } from '../utils/operators';
 
 export enum NodeType {
-  TableArtifact = 'tableArtifact',
-  FloatArtifact = 'floatArtifact',
+  TabularArtifact = 'tabularArtifact',
+  NumericArtifact = 'numericArtifact',
   BoolArtifact = 'boolArtifact',
   JsonArtifact = 'jsonArtifact',
+  GenericArtifact = 'genericArtifact',
   ExtractOp = 'extractOp',
   LoadOp = 'loadOp',
   FunctionOp = 'functionOp',
@@ -28,10 +29,16 @@ export const OperatorTypeToNodeTypeMap: { [key in OperatorType]: NodeType } = {
 } as const;
 
 export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {
-  [ArtifactType.Table]: NodeType.TableArtifact,
-  [ArtifactType.Float]: NodeType.FloatArtifact,
+  [ArtifactType.Tabular]: NodeType.TabularArtifact,
+  [ArtifactType.Numeric]: NodeType.NumericArtifact,
   [ArtifactType.Bool]: NodeType.BoolArtifact,
   [ArtifactType.Json]: NodeType.JsonArtifact,
+  [ArtifactType.String]: NodeType.GenericArtifact,
+  [ArtifactType.Dict]: NodeType.GenericArtifact,
+  [ArtifactType.Tuple]: NodeType.GenericArtifact,
+  [ArtifactType.Image]: NodeType.GenericArtifact,
+  [ArtifactType.Bytes]: NodeType.GenericArtifact,
+  [ArtifactType.Picklable]: NodeType.GenericArtifact,
 } as const;
 
 export type SelectedNode = {
