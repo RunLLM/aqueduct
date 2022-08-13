@@ -2,12 +2,15 @@ package engine
 
 import (
 	"context"
+	"path"
 	"strconv"
 	"time"
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
@@ -106,4 +109,34 @@ func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifac
 		}, nil
 	}
 	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
+}
+
+func generateJobManagerConfig(dbWorkflowDag *workflow_dag.DBWorkflowDag, aqPath string) (job.Config, error) {
+	switch dbWorkflowDag.EngineConfig.Type {
+	case shared.AqueductEngineType:
+		return &job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		}, nil
+	case shared.K8sEngineType:
+		return &job.K8sConfig{
+			KubeConfigPath:                   "/home/ubuntu/.kube/config",
+			AwsRegion:                        "us-east-2",
+			ClusterName:                      "aqueduct-hari",
+			AwsAccessKeyId:                   "",
+			AwsSecretAccessKey:               "",
+			FunctionDockerImage:              "aqueducthq/function",
+			ParameterDockerImage:             "aqueducthq/param",
+			PostgresConnectorDockerImage:     "aqueducthq/postgres-connector",
+			SnowflakeConnectorDockerImage:    "aqueducthq/snowflake-connector",
+			MySqlConnectorDockerImage:        "aqueducthq/mysql-connector",
+			SqlServerConnectorDockerImage:    "aqueducthq/sqlserver-connector",
+			BigQueryConnectorDockerImage:     "aqueducthq/bigquery-connector",
+			GoogleSheetsConnectorDockerImage: "aqueducthq/googlesheets-connector",
+			SalesforceConnectorDockerImage:   "aqueducthq/salesforce-connector",
+			S3ConnectorDockerImage:           "aqueducthq/s3-connector",
+		}, nil
+	default:
+		return nil, errors.New("Unsupported engine type.")
+	}
 }

@@ -191,33 +191,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
-	// TODO: Generalize JobManager type from user input.
-	// engineJobManager depends on the type of engine used.
-	engineJobManager, err := job.NewJobManager(
-		// 	&job.ProcessConfig{
-		// 		BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
-		// 		OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
-		// 	},
-		&job.K8sConfig{
-			KubeConfigPath:                   "/home/ubuntu/.kube/config",
-			AwsRegion:                        "us-east-2",
-			ClusterName:                      "aqueduct-hari",
-			AwsAccessKeyId:                   "",
-			AwsSecretAccessKey:               "",
-			FunctionDockerImage:              "aqueducthq/function",
-			ParameterDockerImage:             "aqueducthq/param",
-			PostgresConnectorDockerImage:     "aqueducthq/postgres-connector",
-			SnowflakeConnectorDockerImage:    "aqueducthq/snowflake-connector",
-			MySqlConnectorDockerImage:        "aqueducthq/mysql-connector",
-			SqlServerConnectorDockerImage:    "aqueducthq/sqlserver-connector",
-			BigQueryConnectorDockerImage:     "aqueducthq/bigquery-connector",
-			GoogleSheetsConnectorDockerImage: "aqueducthq/googlesheets-connector",
-			SalesforceConnectorDockerImage:   "aqueducthq/salesforce-connector",
-			S3ConnectorDockerImage:           "aqueducthq/s3-connector",
-		},
-	)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+
+	workflowRunMetadata := &workflowRunMetadata{
+		OpToDependencyCount: nil,
+		InProgressOps:       nil,
+		CompletedOps:        nil,
+		Status:              shared.PendingExecutionStatus,
 	}
 
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
@@ -268,6 +247,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
+	}
+
+	engineConfig, err := generateJobManagerConfig(dbWorkflowDag, eng.AqPath)
+
+	engineJobManager, err := job.NewJobManager(engineConfig)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(

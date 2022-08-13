@@ -12,14 +12,14 @@ type EngineType string
 const (
 	AqueductEngineType EngineType = "aqueduct"
 	AirflowEngineType  EngineType = "airflow"
-	K8sConfigType      EngineType = "k8s"
+	K8sEngineType      EngineType = "k8s"
 )
 
 type EngineConfig struct {
 	Type           EngineType      `yaml:"type" json:"type"`
 	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
 	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
-	K8sConfig      *AqueductConfig `yaml:"k8sConfig" json:"k8s_config,omitempty"`
+	K8sConfig      *K8sConfig      `yaml:"k8sConfig" json:"k8s_config,omitempty"`
 }
 
 type AqueductConfig struct{}
