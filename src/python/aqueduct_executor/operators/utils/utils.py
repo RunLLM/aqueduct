@@ -1,11 +1,22 @@
 import io
 import json
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from aqueduct_executor.operators.utils.enums import InputArtifactType, OutputArtifactType
-from aqueduct_executor.operators.utils.execution import ExecutionState
+from aqueduct_executor.operators.utils.enums import (
+    ExecutionStatus,
+    FailureType,
+    InputArtifactType,
+    OutputArtifactType,
+)
+from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
+    Error,
+    ExecutionState,
+    Logs,
+    exception_traceback,
+)
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -262,12 +273,28 @@ def write_exec_state(
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
 
+def delete_object(name: str, delete_fn: Callable[[str], None]) -> SavedObjectDelete:
+    exec_state = ExecutionState(user_logs=Logs())
+    try:
+        delete_fn(name)
+    except Exception as e:
+        exec_state.status = ExecutionStatus.FAILED
+        exec_state.failure_type = FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        return SavedObjectDelete(name=name, exec_state=exec_state)
+    exec_state.status = ExecutionStatus.SUCCEEDED
+    return SavedObjectDelete(name=name, exec_state=exec_state)
+
+
 def write_delete_saved_objects_results(
     storage: Storage, path: str, results: Dict[str, List[SavedObjectDelete]]
 ) -> None:
     results_str = json.dumps(
         {
-            integration: [result.__dict__ for result in results[integration]]
+            integration: [
+                {"name": result.name, "exec_state": json.loads(result.exec_state.json())}
+                for result in results[integration]
+            ]
             for integration in results
         }
     )

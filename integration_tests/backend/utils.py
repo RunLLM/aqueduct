@@ -68,6 +68,6 @@ def delete_flow(client: aqueduct.Client, workflow_id: str) -> None:
     try:
         client.delete_flow(workflow_id)
     except Exception as e:
-        print("Error deleting workflow %s with exception %s" % (workflow_id, e))
+        print("Error deleting workflow %s with exception: %s" % (workflow_id, e))
     else:
         print("Successfully deleted workflow %s" % (workflow_id))

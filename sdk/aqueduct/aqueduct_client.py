@@ -20,7 +20,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import ExecutionStatus, RelationalDBServices, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -38,7 +38,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
-from .responses import SavedObjectDelete, SavedObjectUpdate
+from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_ui_url,
@@ -221,6 +221,8 @@ class Client:
                 provided integration or the provided integration is of an
                 incompatible type.
         """
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+
         if name not in self._connected_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
@@ -449,22 +451,20 @@ class Client:
             flow_id, saved_objects_to_delete, force
         )
 
-        failed_deletions = {}
-        counts = 0
+        failures = []
         for integration in resp.saved_object_deletion_results:
-            failed_for_integration = []
             for obj in resp.saved_object_deletion_results[integration]:
-                if not obj.succeeded:
-                    failed_for_integration.append(obj)
-            if len(failed_for_integration) > 0:
-                failed_deletions[str(integration)] = [
-                    res.__dict__ for res in failed_for_integration
-                ]
-                counts += len(failed_for_integration)
-        if counts > 0:
-            failures = json.dumps(failed_deletions, sort_keys=False, indent=4)
+                if obj.exec_state.status == ExecutionStatus.FAILED:
+                    trace = ""
+                    if obj.exec_state.error:
+                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
+                        trace = f">\t{context}\n{obj.exec_state.error.tip}"
+                    failure_string = f"[{integration}] {obj.name}\n{trace}"
+                    failures.append(failure_string)
+        if len(failures) > 0:
+            failures_string = "\n".join(failures)
             raise Exception(
-                f"Workflow-Written Objects' Deletion Failures\n{counts} Failures\n{failures}"
+                f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
             )
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
