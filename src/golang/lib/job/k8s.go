@@ -25,7 +25,7 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
-	// Update kubeconfig file
+	//TODO ENG-1560: Remove once kubeconfig is determined to work.
 	cmd := exec.Command(
 		"aws",
 		"eks",
@@ -43,9 +43,6 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
-	// create function service account
-	// add docker secrets + image pulling
-	// add aws credentials as secrets??? <- might not need if we are adding the service accounts
 
 	k8s.CreateNamespaces(k8sClient)
 	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeConfigPath)
