@@ -10,9 +10,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//	A helper function that takes in the name of a job, a container image, and
-//	other configuration parameters. It uses this information to generate a new
-//	job and run the job.
+// A helper function that takes in the name of a job, a container image, and
+// other configuration parameters. It uses this information to generate a new
+// job and run the job.
 func LaunchJob(
 	name, containerImage string,
 	environmentVariables *map[string]string,

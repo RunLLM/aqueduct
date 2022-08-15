@@ -19,12 +19,12 @@ const (
 	ServiceKey = "serviceName"
 )
 
-//	This is a helper function that creates a Kubernetes Clientset using the
-//	`client-go/rest` library's `InClusterConfig()` function. This function will
-//	only succeed if it is called from within a Kubernetes cluster. Otherwise,
-//	the configuration retrieval will fail, and this function will call
-//	`log.Fatal` and cause the program to crash. If this function is called from
-//	within the cluster, it should not fail.
+// This is a helper function that creates a Kubernetes Clientset using the
+// `client-go/rest` library's `InClusterConfig()` function. This function will
+// only succeed if it is called from within a Kubernetes cluster. Otherwise,
+// the configuration retrieval will fail, and this function will call
+// `log.Fatal` and cause the program to crash. If this function is called from
+// within the cluster, it should not fail.
 func CreateClientInCluster() *kubernetes.Clientset {
 	k8sConfig, err := rest.InClusterConfig()
 	if err != nil {
@@ -39,11 +39,11 @@ func CreateClientInCluster() *kubernetes.Clientset {
 	return k8sClient
 }
 
-//	This is a helper function that creates a Kubernetes Clientset using the
-//	kubeconfig that is located at `kubecfgLocation`. By default, this location
-//	is specified (in `enterprise/config/cluster.yml`) as `~/.kube/config`. Please modify
-//	the `cluster.yml` file if you need to change this location. If this
-//	location is misconfigured, this function will fail.
+// This is a helper function that creates a Kubernetes Clientset using the
+// kubeconfig that is located at `kubecfgLocation`. By default, this location
+// is specified (in `enterprise/config/cluster.yml`) as `~/.kube/config`. Please modify
+// the `cluster.yml` file if you need to change this location. If this
+// location is misconfigured, this function will fail.
 func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", kubecfgLocation)
 	if err != nil {
@@ -58,10 +58,10 @@ func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, 
 	return k8sClient, nil
 }
 
-//	This is a helper function that creates the two Kubernetes namespaces
-//	described above and does not return anything. This function should never
-//	fail, so any errors that are encountered call `log.Fatal` and cause the
-//	program to crash.
+// This is a helper function that creates the two Kubernetes namespaces
+// described above and does not return anything. This function should never
+// fail, so any errors that are encountered call `log.Fatal` and cause the
+// program to crash.
 func CreateNamespaces(k8sClient *kubernetes.Clientset) {
 	// Check to see if the system namespace has already been created and only
 	// create if it doesn't exist.

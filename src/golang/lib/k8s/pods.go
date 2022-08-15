@@ -10,11 +10,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//	A helper function that takes in the name of a pod, a container image, and
-//	other configuration parameters. It uses this information to generate a new
-//	pod and deploy that pod to the underlying Kubernetes cluster. Note that
-//	this method is not being currently used but might be useful for singletons
-//	to be deployed in the future.
+// A helper function that takes in the name of a pod, a container image, and
+// other configuration parameters. It uses this information to generate a new
+// pod and deploy that pod to the underlying Kubernetes cluster. Note that
+// this method is not being currently used but might be useful for singletons
+// to be deployed in the future.
 func CreatePod(
 	name, containerImage string,
 	environmentVariables *map[string]string,
@@ -48,9 +48,9 @@ func CreatePod(
 	return err
 }
 
-//	This is a helper function that generates a Kubernetes pod spec based on
-//	some configuration metadata. This returns the pod to the caller rather than
-//	creating it (which the `CreatePod` function above can be used for).
+// This is a helper function that generates a Kubernetes pod spec based on
+// some configuration metadata. This returns the pod to the caller rather than
+// creating it (which the `CreatePod` function above can be used for).
 func generatePod(
 	name, containerImage string,
 	environmentVariables *map[string]string,

@@ -72,8 +72,8 @@ func CreateAwsFullS3Role(
 	return *role.Role.Arn
 }
 
-//	The goal of this helper function is to add the name of the cluster to the name of the resource to be created to
-//	prevent creating resources with duplicate names when we spin up multiple clusters.
+// The goal of this helper function is to add the name of the cluster to the name of the resource to be created to
+// prevent creating resources with duplicate names when we spin up multiple clusters.
 func AppendClusterName(clusterName, resourceName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, resourceName)
 }

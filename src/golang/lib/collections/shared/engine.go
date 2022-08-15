@@ -44,3 +44,8 @@ func (e *EngineConfig) Scan(value interface{}) error {
 func (e *EngineConfig) Value() (driver.Value, error) {
 	return utils.ValueJsonB(*e)
 }
+
+type K8sIntegrationConfig struct {
+	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName    string `json:"cluster_name"  yaml:"clusterName"`
+}

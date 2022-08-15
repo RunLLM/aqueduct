@@ -10,6 +10,7 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -57,6 +58,7 @@ type EngineReaders struct {
 	ArtifactReader          artifact_db.Reader
 	ArtifactResultReader    artifact_result.Reader
 	UserReader              user.Reader
+	IntegrationReader       integration.Reader
 }
 
 type EngineWriters struct {
@@ -170,7 +172,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
-
 	workflowRunMetadata := &workflowRunMetadata{
 		OpToDependencyCount: nil,
 		InProgressOps:       nil,
@@ -228,7 +229,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
 
-	engineConfig, err := generateJobManagerConfig(dbWorkflowDag, eng.AqPath)
+	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
 
 	engineJobManager, err := job.NewJobManager(engineConfig)
 	if err != nil {
