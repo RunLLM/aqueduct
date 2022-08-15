@@ -66,7 +66,7 @@ class DAG(BaseModel):
 
     # These fields must be set when publishing the workflow
     metadata: Metadata
-    engine_config: EngineConfig
+    engine_config: EngineConfig = EngineConfig()
 
     class Config:
         fields = {
@@ -561,4 +561,4 @@ def apply_deltas_to_dag(dag: DAG, deltas: List[DAGDelta], make_copy: bool = Fals
 
 
 # Initialize a module-level dag object, to be accessed and modified when the user construct the flow.
-__GLOBAL_DAG__ = DAG(metadata=Metadata(), engine_config=EngineConfig())
+__GLOBAL_DAG__ = DAG(metadata=Metadata())
