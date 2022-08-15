@@ -323,7 +323,7 @@ def _infer_requirements() -> List[str]:
     """
     try:
         process = subprocess.Popen(
-            "pip freeze",
+            f"{sys.executable} -m pip freeze",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

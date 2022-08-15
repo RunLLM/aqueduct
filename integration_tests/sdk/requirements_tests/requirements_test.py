@@ -4,6 +4,7 @@ from aqueduct.error import AqueductError, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from transformers_model.model import sentiment_prediction_using_transformers
 from utils import get_integration_name
+import sys
 
 from aqueduct import infer_requirements, op
 
@@ -37,12 +38,12 @@ def _run_shell_command(cmd: str):
 
 def _uninstall_transformers_package():
     print("Uninstalling `transformers` package.")
-    _run_shell_command("pip3 uninstall -y transformers")
+    _run_shell_command(f"{sys.executable} -m pip uninstall -y transformers")
 
 
 def _install_transformers_package():
     print("Installing `transformers` package.")
-    _run_shell_command("pip3 install transformers")
+    _run_shell_command(f"{sys.executable} -m pip install transformers")
 
 
 def _check_infer_requirements(transformers_exists: bool):
