@@ -1,5 +1,6 @@
 import argparse
 
+
 def run(local_path: str, requirements_path: str, missing_path: str) -> None:
     with open(local_path, "r") as f:
         local_req = set(f.read().split("\n"))
