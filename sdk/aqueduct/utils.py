@@ -113,7 +113,7 @@ RESERVED_FILE_NAMES = [
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = ["aqueduct-ml", "aqueduct-sdk"]
+BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., pd.DataFrame]
 MetricFunction = Callable[..., float]
@@ -310,9 +310,7 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
 
     with open(packaged_requirements_path, "w") as f:
         for line in req_lines:
-            if any(
-                line.startswith(blacklisted_req) for blacklisted_req in BLACKLISTED_REQUIREMENTS
-            ):
+            if any(blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS):
                 continue
             f.write(line)
 
