@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage, ArtifactDetailsPage } from '@aqueducthq/common';
+import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage, ArtifactDetailsPage, MetricDetailsPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
