@@ -40,7 +40,7 @@ func RetentionJobPeriod() string {
 	return globalConfig.RetentionJobPeriod
 }
 
-// APIKey returns the API key the user must use when issueing requests.
+// APIKey returns the API key the user must use when issuing requests.
 func APIKey() string {
 	return globalConfig.ApiKey
 }
