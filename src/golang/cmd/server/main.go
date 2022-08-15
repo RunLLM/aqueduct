@@ -73,7 +73,9 @@ func main() {
 		log.SetReportCaller(true)
 	}
 
-	config.Init(*confPath)
+	if err := config.Init(*confPath); err != nil {
+		log.Fatalf("Failed to initialize server config: %v", err)
+	}
 
 	s := server.NewAqServer()
 
