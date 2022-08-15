@@ -104,5 +104,5 @@ func dumpConfig() error {
 		return err
 	}
 
-	return ioutil.WriteFile(globalConfigPath, data, 0644)
+	return ioutil.WriteFile(globalConfigPath, data, 0o664)
 }
