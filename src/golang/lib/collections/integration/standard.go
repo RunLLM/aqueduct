@@ -177,14 +177,17 @@ func (r *standardReaderImpl) ValidateIntegrationOwnership(
 ) (bool, error) {
 	var count utils.CountResult
 
-	integration := r.GetIntegration(
+	integrationObject, err := r.GetIntegration(
 		ctx,
 		integrationId,
 		db,
 	)
-	userOnly := isUserOnlyIntegration(integration.Service)
-	
-	if (userOnly) {
+	if err != nil {
+		return false, err
+	}
+	userOnly := IsUserOnlyIntegration(integrationObject.Service)
+
+	if userOnly {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
 		err := db.Query(ctx, &count, query, integrationId, userId)
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -30,18 +31,7 @@ func ParseIntegrationConfigFromRequest(r *http.Request) (integration.Service, st
 		return "", "", nil, false, errors.New("Integration name was not provided.")
 	}
 
-	userOnly := isUserOnlyIntegration(service)
+	userOnly := integration.IsUserOnlyIntegration(service)
 
 	return service, integrationName, configuration, userOnly, nil
-}
-
-// isUserOnlyIntegration returns whether the specified service is only accessible by the user.
-func isUserOnlyIntegration(svc integration.Service) bool {
-	userSpecific := []integration.Service{integration.GoogleSheets, integration.Github}
-	for _, s := range userSpecific {
-		if s == svc {
-			return true
-		}
-	}
-	return false
 }
