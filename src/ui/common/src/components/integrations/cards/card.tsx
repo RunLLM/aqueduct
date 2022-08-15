@@ -21,6 +21,7 @@ import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SnowflakeCard } from './snowflakeCard';
+import { KubernetesCard } from './kubernetesCard'
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -127,6 +128,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Airflow':
       serviceCard = <AirflowCard integration={integration} />;
+      break;
+    case 'Kubernetes':
+      serviceCard = <KubernetesCard integration={integration} />;
       break;
     default:
       serviceCard = null;
