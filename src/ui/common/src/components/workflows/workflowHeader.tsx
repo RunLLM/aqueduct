@@ -171,9 +171,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-          <Typography variant="h3" sx={{ fontFamily: 'Monospace', mr: 2 }}>
+          <Typography variant="h3" sx={{ fontFamily: 'Monospace', mr: 2, lineHeight: 1 }}>
             {name}
           </Typography>
 
