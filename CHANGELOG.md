@@ -12,7 +12,7 @@ Released on August 15, 2022.
     pretty-printing.
 * Adds support for authenticating with AWS S3 via pre-defined credentials
     files, including when authentication was done via AWS SSO.
-    **VIKRAM TO ADD IMAGE**
+    <img width="1683" alt="image" src="https://user-images.githubusercontent.com/867892/184670267-9666b842-7663-406e-adf0-65c2c5c90fc4.png">
 
 ### Bugfixes
 * Fixes bug where Python stack traces were truncated when running imported
