@@ -1,6 +1,5 @@
 import argparse
 
-
 def run(local_path: str, requirements_path: str, missing_path: str) -> None:
     with open(local_path, "r") as f:
         local_req = set(f.read().split("\n"))
@@ -10,9 +9,8 @@ def run(local_path: str, requirements_path: str, missing_path: str) -> None:
 
     missing = []
     for r in required:
-        if r not in local_req:
+        if r not in local_req and "@ file" not in r:
             missing.append(r)
-
     if len(missing) > 0:
         with open(missing_path, "w") as f:
             f.write("\n".join(missing))
