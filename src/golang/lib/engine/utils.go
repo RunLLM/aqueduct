@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"path"
 	"strconv"
 	"time"
@@ -11,8 +12,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -55,10 +58,6 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 
 // We should only stop orchestration on system or fatal user errors.
 func shouldStopExecution(execState *shared.ExecutionState) bool {
-	log.Info("StdErr: ")
-	log.Info(execState.UserLogs.StdErr)
-	log.Info("StdOut: ")
-	log.Info(execState.UserLogs.Stdout)
 	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
 }
 
@@ -111,7 +110,12 @@ func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifac
 	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
-func generateJobManagerConfig(dbWorkflowDag *workflow_dag.DBWorkflowDag, aqPath string) (job.Config, error) {
+func generateJobManagerConfig(
+	ctx context.Context,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	aqPath string,
+	vault vault.Vault,
+) (job.Config, error) {
 	switch dbWorkflowDag.EngineConfig.Type {
 	case shared.AqueductEngineType:
 		return &job.ProcessConfig{
@@ -119,24 +123,49 @@ func generateJobManagerConfig(dbWorkflowDag *workflow_dag.DBWorkflowDag, aqPath 
 			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
 		}, nil
 	case shared.K8sEngineType:
-		return &job.K8sConfig{
-			KubeConfigPath:                   "/home/ubuntu/.kube/config",
-			AwsRegion:                        "us-east-2",
-			ClusterName:                      "aqueduct-hari",
+		k8sIntegrationId := dbWorkflowDag.EngineConfig.K8sConfig.IntegrationId
+		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to read config from vault.")
+		}
+		k8sConfig, err := parseConfig(config)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get integration.")
+		}
+		return &job.K8sJobManagerConfig{
+			KubeconfigPath:                   k8sConfig.KubeconfigPath,
+			ClusterName:                      k8sConfig.ClusterName,
 			AwsAccessKeyId:                   "",
 			AwsSecretAccessKey:               "",
-			FunctionDockerImage:              "aqueducthq/function",
-			ParameterDockerImage:             "aqueducthq/param",
-			PostgresConnectorDockerImage:     "aqueducthq/postgres-connector",
-			SnowflakeConnectorDockerImage:    "aqueducthq/snowflake-connector",
-			MySqlConnectorDockerImage:        "aqueducthq/mysql-connector",
-			SqlServerConnectorDockerImage:    "aqueducthq/sqlserver-connector",
-			BigQueryConnectorDockerImage:     "aqueducthq/bigquery-connector",
-			GoogleSheetsConnectorDockerImage: "aqueducthq/googlesheets-connector",
-			SalesforceConnectorDockerImage:   "aqueducthq/salesforce-connector",
-			S3ConnectorDockerImage:           "aqueducthq/s3-connector",
+			AwsRegion:                        DefaultAwsRegion,
+			FunctionDockerImage:              DefaultFunctionDockerImage,
+			ParameterDockerImage:             DefaultParameterDockerImage,
+			PostgresConnectorDockerImage:     DefaultPostgresConnectorDockerImage,
+			SnowflakeConnectorDockerImage:    DefaultSnowflakeConnectorDockerImage,
+			MySqlConnectorDockerImage:        DefaultMySqlConnectorDockerImage,
+			SqlServerConnectorDockerImage:    DefaultSqlServerConnectorDockerImage,
+			BigQueryConnectorDockerImage:     DefaultBigQueryConnectorDockerImage,
+			GoogleSheetsConnectorDockerImage: DefaultGoogleSheetsConnectorDockerImage,
+			SalesforceConnectorDockerImage:   DefaultSalesforceConnectorDockerImage,
+			S3ConnectorDockerImage:           DefaultS3ConnectorDockerImage,
 		}, nil
 	default:
 		return nil, errors.New("Unsupported engine type.")
 	}
+}
+
+// parseConfig takes in an auth.Config and parses into a config.
+// It also returns an error, if any.
+func parseConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.K8sIntegrationConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }

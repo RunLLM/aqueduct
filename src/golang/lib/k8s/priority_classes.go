@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//	A helper function that creates a new priority class to be attached to pods.
+// A helper function that creates a new priority class to be attached to pods.
 func CreatePriorityClass(
 	name string,
 	priority int,

@@ -22,8 +22,8 @@ type ProcessConfig struct {
 	OperatorStorageDir    string `yaml:"operatorStorageDir" json:"operator_storage_dir"`
 }
 
-type K8sConfig struct {
-	KubeConfigPath     string `yaml:"kubeConfigPath" json:"kube_config_path"`
+type K8sJobManagerConfig struct {
+	KubeconfigPath     string `yaml:"kubeconfigPath" json:"kube_config_path"`
 	ClusterName        string `yaml:"clusterName" json:"cluster_name"`
 	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
@@ -42,7 +42,7 @@ type K8sConfig struct {
 	S3ConnectorDockerImage           string `yaml:"s3ConnectorDockerImage" json:"s3_connector_docker_image"`
 }
 
-func (*K8sConfig) Type() ManagerType {
+func (*K8sJobManagerConfig) Type() ManagerType {
 	return K8sType
 }
 
@@ -52,7 +52,7 @@ func (*ProcessConfig) Type() ManagerType {
 
 func RegisterGobTypes() {
 	gob.Register(&ProcessConfig{})
-	gob.Register(&K8sConfig{})
+	gob.Register(&K8sJobManagerConfig{})
 	gob.Register(&WorkflowSpec{})
 	gob.Register(&WorkflowRetentionSpec{})
 }

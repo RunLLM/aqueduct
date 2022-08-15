@@ -2,13 +2,11 @@ package job
 
 import (
 	"context"
-	"os/exec"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -21,31 +19,31 @@ const (
 
 type k8sJobManager struct {
 	k8sClient *kubernetes.Clientset
-	conf      *K8sConfig
+	conf      *K8sJobManagerConfig
 }
 
-func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
-	//TODO ENG-1560: Remove once kubeconfig is determined to work.
-	cmd := exec.Command(
-		"aws",
-		"eks",
-		"update-kubeconfig",
-		"--region", conf.AwsRegion,
-		"--name", conf.ClusterName,
-		"--kubeconfig", conf.KubeConfigPath,
-	)
-	err := cmd.Run()
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to update kubeconfig.")
-	}
+func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
+	// //TODO ENG-1560: Remove once kubeconfig is determined to work.
+	// cmd := exec.Command(
+	// 	"aws",
+	// 	"eks",
+	// 	"update-kubeconfig",
+	// 	"--region", conf.AwsRegion,
+	// 	"--name", conf.ClusterName,
+	// 	"--kubeconfig", conf.KubeconfigPath,
+	// )
+	// err := cmd.Run()
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "Unable to update kubeconfig.")
+	// }
 
-	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeConfigPath)
+	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
 
 	k8s.CreateNamespaces(k8sClient)
-	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeConfigPath)
+	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeconfigPath)
 
 	return &k8sJobManager{
 		k8sClient: k8sClient,
@@ -56,10 +54,12 @@ func NewK8sJobManager(conf *K8sConfig) (*k8sJobManager, error) {
 func (j *k8sJobManager) Config() Config {
 	return j.conf
 }
+
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
-	logrus.Info("In K8sJobManager.Launch()")
-	logrus.Info(spec)
-	resourceRequest := generateResourceRequest(j.conf, spec.Type())
+	resourceRequest := map[string]string{
+		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
+		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
+	}
 	environmentVariables := map[string]string{}
 
 	if spec.Type() == FunctionJobType {
@@ -81,8 +81,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
 	// TODO: https://linear.app/aqueducthq/issue/ENG-369/create-k8s-service-accounts-for-local-minikube-clusters
-	var secretEnvVars []string
-	secretEnvVars = []string{k8s.AwsCredentialsSecretName}
+	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
 
 	containerImage, err := mapJobTypeToDockerImage(j, spec)
 	if err != nil {
@@ -98,6 +97,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		j.k8sClient,
 	)
 }
+
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(name, j.k8sClient)
 	if err != nil {
@@ -120,12 +120,15 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 func (j *k8sJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) error {
 	return nil
 }
+
 func (j *k8sJobManager) CronJobExists(ctx context.Context, name string) bool {
 	return false
 }
+
 func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
 	return nil
 }
+
 func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 	return nil
 }
@@ -179,37 +182,37 @@ func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Se
 	}
 }
 
-func generateResourceRequest(conf *K8sConfig, jobType JobType) map[string]string {
-	resourceRequest := map[string]string{
-		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
-		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
-	}
+// func generateResourceRequest(conf *K8sJobManagerConfig, jobType JobType) map[string]string {
+// 	resourceRequest := map[string]string{
+// 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
+// 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
+// 	}
 
-	return resourceRequest
-}
+// 	return resourceRequest
+// }
 
-// generateS3Annotation generates an annotation to be attached to the service account to allow
-// it to access S3.
-func generateS3Annotation(
-	serviceAccount string,
-	namespace string,
-	roleName string,
-	oidcIssuerUri *string,
-	openIDConnectProviderArn string,
-	awsRegion string,
-	clusterName string,
-) map[string]string {
-	arn := k8s.CreateAwsFullS3Role(
-		serviceAccount,
-		namespace,
-		roleName,
-		oidcIssuerUri,
-		openIDConnectProviderArn,
-		awsRegion,
-		clusterName,
-	)
+// // generateS3Annotation generates an annotation to be attached to the service account to allow
+// // it to access S3.
+// func generateS3Annotation(
+// 	serviceAccount string,
+// 	namespace string,
+// 	roleName string,
+// 	oidcIssuerUri *string,
+// 	openIDConnectProviderArn string,
+// 	awsRegion string,
+// 	clusterName string,
+// ) map[string]string {
+// 	arn := k8s.CreateAwsFullS3Role(
+// 		serviceAccount,
+// 		namespace,
+// 		roleName,
+// 		oidcIssuerUri,
+// 		openIDConnectProviderArn,
+// 		awsRegion,
+// 		clusterName,
+// 	)
 
-	return map[string]string{
-		"eks.amazonaws.com/role-arn": arn,
-	}
-}
+// 	return map[string]string{
+// 		"eks.amazonaws.com/role-arn": arn,
+// 	}
+// }
