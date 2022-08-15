@@ -71,6 +71,7 @@ func ParseAqContext(ctx context.Context) (*AqContext, int, error) {
 		log.Warning("Seems that request ID is not properly generated.")
 	}
 
+	// The same StorageConfig should be used for the context of a request
 	storageConfig := config.Storage()
 
 	return &AqContext{
