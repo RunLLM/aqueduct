@@ -128,7 +128,15 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 // CreateTable adds the CSV as a table in the database. It returns a status code for the request
 // and an error, if any.
-func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string, integrationObject *integration.Integration, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager) (int, error) {
+func CreateTable(
+	ctx context.Context,
+	args *CreateTableArgs,
+	contentPath string,
+	integrationObject *integration.Integration,
+	vaultObject vault.Vault,
+	storageConfig *shared.StorageConfig,
+	jobManager job.JobManager,
+) (int, error) {
 	// Schedule load table job
 	jobMetadataPath := fmt.Sprintf("create-table-%s", args.RequestId)
 

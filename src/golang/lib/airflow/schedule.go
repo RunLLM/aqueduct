@@ -35,7 +35,6 @@ const (
 func ScheduleWorkflow(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,
-	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	vault vault.Vault,
 	db database.Database,
@@ -48,7 +47,7 @@ func ScheduleWorkflow(
 	}
 
 	// Prepare the storage credentials, so it can be accessed from Airflow
-	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, storageConfig, vault)
+	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, &dag.StorageConfig, vault)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,7 @@ func ScheduleWorkflow(
 				dbInputArtifact,
 				artifactIDToExecPaths[artifactId],
 				nil, /* artifactResultWriter */
-				storageConfig,
+				&dag.StorageConfig,
 				nil, /* artifactCacheManager */
 				nil, /* db */
 			)
@@ -142,7 +141,7 @@ func ScheduleWorkflow(
 				dbOutputArtifact,
 				artifactIDToExecPaths[artifactId],
 				nil, /* previewArtifactResultWriter */
-				storageConfig,
+				&dag.StorageConfig,
 				nil, /* previewCacheManager */
 				nil, /* db */
 			)
@@ -196,13 +195,13 @@ func ScheduleWorkflow(
 	operatorOutputPath := fmt.Sprintf("compile-airflow-output-%s", uuid.New().String())
 
 	defer func() {
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{operatorMetadataPath, operatorOutputPath})
+		go utils.CleanupStorageFiles(ctx, &dag.StorageConfig, []string{operatorMetadataPath, operatorOutputPath})
 	}()
 
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())
 	jobSpec, err := job.NewCompileAirflowSpec(
 		jobName,
-		storageConfig,
+		&dag.StorageConfig,
 		operatorMetadataPath,
 		operatorOutputPath,
 		dagId,
@@ -230,7 +229,7 @@ func ScheduleWorkflow(
 	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
-		storageConfig,
+		&dag.StorageConfig,
 		operatorMetadataPath,
 		&execState,
 	); err != nil {
@@ -241,7 +240,7 @@ func ScheduleWorkflow(
 		return nil, errors.Newf("Compile Airflow job failed: %v \n logs: %v \n failure type: %v", execState.Error, execState.UserLogs, execState.FailureType)
 	}
 
-	airflowDagFile, err := storage.NewStorage(storageConfig).Get(ctx, operatorOutputPath)
+	airflowDagFile, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, operatorOutputPath)
 	if err != nil {
 		return nil, err
 	}

@@ -165,7 +165,6 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
 		workflowDag,
-		args.StorageConfig,
 		h.JobManager,
 		h.Vault,
 		txn,
