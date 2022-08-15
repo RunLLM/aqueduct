@@ -14,4 +14,5 @@ const (
 	BytesType     Type = "bytes"
 	ImageType     Type = "image"
 	PicklableType Type = "picklable"
+	NoneType 	  Type = "none"
 )

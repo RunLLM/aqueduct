@@ -66,6 +66,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"
     PICKLABLE = "picklable"
+    NONE = "none"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
@@ -75,6 +76,7 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
+    NONE = "none"
 
 
 artifact_to_serialization = {
@@ -88,4 +90,5 @@ artifact_to_serialization = {
     ArtifactType.BYTES: [SerializationType.BYTES],
     ArtifactType.IMAGE: [SerializationType.IMAGE],
     ArtifactType.PICKLABLE: [SerializationType.PICKLE],
+    ArtifactType.NONE: [SerializationType.NONE],
 }

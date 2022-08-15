@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from aqueduct.artifacts import (
     bool_artifact,
     generic_artifact,
+    none_artifact,
     numeric_artifact,
     param_artifact,
     table_artifact,
@@ -86,6 +87,7 @@ class FlowRun:
             bool_artifact.BoolArtifact,
             param_artifact.ParamArtifact,
             generic_artifact.GenericArtifact,
+            none_artifact.NoneArtifact,
         ]
     ]:
         """Gets the Artifact from the flow run based on the name of the artifact.
@@ -117,6 +119,8 @@ class FlowRun:
             return bool_artifact.BoolArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         elif artifact_from_dag.type is ArtifactType.PARAM:
             return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+        elif artifact_from_dag.type is ArtifactType.NONE:
+            return none_artifact.NoneArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         else:
             return generic_artifact.GenericArtifact(
                 self._dag, artifact_from_dag.id, artifact_from_dag.type, from_flow_run=True

@@ -4,6 +4,7 @@ import DatabaseNode from './DatabaseNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
 import JsonArtifactNode from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
+import NoneArtifactNode from './NoneArtifactNode';
 import NumericArtifactNode from './NumericArtifactNode';
 import TableArtifactNode from './TableArtifactNode';
 
@@ -13,6 +14,7 @@ export const nodeTypes = {
   numericArtifact: NumericArtifactNode,
   boolArtifact: BoolArtifactNode,
   jsonArtifact: JsonArtifactNode,
+  noneArtifact: NoneArtifactNode,
   function: FunctionOperatorNode,
 
   // These are generic DAG nodes

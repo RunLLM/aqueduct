@@ -80,6 +80,7 @@ import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorN
 import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
+import NoneArtifactNode from './components/workflows/nodes/NoneArtifactNode';
 import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
@@ -425,6 +426,7 @@ export {
   nodeSelection,
   NodeType,
   nodeTypes,
+  NoneArtifactNode,
   normalizeGetWorkflowResponse,
   normalizeOperator,
   normalizeWorkflowDag,

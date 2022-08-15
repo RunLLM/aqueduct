@@ -55,6 +55,10 @@ def _read_bytes_input(storage: Storage, path: str) -> bytes:
     return storage.get(path)
 
 
+def _read_none_input(storage: Storage, path: str) -> str:
+    return None
+
+
 _deserialization_function_mapping = {
     SerializationType.TABLE: _read_table_input,
     SerializationType.JSON: _read_json_input,
@@ -62,6 +66,7 @@ _deserialization_function_mapping = {
     SerializationType.IMAGE: _read_image_input,
     SerializationType.STRING: _read_string_input,
     SerializationType.BYTES: _read_bytes_input,
+    SerializationType.NONE: _read_none_input,
 }
 
 
@@ -164,6 +169,18 @@ def _write_json_output(
     storage.put(output_path, json.dumps(output).encode(_DEFAULT_ENCODING))
 
 
+def _write_none_output(
+    storage: Storage,
+    output_path: str,
+    output: Any,
+) -> None:
+    # default to write a empty bytes
+    if output is None:
+        storage.put(output_path, bytes())
+    else:
+        raise Exception("function output is not None, Wrong serialization method")
+
+
 _serialization_function_mapping = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
@@ -171,6 +188,7 @@ _serialization_function_mapping = {
     SerializationType.IMAGE: _write_image_output,
     SerializationType.STRING: _write_string_output,
     SerializationType.BYTES: _write_bytes_output,
+    SerializationType.NONE: _write_none_output,
 }
 
 
@@ -201,6 +219,8 @@ def write_artifact(
         output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.JSON.value
     elif artifact_type == ArtifactType.PICKLABLE:
         output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.PICKLE.value
+    elif artifact_type == ArtifactType.NONE:
+        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.NONE.value
     elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE:
         try:
             json.dumps(content)
@@ -282,6 +302,8 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.DICT
     elif isinstance(value, tuple):
         return ArtifactType.TUPLE
+    elif isinstance(value, type(None)):
+        return ArtifactType.NONE
     else:
         try:
             pickle.dumps(value)

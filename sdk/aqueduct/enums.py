@@ -144,6 +144,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     PICKLABLE = "picklable"
     PARAM = "param"
+    NONE = "none"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
@@ -153,3 +154,4 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
+    NONE = "none"

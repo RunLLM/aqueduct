@@ -34,6 +34,10 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
+def _read_none_content(content: bytes) -> bytes:
+    return content
+
+
 deserialization_function_mapping = {
     SerializationType.TABLE: _read_table_content,
     SerializationType.JSON: _read_json_content,
@@ -41,4 +45,5 @@ deserialization_function_mapping = {
     SerializationType.IMAGE: _read_image_content,
     SerializationType.STRING: _read_string_content,
     SerializationType.BYTES: _read_bytes_content,
+    SerializationType.NONE: _read_none_content,
 }

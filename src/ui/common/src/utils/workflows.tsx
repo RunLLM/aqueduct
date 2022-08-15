@@ -92,7 +92,7 @@ export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {
   resp.workflow_dag_results = (resp.workflow_dag_results ?? []).sort((x, y) =>
     x.created_at < y.created_at ? 1 : -1
   );
-
+  
   return resp;
 }
 
