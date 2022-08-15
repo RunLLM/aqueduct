@@ -176,3 +176,7 @@ class Flow:
 
 class FlowConfig(BaseModel):
     engine: Optional[AirflowIntegration]
+
+    class Config:
+        # Necessary to allow an engine field
+        arbitrary_types_allowed = True
