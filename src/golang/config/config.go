@@ -10,13 +10,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// globalConfigPath is set during Init
-var globalConfigPath string
+var (
+	// globalConfigPath is set during Init
+	globalConfigPath string
+	// globalConfig is initialized during Init and updated as changes are made to the fields
+	globalConfig *serverConfiguration
+)
 
-// globalConfig is initialized during Init and updated as changes are made to the fields
-var globalConfig *ServerConfiguration
-
-type ServerConfiguration struct {
+type serverConfiguration struct {
 	AqPath             string                `yaml:"aqPath"`
 	EncryptionKey      string                `yaml:"encryptionKey"`
 	RetentionJobPeriod string                `yaml:"retentionJobPeriod"`
@@ -73,7 +74,7 @@ func loadConfig() error {
 		return err
 	}
 
-	var config ServerConfiguration
+	var config serverConfiguration
 	err = yaml.Unmarshal(bts, &config)
 	if err != nil {
 		return err
@@ -103,5 +104,5 @@ func dumpConfig() error {
 		return err
 	}
 
-	return ioutil.WriteFile(globalConfigPath, data, 0x0644)
+	return ioutil.WriteFile(globalConfigPath, data, 0644)
 }
