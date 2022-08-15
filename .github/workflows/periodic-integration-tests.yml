@@ -57,7 +57,7 @@ jobs:
         run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install packages needed for testing
         run: pip3 install nltk matplotlib pytest-xdist
