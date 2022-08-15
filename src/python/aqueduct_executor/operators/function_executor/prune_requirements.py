@@ -12,7 +12,7 @@ def run(local_path: str, requirements_path: str, missing_path: str) -> None:
     for r in required:
         if r not in local_req and "@ file" not in r:
             missing.append(r)
-            
+
     if len(missing) > 0:
         with open(missing_path, "w") as f:
             f.write("\n".join(missing))
