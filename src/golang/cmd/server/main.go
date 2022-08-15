@@ -20,7 +20,7 @@ var (
 		"The path to .yml config file",
 	)
 	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
-	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal.")
+	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
 	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
 	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
 )
@@ -68,6 +68,9 @@ func main() {
 				log.DebugLevel,
 			},
 		})
+
+		// Also print the filepath and line number.
+		log.SetReportCaller(true)
 	}
 
 	serverConfig := config.ParseServerConfiguration(*confPath)
