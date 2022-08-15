@@ -1,3 +1,5 @@
+import base64
+import json
 import uuid
 from typing import List
 
@@ -8,10 +10,12 @@ from aqueduct.dag import DAG, Metadata
 from aqueduct.enums import (
     ArtifactType,
     CheckSeverity,
+    ExecutionStatus,
     FunctionGranularity,
     FunctionType,
     LoadUpdateMode,
     OperatorType,
+    SerializationType,
     ServiceType,
 )
 from aqueduct.operators import (
@@ -25,6 +29,7 @@ from aqueduct.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
+from aqueduct.responses import ArtifactResult, PreviewResponse
 from aqueduct.utils import generate_uuid
 
 from aqueduct import dag as dag_module
@@ -156,3 +161,49 @@ def default_table_artifact(
     return TableArtifact(
         dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame()
     )
+
+
+# This helper function is used to mock our preview call so that it 1) captures the randomly generated
+# output artifact id, and 2) returns the mocked preview response result keyed by that artifact id.
+def construct_mocked_preview(
+    artifact_name: str,
+    artifact_type: ArtifactType,
+    serialization_type: SerializationType,
+    content: any,
+):
+    def mocked_preview(dag: DAG):
+        output_artifact_id = None
+        for id in dag.artifacts:
+            if dag.artifacts[id].name == artifact_name:
+                output_artifact_id = id
+                break
+
+        if output_artifact_id is None:
+            raise Exception("Unable to find output artifact from the dag.")
+
+        status = ExecutionStatus.SUCCEEDED
+
+        if serialization_type == SerializationType.TABLE:
+            serialized_content = content.to_json(
+                orient="table", date_format="iso", index=False
+            ).encode()
+        elif serialization_type == SerializationType.JSON:
+            serialized_content = json.dumps(content).encode()
+        else:
+            raise Exception("Unexpected serialization type %s." % serialization_type)
+
+        artifact_results = {
+            output_artifact_id: ArtifactResult(
+                serialization_type=serialization_type,
+                artifact_type=artifact_type,
+                content=base64.b64encode(serialized_content),
+            ),
+        }
+
+        return PreviewResponse(
+            status=status,
+            operator_results={},
+            artifact_results=artifact_results,
+        )
+
+    return mocked_preview

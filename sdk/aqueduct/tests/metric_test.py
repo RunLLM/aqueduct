@@ -1,4 +1,3 @@
-import base64
 import json
 import sys
 from io import StringIO
@@ -7,8 +6,7 @@ from unittest.mock import MagicMock
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.decorator import check, metric
 from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
-from aqueduct.responses import ArtifactResult, PreviewResponse
-from aqueduct.tests.utils import default_table_artifact
+from aqueduct.tests.utils import construct_mocked_preview, default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
 
 from aqueduct import api_client
@@ -39,32 +37,14 @@ def test_metric():
     )
     dag = metric_input._dag
 
-    def mocked_preview(dag):
-        output_artifact_id = None
-        for id in dag.artifacts:
-            if dag.artifacts[id].name == metric_artifact_name:
-                output_artifact_id = id
-                break
-
-        if output_artifact_id is None:
-            raise Exception("Unable to find output artifact from the dag.")
-
-        status = ExecutionStatus.SUCCEEDED
-        artifact_results = {
-            output_artifact_id: ArtifactResult(
-                serialization_type=SerializationType.JSON,
-                artifact_type=ArtifactType.NUMERIC,
-                content=base64.b64encode(json.dumps(output).encode()),
-            ),
-        }
-
-        return PreviewResponse(
-            status=status,
-            operator_results={},
-            artifact_results=artifact_results,
+    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+        side_effect=construct_mocked_preview(
+            metric_artifact_name,
+            ArtifactType.NUMERIC,
+            SerializationType.JSON,
+            output,  # dummy metric value
         )
-
-    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(side_effect=mocked_preview)
+    )
 
     try:
         metric_output: NumericArtifact = metric_fn(metric_input)
@@ -132,33 +112,16 @@ def test_metrics_and_checks_on_table_describe():
 
     check_name = "check_fn"
     check_artifact_name = f"{check_name} artifact"
+    check_output = True
 
-    def mocked_preview(dag):
-        output_artifact_id = None
-        for id in dag.artifacts:
-            if dag.artifacts[id].name == check_artifact_name:
-                output_artifact_id = id
-                break
-
-        if output_artifact_id is None:
-            raise Exception("Unable to find output artifact from the dag.")
-
-        status = ExecutionStatus.SUCCEEDED
-        artifact_results = {
-            output_artifact_id: ArtifactResult(
-                serialization_type=SerializationType.JSON,
-                artifact_type=ArtifactType.BOOL,
-                content=base64.b64encode(json.dumps(True).encode()),
-            ),
-        }
-
-        return PreviewResponse(
-            status=status,
-            operator_results={},
-            artifact_results=artifact_results,
+    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+        side_effect=construct_mocked_preview(
+            check_artifact_name,
+            ArtifactType.BOOL,
+            SerializationType.JSON,
+            check_output,  # dummy check value
         )
-
-    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(side_effect=mocked_preview)
+    )
 
     check_fn(metric_output)
 

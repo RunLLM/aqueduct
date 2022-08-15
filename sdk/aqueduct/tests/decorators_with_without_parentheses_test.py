@@ -1,5 +1,3 @@
-import base64
-import json
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -8,8 +6,7 @@ from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.decorator import check, metric, op
 from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
-from aqueduct.responses import ArtifactResult, PreviewResponse
-from aqueduct.tests.utils import default_table_artifact
+from aqueduct.tests.utils import construct_mocked_preview, default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file
 
 from aqueduct import api_client
@@ -91,38 +88,14 @@ def test_decorators_with_without_parentheses():
             name = f"{decorator}_fn_{inp_type.replace(' ', '_')}"
             artifact_name = f"{name} artifact"
 
-            def mocked_preview(dag):
-                output_artifact_id = None
-                for id in dag.artifacts:
-                    if dag.artifacts[id].name == artifact_name:
-                        output_artifact_id = id
-                        break
-
-                if output_artifact_id is None:
-                    raise Exception("Unable to find output artifact from the dag.")
-
-                status = ExecutionStatus.SUCCEEDED
-                if expected_artifact_type == ArtifactType.TABLE:
-                    serialized_data = expected_content.to_json(
-                        orient="table", date_format="iso", index=False
-                    ).encode()
-                else:
-                    serialized_data = json.dumps(expected_content).encode()
-                artifact_results = {
-                    output_artifact_id: ArtifactResult(
-                        serialization_type=expected_serialization_type,
-                        artifact_type=expected_artifact_type,
-                        content=base64.b64encode(serialized_data),
-                    ),
-                }
-
-                return PreviewResponse(
-                    status=status,
-                    operator_results={},
-                    artifact_results=artifact_results,
+            api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+                side_effect=construct_mocked_preview(
+                    artifact_name,
+                    expected_artifact_type,
+                    expected_serialization_type,
+                    expected_content,  # dummy data
                 )
-
-            api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(side_effect=mocked_preview)
+            )
 
             try:
                 fn_output = fn(inp)
