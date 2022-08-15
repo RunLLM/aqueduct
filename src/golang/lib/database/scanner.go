@@ -2,10 +2,10 @@ package database
 
 import (
 	"database/sql"
-	log "github.com/sirupsen/logrus"
 	"reflect"
 
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
