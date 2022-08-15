@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 )
 
 type Readers struct {
@@ -214,4 +215,33 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		WorkflowWatcherWriter:   workflowWatcherWriter,
 		WorkflowDagResultWriter: workflowDagResultWriter,
 	}, nil
+}
+
+func GetEngineReaders(readers *Readers) *engine.EngineReaders {
+	return &engine.EngineReaders{
+		WorkflowReader:          readers.WorkflowReader,
+		WorkflowDagReader:       readers.WorkflowDagReader,
+		WorkflowDagEdgeReader:   readers.WorkflowDagEdgeReader,
+		WorkflowDagResultReader: readers.WorkflowDagResultReader,
+		OperatorReader:          readers.OperatorReader,
+		OperatorResultReader:    readers.OperatorResultReader,
+		ArtifactReader:          readers.ArtifactReader,
+		ArtifactResultReader:    readers.ArtifactResultReader,
+		UserReader:              readers.UserReader,
+	}
+}
+
+func GetEngineWriters(writers *Writers) *engine.EngineWriters {
+	return &engine.EngineWriters{
+		WorkflowWriter:          writers.WorkflowWriter,
+		WorkflowDagWriter:       writers.WorkflowDagWriter,
+		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
+		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
+		WorkflowWatcherWriter:   writers.WorkflowWatcherWriter,
+		OperatorWriter:          writers.OperatorWriter,
+		OperatorResultWriter:    writers.OperatorResultWriter,
+		ArtifactWriter:          writers.ArtifactWriter,
+		ArtifactResultWriter:    writers.ArtifactResultWriter,
+		NotificationWriter:      writers.NotificationWriter,
+	}
 }

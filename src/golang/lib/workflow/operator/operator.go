@@ -21,6 +21,11 @@ type Operator interface {
 	Name() string
 	ID() uuid.UUID
 	JobSpec() job.Spec
+	MetadataPath() string
+
+	// Launch kicks off the execution of this operator, using operator's job spec.
+	// Poll on `GetExecState()` afterwards to determine when this operator has completed.
+	Launch(ctx context.Context) error
 
 	// GetExecState performs a non-blocking fetch for the execution state of this operator.
 	GetExecState(ctx context.Context) (*shared.ExecutionState, error)

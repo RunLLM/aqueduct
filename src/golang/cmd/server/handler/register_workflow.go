@@ -15,6 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -46,6 +47,7 @@ type RegisterWorkflowHandler struct {
 	GithubManager github.Manager
 	Vault         vault.Vault
 	StorageConfig *shared.StorageConfig
+	Engine        engine.Engine
 
 	ArtifactReader    artifact.Reader
 	IntegrationReader integration.Reader
@@ -62,7 +64,7 @@ type RegisterWorkflowHandler struct {
 
 type registerWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowDag              *workflow_dag.DBWorkflowDag
+	dbWorkflowDag            *workflow_dag.DBWorkflowDag
 	operatorIdToFileContents map[uuid.UUID][]byte
 
 	// Whether this is a registering a new workflow or updating an existing one.
@@ -138,7 +140,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 
 	return &registerWorkflowArgs{
 		AqContext:                aqContext,
-		workflowDag:              dagSummary.Dag,
+		dbWorkflowDag:            dagSummary.Dag,
 		operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
 		isUpdate:                 isUpdate,
 	}, http.StatusOK, nil
@@ -149,7 +151,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	emptyResp := registerWorkflowResponse{}
 
-	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
+	if _, err := operator_utils.UploadOperatorFiles(ctx, args.dbWorkflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -161,7 +163,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.workflowDag,
+		args.dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -176,38 +178,33 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.workflowDag.Metadata.Id = workflowId
+	args.dbWorkflowDag.Metadata.Id = workflowId
 
 	if args.isUpdate {
 		// If we're updating an existing workflow, first update the metadata.
-		_, _, err = (&EditWorkflowHandler{
-			Database:       txn,
-			WorkflowReader: h.WorkflowReader,
-			WorkflowWriter: h.WorkflowWriter,
-			JobManager:     h.JobManager,
-		}).Perform(
+		err := h.Engine.EditWorkflow(
 			ctx,
-			&editWorkflowArgs{
-				workflowId:          workflowId,
-				workflowName:        args.workflowDag.Metadata.Name,
-				workflowDescription: args.workflowDag.Metadata.Description,
-				schedule:            &args.workflowDag.Metadata.Schedule,
-			},
+			txn,
+			workflowId,
+			args.dbWorkflowDag.Metadata.Name,
+			args.dbWorkflowDag.Metadata.Description,
+			&args.dbWorkflowDag.Metadata.Schedule,
 		)
 		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update existing workflow.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
 		}
+
 	} else {
 		// We should create cron jobs for newly created, non-manually triggered workflows.
-		if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
-			err = CreateWorkflowCronJob(
+		if string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule) != "" {
+
+			err = h.Engine.ScheduleWorkflow(
 				ctx,
-				args.workflowDag.Metadata,
-				h.Database.Config(),
-				h.Vault,
-				h.JobManager,
-				h.GithubManager,
+				workflowId,
+				shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
+				string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
+
 			if err != nil {
 				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 			}
@@ -218,20 +215,22 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	_, _, err = (&RefreshWorkflowHandler{
-		Database:       h.Database,
-		JobManager:     h.JobManager,
-		GithubManager:  h.GithubManager,
-		Vault:          h.Vault,
-		WorkflowReader: h.WorkflowReader,
-	}).Perform(
+	timeConfig := &engine.AqueductTimeConfig{
+		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
+		ExecTimeout:          engine.DefaultExecutionTimeout,
+		CleanupTimeout:       engine.DefaultCleanupTimeout,
+	}
+	emptyParams := make(map[string]string)
+
+	_, err = h.Engine.TriggerWorkflow(
 		ctx,
-		&RefreshWorkflowArgs{
-			WorkflowId: workflowId,
-		},
+		workflowId,
+		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
+		timeConfig,
+		emptyParams,
 	)
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
 	}
 
 	if !args.isUpdate {
@@ -253,40 +252,4 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
-}
-
-// CreateWorkflowCronJob creates a k8s cron job
-// that will run the workflow on the specified schedule.
-func CreateWorkflowCronJob(
-	ctx context.Context,
-	workflow *workflow.Workflow,
-	dbConfig *database.DatabaseConfig,
-	vaultObject vault.Vault,
-	jobManager job.JobManager,
-	githubManager github.Manager,
-) error {
-	workflowId := workflow.Id.String()
-	name := shared_utils.AppendPrefix(workflowId)
-	period := string(workflow.Schedule.CronSchedule)
-
-	spec := job.NewWorkflowSpec(
-		workflow.Name,
-		workflowId,
-		dbConfig,
-		vaultObject.Config(),
-		jobManager.Config(),
-		githubManager.Config(),
-		nil, /* parameters */
-	)
-
-	err := jobManager.DeployCronJob(
-		ctx,
-		name,
-		period,
-		spec,
-	)
-	if err != nil {
-		return errors.Wrap(err, "unable to deploy workflow cron job")
-	}
-	return nil
 }

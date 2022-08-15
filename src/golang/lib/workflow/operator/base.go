@@ -58,6 +58,10 @@ func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
+func (bo *baseOperator) MetadataPath() string {
+	return bo.metadataPath
+}
+
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
@@ -72,6 +76,10 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 			Tip:     shared.TipUnknownInternalError,
 		},
 	}
+}
+
+func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
 // fetchExecState assumes that the operator has been computed already.

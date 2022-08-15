@@ -156,4 +156,7 @@ def exception_traceback(exception: Exception) -> str:
 
     This is typically used for system error so that the full trace is captured.
     """
-    return "".join(traceback.format_tb(exception.__traceback__))
+    return (
+        "".join(traceback.format_tb(exception.__traceback__))
+        + f"{exception.__class__.__name__}: {str(exception)}"
+    )

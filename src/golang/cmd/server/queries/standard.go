@@ -108,26 +108,6 @@ func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResult
 	return response, err
 }
 
-func (r *standardReaderImpl) GetWorkflowLastRun(
-	ctx context.Context,
-	db database.Database,
-) ([]WorkflowLastRunResponse, error) {
-	query := `
-		SELECT workflow.id AS workflow_id, workflow.schedule, workflow_dag_result.created_at AS last_run_at 
-		FROM workflow, workflow_dag, workflow_dag_result, 
-		(SELECT workflow.id, MAX(workflow_dag_result.created_at) AS created_at 
-		FROM workflow, workflow_dag, workflow_dag_result 
-		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
-		GROUP BY workflow.id) AS workflow_latest_run 
-		WHERE workflow.id = workflow_dag.workflow_id AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
-		AND workflow.id = workflow_latest_run.id AND workflow_dag_result.created_at = workflow_latest_run.created_at;`
-
-	var response []WorkflowLastRunResponse
-
-	err := db.Query(ctx, &response, query)
-	return response, err
-}
-
 func (r *standardReaderImpl) GetWorkflowIdsFromOperatorIds(
 	ctx context.Context,
 	operatorIds []uuid.UUID,

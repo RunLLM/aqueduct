@@ -82,9 +82,11 @@ type WorkflowRetentionSpec struct {
 
 type WorkflowSpec struct {
 	BaseSpec
-	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
-	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
-	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
+	WorkflowId     string                `json:"workflow_id" yaml:"workflowId"`
+	GithubManager  github.ManagerConfig  `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]string     `json:"parameters" yaml:"parameters"`
+	AqPath         string                `json:"aq_path" yaml:"aqPath"`
+	StorageConfig  *shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -257,6 +259,8 @@ func NewWorkflowSpec(
 	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
+	aqPath string,
+	storageConfig *shared.StorageConfig,
 	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
@@ -266,6 +270,8 @@ func NewWorkflowSpec(
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		AqPath:        aqPath,
+		StorageConfig: storageConfig,
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,

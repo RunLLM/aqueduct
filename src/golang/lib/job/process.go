@@ -223,6 +223,10 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
+
+		// This is required for credential related temp file creation.
+		// See S3 python executor for more details.
+		cmd.Dir = j.conf.OperatorStorageDir
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
