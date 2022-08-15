@@ -21,6 +21,7 @@ import {
   RelationalDBLoadParams,
 } from '../../../utils/operators';
 import DataPreviewer from '../../DataPreviewer';
+import { ExecState } from '../../../utils/shared';
 import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
@@ -53,7 +54,8 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   };
 
   const operatorSpec = operator.spec;
-  const execState = workflow.operatorResults[currentNode.id]?.result;
+  const execState: ExecState =
+    workflow.operatorResults[currentNode.id]?.result?.status;
 
   let spec, integration, actions;
 
@@ -329,7 +331,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
                 Status:
               </Typography>
               <Box sx={{ ml: 2 }}>
-                <NodeStatus execState={execState.status} />
+                <NodeStatus execState={execState} />
               </Box>
             </Box>
           )}

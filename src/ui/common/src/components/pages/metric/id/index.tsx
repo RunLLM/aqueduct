@@ -141,6 +141,40 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 </AccordionDetails>
               </Accordion>
             </Box>
+            <Box width="32px" />
+            <Box width="100%">
+              <Typography variant="h5" component="div" marginBottom="8px">
+                Outputs:
+              </Typography>
+              {/* TODO: add accordion here for inputs to the metric. */}
+              <Accordion
+                expanded={true}
+                onChange={() => {
+                  console.log('on accordion change');
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+                  aria-controls="panel1bh-content"
+                  id="panel1bh-header"
+                >
+                  <Typography
+                    sx={{ width: '33%', flexShrink: 0 }}
+                    variant="h5"
+                    component="div"
+                    marginBottom="8px"
+                  >
+                    Inputs
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography>
+                    Nulla facilisi. Phasellus sollicitudin nulla et quam mattis
+                    feugiat. Aliquam eget maximus est, id dignissim quam.
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            </Box>
           </Box>
 
           {/* <Box display="flex" width="100%" paddingTop="40px">

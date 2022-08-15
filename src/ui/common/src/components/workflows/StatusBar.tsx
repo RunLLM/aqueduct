@@ -33,7 +33,7 @@ import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
 import { Operator } from '../../utils/operators';
-import ExecutionStatus, { FailureType } from '../../utils/shared';
+import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
 enum WorkflowStatusTabs {
@@ -371,8 +371,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         type: 'tableArtifact',
       };
 
-      const artifactStatus = artifactResult.result?.status;
-      const artifactExecState = artifactResult.result?.exec_state;
+      console.log('artifactResult: ', artifactResult);
+      const artifactStatus: ExecutionStatus = artifactResult.result?.status;
+      console.log('artifactStatus: ', artifactStatus);
+      const artifactExecState: ExecState = artifactResult.result?.exec_state;
       if (
         artifactStatus === ExecutionStatus.Failed &&
         artifactExecState.failure_type == FailureType.UserNonFatal
@@ -428,7 +430,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
+      console.log('operatorResult: ', operatorResult);
       const opStatus = operatorResult.result?.status;
+      console.log('opStatus: ', opStatus);
       const opExecState = operatorResult.result;
       if (
         opStatus.status === ExecutionStatus.Failed &&
@@ -443,9 +447,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.status.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.status.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
