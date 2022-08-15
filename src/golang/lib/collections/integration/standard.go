@@ -175,12 +175,27 @@ func (r *standardReaderImpl) ValidateIntegrationOwnership(
 	userId uuid.UUID,
 	db database.Database,
 ) (bool, error) {
-	query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND (organization_id = $2 OR user_id = $3);`
 	var count utils.CountResult
 
-	err := db.Query(ctx, &count, query, integrationId, organizationId, userId)
-	if err != nil {
-		return false, err
+	integration := r.GetIntegration(
+		ctx,
+		integrationId,
+		db,
+	)
+	userOnly := isUserOnlyIntegration(integration.Service)
+	
+	if (userOnly) {
+		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
+		err := db.Query(ctx, &count, query, integrationId, userId)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND organization_id = $2;`
+		err := db.Query(ctx, &count, query, integrationId, organizationId)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return count.Count == 1, nil
