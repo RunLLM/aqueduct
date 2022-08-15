@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -45,7 +44,6 @@ type AqServer struct {
 	Router *chi.Mux
 
 	Name          string
-	StorageConfig *shared.StorageConfig
 	Database      database.Database
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
@@ -57,9 +55,9 @@ type AqServer struct {
 	*Writers
 }
 
-func NewAqServer(conf *config.ServerConfiguration) *AqServer {
+func NewAqServer() *AqServer {
 	ctx := context.Background()
-	aqPath := conf.AqPath
+	aqPath := config.AqueductPath()
 	db, err := database.NewSqliteDatabase(&database.SqliteConfig{
 		File: path.Join(aqPath, database.SqliteDatabasePath),
 	})
@@ -82,7 +80,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 
 	vault, err := vault.NewFileVault(&vault.FileConfig{
 		Directory:     path.Join(aqPath, vault.FileVaultDir),
-		EncryptionKey: conf.EncryptionKey,
+		EncryptionKey: config.EncryptionKey(),
 	})
 	if err != nil {
 		db.Close()
@@ -115,7 +113,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		previewCacheManager,
 		vault,
 		aqPath,
-		conf.StorageConfig,
 		GetEngineReaders(readers),
 		GetEngineWriters(writers),
 	)
@@ -125,7 +122,6 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 
 	s := &AqServer{
 		Router:        chi.NewRouter(),
-		StorageConfig: conf.StorageConfig,
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
@@ -164,7 +160,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		"",
 		"",
 		"",
-		conf.ApiKey,
+		config.APIKey(),
 		accountOrganizationId,
 	)
 	if err != nil {
