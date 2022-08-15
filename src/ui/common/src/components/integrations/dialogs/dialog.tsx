@@ -28,6 +28,7 @@ import {
   Service,
   SupportedIntegrations,
 } from '../../../utils/integrations';
+import { KubernetesDialog } from './kubernetesDialog';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CSVDialog } from './csvDialog';
@@ -224,6 +225,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       break;
     case 'Airflow':
       serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
+      break;
+    case 'Kubernetes':
+      serviceDialog = <KubernetesDialog setDialogConfig={setConfig} />;
       break;
     default:
       return null;

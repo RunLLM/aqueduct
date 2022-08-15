@@ -210,6 +210,12 @@ func ValidateConfig(
 		return validateAirflowConfig(ctx, config)
 	}
 
+	if service == integration.Kubernetes {
+		// Kuerbnetes authentication is performed via initializing a k8s client
+		// instead of the Python client, so we don't launch a job for it.
+		return validateKubernetesConfig(ctx, config)
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
 
@@ -393,4 +399,9 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	}
 
 	return storageConfig, nil
+func validateKubernetesConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	return http.StatusOK, nil
 }
