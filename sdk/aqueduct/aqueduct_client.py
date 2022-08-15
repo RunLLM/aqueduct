@@ -14,21 +14,24 @@ from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
+    AirflowEngineConfig,
+    EngineConfig,
     Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from .flow import Flow
+from .flow import Flow, FlowConfig
 from .flow_run import _show_dag
 from .github import Github
+from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
@@ -203,6 +206,7 @@ class Client:
         S3Integration,
         GoogleSheetsIntegration,
         RelationalDBIntegration,
+        AirflowIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -243,6 +247,10 @@ class Client:
         elif integration_info.service == ServiceType.S3:
             return S3Integration(
                 dag=self._dag,
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.AIRFLOW:
+            return AirflowIntegration(
                 metadata=integration_info,
             )
         else:
@@ -295,6 +303,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
+        config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -319,6 +328,11 @@ class Client:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
                 computation steps. All checks are on the resulting flow are also included.
+            config:
+                An optional set of config fields for this flow.
+                - engine: Specify where this flow should run with one of your connected integrations.
+                We currently support Airflow.
+
         Raises:
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
@@ -354,7 +368,28 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+        if config and config.engine:
+            # This is an Airflow workflow
+            dag.engine_config = EngineConfig(
+                type=RuntimeType.AIRFLOW,
+                airflow_config=AirflowEngineConfig(
+                    integration_id=config.engine._metadata.id,
+                ),
+            )
+            resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            flow_id, airflow_file = resp.id, resp.file
+
+            file = "{}_airflow.py".format(name)
+            with open(file, "w") as f:
+                f.write(airflow_file)
+            print(
+                """The Airflow DAG file has been downloaded to: {}. 
+                Please copy it to your Airflow server to begin execution.""".format(
+                    file
+                )
+            )
+        else:
+            flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
             api_client.__GLOBAL_API_CLIENT__.construct_base_url(),

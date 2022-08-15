@@ -1,10 +1,12 @@
 import json
 import textwrap
 import uuid
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from pydantic import BaseModel
 
 from aqueduct import api_client
 
@@ -170,3 +172,11 @@ class Flow:
             )
         )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
+
+
+class FlowConfig(BaseModel):
+    engine: Optional[AirflowIntegration]
+
+    class Config:
+        # Necessary to allow an engine field
+        arbitrary_types_allowed = True
