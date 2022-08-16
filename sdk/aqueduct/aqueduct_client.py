@@ -122,13 +122,17 @@ class Client:
             not "PYTEST_CURRENT_TEST" in os.environ
         )
 
-        # Check if "@ file" in pip freeze requirements & warn user.
-        for requirement in infer_requirements():
-            if "@ file" in requirement:
+        # Check if "@ file" in pip freeze requirements and warn user.
+        if not "localhost" in aqueduct_address:
+            skipped_packages = []
+            for requirement in infer_requirements():
+                if "@ file" in requirement:
+                    skipped_packages.append(requirement.split(" ")[0])
+            if len(skipped_packages) > 0:
                 warnings.warn(
-                    "You have installed at least one module from your local file system. These won't be installed in the server environment."
+                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
+                    + ", ".join(skipped_packages)
                 )
-                break
 
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
