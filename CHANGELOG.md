@@ -15,6 +15,8 @@ Released on August 15, 2022.
     <img width="1683" alt="image" src="https://user-images.githubusercontent.com/867892/184670267-9666b842-7663-406e-adf0-65c2c5c90fc4.png">
 
 ### Bugfixes
+* Fixes bug where Python requirements weren't properly installed when the client
+    and the server ran on different machines.
 * Fixes bug where Python stack traces were truncated when running imported
     Python functions.
 * Fixes bug where errors generated when uploading a CSV to the Aqueduct demo
