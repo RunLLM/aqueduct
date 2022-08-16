@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.0.9
+Released on August 15, 2022.
+
+### Enhancements
+* Removes the system name prefix from integration connection form; users found
+    this confusing because it was unclear you had to provide a name in addition
+    to the prefix.
+* Removes deprecated CLI commands, `aqueduct server` and `aqueduct ui`.
+* Adds `__str__` method to SDK `TableArtifact` class to support
+    pretty-printing.
+* Adds support for authenticating with AWS S3 via pre-defined credentials
+    files, including when authentication was done via AWS SSO.
+    <img width="1683" alt="image" src="https://user-images.githubusercontent.com/867892/184670267-9666b842-7663-406e-adf0-65c2c5c90fc4.png">
+
+### Bugfixes
+* Fixes bug where Python stack traces were truncated when running imported
+    Python functions.
+* Fixes bug where errors generated when uploading a CSV to the Aqueduct demo
+    database were formatted poorly and unreadable.
+* Fixes bug where SDK client would indefinitely cache the list of connected
+    integrations; if a user connected an integration after creating an SDK
+    client, that integration would not have been accessible from the SDK
+    client.
+
 ## 0.0.8
 Released on August 8, 2022.
 
