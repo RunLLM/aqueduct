@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import subprocess
 import time
 from pathlib import Path
@@ -147,7 +148,7 @@ with open(notebook_script_path, "w") as f:
 
 start_time = time.time()
 process = subprocess.Popen(
-    "cd %s && python3 %s" % (notebook_dir, NOTEBOOK_SCRIPT_NAME),
+    "cd %s && %s %s" % (notebook_dir, sys.executable, NOTEBOOK_SCRIPT_NAME),
     shell=True,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
