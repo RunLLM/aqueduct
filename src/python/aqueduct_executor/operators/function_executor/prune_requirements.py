@@ -10,6 +10,7 @@ def run(local_path: str, requirements_path: str, missing_path: str) -> None:
 
     missing = []
     for r in required:
+        # Remove any @ file because we may not have those files local to the user's device in our file system.
         if r not in local_req and "@ file" not in r:
             missing.append(r)
 
