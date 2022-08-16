@@ -467,6 +467,12 @@ export const workflowSlice = createSlice({
       };
     });
 
+    builder.addCase(handleDeleteWorkflow.pending, (state) => {
+      state.savedObjectDeletion.loadingStatus = {
+        loading: LoadingStatusEnum.Loading, err: ''
+      };
+    });
+
     builder.addCase(handleDeleteWorkflow.rejected, (state, action) => {
       const payload = action.payload;
       state.savedObjectDeletion.loadingStatus = {
