@@ -63,13 +63,6 @@ func (h *ListIntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, i
 	}
 
 	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	fmt.Print("\n")
-	fmt.Print(r)
-	fmt.Print("\n")
-	fmt.Print(routes.IntegrationIdUrlParam)
-	fmt.Print("\n")
-	fmt.Print(integrationIdStr)
-	fmt.Print("\n")
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
