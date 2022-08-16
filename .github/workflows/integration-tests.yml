@@ -73,7 +73,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 5
+        run: pytest . -rP --publish
 
       # These must be run with concurrency=1
       - name: Run the SDK Requirements Tests
