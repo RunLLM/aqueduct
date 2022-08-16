@@ -124,12 +124,15 @@ class Client:
 
         # Check if "@ file" in pip freeze requirements and warn user.
         if not "localhost" in aqueduct_address:
+            skipped_packages = []
             for requirement in infer_requirements():
                 if "@ file" in requirement:
-                    warnings.warn(
-                        "Your local Python environment has at least one package installed from the local file system. These won't be installed into your server's Python environment."
-                    )
-                    break
+                    skipped_packages.append(requirement.split(" ")[0])
+            if len(skipped_packages) > 0:
+                warnings.warn(
+                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: " +
+                    ", ".join(skipped_packages)
+                )
 
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
