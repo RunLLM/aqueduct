@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -47,10 +48,11 @@ func (*ConnectIntegrationHandler) Headers() []string {
 
 type ConnectIntegrationArgs struct {
 	*aq_context.AqContext
-	Name     string              // User specified name for the integration
-	Service  integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
-	Config   auth.Config         // Integration config
-	UserOnly bool                // Whether the integration is only accessible by the user or the entire org
+	Name       string              // User specified name for the integration
+	Service    integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
+	Config     auth.Config         // Integration config
+	UserOnly   bool                // Whether the integration is only accessible by the user or the entire org
+	SetStorage bool                // Whether the integration should be used as the storage layer
 }
 
 type ConnectIntegrationResponse struct{}
@@ -74,14 +76,20 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
+	setStorage, err := request.ParseSetIntegrationAsStorage(r, service)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
 	config := auth.NewStaticConfig(configMap)
 
 	return &ConnectIntegrationArgs{
-		AqContext: aqContext,
-		Service:   service,
-		Name:      name,
-		Config:    config,
-		UserOnly:  userOnly,
+		AqContext:  aqContext,
+		Service:    service,
+		Name:       name,
+		Config:     config,
+		UserOnly:   userOnly,
+		SetStorage: setStorage,
 	}, http.StatusOK, nil
 }
 
@@ -105,6 +113,11 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, h.Database, h.Vault); err != nil {
 		return emptyResp, statusCode, err
+	}
+
+	if args.SetStorage {
+		// This integration should be used as the new storage layer
+		setIntegrationAsStorage(ctx, args.Service, args.Config)
 	}
 
 	return emptyResp, http.StatusOK, nil
@@ -247,4 +260,30 @@ func validateAirflowConfig(
 	}
 
 	return http.StatusOK, nil
+}
+
+func setIntegrationAsStorage(ctx context.Context, svc integration.Service, conf auth.Config) error {
+	if svc != integration.S3 {
+		return errors.Newf("Cannot set integration for %v as the storage layer", svc)
+	}
+
+	data, err := conf.Marshal()
+	if err != nil {
+		return err
+	}
+
+	var c integration.S3Config
+	if err := json.Unmarshal(data, &c); err != nil {
+		return err
+	}
+
+	storageConfig := &shared.StorageConfig{
+		Type: shared.S3StorageType,
+		S3Config: &shared.S3Config{
+			Region:             "",
+			Bucket:             c.Bucket,
+			CredentialsPath:    "",
+			CredentialsProfile: "",
+		},
+	}
 }

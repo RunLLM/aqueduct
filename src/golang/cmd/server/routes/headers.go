@@ -7,9 +7,10 @@ const (
 	SdkClientVersionHeader = "sdk-client-version"
 
 	// Integration headers
-	IntegrationNameHeader    = "integration-name"
-	IntegrationServiceHeader = "integration-service"
-	IntegrationConfigHeader  = "integration-config"
+	IntegrationNameHeader       = "integration-name"
+	IntegrationServiceHeader    = "integration-service"
+	IntegrationConfigHeader     = "integration-config"
+	IntegrationSetStorageHeader = "integration-set-storage"
 
 	TableNameHeader = "table-name"
 )
