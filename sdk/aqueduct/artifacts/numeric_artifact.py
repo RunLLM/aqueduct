@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import numpy as np
 from aqueduct.artifacts import bool_artifact
 from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import (
     DAG,
@@ -29,7 +29,7 @@ from aqueduct.utils import (
 import aqueduct
 
 
-class NumericArtifact(Artifact):
+class NumericArtifact(BaseArtifact):
     """This class represents a computed metric within the flow's DAG.
 
     Any `@metric`-annotated python function that returns a float will
@@ -78,6 +78,8 @@ class NumericArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        self._dag.must_get_artifact(self._artifact_id)
+
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.NUMERIC:

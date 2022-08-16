@@ -3,15 +3,15 @@ package artifact
 type Type string
 
 const (
-	Untyped       Type = "untyped"
-	StringType    Type = "string"
-	BoolType      Type = "bool"
-	NumericType   Type = "numeric"
-	DictType      Type = "dictionary"
-	TupleType     Type = "tuple"
-	TableType     Type = "table"
-	JsonType      Type = "json"
-	BytesType     Type = "bytes"
-	ImageType     Type = "image"
-	PicklableType Type = "picklable"
+	Untyped   Type = "untyped"
+	String    Type = "string"
+	Bool      Type = "bool"
+	Numeric   Type = "numeric"
+	Dict      Type = "dictionary"
+	Tuple     Type = "tuple"
+	Table     Type = "table"
+	Json      Type = "json"
+	Bytes     Type = "bytes"
+	Image     Type = "image"
+	Picklable Type = "picklable"
 )

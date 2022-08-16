@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
 
@@ -293,7 +293,7 @@ class Client:
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
-        artifacts: Optional[List[Artifact]] = None,
+        artifacts: Optional[List[BaseArtifact]] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -433,7 +433,7 @@ class Client:
         #  was successfully deleted.
         api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
 
-    def show_dag(self, artifacts: Optional[List[Artifact]] = None) -> None:
+    def show_dag(self, artifacts: Optional[List[BaseArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
 
         A user outside the notebook environment will be redirected to a page in their browser

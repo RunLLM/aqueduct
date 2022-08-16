@@ -15,15 +15,14 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	atf := artifact.DBArtifact{
 		Id:   id,
 		Name: "test",
-		Type: artifact.TableType,
+		Type: artifact.Table,
 	}
 
 	rawAtf, err := json.Marshal(atf)
 	require.Nil(t, err)
 
-	// TODO(cgwu): Temporarily commenting this out. Will revisit after finalizing the new type struct.
 	var reconstructedAtf artifact.DBArtifact
 	err = json.Unmarshal(rawAtf, &reconstructedAtf)
 	require.Nil(t, err)
-	require.True(t, reconstructedAtf.Type == artifact.TableType)
+	require.True(t, reconstructedAtf.Type == artifact.Table)
 }

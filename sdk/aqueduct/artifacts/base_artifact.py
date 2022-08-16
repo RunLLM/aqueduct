@@ -4,15 +4,16 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType
+from aqueduct.enums import ArtifactType, OperatorType
 
 
-class Artifact(ABC):
+class BaseArtifact(ABC):
 
     _artifact_id: uuid.UUID
     _dag: DAG
     _type: ArtifactType
     _from_flow_run: bool
+    _from_operator_type: Optional[OperatorType] = None
 
     def id(self) -> uuid.UUID:
         """Fetch the id associated with this artifact.
@@ -27,6 +28,9 @@ class Artifact(ABC):
 
     def type(self) -> ArtifactType:
         return self._type
+
+    def set_operator_type(self, operator_type: OperatorType) -> None:
+        self._from_operator_type = operator_type
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)

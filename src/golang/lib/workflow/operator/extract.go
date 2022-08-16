@@ -35,7 +35,7 @@ func newExtractOperator(
 	}
 
 	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.JsonType {
+		if inputArtifact.Type() != db_artifact.Json {
 			return nil, errors.New("Only parameters can be used as inputs to extract operators.")
 		}
 	}
