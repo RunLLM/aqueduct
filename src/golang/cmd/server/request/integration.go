@@ -3,7 +3,6 @@ package request
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -45,21 +44,4 @@ func isUserOnlyIntegration(svc integration.Service) bool {
 		}
 	}
 	return false
-}
-
-// ParseSetIntegrationAsStorage returns whether the integration being connected should be
-// used as the new storage layer.
-func ParseSetIntegrationAsStorage(r *http.Request, svc integration.Service) (bool, error) {
-	if svc != integration.S3 {
-		// Only S3 integrations can be used for storage currently
-		return false, nil
-	}
-
-	setStorageHeader := r.Header.Get(routes.IntegrationSetStorageHeader)
-	setStorage, err := strconv.ParseBool(setStorageHeader)
-	if err != nil {
-		return false, err
-	}
-
-	return setStorage, nil
 }

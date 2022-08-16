@@ -80,12 +80,13 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
-	setStorage, err := request.ParseSetIntegrationAsStorage(r, service)
+	config := auth.NewStaticConfig(configMap)
+
+	// Check if this integration should be used as the new storage layer
+	setStorage, err := checkIntegrationSetStorage(r.Context(), service, config)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
-
-	config := auth.NewStaticConfig(configMap)
 
 	return &ConnectIntegrationArgs{
 		AqContext:  aqContext,
@@ -127,7 +128,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if args.SetStorage {
 		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(args.Service, args.Config); err != nil {
+		if err := setIntegrationAsStorage(args.Config); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -277,11 +278,27 @@ func validateAirflowConfig(
 	return http.StatusOK, nil
 }
 
-func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
+// checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
+func checkIntegrationSetStorage(ctx context.Context, svc integration.Service, conf auth.Config) (bool, error) {
 	if svc != integration.S3 {
-		return errors.Newf("Cannot set integration for %v as the storage layer", svc)
+		// Only S3 integrations can be used for the storage layer
+		return false, nil
 	}
 
+	data, err := conf.Marshal()
+	if err != nil {
+		return false, err
+	}
+
+	var c integration.S3Config
+	if err := json.Unmarshal(data, &c); err != nil {
+		return false, err
+	}
+
+	return c.UseAsStorage, nil
+}
+
+func setIntegrationAsStorage(conf auth.Config) error {
 	data, err := conf.Marshal()
 	if err != nil {
 		return err

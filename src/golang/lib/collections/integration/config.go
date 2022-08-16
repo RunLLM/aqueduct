@@ -17,6 +17,7 @@ type S3Config struct {
 	ConfigFilePath    string       `json:"config_file_path"`
 	ConfigFileContent string       `json:"config_file_content"`
 	ConfigFileProfile string       `json:"config_file_profile"`
+	UseAsStorage      bool         `json:"use_as_storage"`
 }
 
 // AirflowConfig contains the fields for connecting an Airflow integration.
