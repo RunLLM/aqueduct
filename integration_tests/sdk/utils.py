@@ -37,11 +37,11 @@ def should_run_complex_models() -> bool:
 
 
 def generate_new_flow_name() -> str:
-    return "workflow_" + uuid.uuid4().hex[:8]
+    return "test_" + uuid.uuid4().hex
 
 
 def generate_table_name() -> str:
-    return "test_table_" + uuid.uuid4().hex[:8]
+    return "test_table_" + uuid.uuid4().hex[:24]
 
 
 def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
