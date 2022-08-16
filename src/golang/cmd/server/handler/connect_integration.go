@@ -127,7 +127,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if args.SetStorage {
 		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(ctx, args.Service, args.Config); err != nil {
+		if err := setIntegrationAsStorage(args.Service, args.Config); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -277,7 +277,7 @@ func validateAirflowConfig(
 	return http.StatusOK, nil
 }
 
-func setIntegrationAsStorage(ctx context.Context, svc integration.Service, conf auth.Config) error {
+func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 	if svc != integration.S3 {
 		return errors.Newf("Cannot set integration for %v as the storage layer", svc)
 	}
