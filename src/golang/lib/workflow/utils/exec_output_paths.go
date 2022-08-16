@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -17,9 +18,9 @@ type ExecPaths struct {
 	ArtifactMetadataPath string
 }
 
-func InitializeExecOutputPaths(isPreview bool) *ExecPaths {
+func InitializeExecOutputPaths(opExecMode operator.ExecutionMode) *ExecPaths {
 	var pathPrefix string
-	if isPreview {
+	if opExecMode == operator.Preview {
 		pathPrefix = previewDir
 	}
 
