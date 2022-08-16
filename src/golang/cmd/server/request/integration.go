@@ -62,5 +62,4 @@ func ParseSetIntegrationAsStorage(r *http.Request, svc integration.Service) (boo
 	}
 
 	return setStorage, nil
-
 }
