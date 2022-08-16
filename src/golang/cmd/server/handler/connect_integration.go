@@ -9,6 +9,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -111,13 +112,25 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, h.Database, h.Vault); err != nil {
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, txn, h.Vault); err != nil {
 		return emptyResp, statusCode, err
 	}
 
 	if args.SetStorage {
 		// This integration should be used as the new storage layer
-		setIntegrationAsStorage(ctx, args.Service, args.Config)
+		if err := setIntegrationAsStorage(ctx, args.Service, args.Config); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
+		}
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	return emptyResp, http.StatusOK, nil
@@ -171,7 +184,6 @@ func ConnectIntegration(
 		args.Config,
 		vaultObject,
 	); err != nil {
-		// TODO ENG-498: Rollback integration write
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
@@ -277,6 +289,7 @@ func setIntegrationAsStorage(ctx context.Context, svc integration.Service, conf 
 		return err
 	}
 
+	// TODO: Convert S3Config into a StorageConfig
 	storageConfig := &shared.StorageConfig{
 		Type: shared.S3StorageType,
 		S3Config: &shared.S3Config{
@@ -286,4 +299,7 @@ func setIntegrationAsStorage(ctx context.Context, svc integration.Service, conf 
 			CredentialsProfile: "",
 		},
 	}
+
+	// Change global storage config
+	return config.UpdateStorage(storageConfig)
 }
