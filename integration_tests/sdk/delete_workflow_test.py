@@ -94,6 +94,8 @@ def test_delete_workflow_saved_objects(client):
 
         client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
 
+        flow_ids_to_delete.remove(flow_id)
+
         # Wait for deletion to occur
         sleep(1)
 
@@ -136,16 +138,22 @@ def test_delete_workflow_saved_objects_twice(client):
         flow_2_id = flow_list[1]
 
         tables = client.flow(flow_1_id).list_saved_objects()
-        assert "delete_table" in [item.object_name for item in tables[get_integration_name()]]
+        tables_1 = set([item.object_name for item in tables[get_integration_name()]])
+        assert "delete_table" in tables_1
 
         tables = client.flow(flow_2_id).list_saved_objects()
-        assert "delete_table" in [item.object_name for item in tables[get_integration_name()]]
+        tables_2 = set([item.object_name for item in tables[get_integration_name()]])
+        assert "delete_table" in tables_2
+
+        assert tables_1 == tables_2
 
         # No SDK function to do this so we query the endpoint directly to see delete_table is properly created at the integration.
         tables_response = get_response(client, endpoint).json()
         assert "delete_table" in set(tables_response["object_names"])
 
         client.delete_flow(flow_1_id, saved_objects_to_delete=tables, force=True)
+
+        flow_ids_to_delete.remove(flow_1_id)
 
         # Wait for deletion to occur
         sleep(1)
@@ -158,6 +166,12 @@ def test_delete_workflow_saved_objects_twice(client):
         with pytest.raises(Exception) as e_info:
             client.delete_flow(flow_2_id, saved_objects_to_delete=tables, force=True)
         assert str(e_info.value).startswith("Failed to delete")
+
+        # Failed to delete tables, but flow should be removed.
+        with pytest.raises(Exception) as e_info:
+            client.delete_flow(flow_2_id)
+        assert str(e_info.value).startswith("The organization does not own")
+        flow_ids_to_delete.remove(flow_2_id)
 
     finally:
         for flow_id in flow_ids_to_delete:
