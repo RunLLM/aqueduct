@@ -122,13 +122,14 @@ class Client:
             not "PYTEST_CURRENT_TEST" in os.environ
         )
 
-        # Check if "@ file" in pip freeze requirements & warn user.
-        for requirement in infer_requirements():
-            if "@ file" in requirement:
-                warnings.warn(
-                    "You have installed at least one module from your local file system. These won't be installed in the server environment."
-                )
-                break
+        # Check if "@ file" in pip freeze requirements and warn user.
+        if not "localhost" in aqueduct_address:
+            for requirement in infer_requirements():
+                if "@ file" in requirement:
+                    warnings.warn(
+                        "Your local Python environment has at least one package installed from the local file system. These won't be installed into your server's Python environment."
+                    )
+                    break
 
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
