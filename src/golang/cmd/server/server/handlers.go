@@ -72,9 +72,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			WorkflowDagResultReader: s.WorkflowDagResultReader,
 		},
-		routes.ListBuiltinFunctionsRoute: &handler.ListBuiltinFunctionsHandler{
-			StorageConfig: s.StorageConfig,
-		},
 		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,

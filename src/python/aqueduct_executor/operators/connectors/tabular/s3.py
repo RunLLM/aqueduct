@@ -10,6 +10,12 @@ from aqueduct_executor.operators.connectors.tabular import common, config, conne
 from aqueduct_executor.operators.connectors.tabular.config import S3Config, S3CredentialType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
+from typing import List, Optional
+
+import boto3
+import pandas as pd
+from aqueduct_executor.operators.connectors.tabular import common, connector, extract, load
+from aqueduct_executor.operators.connectors.tabular.config import S3Config, S3CredentialType
 
 
 class S3Connector(connector.TabularConnector):

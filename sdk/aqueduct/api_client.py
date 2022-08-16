@@ -23,6 +23,7 @@ from aqueduct.responses import (
     ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
+    RegisterAirflowWorkflowResponse,
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
@@ -100,6 +101,7 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register_airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
@@ -289,6 +291,28 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterWorkflowResponse(**resp.json())
+
+    def register_airflow_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterAirflowWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterAirflowWorkflowResponse(**resp.json())
+
+    def _construct_register_workflow_request(
+        self,
+        dag: DAG,
+    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
@@ -300,11 +324,7 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
-        resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
-
-        return RegisterWorkflowResponse(**resp.json())
+        return headers, body, files
 
     def refresh_workflow(
         self,

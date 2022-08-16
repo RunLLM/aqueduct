@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -42,6 +42,20 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
+class AqueductEngineConfig(BaseModel):
+    pass
+
+
+class AirflowEngineConfig(BaseModel):
+    integration_id: uuid.UUID
+
+
+class EngineConfig(BaseModel):
+    type: RuntimeType = RuntimeType.AQUEDUCT
+    aqueduct_config: Optional[AqueductEngineConfig]
+    airflow_config: Optional[AirflowEngineConfig]
+
+
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, Artifact] = {}
@@ -52,6 +66,7 @@ class DAG(BaseModel):
 
     # These fields must be set when publishing the workflow
     metadata: Metadata
+    engine_config: EngineConfig = EngineConfig()
 
     class Config:
         fields = {
