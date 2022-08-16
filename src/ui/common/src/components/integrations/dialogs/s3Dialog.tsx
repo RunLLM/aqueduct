@@ -1,3 +1,4 @@
+import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ const Placeholders: S3Config = {
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
+  use_as_storage: false,
 };
 
 type Props = {
@@ -37,6 +39,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [s3Type, setS3Type] = useState<S3CredentialType>(
     S3CredentialType.AccessKey
   );
+  const [useAsStorage, setUseAsStorage] = useState<boolean>(false);
 
   useEffect(() => {
     const config: S3Config = {
@@ -47,6 +50,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       config_file_path: configFilePath,
       config_file_content: file?.data ?? '',
       config_file_profile: configFileProfile,
+      use_as_storage: useAsStorage,
     };
     setDialogConfig(config);
   }, [
@@ -57,6 +61,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
     file,
     configFileProfile,
     s3Type,
+    useAsStorage,
   ]);
 
   const configProfileInput = (
@@ -182,7 +187,13 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       {s3Type === S3CredentialType.AccessKey && accessKeyTab}
       {s3Type === S3CredentialType.ConfigFilePath && configPathTab}
       {s3Type === S3CredentialType.ConfigFileContent && configUploadTab}
+
+      <FormControlLabel
+        label="Use this integration for Aqueduct storage."
+        control={<Checkbox checked={useAsStorage} onChange={(event) => setUseAsStorage(event.target.checked)} />}
+      />
     </Box>
+
   );
 };
 
