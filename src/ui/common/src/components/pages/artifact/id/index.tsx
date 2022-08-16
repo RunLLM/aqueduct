@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { exportCsv } from '../../../../utils/preview';
 
 import {
   ArtifactResult,
@@ -97,16 +98,24 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     );
   }
 
+  console.log('artifactResult: ', artifactResult.result.name);
+
   const parsedData = JSON.parse(artifactResult.result.data);
+  const artifactName: string = artifactResult.result.name;
+  console.log('artifactName: ', artifactName);
+
+  console.log('artifactName replaced: ', artifactName.replaceAll(' ', '_'));
 
   return (
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          <Box width="100%" display="flex">
+          <Box width="100%" display="flex" alignItems="center">
             <ArtifactDetailsHeader artifactName={artifactResult.result.name} />
-            <Button variant="contained" sx={{ maxHeight: '32px' }}>
-              EXPORT
+            <Button variant="contained" sx={{ maxHeight: '32px' }} onClick={() => {
+              exportCsv(parsedData, artifactName.replaceAll(' ', '_'))
+            }}>
+              Export
             </Button>
           </Box>
           <Box width="100%" marginTop="12px">
