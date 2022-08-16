@@ -1,7 +1,8 @@
-from time import sleep
+from time import sleep, time
 
 import pytest
 from aqueduct.error import InvalidRequestError
+from aqueduct.error import AqueductError
 from constants import SENTIMENT_SQL_QUERY
 from utils import (
     delete_flow,
@@ -147,20 +148,27 @@ def test_delete_workflow_saved_objects_twice(client):
 
         assert tables_1 == tables_2
 
-        # No SDK function to do this so we query the endpoint directly to see delete_table is properly created at the integration.
-        tables_response = get_response(client, endpoint).json()
-        assert "delete_table" in set(tables_response["object_names"])
+        # Check delete_table is properly created at the integration.
+        integration.sql("SELECT * FROM delete_table").get()
 
         client.delete_flow(flow_1_id, saved_objects_to_delete=tables, force=True)
 
         flow_ids_to_delete.remove(flow_1_id)
 
         # Wait for deletion to occur
-        sleep(1)
+        timeout = 500
+        poll_threshold = 5
+        begin = time()
 
-        # No SDK function to do this so we query the endpoint directly to see delete_table is properly deleted at the integration.
-        tables_response = get_response(client, endpoint).json()
-        assert "delete_table" not in set(tables_response["object_names"])
+        while True:
+            assert time() - begin < timeout, "Timed out waiting for workflow run to complete."
+
+            # Check delete_table no longer exists.
+            try:
+                integration.sql("SELECT * FROM delete_table").get()
+                sleep(poll_threshold)
+            except:
+                break
 
         # Try to delete table deleted by other flow.
         with pytest.raises(Exception) as e_info:
