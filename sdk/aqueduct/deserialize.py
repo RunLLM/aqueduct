@@ -34,8 +34,8 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
-def _read_none_content(content: bytes) -> bytes:
-    return content
+def _read_none_content(content: bytes) -> None:
+    return None
 
 
 deserialization_function_mapping = {

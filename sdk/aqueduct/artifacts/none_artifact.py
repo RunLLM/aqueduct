@@ -3,16 +3,14 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.artifact import Artifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
-from aqueduct.error import AqueductError
 
 
 class NoneArtifact(Artifact):
-    """This class represents a generic artifact within the flow's DAG.
-    Currently, a generic artifact can be any artifact other than table, numeric, bool, or parameter.
+    """This class represents a none artifact within the flow's DAG.
+    Currently, a none artifact will only be created when there is no return value for the operator function
     """
 
     def __init__(
@@ -31,20 +29,13 @@ class NoneArtifact(Artifact):
         self._type = type
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
-        """Materializes the artifact.
-
+        """
         Returns:
-            The materialized value.
-
-        Raises:
-            InvalidRequestError:
-                An error occurred because of an issue with the user's code or inputs.
-            InternalServerError:
-                An unexpected error occurred in the server.
+            None
         """
         return None
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the bool artifact."""
+        """Prints out a human-readable description of the none artifact."""
         # TODO: make this more informative.
         print("This is a %s artifact." % self.type())

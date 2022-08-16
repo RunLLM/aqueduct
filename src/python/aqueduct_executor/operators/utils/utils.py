@@ -55,7 +55,7 @@ def _read_bytes_input(storage: Storage, path: str) -> bytes:
     return storage.get(path)
 
 
-def _read_none_input(storage: Storage, path: str) -> str:
+def _read_none_input(storage: Storage, path: str) -> NoneType:
     return None
 
 
@@ -178,7 +178,7 @@ def _write_none_output(
     if output is None:
         storage.put(output_path, bytes())
     else:
-        raise Exception("function output is not None, Wrong serialization method")
+        raise Exception("Function output is not None, wrong serialization method")
 
 
 _serialization_function_mapping = {
@@ -302,7 +302,7 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.DICT
     elif isinstance(value, tuple):
         return ArtifactType.TUPLE
-    elif isinstance(value, type(None)):
+    elif value is None:
         return ArtifactType.NONE
     else:
         try:

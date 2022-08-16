@@ -10,7 +10,6 @@ type Props = {
 };
 
 const NoneArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
-  console.log("node data: ", data)
   return (
     <Node
       icon={faChartLine}
