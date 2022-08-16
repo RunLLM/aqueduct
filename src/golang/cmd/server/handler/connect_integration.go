@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -290,14 +293,72 @@ func setIntegrationAsStorage(ctx context.Context, svc integration.Service, conf 
 	}
 
 	// TODO: Convert S3Config into a StorageConfig
+	// Users provide AWS credentials for an S3 integration via one of the following:
+	//  1. AWS Access Key and Secret Key
+	//  2. Credentials file content
+	//  3. Credentials filepath and profile name
+	// The S3 Storage implementation expects the AWS credentials to be specified via a
+	// filepath and profile name, so we must convert the above to the correct format.
 	storageConfig := &shared.StorageConfig{
 		Type: shared.S3StorageType,
 		S3Config: &shared.S3Config{
-			Region:             "",
-			Bucket:             c.Bucket,
-			CredentialsPath:    "",
-			CredentialsProfile: "",
+			Bucket: c.Bucket,
 		},
+	}
+	switch c.Type {
+	case integration.AccessKeyS3ConfigType:
+		// AWS access and secret keys need to be written to a credentials file
+		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
+		f, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		credentialsContent := fmt.Sprintf(
+			"[default]\naws_access_key_id=%s\naws_secret_access_key=%s\n",
+			c.AccessKeyId,
+			c.SecretAccessKey,
+		)
+		if _, err := f.WriteString(credentialsContent); err != nil {
+			return err
+		}
+
+		storageConfig.S3Config.CredentialsPath = path
+		storageConfig.S3Config.CredentialsProfile = "default"
+	case integration.ConfigFileContentS3ConfigType:
+		// The credentials content needs to be written to a credentials file
+		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
+		f, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		// Determine profile name by looking for [profile_name]
+		i := strings.Index(c.ConfigFileContent, "[")
+		if i < 0 {
+			return errors.New("Unable to determine AWS credentials profile name.")
+		}
+
+		j := strings.Index(c.ConfigFileContent, "]")
+		if j < 0 {
+			return errors.New("Unable to determine AWS credentials profile name.")
+		}
+
+		profileName := c.ConfigFileContent[i+1 : j]
+
+		if _, err := f.WriteString(c.ConfigFileContent); err != nil {
+			return err
+		}
+
+		storageConfig.S3Config.CredentialsPath = path
+		storageConfig.S3Config.CredentialsProfile = profileName
+	case integration.ConfigFileS3ConfigType:
+		// The credentials are already in the form of a filepath and profile, so no changes
+		// need to be made
+		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
+		storageConfig.S3Config.CredentialsProfile = c.ConfigFileProfile
 	}
 
 	// Change global storage config
