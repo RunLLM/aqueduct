@@ -1,10 +1,11 @@
+import sys
+
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from transformers_model.model import sentiment_prediction_using_transformers
 from utils import get_integration_name
-import sys
 
 from aqueduct import infer_requirements, op
 
