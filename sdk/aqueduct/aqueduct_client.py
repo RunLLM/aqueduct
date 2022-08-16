@@ -130,8 +130,8 @@ class Client:
                     skipped_packages.append(requirement.split(" ")[0])
             if len(skipped_packages) > 0:
                 warnings.warn(
-                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: " +
-                    ", ".join(skipped_packages)
+                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
+                    + ", ".join(skipped_packages)
                 )
 
     def github(self, repo: str, branch: str = "") -> Github:
