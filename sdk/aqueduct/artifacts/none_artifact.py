@@ -17,7 +17,6 @@ class NoneArtifact(Artifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        type: ArtifactType,
         content: Optional[Any] = None,
         from_flow_run: bool = False,
     ):
@@ -26,9 +25,9 @@ class NoneArtifact(Artifact):
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
         self._content = content
-        self._type = type
+        self._type = ArtifactType.NONE
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> None:
         """
         Returns:
             None

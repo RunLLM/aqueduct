@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 from aqueduct.artifacts.artifact import Artifact
 from aqueduct.dag import DAG
+from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.utils import format_header_for_print
 
@@ -17,6 +18,7 @@ class ParamArtifact(Artifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
+        self._type = ArtifactType.PARAM
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         if parameters is not None:
