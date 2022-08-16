@@ -2,7 +2,7 @@ import json
 import textwrap
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, Union, Optional
+from typing import DefaultDict, Dict, List, Optional, Union
 
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException

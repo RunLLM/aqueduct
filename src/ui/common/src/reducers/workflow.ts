@@ -403,9 +403,11 @@ export const workflowSlice = createSlice({
       };
     });
 
-
     builder.addCase(handleListWorkflowSavedObjects.pending, (state, _) => {
-      state.savedObjects.loadingStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+      state.savedObjects.loadingStatus = {
+        loading: LoadingStatusEnum.Loading,
+        err: '',
+      };
     });
 
     builder.addCase(
@@ -469,7 +471,8 @@ export const workflowSlice = createSlice({
 
     builder.addCase(handleDeleteWorkflow.pending, (state) => {
       state.savedObjectDeletion.loadingStatus = {
-        loading: LoadingStatusEnum.Loading, err: ''
+        loading: LoadingStatusEnum.Loading,
+        err: '',
       };
     });
 
