@@ -267,7 +267,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       return (
         <Button
           onClick={() =>
-            exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+            exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
           }
         >
           Export CSV
