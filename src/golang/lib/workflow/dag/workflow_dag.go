@@ -69,7 +69,7 @@ type workflowDagImpl struct {
 
 // Assumption: all dag's start with operators.
 // computeArtifactSignatures traverses over the entire dag structure from beginning to end,
-// computing the signatures for each artifact. These logical IDs are returned in a map keyed
+// computing the signatures for each artifact. These signatures are returned in a map keyed
 // by the artifact's original ID.
 func computeArtifactSignatures(
 	dbOperators map[uuid.UUID]db_operator.DBOperator,
@@ -110,7 +110,7 @@ func computeArtifactSignatures(
 		for _, inputArtifactID := range currOp.Inputs {
 			inputArtifactSignature, ok := artifactIDToSignature[inputArtifactID]
 			if !ok {
-				return nil, errors.Newf("Unable to find logical ID for input artifact %s", inputArtifactID)
+				return nil, errors.Newf("Unable to find signature for input artifact %s", inputArtifactID)
 			}
 			bytesToHash = append(bytesToHash, []byte(inputArtifactSignature.String())...)
 		}
@@ -124,7 +124,7 @@ func computeArtifactSignatures(
 			return nil, errors.Newf("Multiple output artifacts is currently unsupported.")
 		}
 
-		// Compute that logical ID for each output artifact.
+		// Compute that signature for each output artifact.
 		// The assumption is that there is only one output.
 		outputArtifactID := currOp.Outputs[0]
 		bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
@@ -178,7 +178,7 @@ func NewWorkflowDag(
 		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths()
 	}
 
-	// Compute logical IDs for each artifact.
+	// Compute signatures for each artifact.
 	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, dbArtifacts)
 	if err != nil {
 		return nil, errors.Wrap(err, "Internal error: unable to set up workflow execution.")

@@ -112,7 +112,7 @@ func ScheduleWorkflow(
 			}
 
 			inputArtifact, err := artifact.NewArtifact(
-				uuid.Nil, /* Airflow does not use this logical ids */
+				uuid.Nil, /* Airflow does not use the preview cache */
 				dbInputArtifact,
 				artifactIDToExecPaths[artifactId],
 				nil, /* artifactResultWriter */
@@ -138,7 +138,7 @@ func ScheduleWorkflow(
 			}
 
 			outputArtifact, err := artifact.NewArtifact(
-				uuid.Nil, /* Airflow does not use logical ids */
+				uuid.Nil, /* Airflow does not use the preview cache */
 				dbOutputArtifact,
 				artifactIDToExecPaths[artifactId],
 				nil, /* previewArtifactResultWriter */

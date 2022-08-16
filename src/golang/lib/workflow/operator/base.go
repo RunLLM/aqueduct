@@ -124,7 +124,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 				// We've successfully used the cached result!
 				return nil
 			}
-			// We've failed to use the cache, so we should fallback on actually computing the function.
+			// We've failed to use the cache, so we will retry the execution without the cache.
 			log.Errorf("Operator %s had a preview cache hit but was unable to execute. Error: %v", bo.Name(), err)
 		}
 	}
