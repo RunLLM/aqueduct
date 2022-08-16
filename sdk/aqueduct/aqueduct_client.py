@@ -3,7 +3,8 @@ import logging
 import os
 import uuid
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from collections import defaultdict
+from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
@@ -22,7 +23,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, RuntimeType, ServiceType
+from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -34,13 +35,14 @@ from .flow_run import _show_dag
 from .github import Github
 from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import IntegrationInfo
+from .integrations.integration import Integration, IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
+from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_ui_url,
@@ -462,12 +464,23 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         api_client.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def delete_flow(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        saved_objects_to_delete: Optional[
+            DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
+        ] = None,
+        force: bool = False,
+    ) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            saved_objects_to_delete:
+                The tables or storage paths to delete grouped by integration name.
+            force:
+                Force the deletion even though some workflow-written objects in the writes_to_delete argument had UpdateMode=append
 
         Raises:
             InvalidRequestError:
@@ -476,11 +489,31 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        if saved_objects_to_delete is None:
+            saved_objects_to_delete = defaultdict()
         flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
+        resp = api_client.__GLOBAL_API_CLIENT__.delete_workflow(
+            flow_id, saved_objects_to_delete, force
+        )
+
+        failures = []
+        for integration in resp.saved_object_deletion_results:
+            for obj in resp.saved_object_deletion_results[integration]:
+                if obj.exec_state.status == ExecutionStatus.FAILED:
+                    trace = ""
+                    if obj.exec_state.error:
+                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
+                        trace = f">\t{context}\n{obj.exec_state.error.tip}"
+                    failure_string = f"[{integration}] {obj.name}\n{trace}"
+                    failures.append(failure_string)
+        if len(failures) > 0:
+            failures_string = "\n".join(failures)
+            raise Exception(
+                f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
+            )
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.

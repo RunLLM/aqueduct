@@ -2,12 +2,14 @@ import io
 import json
 import os
 import uuid
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import boto3
 import pandas as pd
-from aqueduct_executor.operators.connectors.tabular import common, connector, extract, load
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 from aqueduct_executor.operators.connectors.tabular.config import S3Config, S3CredentialType
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
+from aqueduct_executor.operators.utils.utils import delete_object
 
 
 class S3Connector(connector.TabularConnector):
@@ -110,6 +112,15 @@ class S3Connector(connector.TabularConnector):
                     raise Exception("Each key in the list must not be a directory, found %s." % key)
                 dfs.append(self._fetch_object(key, params.format))
             return pd.concat(dfs)
+
+    def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
+        self.s3.Object(self.bucket, name).delete()
+
+    def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
+        results = []
+        for key in objects:
+            results.append(delete_object(key, self._delete_object))
+        return results
 
     def load(self, params: load.S3Params, df: pd.DataFrame) -> None:
         buf = io.BytesIO()

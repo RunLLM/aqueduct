@@ -2,6 +2,7 @@ import time
 import uuid
 from typing import Dict, List, Optional, Union
 
+import requests
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
@@ -14,7 +15,7 @@ from test_functions.sentiment.model import sentiment_model, sentiment_model_mult
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 
 import aqueduct
-from aqueduct import Flow
+from aqueduct import Flow, api_client
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None
@@ -192,6 +193,14 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
     try:
         client.delete_flow(str(workflow_id))
     except Exception as e:
-        print("Error deleting workflow %s with exception %s" % (workflow_id, e))
+        print("Error deleting workflow %s with exception: %s" % (workflow_id, e))
     else:
         print("Successfully deleted workflow %s" % (workflow_id))
+
+
+def get_response(client, endpoint, additional_headers={}):
+    headers = {"api-key": api_client.__GLOBAL_API_CLIENT__.api_key}
+    headers.update(additional_headers)
+    url = api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
+    r = requests.get(url, headers=headers)
+    return r

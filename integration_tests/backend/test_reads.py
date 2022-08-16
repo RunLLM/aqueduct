@@ -1,3 +1,9 @@
+import os
+import subprocess
+import sys
+from pathlib import Path
+from time import sleep
+
 import pytest
 import requests
 import utils
@@ -7,7 +13,7 @@ import aqueduct
 
 
 class TestBackend:
-    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/objects"
+    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
 
     @classmethod
@@ -31,8 +37,8 @@ class TestBackend:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_getworkflowtables(self):
-        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves"]
+    def test_endpoint_list_saved_objects(self):
+        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves"]
         data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
@@ -48,10 +54,10 @@ class TestBackend:
         assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
-        assert len(set([item["integration_id"] for item in data])) == 1
+        assert len(set([item["integration_name"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
 
-    def test_testintegration(self):
+    def test_endpoint_test_integration(self):
         resp = self.get_response_class(
             self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id
         )
