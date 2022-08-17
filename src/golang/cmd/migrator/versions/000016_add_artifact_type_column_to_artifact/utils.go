@@ -225,13 +225,14 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 	for _, artifactSpec := range artifactSpecs {
 		artifactResults, err := getArtifactResult(ctx, db, artifactSpec.Id)
 		if err != nil {
-			log.Errorf("get artifact result error %s.", err)
 			return err
 		}
 
 		newArtifactType := NewArtifactType("")
 
 		for _, artifactResult := range artifactResults {
+			// Temporaty file to store the updated metadata dict that contains
+			// the serialization type and artifact type.
 			metadataPath := fmt.Sprintf("%s_%s", artifactResult.Id, "metadata")
 			storageConfig := config.ParseServerConfiguration(confPath).StorageConfig
 
@@ -247,6 +248,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 				return err
 			}
 
+			// Launch the Python migration job with the spec constructed above.
 			cmd := exec.Command(
 				"python3",
 				"-m",
@@ -262,8 +264,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 
 			err = cmd.Run()
 			if err != nil {
-				log.Errorf("cmd run error %s.", err)
-				log.Errorf("out: %s, err: %s", outb.String(), errb.String())
+				log.Errorf("Error running Python migration job. Stdout: %s, Stderr: %s", outb.String(), errb.String())
 				return err
 			}
 
@@ -278,6 +279,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 				return err
 			}
 
+			// Garbage collect the temp file.
 			err = storage.NewStorage(storageConfig).Delete(ctx, metadataPath)
 			if err != nil {
 				return err
@@ -286,6 +288,8 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			artifactResult.Metadata.ArtifactType = typeMetadata.ArtifactType
 			artifactResult.Metadata.SerializationType = typeMetadata.SerializationType
 
+			// Update artifact_result table's metadata column with the serialization type and
+			// artifact type.
 			err = updateMetadataInArtifactResult(ctx, artifactResult.Id, &artifactResult.Metadata, db)
 			if err != nil {
 				return err
@@ -297,6 +301,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 		}
 
 		if newArtifactType != "" {
+			// Update artifact table's type column with the artifact type.
 			err = updateTypeInArtifact(ctx, artifactSpec.Id, newArtifactType, db)
 			if err != nil {
 				return err

@@ -1,8 +1,7 @@
 import json
 
-from pydantic import BaseModel, parse_obj_as
-
 from aqueduct_executor.operators.utils.storage import config
+from pydantic import BaseModel, parse_obj_as
 
 
 class MigrationSpec(BaseModel):
