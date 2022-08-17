@@ -39,9 +39,10 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 	engineReaders := GetEngineReaders(base.Readers)
 	engineWriters := GetEngineWriters(base.Writers)
 
-	engine, err := engine.NewAqEngine(
+	eng, err := engine.NewAqEngine(
 		base.Database,
 		githubManager,
+		nil, /* PreviewCacheManager */
 		base.Vault,
 		spec.AqPath,
 		spec.StorageConfig,
@@ -56,7 +57,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		BaseExecutor:  base,
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
-		Engine:        engine,
+		Engine:        eng,
 		Parameters:    spec.Parameters,
 	}, nil
 }

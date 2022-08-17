@@ -25,7 +25,6 @@ func newParamOperator(
 
 	inputs := base.inputs
 	outputs := base.outputs
-
 	if len(inputs) != 0 {
 		return nil, errWrongNumInputs
 	}
@@ -50,8 +49,8 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			po.metadataPath,
 		),
 		Val:                po.dbOperator.Spec.Param().Val,
-		OutputMetadataPath: po.outputMetadataPaths[0],
-		OutputContentPath:  po.outputContentPaths[0],
+		OutputMetadataPath: po.outputExecPaths[0].ArtifactMetadataPath,
+		OutputContentPath:  po.outputExecPaths[0].ArtifactContentPath,
 	}
 }
 

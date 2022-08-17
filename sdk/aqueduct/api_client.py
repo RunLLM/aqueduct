@@ -27,6 +27,7 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from aqueduct.utils import GITHUB_ISSUE_LINK
 
 from aqueduct import utils
 
@@ -87,6 +88,13 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
+        # If non of the operators failed, this must be an issue with our
+        if len(op_err_msgs) == 0:
+            raise InternalAqueductError(
+                f"Unexpected Server Error! If this issue persists, please file a bug report in github: "
+                f"{GITHUB_ISSUE_LINK} . We will get back to you as soon as we can.",
+            )
+
         failure_err_msg = "\n".join(op_err_msgs)
         raise AqueductError(f"Preview Execution Failed:\n\n{failure_err_msg}\n")
 
