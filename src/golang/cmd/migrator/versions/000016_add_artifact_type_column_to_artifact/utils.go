@@ -17,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -205,6 +206,8 @@ func updateTypeInArtifact(
 }
 
 func migrateArtifact(ctx context.Context, db database.Database) error {
+	artifactResultMigrated := 0
+
 	artifactSpecs, err := getArtifactSpec(ctx, db)
 	if err != nil {
 		return err
@@ -273,6 +276,8 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			}
 
 			newArtifactType = string(typeMetadata.ArtifactType)
+
+			artifactResultMigrated += 1
 		}
 
 		if newArtifactType != "" {
@@ -282,6 +287,8 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			}
 		}
 	}
+
+	log.Infof("A total of %d artifact results have been migrated.", artifactResultMigrated)
 
 	return nil
 }
