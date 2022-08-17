@@ -175,7 +175,7 @@ func NewWorkflowDag(
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
 	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths()
+		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(opExecMode == operator.Preview)
 	}
 
 	// Compute signatures for each artifact.

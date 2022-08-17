@@ -1,6 +1,14 @@
 package utils
 
-import "github.com/google/uuid"
+import (
+	"path/filepath"
+
+	"github.com/google/uuid"
+)
+
+// The subdirectory within the storage directory containing all the outputs of previewed operators.
+// The contents of this directory will be dropped on every server start.
+const previewDir = "preview"
 
 // ExecPaths packages together all the storage paths that are written to by a python operator.
 type ExecPaths struct {
@@ -9,10 +17,15 @@ type ExecPaths struct {
 	ArtifactMetadataPath string
 }
 
-func InitializeExecOutputPaths() *ExecPaths {
+func InitializeExecOutputPaths(isPreview bool) *ExecPaths {
+	var pathPrefix string
+	if isPreview {
+		pathPrefix = previewDir
+	}
+
 	return &ExecPaths{
-		OpMetadataPath:       uuid.New().String(),
-		ArtifactContentPath:  uuid.New().String(),
-		ArtifactMetadataPath: uuid.New().String(),
+		OpMetadataPath:       filepath.Join(pathPrefix, uuid.New().String()),
+		ArtifactContentPath:  filepath.Join(pathPrefix, uuid.New().String()),
+		ArtifactMetadataPath: filepath.Join(pathPrefix, uuid.New().String()),
 	}
 }
