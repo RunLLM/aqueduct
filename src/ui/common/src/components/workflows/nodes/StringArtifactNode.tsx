@@ -1,4 +1,4 @@
-import { faTableColumns, faFileText } from '@fortawesome/free-solid-svg-icons';
+import { faFileText } from '@fortawesome/free-solid-svg-icons';
 import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
