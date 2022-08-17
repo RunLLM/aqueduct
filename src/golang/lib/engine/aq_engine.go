@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
@@ -101,9 +102,9 @@ type WorkflowPreviewResult struct {
 }
 
 type PreviewArtifactResult struct {
-	SerializationType string `json:"serialization_type"`
-	ArtifactType      string `json:"artifact_type"`
-	Content           string `json:"content"`
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact.Type                     `json:"artifact_type"`
+	Content           string                            `json:"content"`
 }
 
 func NewAqEngine(

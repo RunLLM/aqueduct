@@ -7,11 +7,31 @@ import (
 )
 
 func UpPostgres(ctx context.Context, db database.Database) error {
-	return db.Execute(ctx, upPostgresScript)
+	err := db.Execute(ctx, upPostgresAddColumn)
+	if err != nil {
+		return err
+	}
+
+	err = migrateArtifact(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	return db.Execute(ctx, upPostgresDropColumn)
 }
 
 func UpSqlite(ctx context.Context, db database.Database) error {
-	return db.Execute(ctx, sqliteScript)
+	err := db.Execute(ctx, sqliteAddColumn)
+	if err != nil {
+		return err
+	}
+
+	err = migrateArtifact(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	return db.Execute(ctx, sqliteDropColumn)
 }
 
 func DownPostgres(ctx context.Context, db database.Database) error {
