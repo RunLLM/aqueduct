@@ -1,20 +1,19 @@
 import pytest
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidRequestError, InvalidUserArgumentException
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
+    check_flow_doesnt_exist,
+    check_table_doesnt_exist,
+    check_table_exists,
     delete_flow,
     generate_new_flow_name,
     get_integration_name,
-    run_flow_test,
     polling,
-    check_flow_doesnt_exist,
-    check_table_exists,
-    check_table_doesnt_exist,
+    run_flow_test,
 )
 
-
 from aqueduct import LoadUpdateMode
+
 
 # Check the flow cannot delete an object it had not saved.
 @pytest.mark.publish
@@ -42,7 +41,7 @@ def test_delete_workflow_invalid_saved_objects(client):
         # Cannot delete a flow if the saved objects specified had not been saved by the flow.
         with pytest.raises(InvalidRequestError):
             data = client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
-        
+
         # Check flow exists.
         client.flow(flow_id)
     finally:

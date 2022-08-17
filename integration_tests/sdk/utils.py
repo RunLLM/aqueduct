@@ -197,6 +197,7 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
     else:
         print("Successfully deleted workflow %s" % (workflow_id))
 
+
 def check_flow_doesnt_exist(client, flow_id):
     def stop_condition(client, flow_id):
         try:
@@ -204,7 +205,14 @@ def check_flow_doesnt_exist(client, flow_id):
             return False
         except:
             return True
-    polling(lambda: stop_condition(client, flow_id), timeout=60, poll_threshold=5, timeout_comment="Timed out checking flow doens't exist.")
+
+    polling(
+        lambda: stop_condition(client, flow_id),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking flow doens't exist.",
+    )
+
 
 def check_table_doesnt_exist(integration, table):
     def stop_condition(integration, table):
@@ -213,7 +221,14 @@ def check_table_doesnt_exist(integration, table):
             return False
         except:
             return True
-    polling(lambda: stop_condition(integration, table), timeout=60, poll_threshold=5, timeout_comment="Timed out checking table doesn't exist.")
+
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
 
 def check_table_exists(integration, table):
     def stop_condition(integration, table):
@@ -222,9 +237,21 @@ def check_table_exists(integration, table):
             return True
         except:
             return False
-    polling(lambda: stop_condition(integration, table), timeout=60, poll_threshold=5, timeout_comment="Timed out checking table doesn't exist.")
 
-def polling(stop_condition_fn, timeout=60, poll_threshold=5, timeout_comment="Timed out waiting for workflow run to complete."):
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
+
+def polling(
+    stop_condition_fn,
+    timeout=60,
+    poll_threshold=5,
+    timeout_comment="Timed out waiting for workflow run to complete.",
+):
     begin = time.time()
 
     while True:
@@ -234,4 +261,3 @@ def polling(stop_condition_fn, timeout=60, poll_threshold=5, timeout_comment="Ti
             break
         else:
             time.sleep(poll_threshold)
-
