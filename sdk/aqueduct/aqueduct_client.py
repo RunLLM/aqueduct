@@ -41,6 +41,7 @@ from .utils import (
     _infer_requirements,
     generate_ui_url,
     generate_uuid,
+    infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
@@ -156,6 +157,8 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
+        artifact_type = infer_artifact_type(default)
+
         val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
@@ -176,8 +179,7 @@ class Client:
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=name,
-                            # TODO(cgwu): revisit the type here.
-                            type=ArtifactType.JSON,
+                            type=artifact_type,
                         ),
                     ],
                 )

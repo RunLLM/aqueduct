@@ -30,9 +30,6 @@ from pandas import DataFrame
 
 from aqueduct import dag as dag_module
 
-# Valid inputs and outputs to our operators.
-InputArtifactLocal = Union[TableArtifact, NumericArtifact, ParamArtifact, DataFrame]
-
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
 # Type declarations for functions
@@ -46,11 +43,7 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 
 
 def _is_input_artifact(elem: Any) -> bool:
-    return (
-        isinstance(elem, TableArtifact)
-        or isinstance(elem, NumericArtifact)
-        or isinstance(elem, ParamArtifact)
-    )
+    return isinstance(elem, BaseArtifact)
 
 
 def wrap_spec(
@@ -262,7 +255,7 @@ def op(
             return new_function_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> DataFrame:
+        def local_func(*inputs: Any) -> DataFrame:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -376,7 +369,7 @@ def metric(
             return new_metric_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> float:
+        def local_func(*inputs: Any) -> float:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -493,7 +486,7 @@ def check(
             return new_check_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> bool:
+        def local_func(*inputs: Any) -> bool:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 

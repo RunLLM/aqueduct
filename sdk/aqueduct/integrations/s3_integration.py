@@ -68,6 +68,12 @@ class S3Integration(Integration):
             Artifact or a tuple of artifacts representing the S3 Files.
         """
         if format:
+            if artifact_type != ArtifactType.TABLE:
+                raise Exception(
+                    "Format argument is only applicable to table artifact type, found %s instead."
+                    % artifact_type
+                )
+
             lowercased_format = format.lower()
             if lowercased_format == S3TableFormat.CSV.value.lower():
                 format_enum = S3TableFormat.CSV
