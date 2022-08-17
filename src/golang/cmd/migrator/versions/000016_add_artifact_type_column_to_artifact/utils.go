@@ -1,6 +1,7 @@
 package _000016_add_artifact_type_column_to_artifact
 
 import (
+	"bytes"
 	"context"
 	"database/sql/driver"
 	"encoding/base64"
@@ -128,6 +129,37 @@ type NullMetadata struct {
 	IsNull bool
 }
 
+func (m *Metadata) Value() (driver.Value, error) {
+	return utils.ValueJsonB(*m)
+}
+
+func (m *Metadata) Scan(value interface{}) error {
+	return utils.ScanJsonB(value, m)
+}
+
+func (n *NullMetadata) Value() (driver.Value, error) {
+	if n.IsNull {
+		return nil, nil
+	}
+
+	return (&n.Metadata).Value()
+}
+
+func (n *NullMetadata) Scan(value interface{}) error {
+	if value == nil {
+		n.IsNull = true
+		return nil
+	}
+
+	metadata := &Metadata{}
+	if err := metadata.Scan(value); err != nil {
+		return err
+	}
+
+	n.Metadata, n.IsNull = *metadata, false
+	return nil
+}
+
 type artifactResult struct {
 	Id          uuid.UUID    `db:"id"`
 	Metadata    NullMetadata `db:"metadata"`
@@ -193,6 +225,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 	for _, artifactSpec := range artifactSpecs {
 		artifactResults, err := getArtifactResult(ctx, db, artifactSpec.Id)
 		if err != nil {
+			log.Errorf("get artifact result error %s.", err)
 			return err
 		}
 
@@ -223,8 +256,14 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			)
 			cmd.Env = os.Environ()
 
+			var outb, errb bytes.Buffer
+			cmd.Stdout = &outb
+			cmd.Stderr = &errb
+
 			err = cmd.Run()
 			if err != nil {
+				log.Errorf("cmd run error %s.", err)
+				log.Errorf("out: %s, err: %s", outb.String(), errb.String())
 				return err
 			}
 

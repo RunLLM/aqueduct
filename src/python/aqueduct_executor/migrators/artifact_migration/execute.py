@@ -1,11 +1,13 @@
 import json
 import sys
 import cloudpickle as pickle
+from typing import Any
 
-from aqueduct_executor.operators.artifact_migration.spec import MigrationSpec
+from aqueduct_executor.migrators.artifact_migration.spec import MigrationSpec
 from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.utils import infer_artifact_type
+from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
 _DEFAULT_ENCODING = "utf8"
