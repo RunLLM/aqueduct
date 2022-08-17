@@ -120,7 +120,7 @@ type Metadata struct {
 	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
 	SystemMetrics     map[string]string `json:"system_metadata,omitempty"`
 	SerializationType SerializationType `json:"serialization_type,omitempty"`
-	ArtifactType      NewType           `json:"artifact_type,omitempty"`
+	ArtifactType      NewArtifactType   `json:"artifact_type,omitempty"`
 }
 
 type NullMetadata struct {
@@ -161,42 +161,19 @@ type MigrationSpec struct {
 	ContentPath   string               `json:"content_path"`
 }
 
-type NewType string
-
-const (
-	Untyped          NewType = "untyped"
-	NewStringType    NewType = "string"
-	NewBoolType      NewType = "bool"
-	NewNumericType   NewType = "numeric"
-	NewDictType      NewType = "dictionary"
-	NewTupleType     NewType = "tuple"
-	NewTableType     NewType = "table"
-	NewJsonType      NewType = "json"
-	NewBytesType     NewType = "bytes"
-	NewImageType     NewType = "image"
-	NewPicklableType NewType = "picklable"
-)
+type NewArtifactType string
 
 type SerializationType string
 
-const (
-	StringSerializationType    SerializationType = "string"
-	TableSerializationType     SerializationType = "table"
-	JsonSerializationType      SerializationType = "json"
-	BytesSerializationType     SerializationType = "bytes"
-	ImageSerializationType     SerializationType = "image"
-	PicklableSerializationType SerializationType = "picklable"
-)
-
 type TypeMetadata struct {
-	ArtifactType      NewType           `json:"artifact_type"`
+	ArtifactType      NewArtifactType   `json:"artifact_type"`
 	SerializationType SerializationType `json:"serialization_type"`
 }
 
 func updateTypeInArtifact(
 	ctx context.Context,
 	id uuid.UUID,
-	artifactType NewType,
+	artifactType NewArtifactType,
 	db database.Database,
 ) error {
 	changes := map[string]interface{}{
@@ -219,7 +196,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			return err
 		}
 
-		newArtifactType := ""
+		newArtifactType := NewArtifactType("")
 
 		for _, artifactResult := range artifactResults {
 			metadataPath := fmt.Sprintf("%s_%s", artifactResult.Id, "metadata")
@@ -275,13 +252,13 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 				return err
 			}
 
-			newArtifactType = string(typeMetadata.ArtifactType)
+			newArtifactType = typeMetadata.ArtifactType
 
 			artifactResultMigrated += 1
 		}
 
 		if newArtifactType != "" {
-			err = updateTypeInArtifact(ctx, artifactSpec.Id, NewType(newArtifactType), db)
+			err = updateTypeInArtifact(ctx, artifactSpec.Id, newArtifactType, db)
 			if err != nil {
 				return err
 			}
