@@ -1,20 +1,19 @@
 import pytest
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidRequestError, InvalidUserArgumentException
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
+    check_flow_doesnt_exist,
+    check_table_doesnt_exist,
+    check_table_exists,
     delete_flow,
     generate_new_flow_name,
     get_integration_name,
-    run_flow_test,
     polling,
-    check_flow_doesnt_exist,
-    check_table_exists,
-    check_table_doesnt_exist,
+    run_flow_test,
 )
 
-
 from aqueduct import LoadUpdateMode
+
 
 # Check the flow cannot delete an object it had not saved.
 @pytest.mark.publish
@@ -42,11 +41,12 @@ def test_delete_workflow_invalid_saved_objects(client):
         # Cannot delete a flow if the saved objects specified had not been saved by the flow.
         with pytest.raises(InvalidRequestError):
             data = client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
-        
+
         # Check flow exists.
         client.flow(flow_id)
     finally:
         delete_flow(client, flow_id)
+
 
 # Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode.
 @pytest.mark.publish
@@ -95,7 +95,7 @@ def test_delete_workflow_saved_objects(client):
         integration.sql(f"SELECT * FROM {table_name}").get()
 
         client.delete_flow(flow_id, saved_objects_to_delete=tables, force=True)
-        
+
         # Check flow indeed deleted
         check_flow_doesnt_exist(client, flow_id)
         flow_ids_to_delete.remove(flow_id)
@@ -107,9 +107,10 @@ def test_delete_workflow_saved_objects(client):
         for flow_id in flow_ids_to_delete:
             delete_flow(client, flow_id)
 
+
 # Checking the successful deletion case and unsuccessful deletion case works as expected.
-# To test this, I have two workflows that write to the same table. When I delete the table in the first workflow, 
-# it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already 
+# To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
+# it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already
 # been deleted.
 @pytest.mark.publish
 def test_delete_workflow_saved_objects_twice(client):
@@ -162,7 +163,6 @@ def test_delete_workflow_saved_objects_twice(client):
         check_flow_doesnt_exist(client, flow_1_id)
         flow_ids_to_delete.remove(flow_1_id)
 
-
         # Check table no longer exists
         check_table_doesnt_exist(integration, table_name)
 
@@ -170,7 +170,6 @@ def test_delete_workflow_saved_objects_twice(client):
         with pytest.raises(Exception) as e_info:
             client.delete_flow(flow_2_id, saved_objects_to_delete=tables, force=True)
         assert str(e_info.value).startswith("Failed to delete")
-
 
         # Failed to delete tables, but flow should be removed.
         check_flow_doesnt_exist(client, flow_2_id)
