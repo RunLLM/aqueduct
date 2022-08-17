@@ -58,32 +58,15 @@ func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, 
 	return k8sClient, nil
 }
 
-// This is a helper function that creates the two Kubernetes namespaces
-// described above and does not return anything. This function should never
+// This is a helper function that creates the user namespace
+// and does not return anything. This function should never
 // fail, so any errors that are encountered call `log.Fatal` and cause the
 // program to crash.
-func CreateNamespaces(k8sClient *kubernetes.Clientset) {
-	// Check to see if the system namespace has already been created and only
-	// create if it doesn't exist.
+func CreateNamespaces(k8sClient *kubernetes.Clientset) error {
 	namespaces := k8sClient.CoreV1().Namespaces()
-	_, err := namespaces.Get(context.TODO(), SystemNamespace, metav1.GetOptions{})
-	if err != nil {
-		systemNamespace := &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: SystemNamespace,
-			},
-			Spec: corev1.NamespaceSpec{}, // The only required field here is a `Finalizers` field that we do not use.
-		}
-
-		_, err := namespaces.Create(context.TODO(), systemNamespace, metav1.CreateOptions{})
-		if err != nil {
-			log.Fatal("Unable to create namespace: ", err)
-		}
-		log.Infof("System namespace (name: %s) created successfully.\n", SystemNamespace)
-	}
 
 	// Create the user pod namespace again only after checking if it exists.
-	_, err = namespaces.Get(context.TODO(), UserNamespace, metav1.GetOptions{})
+	_, err := namespaces.Get(context.TODO(), UserNamespace, metav1.GetOptions{})
 	if err != nil {
 		userNamespace := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -94,8 +77,9 @@ func CreateNamespaces(k8sClient *kubernetes.Clientset) {
 
 		_, err = k8sClient.CoreV1().Namespaces().Create(context.TODO(), userNamespace, metav1.CreateOptions{})
 		if err != nil {
-			log.Fatal("Unable to create namespace: ", err)
+			return errors.Wrap(err, "Unable to create namespace.")
 		}
 		log.Infof("User namespace (name: %s) created successfully.\n", UserNamespace)
 	}
+	return nil
 }

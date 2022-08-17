@@ -23,27 +23,23 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	// //TODO ENG-1560: Remove once kubeconfig is determined to work.
-	// cmd := exec.Command(
-	// 	"aws",
-	// 	"eks",
-	// 	"update-kubeconfig",
-	// 	"--region", conf.AwsRegion,
-	// 	"--name", conf.ClusterName,
-	// 	"--kubeconfig", conf.KubeconfigPath,
-	// )
-	// err := cmd.Run()
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "Unable to update kubeconfig.")
-	// }
-
 	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
 
-	k8s.CreateNamespaces(k8sClient)
-	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeconfigPath)
+	err = k8s.CreateNamespaces(k8sClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
+
+	secretsMap := map[string]string{}
+	secretsMap[k8s.AwsAccessKeyIdName] = conf.AwsAccessKeyId
+	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
+	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
 
 	return &k8sJobManager{
 		k8sClient: k8sClient,
@@ -80,7 +76,6 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
-	// TODO: https://linear.app/aqueducthq/issue/ENG-369/create-k8s-service-accounts-for-local-minikube-clusters
 	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
 
 	containerImage, err := mapJobTypeToDockerImage(j, spec)
