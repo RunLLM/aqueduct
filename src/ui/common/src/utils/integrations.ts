@@ -99,7 +99,7 @@ export type S3Config = {
   config_file_path: string;
   config_file_content: string;
   config_file_profile: string;
-  use_as_storage: boolean;
+  use_as_storage: string;
 };
 
 export type AqueductDemoConfig = Record<string, never>;

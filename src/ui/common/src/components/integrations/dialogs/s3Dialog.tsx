@@ -22,7 +22,7 @@ const Placeholders: S3Config = {
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
-  use_as_storage: false,
+  use_as_storage: '',
 };
 
 type Props = {
@@ -39,7 +39,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [s3Type, setS3Type] = useState<S3CredentialType>(
     S3CredentialType.AccessKey
   );
-  const [useAsStorage, setUseAsStorage] = useState<boolean>(false);
+  const [useAsStorage, setUseAsStorage] = useState<string>('false');
 
   useEffect(() => {
     const config: S3Config = {
@@ -190,10 +190,9 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
 
       <FormControlLabel
         label="Use this integration for Aqueduct storage."
-        control={<Checkbox checked={useAsStorage} onChange={(event) => setUseAsStorage(event.target.checked)} />}
+        control={<Checkbox checked={useAsStorage === 'true'} onChange={(event) => setUseAsStorage(event.target.checked ? 'true' : 'false')} />}
       />
     </Box>
-
   );
 };
 
