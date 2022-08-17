@@ -248,6 +248,19 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 				return err
 			}
 
+			// Before launching storage migration, copy the content file in case the database migration fails
+			// and we need to revert the content change.
+			originalContent, err := storage.NewStorage(storageConfig).Get(ctx, artifactResult.ContentPath)
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				if err != nil {
+					storage.NewStorage(storageConfig).Put(ctx, artifactResult.ContentPath, originalContent)
+				}
+			}()
+
 			// Launch the Python migration job with the spec constructed above.
 			cmd := exec.Command(
 				"python3",
