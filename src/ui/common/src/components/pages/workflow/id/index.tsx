@@ -248,7 +248,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.TableArtifact ||
       currentNode.type === NodeType.NumericArtifact ||
       currentNode.type === NodeType.BoolArtifact ||
-      currentNode.type === NodeType.JsonArtifact
+      currentNode.type === NodeType.JsonArtifact || 
+      currentNode.type === NodeType.StringArtifact
     ) {
       return selectedDag.artifacts[currentNode.id].name;
     } else {
