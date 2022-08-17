@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	stmt "github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
-	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path"
+
+	stmt "github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 )
 
 const (
@@ -132,10 +132,6 @@ func (sdb *sqliteDatabase) BeginTx(ctx context.Context) (Transaction, error) {
 			nested: false,
 		},
 	}, nil
-}
-
-func (sdb *sqliteDatabase) Close() {
-	sdb.standardDatabase.Close()
 }
 
 func (*sqliteTransaction) Type() Type {
