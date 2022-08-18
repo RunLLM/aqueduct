@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.dag import (
@@ -58,7 +58,7 @@ import aqueduct
 from aqueduct import api_client
 
 
-class TableArtifact(Artifact):
+class TableArtifact(BaseArtifact):
     """This class represents a computed table within the flow's DAG.
 
     Any `@op`-annotated python function that returns a dataframe will
@@ -116,6 +116,8 @@ class TableArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        self._dag.must_get_artifact(self._artifact_id)
+
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.TABLE:

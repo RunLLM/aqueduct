@@ -2,7 +2,7 @@ import json
 from typing import List, Optional, Union
 
 from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, S3TableFormat
@@ -35,7 +35,7 @@ class S3Integration(Integration):
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
-    ) -> Artifact:
+    ) -> BaseArtifact:
         """
         Reads one or more files from the S3 integration.
 
@@ -68,6 +68,12 @@ class S3Integration(Integration):
             Artifact or a tuple of artifacts representing the S3 Files.
         """
         if format:
+            if artifact_type != ArtifactType.TABLE:
+                raise Exception(
+                    "Format argument is only applicable to table artifact type, found %s instead."
+                    % artifact_type
+                )
+
             lowercased_format = format.lower()
             if lowercased_format == S3TableFormat.CSV.value.lower():
                 format_enum = S3TableFormat.CSV

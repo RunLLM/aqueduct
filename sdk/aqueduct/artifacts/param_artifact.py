@@ -3,14 +3,13 @@ import textwrap
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.utils import format_header_for_print
 
 
-class ParamArtifact(Artifact):
+class ParamArtifact(BaseArtifact):
     def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
         """The APIClient is only included because decorated functions operators acting on this parameter
         will need a handle to an API client."""

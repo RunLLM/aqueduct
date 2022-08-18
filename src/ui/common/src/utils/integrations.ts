@@ -173,9 +173,10 @@ export async function addTable(
       body: config.csv.data,
     }
   );
+
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message);
+    const body = await res.json();
+    throw new Error(body.error);
   }
 }
 

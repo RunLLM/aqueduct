@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
 from constants import SENTIMENT_SQL_QUERY
@@ -10,6 +12,8 @@ from test_functions.simple.file_dependency_model import (
 )
 from test_functions.simple.model import dummy_model
 from utils import get_integration_name, run_sentiment_model, run_sentiment_model_multiple_input
+
+from aqueduct import op
 
 
 def test_basic_get(client):
@@ -94,3 +98,27 @@ def test_invalid_file_dependencies(client):
 
     with pytest.raises(InvalidDependencyFilePath):
         model_with_out_of_package_file_dependency(sql_artifact)
+
+
+def test_preview_artifact_caching(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    @op
+    def slow_fn(df):
+        time.sleep(5)
+        return df
+
+    @op
+    def noop(df):
+        return df
+
+    # Check that the first run will take a while, but the second run will happen much faster.
+    start = time.time()
+    slow_output = slow_fn(sql_artifact)
+    _ = slow_output.get()
+    assert time.time() - start > 5
+
+    start = time.time()
+    _ = noop(slow_output).get()
+    assert time.time() - start < 5

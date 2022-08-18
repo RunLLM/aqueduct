@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
 from aqueduct.artifacts import (
+    base_artifact,
     bool_artifact,
     generic_artifact,
     none_artifact,
@@ -78,18 +79,8 @@ class FlowRun:
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
 
-    def artifact(
-        self, name: str
-    ) -> Optional[
-        Union[
-            table_artifact.TableArtifact,
-            numeric_artifact.NumericArtifact,
-            bool_artifact.BoolArtifact,
-            param_artifact.ParamArtifact,
-            generic_artifact.GenericArtifact,
-            none_artifact.NoneArtifact,
-        ]
-    ]:
+
+    def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.
 
         Args:

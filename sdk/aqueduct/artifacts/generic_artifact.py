@@ -4,13 +4,13 @@ import uuid
 from typing import Any, Dict, Optional
 
 from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
 from aqueduct.error import AqueductError
 
 
-class GenericArtifact(Artifact):
+class GenericArtifact(BaseArtifact):
     """This class represents a generic artifact within the flow's DAG.
     Currently, a generic artifact can be any artifact other than table, numeric, bool, or parameter.
     """
@@ -48,6 +48,8 @@ class GenericArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
+        self._dag.must_get_artifact(self._artifact_id)
+
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.BOOL:

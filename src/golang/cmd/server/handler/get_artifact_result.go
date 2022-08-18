@@ -41,6 +41,8 @@ type getArtifactResultArgs struct {
 }
 
 type getArtifactResultResponse struct {
+	Name string `json:"name"`
+
 	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
 	// We are incurring this tech debt right now since there are quite a few usages of
 	// `status` in the UI.
@@ -115,6 +117,11 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
+	dbArtifact, err := h.ArtifactReader.GetArtifact(ctx, args.artifactId, h.Database)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
+	}
+
 	dbArtifactResult, err := h.ArtifactResultReader.GetArtifactResultByWorkflowDagResultIdAndArtifactId(
 		ctx,
 		args.workflowDagResultId,
@@ -137,6 +144,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	response := getArtifactResultResponse{
 		Status:    execState.Status,
 		ExecState: execState,
+		Name:      dbArtifact.Name,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {

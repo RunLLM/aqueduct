@@ -2,11 +2,13 @@ import json
 import logging
 import os
 import uuid
-from typing import Any, Dict, List, Optional, Union
+import warnings
+from collections import defaultdict
+from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
 
@@ -15,32 +17,37 @@ from aqueduct import api_client, dag
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
+    AirflowEngineConfig,
+    EngineConfig,
     Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import ArtifactType, RelationalDBServices, ServiceType
+from .enums import ArtifactType, ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from .flow import Flow
+from .flow import Flow, FlowConfig
 from .flow_run import _show_dag
 from .github import Github
+from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import IntegrationInfo
+from .integrations.integration import Integration, IntegrationInfo
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
+from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_ui_url,
     generate_uuid,
+    infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
@@ -118,6 +125,18 @@ class Client:
             not "PYTEST_CURRENT_TEST" in os.environ
         )
 
+        # Check if "@ file" in pip freeze requirements and warn user.
+        if not "localhost" in aqueduct_address:
+            skipped_packages = []
+            for requirement in infer_requirements():
+                if "@ file" in requirement:
+                    skipped_packages.append(requirement.split(" ")[0])
+            if len(skipped_packages) > 0:
+                warnings.warn(
+                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
+                    + ", ".join(skipped_packages)
+                )
+
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
 
@@ -156,6 +175,8 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
+        artifact_type = infer_artifact_type(default)
+
         val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
@@ -176,8 +197,7 @@ class Client:
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=name,
-                            # TODO(cgwu): revisit the type here.
-                            type=ArtifactType.JSON,
+                            type=artifact_type,
                         ),
                     ],
                 )
@@ -204,6 +224,7 @@ class Client:
         S3Integration,
         GoogleSheetsIntegration,
         RelationalDBIntegration,
+        AirflowIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -220,6 +241,8 @@ class Client:
                 provided integration or the provided integration is of an
                 incompatible type.
         """
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+
         if name not in self._connected_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
@@ -242,6 +265,10 @@ class Client:
         elif integration_info.service == ServiceType.S3:
             return S3Integration(
                 dag=self._dag,
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.AIRFLOW:
+            return AirflowIntegration(
                 metadata=integration_info,
             )
         else:
@@ -293,7 +320,8 @@ class Client:
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
-        artifacts: Optional[List[Artifact]] = None,
+        artifacts: Optional[List[BaseArtifact]] = None,
+        config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -318,6 +346,11 @@ class Client:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
                 computation steps. All checks are on the resulting flow are also included.
+            config:
+                An optional set of config fields for this flow.
+                - engine: Specify where this flow should run with one of your connected integrations.
+                We currently support Airflow.
+
         Raises:
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
@@ -353,7 +386,28 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+        if config and config.engine:
+            # This is an Airflow workflow
+            dag.engine_config = EngineConfig(
+                type=RuntimeType.AIRFLOW,
+                airflow_config=AirflowEngineConfig(
+                    integration_id=config.engine._metadata.id,
+                ),
+            )
+            resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            flow_id, airflow_file = resp.id, resp.file
+
+            file = "{}_airflow.py".format(name)
+            with open(file, "w") as f:
+                f.write(airflow_file)
+            print(
+                """The Airflow DAG file has been downloaded to: {}. 
+                Please copy it to your Airflow server to begin execution.""".format(
+                    file
+                )
+            )
+        else:
+            flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
             api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
@@ -413,12 +467,23 @@ class Client:
         flow_id = parse_user_supplied_id(flow_id)
         api_client.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
 
-    def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
+    def delete_flow(
+        self,
+        flow_id: Union[str, uuid.UUID],
+        saved_objects_to_delete: Optional[
+            DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
+        ] = None,
+        force: bool = False,
+    ) -> None:
         """Deletes a flow object.
 
         Args:
             flow_id:
                 The id of the workflow to delete (not the name)
+            saved_objects_to_delete:
+                The tables or storage paths to delete grouped by integration name.
+            force:
+                Force the deletion even though some workflow-written objects in the writes_to_delete argument had UpdateMode=append
 
         Raises:
             InvalidRequestError:
@@ -427,13 +492,33 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        if saved_objects_to_delete is None:
+            saved_objects_to_delete = defaultdict()
         flow_id = parse_user_supplied_id(flow_id)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
+        resp = api_client.__GLOBAL_API_CLIENT__.delete_workflow(
+            flow_id, saved_objects_to_delete, force
+        )
 
-    def show_dag(self, artifacts: Optional[List[Artifact]] = None) -> None:
+        failures = []
+        for integration in resp.saved_object_deletion_results:
+            for obj in resp.saved_object_deletion_results[integration]:
+                if obj.exec_state.status == ExecutionStatus.FAILED:
+                    trace = ""
+                    if obj.exec_state.error:
+                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
+                        trace = f">\t{context}\n{obj.exec_state.error.tip}"
+                    failure_string = f"[{integration}] {obj.name}\n{trace}"
+                    failures.append(failure_string)
+        if len(failures) > 0:
+            failures_string = "\n".join(failures)
+            raise Exception(
+                f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
+            )
+
+    def show_dag(self, artifacts: Optional[List[BaseArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
 
         A user outside the notebook environment will be redirected to a page in their browser

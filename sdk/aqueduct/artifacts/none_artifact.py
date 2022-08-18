@@ -3,12 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
 
 
-class NoneArtifact(Artifact):
+class NoneArtifact(BaseArtifact):
     """This class represents a none artifact within the flow's DAG.
     Currently, a none artifact will only be created when there is no return value for the operator function
     """

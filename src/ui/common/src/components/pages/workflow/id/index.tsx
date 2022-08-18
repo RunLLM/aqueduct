@@ -249,7 +249,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.NumericArtifact ||
       currentNode.type === NodeType.BoolArtifact ||
       currentNode.type === NodeType.JsonArtifact ||
-      currentNode.type === NodeType.NoneArtifact
+      currentNode.type === NodeType.NoneArtifact ||
+      currentNode.type === NodeType.StringArtifact
     ) {
       return selectedDag.artifacts[currentNode.id].name;
     } else {
@@ -268,7 +269,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       return (
         <Button
           onClick={() =>
-            exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+            exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
           }
         >
           Export CSV

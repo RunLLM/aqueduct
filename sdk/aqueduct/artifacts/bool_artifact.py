@@ -6,19 +6,19 @@ from typing import Any, Dict, Optional, Union
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
-from aqueduct.artifacts.artifact import Artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
 from aqueduct.error import AqueductError
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 
-class BoolArtifact(Artifact):
-    """This class represents a check within the flow's DAG.
+class BoolArtifact(BaseArtifact):
+    """This class represents a bool within the flow's DAG.
 
-    Any `@check`-annotated python function that returns a boolean will
-    return this class when that function is called called. This also
-    is returned from pre-defined functions like metric.bound(...).
+    Any annotated python function that returns a boolean will
+    return this class when that function is called. This is also returned from pre-defined
+    functions like metric.bound(...).
 
     Examples:
         >>> @check
@@ -64,6 +64,8 @@ class BoolArtifact(Artifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
+        self._dag.must_get_artifact(self._artifact_id)
+
         if parameters:
             artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.BOOL:
