@@ -176,5 +176,4 @@ def test_delete_workflow_saved_objects_twice(client):
         flow_ids_to_delete.remove(flow_2_id)
 
     finally:
-        for flow_id in flow_ids_to_delete:
-            delete_flow(client, flow_id)
+        delete_flow(client, flow_id)

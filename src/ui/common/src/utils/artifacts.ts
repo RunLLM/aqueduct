@@ -2,24 +2,23 @@ import { WorkflowState } from '../reducers/workflow';
 import ExecutionStatus, { ExecState } from './shared';
 
 export enum ArtifactType {
-  Table = 'table',
-  Float = 'float',
+  String = 'string',
   Bool = 'boolean',
+  Numeric = 'numeric',
+  Dict = 'dict',
+  Tuple = 'tuple',
+  Table = 'table',
   Json = 'json',
+  Bytes = 'bytes',
+  Image = 'image',
+  Picklable = 'Picklable',
 }
-
-export type Spec = {
-  table?: Record<string, string>;
-  metric?: Record<string, string>;
-  bool?: Record<string, string>;
-  type: ArtifactType;
-};
 
 export type Artifact = {
   id: string;
   name: string;
   description: string;
-  spec: Spec;
+  type: ArtifactType;
 };
 
 export type Schema = { [col_name: string]: string }[];

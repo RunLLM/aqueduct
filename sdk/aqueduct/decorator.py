@@ -1,15 +1,23 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-from aqueduct.artifact import Artifact, ArtifactSpec
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
+from aqueduct.enums import (
+    ArtifactType,
+    CheckSeverity,
+    FunctionGranularity,
+    FunctionType,
+    OperatorType,
+)
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -22,15 +30,10 @@ from pandas import DataFrame
 
 from aqueduct import dag as dag_module
 
-# Valid inputs and outputs to our operators.
-OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
-InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
-
-OutputArtifactFunction = Callable[..., OutputArtifact]
+OutputArtifactFunction = Callable[..., BaseArtifact]
 
 # Type declarations for functions
-DecoratedFunction = Callable[[UserFunction], OutputArtifactFunction]
+DecoratedFunction = Callable[[UserFunction], Callable[..., BaseArtifact]]
 
 # Type declarations for metrics
 DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
@@ -40,19 +43,15 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 
 
 def _is_input_artifact(elem: Any) -> bool:
-    return (
-        isinstance(elem, TableArtifact)
-        or isinstance(elem, MetricArtifact)
-        or isinstance(elem, ParamArtifact)
-    )
+    return isinstance(elem, BaseArtifact)
 
 
 def wrap_spec(
     spec: OperatorSpec,
-    *input_artifacts: InputArtifact,
+    *input_artifacts: BaseArtifact,
     op_name: str,
     description: str = "",
-) -> OutputArtifact:
+) -> BaseArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -76,7 +75,7 @@ def wrap_spec(
     for artifact in input_artifacts:
         if artifact._from_flow_run:
             raise InvalidUserActionException(
-                "Artifact fetched from flow run can not be reused for computation"
+                "Artifact fetched from flow run cannot be reused for computation."
             )
 
     dag = dag_module.__GLOBAL_DAG__
@@ -87,20 +86,6 @@ def wrap_spec(
 
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
-
-    output_artifact: OutputArtifact
-
-    if spec.metric:
-        artifact_spec = ArtifactSpec(float={})
-        output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.function:
-        artifact_spec = ArtifactSpec(table={})
-        output_artifact = TableArtifact(dag=dag, artifact_id=output_artifact_id)
-    elif spec.check:
-        artifact_spec = ArtifactSpec(bool={})
-        output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
-    else:
-        raise AqueductError("Operator spec not supported.")
 
     apply_deltas_to_dag(
         dag,
@@ -115,17 +100,21 @@ def wrap_spec(
                     outputs=[output_artifact_id],
                 ),
                 output_artifacts=[
-                    Artifact(
+                    ArtifactMetadata(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
-                        spec=artifact_spec,
+                        type=ArtifactType.UNTYPED,
                     )
                 ],
             ),
         ],
     )
 
-    return output_artifact
+    # Issue preview request since this is an eager execution
+    artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
+    dag.must_get_artifact(output_artifact_id).type = artifact.type()
+
+    return artifact
 
 
 def _type_check_decorator_arguments(
@@ -155,6 +144,32 @@ def _type_check_decorator_arguments(
             raise InvalidUserArgumentException("Each pip requirements specifier must be a string.")
 
 
+def _type_check_decorated_function_arguments(
+    operator_type: OperatorType, *input_artifacts: BaseArtifact
+) -> None:
+    for artifact in input_artifacts:
+        if not isinstance(artifact, BaseArtifact):
+            raise InvalidUserArgumentException(
+                "Input to decorated must be an Aqueduct artifact, got type %s." % type(artifact)
+            )
+
+        if operator_type == OperatorType.FUNCTION:
+            if (
+                artifact._from_operator_type == OperatorType.METRIC
+                or artifact._from_operator_type == OperatorType.CHECK
+            ):
+                raise InvalidUserActionException(
+                    "Artifact from metric or check operator cannot be used as input to %s operator."
+                    % operator_type
+                )
+        if operator_type == OperatorType.METRIC or operator_type == OperatorType.CHECK:
+            if artifact._from_operator_type == OperatorType.CHECK:
+                raise InvalidUserActionException(
+                    "Artifact from check operator cannot be used as input to %s operator."
+                    % operator_type
+                )
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -163,7 +178,7 @@ def op(
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
-    Calling the decorated function returns a TableArtifact. The decorated function
+    Calling the decorated function returns an Artifact. The decorated function
     can take any number of artifact inputs.
 
     To run the wrapped code locally, without Aqueduct, use the `local` attribute. Eg:
@@ -197,7 +212,7 @@ def op(
         >>> recent_clicks = db.sql("SELECT * recent_clicks", db="google_analytics/shopping")
         >>> recommendations = compute_recommendations(customer_profiles, recent_clicks)
 
-        `recommendations` is a TableArtifact representing the result of `compute_recommendations()`.
+        `recommendations` is an Artifact representing the result of `compute_recommendations()`.
 
         >>> recommendations.get()
     """
@@ -211,7 +226,7 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*sql_artifacts: TableArtifact) -> TableArtifact:
+        def wrapped(*input_artifacts: BaseArtifact) -> BaseArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -222,6 +237,9 @@ def op(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            _type_check_decorated_function_arguments(OperatorType.FUNCTION, *input_artifacts)
+
             zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
@@ -230,16 +248,14 @@ def op(
             )
             new_function_artifact = wrap_spec(
                 OperatorSpec(function=function_spec),
-                *sql_artifacts,
+                *input_artifacts,
                 op_name=name,
             )
-
-            assert isinstance(new_function_artifact, TableArtifact)
 
             return new_function_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> DataFrame:
+        def local_func(*inputs: Any) -> DataFrame:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -260,7 +276,7 @@ def metric(
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
-    Calling the decorated function returns a MetricArtifact. The decorated function
+    Calling the decorated function returns a NumericArtifact. The decorated function
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
@@ -295,7 +311,7 @@ def metric(
         >>> churn_table = db.sql("SELECT * from churn_table")
         >>> churn_metric = avg_churn(churn_table)
 
-        `churn_metric` is a MetricArtifact representing the result of `avg_churn()`.
+        `churn_metric` is a NumericArtifact representing the result of `avg_churn()`.
 
         >>> churn_metric.get()
     """
@@ -314,8 +330,8 @@ def metric(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> MetricArtifact:
+            *input_artifacts: BaseArtifact,
+        ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -326,7 +342,10 @@ def metric(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
-            zip_file = serialize_function(func)
+
+            _type_check_decorated_function_arguments(OperatorType.METRIC, *input_artifacts)
+
+            zip_file = serialize_function(func, file_dependencies, requirements)
 
             # TODO(ENG-735): Support granularity=FunctionGranularity.TABLE & granularity=FunctionGranularity.ROW
             function_spec = FunctionSpec(
@@ -339,17 +358,18 @@ def metric(
 
             new_metric_artifact = wrap_spec(
                 OperatorSpec(metric=metric_spec),
-                *artifacts,
+                *input_artifacts,
                 op_name=name,
                 description=description,
             )
 
-            assert isinstance(new_metric_artifact, MetricArtifact)
+            assert isinstance(new_metric_artifact, NumericArtifact)
+            new_metric_artifact.set_operator_type(OperatorType.METRIC)
 
             return new_metric_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> float:
+        def local_func(*inputs: Any) -> float:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -371,7 +391,7 @@ def check(
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
-    Calling the decorated function returns a CheckArtifact. The decorated python function
+    Calling the decorated function returns a BoolArtifact. The decorated python function
     can have any number of artifact inputs.
 
     A check can be set with either WARNING or ERROR severity. A failing check with ERROR severity
@@ -411,7 +431,7 @@ def check(
         ...     return churn_table['pred_churn'].mean() < 0.1
         >>> churn_is_low_check = avg_churn_is_low(churn_table_artifact)
 
-        `churn_is_low_check` is a CheckArtifact representing the result of `avg_churn_is_low()`.
+        `churn_is_low_check` is a BoolArtifact representing the result of `avg_churn_is_low()`.
 
         >>> churn_is_low_check.get()
     """
@@ -430,8 +450,8 @@ def check(
 
         @wraps(func)
         def wrapped(
-            *artifacts: InputArtifact,
-        ) -> CheckArtifact:
+            *input_artifacts: BaseArtifact,
+        ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -442,7 +462,10 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
-            zip_file = serialize_function(func)
+
+            _type_check_decorated_function_arguments(OperatorType.CHECK, *input_artifacts)
+
+            zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
@@ -452,17 +475,18 @@ def check(
 
             new_check_artifact = wrap_spec(
                 OperatorSpec(check=check_spec),
-                *artifacts,
+                *input_artifacts,
                 op_name=name,
                 description=description,
             )
 
-            assert isinstance(new_check_artifact, CheckArtifact)
+            assert isinstance(new_check_artifact, BoolArtifact)
+            new_check_artifact.set_operator_type(OperatorType.CHECK)
 
             return new_check_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: InputArtifactLocal) -> bool:
+        def local_func(*inputs: Any) -> bool:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -481,7 +505,7 @@ def to_operator(
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
-) -> Union[Callable[..., OutputArtifact], OutputArtifact]:
+) -> Union[Callable[..., BaseArtifact], BaseArtifact]:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
     Args:

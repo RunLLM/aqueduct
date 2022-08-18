@@ -8,11 +8,12 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.generic_artifact import Artifact as GenericArtifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.param_artifact import ParamArtifact
 
 from aqueduct import api_client, dag
 
-from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
@@ -23,7 +24,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
+from .enums import ArtifactType, ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -41,12 +42,12 @@ from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
-from .param_artifact import ParamArtifact
 from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_ui_url,
     generate_uuid,
+    infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
@@ -174,6 +175,8 @@ class Client:
         if default is None:
             raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
+        artifact_type = infer_artifact_type(default)
+
         val = serialize_parameter_value(name, default)
 
         operator_id = generate_uuid()
@@ -191,10 +194,10 @@ class Client:
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=output_artifact_id,
                             name=name,
-                            spec=ArtifactSpec(jsonable={}),
+                            type=artifact_type,
                         ),
                     ],
                 )
@@ -317,7 +320,7 @@ class Client:
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
-        artifacts: Optional[List[GenericArtifact]] = None,
+        artifacts: Optional[List[BaseArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -515,7 +518,7 @@ class Client:
                 f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
             )
 
-    def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
+    def show_dag(self, artifacts: Optional[List[BaseArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
 
         A user outside the notebook environment will be redirected to a page in their browser

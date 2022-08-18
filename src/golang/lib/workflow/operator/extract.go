@@ -35,8 +35,8 @@ func newExtractOperator(
 	}
 
 	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.JsonType {
-			return nil, errors.New("Only parameters can be used as inputs to extract operators.")
+		if inputArtifact.Type() != db_artifact.String {
+			return nil, errors.New("Only strings can be used as inputs to extract operators.")
 		}
 	}
 
@@ -52,13 +52,16 @@ func newExtractOperator(
 	}, nil
 }
 
-func (eo *extractOperatorImpl) JobSpec() job.Spec {
+func (eo *extractOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := eo.dbOperator.Spec.Extract()
 
 	inputParamNames := make([]string, 0, len(eo.inputs))
 	for _, inputArtifact := range eo.inputs {
 		inputParamNames = append(inputParamNames, inputArtifact.Name())
 	}
+
+	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(eo.inputExecPaths)
+	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(eo.outputExecPaths)
 
 	return &job.ExtractSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
@@ -68,13 +71,13 @@ func (eo *extractOperatorImpl) JobSpec() job.Spec {
 			eo.metadataPath,
 		),
 		InputParamNames:    inputParamNames,
-		InputContentPaths:  eo.inputContentPaths,
-		InputMetadataPaths: eo.inputMetadataPaths,
+		InputContentPaths:  inputContentPaths,
+		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      spec.Service,
 		ConnectorConfig:    eo.config,
 		Parameters:         spec.Parameters,
-		OutputContentPath:  eo.outputContentPaths[0],
-		OutputMetadataPath: eo.outputMetadataPaths[0],
+		OutputContentPath:  outputContentPaths[0],
+		OutputMetadataPath: outputMetadataPaths[0],
 	}
 }
 

@@ -1,10 +1,10 @@
 """
-CONFIG FILE FOR TABULAR CONNECTOR INTEGRATION TESTS
+CONFIG FILE FOR TABLE CONNECTOR INTEGRATION TESTS
 - To skip a particular test set the relevant `SKIP_` flag to False
 - Set the `_CONF` dict for all connectors being tested.
 - Commented out config fields are optional.
 """
-from aqueduct_executor.operators.connectors.tabular import (
+from aqueduct_executor.operators.connectors.data import (
     bigquery,
     mysql,
     postgres,
@@ -12,7 +12,7 @@ from aqueduct_executor.operators.connectors.tabular import (
     sql_server,
     sqlite,
 )
-from aqueduct_executor.operators.connectors.tabular.config import BigQueryConfig
+from aqueduct_executor.operators.connectors.data.config import BigQueryConfig
 
 """FLAGS TO SKIP TESTS"""
 SKIP_POSTGRES = True
