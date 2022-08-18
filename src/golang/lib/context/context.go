@@ -23,7 +23,8 @@ const (
 
 type AqContext struct {
 	user.User
-	RequestId     string
+	RequestId string
+	// StorageConfig is a copy of the global storage config as of the creation of this AqContext
 	StorageConfig *shared.StorageConfig
 }
 
