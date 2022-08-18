@@ -73,11 +73,13 @@ func main() {
 		log.SetReportCaller(true)
 	}
 
-	serverConfig := config.ParseServerConfiguration(*confPath)
+	if err := config.Init(*confPath); err != nil {
+		log.Fatalf("Failed to initialize server config: %v", err)
+	}
 
-	s := server.NewAqServer(serverConfig)
+	s := server.NewAqServer()
 
-	err := s.StartWorkflowRetentionJob(serverConfig.RetentionJobPeriod)
+	err := s.StartWorkflowRetentionJob(config.RetentionJobPeriod())
 	if err != nil {
 		log.Fatalf("Failed to start workflow retention cronjob: %v", err)
 	}
@@ -88,6 +90,6 @@ func main() {
 	}
 
 	// Start the HTTP server and listen for requests indefinitely.
-	log.Infof("You can use api key %s to connect to the server", serverConfig.ApiKey)
+	log.Infof("You can use api key %s to connect to the server", config.APIKey())
 	s.Run(*expose, *port)
 }
