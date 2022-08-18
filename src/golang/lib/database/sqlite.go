@@ -8,6 +8,7 @@ import (
 	"path"
 
 	stmt "github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
