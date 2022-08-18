@@ -75,30 +75,6 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 	}
 }
 
-// For each output artifact, copy over the contents of the content and metadata paths.
-// This should only ever be used for preview routes. Returns an error if this operator did not succeed.
-// If it does not, the operator will fall back on traditional execution, overwriting anything we wrote
-// to the output paths here.
-func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedOutputPaths []preview_cache.Entry) error {
-	for i, cachedOutputPaths := range allCachedOutputPaths {
-		err := utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
-		if err != nil {
-			return err
-		}
-
-		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactMetadataPath, bo.outputExecPaths[i].ArtifactMetadataPath)
-		if err != nil {
-			return err
-		}
-
-		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.OpMetadataPath, bo.outputExecPaths[i].OpMetadataPath)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
@@ -113,18 +89,15 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 
 		if allFound {
-			allCachedEntries := make([]preview_cache.Entry, 0, len(bo.outputs))
-			for _, outputArtifact := range bo.outputs {
-				allCachedEntries = append(allCachedEntries, cacheEntryByKey[outputArtifact.Signature()])
+			// Apply the cached results for each output artifact. This just means setting the output paths
+			// to be the same as the cached ones.
+			for i, outputArtifact := range bo.outputs {
+				cacheEntry := cacheEntryByKey[outputArtifact.Signature()]
+				bo.outputExecPaths[i].OpMetadataPath = cacheEntry.OpMetadataPath
+				bo.outputExecPaths[i].ArtifactMetadataPath = cacheEntry.ArtifactMetadataPath
+				bo.outputExecPaths[i].ArtifactContentPath = cacheEntry.ArtifactContentPath
 			}
-
-			err = bo.executeUsingCachedResult(ctx, allCachedEntries)
-			if err == nil {
-				// We've successfully used the cached result!
-				return nil
-			}
-			// We've failed to use the cache, so we will retry the execution without the cache.
-			log.Errorf("Operator %s had a preview cache hit but was unable to execute. Error: %v", bo.Name(), err)
+			return nil
 		}
 	}
 
