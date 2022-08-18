@@ -24,6 +24,8 @@ from croniter import croniter
 from pandas import DataFrame
 from PIL import Image
 
+GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
+
 
 def format_header_for_print(header: str) -> str:
     """Used to print the header of a section in "describe()" with a consistent length.
@@ -114,7 +116,7 @@ RESERVED_FILE_NAMES = [
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = ["aqueduct-ml", "aqueduct-sdk"]
+BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., Any]
 MetricFunction = Callable[..., Union[int, float, np.number]]
@@ -311,9 +313,7 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
 
     with open(packaged_requirements_path, "w") as f:
         for line in req_lines:
-            if any(
-                line.startswith(blacklisted_req) for blacklisted_req in BLACKLISTED_REQUIREMENTS
-            ):
+            if any(blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS):
                 continue
             f.write(line)
 
@@ -326,7 +326,7 @@ def _infer_requirements() -> List[str]:
     """
     try:
         process = subprocess.Popen(
-            "pip freeze",
+            f"{sys.executable} -m pip freeze",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

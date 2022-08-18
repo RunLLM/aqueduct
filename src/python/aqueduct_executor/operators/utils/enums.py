@@ -49,6 +49,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     EXTRACT = "extract"
     LOAD = "load"
     LOADTABLE = "load-table"
+    DELETESAVEDOBJECTS = "delete-saved-objects"
     DISCOVER = "discover"
     PARAM = "param"
     SYSTEM_METRIC = "system_metric"

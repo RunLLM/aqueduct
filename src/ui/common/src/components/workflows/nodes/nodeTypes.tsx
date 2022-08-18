@@ -5,8 +5,8 @@ import FunctionOperatorNode from './FunctionOperatorNode';
 import JsonArtifactNode from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
 import NumericArtifactNode from './NumericArtifactNode';
-import TableArtifactNode from './TableArtifactNode';
 import StringArtifactNode from './StringArtifactNode';
+import TableArtifactNode from './TableArtifactNode';
 
 export const nodeTypes = {
   database: DatabaseNode,

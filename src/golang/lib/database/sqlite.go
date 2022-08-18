@@ -13,16 +13,19 @@ import (
 
 const (
 	// SQLite3 driver from: https://github.com/mattn/go-sqlite3
-	sqliteDriver             = "sqlite3"
-	sqliteConnectionTemplate = `file:%s?mode=%s&cache=%s`
-
-	defaultSqliteMode  = "rwc"
-	defaultSqliteCache = "shared"
+	sqliteDriver = "sqlite3"
 
 	SqliteDatabasePath = "db/aqueduct.db"
 )
 
 var DefaultSqliteFile = path.Join(os.Getenv("HOME"), ".aqueduct", "server", SqliteDatabasePath)
+
+var defaultSqliteOptions = map[string]string{
+	"mode":          "rwc",
+	"cache":         "shared",
+	"_journal_mode": "WAL",  // Enable Write-Ahead logging.
+	"_busy_timeout": "3000", // Wait for a bit on database locks before giving up.
+}
 
 type sqliteDatabase struct {
 	conf *SqliteConfig
@@ -36,6 +39,20 @@ type sqliteTransaction struct {
 	stmt.StandardPreparer
 }
 
+// Create Data Source String with which to configure this Sqlite driver.
+func createDsn(file string, sqliteOptions map[string]string) string {
+	dsn := fmt.Sprintf("file:%s?", file)
+	for k, v := range sqliteOptions {
+		dsn += fmt.Sprintf("%s=%s&", k, v)
+	}
+
+	// Remove the hanging '&'
+	if len(sqliteOptions) > 0 {
+		dsn = dsn[:len(dsn)-1]
+	}
+	return dsn
+}
+
 // NewSqliteDatabase returns a Database that uses the sqlite3 driver.
 func NewSqliteDatabase(conf *SqliteConfig) (Database, error) {
 	file := conf.File
@@ -43,17 +60,14 @@ func NewSqliteDatabase(conf *SqliteConfig) (Database, error) {
 		file = DefaultSqliteFile
 	}
 
-	dsn := fmt.Sprintf(sqliteConnectionTemplate, file, defaultSqliteMode, defaultSqliteCache)
-	return newSqliteDatabase(conf, dsn)
+	return newSqliteDatabase(conf, createDsn(file, defaultSqliteOptions))
 }
 
 func NewSqliteInMemoryDatabase(conf *SqliteConfig) (Database, error) {
-	dsn := fmt.Sprintf(
-		sqliteConnectionTemplate,
-		DefaultSqliteFile,
-		"memory",
-		defaultSqliteCache,
-	)
+	dsn := createDsn(DefaultSqliteFile, map[string]string{
+		"mode":  "memory",
+		"cache": "shared",
+	})
 	return newSqliteDatabase(conf, dsn)
 }
 

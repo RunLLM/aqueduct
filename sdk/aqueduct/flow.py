@@ -1,10 +1,13 @@
 import json
 import textwrap
 import uuid
-from typing import Dict, List, Union
+from collections import defaultdict
+from typing import DefaultDict, Dict, List, Optional, Union
 
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from pydantic import BaseModel
 
 from aqueduct import api_client
 
@@ -12,7 +15,7 @@ from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
 from .logger import logger
 from .operators import OperatorSpec, ParamSpec
-from .responses import WorkflowDagResponse, WorkflowDagResultResponse
+from .responses import SavedObjectUpdate, WorkflowDagResponse, WorkflowDagResultResponse
 from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
@@ -144,6 +147,20 @@ class Flow:
         workflow_dag = resp.workflow_dags[result.workflow_dag_id]
         return self._construct_flow_run(result, workflow_dag)
 
+    def list_saved_objects(self) -> DefaultDict[str, List[SavedObjectUpdate]]:
+        """Get everything saved by the flow.
+
+        Returns:
+            A dictionary mapping the integration id to the list of table names/storage path.
+        """
+        workflow_objects = api_client.__GLOBAL_API_CLIENT__.list_saved_objects(
+            self._id
+        ).object_details
+        object_mapping = defaultdict(list)
+        for item in workflow_objects:
+            object_mapping[item.integration_name].append(item)
+        return object_mapping
+
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""
         resp = api_client.__GLOBAL_API_CLIENT__.get_workflow(self._id)
@@ -170,3 +187,11 @@ class Flow:
             )
         )
         print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
+
+
+class FlowConfig(BaseModel):
+    engine: Optional[AirflowIntegration]
+
+    class Config:
+        # Necessary to allow an engine field
+        arbitrary_types_allowed = True

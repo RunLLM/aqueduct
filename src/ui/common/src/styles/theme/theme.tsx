@@ -67,6 +67,7 @@ export const theme = {
       800: '#66460D',
       100: '#FFEFD2',
     },
+    Info: '#0288D1',
     TableSuccessBackground: 'rgba(76,175,80,0.1)',
     TableErrorBackground: 'rgba(224,67,54,0.1)',
     TableWarningBackground: 'rgba(237,18,2,0.1)',

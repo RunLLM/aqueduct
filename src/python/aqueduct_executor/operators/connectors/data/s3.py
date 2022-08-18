@@ -2,7 +2,7 @@ import io
 import json
 import os
 import uuid
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import boto3
 import cloudpickle as pickle
@@ -11,6 +11,8 @@ import pandas as pd
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import S3Config, S3CredentialType
 from aqueduct_executor.operators.utils.enums import ArtifactType
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
+from aqueduct_executor.operators.utils.utils import delete_object
 from PIL import Image
 
 _DEFAULT_JSON_ENCODING = "utf8"
@@ -26,9 +28,7 @@ class S3Connector(connector.DataConnector):
         os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
         os.environ["AWS_CONFIG_FILE"] = config.config_file_path
         session = boto3.Session(profile_name=config.config_file_profile)
-        credentials = session.get_credentials()
-        config.access_key_id = credentials.access_key
-        config.secret_access_key = credentials.secret_key
+        self.s3 = session.resource("s3")
 
     def _handle_config_file_content(self, config: S3Config) -> None:
         """
@@ -47,7 +47,15 @@ class S3Connector(connector.DataConnector):
             # always remove
             os.remove(temp_path)
 
+    def _handle_access_key(self, config: S3Config) -> None:
+        self.s3 = boto3.resource(
+            "s3",
+            aws_access_key_id=config.access_key_id,
+            aws_secret_access_key=config.secret_access_key,
+        )
+
     def __init__(self, config: S3Config):
+        self.s3 = None
         # Write a temp file
         if config.type == S3CredentialType.CONFIG_FILE_CONTENT:
             self._handle_config_file_content(config)
@@ -55,11 +63,8 @@ class S3Connector(connector.DataConnector):
         if config.type == S3CredentialType.CONFIG_FILE_PATH:
             self._handle_config_file_path(config)
 
-        self.s3 = boto3.resource(
-            "s3",
-            aws_access_key_id=config.access_key_id,
-            aws_secret_access_key=config.secret_access_key,
-        )
+        if config.type == S3CredentialType.ACCESS_KEY:
+            self._handle_access_key(config)
 
         self.bucket = config.bucket
 
@@ -219,3 +224,12 @@ class S3Connector(connector.DataConnector):
             raise Exception("Unsupported data type %s." % artifact_type)
 
         self.s3.Object(self.bucket, params.filepath).put(Body=serialized_data)
+
+    def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
+        self.s3.Object(self.bucket, name).delete()
+
+    def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
+        results = []
+        for key in objects:
+            results.append(delete_object(key, self._delete_object))
+        return results

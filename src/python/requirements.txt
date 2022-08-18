@@ -8,4 +8,4 @@ distro
 pyyaml
 typing_extensions
 Pillow
-aqueduct-sdk==0.0.8
+aqueduct-sdk==0.0.9

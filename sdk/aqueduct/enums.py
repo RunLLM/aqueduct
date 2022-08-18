@@ -66,6 +66,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
     SQLITE = "SQLite"
+    AIRFLOW = "Airflow"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -153,3 +154,8 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
+
+
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"

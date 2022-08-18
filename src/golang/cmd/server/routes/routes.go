@@ -5,14 +5,14 @@ const (
 	GetArtifactVersionsRoute = "/api/artifact_versions"
 	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
 
-	ListBuiltinFunctionsRoute = "/api/builtinFunctions"
-	GetFunctionRoute          = "/api/function/{functionId}"
-	ExportFunctionRoute       = "/api/function/{operatorId}/export"
+	GetFunctionRoute    = "/api/function/{functionId}"
+	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
 	ListIntegrationsRoute            = "/api/integrations"
 	ConnectIntegrationRoute          = "/api/integration/connect"
 	DeleteIntegrationRoute           = "/api/integration/{integrationId}/delete"
 	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
+	ListIntegrationObjectsRoute      = "/api/integration/{integrationId}/objects"
 	CreateTableRoute                 = "/api/integration/{integrationId}/create"
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"

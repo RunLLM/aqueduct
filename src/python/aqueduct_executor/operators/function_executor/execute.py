@@ -257,7 +257,7 @@ def run_with_setup(spec: FunctionSpec) -> None:
 
     requirements_path = os.path.join(op_path, "requirements.txt")
     if os.path.exists(requirements_path):
-        os.system("pip3 install -r {}".format(requirements_path))
+        os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
 
     run(spec)
 

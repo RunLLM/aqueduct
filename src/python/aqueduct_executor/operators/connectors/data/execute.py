@@ -1,3 +1,4 @@
+import json
 import sys
 from typing import Any
 
@@ -5,6 +6,7 @@ import pandas as pd
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
+    DeleteSavedObjectsSpec,
     DiscoverSpec,
     ExtractSpec,
     LoadSpec,
@@ -35,11 +37,11 @@ def run(spec: Spec) -> None:
     - extract
     - load
     - load-table
+    - delete-saved-objects
     - discover
 
     Arguments:
     - spec: The spec provided for this operator.
-    - storage: An execution storage to use for reading or writing artifacts.
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
@@ -71,20 +73,24 @@ def run(spec: Spec) -> None:
 
 
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
-    op = setup_connector(spec.connector_name, spec.connector_config)
 
-    if spec.type == enums.JobType.AUTHENTICATE:
-        run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
-    elif spec.type == enums.JobType.EXTRACT:
-        run_extract(spec, op, storage, exec_state)
-    elif spec.type == enums.JobType.LOADTABLE:
-        run_load_table(spec, op, storage)
-    elif spec.type == enums.JobType.LOAD:
-        run_load(spec, op, storage, exec_state)
-    elif spec.type == enums.JobType.DISCOVER:
-        run_discover(spec, op, storage)
+    if isinstance(spec.connector_name, dict):
+        run_delete_saved_objects(spec, storage, exec_state)
     else:
-        raise Exception("Unknown job: %s" % spec.type)
+        op = setup_connector(spec.connector_name, spec.connector_config)
+
+        if spec.type == enums.JobType.AUTHENTICATE:
+            run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
+        elif spec.type == enums.JobType.EXTRACT:
+            run_extract(spec, op, storage, exec_state)
+        elif spec.type == enums.JobType.LOADTABLE:
+            run_load_table(spec, op, storage)
+        elif spec.type == enums.JobType.LOAD:
+            run_load(spec, op, storage, exec_state)
+        elif spec.type == enums.JobType.DISCOVER:
+            run_discover(spec, op, storage)
+        else:
+            raise Exception("Unknown job: %s" % spec.type)
 
 
 def run_authenticate(
@@ -145,6 +151,15 @@ def run_extract(
             output,
             system_metadata={},
         )
+
+
+def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
+    results = {}
+    assert isinstance(spec.connector_name, dict)
+    for integration in spec.connector_name:
+        op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
+        results[integration] = op.delete(spec.integration_to_object[integration])
+    utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
 def run_load(

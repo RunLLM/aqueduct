@@ -20,9 +20,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			StorageConfig:     s.StorageConfig,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
-			Database:       s.Database,
-			WorkflowReader: s.WorkflowReader,
-			Engine:         s.AqEngine,
+			Database:      s.Database,
+			Engine:        s.AqEngine,
+			StorageConfig: s.StorageConfig,
+			JobManager:    s.JobManager,
+			Vault:         s.Vault,
+
+			OperatorReader:    s.OperatorReader,
+			IntegrationReader: s.IntegrationReader,
+			WorkflowReader:    s.WorkflowReader,
 		},
 		routes.EditWorkflowRoute: &handler.EditWorkflowHandler{
 			Database:       s.Database,
@@ -65,9 +71,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			WorkflowDagResultReader: s.WorkflowDagResultReader,
-		},
-		routes.ListBuiltinFunctionsRoute: &handler.ListBuiltinFunctionsHandler{
-			StorageConfig: s.StorageConfig,
 		},
 		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
 			Database:          s.Database,
@@ -121,6 +124,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:          s.Database,
 			CustomReader:      s.CustomReader,
+			IntegrationReader: s.IntegrationReader,
+			StorageConfig:     s.StorageConfig,
+			JobManager:        s.JobManager,
+			Vault:             s.Vault,
+		},
+		routes.ListIntegrationObjectsRoute: &handler.ListIntegrationObjectsHandler{
+			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
 			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,

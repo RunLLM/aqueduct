@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
@@ -37,12 +39,12 @@ def _run_shell_command(cmd: str):
 
 def _uninstall_transformers_package():
     print("Uninstalling `transformers` package.")
-    _run_shell_command("pip3 uninstall -y transformers")
+    _run_shell_command(f"{sys.executable} -m pip uninstall -y transformers")
 
 
 def _install_transformers_package():
     print("Installing `transformers` package.")
-    _run_shell_command("pip3 install transformers")
+    _run_shell_command(f"{sys.executable} -m pip install transformers")
 
 
 def _check_infer_requirements(transformers_exists: bool):
