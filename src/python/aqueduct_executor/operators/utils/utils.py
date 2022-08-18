@@ -64,7 +64,7 @@ def _read_bytes_input(storage: Storage, path: str) -> bytes:
     return storage.get(path)
 
 
-def _read_bytes_input(storage: Storage, path: str) -> None:
+def _read_none_input(storage: Storage, path: str) -> None:
     return None
 
 
@@ -75,7 +75,7 @@ _deserialization_function_mapping = {
     SerializationType.IMAGE: _read_image_input,
     SerializationType.STRING: _read_string_input,
     SerializationType.BYTES: _read_bytes_input,
-    SerializationType.NONE: _read_bytes_input,
+    SerializationType.NONE: _read_none_input,
 }
 
 

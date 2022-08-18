@@ -42,3 +42,19 @@ def test_to_operator_imported_function(client):
     )(sql_artifact).get()
 
     assert df_decorate["positivity"].equals(df_function["positivity"])
+
+
+def test_to_operator_no_return_function(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    @op
+    def decorated_func(df):
+        # perform codes with side effect
+        df = dummy_sentiment_model_function(df)
+        return
+
+    output_artifact_from_decorator = decorated_func(sql_artifact)
+    assert output_artifact_from_decorator.get() is None
+
+
