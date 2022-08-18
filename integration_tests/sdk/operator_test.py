@@ -51,7 +51,8 @@ def test_to_operator_no_return_function(client):
     @op
     def decorated_func(df):
         # perform codes with side effect
-        df = dummy_sentiment_model_function(df)
+        import time
+        time.sleep(1)
         return
 
     output_artifact_from_decorator = decorated_func(sql_artifact)
