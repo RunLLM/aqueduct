@@ -56,5 +56,3 @@ def test_to_operator_no_return_function(client):
 
     output_artifact_from_decorator = decorated_func(sql_artifact)
     assert output_artifact_from_decorator.get() is None
-
-
