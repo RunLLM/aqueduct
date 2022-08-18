@@ -34,7 +34,10 @@ func scanRows(rows *sql.Rows, dest interface{}) error {
 	case reflect.Struct:
 		// Scan a single row to a struct
 		if ok := rows.Next(); !ok {
-			log.Errorf("No more rows left to scan. Error: %s", rows.Err())
+			if rows.Err() != nil {
+				log.Errorf("Error when calling rows.Next(): %s", rows.Err())
+			}
+
 			// No rows to scan
 			return ErrNoRows
 		}
