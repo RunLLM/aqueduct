@@ -12,7 +12,7 @@ export enum ArtifactType {
   Bytes = 'bytes',
   Image = 'image',
   Picklable = 'Picklable',
-  None = 'none'
+  None = 'none',
 }
 
 export type Artifact = {

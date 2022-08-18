@@ -4,6 +4,7 @@ from typing import Any, List
 import pandas as pd
 from aqueduct_executor.operators.connectors.data import extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 
 class DataConnector(ABC):
@@ -32,6 +33,32 @@ class DataConnector(ABC):
 
         Returns:
             A DataFrame that contains the data extracted by the connector.
+        """
+
+    @abstractmethod
+    def _delete_object(  # type: ignore
+        self,
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        name,  # str
+        context,  # Optional[Dict[str, Any]]
+    ) -> None:
+        """Delete object from integration. Helper function for delete.
+
+        Args:
+            name: Name of object to delete.
+            context: Any other variable.
+        """
+
+    @abstractmethod
+    def delete(  # type: ignore
+        self,
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        objects,  # List[str]
+    ) -> List[SavedObjectDelete]:
+        """Delete objects from integration.
+
+        Args:
+            objects: List of objects to delete from this integration.
         """
 
     @abstractmethod
