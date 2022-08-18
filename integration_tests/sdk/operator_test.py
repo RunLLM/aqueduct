@@ -52,6 +52,7 @@ def test_to_operator_no_return_function(client):
     def decorated_func(df):
         # perform codes with side effect
         import time
+
         time.sleep(1)
         return
 
