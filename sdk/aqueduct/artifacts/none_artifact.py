@@ -36,5 +36,5 @@ class NoneArtifact(Artifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the none artifact."""
-        # TODO: make this more informative.
+        # TODO: ENG-1581/enable-different-artifact-type-to-produce-meaningful-output-when.
         print("This is a %s artifact." % self.type())

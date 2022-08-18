@@ -175,10 +175,7 @@ def _write_none_output(
     output: Any,
 ) -> None:
     # default to write a empty bytes
-    if output is None:
-        storage.put(output_path, bytes())
-    else:
-        raise Exception("Function output is not None, wrong serialization method")
+    storage.put(output_path, bytes())
 
 
 _serialization_function_mapping = {
