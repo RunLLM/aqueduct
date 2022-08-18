@@ -99,8 +99,10 @@ func NewAqServer() *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
+	storageConfig := config.Storage()
+
 	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
-		conf.StorageConfig,
+		&storageConfig,
 		previewCacheSize,
 	)
 	if err != nil {
