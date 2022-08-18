@@ -234,7 +234,9 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			// Temporaty file to store the updated metadata dict that contains
 			// the serialization type and artifact type.
 			metadataPath := fmt.Sprintf("%s_%s", artifactResult.Id, "metadata")
-			storageConfig := config.ParseServerConfiguration(confPath).StorageConfig
+			config.Init(confPath)
+			sConfig := config.Storage()
+			storageConfig := &sConfig
 
 			migrationSpec := MigrationSpec{
 				ArtifactType:  string(artifactSpec.Spec.spec.Type),
