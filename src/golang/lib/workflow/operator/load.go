@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
@@ -39,12 +38,6 @@ func newLoadOperator(
 	}
 	if len(outputs) != 0 {
 		return nil, errWrongNumOutputs
-	}
-
-	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.TableType {
-			return nil, errors.New("Only table artifacts can be saved.")
-		}
 	}
 
 	spec := base.dbOperator.Spec.Load()

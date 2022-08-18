@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
 import pytest
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.error import IncompleteFlowException
-from aqueduct.table_artifact import TableArtifact
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from test_metrics.constant.model import constant_metric

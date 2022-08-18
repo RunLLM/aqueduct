@@ -125,7 +125,7 @@ func WriteWorkflowDagToDatabase(
 				ctx,
 				artifact.Name,
 				artifact.Description,
-				&artifact.Spec,
+				artifact.Type,
 				db,
 			)
 			if err != nil {

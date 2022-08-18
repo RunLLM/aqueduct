@@ -56,14 +56,37 @@ class JobType(str, Enum, metaclass=MetaEnum):
     COMPILE_AIRFLOW = "compile_airflow"
 
 
-class InputArtifactType(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    FLOAT = "float"
-    JSON = "json"
-
-
-class OutputArtifactType(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    FLOAT = "float"
+class ArtifactType(str, Enum, metaclass=MetaEnum):
+    STRING = "string"
     BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABLE = "table"
     JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLABLE = "picklable"
+
+
+class SerializationType(str, Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STRING = "string"
+    BYTES = "bytes"
+
+
+artifact_to_serialization = {
+    ArtifactType.STRING: [SerializationType.STRING],
+    ArtifactType.BOOL: [SerializationType.JSON],
+    ArtifactType.NUMERIC: [SerializationType.JSON],
+    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
+    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
+    ArtifactType.TABLE: [SerializationType.TABLE],
+    ArtifactType.JSON: [SerializationType.STRING],
+    ArtifactType.BYTES: [SerializationType.BYTES],
+    ArtifactType.IMAGE: [SerializationType.IMAGE],
+    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
+}

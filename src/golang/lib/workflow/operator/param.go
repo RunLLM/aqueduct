@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -30,9 +28,6 @@ func newParamOperator(
 	}
 	if len(outputs) != 1 {
 		return nil, errWrongNumOutputs
-	}
-	if outputs[0].Type() != db_artifact.JsonType {
-		return nil, errors.Newf("Internal Error: parameter must output a JSON artifact.")
 	}
 
 	return &paramOperatorImpl{

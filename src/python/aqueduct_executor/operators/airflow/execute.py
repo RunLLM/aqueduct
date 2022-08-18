@@ -4,7 +4,7 @@ import traceback
 from typing import Dict, List, Tuple, Union
 
 from aqueduct_executor.operators.airflow import spec
-from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
+from aqueduct_executor.operators.connectors.data import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
 from aqueduct_executor.operators.system_metric_executor import spec as system_metric_spec

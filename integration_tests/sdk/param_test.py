@@ -6,6 +6,7 @@ import pytest
 from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
+from pandas.util.testing import assert_frame_equal
 from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
 
 from aqueduct import metric, op
@@ -51,7 +52,9 @@ def test_basic_param_creation(client):
     assert param.get() == kv
 
     kv_df = convert_dict_to_df(param)
-    assert kv_df.get().equals(pd.DataFrame(data=kv))
+    # We don't use df.equals because when comparing floating point values, our internal serialization
+    # may have changed the value's accuracy. assert_frame_equal takes this into account.
+    assert_frame_equal(kv_df.get(), pd.DataFrame(data=kv))
 
 
 def test_non_jsonable_parameter(client):

@@ -68,7 +68,7 @@ export function getArtifactNode(
 ): Node<ReactFlowNodeData> {
   return {
     id: artf.id,
-    type: ArtifactTypeToNodeTypeMap[artf.spec.type],
+    type: ArtifactTypeToNodeTypeMap[artf.type],
     draggable: false,
     data: {
       nodeType: ReactflowNodeType.Artifact,

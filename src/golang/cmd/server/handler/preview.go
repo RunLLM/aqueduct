@@ -36,11 +36,10 @@ type previewArgs struct {
 	DagSummary *request.DagSummary
 	// Add list of IDs
 }
-
 type previewResponse struct {
-	Status          shared.ExecutionStatus                      `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState         `json:"operator_results"`
-	ArtifactResults map[uuid.UUID]engine.PreviewArtifactResults `json:"artifact_results"`
+	Status          shared.ExecutionStatus                     `json:"status"`
+	OperatorResults map[uuid.UUID]shared.ExecutionState        `json:"operator_results"`
+	ArtifactResults map[uuid.UUID]engine.PreviewArtifactResult `json:"artifact_results"`
 }
 
 type PreviewHandler struct {

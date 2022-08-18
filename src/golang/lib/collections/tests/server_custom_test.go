@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -33,7 +32,7 @@ func TestGetLoadOperatorSpecByOrganization(t *testing.T) {
 		context.Background(),
 		randString(5),
 		randString(10),
-		artifact.NewSpecFromTable(table.Table{}),
+		artifact.Table,
 		db,
 	)
 	require.Nil(t, err)

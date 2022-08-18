@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"path"
 	"reflect"
@@ -100,31 +101,13 @@ type workflowRunMetadata struct {
 type WorkflowPreviewResult struct {
 	Status    shared.ExecutionStatus
 	Operators map[uuid.UUID]shared.ExecutionState
-	Artifacts map[uuid.UUID]PreviewArtifactResults
+	Artifacts map[uuid.UUID]PreviewArtifactResult
 }
 
-type previewFloatArtifactResponse struct {
-	Val float64 `json:"val"`
-}
-
-type previewBoolArtifactResponse struct {
-	Passed bool `json:"passed"`
-}
-
-type previewParamArtifactResponse struct {
-	Val string `json:"val"`
-}
-
-type previewTableArtifactResponse struct {
-	TableSchema []map[string]string `json:"table_schema"`
-	Data        string              `json:"data"`
-}
-
-type PreviewArtifactResults struct {
-	Table  *previewTableArtifactResponse `json:"table"`
-	Metric *previewFloatArtifactResponse `json:"metric"`
-	Check  *previewBoolArtifactResponse  `json:"check"`
-	Param  *previewParamArtifactResponse `json:"param"`
+type PreviewArtifactResult struct {
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
+	Content           string                            `json:"content"`
 }
 
 func NewAqEngine(
@@ -402,14 +385,23 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	// Only include artifact results that were successfully computed.
-	artifactResults := make(map[uuid.UUID]PreviewArtifactResults)
+	artifactResults := make(map[uuid.UUID]PreviewArtifactResult)
 	for _, artf := range dag.Artifacts() {
 		if artf.Computed(ctx) {
-			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
+			artifact_metadata, err := artf.GetMetadata(ctx)
 			if err != nil {
-				return nil, errors.Wrap(err, "Unable to convert artifact result.")
+				return nil, errors.Wrap(err, "Unable to get artifact metadata.")
 			}
-			artifactResults[artf.ID()] = *artifactResp
+
+			content, err := artf.GetContent(ctx)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to get artifact content.")
+			}
+			artifactResults[artf.ID()] = PreviewArtifactResult{
+				SerializationType: artifact_metadata.SerializationType,
+				ArtifactType:      artifact_metadata.ArtifactType,
+				Content:           base64.StdEncoding.EncodeToString(content),
+			}
 		}
 	}
 

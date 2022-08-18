@@ -20,13 +20,13 @@ func (w *standardWriterImpl) CreateArtifact(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *Spec,
+	artifactType Type,
 	db database.Database,
 ) (*DBArtifact, error) {
-	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn}
+	insertColumns := []string{NameColumn, DescriptionColumn, TypeColumn}
 	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{name, description, spec}
+	args := []interface{}{name, description, artifactType}
 
 	var artifact DBArtifact
 	err := db.Query(ctx, &artifact, insertArtifactStmt, args...)

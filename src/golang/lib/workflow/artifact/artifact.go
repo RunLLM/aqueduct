@@ -95,7 +95,7 @@ func NewArtifact(
 		signature:           signature,
 		name:                dbArtifact.Name,
 		description:         dbArtifact.Description,
-		artifactType:        dbArtifact.Spec.Type(),
+		artifactType:        dbArtifact.Type,
 		execPaths:           execPaths,
 		resultWriter:        artifactResultWriter,
 		resultID:            uuid.Nil,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -324,15 +323,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		}
 	}
 
-	inputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.inputs))
-	outputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.outputs))
-	for _, inputArtifact := range bfo.inputs {
-		inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Type())
-	}
-	for _, outputArtifact := range bfo.outputs {
-		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
-	}
-
 	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
 	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
 	return &job.FunctionSpec{
@@ -352,8 +342,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		InputMetadataPaths:  inputMetadataPaths,
 		OutputContentPaths:  outputContentPaths,
 		OutputMetadataPaths: outputMetadataPaths,
-		InputArtifactTypes:  inputArtifactTypes,
-		OutputArtifactTypes: outputArtifactTypes,
 		OperatorType:        bfo.Type(),
 		CheckSeverity:       checkSeverity,
 	}

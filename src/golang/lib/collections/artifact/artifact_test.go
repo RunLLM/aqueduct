@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact/table"
-
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -17,9 +15,7 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	atf := artifact.DBArtifact{
 		Id:   id,
 		Name: "test",
-		Spec: *artifact.NewSpecFromTable(
-			table.Table{},
-		),
+		Type: artifact.Table,
 	}
 
 	rawAtf, err := json.Marshal(atf)
@@ -28,6 +24,5 @@ func TestSerializingAndDeserializingArtifact(t *testing.T) {
 	var reconstructedAtf artifact.DBArtifact
 	err = json.Unmarshal(rawAtf, &reconstructedAtf)
 	require.Nil(t, err)
-	require.True(t, reconstructedAtf.Spec.IsTable())
-	require.NotNil(t, reconstructedAtf.Spec.Table())
+	require.True(t, reconstructedAtf.Type == artifact.Table)
 }
