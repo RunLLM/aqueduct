@@ -49,12 +49,19 @@ def test_to_operator_no_return_function(client):
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     @op
-    def decorated_func(df):
+    def decorated_func_one(df):
         # perform codes with side effect
         import time
 
         time.sleep(1)
         return
 
-    output_artifact_from_decorator = decorated_func(sql_artifact)
-    assert output_artifact_from_decorator.get() is None
+    @op
+    def decorated_func_two(none_artifact):
+        return
+
+    output_artifact_from_decorator_one = decorated_func_one(sql_artifact)
+    assert output_artifact_from_decorator_one.get() is None
+
+    output_artifact_from_decorator_two = decorated_func_two(output_artifact_from_decorator_one)
+    assert output_artifact_from_decorator_one.get() is None
