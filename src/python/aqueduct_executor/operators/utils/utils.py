@@ -1,6 +1,5 @@
 import io
 import json
-from re import A, S
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cloudpickle as pickle
@@ -63,6 +62,7 @@ def _read_string_input(storage: Storage, path: str) -> str:
 
 def _read_bytes_input(storage: Storage, path: str) -> bytes:
     return storage.get(path)
+
 
 def _read_bytes_input(storage: Storage, path: str) -> None:
     return None
@@ -176,6 +176,7 @@ def _write_json_output(
     output: Any,
 ) -> None:
     storage.put(output_path, json.dumps(output).encode(_DEFAULT_ENCODING))
+
 
 def _write_none_output(
     storage: Storage,

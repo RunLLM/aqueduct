@@ -1,7 +1,6 @@
 import inspect
 import json
 import os
-from re import A
 import shutil
 import subprocess
 import sys
@@ -9,6 +8,7 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
+from re import A
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 import cloudpickle as pickle
@@ -24,7 +24,6 @@ from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
 from PIL import Image
-
 
 GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 

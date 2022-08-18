@@ -338,7 +338,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		EntryPointClass:     entryPoint.ClassName,
 		EntryPointMethod:    entryPoint.Method,
 		CustomArgs:          fn.CustomArgs,
-
 		InputContentPaths:   inputContentPaths,
 		InputMetadataPaths:  inputMetadataPaths,
 		OutputContentPaths:  outputContentPaths,

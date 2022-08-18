@@ -463,6 +463,7 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
             _type_check_decorated_function_arguments(OperatorType.CHECK, *input_artifacts)
 
             zip_file = serialize_function(func, file_dependencies, requirements)

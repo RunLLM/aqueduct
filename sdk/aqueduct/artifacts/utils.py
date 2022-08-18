@@ -4,7 +4,13 @@ import base64
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
-from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact, none_artifact
+from aqueduct.artifacts import (
+    bool_artifact,
+    generic_artifact,
+    none_artifact,
+    numeric_artifact,
+    table_artifact,
+)
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.deserialize import deserialization_function_mapping
@@ -16,9 +22,9 @@ from aqueduct import api_client
 if TYPE_CHECKING:
     from aqueduct.artifacts.bool_artifact import BoolArtifact
     from aqueduct.artifacts.generic_artifact import GenericArtifact
+    from aqueduct.artifacts.none_artifact import NoneArtifact
     from aqueduct.artifacts.numeric_artifact import NumericArtifact
     from aqueduct.artifacts.table_artifact import TableArtifact
-    from aqueduct.artifacts.none_artifact import NoneArtifact
 
 
 def preview_artifact(

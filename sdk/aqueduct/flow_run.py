@@ -79,7 +79,6 @@ class FlowRun:
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
 
-
     def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.
 
