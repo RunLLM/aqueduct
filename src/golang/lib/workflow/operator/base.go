@@ -89,13 +89,21 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 
 		if allFound {
+			log.Errorf("Applied cached results for %s", bo.Name())
+
 			// Apply the cached results for each output artifact. This just means setting the output paths
 			// to be the same as the cached ones.
 			for i, outputArtifact := range bo.outputs {
 				cacheEntry := cacheEntryByKey[outputArtifact.Signature()]
-				bo.outputExecPaths[i].OpMetadataPath = cacheEntry.OpMetadataPath
 				bo.outputExecPaths[i].ArtifactMetadataPath = cacheEntry.ArtifactMetadataPath
 				bo.outputExecPaths[i].ArtifactContentPath = cacheEntry.ArtifactContentPath
+
+				// The op metadata path is updated for both for this operator and its output artifacts.
+				bo.outputExecPaths[i].OpMetadataPath = cacheEntry.OpMetadataPath
+				bo.metadataPath = cacheEntry.OpMetadataPath
+
+				log.Errorf("HELLO: op metadata path set to %s", bo.metadataPath)
+				log.Errorf("HELLO: artifact content path set to %s", bo.outputExecPaths[i].ArtifactContentPath)
 			}
 			return nil
 		}

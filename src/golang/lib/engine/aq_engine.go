@@ -739,12 +739,16 @@ func (eng *aqEngine) execute(
 			}
 
 			if execState.Status == shared.PendingExecutionStatus {
+				log.Error("Op %s is pending ", op.Name())
+				time.Sleep(1 * time.Second)
+
 				err = op.Launch(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
 				continue
 			} else if execState.Status == shared.RunningExecutionStatus {
+				log.Error("Op %s is running ", op.Name())
 				continue
 			}
 			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
@@ -761,8 +765,10 @@ func (eng *aqEngine) execute(
 
 			// We can continue orchestration on non-fatal errors.
 			if shouldStopExecution(execState) {
+				log.Error("Op %s is failed ", op.Name())
 				return opFailureError(*execState.FailureType, op)
 			}
+			log.Error("Op %s is succeeded ", op.Name())
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
 			if _, ok := completedOps[op.ID()]; ok {
@@ -799,7 +805,6 @@ func (eng *aqEngine) execute(
 					}
 				}
 			}
-
 			time.Sleep(timeConfig.OperatorPollInterval)
 		}
 	}
