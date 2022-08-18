@@ -39,7 +39,7 @@ class S3Storage(Storage):
         key = self._prefix_key(key)
         print(f"reading from s3: {key}")
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
-    
+
     def _prefix_key(self, key: str) -> str:
         if not self._key_prefix:
             return key
