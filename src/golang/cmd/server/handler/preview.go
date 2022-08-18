@@ -47,7 +47,6 @@ type PreviewHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
-	StorageConfig     *shared.StorageConfig
 	GithubManager     github.Manager
 	AqEngine          engine.AqEngine
 }
@@ -66,7 +65,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		r,
 		aqContext.Id,
 		h.GithubManager,
-		h.StorageConfig,
+		aqContext.StorageConfig,
 	)
 	if err != nil {
 		return nil, statusCode, err

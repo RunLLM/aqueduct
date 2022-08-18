@@ -53,7 +53,6 @@ type DiscoverHandler struct {
 	Database          database.Database
 	IntegrationReader integration.Reader
 	CustomReader      queries.Reader
-	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
 }
@@ -117,7 +116,7 @@ func (h *DiscoverHandler) Perform(
 
 	defer func() {
 		// Delete storage files created for list tables job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, h.StorageConfig, []string{jobMetadataPath, jobResultPath})
+		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
 	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, h.Vault)
@@ -128,7 +127,7 @@ func (h *DiscoverHandler) Perform(
 	jobName := fmt.Sprintf("discover-operator-%s", uuid.New().String())
 	jobSpec := job.NewDiscoverSpec(
 		jobName,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobMetadataPath,
 		integrationObject.Service,
 		config,
@@ -151,7 +150,7 @@ func (h *DiscoverHandler) Perform(
 	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobMetadataPath,
 		&metadata,
 	); err != nil {
@@ -165,7 +164,7 @@ func (h *DiscoverHandler) Perform(
 	var tableNames []string
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobResultPath,
 		&tableNames,
 	); err != nil {

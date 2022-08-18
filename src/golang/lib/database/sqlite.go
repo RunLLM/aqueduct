@@ -21,10 +21,32 @@ const (
 var DefaultSqliteFile = path.Join(os.Getenv("HOME"), ".aqueduct", "server", SqliteDatabasePath)
 
 var defaultSqliteOptions = map[string]string{
-	"mode":          "rwc",
-	"cache":         "shared",
-	"_journal_mode": "WAL",  // Enable Write-Ahead logging.
-	"_busy_timeout": "3000", // Wait for a bit on database locks before giving up.
+	"mode": "rwc",
+
+	// Write-Ahead Logging allows readers to continue to read even when a write transaction
+	// in progress. This does not resolve write-write conflicts.
+	"_journal_mode": "WAL",
+
+	// If the database is locked by another in-progress write, the current write
+	// will block for this amount of time before giving up with a SQLITE_BUSY error.
+	// Units are milliseconds. Default value is 5 seconds.
+	//
+	// Set this value > the expected time for the longest transaction in our system to complete.
+	"_busy_timeout": "10000",
+
+	// Transactions will always start as write transactions, instead of deferring
+	// the decision for later. This prevents the following edge case, where there are two
+	// concurrent transactions:
+	// 1) Begin Transaction
+	// 2) Select statement
+	// 3) Insert statement
+	// 4) Commit
+	// Because we perform a read first at step 2, the transaction will start as a read
+	// transaction and then get upgraded afterwards to a write at step 3. This will lead
+	// to an immediate SQLITE_BUSY error that our `_busy_timeout` above cannot protect against.
+	// By forcing all transactions to first grab write locks, we force any conflicting writes
+	// to wait on each other, respecting our `_busy_timeout` value.
+	"_txlock": "IMMEDIATE",
 }
 
 type sqliteDatabase struct {

@@ -37,7 +37,6 @@ type IntegrationObjectsHandler struct {
 	GetHandler
 
 	Database          database.Database
-	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
 	IntegrationReader integration.Reader
@@ -95,7 +94,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 
 	defer func() {
 		// Delete storage files created for list objects job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, h.StorageConfig, []string{jobMetadataPath, jobResultPath})
+		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
 	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, h.Vault)
@@ -106,7 +105,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	jobName := fmt.Sprintf("integration-objects-%s", uuid.New().String())
 	jobSpec := job.NewDiscoverSpec(
 		jobName,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobMetadataPath,
 		integrationObject.Service,
 		config,
@@ -129,7 +128,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobMetadataPath,
 		&metadata,
 	); err != nil {
@@ -143,7 +142,7 @@ func (h *IntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs i
 	var objectNames []string
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
-		h.StorageConfig,
+		args.StorageConfig,
 		jobResultPath,
 		&objectNames,
 	); err != nil {

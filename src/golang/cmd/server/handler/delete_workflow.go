@@ -56,11 +56,10 @@ type deleteWorkflowResponse struct {
 type DeleteWorkflowHandler struct {
 	PostHandler
 
-	Database      database.Database
-	Engine        engine.Engine
-	StorageConfig *shared.StorageConfig
-	JobManager    job.JobManager
-	Vault         vault.Vault
+	Database   database.Database
+	Engine     engine.Engine
+	JobManager job.JobManager
+	Vault      vault.Vault
 
 	IntegrationReader integration.Reader
 	OperatorReader    operator.Reader
@@ -171,7 +170,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated objects.
 	if objCount > 0 {
-		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, h.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, args.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
