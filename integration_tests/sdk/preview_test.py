@@ -117,8 +117,10 @@ def test_preview_artifact_caching(client):
     start = time.time()
     slow_output = slow_fn(sql_artifact)
     _ = slow_output.get()
+    print("First time", time.time() - start)
     assert time.time() - start > 5
 
     start = time.time()
     _ = noop(slow_output).get()
+    print("Second time", time.time() - start)
     assert time.time() - start < 5
