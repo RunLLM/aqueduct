@@ -257,7 +257,8 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			// and we need to revert the content change.
 			originalContent, err := storage.NewStorage(storageConfig).Get(ctx, artifactResult.ContentPath)
 			if err != nil {
-				return err
+				log.Infof("Skipping data migration for artifact result %s since its content wasn't generated", artifactResult.Id)
+				continue
 			}
 
 			defer func() {
@@ -324,6 +325,35 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			err = updateTypeInArtifact(ctx, artifactSpec.Id, newArtifactType, db)
 			if err != nil {
 				return err
+			}
+		} else {
+			// If we reach here, it means the artifact has no result available, so we do a best-effort
+			// mapping netween the original artifact type and the new type.
+			if artifactSpec.Spec.spec.Type == TableType {
+				err = updateTypeInArtifact(ctx, artifactSpec.Id, "table", db)
+				if err != nil {
+					return err
+				}
+			} else if artifactSpec.Spec.spec.Type == FloatType {
+				err = updateTypeInArtifact(ctx, artifactSpec.Id, "numeric", db)
+				if err != nil {
+					return err
+				}
+			} else if artifactSpec.Spec.spec.Type == BoolType {
+				err = updateTypeInArtifact(ctx, artifactSpec.Id, "boolean", db)
+				if err != nil {
+					return err
+				}
+			} else if artifactSpec.Spec.spec.Type == JsonType {
+				// Since we don't know the real type of a parameter, we put untyped for now and
+				// later when the workflow is executed, we will update this field from untyped to
+				// its real type.
+				err = updateTypeInArtifact(ctx, artifactSpec.Id, "untyped", db)
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.Newf("Unexpected original artifact type %s", artifactSpec.Spec.spec.Type)
 			}
 		}
 	}
