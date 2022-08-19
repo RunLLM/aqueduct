@@ -1,6 +1,8 @@
 package operator
 
 import (
+	"context"
+
 	"github.com/aqueducthq/aqueduct/lib/job"
 )
 
@@ -28,4 +30,8 @@ func newMetricOperator(base baseFunctionOperator) (Operator, error) {
 func (mo *metricOperatorImpl) JobSpec() job.Spec {
 	fn := mo.dbOperator.Spec.Metric().Function
 	return mo.jobSpec(&fn, nil /* checkSeverity */)
+}
+
+func (mo *metricOperatorImpl) Launch(ctx context.Context) error {
+	return mo.launch(ctx, mo.JobSpec())
 }

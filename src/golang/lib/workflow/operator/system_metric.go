@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -36,6 +37,8 @@ func newSystemMetricOperator(
 }
 
 func (smo *systemMetricOperatorImpl) JobSpec() job.Spec {
+	_, inputMetadataPaths := unzipExecPathsToRawPaths(smo.inputExecPaths)
+
 	return &job.SystemMetricSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.SystemMetricJobType,
@@ -43,9 +46,13 @@ func (smo *systemMetricOperatorImpl) JobSpec() job.Spec {
 			*smo.storageConfig,
 			smo.metadataPath,
 		),
-		InputMetadataPaths: smo.inputMetadataPaths,
-		OutputContentPath:  smo.outputContentPaths[0],
-		OutputMetadataPath: smo.outputMetadataPaths[0],
+		InputMetadataPaths: inputMetadataPaths,
+		OutputContentPath:  smo.outputExecPaths[0].ArtifactContentPath,
+		OutputMetadataPath: smo.outputExecPaths[0].ArtifactMetadataPath,
 		MetricName:         smo.dbOperator.Spec.SystemMetric().MetricName,
 	}
+}
+
+func (smo *systemMetricOperatorImpl) Launch(ctx context.Context) error {
+	return smo.launch(ctx, smo.JobSpec())
 }

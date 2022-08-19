@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -34,4 +35,8 @@ func newFunctionOperator(
 func (fo *functionOperatorImpl) JobSpec() job.Spec {
 	fn := fo.dbOperator.Spec.Function()
 	return fo.jobSpec(fn, nil /* checkSeverity */)
+}
+
+func (fo *functionOperatorImpl) Launch(ctx context.Context) error {
+	return fo.launch(ctx, fo.JobSpec())
 }

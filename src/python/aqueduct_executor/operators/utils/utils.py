@@ -1,17 +1,27 @@
 import io
 import json
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cloudpickle as pickle
 import numpy as np
 import pandas as pd
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
+    ExecutionStatus,
+    FailureType,
     SerializationType,
     artifact_to_serialization,
 )
-from aqueduct_executor.operators.utils.execution import ExecutionState
+from aqueduct_executor.operators.utils.execution import (
+    TIP_UNKNOWN_ERROR,
+    Error,
+    ExecutionState,
+    Logs,
+    exception_traceback,
+)
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pandas import DataFrame
 from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
@@ -29,7 +39,7 @@ def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
 
 
-def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
+def _read_table_input(storage: Storage, path: str) -> pd.DataFrame:
     input_bytes = storage.get(path)
     return pd.read_json(io.BytesIO(input_bytes), orient="table")
 
@@ -55,7 +65,7 @@ def _read_bytes_input(storage: Storage, path: str) -> bytes:
 
 
 _deserialization_function_mapping = {
-    SerializationType.TABULAR: _read_tabular_input,
+    SerializationType.TABLE: _read_table_input,
     SerializationType.JSON: _read_json_input,
     SerializationType.PICKLE: _read_pickle_input,
     SerializationType.IMAGE: _read_image_input,
@@ -112,7 +122,7 @@ def _read_metadata_key(
     return [metadata[key_name] for metadata in metadata_inputs]
 
 
-def _write_tabular_output(
+def _write_table_output(
     storage: Storage,
     output_path: str,
     output: pd.DataFrame,
@@ -164,7 +174,7 @@ def _write_json_output(
 
 
 _serialization_function_mapping = {
-    SerializationType.TABULAR: _write_tabular_output,
+    SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
     SerializationType.PICKLE: _write_pickle_output,
     SerializationType.IMAGE: _write_image_output,
@@ -187,9 +197,9 @@ def write_artifact(
         _METADATA_ARTIFACT_TYPE_KEY: artifact_type.value,
     }
 
-    if artifact_type == ArtifactType.TABULAR:
+    if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.TABULAR.value
+        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.TABLE.value
     elif artifact_type == ArtifactType.IMAGE:
         output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.IMAGE.value
     elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:
@@ -235,6 +245,34 @@ def write_exec_state(
     storage.put(metadata_path, bytes(exec_state.json(), encoding=_DEFAULT_ENCODING))
 
 
+def delete_object(name: str, delete_fn: Callable[[str], None]) -> SavedObjectDelete:
+    exec_state = ExecutionState(user_logs=Logs())
+    try:
+        delete_fn(name)
+    except Exception as e:
+        exec_state.status = ExecutionStatus.FAILED
+        exec_state.failure_type = FailureType.SYSTEM
+        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        return SavedObjectDelete(name=name, exec_state=exec_state)
+    exec_state.status = ExecutionStatus.SUCCEEDED
+    return SavedObjectDelete(name=name, exec_state=exec_state)
+
+
+def write_delete_saved_objects_results(
+    storage: Storage, path: str, results: Dict[str, List[SavedObjectDelete]]
+) -> None:
+    results_str = json.dumps(
+        {
+            integration: [
+                {"name": result.name, "exec_state": json.loads(result.exec_state.json())}
+                for result in results[integration]
+            ]
+            for integration in results
+        }
+    )
+    storage.put(path, bytes(results_str, encoding=_DEFAULT_ENCODING))
+
+
 def write_discover_results(storage: Storage, path: str, tables: List[str]) -> None:
     table_names_str = json.dumps(tables)
 
@@ -251,9 +289,39 @@ def check_passed(content: Union[bool, np.bool_]) -> bool:
             "instead got %s" % type(content).__name__
         )
 
-        
+
 def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:
     """
     Writes the provided Airflow DAG file to storage.
     """
     storage.put(path, dag_file)
+
+
+def infer_artifact_type(value: Any) -> ArtifactType:
+    if isinstance(value, DataFrame):
+        return ArtifactType.TABLE
+    elif isinstance(value, Image.Image):
+        return ArtifactType.IMAGE
+    elif isinstance(value, bytes):
+        return ArtifactType.BYTES
+    elif isinstance(value, str):
+        # We first check if the value is a valid JSON string.
+        try:
+            json.loads(value)
+            return ArtifactType.JSON
+        except:
+            return ArtifactType.STRING
+    elif isinstance(value, bool) or isinstance(value, np.bool_):
+        return ArtifactType.BOOL
+    elif isinstance(value, int) or isinstance(value, float) or isinstance(value, np.number):
+        return ArtifactType.NUMERIC
+    elif isinstance(value, dict):
+        return ArtifactType.DICT
+    elif isinstance(value, tuple):
+        return ArtifactType.TUPLE
+    else:
+        try:
+            pickle.dumps(value)
+            return ArtifactType.PICKLABLE
+        except:
+            raise Exception("Failed to map type %s to supported artifact type." % type(value))

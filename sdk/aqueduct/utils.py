@@ -10,18 +10,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
-import cloudpickle as cp
+import cloudpickle as pickle
+import numpy as np
 import pandas as pd
 import requests
-from aqueduct.enums import OperatorType
+from aqueduct.dag import DAG, RetentionPolicy, Schedule
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.error import *
+from aqueduct.logger import logger
 from aqueduct.operators import Operator
+from aqueduct.templates import op_file_content
 from croniter import croniter
+from pandas import DataFrame
+from PIL import Image
 
-from .dag import DAG, RetentionPolicy, Schedule
-from .enums import TriggerType
-from .error import *
-from .logger import logger
-from .templates import op_file_content
+GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
 
 def format_header_for_print(header: str) -> str:
@@ -121,11 +124,11 @@ RESERVED_FILE_NAMES = [
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = ["aqueduct-ml", "aqueduct-sdk"]
+BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., Any]
-MetricFunction = Callable[..., float]
-CheckFunction = Callable[..., bool]
+MetricFunction = Callable[..., Union[int, float, np.number]]
+CheckFunction = Callable[..., Union[bool, np.bool_]]
 
 
 def get_zip_file_path(dir_name: str) -> str:
@@ -197,7 +200,7 @@ def serialize_function(
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
-            cp.dump(func, f)
+            pickle.dump(func, f)
 
         zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
@@ -318,9 +321,7 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
 
     with open(packaged_requirements_path, "w") as f:
         for line in req_lines:
-            if any(
-                line.startswith(blacklisted_req) for blacklisted_req in BLACKLISTED_REQUIREMENTS
-            ):
+            if any(blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS):
                 continue
             f.write(line)
 
@@ -333,7 +334,7 @@ def _infer_requirements() -> List[str]:
     """
     try:
         process = subprocess.Popen(
-            "pip freeze",
+            f"{sys.executable} -m pip freeze",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -472,3 +473,33 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     if isinstance(id, uuid.UUID):
         return str(id)
     return id
+
+
+def infer_artifact_type(value: Any) -> ArtifactType:
+    if isinstance(value, DataFrame):
+        return ArtifactType.TABLE
+    elif isinstance(value, Image.Image):
+        return ArtifactType.IMAGE
+    elif isinstance(value, bytes):
+        return ArtifactType.BYTES
+    elif isinstance(value, str):
+        # We first check if the value is a valid JSON string.
+        try:
+            json.loads(value)
+            return ArtifactType.JSON
+        except:
+            return ArtifactType.STRING
+    elif isinstance(value, bool) or isinstance(value, np.bool_):
+        return ArtifactType.BOOL
+    elif isinstance(value, int) or isinstance(value, float) or isinstance(value, np.number):
+        return ArtifactType.NUMERIC
+    elif isinstance(value, dict):
+        return ArtifactType.DICT
+    elif isinstance(value, tuple):
+        return ArtifactType.TUPLE
+    else:
+        try:
+            pickle.dumps(value)
+            return ArtifactType.PICKLABLE
+        except:
+            raise Exception("Failed to map type %s to supported artifact type." % type(value))

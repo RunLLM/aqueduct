@@ -8,8 +8,8 @@ import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
 import cloudpickle as pickle
-import pandas as pd
 import numpy as np
+import pandas as pd
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
@@ -23,6 +23,8 @@ from aqueduct_executor.operators.utils.enums import (
 )
 from aqueduct_executor.operators.utils.execution import (
     TIP_CHECK_DID_NOT_PASS,
+    TIP_NOT_BOOL,
+    TIP_NOT_NUMERIC,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
@@ -34,7 +36,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import check_passed
+from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
 from pandas import DataFrame
 from PIL import Image
 
@@ -155,7 +157,7 @@ def _execute_function(
         return invoke(*inputs)
 
     result = _invoke()
-    inferred_result_type = _infer_result_type(result)
+    inferred_result_type = infer_artifact_type(result)
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -191,13 +193,15 @@ def run(spec: FunctionSpec) -> None:
             sys.exit(1)
 
         print("Function invoked successfully!")
-        print("result is", result)
-        print("result type is", result_type)
 
         # Perform type checking for metric and check operators.
         type_error = False
         if spec.operator_type == OperatorType.METRIC:
-            if not (isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number)):
+            if not (
+                isinstance(result, int)
+                or isinstance(result, float)
+                or isinstance(result, np.number)
+            ):
                 type_error = True
                 type_error_tip = TIP_NOT_NUMERIC
         elif spec.operator_type == OperatorType.CHECK:
@@ -286,7 +290,7 @@ def run_with_setup(spec: FunctionSpec) -> None:
 
     requirements_path = os.path.join(op_path, "requirements.txt")
     if os.path.exists(requirements_path):
-        os.system("pip3 install -r {}".format(requirements_path))
+        os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
 
     run(spec)
 

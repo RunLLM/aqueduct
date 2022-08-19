@@ -1,10 +1,18 @@
+import base64
 import textwrap
 import uuid
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType, SerializationType, ArtifactType
+from aqueduct.deserialize import deserialization_function_mapping
+from aqueduct.enums import (
+    ArtifactType,
+    ExecutionStatus,
+    FailureType,
+    SerializationType,
+    ServiceType,
+)
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
@@ -54,8 +62,8 @@ class OperatorResult(BaseModel):
 
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
-    content: bytes
     artifact_type: ArtifactType
+    content: str
 
 
 class PreviewResponse(BaseModel):
@@ -69,7 +77,7 @@ class PreviewResponse(BaseModel):
             All operators that were run will appear in this map.
 
         artifact_results:
-            A map from an artifact id to its content in bytes.
+            A map from an artifact id to its base64 encoded string.
             Artifact results will only appear in this map if explicitly
             specified in the `target_ids` on the request.
     """
@@ -88,6 +96,19 @@ class RegisterWorkflowResponse(BaseModel):
     """
 
     id: uuid.UUID
+
+
+class RegisterAirflowWorkflowResponse(BaseModel):
+    """This is the response object returned by api_client.register_airflow_workflow().
+
+    Attributes:
+        id:
+            The uuid if of the newly registered workflow.
+    """
+
+    id: uuid.UUID
+    # TODO ENG-1481: Return an actual file instead of a string.
+    file: str
 
 
 class ListWorkflowResponseEntry(BaseModel):
@@ -146,7 +167,7 @@ class WorkflowDagResponse(BaseModel):
     workflow_id: uuid.UUID
     metadata: Metadata
     operators: Dict[str, Operator]
-    artifacts: Dict[str, Artifact]
+    artifacts: Dict[str, ArtifactMetadata]
 
 
 class WorkflowDagResultResponse(BaseModel):
@@ -192,3 +213,45 @@ class GetWorkflowResponse(BaseModel):
 
     workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
     workflow_dag_results: List[WorkflowDagResultResponse]
+
+
+class SavedObjectDelete(BaseModel):
+    """This is an item in the list returned by DeleteWorkflowResponse."""
+
+    name: str
+    exec_state: OperatorResult
+
+
+class DeleteWorkflowResponse(BaseModel):
+    """This is the response object returned by api_client.delete_workflow().
+
+    Attributes:
+        saved_object_deletion_results:
+            Results of deleting saved objects.
+            Key: Integration name
+            Value: List of SavedObjectDelete belonging to that integration
+    """
+
+    saved_object_deletion_results: Dict[str, List[SavedObjectDelete]]
+
+
+class SavedObjectUpdate(BaseModel):
+    """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
+
+    operator_name: str
+    integration_name: str
+    integration_id: uuid.UUID
+    service: ServiceType
+    object_name: str
+    update_mode: str
+
+
+class ListWorkflowSavedObjectsResponse(BaseModel):
+    """This is the response object returned by api_client.get_workflow_writes().
+
+    Attributes:
+        table_details:
+            List of objects written by the workflow.
+    """
+
+    object_details: List[SavedObjectUpdate]

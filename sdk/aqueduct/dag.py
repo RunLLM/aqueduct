@@ -3,8 +3,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from aqueduct.artifact import Artifact
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -42,9 +42,23 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
+class AqueductEngineConfig(BaseModel):
+    pass
+
+
+class AirflowEngineConfig(BaseModel):
+    integration_id: uuid.UUID
+
+
+class EngineConfig(BaseModel):
+    type: RuntimeType = RuntimeType.AQUEDUCT
+    aqueduct_config: Optional[AqueductEngineConfig]
+    airflow_config: Optional[AirflowEngineConfig]
+
+
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
-    artifacts: Dict[str, Artifact] = {}
+    artifacts: Dict[str, ArtifactMetadata] = {}
 
     # Allows for quick operator lookup by name.
     # Is excluded from json serialization.
@@ -52,6 +66,7 @@ class DAG(BaseModel):
 
     # These fields must be set when publishing the workflow
     metadata: Metadata
+    engine_config: EngineConfig = EngineConfig()
 
     class Config:
         fields = {
@@ -169,15 +184,15 @@ class DAG(BaseModel):
 
         return root_operators
 
-    def must_get_artifact(self, artifact_id: uuid.UUID) -> Artifact:
+    def must_get_artifact(self, artifact_id: uuid.UUID) -> ArtifactMetadata:
         if str(artifact_id) not in self.artifacts:
             raise ArtifactNotFoundException("Unable to find artifact.")
         return self.artifacts[str(artifact_id)]
 
-    def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[Artifact]:
+    def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[ArtifactMetadata]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
 
-    def get_artifacts_by_name(self, name: str) -> Optional[Artifact]:
+    def get_artifacts_by_name(self, name: str) -> Optional[ArtifactMetadata]:
         for artifact in self.list_artifacts():
             if artifact.name == name:
                 return artifact
@@ -188,7 +203,7 @@ class DAG(BaseModel):
         self,
         on_op_ids: Optional[List[uuid.UUID]] = None,
         filter_to: Optional[List[ArtifactType]] = None,
-    ) -> List[Artifact]:
+    ) -> List[ArtifactMetadata]:
         """Returns all artifacts in the DAG with the following optional filters:
 
         Args:
@@ -218,7 +233,7 @@ class DAG(BaseModel):
             self.operators[str(op.id)] = op
             self.operator_by_name[op.name] = op
 
-    def add_artifacts(self, artifacts: List[Artifact]) -> None:
+    def add_artifacts(self, artifacts: List[ArtifactMetadata]) -> None:
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
 
@@ -297,7 +312,7 @@ class AddOrReplaceOperatorDelta(DAGDelta):
             The output artifacts for this operation.
     """
 
-    def __init__(self, op: Operator, output_artifacts: List[Artifact]):
+    def __init__(self, op: Operator, output_artifacts: List[ArtifactMetadata]):
         # Check that the operator's outputs correspond to the given output artifacts.
         if len(op.outputs) != len(output_artifacts):
             raise InternalAqueductError(

@@ -1,9 +1,11 @@
 import json
 from typing import List, Optional, Union
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, S3TabularFormat
+from aqueduct.enums import ArtifactType, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -13,7 +15,6 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 from aqueduct.preview import preview_artifact
 
@@ -35,7 +36,7 @@ class S3Integration(Integration):
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
-    ) -> UntypedArtifact:
+    ) -> BaseArtifact:
         """
         Reads one or more files from the S3 integration.
 
@@ -53,11 +54,11 @@ class S3Integration(Integration):
                 supported types, except for ArtifactType.UNTYPED. Note that when multiple files are
                 retrieved, they must have the same artifact type.
             format:
-                If the artifact type is ArtifactType.TABULAR, the user has to specify the table format.
+                If the artifact type is ArtifactType.TABLE, the user has to specify the table format.
                 We currently support JSON, CSV, and Parquet. Note that when multiple files are retrieved,
                 they must have the same format.
             merge:
-                If the artifact type is ArtifactType.TABULAR, we can optionally merge multiple tables
+                If the artifact type is ArtifactType.TABLE, we can optionally merge multiple tables
                 into a single DataFrame if this flag is set to True.
             name:
                 Name of the query.
@@ -68,13 +69,19 @@ class S3Integration(Integration):
             Artifact or a tuple of artifacts representing the S3 Files.
         """
         if format:
+            if artifact_type != ArtifactType.TABLE:
+                raise Exception(
+                    "Format argument is only applicable to table artifact type, found %s instead."
+                    % artifact_type
+                )
+
             lowercased_format = format.lower()
-            if lowercased_format == S3TabularFormat.CSV.value.lower():
-                format_enum = S3TabularFormat.CSV
-            elif lowercased_format == S3TabularFormat.JSON.value.lower():
-                format_enum = S3TabularFormat.JSON
-            elif lowercased_format == S3TabularFormat.PARQUET.value.lower():
-                format_enum = S3TabularFormat.PARQUET
+            if lowercased_format == S3TableFormat.CSV.value.lower():
+                format_enum = S3TableFormat.CSV
+            elif lowercased_format == S3TableFormat.JSON.value.lower():
+                format_enum = S3TableFormat.JSON
+            elif lowercased_format == S3TableFormat.PARQUET.value.lower():
+                format_enum = S3TableFormat.PARQUET
             else:
                 raise Exception("Unsupport file format %s." % format)
         else:
@@ -109,7 +116,7 @@ class S3Integration(Integration):
                         outputs=[output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
                             type=ArtifactType.UNTYPED,
@@ -120,12 +127,12 @@ class S3Integration(Integration):
         )
 
         # Issue preview request since this is an eager execution
-        artifact = preview_artifact(self._dag, output_artifact_id)
+        artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
         self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
 
         return artifact
 
-    def config(self, filepath: str, format: Optional[S3TabularFormat] = None) -> SaveConfig:
+    def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
         """
         Configuration for saving to S3 Integration.
 

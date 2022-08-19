@@ -11,7 +11,7 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    S3TabularFormat,
+    S3TableFormat,
     SalesforceExtractType,
     ServiceType,
 )
@@ -59,7 +59,7 @@ class S3ExtractParams(BaseModel):
     # serialize the path before we pass it to initialize this field.
     filepath: str
     artifact_type: ArtifactType
-    format: Optional[S3TabularFormat]
+    format: Optional[S3TableFormat]
     merge: Optional[bool]
 
 
@@ -93,7 +93,7 @@ class GoogleSheetsLoadParams(BaseModel):
 
 class S3LoadParams(BaseModel):
     filepath: str
-    format: S3TabularFormat
+    format: S3TableFormat
 
 
 UnionLoadParams = Union[

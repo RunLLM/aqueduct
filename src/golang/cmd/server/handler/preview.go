@@ -6,23 +6,17 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/aqueducthq/aqueduct/lib/workflow/orchestrator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -41,8 +35,6 @@ import (
 //	Body:
 //		serialized `previewResponse` object consisting of overall status and results for all executed operators / artifacts.
 
-const previewPollIntervalMillisec = 100
-
 type previewArgs struct {
 	*aq_context.AqContext
 	DagSummary *request.DagSummary
@@ -53,24 +45,28 @@ type previewResponse struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
 	ArtifactContents map[uuid.UUID][]byte 				  `json:"artifact_contents"`
-	ArtifactSerializationTypes map[uuid.UUID]string		  `json:"artifact_serialization_types"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifact_types_metadata"`
 }
 
 type previewResponseMetadata struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactSeriaizationTypes map[uuid.UUID]string		  `json:"artifact_serialization_types"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifactTypeMetadata"`
 }
+
+type artifactTypeMetadata struct {
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
+}
+
 
 type PreviewHandler struct {
 	PostHandler
 
 	Database          database.Database
 	IntegrationReader integration.Reader
-	StorageConfig     *shared.StorageConfig
-	JobManager        job.JobManager
 	GithubManager     github.Manager
-	Vault             vault.Vault
+	AqEngine          engine.AqEngine
 }
 
 func (*PreviewHandler) Name() string {
@@ -93,7 +89,7 @@ func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{})
 	responseMetadata := previewResponseMetadata{
 		Status: resp.Status,
 		OperatorResults: resp.OperatorResults,
-		ArtifactSeriaizationTypes: resp.ArtifactSerializationTypes,
+		ArtifactTypesMetadata: resp.ArtifactTypesMetadata,
 	}
 
 	jsonBlob, err := json.Marshal(responseMetadata)
@@ -127,7 +123,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		r,
 		aqContext.Id,
 		h.GithubManager,
-		h.StorageConfig,
+		aqContext.StorageConfig,
 	)
 	if err != nil {
 		return nil, statusCode, err
@@ -175,86 +171,45 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	workflowDag, err := dag_utils.NewWorkflowDag(
+	timeConfig := &engine.AqueductTimeConfig{
+		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
+		ExecTimeout:          engine.DefaultExecutionTimeout,
+		CleanupTimeout:       engine.DefaultCleanupTimeout,
+	}
+
+	workflowPreviewResult, err := h.AqEngine.PreviewWorkflow(
 		ctx,
 		dagSummary.Dag,
-		workflow_dag_result.NewNoopWriter(true),
-		operator_result.NewNoopWriter(true),
-		artifact_result.NewNoopWriter(true),
-		workflow.NewNoopReader(true),
-		notification.NewNoopWriter(true),
-		user.NewNoopReader(true),
-		h.JobManager,
-		h.Vault,
-		h.StorageConfig,
-		true, // this is a preview
-		h.Database,
+		timeConfig,
 	)
-	if err != nil {
-		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating dag object.")
-	}
-
-	orch, err := orchestrator.NewAqOrchestrator(
-		workflowDag,
-		h.JobManager,
-		orchestrator.AqueductTimeConfig{
-			OperatorPollInterval: previewPollIntervalMillisec,
-			ExecTimeout:          orchestrator.DefaultExecutionTimeout,
-			CleanupTimeout:       orchestrator.DefaultCleanupTimeout,
-		},
-		true, // this is a preview
-	)
-	if err != nil {
-		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error creating orchestrator.")
-	}
-
-	defer orch.Finish(ctx)
-	status, err := orch.Execute(ctx)
-	if err != nil && err != orchestrator.ErrOpExecSystemFailure && err != orchestrator.ErrOpExecBlockingUserFailure {
+	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
 	statusCode := http.StatusOK
-	if err == orchestrator.ErrOpExecSystemFailure {
+	if err == engine.ErrOpExecSystemFailure {
 		statusCode = http.StatusInternalServerError
-	} else if err == orchestrator.ErrOpExecBlockingUserFailure {
+	} else if err == engine.ErrOpExecBlockingUserFailure {
 		statusCode = http.StatusBadRequest
 	}
 
-	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(workflowDag.Operators()))
-	for _, op := range workflowDag.Operators() {
-		execState, err := op.GetExecState(ctx)
-		if err != nil {
-			return errorRespPtr, http.StatusInternalServerError, err
-		}
-		execStateByOp[op.ID()] = *execState
-	}
 
 	// Only include artifact results that were successfully computed.
 	artifactContents := make(map[uuid.UUID][]byte)
-	artifactSerializationTypes := make(map[uuid.UUID]string)
-	for _, artf := range workflowDag.Artifacts() {
-		if artf.Computed(ctx) {
-			artifact_metadata, err := artf.GetMetadata(ctx)
-			if err != nil {
-				return errorRespPtr, http.StatusInternalServerError, err
-			}
-
-			content, err := artf.GetContent(ctx)
-			if err != nil {
-				return errorRespPtr, http.StatusInternalServerError, err
-			}
-
-			artifactContents[artf.ID()] = content
-			artifactSerializationTypes[artf.ID()] = artifact_metadata.SerializationType
+	artifactTypesMetadata := make(map[uuid.UUID]artifactTypeMetadata)
+	for id, artf := range workflowPreviewResult.Artifacts {
+		artifactContents[id] = artf.Content
+		artifactTypesMetadata[id] = artifactTypeMetadata{
+			SerializationType: artf.SerializationType,
+			ArtifactType: artf.ArtifactType,
 		}
 	}
 
 	return &previewResponse{
-		Status:          status,
-		OperatorResults: execStateByOp,
+		Status:          workflowPreviewResult.Status,
+		OperatorResults: workflowPreviewResult.Operators,
 		ArtifactContents: artifactContents,
-		ArtifactSerializationTypes: artifactSerializationTypes,
+		ArtifactTypesMetadata: artifactTypesMetadata,
 	}, statusCode, nil
 }
 

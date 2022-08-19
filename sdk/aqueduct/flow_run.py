@@ -4,15 +4,19 @@ from textwrap import wrap
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
-from aqueduct.artifact import Artifact
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.artifacts import (
+    base_artifact,
+    bool_artifact,
+    generic_artifact,
+    numeric_artifact,
+    param_artifact,
+    table_artifact,
+)
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
-from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
 from aqueduct import api_client
@@ -74,9 +78,7 @@ class FlowRun:
             assert param_op.spec.param is not None, "Artifact is not a parameter."
             print("* " + param_op.name + ": " + param_op.spec.param.val)
 
-    def artifact(
-        self, name: str
-    ) -> Optional[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
+    def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.
 
         Args:
@@ -92,16 +94,24 @@ class FlowRun:
 
         if artifact_from_dag is None:
             return None
-        elif artifact_from_dag.type is ArtifactType.TABULAR:
-            return TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif artifact_from_dag.type is ArtifactType.NUMERIC:
-            return MetricArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif artifact_from_dag.type is ArtifactType.BOOL:
-            return CheckArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif artifact_from_dag.type is ArtifactType.PARAM:
-            return ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
 
-        raise InternalAqueductError("The artifact's type can not be recognized.")
+        if not isinstance(artifact_from_dag.type, ArtifactType):
+            raise InternalAqueductError("The artifact's type can not be recognized.")
+
+        if artifact_from_dag.type is ArtifactType.TABLE:
+            return table_artifact.TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+        elif artifact_from_dag.type is ArtifactType.NUMERIC:
+            return numeric_artifact.NumericArtifact(
+                self._dag, artifact_from_dag.id, from_flow_run=True
+            )
+        elif artifact_from_dag.type is ArtifactType.BOOL:
+            return bool_artifact.BoolArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+        elif artifact_from_dag.type is ArtifactType.PARAM:
+            return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+        else:
+            return generic_artifact.GenericArtifact(
+                self._dag, artifact_from_dag.id, artifact_from_dag.type, from_flow_run=True
+            )
 
 
 # TODO(ENG-1049): find a better place to put this. It cannot be put in utils.py because of
@@ -126,7 +136,7 @@ def _show_dag(
         artifact_color: color of the artifact node.
     """
     operator_by_id: Dict[str, Operator] = {}
-    artifact_by_id: Dict[str, Artifact] = {}
+    artifact_by_id: Dict[str, ArtifactMetadata] = {}
     operator_mapping: Dict[str, Dict[str, Any]] = {}
 
     for operator in dag.list_operators():
@@ -159,7 +169,7 @@ def _show_dag(
             self,
             node_type: str,
             positions: Mapping[str, Mapping[str, float]],
-            mapping: Union[Mapping[str, Operator], Mapping[str, Artifact]],
+            mapping: Union[Mapping[str, Operator], Mapping[str, ArtifactMetadata]],
             color: str,
         ) -> None:
             self.node_type = node_type

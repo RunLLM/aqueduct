@@ -79,7 +79,7 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
   );
 };
 
-function readCredentialsFile(
+export function readCredentialsFile(
   file: File,
   setFile: (credentials: FileData) => void
 ) {

@@ -1,5 +1,5 @@
 import pytest
-from aqueduct_executor.operators.connectors.tabular import dataframe, mysql
+from aqueduct_executor.operators.connectors.data import dataframe, mysql
 from aqueduct_executor.operators.connectors.tests import conf, utils
 
 _TABLE = "test_mysql"

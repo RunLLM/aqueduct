@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -25,7 +24,6 @@ type TestIntegrationHandler struct {
 	IntegrationReader integration.Reader
 	Vault             vault.Vault
 	JobManager        job.JobManager
-	StorageConfig     *shared.StorageConfig
 }
 
 type TestIntegrationArgs struct {
@@ -81,7 +79,7 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		config,
 		integrationObject.Service,
 		h.JobManager,
-		h.StorageConfig,
+		args.StorageConfig,
 	)
 
 	return emptyResp, statusCode, err
