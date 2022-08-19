@@ -196,7 +196,6 @@ func extractAwsCredentials(config *shared.S3Config) (string, string, error) {
 
 	for fileScanner.Scan() {
 		if profileString == fileScanner.Text() {
-			awsAccessKeyId = fileScanner.Text()
 			if fileScanner.Scan() {
 				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id = %v", &awsAccessKeyId)
 			} else {
