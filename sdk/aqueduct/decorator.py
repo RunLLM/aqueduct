@@ -1,6 +1,7 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
+import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -369,7 +370,7 @@ def metric(
             return new_metric_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> float:
+        def local_func(*inputs: Any) -> Union[float, np.number[Any]]:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
@@ -486,7 +487,7 @@ def check(
             return new_check_artifact
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> bool:
+        def local_func(*inputs: Any) -> Union[bool, np.bool_]:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
