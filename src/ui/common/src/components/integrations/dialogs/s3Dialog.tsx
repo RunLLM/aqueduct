@@ -17,6 +17,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 const Placeholders: S3Config = {
   type: S3CredentialType.AccessKey,
   bucket: 'aqueduct',
+  region: '',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
@@ -31,6 +32,7 @@ type Props = {
 
 export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [bucket, setBucket] = useState<string>(null);
+  const [region, setRegion] = useState<string>(null);
   const [accessKeyId, setAccessKeyId] = useState<string>(null);
   const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
   const [configFilePath, setConfigFilePath] = useState<string>(null);
@@ -45,6 +47,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
     const config: S3Config = {
       type: s3Type,
       bucket: bucket,
+      region: region,
       access_key_id: accessKeyId,
       secret_access_key: secretAccessKey,
       config_file_path: configFilePath,
@@ -55,6 +58,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
     setDialogConfig(config);
   }, [
     bucket,
+    region,
     accessKeyId,
     secretAccessKey,
     configFilePath,
@@ -169,6 +173,16 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         placeholder={Placeholders.bucket}
         onChange={(event) => setBucket(event.target.value)}
         value={bucket}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Region*"
+        description="The region the S3 bucket belongs to."
+        placeholder={Placeholders.region}
+        onChange={(event) => setRegion(event.target.value)}
+        value={region}
       />
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>

@@ -94,6 +94,7 @@ export enum S3CredentialType {
 export type S3Config = {
   type: S3CredentialType;
   bucket: string;
+  region: string;
   access_key_id: string;
   secret_access_key: string;
   config_file_path: string;
