@@ -25,6 +25,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -66,15 +67,21 @@ func (*ConnectIntegrationHandler) Name() string {
 }
 
 func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+	logrus.Warn("Started prepare")
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}
 
+	logrus.Warn("Finished parse ctx")
+
 	service, name, configMap, userOnly, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
+		logrus.Warn("Unable to parse config")
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
+
+	logrus.Warnf("Parsed the config")
 
 	if service == integration.Github || service == integration.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
@@ -83,8 +90,9 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	config := auth.NewStaticConfig(configMap)
 
 	// Check if this integration should be used as the new storage layer
-	setStorage, err := checkIntegrationSetStorage(r.Context(), service, config)
+	setStorage, err := checkIntegrationSetStorage(service, config)
 	if err != nil {
+		logrus.Warnf("Unable to check set storage: %v", err)
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
 
@@ -279,7 +287,7 @@ func validateAirflowConfig(
 }
 
 // checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
-func checkIntegrationSetStorage(ctx context.Context, svc integration.Service, conf auth.Config) (bool, error) {
+func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
 	if svc != integration.S3 {
 		// Only S3 integrations can be used for the storage layer
 		return false, nil
@@ -295,7 +303,7 @@ func checkIntegrationSetStorage(ctx context.Context, svc integration.Service, co
 		return false, err
 	}
 
-	return c.UseAsStorage, nil
+	return bool(c.UseAsStorage), nil
 }
 
 func setIntegrationAsStorage(conf auth.Config) error {
@@ -328,7 +336,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	storageConfig := &shared.StorageConfig{
 		Type: shared.S3StorageType,
 		S3Config: &shared.S3Config{
-			Bucket: c.Bucket,
+			Bucket: fmt.Sprintf("s3://%s", c.Bucket),
 		},
 	}
 	switch c.Type {
