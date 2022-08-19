@@ -87,8 +87,9 @@ def test_edit_check(client):
     success_check = check_op(sql_artifact)
     assert success_check.get()
 
+    # Attempting to fetch the previous check artifact should fail, since its been overwritten!
     with pytest.raises(ArtifactNotFoundException):
-        client._dag.must_get_artifact(failed_check.id())
+        failed_check.get()
 
 
 def test_delete_check(client):
@@ -102,13 +103,13 @@ def test_delete_check(client):
     check_artifact_on_sql = success_on_single_table_input(sql_artifact)
     sql_artifact.remove_check(name="success_on_single_table_input")
     with pytest.raises(ArtifactNotFoundException):
-        client._dag.must_get_artifact(check_artifact_on_sql.id())
+        check_artifact_on_sql.get()
 
     metric_artifact = constant_metric(sql_artifact)
     check_artifact_on_metric = success_on_single_metric_input(metric_artifact)
     metric_artifact.remove_check(name="success_on_single_metric_input")
     with pytest.raises(ArtifactNotFoundException):
-        client._dag.must_get_artifact(check_artifact_on_metric.id())
+        check_artifact_on_metric.get()
 
 
 def test_check_wrong_input_type(client):

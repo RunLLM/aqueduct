@@ -16,7 +16,6 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
-from aqueduct.preview import preview_artifact
 
 
 class S3Integration(Integration):

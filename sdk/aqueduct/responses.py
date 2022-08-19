@@ -16,7 +16,6 @@ from aqueduct.enums import (
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
-from aqueduct.deserialize import deserialization_function_mapping
 
 
 class Logs(BaseModel):

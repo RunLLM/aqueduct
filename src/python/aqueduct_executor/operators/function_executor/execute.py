@@ -31,8 +31,6 @@ from aqueduct_executor.operators.utils.execution import (
     ExecutionState,
     Logs,
     exception_traceback,
-    TIP_NOT_NUMERIC,
-    TIP_NOT_BOOL,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
@@ -104,36 +102,6 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     return getattr(function, method_name)  # type: ignore
 
 
-def _infer_result_type(result: Any) -> ArtifactType:
-    if isinstance(result, DataFrame):
-        return ArtifactType.TABULAR
-    elif isinstance(result, Image.Image):
-        return ArtifactType.IMAGE
-    elif isinstance(result, bytes):
-        return ArtifactType.BYTES
-    elif isinstance(result, str):
-        # We first check if the result is a valid JSON string.
-        try:
-            json.loads(result)
-            return ArtifactType.JSON
-        except:
-            return ArtifactType.STRING
-    elif isinstance(result, bool) or isinstance(result, np.bool_):
-        return ArtifactType.BOOL
-    elif isinstance(result, int) or isinstance(result, float) or isinstance(result, np.number):
-        return ArtifactType.NUMERIC
-    elif isinstance(result, dict):
-        return ArtifactType.DICT
-    elif isinstance(result, tuple):
-        return ArtifactType.TUPLE
-    else:
-        try:
-            pickle.dumps(result)
-            return ArtifactType.PICKLABLE
-        except:
-            raise Exception("Failed to map type %s to supported artifact type." % type(result))
-
-
 def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
@@ -176,7 +144,6 @@ def run(spec: FunctionSpec) -> None:
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
-    print("operator type is:", spec.operator_type)
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:

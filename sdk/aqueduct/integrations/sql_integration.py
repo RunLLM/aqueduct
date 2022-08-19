@@ -19,7 +19,6 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
-from aqueduct.preview import preview_artifact
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"

@@ -56,7 +56,6 @@ from ruamel import yaml
 
 import aqueduct
 from aqueduct import api_client
-from aqueduct.preview import preview_artifact
 
 
 class TableArtifact(BaseArtifact):
