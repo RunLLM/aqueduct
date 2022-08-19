@@ -1,5 +1,5 @@
 import pytest
-from aqueduct_executor.operators.connectors.tabular import dataframe, sql_server
+from aqueduct_executor.operators.connectors.data import dataframe, sql_server
 from aqueduct_executor.operators.connectors.tests import conf, utils
 
 _TABLE = "test_sql_server"

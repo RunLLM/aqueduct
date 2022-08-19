@@ -21,12 +21,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type WorkflowStoragePaths struct {
-	OperatorMetadataPaths map[uuid.UUID]string
-	ArtifactPaths         map[uuid.UUID]string
-	ArtifactMetadataPaths map[uuid.UUID]string
-}
-
 func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
 	CleanupStorageFiles(ctx, storageConfig, []string{key})
 }
@@ -58,6 +52,16 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 	}
 
 	return nil
+}
+
+// Only to be used when duplicating cached results in the preview artifact cache.
+func CopyPathContentsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, fromPath string, toPath string) error {
+	s := storage.NewStorage(storageConfig)
+	content, err := s.Get(ctx, fromPath)
+	if err != nil {
+		return err
+	}
+	return s.Put(ctx, toPath, content)
 }
 
 func WriteWorkflowDagToDatabase(
@@ -121,7 +125,7 @@ func WriteWorkflowDagToDatabase(
 				ctx,
 				artifact.Name,
 				artifact.Description,
-				&artifact.Spec,
+				artifact.Type,
 				db,
 			)
 			if err != nil {

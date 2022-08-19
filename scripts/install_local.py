@@ -26,7 +26,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "15"
+SCHEMA_VERSION = "16"
 
 
 def execute_command(args, cwd=None):
@@ -88,6 +88,39 @@ if __name__ == "__main__":
     if not isdir(base_directory):
         print("~/.aqueduct must exist.")
         exit(1)
+
+    # TODO(kenxu): Can be removed once all development environments have this folder already.
+    preview_outputs_directory = os.path.join(server_directory, "storage", "preview")
+    if not os.path.isdir(preview_outputs_directory):
+        os.mkdir(preview_outputs_directory)
+
+    # Install the local SDK.
+    if args.update_sdk:
+        print("Updating the Python SDK...")
+        prev_pwd = os.environ["PWD"]
+        os.environ["PWD"] = join(os.environ["PWD"], "sdk")
+        execute_command(["pip", "install", "."], cwd=join(cwd, "sdk"))
+        os.environ["PWD"] = prev_pwd
+
+    # Install the local python operators.
+    if args.update_executor:
+        print("Updating the Python executor...")
+        prev_pwd = os.environ["PWD"]
+        os.environ["PWD"] = join(os.environ["PWD"], "src/python")
+        execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
+        os.environ["PWD"] = prev_pwd
+        
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/start-function-executor.sh",
+            join(server_directory, "bin")
+        ])
+
+        execute_command([
+            "cp", 
+            "./src/python/aqueduct_executor/operators/airflow/dag.template",
+            join(server_directory, "bin")
+        ])
 
     # Build and replace backend binaries.
     if args.update_go_binary:
@@ -153,33 +186,5 @@ if __name__ == "__main__":
         for f in files:
             if not fileNameRegex.search(f) and not f == "__version__":
                 execute_command(["rm", f], cwd=ui_directory)
-
-    # Install the local SDK.
-    if args.update_sdk:
-        print("Updating the Python SDK...")
-        prev_pwd = os.environ["PWD"]
-        os.environ["PWD"] = join(os.environ["PWD"], "sdk")
-        execute_command([sys.executable, "-m", "pip", "install", "."], cwd=join(cwd, "sdk"))
-        os.environ["PWD"] = prev_pwd
-
-    # Install the local python operators.
-    if args.update_executor:
-        print("Updating the Python executor...")
-        prev_pwd = os.environ["PWD"]
-        os.environ["PWD"] = join(os.environ["PWD"], "src/python")
-        execute_command([sys.executable, "-m", "pip", "install", "."], cwd=join(cwd, "src", "python"))
-        os.environ["PWD"] = prev_pwd
-        
-        execute_command([
-            "cp", 
-            "./src/python/aqueduct_executor/start-function-executor.sh",
-            join(server_directory, "bin")
-        ])
-
-        execute_command([
-            "cp", 
-            "./src/python/aqueduct_executor/operators/airflow/dag.template",
-            join(server_directory, "bin")
-        ])
 
     print("Successfully installed aqueduct from local repo!")

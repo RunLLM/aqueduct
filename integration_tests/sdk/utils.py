@@ -2,12 +2,11 @@ import time
 import uuid
 from typing import Dict, List, Optional, Union
 
-import requests
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import ExecutionStatus
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
 from pandas import DataFrame
 
 # Should be set before each test runs.
@@ -93,7 +92,7 @@ def run_sentiment_model_local_multiple_input(
 
 def run_flow_test(
     client: aqueduct.Client,
-    artifacts: List[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]],
+    artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact, ParamArtifact]],
     name: str = "",
     schedule: str = "",
     num_runs: int = 1,
@@ -120,7 +119,7 @@ def run_flow_test(
         artifacts=artifacts,
         schedule=schedule,
     )
-    print("Workflow registration succeeded. Workflow ID: %s" % flow.id())
+    print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
     try:
         wait_for_flow_runs(client, flow.id(), num_runs, expect_success)
@@ -148,9 +147,9 @@ def wait_for_flow_runs(
     begin = time.time()
 
     while True:
-        assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
-
         time.sleep(poll_threshold)
+
+        assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
             continue
@@ -198,9 +197,66 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
         print("Successfully deleted workflow %s" % (workflow_id))
 
 
-def get_response(client, endpoint, additional_headers={}):
-    headers = {"api-key": api_client.__GLOBAL_API_CLIENT__.api_key}
-    headers.update(additional_headers)
-    url = api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
-    r = requests.get(url, headers=headers)
-    return r
+def check_flow_doesnt_exist(client, flow_id):
+    def stop_condition(client, flow_id):
+        try:
+            client.flow(flow_id)
+            return False
+        except:
+            return True
+
+    polling(
+        lambda: stop_condition(client, flow_id),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking flow doens't exist.",
+    )
+
+
+def check_table_doesnt_exist(integration, table):
+    def stop_condition(integration, table):
+        try:
+            integration.sql(f"SELECT * FROM {table}").get()
+            return False
+        except:
+            return True
+
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
+
+def check_table_exists(integration, table):
+    def stop_condition(integration, table):
+        try:
+            integration.sql(f"SELECT * FROM {table}").get()
+            return True
+        except:
+            return False
+
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
+
+def polling(
+    stop_condition_fn,
+    timeout=60,
+    poll_threshold=5,
+    timeout_comment="Timed out waiting for workflow run to complete.",
+):
+    begin = time.time()
+
+    while True:
+        assert time.time() - begin < timeout, timeout_comment
+
+        if stop_condition_fn():
+            break
+        else:
+            time.sleep(poll_threshold)

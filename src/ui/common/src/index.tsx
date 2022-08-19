@@ -76,11 +76,11 @@ import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
 import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import FloatArtifactNode from './components/workflows/nodes/FloatArtifactNode';
 import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
 import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
+import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
@@ -158,7 +158,6 @@ import {
   GetArtifactResultResponse,
   getUpstreamOperator,
   Schema,
-  Spec,
 } from './utils/artifacts';
 import UserProfile from './utils/auth';
 import {
@@ -354,7 +353,6 @@ export {
   fetchUser,
   FileData,
   FileEventTarget,
-  FloatArtifactNode,
   formatService,
   FunctionGranularity,
   FunctionOp,
@@ -449,6 +447,7 @@ export {
   notificationsSlice,
   NotificationStatus,
   NotificationWorkflowMetadata,
+  NumericArtifactNode,
   objectKeyFn,
   openSideSheet,
   openSideSheetSlice,
@@ -497,7 +496,6 @@ export {
   SnowflakeCard,
   SnowflakeConfig,
   SnowflakeDialog,
-  Spec,
   SqlServerCard,
   SqlServerConfig,
   Status,

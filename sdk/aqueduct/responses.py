@@ -1,10 +1,18 @@
+import base64
 import textwrap
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from aqueduct.artifact import Artifact
+from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType, ServiceType
+from aqueduct.deserialize import deserialization_function_mapping
+from aqueduct.enums import (
+    ArtifactType,
+    ExecutionStatus,
+    FailureType,
+    SerializationType,
+    ServiceType,
+)
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
@@ -51,39 +59,10 @@ class OperatorResult(BaseModel):
     failure_type: Optional[FailureType] = None
 
 
-class TableArtifactResult(BaseModel):
-    """This represents the results of a single table artifact.
-
-    Attributes:
-        table_schema:
-            A list of maps, which each map representing the name -> type
-            of a single column.
-
-        data:
-            A byte string that can be deserialized into a Pandas dataframe.
-    """
-
-    table_schema: Optional[List[Dict[str, str]]]
-    data: str
-
-
-class MetricArtifactResult(BaseModel):
-    val: float
-
-
-class CheckArtifactResult(BaseModel):
-    passed: bool
-
-
-class ParamArtifactResult(BaseModel):
-    val: str
-
-
 class ArtifactResult(BaseModel):
-    table: Optional[TableArtifactResult]
-    metric: Optional[MetricArtifactResult]
-    check: Optional[CheckArtifactResult]
-    param: Optional[ParamArtifactResult]
+    serialization_type: SerializationType
+    artifact_type: ArtifactType
+    content: str
 
 
 class PreviewResponse(BaseModel):
@@ -97,8 +76,8 @@ class PreviewResponse(BaseModel):
             All operators that were run will appear in this map.
 
         artifact_results:
-            A map from an artifact id to its ArtifactResult object.
-            ArtifactResults will only appear in this map if explicitly
+            A map from an artifact id to its base64 encoded string.
+            Artifact results will only appear in this map if explicitly
             specified in the `target_ids` on the request.
     """
 
@@ -187,7 +166,7 @@ class WorkflowDagResponse(BaseModel):
     workflow_id: uuid.UUID
     metadata: Metadata
     operators: Dict[str, Operator]
-    artifacts: Dict[str, Artifact]
+    artifacts: Dict[str, ArtifactMetadata]
 
 
 class WorkflowDagResultResponse(BaseModel):

@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
@@ -83,11 +82,10 @@ type WorkflowRetentionSpec struct {
 
 type WorkflowSpec struct {
 	BaseSpec
-	WorkflowId     string                `json:"workflow_id" yaml:"workflowId"`
-	GithubManager  github.ManagerConfig  `json:"github_manager" yaml:"github_manager"`
-	Parameters     map[string]string     `json:"parameters" yaml:"parameters"`
-	AqPath         string                `json:"aq_path" yaml:"aqPath"`
-	StorageConfig  *shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
+	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
+	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
+	AqPath         string               `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -102,19 +100,17 @@ type BasePythonSpec struct {
 
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath        string          `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath string          `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile      string          `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass     string          `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod    string          `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs          string          `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths   []string        `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths  []string        `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths  []string        `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
-	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
-	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
+	FunctionPath        string        `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath string        `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile      string        `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass     string        `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod    string        `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs          string        `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths   []string      `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths  []string      `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths  []string      `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	OperatorType        operator.Type `json:"operator_type" yaml:"operator_type"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
@@ -273,7 +269,6 @@ func NewWorkflowSpec(
 	jobManager Config,
 	githubManager github.ManagerConfig,
 	aqPath string,
-	storageConfig *shared.StorageConfig,
 	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
@@ -284,7 +279,6 @@ func NewWorkflowSpec(
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
 		AqPath:        aqPath,
-		StorageConfig: storageConfig,
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,

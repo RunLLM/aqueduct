@@ -32,7 +32,12 @@ func (sdb *standardDatabase) Query(ctx context.Context, dest interface{}, query 
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Errorf("Error when closing rows: %s", err)
+		}
+	}()
 
 	return scanRows(rows, dest)
 }
@@ -53,7 +58,12 @@ func (stx *standardTransaction) Query(ctx context.Context, dest interface{}, que
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Errorf("Error when closing rows: %s", err)
+		}
+	}()
 
 	return scanRows(rows, dest)
 }

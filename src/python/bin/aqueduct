@@ -251,6 +251,13 @@ def update():
             shutil.rmtree(server_directory, ignore_errors=True)
             exit(1)
 
+    # Ensure that the preview outputs directory always exists, and always starts off empty.
+    # Contents from previous server sessions will be cleared.
+    preview_outputs_directory = os.path.join(server_directory, "storage", "preview")
+    if os.path.isdir(preview_outputs_directory):
+        shutil.rmtree(preview_outputs_directory)
+    os.mkdir(preview_outputs_directory)
+
     version_file = os.path.join(server_directory, "__version__")
     if require_update(version_file):
         try:
