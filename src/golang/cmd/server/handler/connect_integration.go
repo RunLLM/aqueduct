@@ -25,7 +25,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -67,21 +66,15 @@ func (*ConnectIntegrationHandler) Name() string {
 }
 
 func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	logrus.Warn("Started prepare")
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	logrus.Warn("Finished parse ctx")
-
 	service, name, configMap, userOnly, err := request.ParseIntegrationConfigFromRequest(r)
 	if err != nil {
-		logrus.Warn("Unable to parse config")
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
-
-	logrus.Warnf("Parsed the config")
 
 	if service == integration.Github || service == integration.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
@@ -92,7 +85,6 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	// Check if this integration should be used as the new storage layer
 	setStorage, err := checkIntegrationSetStorage(service, config)
 	if err != nil {
-		logrus.Warnf("Unable to check set storage: %v", err)
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
 
@@ -137,7 +129,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
 		if err := setIntegrationAsStorage(args.Config); err != nil {
-			logrus.Warnf("Error: %v", err)
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -307,6 +298,8 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 	return bool(c.UseAsStorage), nil
 }
 
+// setIntegrationAsStorage use the integration config `conf` and updates the global
+// storage config with it.
 func setIntegrationAsStorage(conf auth.Config) error {
 	data, err := conf.Marshal()
 	if err != nil {

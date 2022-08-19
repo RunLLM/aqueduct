@@ -2,7 +2,6 @@ package integration
 
 import (
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type S3ConfigType string
@@ -19,11 +18,9 @@ func (scb *S3ConfigBool) UnmarshalJSON(data []byte) error {
 	s := string(data)
 	var b bool
 
-	logrus.Warnf("Got data as %v", s)
-
+	// TODO ENG-1586: Remove hack of treating credential string as a boolean
 	switch s {
 	case "\"true\"":
-		logrus.Warnf("Inside true case")
 		b = true
 	case "\"false\"":
 		b = false
