@@ -50,7 +50,7 @@ class NumericArtifact(BaseArtifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        content: Optional[Union[int, float, np.number[Any]]] = None,
+        content: Optional[Union[int, float, np.number]] = None,
         from_flow_run: bool = False,
     ):
         self._dag = dag
@@ -66,7 +66,7 @@ class NumericArtifact(BaseArtifact):
 
         self._type = ArtifactType.NUMERIC
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number[Any]]:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
 
         Returns:

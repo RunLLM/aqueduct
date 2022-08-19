@@ -52,7 +52,7 @@ class BoolArtifact(BaseArtifact):
 
         self._type = ArtifactType.BOOL
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
         """Materializes a BoolArtifact into a boolean.
 
         Returns:
