@@ -89,7 +89,7 @@ func (*GetArtifactResultHandler) SendResponse(w http.ResponseWriter, response in
 		return
 	}
 
-	formFieldWriter, err := multipartWriter.CreateFormField(metadataFormFieldName)
+	formFieldWriter, err := multipartWriter.CreateFormFile(metadataFormFieldName, metadataFormFieldName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -102,7 +102,7 @@ func (*GetArtifactResultHandler) SendResponse(w http.ResponseWriter, response in
 	}
 
 	if len(resp.Data) > 0 {
-		formFieldWriter, err = multipartWriter.CreateFormField(dataFormFieldName)
+		formFieldWriter, err = multipartWriter.CreateFormFile(dataFormFieldName, dataFormFieldName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
