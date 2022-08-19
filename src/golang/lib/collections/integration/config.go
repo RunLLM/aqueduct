@@ -9,7 +9,7 @@ type S3ConfigType string
 
 const (
 	AccessKeyS3ConfigType         S3ConfigType = "access_key"
-	ConfigFileS3ConfigType        S3ConfigType = "config_file"
+	ConfigFilePathS3ConfigType    S3ConfigType = "config_file_path"
 	ConfigFileContentS3ConfigType S3ConfigType = "config_file_content"
 )
 
@@ -39,7 +39,7 @@ func (scb *S3ConfigBool) UnmarshalJSON(data []byte) error {
 type S3Config struct {
 	Type              S3ConfigType `json:"type"`
 	Bucket            string       `json:"bucket"`
-	Region            string       `json:"string"`
+	Region            string       `json:"region"`
 	AccessKeyId       string       `json:"access_key_id"`
 	SecretAccessKey   string       `json:"secret_access_key"`
 	ConfigFilePath    string       `json:"config_file_path"`

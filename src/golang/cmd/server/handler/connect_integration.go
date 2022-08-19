@@ -137,6 +137,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
 		if err := setIntegrationAsStorage(args.Config); err != nil {
+			logrus.Warnf("Error: %v", err)
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -389,7 +390,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 
 		storageConfig.S3Config.CredentialsPath = path
 		storageConfig.S3Config.CredentialsProfile = profileName
-	case integration.ConfigFileS3ConfigType:
+	case integration.ConfigFilePathS3ConfigType:
 		// The credentials are already in the form of a filepath and profile, so no changes
 		// need to be made
 		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath

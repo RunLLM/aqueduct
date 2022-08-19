@@ -47,6 +47,8 @@ class S3Config(models.BaseConfig):
     config_file_profile: str = ""
 
     bucket: str = ""
+
+    region: str = ""
     use_as_storage: str = ""
 
 
