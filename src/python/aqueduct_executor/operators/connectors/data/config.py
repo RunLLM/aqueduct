@@ -47,6 +47,7 @@ class S3Config(models.BaseConfig):
     config_file_profile: str = ""
 
     bucket: str = ""
+    use_as_storage: str = ""
 
 
 class SnowflakeConfig(models.BaseConfig):
