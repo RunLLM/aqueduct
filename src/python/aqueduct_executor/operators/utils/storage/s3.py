@@ -31,14 +31,19 @@ class S3Storage(Storage):
         self._key_prefix = key_prefix
 
     def put(self, key: str, value: bytes) -> None:
-        key = self._key_prefix + "/" + key
+        key = self._prefix_key(key)
         print(f"writing to s3: {key}")
         self._client.put_object(Bucket=self._bucket, Key=key, Body=value)
 
     def get(self, key: str) -> bytes:
-        key = self._key_prefix + "/" + key
+        key = self._prefix_key(key)
         print(f"reading from s3: {key}")
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
+
+    def _prefix_key(self, key: str) -> str:
+        if not self._key_prefix:
+            return key
+        return self._key_prefix + "/" + key
 
 
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:

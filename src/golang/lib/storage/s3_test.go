@@ -8,18 +8,38 @@ import (
 )
 
 func TestParseBucketAndKey(t *testing.T) {
-	config := &shared.S3Config{
-		Region:             "us-east-2",
-		Bucket:             "s3://aqueduct/test/folder",
-		CredentialsPath:    "/home/users/aqueduct/.aws",
-		CredentialsProfile: "default",
-	}
-	storage := s3Storage{
-		s3Config: config,
+	type test struct {
+		inputBucket    string
+		inputKey       string
+		expectedBucket string
+		expectedKey    string
 	}
 
-	bucket, key, err := storage.parseBucketAndKey("key")
-	require.Nil(t, err)
-	require.Equal(t, "aqueduct", bucket)
-	require.Equal(t, "/test/folder/key", key)
+	tests := []test{
+		{
+			inputBucket:    "s3://aqueduct/test/folder",
+			inputKey:       "key",
+			expectedBucket: "aqueduct",
+			expectedKey:    "test/folder/key",
+		},
+		{
+			inputBucket:    "s3://aqueduct",
+			inputKey:       "key",
+			expectedBucket: "aqueduct",
+			expectedKey:    "key",
+		},
+	}
+
+	for _, tc := range tests {
+		storage := s3Storage{
+			s3Config: &shared.S3Config{
+				Bucket: tc.inputBucket,
+			},
+		}
+
+		bucket, key, err := storage.parseBucketAndKey(tc.inputKey)
+		require.Nil(t, err)
+		require.Equal(t, tc.expectedBucket, bucket)
+		require.Equal(t, tc.expectedKey, key)
+	}
 }
