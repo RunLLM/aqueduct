@@ -53,11 +53,11 @@ func (*ConnectIntegrationHandler) Headers() []string {
 
 type ConnectIntegrationArgs struct {
 	*aq_context.AqContext
-	Name       string              // User specified name for the integration
-	Service    integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
-	Config     auth.Config         // Integration config
-	UserOnly   bool                // Whether the integration is only accessible by the user or the entire org
-	SetStorage bool                // Whether the integration should be used as the storage layer
+	Name         string              // User specified name for the integration
+	Service      integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
+	Config       auth.Config         // Integration config
+	UserOnly     bool                // Whether the integration is only accessible by the user or the entire org
+	SetAsStorage bool                // Whether the integration should be used as the storage layer
 }
 
 type ConnectIntegrationResponse struct{}
@@ -97,12 +97,12 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}
 
 	return &ConnectIntegrationArgs{
-		AqContext:  aqContext,
-		Service:    service,
-		Name:       name,
-		Config:     config,
-		UserOnly:   userOnly,
-		SetStorage: setStorage,
+		AqContext:    aqContext,
+		Service:      service,
+		Name:         name,
+		Config:       config,
+		UserOnly:     userOnly,
+		SetAsStorage: setStorage,
 	}, http.StatusOK, nil
 }
 
@@ -134,7 +134,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	if args.SetStorage {
+	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
 		if err := setIntegrationAsStorage(args.Config); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
@@ -337,6 +337,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 		Type: shared.S3StorageType,
 		S3Config: &shared.S3Config{
 			Bucket: fmt.Sprintf("s3://%s", c.Bucket),
+			Region: c.Region,
 		},
 	}
 	switch c.Type {

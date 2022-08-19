@@ -129,7 +129,7 @@ func (s *s3Storage) Delete(ctx context.Context, key string) error {
 
 func CreateS3Session(s3Config *shared.S3Config) (*session.Session, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-2"),
+		Region: aws.String(s3Config.Region),
 		Credentials: credentials.NewSharedCredentials(
 			s3Config.CredentialsPath,
 			s3Config.CredentialsProfile,
