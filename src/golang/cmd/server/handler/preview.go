@@ -51,7 +51,7 @@ type previewResponse struct {
 type previewResponseMetadata struct {
 	Status          shared.ExecutionStatus                `json:"status"`
 	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifactTypeMetadata"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifact_types_metadata"`
 }
 
 type artifactTypeMetadata struct {

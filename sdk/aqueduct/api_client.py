@@ -29,8 +29,8 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from requests_toolbelt.multipart import decoder
 from aqueduct.utils import GITHUB_ISSUE_LINK
+from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
 
@@ -282,12 +282,9 @@ class APIClient:
                 metadata = json.loads(part.content.decode(multipart_data.encoding))
             elif utils.is_string_valid_uuid(field_name):
                 if is_metadata_received:
-                    artifact_result_constructor["serialization_type"] = metadata[
-                        "artifact_serialization_types"
-                    ][field_name]
+                    artifact_result_constructor = metadata["artifact_types_metadata"][field_name]
                     artifact_result_constructor["content"] = part.content
                     artifact_results[field_name] = ArtifactResult(**artifact_result_constructor)
-                    artifact_result_constructor = {}
                 else:
                     raise AqueductError("Unable to retrieve artifacts metadata")
             else:

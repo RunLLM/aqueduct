@@ -5,12 +5,12 @@ import uuid
 from typing import Any, Dict, Optional
 
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
+from aqueduct.enums import ArtifactType
 from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 from aqueduct import api_client
-from aqueduct.enums import ArtifactType
 
 
 class BoolArtifact(Artifact):
@@ -32,7 +32,9 @@ class BoolArtifact(Artifact):
         >>> assert check_artifact.get()
     """
 
-    def __init__(self, dag: DAG, artifact_id: uuid.UUID, content: bool, from_flow_run: bool = False):
+    def __init__(
+        self, dag: DAG, artifact_id: uuid.UUID, content: bool, from_flow_run: bool = False
+    ):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -55,7 +57,10 @@ class BoolArtifact(Artifact):
         if parameters:
             artifact_response = preview_artifact(self._dag, self._artifact_id, parameters)
             if artifact.type() != ArtifactType.BOOL:
-                raise Exception("Error: the computed result is expected to of type bool, found %s" % artifact.type())
+                raise Exception(
+                    "Error: the computed result is expected to of type bool, found %s"
+                    % artifact.type()
+                )
             return artifact._content()
         else:
             return self._content

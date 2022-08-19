@@ -1,4 +1,3 @@
-import base64
 import textwrap
 import uuid
 from typing import Any, Dict, List, Optional
@@ -62,7 +61,7 @@ class OperatorResult(BaseModel):
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
     artifact_type: ArtifactType
-    content: str
+    content: bytes
 
 
 class PreviewResponse(BaseModel):
