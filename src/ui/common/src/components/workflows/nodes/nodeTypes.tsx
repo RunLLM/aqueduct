@@ -1,15 +1,15 @@
 import BoolArtifactNode from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
 import DatabaseNode from './DatabaseNode';
+import DictArtifactNode from './DictArtifactNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
+import GeneticArtifactNode from './GenericArtifactNode';
+import ImageArtifactNode from './ImageArtifactNode';
 import JsonArtifactNode from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
 import NumericArtifactNode from './NumericArtifactNode';
 import StringArtifactNode from './StringArtifactNode';
 import TableArtifactNode from './TableArtifactNode';
-import ImageArtifactNode from './ImageArtifactNode';
-import DictArtifactNode from './DictArtifactNode';
-import GeneticArtifactNode from './GenericArtifactNode';
 
 export const nodeTypes = {
   database: DatabaseNode,

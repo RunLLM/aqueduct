@@ -3,15 +3,15 @@ import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
+import Image from 'mui-image';
 import React from 'react';
 
 import { ArtifactResult } from '../../reducers/workflow';
+import { SerializationType } from '../../utils/artifacts';
 import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
 import DataTable from '../tables/DataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
-import Image from 'mui-image'
-import { SerializationType } from '../../utils/artifacts';
 
 type Props = {
   previewData: ArtifactResult;
@@ -77,11 +77,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   if (errorComponent) {
-    return (
-      <>
-      {errorComponent}
-      </>
-    );
+    return <>{errorComponent}</>;
   }
 
   let data: React.ReactElement;
@@ -111,20 +107,28 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
           />
         </Box>
       );
-    } else if (previewData.result.serialization_type === SerializationType.Image) {
-      const srcFromBase64 = "data:image/png;base64," + previewData.result.data
-      data = (
-        <Image src={srcFromBase64} duration={0} fit="contain"/>
-      );
-    } else if (previewData.result.serialization_type === SerializationType.Json) {
+    } else if (
+      previewData.result.serialization_type === SerializationType.Image
+    ) {
+      const srcFromBase64 = 'data:image/png;base64,' + previewData.result.data;
+      data = <Image src={srcFromBase64} duration={0} fit="contain" />;
+    } else if (
+      previewData.result.serialization_type === SerializationType.Json
+    ) {
       // Convert to pretty-printed version.
-      const prettyJson = JSON.stringify(JSON.parse(previewData.result.data),null,2)
+      const prettyJson = JSON.stringify(
+        JSON.parse(previewData.result.data),
+        null,
+        2
+      );
       data = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
           {prettyJson}
         </Typography>
       );
-    } else if (previewData.result.serialization_type === SerializationType.String) {
+    } else if (
+      previewData.result.serialization_type === SerializationType.String
+    ) {
       data = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
           {previewData.result.data}
@@ -134,8 +138,11 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
       errorComponent = (
         <Box>
           <Alert severity="error">
-            <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-              Unexpected Artifact serialization type {previewData.result.serialization_type}.
+            <Typography
+              sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}
+            >
+              Unexpected Artifact serialization type{' '}
+              {previewData.result.serialization_type}.
             </Typography>
           </Alert>
         </Box>

@@ -2,7 +2,11 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'react-flow-renderer';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
-import { Artifact, GetArtifactResultResponse, SerializationType } from '../utils/artifacts';
+import {
+  Artifact,
+  GetArtifactResultResponse,
+  SerializationType,
+} from '../utils/artifacts';
 import {
   GetOperatorResultResponse,
   Operator,
@@ -153,31 +157,35 @@ export const handleGetArtifactResults = createAsyncThunk<
 
     try {
       const formData = await res.formData();
-      const metadataJson = await (formData.get("metadata") as File).text()
+      const metadataJson = await (formData.get('metadata') as File).text();
       const artifactResult = JSON.parse(metadataJson);
-  
+
       if (
-        artifactResult.serialization_type == SerializationType.String || 
+        artifactResult.serialization_type == SerializationType.String ||
         artifactResult.serialization_type == SerializationType.Table ||
         artifactResult.serialization_type == SerializationType.Json
       ) {
-        artifactResult["data"] = await (formData.get("data") as File).text()
+        artifactResult['data'] = await (formData.get('data') as File).text();
       } else if (artifactResult.serialization_type == SerializationType.Image) {
-        const toBase64 = file => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(
-            // Use a regex to remove data url part
-            (reader.result as string).replace('data:', '').replace(/^.+,/, '')
-          );
-          reader.onerror = error => reject(error);
-        });
-  
-        artifactResult["data"] = await toBase64((formData.get("data") as File))
+        const toBase64 = (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () =>
+              resolve(
+                // Use a regex to remove data url part
+                (reader.result as string)
+                  .replace('data:', '')
+                  .replace(/^.+,/, '')
+              );
+            reader.onerror = (error) => reject(error);
+          });
+
+        artifactResult['data'] = await toBase64(formData.get('data') as File);
       }
-  
+
       return artifactResult as GetArtifactResultResponse;
-    } catch(err) {
+    } catch (err) {
       return thunkAPI.rejectWithValue(err);
     }
   }
