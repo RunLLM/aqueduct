@@ -45,6 +45,7 @@ class S3Storage(Storage):
             return key
         return self._key_prefix + "/" + key
 
+
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:
     path_parts = s3_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
