@@ -17,14 +17,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationWriter: s.IntegrationWriter,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
-			StorageConfig:     s.StorageConfig,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
-			Database:      s.Database,
-			Engine:        s.AqEngine,
-			StorageConfig: s.StorageConfig,
-			JobManager:    s.JobManager,
-			Vault:         s.Vault,
+			Database:   s.Database,
+			Engine:     s.AqEngine,
+			JobManager: s.JobManager,
+			Vault:      s.Vault,
 
 			OperatorReader:    s.OperatorReader,
 			IntegrationReader: s.IntegrationReader,
@@ -110,14 +108,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.PreviewTableRoute: &handler.PreviewTableHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
-			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
 		routes.PreviewRoute: &handler.PreviewHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
-			StorageConfig:     s.StorageConfig,
 			GithubManager:     s.GithubManager,
 			AqEngine:          s.AqEngine,
 		},
@@ -125,21 +121,18 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:          s.Database,
 			CustomReader:      s.CustomReader,
 			IntegrationReader: s.IntegrationReader,
-			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
 		routes.ListIntegrationObjectsRoute: &handler.ListIntegrationObjectsHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
-			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
 		routes.CreateTableRoute: &handler.CreateTableHandler{
 			Database:          s.Database,
 			IntegrationReader: s.IntegrationReader,
-			StorageConfig:     s.StorageConfig,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
@@ -153,7 +146,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager:    s.JobManager,
 			GithubManager: s.GithubManager,
 			Vault:         s.Vault,
-			StorageConfig: s.StorageConfig,
 			Engine:        s.AqEngine,
 
 			ArtifactReader:    s.ArtifactReader,
@@ -174,7 +166,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				JobManager:    s.JobManager,
 				GithubManager: s.GithubManager,
 				Vault:         s.Vault,
-				StorageConfig: s.StorageConfig,
 
 				ArtifactReader:    s.ArtifactReader,
 				IntegrationReader: s.IntegrationReader,
@@ -200,7 +191,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationReader: s.IntegrationReader,
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
-			StorageConfig:     s.StorageConfig,
 		},
 	}
 }

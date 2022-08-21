@@ -359,6 +359,7 @@ export const workflowSlice = createSlice({
     selectResultIdx: (state, { payload }: PayloadAction<number>) => {
       state.artifactResults = {};
       state.operatorResults = {};
+
       state.selectedResult = state.dagResults[payload];
       state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
     },
@@ -487,7 +488,9 @@ export const workflowSlice = createSlice({
 
         state.artifactResults = {};
         state.operatorResults = {};
-        state.selectedResult = state.dagResults[0];
+        if (!state.selectedResult) {
+          state.selectedResult = state.dagResults[0];
+        }
         state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
         state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
       }

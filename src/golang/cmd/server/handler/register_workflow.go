@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -46,7 +45,6 @@ type RegisterWorkflowHandler struct {
 	JobManager    job.JobManager
 	GithubManager github.Manager
 	Vault         vault.Vault
-	StorageConfig *shared.StorageConfig
 	Engine        engine.Engine
 
 	ArtifactReader    artifact.Reader
@@ -90,7 +88,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		r,
 		aqContext.Id,
 		h.GithubManager,
-		h.StorageConfig,
+		aqContext.StorageConfig,
 	)
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to register workflow.")

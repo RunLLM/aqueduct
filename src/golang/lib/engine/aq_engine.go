@@ -77,7 +77,6 @@ type aqEngine struct {
 	GithubManager  github.Manager
 	Vault          vault.Vault
 	CronjobManager cronjob.CronjobManager
-	StorageConfig  *shared.StorageConfig
 	AqPath         string
 
 	// Only used for previews.
@@ -116,7 +115,6 @@ func NewAqEngine(
 	previewCacheManager preview_cache.CacheManager,
 	vault vault.Vault,
 	aqPath string,
-	storageConfig *shared.StorageConfig,
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
 ) (*aqEngine, error) {
@@ -128,7 +126,6 @@ func NewAqEngine(
 		PreviewCacheManager: previewCacheManager,
 		Vault:               vault,
 		CronjobManager:      cronjobManager,
-		StorageConfig:       storageConfig,
 		AqPath:              aqPath,
 		EngineReaders:       engineReaders,
 		EngineWriters:       engineWriters,
@@ -153,7 +150,6 @@ func (eng *aqEngine) ScheduleWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
-		eng.StorageConfig,
 		nil,
 	)
 	err := eng.CronjobManager.DeployCronJob(
@@ -247,7 +243,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.UserReader,
 		engineJobManager,
 		eng.Vault,
-		eng.StorageConfig,
 		nil, /* artifactCacheManager */
 		operator.Publish,
 		eng.Database,
@@ -333,7 +328,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.UserReader,
 		jobManager,
 		eng.Vault,
-		eng.StorageConfig,
 		eng.PreviewCacheManager,
 		operator.Preview,
 		eng.Database,
@@ -663,7 +657,6 @@ func (eng *aqEngine) TriggerWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
-		eng.StorageConfig,
 		parameters,
 	)
 
@@ -874,7 +867,6 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			},
 			eng.GithubManager.Config(),
 			eng.AqPath,
-			eng.StorageConfig,
 			nil,
 		)
 

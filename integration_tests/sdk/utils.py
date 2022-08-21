@@ -119,7 +119,7 @@ def run_flow_test(
         artifacts=artifacts,
         schedule=schedule,
     )
-    print("Workflow registration succeeded. Workflow ID: %s" % flow.id())
+    print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
     try:
         wait_for_flow_runs(client, flow.id(), num_runs, expect_success)
