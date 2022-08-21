@@ -160,14 +160,21 @@ func (n *NullMetadata) Scan(value interface{}) error {
 	return nil
 }
 
+type ExecutionStatus string
+
+const (
+	SucceededExecutionStatus ExecutionStatus = "succeeded"
+)
+
 type artifactResult struct {
-	Id          uuid.UUID    `db:"id"`
-	Metadata    NullMetadata `db:"metadata"`
-	ContentPath string       `db:"content_path" json:"content_path"`
+	Id          uuid.UUID       `db:"id"`
+	Metadata    NullMetadata    `db:"metadata"`
+	ContentPath string          `db:"content_path" json:"content_path"`
+	Status      ExecutionStatus `db:"status" json:"status"`
 }
 
 func getArtifactResult(ctx context.Context, db database.Database, artifactId uuid.UUID) ([]artifactResult, error) {
-	query := "SELECT id, metadata, content_path FROM artifact_result WHERE artifact_id = $1;"
+	query := "SELECT id, metadata, content_path, status FROM artifact_result WHERE artifact_id = $1;"
 
 	var result []artifactResult
 	err := db.Query(ctx, &result, query, artifactId)
@@ -235,6 +242,10 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 		newArtifactType := NewArtifactType("")
 
 		for _, artifactResult := range artifactResults {
+			if artifactResult.Metadata.ArtifactType != "" && artifactResult.Metadata.SerializationType != "" {
+				log.Infof("Skipping data migration for artifact result %s since its content has already been migrated.", artifactResult.Id)
+				continue
+			}
 			// Temporaty file to store the updated metadata dict that contains
 			// the serialization type and artifact type.
 			metadataPath := fmt.Sprintf("%s_%s", artifactResult.Id, "metadata")
@@ -257,8 +268,13 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			// and we need to revert the content change.
 			originalContent, err := storage.NewStorage(storageConfig).Get(ctx, artifactResult.ContentPath)
 			if err != nil {
-				log.Infof("Skipping data migration for artifact result %s since its content wasn't generated", artifactResult.Id)
-				continue
+				if artifactResult.Status != SucceededExecutionStatus && err == storage.ErrObjectDoesNotExist {
+					log.Infof("Skipping data migration for artifact result %s since its content wasn't generated.", artifactResult.Id)
+					continue
+				} else {
+					log.Errorf("Unexpected error while migrating artifact result %s: %s.", artifactResult.Id, err)
+					return err
+				}
 			}
 
 			defer func() {
@@ -284,7 +300,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 
 			err = cmd.Run()
 			if err != nil {
-				log.Errorf("Error running Python migration job. Stdout: %s, Stderr: %s", outb.String(), errb.String())
+				log.Errorf("Error running Python migration job. Stdout: %s, Stderr: %s.", outb.String(), errb.String())
 				return err
 			}
 
