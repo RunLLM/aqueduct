@@ -81,7 +81,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   let data: React.ReactElement;
-  if (previewData.result && previewData.result.data) {
+  if (previewData.result?.status === ExecutionStatus.Succeeded) {
     if (previewData.result.serialization_type === SerializationType.Table) {
       const parsedData = JSON.parse(previewData.result.data);
       const columnsContent = parsedData.schema.fields.map((column) => {
@@ -137,27 +137,16 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
     } else {
       errorComponent = (
         <Box>
-          <Alert severity="error">
+          <Alert severity="warning">
             <Typography
               sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}
             >
-              Unexpected Artifact serialization type{' '}
-              {previewData.result.serialization_type}.
+              Artifact contains binary data that cannot be previewed.
             </Typography>
           </Alert>
         </Box>
       );
     }
-  } else {
-    errorComponent = (
-      <Box>
-        <Alert severity="warning">
-          <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-            Artifact contains binary data that cannot be previewed.
-          </Typography>
-        </Alert>
-      </Box>
-    );
   }
 
   return (

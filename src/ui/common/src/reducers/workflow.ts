@@ -19,6 +19,7 @@ import {
   ReactFlowNodeData,
 } from '../utils/reactflow';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
+import { ExecutionStatus } from '../utils/shared';
 import {
   DeleteWorkflowResponse,
   GetWorkflowResponse,
@@ -158,33 +159,39 @@ export const handleGetArtifactResults = createAsyncThunk<
     try {
       const formData = await res.formData();
       const metadataJson = await (formData.get('metadata') as File).text();
-      const artifactResult = JSON.parse(metadataJson);
+      const artifactResult = JSON.parse(
+        metadataJson
+      ) as GetArtifactResultResponse;
 
-      if (
-        artifactResult.serialization_type == SerializationType.String ||
-        artifactResult.serialization_type == SerializationType.Table ||
-        artifactResult.serialization_type == SerializationType.Json
-      ) {
-        artifactResult['data'] = await (formData.get('data') as File).text();
-      } else if (artifactResult.serialization_type == SerializationType.Image) {
-        const toBase64 = (file) =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () =>
-              resolve(
-                // Use a regex to remove data url part
-                (reader.result as string)
-                  .replace('data:', '')
-                  .replace(/^.+,/, '')
-              );
-            reader.onerror = (error) => reject(error);
-          });
+      if (artifactResult.exec_state.status === ExecutionStatus.Succeeded) {
+        if (
+          artifactResult.serialization_type === SerializationType.String ||
+          artifactResult.serialization_type === SerializationType.Table ||
+          artifactResult.serialization_type === SerializationType.Json
+        ) {
+          artifactResult.data = await (formData.get('data') as File).text();
+        } else if (
+          artifactResult.serialization_type === SerializationType.Image
+        ) {
+          const toBase64 = (file) =>
+            new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () =>
+                resolve(
+                  // Use a regex to remove data url part
+                  (reader.result as string)
+                    .replace('data:', '')
+                    .replace(/^.+,/, '')
+                );
+              reader.onerror = (error) => reject(error);
+            });
 
-        artifactResult['data'] = await toBase64(formData.get('data') as File);
+          artifactResult.data = await toBase64(formData.get('data') as File);
+        }
       }
 
-      return artifactResult as GetArtifactResultResponse;
+      return artifactResult;
     } catch (err) {
       return thunkAPI.rejectWithValue(err);
     }

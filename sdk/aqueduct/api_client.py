@@ -406,7 +406,8 @@ class APIClient:
         parsed_response = utils.parse_artifact_result_response(resp)
 
         if parsed_response["metadata"]["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
-            raise AqueductError("Artifact result unavailable due to unsuccessful execution.")
+            print("Artifact result unavailable due to unsuccessful execution.")
+            return ""
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
         if serialization_type not in deserialization_function_mapping:
