@@ -5,7 +5,7 @@ type Type string
 const (
 	Untyped   Type = "untyped"
 	String    Type = "string"
-	Bool      Type = "bool"
+	Bool      Type = "boolean"
 	Numeric   Type = "numeric"
 	Dict      Type = "dictionary"
 	Tuple     Type = "tuple"
