@@ -1,3 +1,4 @@
+import base64
 import json
 import sys
 
@@ -21,8 +22,9 @@ def run(spec: ParamSpec) -> None:
     print("Job Spec: \n{}".format(spec.json()))
 
     storage = parse_storage(spec.storage_config)
+    system_metadata = utils.read_system_metadata(storage, [spec.input_metadata_path])
     exec_state = ExecutionState(user_logs=Logs())
-    deserialized_value = json.loads(spec.val)
+    deserialized_value = base64.b64decode(spec.val)
     artifact_type = infer_artifact_type(deserialized_value)
 
     try:

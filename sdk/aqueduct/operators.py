@@ -150,6 +150,7 @@ class CheckSpec(BaseModel):
 
 class ParamSpec(BaseModel):
     val: str
+    val_type: ArtifactType
 
 
 class OperatorSpec(BaseModel):

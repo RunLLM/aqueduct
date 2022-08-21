@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
@@ -119,6 +120,8 @@ type FunctionSpec struct {
 type ParamSpec struct {
 	BasePythonSpec
 	Val                string `json:"val"  yaml:"val"`
+	Val_Type		   artifact.Type `json:"val_type"  yaml:val_type"`
+	InputMetadataPath  string `json:"input_metadata_path"  yaml:"input_metadata_path"`
 	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }

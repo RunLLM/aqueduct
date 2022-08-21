@@ -16,8 +16,10 @@ class ParamSpec(BaseModel):
     name: str
     type: Literal[enums.JobType.PARAM]
     storage_config: config.StorageConfig
+    input_metadata_path: str
     metadata_path: str
     val: str
+    val_type: enums.ArtifactType
     output_content_path: str
     output_metadata_path: str
 

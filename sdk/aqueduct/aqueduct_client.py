@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.serialize import serialization_function_mapping
 
 from aqueduct import api_client, dag
 
@@ -176,7 +178,14 @@ class Client:
 
         artifact_type = infer_artifact_type(default)
 
-        val = serialize_parameter_value(name, default)
+        if artifact_type not in serialization_function_mapping:
+            raise Exception("Unsupported parameter artifact serialization type %s." % serialization_type)
+
+        val = serialization_function_mapping[artifact_type](
+            default
+        )
+
+        encoded_val = base64.b64encode(val)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -188,7 +197,7 @@ class Client:
                         id=operator_id,
                         name=name,
                         description=description,
-                        spec=OperatorSpec(param=ParamSpec(val=val)),
+                        spec=OperatorSpec(param=ParamSpec(val=encoded_val, val_type=artifact_type)),
                         inputs=[],
                         outputs=[output_artifact_id],
                     ),
