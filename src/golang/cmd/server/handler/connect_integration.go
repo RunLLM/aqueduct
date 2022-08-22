@@ -2,12 +2,17 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -47,10 +52,11 @@ func (*ConnectIntegrationHandler) Headers() []string {
 
 type ConnectIntegrationArgs struct {
 	*aq_context.AqContext
-	Name     string              // User specified name for the integration
-	Service  integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
-	Config   auth.Config         // Integration config
-	UserOnly bool                // Whether the integration is only accessible by the user or the entire org
+	Name         string              // User specified name for the integration
+	Service      integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
+	Config       auth.Config         // Integration config
+	UserOnly     bool                // Whether the integration is only accessible by the user or the entire org
+	SetAsStorage bool                // Whether the integration should be used as the storage layer
 }
 
 type ConnectIntegrationResponse struct{}
@@ -76,12 +82,19 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	config := auth.NewStaticConfig(configMap)
 
+	// Check if this integration should be used as the new storage layer
+	setStorage, err := checkIntegrationSetStorage(service, config)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
 	return &ConnectIntegrationArgs{
-		AqContext: aqContext,
-		Service:   service,
-		Name:      name,
-		Config:    config,
-		UserOnly:  userOnly,
+		AqContext:    aqContext,
+		Service:      service,
+		Name:         name,
+		Config:       config,
+		UserOnly:     userOnly,
+		SetAsStorage: setStorage,
 	}, http.StatusOK, nil
 }
 
@@ -103,8 +116,25 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, h.Database, h.Vault); err != nil {
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, txn, h.Vault); err != nil {
 		return emptyResp, statusCode, err
+	}
+
+	if args.SetAsStorage {
+		// This integration should be used as the new storage layer
+		if err := setIntegrationAsStorage(args.Config); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
+		}
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	return emptyResp, http.StatusOK, nil
@@ -158,7 +188,6 @@ func ConnectIntegration(
 		args.Config,
 		vaultObject,
 	); err != nil {
-		// TODO ENG-498: Rollback integration write
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
@@ -247,4 +276,121 @@ func validateAirflowConfig(
 	}
 
 	return http.StatusOK, nil
+}
+
+// checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
+func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
+	if svc != integration.S3 {
+		// Only S3 integrations can be used for the storage layer
+		return false, nil
+	}
+
+	data, err := conf.Marshal()
+	if err != nil {
+		return false, err
+	}
+
+	var c integration.S3Config
+	if err := json.Unmarshal(data, &c); err != nil {
+		return false, err
+	}
+
+	return bool(c.UseAsStorage), nil
+}
+
+// setIntegrationAsStorage use the integration config `conf` and updates the global
+// storage config with it.
+func setIntegrationAsStorage(conf auth.Config) error {
+	data, err := conf.Marshal()
+	if err != nil {
+		return err
+	}
+
+	var c integration.S3Config
+	if err := json.Unmarshal(data, &c); err != nil {
+		return err
+	}
+
+	storageConfig, err := convertS3IntegrationtoStorageConfig(&c)
+	if err != nil {
+		return err
+	}
+
+	// Change global storage config
+	return config.UpdateStorage(storageConfig)
+}
+
+func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.StorageConfig, error) {
+	// Users provide AWS credentials for an S3 integration via one of the following:
+	//  1. AWS Access Key and Secret Key
+	//  2. Credentials file content
+	//  3. Credentials filepath and profile name
+	// The S3 Storage implementation expects the AWS credentials to be specified via a
+	// filepath and profile name, so we must convert the above to the correct format.
+	storageConfig := &shared.StorageConfig{
+		Type: shared.S3StorageType,
+		S3Config: &shared.S3Config{
+			Bucket: fmt.Sprintf("s3://%s", c.Bucket),
+			Region: c.Region,
+		},
+	}
+	switch c.Type {
+	case integration.AccessKeyS3ConfigType:
+		// AWS access and secret keys need to be written to a credentials file
+		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
+		f, err := os.Create(path)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		credentialsContent := fmt.Sprintf(
+			"[default]\naws_access_key_id=%s\naws_secret_access_key=%s\n",
+			c.AccessKeyId,
+			c.SecretAccessKey,
+		)
+		if _, err := f.WriteString(credentialsContent); err != nil {
+			return nil, err
+		}
+
+		storageConfig.S3Config.CredentialsPath = path
+		storageConfig.S3Config.CredentialsProfile = "default"
+	case integration.ConfigFileContentS3ConfigType:
+		// The credentials content needs to be written to a credentials file
+		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
+		f, err := os.Create(path)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		// Determine profile name by looking for [profile_name]
+		i := strings.Index(c.ConfigFileContent, "[")
+		if i < 0 {
+			return nil, errors.New("Unable to determine AWS credentials profile name.")
+		}
+
+		j := strings.Index(c.ConfigFileContent, "]")
+		if j < 0 {
+			return nil, errors.New("Unable to determine AWS credentials profile name.")
+		}
+
+		profileName := c.ConfigFileContent[i+1 : j]
+
+		if _, err := f.WriteString(c.ConfigFileContent); err != nil {
+			return nil, err
+		}
+
+		storageConfig.S3Config.CredentialsPath = path
+		storageConfig.S3Config.CredentialsProfile = profileName
+	case integration.ConfigFilePathS3ConfigType:
+		// The credentials are already in the form of a filepath and profile, so no changes
+		// need to be made
+		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
+		storageConfig.S3Config.CredentialsProfile = c.ConfigFileProfile
+	default:
+		return nil, errors.Newf("Unknown S3ConfigType: %v", c.Type)
+	}
+
+	return storageConfig, nil
 }
