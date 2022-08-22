@@ -1,4 +1,4 @@
-import { faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { faFileCode } from '@fortawesome/free-solid-svg-icons';
 import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
@@ -9,15 +9,15 @@ type Props = {
   isConnectable: boolean;
 };
 
-const NumericArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
+const DictArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faHashtag}
+      icon={faFileCode}
       data={data}
       isConnectable={isConnectable}
-      defaultLabel="Numeric"
+      defaultLabel="Dictionary"
     />
   );
 };
 
-export default memo(NumericArtifactNode);
+export default memo(DictArtifactNode);

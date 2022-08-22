@@ -27,6 +27,7 @@ import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
 import { exportCsv } from '../../../../utils/preview';
 import { LoadingStatusEnum } from '../../../../utils/shared';
+import { ExecutionStatus } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
@@ -249,7 +250,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.NumericArtifact ||
       currentNode.type === NodeType.BoolArtifact ||
       currentNode.type === NodeType.JsonArtifact ||
-      currentNode.type === NodeType.StringArtifact
+      currentNode.type === NodeType.StringArtifact ||
+      currentNode.type === NodeType.ImageArtifact ||
+      currentNode.type === NodeType.DictArtifact ||
+      currentNode.type === NodeType.GenericArtifact
     ) {
       return selectedDag.artifacts[currentNode.id].name;
     } else {
@@ -261,7 +265,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
-      if (artifactResult?.result && artifactResult.result.data.length > 0) {
+      if (
+        artifactResult?.result &&
+        artifactResult.result.exec_state.status === ExecutionStatus.Succeeded &&
+        artifactResult.result.data.length > 0
+      ) {
         artifactResultData = JSON.parse(artifactResult.result.data);
       }
 
