@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -15,6 +17,11 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+)
+
+const (
+	metadataFormFieldName = "metadata"
+	dataFormFieldName     = "data"
 )
 
 // Route: /artifact_result/{workflowDagResultId}/{artifactId}
@@ -40,16 +47,22 @@ type getArtifactResultArgs struct {
 	artifactId          uuid.UUID
 }
 
-type getArtifactResultResponse struct {
+type artifactResultMetadata struct {
 	Name string `json:"name"`
 
 	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
 	// We are incurring this tech debt right now since there are quite a few usages of
 	// `status` in the UI.
-	Status    shared.ExecutionStatus `json:"status"`
-	ExecState shared.ExecutionState  `json:"exec_state"`
-	Schema    []map[string]string    `json:"schema"`
-	Data      string                 `json:"data"`
+	Status            shared.ExecutionStatus            `json:"status"`
+	ExecState         shared.ExecutionState             `json:"exec_state"`
+	Schema            []map[string]string               `json:"schema"`
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact.Type                     `json:"artifact_type"`
+}
+
+type getArtifactResultResponse struct {
+	Metadata *artifactResultMetadata `json:"metadata"`
+	Data     []byte                  `json:"data"`
 }
 
 type GetArtifactResultHandler struct {
@@ -63,6 +76,51 @@ type GetArtifactResultHandler struct {
 
 func (*GetArtifactResultHandler) Name() string {
 	return "GetArtifactResult"
+}
+
+// This custom implementation of SendResponse constructs a multipart form response with two fields:
+// 1: "metadata" contains a json serialized blob of artifact result metadata.
+// 2: "data" contains the artifact result data blob generated the serialization method
+// specified in the metadata field.
+func (*GetArtifactResultHandler) SendResponse(w http.ResponseWriter, response interface{}) {
+	resp := response.(*getArtifactResultResponse)
+	multipartWriter := multipart.NewWriter(w)
+	defer multipartWriter.Close()
+
+	w.Header().Set("Content-Type", multipartWriter.FormDataContentType())
+
+	metadataJsonBlob, err := json.Marshal(resp.Metadata)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// The second argument is the file name, which is redundant but required by the UI to parse the file correctly.
+	formFieldWriter, err := multipartWriter.CreateFormFile(metadataFormFieldName, metadataFormFieldName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = formFieldWriter.Write(metadataJsonBlob)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if len(resp.Data) > 0 {
+		formFieldWriter, err = multipartWriter.CreateFormFile(dataFormFieldName, dataFormFieldName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = formFieldWriter.Write(resp.Data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -141,14 +199,20 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		execState.UserLogs = dbArtifactResult.ExecState.UserLogs
 	}
 
-	response := getArtifactResultResponse{
-		Status:    execState.Status,
-		ExecState: execState,
-		Name:      dbArtifact.Name,
+	metadata := artifactResultMetadata{
+		Status:            execState.Status,
+		ExecState:         execState,
+		Name:              dbArtifact.Name,
+		ArtifactType:      dbArtifactResult.Metadata.ArtifactType,
+		SerializationType: dbArtifactResult.Metadata.SerializationType,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {
-		response.Schema = dbArtifactResult.Metadata.Schema
+		metadata.Schema = dbArtifactResult.Metadata.Schema
+	}
+
+	response := &getArtifactResultResponse{
+		Metadata: &metadata,
 	}
 
 	if dbArtifactResult.Status == shared.SucceededExecutionStatus {
@@ -161,7 +225,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 		}
 
-		response.Data = string(data)
+		response.Data = data
 	}
 
 	return response, http.StatusOK, nil

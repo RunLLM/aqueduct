@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 import cloudpickle as pickle
+import multipart
 import numpy as np
 import pandas as pd
 import requests
@@ -23,6 +24,7 @@ from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
 from PIL import Image
+from requests_toolbelt.multipart import decoder
 
 GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
@@ -495,3 +497,25 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             return ArtifactType.PICKLABLE
         except:
             raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+    parse = multipart.parse_options_header
+
+    result = {}
+
+    for part in multipart_data.parts:
+        field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+        field_name = parse(field_name)[1]["name"]
+
+        if field_name == "metadata":
+            result[field_name] = json.loads(part.content.decode(multipart_data.encoding))
+        elif field_name == "data":
+            result[field_name] = part.content
+        else:
+            raise AqueductError(
+                "Unexpected form field %s for artifact result response" % field_name
+            )
+
+    return result

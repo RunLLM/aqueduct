@@ -1,3 +1,4 @@
+import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -16,11 +17,13 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 const Placeholders: S3Config = {
   type: S3CredentialType.AccessKey,
   bucket: 'aqueduct',
+  region: 'us-east-1',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
+  use_as_storage: '',
 };
 
 type Props = {
@@ -29,6 +32,7 @@ type Props = {
 
 export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [bucket, setBucket] = useState<string>(null);
+  const [region, setRegion] = useState<string>(null);
   const [accessKeyId, setAccessKeyId] = useState<string>(null);
   const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
   const [configFilePath, setConfigFilePath] = useState<string>(null);
@@ -37,26 +41,31 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
   const [s3Type, setS3Type] = useState<S3CredentialType>(
     S3CredentialType.AccessKey
   );
+  const [useAsStorage, setUseAsStorage] = useState<string>('false');
 
   useEffect(() => {
     const config: S3Config = {
       type: s3Type,
       bucket: bucket,
+      region: region,
       access_key_id: accessKeyId,
       secret_access_key: secretAccessKey,
       config_file_path: configFilePath,
       config_file_content: file?.data ?? '',
       config_file_profile: configFileProfile,
+      use_as_storage: useAsStorage,
     };
     setDialogConfig(config);
   }, [
     bucket,
+    region,
     accessKeyId,
     secretAccessKey,
     configFilePath,
     file,
     configFileProfile,
     s3Type,
+    useAsStorage,
   ]);
 
   const configProfileInput = (
@@ -166,6 +175,16 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         value={bucket}
       />
 
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Region*"
+        description="The region the S3 bucket belongs to."
+        placeholder={Placeholders.region}
+        onChange={(event) => setRegion(event.target.value)}
+        value={region}
+      />
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={s3Type} onChange={(_, value) => setS3Type(value)}>
           <Tab value={S3CredentialType.AccessKey} label="Enter Access Keys" />
@@ -182,6 +201,18 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       {s3Type === S3CredentialType.AccessKey && accessKeyTab}
       {s3Type === S3CredentialType.ConfigFilePath && configPathTab}
       {s3Type === S3CredentialType.ConfigFileContent && configUploadTab}
+
+      <FormControlLabel
+        label="Use this integration for Aqueduct metadata storage."
+        control={
+          <Checkbox
+            checked={useAsStorage === 'true'}
+            onChange={(event) =>
+              setUseAsStorage(event.target.checked ? 'true' : 'false')
+            }
+          />
+        }
+      />
     </Box>
   );
 };
