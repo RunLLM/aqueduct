@@ -400,6 +400,8 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	}
 
 	return storageConfig, nil
+}
+
 func validateKubernetesConfig(
 	ctx context.Context,
 	config auth.Config,
