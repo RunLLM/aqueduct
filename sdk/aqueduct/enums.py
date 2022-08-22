@@ -142,7 +142,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
-    IMAGE = "image" # corresponds to PIL.Image.Image type
+    IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
     PARAM = "param"
 
