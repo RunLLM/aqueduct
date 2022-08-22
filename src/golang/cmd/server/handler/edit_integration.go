@@ -89,9 +89,9 @@ func (*EditIntegrationHandler) Name() string {
 // `updateConfig` updates `curConfigToUpdate` *in-place* with `newConfig` with
 // the same behavior as map updates.
 // It returns 3 values:
-//  - whether there's actually an update
-//  - http status code
-//  - error if there's any
+// - whether there's actually an update
+// - http status code
+// - error if there's any
 //
 // If trying to update a 'read only' field defined by `ServerToReadOnlyFieldsMap`,
 // `updateConfig` will return a 400 and an error.
