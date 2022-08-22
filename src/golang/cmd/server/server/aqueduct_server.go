@@ -14,12 +14,13 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -32,6 +33,9 @@ const (
 	RequiredSchemaVersion = 15
 
 	accountOrganizationId = "aqueduct"
+
+	// The maximum number of entries this cache can have.
+	previewCacheSize = 200
 )
 
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
@@ -40,24 +44,28 @@ type AqServer struct {
 	Router *chi.Mux
 
 	Name          string
-	StorageConfig *shared.StorageConfig
 	Database      database.Database
 	GithubManager github.Manager
-	JobManager    job.JobManager
-	Vault         vault.Vault
+	// TODO ENG-1483: Move JobManager from Server to Handlers
+	JobManager job.JobManager
+	Vault      vault.Vault
+	AqEngine   engine.AqEngine
+	AqPath     string
 	*Readers
 	*Writers
 }
 
-func NewAqServer(conf *config.ServerConfiguration) *AqServer {
+func NewAqServer() *AqServer {
 	ctx := context.Background()
-	aqPath := conf.AqPath
+	aqPath := config.AqueductPath()
 	db, err := database.NewSqliteDatabase(&database.SqliteConfig{
 		File: path.Join(aqPath, database.SqliteDatabasePath),
 	})
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
+
+	githubManager := github.NewUnimplementedManager()
 
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
@@ -72,7 +80,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 
 	vault, err := vault.NewFileVault(&vault.FileConfig{
 		Directory:     path.Join(aqPath, vault.FileVaultDir),
-		EncryptionKey: conf.EncryptionKey,
+		EncryptionKey: config.EncryptionKey(),
 	})
 	if err != nil {
 		db.Close()
@@ -91,13 +99,37 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		log.Fatal("Unable to create writers: ", err)
 	}
 
+	storageConfig := config.Storage()
+
+	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
+		&storageConfig,
+		previewCacheSize,
+	)
+	if err != nil {
+		log.Fatal("Unable to create preview artifact cache: ", err)
+	}
+
+	eng, err := engine.NewAqEngine(
+		db,
+		githubManager,
+		previewCacheManager,
+		vault,
+		aqPath,
+		GetEngineReaders(readers),
+		GetEngineWriters(writers),
+	)
+	if err != nil {
+		log.Fatal("Unable to create aqEngine: ", err)
+	}
+
 	s := &AqServer{
 		Router:        chi.NewRouter(),
-		StorageConfig: conf.StorageConfig,
 		Database:      db,
 		GithubManager: github.NewUnimplementedManager(),
 		JobManager:    jobManager,
 		Vault:         vault,
+		AqPath:        aqPath,
+		AqEngine:      eng,
 		Readers:       readers,
 		Writers:       writers,
 	}
@@ -130,7 +162,7 @@ func NewAqServer(conf *config.ServerConfiguration) *AqServer {
 		"",
 		"",
 		"",
-		conf.ApiKey,
+		config.APIKey(),
 		accountOrganizationId,
 	)
 	if err != nil {

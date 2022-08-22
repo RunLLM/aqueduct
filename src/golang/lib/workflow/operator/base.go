@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -14,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -30,20 +30,21 @@ type baseOperator struct {
 	metadataPath string
 	jobName      string
 
-	inputs              []artifact.Artifact
-	outputs             []artifact.Artifact
-	inputContentPaths   []string
-	inputMetadataPaths  []string
-	outputContentPaths  []string
-	outputMetadataPaths []string
+	inputs          []artifact.Artifact
+	outputs         []artifact.Artifact
+	inputExecPaths  []*utils.ExecPaths
+	outputExecPaths []*utils.ExecPaths
 
-	jobManager    job.JobManager
-	vaultObject   vault.Vault
-	storageConfig *shared.StorageConfig
-	db            database.Database
+	// The operator is cache-aware if this is non-nil.
+	previewCacheManager preview_cache.CacheManager
+	jobManager          job.JobManager
+	vaultObject         vault.Vault
+	storageConfig       *shared.StorageConfig
+	db                  database.Database
 
+	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
-	isPreview        bool
+	execMode         ExecutionMode
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -72,6 +73,62 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 			Tip:     shared.TipUnknownInternalError,
 		},
 	}
+}
+
+// For each output artifact, copy over the contents of the content and metadata paths.
+// This should only ever be used for preview routes. Returns an error if this operator did not succeed.
+// If it does not, the operator will fall back on traditional execution, overwriting anything we wrote
+// to the output paths here.
+func (bo *baseOperator) executeUsingCachedResult(ctx context.Context, allCachedOutputPaths []preview_cache.Entry) error {
+	for i, cachedOutputPaths := range allCachedOutputPaths {
+		err := utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactContentPath, bo.outputExecPaths[i].ArtifactContentPath)
+		if err != nil {
+			return err
+		}
+
+		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.ArtifactMetadataPath, bo.outputExecPaths[i].ArtifactMetadataPath)
+		if err != nil {
+			return err
+		}
+
+		err = utils.CopyPathContentsInStorage(ctx, bo.storageConfig, cachedOutputPaths.OpMetadataPath, bo.outputExecPaths[i].OpMetadataPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	// Check if this operator can use previously cached results instead of computing for scratch.
+	if bo.previewCacheManager != nil {
+		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))
+		for _, output := range bo.outputs {
+			outputArtifactSignatures = append(outputArtifactSignatures, output.Signature())
+		}
+
+		allFound, cacheEntryByKey, err := bo.previewCacheManager.GetMulti(ctx, outputArtifactSignatures)
+		if err != nil {
+			log.Errorf("Unexpected error when querying the preview cache: %v", err)
+		}
+
+		if allFound {
+			allCachedEntries := make([]preview_cache.Entry, 0, len(bo.outputs))
+			for _, outputArtifact := range bo.outputs {
+				allCachedEntries = append(allCachedEntries, cacheEntryByKey[outputArtifact.Signature()])
+			}
+
+			err = bo.executeUsingCachedResult(ctx, allCachedEntries)
+			if err == nil {
+				// We've successfully used the cached result!
+				return nil
+			}
+			// We've failed to use the cache, so we will retry the execution without the cache.
+			log.Errorf("Operator %s had a preview cache hit but was unable to execute. Error: %v", bo.Name(), err)
+		}
+	}
+
+	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
 // fetchExecState assumes that the operator has been computed already.
@@ -103,11 +160,13 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 
 	status, err := bo.jobManager.Poll(ctx, bo.jobName)
 	if err != nil {
-		// If the job does not exist, this could mean that is hasn't been run yet (pending),
-		// or that it has run already at sometime in the past, but has been garbage collected
-		// (succeeded/failed).
+		// If the job does not exist, this could mean that
+		// 1) it is hasn't been run yet (pending),
+		// 2) it has run already at sometime in the past, but has been garbage collected
+		// 3) it has run already at sometime in the past, but did not go through the job manager.
+		//    (this can happen when the output artifacts have already been cached).
 		if err == job.ErrJobNotExist {
-			// Check whether the operator actually ran.
+			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
 				return bo.fetchExecState(ctx), nil
 			}
@@ -179,9 +238,13 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
-	if bo.isPreview {
-		// Don't persist any result for preview operators.
-		return nil
+	if bo.execMode == Preview {
+		// We should not be persisting any result for preview operators.
+		return errors.Newf("Operator %s cannot be persisted, as it is being previewed.", bo.Name())
+	}
+
+	if bo.previewCacheManager != nil {
+		return errors.Newf("Operator %s is cache-aware, so it cannot be persisted.", bo.Name())
 	}
 
 	if bo.resultsPersisted {
@@ -216,7 +279,11 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 }
 
 func (bo *baseOperator) Finish(ctx context.Context) {
-	utils.CleanupStorageFile(ctx, bo.storageConfig, bo.metadataPath)
+	// Delete the operator's metadata path only if it was already copied into the operator_result's table.
+	// Otherwise, the artifact preview cache manager will handle the deletion.
+	if bo.resultsPersisted {
+		utils.CleanupStorageFile(ctx, bo.storageConfig, bo.metadataPath)
+	}
 
 	for _, outputArtifact := range bo.outputs {
 		outputArtifact.Finish(ctx)
@@ -229,8 +296,8 @@ type baseFunctionOperator struct {
 }
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
-	// If the operator ran in preview mode, cleanup the serialized function.
-	if bfo.isPreview {
+	// Delete the serialized function only for previews.
+	if bfo.execMode == Preview {
 		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
 	}
 
@@ -256,15 +323,8 @@ func (bfo *baseFunctionOperator) jobSpec(
 		}
 	}
 
-	inputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.inputs))
-	outputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.outputs))
-	for _, inputArtifact := range bfo.inputs {
-		inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Type())
-	}
-	for _, outputArtifact := range bfo.outputs {
-		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
-	}
-
+	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
+	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
 	return &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
@@ -278,12 +338,10 @@ func (bfo *baseFunctionOperator) jobSpec(
 		EntryPointClass:     entryPoint.ClassName,
 		EntryPointMethod:    entryPoint.Method,
 		CustomArgs:          fn.CustomArgs,
-		InputContentPaths:   bfo.inputContentPaths,
-		InputMetadataPaths:  bfo.inputMetadataPaths,
-		OutputContentPaths:  bfo.outputContentPaths,
-		OutputMetadataPaths: bfo.outputMetadataPaths,
-		InputArtifactTypes:  inputArtifactTypes,
-		OutputArtifactTypes: outputArtifactTypes,
+		InputContentPaths:   inputContentPaths,
+		InputMetadataPaths:  inputMetadataPaths,
+		OutputContentPaths:  outputContentPaths,
+		OutputMetadataPaths: outputMetadataPaths,
 		OperatorType:        bfo.Type(),
 		CheckSeverity:       checkSeverity,
 	}

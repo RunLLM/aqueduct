@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
@@ -27,6 +26,10 @@ func newLoadOperator(
 ) (Operator, error) {
 	base.jobName = generateLoadJobName()
 
+	if base.previewCacheManager != nil {
+		return nil, errors.Newf("A load operator cannot be part of a cache-aware workflow execution, since it is non-preview only.")
+	}
+
 	inputs := base.inputs
 	outputs := base.outputs
 
@@ -35,12 +38,6 @@ func newLoadOperator(
 	}
 	if len(outputs) != 0 {
 		return nil, errWrongNumOutputs
-	}
-
-	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.TableType {
-			return nil, errors.New("Only table artifacts can be saved.")
-		}
 	}
 
 	spec := base.dbOperator.Spec.Load()
@@ -55,7 +52,7 @@ func newLoadOperator(
 	}, nil
 }
 
-func (lo *loadOperatorImpl) JobSpec() job.Spec {
+func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := lo.dbOperator.Spec.Load()
 
 	return &job.LoadSpec{
@@ -68,7 +65,11 @@ func (lo *loadOperatorImpl) JobSpec() job.Spec {
 		ConnectorName:     spec.Service,
 		ConnectorConfig:   lo.config,
 		Parameters:        spec.Parameters,
-		InputContentPath:  lo.inputContentPaths[0],
-		InputMetadataPath: lo.inputMetadataPaths[0],
+		InputContentPath:  lo.inputExecPaths[0].ArtifactContentPath,
+		InputMetadataPath: lo.inputExecPaths[0].ArtifactMetadataPath,
 	}
+}
+
+func (lo *loadOperatorImpl) Launch(ctx context.Context) error {
+	return lo.launch(ctx, lo.JobSpec())
 }

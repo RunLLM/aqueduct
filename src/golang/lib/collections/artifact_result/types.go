@@ -3,14 +3,28 @@ package artifact_result
 import (
 	"database/sql/driver"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+)
+
+type SerializationType string
+
+const (
+	String    SerializationType = "string"
+	Table     SerializationType = "table"
+	Json      SerializationType = "json"
+	Bytes     SerializationType = "bytes"
+	Image     SerializationType = "image"
+	Picklable SerializationType = "picklable"
 )
 
 type Metadata struct {
 	Schema []map[string]string // Table Schema from Pandas
 	// Metrics from the system regarding the op used to create the artifact result.
 	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
-	SystemMetrics map[string]string
+	SystemMetrics     map[string]string `json:"system_metadata,omitempty"`
+	SerializationType SerializationType `json:"serialization_type,omitempty"`
+	ArtifactType      artifact.Type     `json:"artifact_type,omitempty"`
 }
 
 type NullMetadata struct {

@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
@@ -38,17 +37,18 @@ const (
 )
 
 const (
-	WorkflowJobType       JobType = "workflow"
-	FunctionJobType       JobType = "function"
-	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "system_metric"
-	AuthenticateJobType   JobType = "authenticate"
-	ExtractJobType        JobType = "extract"
-	LoadJobType           JobType = "load"
-	LoadTableJobType      JobType = "load-table"
-	DiscoverJobType       JobType = "discover"
-	WorkflowRetentionType JobType = "workflow_retention"
-	CompileAirflowJobType JobType = "compile_airflow"
+	WorkflowJobType           JobType = "workflow"
+	FunctionJobType           JobType = "function"
+	ParamJobType              JobType = "param"
+	SystemMetricJobType       JobType = "system_metric"
+	AuthenticateJobType       JobType = "authenticate"
+	ExtractJobType            JobType = "extract"
+	LoadJobType               JobType = "load"
+	LoadTableJobType          JobType = "load-table"
+	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
+	DiscoverJobType           JobType = "discover"
+	WorkflowRetentionType     JobType = "workflow_retention"
+	CompileAirflowJobType     JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -85,6 +85,7 @@ type WorkflowSpec struct {
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
 	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
 	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
+	AqPath         string               `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -99,19 +100,17 @@ type BasePythonSpec struct {
 
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath        string          `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath string          `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile      string          `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass     string          `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod    string          `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs          string          `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths   []string        `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths  []string        `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths  []string        `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
-	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
-	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
+	FunctionPath        string        `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath string        `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile      string        `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass     string        `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod    string        `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs          string        `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths   []string      `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths  []string      `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths  []string      `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	OperatorType        operator.Type `json:"operator_type" yaml:"operator_type"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
@@ -144,6 +143,14 @@ type ExtractSpec struct {
 	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
+}
+
+type DeleteSavedObjectsSpec struct {
+	BasePythonSpec
+	ConnectorName       map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig     map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	IntegrationToObject map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
+	OutputContentPath   string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -221,6 +228,10 @@ func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
 }
 
+func (*DeleteSavedObjectsSpec) Type() JobType {
+	return DeleteSavedObjectsJobType
+}
+
 func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
 }
@@ -257,6 +268,7 @@ func NewWorkflowSpec(
 	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
+	aqPath string,
 	parameters map[string]string,
 ) Spec {
 	return &WorkflowSpec{
@@ -266,6 +278,7 @@ func NewWorkflowSpec(
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		AqPath:        aqPath,
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
@@ -343,6 +356,32 @@ func NewExtractSpec(
 		Parameters:         parameters,
 		OutputContentPath:  outputContentPath,
 		OutputMetadataPath: outputMetadataPath,
+	}
+}
+
+// NewDeleteSavedObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
+func NewDeleteSavedObjectsSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	connectorName map[string]integration.Service,
+	connectorConfig map[string]auth.Config,
+	integrationToObject map[string][]string,
+	outputContentPath string,
+) Spec {
+	return &DeleteSavedObjectsSpec{
+		BasePythonSpec: BasePythonSpec{
+			BaseSpec: BaseSpec{
+				Type: DeleteSavedObjectsJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		ConnectorName:       connectorName,
+		ConnectorConfig:     connectorConfig,
+		IntegrationToObject: integrationToObject,
+		OutputContentPath:   outputContentPath,
 	}
 }
 

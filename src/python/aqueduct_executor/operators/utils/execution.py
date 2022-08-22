@@ -28,6 +28,9 @@ TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your
 # Assumption: only check operators will use this tip.
 TIP_CHECK_DID_NOT_PASS = "The check did not pass (returned False)."
 
+TIP_NOT_NUMERIC = "The computed result is not of type numeric."
+TIP_NOT_BOOL = "The computed result is not of type bool."
+
 
 class Error(BaseModel):
     tip: str = ""  # Information about how the user could fix the error.
@@ -156,4 +159,7 @@ def exception_traceback(exception: Exception) -> str:
 
     This is typically used for system error so that the full trace is captured.
     """
-    return "".join(traceback.format_tb(exception.__traceback__))
+    return (
+        "".join(traceback.format_tb(exception.__traceback__))
+        + f"{exception.__class__.__name__}: {str(exception)}"
+    )

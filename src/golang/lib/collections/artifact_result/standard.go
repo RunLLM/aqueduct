@@ -33,6 +33,25 @@ func (w *standardWriterImpl) CreateArtifactResult(
 	return &artifactResult, err
 }
 
+func (w *standardWriterImpl) InsertArtifactResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	artifactId uuid.UUID,
+	contentPath string,
+	execState *shared.ExecutionState,
+	metadata *Metadata,
+	db database.Database,
+) (*ArtifactResult, error) {
+	insertColumns := []string{WorkflowDagResultIdColumn, ArtifactIdColumn, ContentPathColumn, StatusColumn, ExecStateColumn, MetadataColumn}
+	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
+
+	args := []interface{}{workflowDagResultId, artifactId, contentPath, execState.Status, execState, metadata}
+
+	var artifactResult ArtifactResult
+	err := db.Query(ctx, &artifactResult, insertArtifactStmt, args...)
+	return &artifactResult, err
+}
+
 func (r *standardReaderImpl) GetArtifactResult(
 	ctx context.Context,
 	id uuid.UUID,

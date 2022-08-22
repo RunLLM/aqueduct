@@ -7,11 +7,15 @@ import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
+import cloudpickle as pickle
+import numpy as np
+import pandas as pd
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import (
+    ArtifactType,
     CheckSeverityLevel,
     ExecutionStatus,
     FailureType,
@@ -19,6 +23,8 @@ from aqueduct_executor.operators.utils.enums import (
 )
 from aqueduct_executor.operators.utils.execution import (
     TIP_CHECK_DID_NOT_PASS,
+    TIP_NOT_BOOL,
+    TIP_NOT_NUMERIC,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
@@ -28,8 +34,9 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import check_passed
+from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
 from pandas import DataFrame
+from PIL import Image
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -52,7 +59,7 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
     return file_path.replace("/", ".")
 
 
-def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
+def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     """
     `_import_invoke_method` imports the model object.
     it assumes the operator has been extracted to `<storage>/operators/<id>/op`
@@ -99,7 +106,7 @@ def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
-) -> Tuple[Any, Dict[str, str]]:
+) -> Tuple[Any, ArtifactType, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors. Instead, returns the error message as a string.
@@ -118,6 +125,7 @@ def _execute_function(
         return invoke(*inputs)
 
     result = _invoke()
+    inferred_result_type = infer_artifact_type(result)
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -127,7 +135,7 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return result, system_metadata
+    return result, inferred_result_type, system_metadata
 
 
 def run(spec: FunctionSpec) -> None:
@@ -140,34 +148,65 @@ def run(spec: FunctionSpec) -> None:
     storage = parse_storage(spec.storage_config)
     try:
         # Read the input data from intermediate storage.
-        inputs = utils.read_artifacts(
-            storage, spec.input_content_paths, spec.input_metadata_paths, spec.input_artifact_types
+        inputs, _ = utils.read_artifacts(
+            storage, spec.input_content_paths, spec.input_metadata_paths
         )
 
         print("Invoking the function...")
-        results, system_metadata = _execute_function(spec, inputs, exec_state)
+        result, result_type, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
-        # Force all results to be of type `list`, so we can always loop over them.
-        if not isinstance(results, list):
-            results = [results]
 
-        utils.write_artifacts(
+        # Perform type checking for metric and check operators.
+        type_error = False
+        if spec.operator_type == OperatorType.METRIC:
+            if not (
+                isinstance(result, int)
+                or isinstance(result, float)
+                or isinstance(result, np.number)
+            ):
+                type_error = True
+                type_error_tip = TIP_NOT_NUMERIC
+        elif spec.operator_type == OperatorType.CHECK:
+            if isinstance(result, pd.Series) and result.dtype == "bool":
+                # Cast pd.Series to a bool.
+                # We only write True if every boolean in the series is True.
+                series = pd.Series(result)
+                result = bool(series.size - series.sum().item() == 0)
+                result_type = ArtifactType.BOOL
+            elif isinstance(result, bool) or isinstance(result, np.bool_):
+                # Cast np.bool_ to a bool.
+                result = bool(result)
+            else:
+                type_error = True
+                type_error_tip = TIP_NOT_BOOL
+
+        if type_error:
+            exec_state.status = ExecutionStatus.FAILED
+            exec_state.failure_type = FailureType.USER_FATAL
+            exec_state.error = Error(
+                context="",
+                tip=type_error_tip,
+            )
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            sys.exit(1)
+
+        utils.write_artifact(
             storage,
-            spec.output_artifact_types,
-            spec.output_content_paths,
-            spec.output_metadata_paths,
-            results,
+            result_type,
+            spec.output_content_paths[0],
+            spec.output_metadata_paths[0],
+            result,
             system_metadata=system_metadata,
         )
 
         # For check operators, we want to fail the operator based on the exact output of the user's function.
         # Assumption: the check operator only has a single output.
-        if spec.operator_type == OperatorType.CHECK and not check_passed(results[0]):
+        if spec.operator_type == OperatorType.CHECK and not check_passed(result):
             check_severity = spec.check_severity
             if spec.check_severity is None:
                 print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
@@ -218,7 +257,7 @@ def run_with_setup(spec: FunctionSpec) -> None:
 
     requirements_path = os.path.join(op_path, "requirements.txt")
     if os.path.exists(requirements_path):
-        os.system("pip3 install -r {}".format(requirements_path))
+        os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
 
     run(spec)
 

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/gorhill/cronexpr"
@@ -27,10 +29,8 @@ func (s *AqServer) triggerMissedCronJobs(
 		// So we manually trigger the workflow here.
 		_, _, err := (&handler.RefreshWorkflowHandler{
 			Database:       s.Database,
-			JobManager:     s.JobManager,
-			GithubManager:  s.GithubManager,
-			Vault:          s.Vault,
 			WorkflowReader: s.WorkflowReader,
+			Engine:         s.AqEngine,
 		}).Perform(
 			ctx,
 			&handler.RefreshWorkflowArgs{
@@ -44,12 +44,16 @@ func (s *AqServer) triggerMissedCronJobs(
 }
 
 // RunMissedCronJobs first gets the latest workflow run timestamp of all deployed workflows that are
-// on a schedule and are not paused. For each workflow, it compares the latest workflow run's timestamp with the
-// expected trigger timestamp calculated based on the cron schedule, and manually triggers the workflow
-// if the cron triggering did not happen.
+// running on Aqueduct, on a schedule, and are not paused. For each workflow, it compares the latest workflow
+// run's timestamp with the expected trigger timestamp calculated based on the cron schedule, and manually
+// triggers the workflow if the cron triggering did not happen.
 func (s *AqServer) RunMissedCronJobs() error {
 	ctx := context.Background()
-	workflowLastRunResponse, err := s.CustomReader.GetWorkflowLastRun(ctx, s.Database)
+	workflowLastRunResponse, err := s.CustomReader.GetWorkflowLastRunByEngine(
+		ctx,
+		shared.AqueductEngineType,
+		s.Database,
+	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get workflow last run data from database.")
 	}
@@ -101,14 +105,14 @@ func (s *AqServer) initializeWorkflowCronJobs(ctx context.Context) error {
 			if wf.Schedule.Paused {
 				wf.Schedule.CronSchedule = ""
 			}
+			name := shared_utils.AppendPrefix(wf.Id.String())
+			period := string(wf.Schedule.CronSchedule)
 
-			err = handler.CreateWorkflowCronJob(
+			err = s.AqEngine.ScheduleWorkflow(
 				ctx,
-				&wf,
-				s.Database.Config(),
-				s.Vault,
-				s.JobManager,
-				s.GithubManager,
+				wf.Id,
+				name,
+				period,
 			)
 			if err != nil {
 				return err

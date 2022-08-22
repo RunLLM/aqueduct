@@ -15,7 +15,7 @@ const BoolArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
       icon={faCircleCheck}
       data={data}
       isConnectable={isConnectable}
-      defaultLabel="Float"
+      defaultLabel="Bool"
     />
   );
 };

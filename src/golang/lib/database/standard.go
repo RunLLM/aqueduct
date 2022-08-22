@@ -32,7 +32,12 @@ func (sdb *standardDatabase) Query(ctx context.Context, dest interface{}, query 
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Errorf("Error when closing rows: %s", err)
+		}
+	}()
 
 	return scanRows(rows, dest)
 }
@@ -53,7 +58,12 @@ func (stx *standardTransaction) Query(ctx context.Context, dest interface{}, que
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Errorf("Error when closing rows: %s", err)
+		}
+	}()
 
 	return scanRows(rows, dest)
 }
@@ -64,16 +74,13 @@ func (stx *standardTransaction) Rollback(ctx context.Context) error {
 		return nil
 	}
 
-	err := stx.tx.Rollback()
-	if err != sql.ErrTxDone {
-		// Transaction was not already committed or aborted
-		logQuery("Transaction ROLLBACK")
-	}
-	if err != nil {
-		log.Errorf("Rollback failed: %v.", err)
+	if err := stx.tx.Rollback(); err != nil {
+		return err
 	}
 
-	return err
+	// Transaction rollback actually happened
+	logQuery("Transaction ROLLBACK")
+	return nil
 }
 
 func (stx *standardTransaction) Commit(ctx context.Context) error {

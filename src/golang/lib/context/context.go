@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -22,6 +24,8 @@ const (
 type AqContext struct {
 	user.User
 	RequestId string
+	// StorageConfig is a copy of the global storage config as of the creation of this AqContext
+	StorageConfig *shared.StorageConfig
 }
 
 // Most routes will first go through `RequireApiKey` middleware, which assigns the user-related
@@ -68,12 +72,16 @@ func ParseAqContext(ctx context.Context) (*AqContext, int, error) {
 		log.Warning("Seems that request ID is not properly generated.")
 	}
 
+	// The same StorageConfig should be used for the context of a request
+	storageConfig := config.Storage()
+
 	return &AqContext{
 		User: user.User{
 			Id:             userId,
 			OrganizationId: organizationId,
 			Auth0Id:        auth0Id,
 		},
-		RequestId: requestId,
+		RequestId:     requestId,
+		StorageConfig: &storageConfig,
 	}, http.StatusOK, nil
 }
