@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { exportCsv } from '../../../../utils/preview';
+import { Data, DataSchema } from 'src/utils/data';
 
 import {
   ArtifactResult,
@@ -14,7 +14,11 @@ import {
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { exportCsv } from '../../../../utils/preview';
 import DefaultLayout from '../../../layouts/default';
+import KeyValueTable, {
+  KeyValueTableType,
+} from '../../../tables/KeyValueTable';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
 import { LayoutProps } from '../../types';
 
@@ -98,23 +102,55 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     );
   }
 
-  console.log('artifactResult: ', artifactResult.result.name);
+  const kvSchema: DataSchema = {
+    fields: [
+      { name: 'Title', type: 'varchar' },
+      { name: 'Value', type: 'varchar' },
+    ],
+    pandas_version: '0.0.1', // TODO: Figure out what to set this value to.
+  };
+
+  const mockMetrics: Data = {
+    schema: kvSchema,
+    data: [
+      ['avg_churn', '0.04'],
+      ['avg_workflows', '455'],
+      ['avg_users', '1.2'],
+      ['avg_users', '5'],
+    ],
+  };
+
+  const mockChecks: Data = {
+    schema: kvSchema,
+    data: [
+      ['reasonable_churn', 'True'],
+      ['wf_count_small', 'False'],
+      ['bounds_check', 'True'],
+      ['avg_users_check', 'False'],
+      ['warning_check', 'Warning'],
+      ['none_check', 'None']
+    ],
+  };
 
   const parsedData = JSON.parse(artifactResult.result.data);
   const artifactName: string = artifactResult.result.name;
-  console.log('artifactName: ', artifactName);
-
-  console.log('artifactName replaced: ', artifactName.replaceAll(' ', '_'));
 
   return (
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%" display="flex" alignItems="center">
-            <ArtifactDetailsHeader artifactName={artifactResult.result.name} />
-            <Button variant="contained" sx={{ maxHeight: '32px' }} onClick={() => {
-              exportCsv(parsedData, artifactName.replaceAll(' ', '_'))
-            }}>
+            <ArtifactDetailsHeader artifactName={artifactName} />
+            <Button
+              variant="contained"
+              sx={{ maxHeight: '32px' }}
+              onClick={() => {
+                exportCsv(
+                  parsedData,
+                  artifactName ? artifactName.replaceAll(' ', '_') : 'data'
+                );
+              }}
+            >
               Export
             </Button>
           </Box>
@@ -124,21 +160,41 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             </Typography>
             <StickyHeaderTable data={parsedData} />
           </Box>
-          {/* <Box display="flex" width="100%" paddingTop="40px">
-                        <Box width="100%">
-                            <Typography variant="h5" component="div" marginBottom="8px">
-                                Metrics
-                            </Typography>
-                            <KeyValueTable />
-                        </Box>
-                        <Box width="96px" />
-                        <Box width="100%">
-                            <Typography variant="h5" component="div" marginBottom="8px">
-                                Checks
-                            </Typography>
-                            <KeyValueTable />
-                        </Box>
-                    </Box> */}
+          <Box display="flex" width="100%" paddingTop="40px">
+            <Box width="100%">
+              <Typography variant="h5" component="div" marginBottom="8px">
+                Metrics
+              </Typography>
+              {mockMetrics.data.length > 0 ? (
+                <KeyValueTable
+                  schema={kvSchema}
+                  rows={mockMetrics}
+                  tableType={KeyValueTableType.Metric}
+                />
+              ) : (
+                <Typography variant="body2">
+                  This artifact has no associated downstream Metrics.
+                </Typography>
+              )}
+            </Box>
+            <Box width="96px" />
+            <Box width="100%">
+              <Typography variant="h5" component="div" marginBottom="8px">
+                Checks
+              </Typography>
+              {mockChecks.data.length > 0 ? (
+                <KeyValueTable
+                  schema={kvSchema}
+                  rows={mockChecks}
+                  tableType={KeyValueTableType.Check}
+                />
+              ) : (
+                <Typography variant="body2">
+                  This artifact has no associated downstream Checks.
+                </Typography>
+              )}
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Layout>

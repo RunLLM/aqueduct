@@ -69,6 +69,7 @@ import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
+import { KeyValueTableType } from './components/tables/KeyValueTable';
 import StickyHeaderTable from './components/tables/StickyHeaderTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
@@ -417,6 +418,7 @@ export {
   integrationsSlice,
   IntegrationState,
   IntegrationTextInputField,
+  KeyValueTableType,
   listNotifications,
   ListWorkflowResponse,
   ListWorkflowSavedObjectsResponse,

@@ -7,49 +7,54 @@ import TableRow from '@mui/material/TableRow';
 import * as React from 'react';
 
 import { Data, DataSchema } from '../../utils/data';
+import { CheckTableItem } from './CheckTableItem';
 
-// const dataSchema: DataSchema = {
-//   fields: [
-//     { name: 'Title', type: 'varchar' },
-//     { name: 'Value', type: 'varchar' },
-//   ],
-//   pandas_version: '0.0.1', // TODO: Figure out what to set this value to.
-// };
-
-// function createData(): Data {
-//   return {
-//     schema: dataSchema,
-//     data: [
-//       ['avg_churn', '0.04'],
-//       ['avg_workflows', '455'],
-//       ['avg_users', '1.2'],
-//       ['avg_users', '5'],
-//     ],
-//   };
-// }
-
-// const rows: Data = createData();
+export enum KeyValueTableType {
+  Metric = 'metric',
+  Check = 'check',
+}
 
 interface KeyValueTableProps {
   rows: Data;
-  schema: DataSchema;
+  schema?: DataSchema;
   height?: string;
   width?: string;
   maxHeight?: string;
   stickyHeader?: boolean;
   tableAlign?: string;
+  tableType: KeyValueTableType;
 }
 
-export const KeyValueTable: React.FC<KeyValueTableProps> = ({ rows, schema, height = "440px", width = "100%", maxHeight = "440px", stickyHeader = true, tableAlign = "left" }) => {
+const kvSchema: DataSchema = {
+  fields: [
+    { name: 'Title', type: 'varchar' },
+    { name: 'Value', type: 'varchar' },
+  ],
+  pandas_version: '0.0.1', // TODO: Figure out what to set this value to.
+};
+
+export const KeyValueTable: React.FC<KeyValueTableProps> = ({
+  rows,
+  schema = kvSchema,
+  height = '440px',
+  width = '100%',
+  maxHeight = '440px',
+  stickyHeader = true,
+  tableAlign = 'left',
+  tableType,
+}) => {
   return (
     <TableContainer sx={{ maxHeight, height, width }}>
-      <Table stickyHeader={stickyHeader} aria-label={stickyHeader ? "sticky table" : "table"}>
+      <Table
+        stickyHeader={stickyHeader}
+        aria-label={stickyHeader ? 'sticky table' : 'table'}
+      >
         <TableHead>
           <TableRow>
             {schema.fields.map((column, idx) => (
               <TableCell
                 key={`${column.name}-heading-${idx}`}
-                align={tableAlign as TableCellProps["align"]}
+                align={tableAlign as TableCellProps['align']}
               >
                 {column.name}
               </TableCell>
@@ -68,12 +73,16 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({ rows, schema, heig
                 {schema.fields.map((column, columnIndex) => {
                   const value = row[columnIndex];
 
+                  // For title columns we should just render the text. 
+                  // For a check's value column, we should render the appropriate icon.
                   return (
                     <TableCell
                       key={`cell-${rowIndex}-${columnIndex}`}
-                      align={tableAlign as TableCellProps["align"]}
+                      align={tableAlign as TableCellProps['align']}
                     >
-                      {value}
+                      {tableType === KeyValueTableType.Metric || column.name === 'Title'
+                        ? value
+                        : <CheckTableItem checkValue={value as string} />}
                     </TableCell>
                   );
                 })}
