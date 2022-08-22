@@ -1,4 +1,4 @@
-import { faListOl } from '@fortawesome/free-solid-svg-icons';
+import { faFileCode } from '@fortawesome/free-solid-svg-icons';
 import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
@@ -12,7 +12,7 @@ type Props = {
 const DictArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faListOl}
+      icon={faFileCode}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Dictionary"
