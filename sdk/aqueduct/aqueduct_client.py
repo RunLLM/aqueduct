@@ -32,7 +32,6 @@ from .error import (
     InvalidUserArgumentException,
 )
 from .flow import Flow, FlowConfig
-from .flow_run import _show_dag
 from .github import Github
 from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
@@ -517,32 +516,6 @@ class Client:
             raise Exception(
                 f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
             )
-
-    def show_dag(self, artifacts: Optional[List[BaseArtifact]] = None) -> None:
-        """Prints out the flow as a pyplot graph.
-
-        A user outside the notebook environment will be redirected to a page in their browser
-        containing the graph.
-
-        Args:
-            artifacts:
-                If specified the subgraph terminating at these artifacts will be specified.
-                Otherwise, the entire graph is printed.
-        """
-        dag = self._dag
-        if artifacts is not None:
-            dag = apply_deltas_to_dag(
-                self._dag,
-                deltas=[
-                    SubgraphDAGDelta(
-                        artifact_ids=[artifact.id() for artifact in artifacts],
-                        include_load_operators=True,
-                        include_check_artifacts=True,
-                    ),
-                ],
-                make_copy=True,
-            )
-        _show_dag(dag)
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
