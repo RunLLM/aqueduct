@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -35,7 +34,6 @@ type EditIntegrationHandler struct {
 	IntegrationWriter integration.Writer
 	Vault             vault.Vault
 	JobManager        job.JobManager
-	StorageConfig     *shared.StorageConfig
 }
 
 var serviceToReadOnlyFields = map[integration.Service]map[string]bool{
@@ -91,9 +89,9 @@ func (*EditIntegrationHandler) Name() string {
 // `updateConfig` updates `curConfigToUpdate` *in-place* with `newConfig` with
 // the same behavior as map updates.
 // It returns 3 values:
-//  - whether there's actually an update
-//  - http status code
-//  - error if there's any
+// - whether there's actually an update
+// - http status code
+// - error if there's any
 //
 // If trying to update a 'read only' field defined by `ServerToReadOnlyFieldsMap`,
 // `updateConfig` will return a 400 and an error.
@@ -238,7 +236,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		staticConfig,
 		integrationObject.Service,
 		h.JobManager,
-		h.StorageConfig,
+		args.StorageConfig,
 	)
 	if err != nil {
 		return emptyResp, statusCode, err

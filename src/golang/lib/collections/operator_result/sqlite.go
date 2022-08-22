@@ -45,3 +45,25 @@ func (w *sqliteWriterImpl) CreateOperatorResult(
 	err = db.Query(ctx, &operatorResult, insertOperatorStmt, args...)
 	return &operatorResult, err
 }
+
+func (w *sqliteWriterImpl) InsertOperatorResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	operatorId uuid.UUID,
+	execState *shared.ExecutionState,
+	db database.Database,
+) (*OperatorResult, error) {
+	insertColumns := []string{IdColumn, WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn, ExecStateColumn}
+	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
+
+	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{id, workflowDagResultId, operatorId, execState.Status, execState}
+
+	var operatorResult OperatorResult
+	err = db.Query(ctx, &operatorResult, insertOperatorStmt, args...)
+	return &operatorResult, err
+}

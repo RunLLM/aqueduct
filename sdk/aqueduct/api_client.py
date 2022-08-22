@@ -1,6 +1,7 @@
 import io
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple
+import uuid
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
 from aqueduct._version import __version__
@@ -12,16 +13,21 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    DeleteWorkflowResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
+    ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
+    RegisterAirflowWorkflowResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
+from aqueduct.utils import GITHUB_ISSUE_LINK
 
 from aqueduct import utils
 
@@ -82,6 +88,13 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
+        # If non of the operators failed, this must be an issue with our
+        if len(op_err_msgs) == 0:
+            raise InternalAqueductError(
+                f"Unexpected Server Error! If this issue persists, please file a bug report in github: "
+                f"{GITHUB_ISSUE_LINK} . We will get back to you as soon as we can.",
+            )
+
         failure_err_msg = "\n".join(op_err_msgs)
         raise AqueductError(f"Preview Execution Failed:\n\n{failure_err_msg}\n")
 
@@ -96,9 +109,11 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register_airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -161,9 +176,7 @@ class APIClient:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
-        url = "%s%s" % (self.construct_base_url(use_https), route_suffix)
-        logger().debug("Constructed full URL %s", url)
-        return url
+        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -286,6 +299,28 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterWorkflowResponse(**resp.json())
+
+    def register_airflow_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterAirflowWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterAirflowWorkflowResponse(**resp.json())
+
+    def _construct_register_workflow_request(
+        self,
+        dag: DAG,
+    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
@@ -297,11 +332,7 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
-        resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
-
-        return RegisterWorkflowResponse(**resp.json())
+        return headers, body, files
 
     def refresh_workflow(
         self,
@@ -318,11 +349,25 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(
+        self,
+        flow_id: str,
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        force: bool,
+    ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        body = {
+            "external_delete": {
+                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                for integration in saved_objects_to_delete
+            },
+            "force": force,
+        }
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
+        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        return deleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = self._generate_auth_headers()
@@ -331,6 +376,14 @@ class APIClient:
         utils.raise_errors(resp)
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
+
+    def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
+        headers = self._generate_auth_headers()
+        url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
+        return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = self._generate_auth_headers()
