@@ -128,7 +128,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       ['bounds_check', 'True'],
       ['avg_users_check', 'False'],
       ['warning_check', 'Warning'],
-      ['none_check', 'None']
+      ['none_check', 'None'],
     ],
   };
 

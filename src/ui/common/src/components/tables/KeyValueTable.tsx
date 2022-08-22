@@ -73,16 +73,19 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({
                 {schema.fields.map((column, columnIndex) => {
                   const value = row[columnIndex];
 
-                  // For title columns we should just render the text. 
+                  // For title columns we should just render the text.
                   // For a check's value column, we should render the appropriate icon.
                   return (
                     <TableCell
                       key={`cell-${rowIndex}-${columnIndex}`}
                       align={tableAlign as TableCellProps['align']}
                     >
-                      {tableType === KeyValueTableType.Metric || column.name === 'Title'
-                        ? value
-                        : <CheckTableItem checkValue={value as string} />}
+                      {tableType === KeyValueTableType.Metric ||
+                      column.name === 'Title' ? (
+                        value
+                      ) : (
+                        <CheckTableItem checkValue={value as string} />
+                      )}
                     </TableCell>
                   );
                 })}

@@ -220,7 +220,6 @@ export const handleGetWorkflow = createAsyncThunk<
     });
 
     const body = await res.json();
-    console.log('handleGetWorkflow body: ', body);
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
@@ -505,8 +504,6 @@ export const workflowSlice = createSlice({
           state.selectedResult = state.dagResults[0];
         }
         state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
-        console.log('state: ', state);
-        console.log('setting loading status...');
         state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
       }
     );
