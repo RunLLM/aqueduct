@@ -27,10 +27,10 @@ func (w *sqliteWriterImpl) CreateArtifact(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *Spec,
+	artifactType Type,
 	db database.Database,
 ) (*DBArtifact, error) {
-	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, SpecColumn}
+	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, TypeColumn}
 	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
@@ -38,7 +38,7 @@ func (w *sqliteWriterImpl) CreateArtifact(
 		return nil, err
 	}
 
-	args := []interface{}{id, name, description, spec}
+	args := []interface{}{id, name, description, artifactType}
 
 	var artifact DBArtifact
 	err = db.Query(ctx, &artifact, insertArtifactStmt, args...)

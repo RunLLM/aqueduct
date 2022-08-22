@@ -20,7 +20,7 @@ var (
 		"The path to .yml config file",
 	)
 	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
-	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal.")
+	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
 	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
 	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
 )
@@ -68,13 +68,18 @@ func main() {
 				log.DebugLevel,
 			},
 		})
+
+		// Also print the filepath and line number.
+		log.SetReportCaller(true)
 	}
 
-	serverConfig := config.ParseServerConfiguration(*confPath)
+	if err := config.Init(*confPath); err != nil {
+		log.Fatalf("Failed to initialize server config: %v", err)
+	}
 
-	s := server.NewAqServer(serverConfig)
+	s := server.NewAqServer()
 
-	err := s.StartWorkflowRetentionJob(serverConfig.RetentionJobPeriod)
+	err := s.StartWorkflowRetentionJob(config.RetentionJobPeriod())
 	if err != nil {
 		log.Fatalf("Failed to start workflow retention cronjob: %v", err)
 	}
@@ -85,6 +90,6 @@ func main() {
 	}
 
 	// Start the HTTP server and listen for requests indefinitely.
-	log.Infof("You can use api key %s to connect to the server", serverConfig.ApiKey)
+	log.Infof("You can use api key %s to connect to the server", config.APIKey())
 	s.Run(*expose, *port)
 }

@@ -37,7 +37,6 @@ type ConnectIntegrationHandler struct {
 	IntegrationWriter integration.Writer
 	Vault             vault.Vault
 	JobManager        job.JobManager
-	StorageConfig     *shared.StorageConfig
 }
 
 func (*ConnectIntegrationHandler) Headers() []string {
@@ -109,7 +108,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		args.Config,
 		args.Service,
 		h.JobManager,
-		h.StorageConfig,
+		args.StorageConfig,
 	)
 	if err != nil {
 		return emptyResp, statusCode, err

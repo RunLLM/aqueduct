@@ -5,9 +5,8 @@ const (
 	GetArtifactVersionsRoute = "/api/artifact_versions"
 	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
 
-	ListBuiltinFunctionsRoute = "/api/builtinFunctions"
-	GetFunctionRoute          = "/api/function/{functionId}"
-	ExportFunctionRoute       = "/api/function/{operatorId}/export"
+	GetFunctionRoute    = "/api/function/{functionId}"
+	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
 	ListIntegrationsRoute            = "/api/integrations"
 	ConnectIntegrationRoute          = "/api/integration/connect"
@@ -15,6 +14,7 @@ const (
 	DeleteIntegrationRoute           = "/api/integration/{integrationId}/delete"
 	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
 	EditIntegrationRoute             = "/api/integration/{integrationId}/edit"
+	ListIntegrationObjectsRoute      = "/api/integration/{integrationId}/objects"
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"

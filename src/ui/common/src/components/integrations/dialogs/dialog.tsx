@@ -25,6 +25,8 @@ import {
   CSVConfig,
   Integration,
   IntegrationConfig,
+  formatService,
+  S3Config,
   Service,
   SnowflakeConfig,
   SupportedIntegrations,
@@ -37,7 +39,7 @@ import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
-import { S3Dialog } from './s3Dialog';
+import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 
 type Props = {
@@ -82,7 +84,7 @@ const IntegrationDialog: React.FC<Props> = ({
     setConfig((config) => {
       return { ...config, [field]: value };
     });
-
+  
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
@@ -176,6 +178,7 @@ const IntegrationDialog: React.FC<Props> = ({
       required={true}
       label="Name*"
       description="Provide a unique name to refer to this integration."
+      placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
         setName(event.target.value);
       }}
@@ -223,6 +226,10 @@ const IntegrationDialog: React.FC<Props> = ({
 export function isConfigComplete(
   config: IntegrationConfig | CSVConfig
 ): boolean {
+  if (isS3ConfigComplete(config as S3Config)) {
+    return true;
+  }
+  
   return (
     Object.values(config).length > 0 &&
     Object.values(config).every((x) => x === undefined || (x && x !== ''))

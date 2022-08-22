@@ -66,6 +66,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
     SQLITE = "SQLite"
+    AIRFLOW = "Airflow"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -100,7 +101,7 @@ class SalesforceExtractType(str, Enum, metaclass=MetaEnum):
     QUERY = "query"
 
 
-class S3FileFormat(str, Enum, metaclass=MetaEnum):
+class S3TableFormat(str, Enum, metaclass=MetaEnum):
     CSV = "CSV"
     JSON = "JSON"
     PARQUET = "Parquet"
@@ -131,8 +132,30 @@ class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     ARTIFACT = "ARTIFACT"
 
 
-class ArtifactType(Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    NUMBER = "number"
+class ArtifactType(str, Enum, metaclass=MetaEnum):
+    UNTYPED = "untyped"
+    STRING = "string"
     BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABLE = "table"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLABLE = "picklable"
     PARAM = "param"
+
+
+class SerializationType(str, Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STRING = "string"
+    BYTES = "bytes"
+
+
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"
