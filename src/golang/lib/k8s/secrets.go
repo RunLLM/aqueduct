@@ -26,7 +26,7 @@ func CreateSecret(
 	secret := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: UserNamespace,
+			Namespace: AqueductNamespace,
 		},
 		Data: castedSecrets,
 	}
@@ -47,7 +47,7 @@ func CreateSecret(
 }
 
 func GetSecret(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (map[string]string, error) {
-	secret, err := k8sClient.CoreV1().Secrets(UserNamespace).Get(ctx, name, metav1.GetOptions{})
+	secret, err := k8sClient.CoreV1().Secrets(AqueductNamespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func GetSecret(ctx context.Context, name string, k8sClient *kubernetes.Clientset
 }
 
 func DeleteSecret(ctx context.Context, name string, k8sClient *kubernetes.Clientset) error {
-	return k8sClient.CoreV1().Secrets(UserNamespace).Delete(ctx, name, metav1.DeleteOptions{})
+	return k8sClient.CoreV1().Secrets(AqueductNamespace).Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 func DeleteSecretsByNamespace(ctx context.Context, k8sClient *kubernetes.Clientset, namespace string) {

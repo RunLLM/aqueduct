@@ -21,7 +21,7 @@ func LaunchJob(
 	k8sClient *kubernetes.Clientset,
 ) error {
 	// Currently, all jobs run workflow operators, which should be in the user namespace.
-	namespace := UserNamespace
+	namespace := AqueductNamespace
 	privileged := false
 
 	k8sEnvironmentVariables, resourceRequirements := generateK8sEnvVarAndResourceReq(environmentVariables, resourceRequests)
@@ -84,7 +84,7 @@ func LaunchJob(
 
 func GetJob(name string, k8sClient *kubernetes.Clientset) (*batchv1.Job, error) {
 	// Currently, all jobs run workflow operators, which should be in the user namespace.
-	namespace := UserNamespace
+	namespace := AqueductNamespace
 
 	return k8sClient.BatchV1().Jobs(namespace).Get(context.Background(), name, metav1.GetOptions{})
 }

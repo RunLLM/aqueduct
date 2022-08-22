@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { KubernetesConfig, Integration } from '../../../utils/integrations';
+import { Integration, KubernetesConfig } from '../../../utils/integrations';
 
 type Props = {
   integration: Integration;
@@ -14,7 +14,7 @@ export const KubernetesCard: React.FC<Props> = ({ integration }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Typography variant="body1">
         <strong>Kubernetes Config Path: </strong>
-        {config.kube_config_path}
+        {config.kubeconfig_path}
       </Typography>
       <Typography variant="body1">
         <strong>Cluster Name: </strong>

@@ -14,6 +14,7 @@ import WorkflowStatus from '../../workflows/workflowStatus';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { KubernetesCard } from './kubernetesCard';
 import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
 import { MySqlCard } from './mysqlCard';
@@ -21,7 +22,6 @@ import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SnowflakeCard } from './snowflakeCard';
-import { KubernetesCard } from './kubernetesCard'
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;

@@ -13,8 +13,6 @@ import (
 const (
 	defaultFunctionExtractPath = "/app/function/"
 	jobSpecEnvVarKey           = "JOB_SPEC"
-	DevBranchKey               = "PULL_BRANCH"
-	ClusterEnvironmentKey      = "CLUSTER_ENVIRONMENT"
 )
 
 type k8sJobManager struct {
@@ -23,27 +21,23 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	// //TODO ENG-1560: Remove once kubeconfig is determined to work.
-	// cmd := exec.Command(
-	// 	"aws",
-	// 	"eks",
-	// 	"update-kubeconfig",
-	// 	"--region", conf.AwsRegion,
-	// 	"--name", conf.ClusterName,
-	// 	"--kubeconfig", conf.KubeconfigPath,
-	// )
-	// err := cmd.Run()
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "Unable to update kubeconfig.")
-	// }
-
 	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
 
-	k8s.CreateNamespaces(k8sClient)
-	k8s.CreateAwsCredentialsSecret(conf.AwsAccessKeyId, conf.AwsSecretAccessKey, conf.KubeconfigPath)
+	err = k8s.CreateNamespaces(k8sClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
+
+	secretsMap := map[string]string{}
+	secretsMap[k8s.AwsAccessKeyIdName] = conf.AwsAccessKeyId
+	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
+	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+	}
 
 	return &k8sJobManager{
 		k8sClient: k8sClient,
@@ -80,7 +74,6 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
-	// TODO: https://linear.app/aqueducthq/issue/ENG-369/create-k8s-service-accounts-for-local-minikube-clusters
 	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
 
 	containerImage, err := mapJobTypeToDockerImage(j, spec)
@@ -139,7 +132,7 @@ func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 	// case WorkflowJobType:
 	// 	return j.conf.ExecutorDockerImage, nil
 	case FunctionJobType:
-		return j.conf.FunctionDockerImage, nil
+		return DefaultFunctionDockerImage, nil
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToDockerImage(j, authenticateSpec.ConnectorName)
@@ -153,7 +146,9 @@ func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 		discoverSpec := spec.(*DiscoverSpec)
 		return mapIntegrationServiceToDockerImage(j, discoverSpec.ConnectorName)
 	case ParamJobType:
-		return j.conf.ParameterDockerImage, nil
+		return DefaultParameterDockerImage, nil
+	case SystemMetricJobType:
+		return DefaultSystemMetricDockerImage, nil
 	default:
 		return "", errors.Newf("Unsupported job type %v provided", spec.Type())
 	}
@@ -162,57 +157,18 @@ func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Service) (string, error) {
 	switch service {
 	case integration.Postgres, integration.Redshift, integration.AqueductDemo:
-		return j.conf.PostgresConnectorDockerImage, nil
+		return DefaultPostgresConnectorDockerImage, nil
 	case integration.Snowflake:
-		return j.conf.SnowflakeConnectorDockerImage, nil
+		return DefaultSnowflakeConnectorDockerImage, nil
 	case integration.MySql, integration.MariaDb:
-		return j.conf.MySqlConnectorDockerImage, nil
+		return DefaultMySqlConnectorDockerImage, nil
 	case integration.SqlServer:
-		return j.conf.SqlServerConnectorDockerImage, nil
+		return DefaultSqlServerConnectorDockerImage, nil
 	case integration.BigQuery:
-		return j.conf.BigQueryConnectorDockerImage, nil
-	case integration.GoogleSheets:
-		return j.conf.GoogleSheetsConnectorDockerImage, nil
-	case integration.Salesforce:
-		return j.conf.SalesforceConnectorDockerImage, nil
+		return DefaultBigQueryConnectorDockerImage, nil
 	case integration.S3:
-		return j.conf.S3ConnectorDockerImage, nil
+		return DefaultS3ConnectorDockerImage, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)
 	}
 }
-
-// func generateResourceRequest(conf *K8sJobManagerConfig, jobType JobType) map[string]string {
-// 	resourceRequest := map[string]string{
-// 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
-// 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
-// 	}
-
-// 	return resourceRequest
-// }
-
-// // generateS3Annotation generates an annotation to be attached to the service account to allow
-// // it to access S3.
-// func generateS3Annotation(
-// 	serviceAccount string,
-// 	namespace string,
-// 	roleName string,
-// 	oidcIssuerUri *string,
-// 	openIDConnectProviderArn string,
-// 	awsRegion string,
-// 	clusterName string,
-// ) map[string]string {
-// 	arn := k8s.CreateAwsFullS3Role(
-// 		serviceAccount,
-// 		namespace,
-// 		roleName,
-// 		oidcIssuerUri,
-// 		openIDConnectProviderArn,
-// 		awsRegion,
-// 		clusterName,
-// 	)
-
-// 	return map[string]string{
-// 		"eks.amazonaws.com/role-arn": arn,
-// 	}
-// }

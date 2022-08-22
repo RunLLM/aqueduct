@@ -172,13 +172,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
-	workflowRunMetadata := &workflowRunMetadata{
-		OpToDependencyCount: nil,
-		InProgressOps:       nil,
-		CompletedOps:        nil,
-		Status:              shared.PendingExecutionStatus,
-	}
-
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		workflowId,

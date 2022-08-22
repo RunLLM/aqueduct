@@ -19,6 +19,7 @@ import (
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -403,5 +404,9 @@ func validateKubernetesConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
+	if err := engine.AuthenticateK8sConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
 	return http.StatusOK, nil
 }
