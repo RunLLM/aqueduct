@@ -77,11 +77,11 @@ import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
 import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import FloatArtifactNode from './components/workflows/nodes/FloatArtifactNode';
 import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
 import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
+import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
@@ -143,7 +143,10 @@ import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleListWorkflowSavedObjects,
   OperatorResult,
+  SavedObjectDeletionResult,
+  SavedObjectResult,
   selectResultIdx,
   workflowSlice,
   WorkflowState,
@@ -156,7 +159,6 @@ import {
   GetArtifactResultResponse,
   getUpstreamOperator,
   Schema,
-  Spec,
 } from './utils/artifacts';
 import UserProfile from './utils/auth';
 import {
@@ -259,11 +261,15 @@ import ExecutionStatus, {
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
   computeTopologicalOrder,
+  DeleteWorkflowResponse,
   GetWorkflowResponse,
   ListWorkflowResponse,
+  ListWorkflowSavedObjectsResponse,
   ListWorkflowSummary,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
+  SavedObject,
+  SavedObjectDeletion,
   Workflow,
   WorkflowDag,
   WorkflowDagResultSummary,
@@ -336,6 +342,7 @@ export {
   DayOfWeek,
   deconstructCronString,
   DefaultLayout,
+  DeleteWorkflowResponse,
   EdgeTypes,
   ExecutionStatus,
   exportCsv,
@@ -348,7 +355,6 @@ export {
   fetchUser,
   FileData,
   FileEventTarget,
-  FloatArtifactNode,
   formatService,
   FunctionGranularity,
   FunctionOp,
@@ -380,6 +386,7 @@ export {
   handleGetOperatorResults,
   handleGetWorkflow,
   handleListIntegrationObjects,
+  handleListWorkflowSavedObjects,
   handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
   handleLoadIntegrations,
@@ -401,6 +408,7 @@ export {
   IntegrationTextInputField,
   listNotifications,
   ListWorkflowResponse,
+  ListWorkflowSavedObjectsResponse,
   listWorkflowSlice,
   ListWorkflowSummary,
   Load,
@@ -441,6 +449,7 @@ export {
   notificationsSlice,
   NotificationStatus,
   NotificationWorkflowMetadata,
+  NumericArtifactNode,
   objectKeyFn,
   openSideSheet,
   openSideSheetSlice,
@@ -467,6 +476,10 @@ export {
   S3Config,
   S3Dialog,
   SalesforceConfig,
+  SavedObject,
+  SavedObjectDeletion,
+  SavedObjectDeletionResult,
+  SavedObjectResult,
   Schema,
   SelectedNode,
   selectNode,
@@ -485,7 +498,6 @@ export {
   SnowflakeCard,
   SnowflakeConfig,
   SnowflakeDialog,
-  Spec,
   SqlServerCard,
   SqlServerConfig,
   Status,

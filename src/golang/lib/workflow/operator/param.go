@@ -1,11 +1,10 @@
 package operator
 
 import (
+	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -24,15 +23,11 @@ func newParamOperator(
 
 	inputs := base.inputs
 	outputs := base.outputs
-
 	if len(inputs) != 0 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 1 {
 		return nil, errWrongNumOutputs
-	}
-	if outputs[0].Type() != db_artifact.JsonType {
-		return nil, errors.Newf("Internal Error: parameter must output a JSON artifact.")
 	}
 
 	return &paramOperatorImpl{
@@ -49,7 +44,11 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			po.metadataPath,
 		),
 		Val:                po.dbOperator.Spec.Param().Val,
-		OutputMetadataPath: po.outputMetadataPaths[0],
-		OutputContentPath:  po.outputContentPaths[0],
+		OutputMetadataPath: po.outputExecPaths[0].ArtifactMetadataPath,
+		OutputContentPath:  po.outputExecPaths[0].ArtifactContentPath,
 	}
+}
+
+func (po *paramOperatorImpl) Launch(ctx context.Context) error {
+	return po.launch(ctx, po.JobSpec())
 }

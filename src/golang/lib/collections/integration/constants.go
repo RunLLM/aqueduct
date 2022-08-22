@@ -84,3 +84,14 @@ func GetRelationalDatabaseIntegrations() map[Service]bool {
 		Sqlite:       true,
 	}
 }
+
+// IsUserOnlyIntegration returns whether the specified service is only accessible by the user.
+func IsUserOnlyIntegration(svc Service) bool {
+	userSpecific := []Service{GoogleSheets, Github}
+	for _, s := range userSpecific {
+		if s == svc {
+			return true
+		}
+	}
+	return false
+}

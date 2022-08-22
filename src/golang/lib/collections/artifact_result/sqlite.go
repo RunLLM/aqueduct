@@ -46,3 +46,27 @@ func (w *sqliteWriterImpl) CreateArtifactResult(
 	err = db.Query(ctx, &artifactResult, insertArtifactStmt, args...)
 	return &artifactResult, err
 }
+
+func (w *sqliteWriterImpl) InsertArtifactResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	artifactId uuid.UUID,
+	contentPath string,
+	execState *shared.ExecutionState,
+	metadata *Metadata,
+	db database.Database,
+) (*ArtifactResult, error) {
+	insertColumns := []string{IdColumn, WorkflowDagResultIdColumn, ArtifactIdColumn, ContentPathColumn, StatusColumn, ExecStateColumn, MetadataColumn}
+	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
+
+	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{id, workflowDagResultId, artifactId, contentPath, execState.Status, execState, metadata}
+
+	var artifactResult ArtifactResult
+	err = db.Query(ctx, &artifactResult, insertArtifactStmt, args...)
+	return &artifactResult, err
+}

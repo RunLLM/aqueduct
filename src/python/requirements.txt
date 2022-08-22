@@ -7,4 +7,5 @@ SQLAlchemy
 distro
 pyyaml
 typing_extensions
-aqueduct-sdk==0.0.7
+Pillow
+aqueduct-sdk==0.0.9

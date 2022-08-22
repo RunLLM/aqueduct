@@ -12,11 +12,18 @@ class S3Storage(Storage):
     _config: S3StorageConfig
 
     def __init__(self, config: S3StorageConfig):
-        # Boto3 uses an environment variable to determine the credentials filepath and profile
-        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
-        os.environ["AWS_PROFILE"] = config.credentials_profile
 
-        self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
+        if "AWS_ACCESS_KEY_ID" in os.environ and "AWS_SECRET_ACCESS_KEY" in os.environ:
+            self._client = boto3.client(
+                "s3",
+                aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+                aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+            )
+        else:
+            # Boto3 uses an environment variable to determine the credentials filepath and profile
+            os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
+            os.environ["AWS_PROFILE"] = config.credentials_profile
+            self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
         self._config = config
 
         bucket, key_prefix = parse_s3_path(self._config.bucket)
@@ -24,14 +31,19 @@ class S3Storage(Storage):
         self._key_prefix = key_prefix
 
     def put(self, key: str, value: bytes) -> None:
-        key = self._key_prefix + "/" + key
+        key = self._prefix_key(key)
         print(f"writing to s3: {key}")
         self._client.put_object(Bucket=self._bucket, Key=key, Body=value)
 
     def get(self, key: str) -> bytes:
-        key = self._key_prefix + "/" + key
+        key = self._prefix_key(key)
         print(f"reading from s3: {key}")
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
+
+    def _prefix_key(self, key: str) -> str:
+        if not self._key_prefix:
+            return key
+        return self._key_prefix + "/" + key
 
 
 def parse_s3_path(s3_path: str) -> Tuple[str, str]:

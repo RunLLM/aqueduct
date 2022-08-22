@@ -3,6 +3,7 @@ package artifact_result
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
@@ -29,6 +30,18 @@ func (w *noopWriterImpl) CreateArtifactResult(
 	workflowDagResultId uuid.UUID,
 	artifactId uuid.UUID,
 	contentPath string,
+	db database.Database,
+) (*ArtifactResult, error) {
+	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
+}
+
+func (w *noopWriterImpl) InsertArtifactResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	artifactId uuid.UUID,
+	contentPath string,
+	execState *shared.ExecutionState,
+	metadata *Metadata,
 	db database.Database,
 ) (*ArtifactResult, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)

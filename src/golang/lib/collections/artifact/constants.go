@@ -11,7 +11,7 @@ const (
 	IdColumn          = "id"
 	NameColumn        = "name"
 	DescriptionColumn = "description"
-	SpecColumn        = "spec"
+	TypeColumn        = "type"
 )
 
 // Returns a joined string of all Artifact columns.
@@ -21,7 +21,7 @@ func allColumns() string {
 			IdColumn,
 			NameColumn,
 			DescriptionColumn,
-			SpecColumn,
+			TypeColumn,
 		},
 		",",
 	)

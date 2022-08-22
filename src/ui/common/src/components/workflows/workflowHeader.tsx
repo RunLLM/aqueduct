@@ -20,6 +20,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
+import Status from './workflowStatus';
 
 type Props = {
   user: UserProfile;
@@ -170,11 +171,16 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h3" sx={{ fontFamily: 'Monospace' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <Typography
+            variant="h3"
+            sx={{ fontFamily: 'Monospace', mr: 2, lineHeight: 1 }}
+          >
             {name}
           </Typography>
+
+          <Status status={workflow.dagResults[0].status} />
         </Box>
 
         <Box sx={{ ml: 2 }}>
@@ -188,6 +194,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
               <FontAwesomeIcon icon={faGear} />
             </Box>
           </Button>
+
           <WorkflowSettings
             user={user}
             open={showSettings}

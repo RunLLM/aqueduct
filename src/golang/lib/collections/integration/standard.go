@@ -132,6 +132,28 @@ func (r *standardReaderImpl) GetIntegrationsByUser(
 	return integrations, err
 }
 
+func (r *standardReaderImpl) GetIntegrationByNameAndUser(
+	ctx context.Context,
+	integrationName string,
+	userId uuid.UUID,
+	organizationId string,
+	db database.Database,
+) (*Integration, error) {
+	getIntegrationsQuery := fmt.Sprintf(
+		"SELECT %s FROM integration WHERE name=$1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);",
+		allColumns(),
+	)
+	var integrations []Integration
+
+	err := db.Query(ctx, &integrations, getIntegrationsQuery, integrationName, organizationId, userId)
+
+	if len(integrations) != 1 {
+		return nil, errors.Newf("Wrong number of integrations fetched")
+	}
+
+	return &integrations[0], err
+}
+
 func (r *standardReaderImpl) GetIntegrationsByServiceAndUser(
 	ctx context.Context,
 	service Service,
@@ -175,12 +197,30 @@ func (r *standardReaderImpl) ValidateIntegrationOwnership(
 	userId uuid.UUID,
 	db database.Database,
 ) (bool, error) {
-	query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND (organization_id = $2 OR user_id = $3);`
 	var count utils.CountResult
 
-	err := db.Query(ctx, &count, query, integrationId, organizationId, userId)
+	integrationObject, err := r.GetIntegration(
+		ctx,
+		integrationId,
+		db,
+	)
 	if err != nil {
 		return false, err
+	}
+	userOnly := IsUserOnlyIntegration(integrationObject.Service)
+
+	if userOnly {
+		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
+		err := db.Query(ctx, &count, query, integrationId, userId)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND organization_id = $2;`
+		err := db.Query(ctx, &count, query, integrationId, organizationId)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return count.Count == 1, nil

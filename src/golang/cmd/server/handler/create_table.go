@@ -46,7 +46,6 @@ type CreateTableHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
-	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
 }
@@ -103,7 +102,7 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	// Save CSV
 	contentPath := fmt.Sprintf("create-table-content-%s", args.RequestId)
-	csvStorage := storage.NewStorage(h.StorageConfig)
+	csvStorage := storage.NewStorage(args.StorageConfig)
 	if err := csvStorage.Put(ctx, contentPath, args.csv); err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
 	}
@@ -120,7 +119,7 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	emptyResp := CreateTableResponse{}
 
-	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, h.Vault, h.StorageConfig, h.JobManager); err != nil {
+	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, h.Vault, args.StorageConfig, h.JobManager); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -129,7 +128,15 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 // CreateTable adds the CSV as a table in the database. It returns a status code for the request
 // and an error, if any.
-func CreateTable(ctx context.Context, args *CreateTableArgs, contentPath string, integrationObject *integration.Integration, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager) (int, error) {
+func CreateTable(
+	ctx context.Context,
+	args *CreateTableArgs,
+	contentPath string,
+	integrationObject *integration.Integration,
+	vaultObject vault.Vault,
+	storageConfig *shared.StorageConfig,
+	jobManager job.JobManager,
+) (int, error) {
 	// Schedule load table job
 	jobMetadataPath := fmt.Sprintf("create-table-%s", args.RequestId)
 

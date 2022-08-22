@@ -44,6 +44,15 @@ type Writer interface {
 		contentPath string,
 		db database.Database,
 	) (*ArtifactResult, error)
+	InsertArtifactResult(
+		ctx context.Context,
+		workflowDagResultId uuid.UUID,
+		artifactId uuid.UUID,
+		contentPath string,
+		execState *shared.ExecutionState,
+		metadata *Metadata,
+		db database.Database,
+	) (*ArtifactResult, error)
 	UpdateArtifactResult(
 		ctx context.Context,
 		id uuid.UUID,

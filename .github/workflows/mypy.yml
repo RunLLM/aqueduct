@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install mypy pydantic
+          python3 -m pip install mypy pydantic
 
       - name: Install Type Stub Libraries
         run : |
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install mypy pydantic
+          python3 -m pip install mypy pydantic
 
       - name: Install Type Stub Libraries
         run : |

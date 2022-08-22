@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,7 +35,6 @@ const (
 func ScheduleWorkflow(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,
-	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	vault vault.Vault,
 	db database.Database,
@@ -47,14 +47,9 @@ func ScheduleWorkflow(
 	}
 
 	// Prepare the storage credentials, so it can be accessed from Airflow
-	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, storageConfig, vault)
+	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, &dag.StorageConfig, vault)
 	if err != nil {
 		return nil, err
-	}
-
-	operatorIDs := make([]uuid.UUID, 0, len(dag.Operators))
-	for id := range dag.Operators {
-		operatorIDs = append(operatorIDs, id)
 	}
 
 	artifactIDs := make([]uuid.UUID, 0, len(dag.Artifacts))
@@ -62,13 +57,42 @@ func ScheduleWorkflow(
 		artifactIDs = append(artifactIDs, id)
 	}
 
-	// Generate storage path prefixes for operator metadata, artifact content,
-	// and artifact metadata. At runtime, the Airflow DAG run ID is appended to
+	operatorIDs := make([]uuid.UUID, 0, len(dag.Operators))
+	for id := range dag.Operators {
+		operatorIDs = append(operatorIDs, id)
+	}
+
+	// Generate storage path prefixes for artifact content and artifact metadata.
+	// At runtime, the Airflow DAG run ID is appended to
 	// the relevant path prefix to form a unique storage path without requiring
 	// coordination between Airflow and the Aqueduct server.
 	operatorToMetadataPathPrefix := generateStoragePathPrefixes(operatorIDs)
 	artifactToContentPathPrefix := generateStoragePathPrefixes(artifactIDs)
 	artifactToMetadataPathPrefix := generateStoragePathPrefixes(artifactIDs)
+
+	// Convert the format of these paths into `ExecPaths`, which are used to construct
+	// to Artifact/Operator objects. Relies on the fact that an operator -> output artifact
+	// is always a unique one-to-one mapping.
+	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(artifactIDs))
+	for _, dbOperator := range dag.Operators {
+		for _, outputArtifactID := range dbOperator.Outputs {
+			artifactIDToExecPaths[outputArtifactID] = &utils.ExecPaths{
+				ArtifactContentPath:  artifactToContentPathPrefix[outputArtifactID],
+				ArtifactMetadataPath: artifactToMetadataPathPrefix[outputArtifactID],
+				OpMetadataPath:       operatorToMetadataPathPrefix[dbOperator.Id],
+			}
+		}
+	}
+	// Take an additional pass over the artifacts to fill in the paths for those that start workflows.
+	for _, artifactId := range artifactIDs {
+		if _, ok := artifactIDToExecPaths[artifactId]; !ok {
+			artifactIDToExecPaths[artifactId] = &utils.ExecPaths{
+				ArtifactContentPath:  artifactToContentPathPrefix[artifactId],
+				ArtifactMetadataPath: artifactToMetadataPathPrefix[artifactId],
+				OpMetadataPath:       "", // Artifacts with no input operators have no operator metadata path.
+			}
+		}
+	}
 
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
@@ -76,80 +100,72 @@ func ScheduleWorkflow(
 	// For each operator, generate a job spec that can be used to turn an operator
 	// into an Airflow task.
 	for _, op := range dag.Operators {
+
 		// Prepare `op`'s input artifacts
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
-		inputContentPathPrefixes := make([]string, 0, len(op.Inputs))
-		inputMetadataPathPrefixes := make([]string, 0, len(op.Inputs))
+		inputExecPaths := make([]*utils.ExecPaths, 0, len(op.Inputs))
 		for _, artifactId := range op.Inputs {
 			dbInputArtifact, ok := dag.Artifacts[artifactId]
 			if !ok {
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			contentPath := artifactToContentPathPrefix[artifactId]
-			metadataPath := artifactToMetadataPathPrefix[artifactId]
-
 			inputArtifact, err := artifact.NewArtifact(
+				uuid.Nil, /* Airflow does not use the preview cache */
 				dbInputArtifact,
-				contentPath,
-				metadataPath,
-				nil,
-				storageConfig,
-				nil,
+				artifactIDToExecPaths[artifactId],
+				nil, /* artifactResultWriter */
+				&dag.StorageConfig,
+				nil, /* artifactCacheManager */
+				nil, /* db */
 			)
 			if err != nil {
 				return nil, err
 			}
 
 			inputArtifacts = append(inputArtifacts, inputArtifact)
-			inputContentPathPrefixes = append(inputContentPathPrefixes, contentPath)
-			inputMetadataPathPrefixes = append(inputMetadataPathPrefixes, metadataPath)
+			inputExecPaths = append(inputExecPaths, artifactIDToExecPaths[artifactId])
 		}
 
 		// Prepare `op`'s output artifacts
 		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
-		outputContentPathPrefixes := make([]string, 0, len(op.Outputs))
-		outputMetadataPathPrefixes := make([]string, 0, len(op.Outputs))
+		outputExecPaths := make([]*utils.ExecPaths, 0, len(op.Outputs))
 		for _, artifactId := range op.Outputs {
 			dbOutputArtifact, ok := dag.Artifacts[artifactId]
 			if !ok {
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			contentPath := artifactToContentPathPrefix[artifactId]
-			metadataPath := artifactToMetadataPathPrefix[artifactId]
-
 			outputArtifact, err := artifact.NewArtifact(
+				uuid.Nil, /* Airflow does not use the preview cache */
 				dbOutputArtifact,
-				contentPath,
-				metadataPath,
-				nil,
-				storageConfig,
-				nil,
+				artifactIDToExecPaths[artifactId],
+				nil, /* previewArtifactResultWriter */
+				&dag.StorageConfig,
+				nil, /* previewCacheManager */
+				nil, /* db */
 			)
 			if err != nil {
 				return nil, err
 			}
 
 			outputArtifacts = append(outputArtifacts, outputArtifact)
-			outputContentPathPrefixes = append(outputContentPathPrefixes, contentPath)
-			outputMetadataPathPrefixes = append(outputMetadataPathPrefixes, metadataPath)
+			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactId])
 		}
 
 		airflowOperator, err := operator.NewOperator(
 			ctx,
 			op,
 			inputArtifacts,
-			inputContentPathPrefixes,
-			inputMetadataPathPrefixes,
 			outputArtifacts,
-			outputContentPathPrefixes,
-			outputMetadataPathPrefixes,
+			inputExecPaths,
+			outputExecPaths,
 			nil,
 			jobManager,
 			vault,
 			&airflowStorageConfig,
-			false, // airflow operator will never run in preview mode
+			nil,              /* previewCacheManager */
+			operator.Publish, // airflow operator will never run in preview mode
 			db,
 		)
 		if err != nil {
@@ -179,13 +195,13 @@ func ScheduleWorkflow(
 	operatorOutputPath := fmt.Sprintf("compile-airflow-output-%s", uuid.New().String())
 
 	defer func() {
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{operatorMetadataPath, operatorOutputPath})
+		go utils.CleanupStorageFiles(ctx, &dag.StorageConfig, []string{operatorMetadataPath, operatorOutputPath})
 	}()
 
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())
 	jobSpec, err := job.NewCompileAirflowSpec(
 		jobName,
-		storageConfig,
+		&dag.StorageConfig,
 		operatorMetadataPath,
 		operatorOutputPath,
 		dagId,
@@ -213,7 +229,7 @@ func ScheduleWorkflow(
 	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
-		storageConfig,
+		&dag.StorageConfig,
 		operatorMetadataPath,
 		&execState,
 	); err != nil {
@@ -224,17 +240,20 @@ func ScheduleWorkflow(
 		return nil, errors.Newf("Compile Airflow job failed: %v \n logs: %v \n failure type: %v", execState.Error, execState.UserLogs, execState.FailureType)
 	}
 
-	airflowDagFile, err := storage.NewStorage(storageConfig).Get(ctx, operatorOutputPath)
+	airflowDagFile, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, operatorOutputPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update the AirflowRuntimeConfig for `dag`
 	newRuntimeConfig := dag.EngineConfig
+	newRuntimeConfig.AirflowConfig.DagId = dagId
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
 	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix = artifactToMetadataPathPrefix
+
+	logrus.Warnf("Writing op to metadata path prefixes: %v", newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix)
 
 	_, err = workflowDagWriter.UpdateWorkflowDag(
 		ctx,
