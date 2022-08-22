@@ -32,6 +32,7 @@ import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CSVDialog } from './csvDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
@@ -224,6 +225,9 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
       break;
     case 'Airflow':
       serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
+      break;
+    case 'Kubernetes':
+      serviceDialog = <KubernetesDialog setDialogConfig={setConfig} />;
       break;
     default:
       return null;

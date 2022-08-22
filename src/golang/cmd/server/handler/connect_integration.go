@@ -19,6 +19,7 @@ import (
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -210,6 +211,12 @@ func ValidateConfig(
 		return validateAirflowConfig(ctx, config)
 	}
 
+	if service == integration.Kubernetes {
+		// Kuerbnetes authentication is performed via initializing a k8s client
+		// instead of the Python client, so we don't launch a job for it.
+		return validateKubernetesConfig(ctx, config)
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
 
@@ -393,4 +400,15 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	}
 
 	return storageConfig, nil
+}
+
+func validateKubernetesConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateK8sConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
 }

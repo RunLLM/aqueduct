@@ -10,6 +10,7 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -57,6 +58,7 @@ type EngineReaders struct {
 	ArtifactReader          artifact_db.Reader
 	ArtifactResultReader    artifact_result.Reader
 	UserReader              user.Reader
+	IntegrationReader       integration.Reader
 }
 
 type EngineWriters struct {
@@ -170,18 +172,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
-	// TODO: Generalize JobManager type from user input.
-	// engineJobManager depends on the type of engine used.
-	engineJobManager, err := job.NewJobManager(
-		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
-		},
-	)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
-	}
-
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
 		workflowId,
@@ -230,6 +220,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
+	}
+
+	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
+
+	engineJobManager, err := job.NewJobManager(engineConfig)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(
