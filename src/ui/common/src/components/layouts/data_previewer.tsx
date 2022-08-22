@@ -2,7 +2,6 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Typography from '@mui/material/Typography';
 import Image from 'mui-image';
 import React from 'react';
 
@@ -12,6 +11,7 @@ import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
 import DataTable from '../tables/DataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
+import TextBlock from '../text/TextBlock';
 
 type Props = {
   previewData: ArtifactResult;
@@ -68,9 +68,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
     errorComponent = (
       <Box>
         <Alert severity="error">
-          <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-            {loadingStatus.err}
-          </Typography>
+          <TextBlock text={loadingStatus.err} />
         </Alert>
       </Box>
     );
@@ -82,70 +80,58 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
 
   let data: React.ReactElement;
   if (previewData.result?.status === ExecutionStatus.Succeeded) {
-    if (previewData.result.serialization_type === SerializationType.Table) {
-      const parsedData = JSON.parse(previewData.result.data);
-      const columnsContent = parsedData.schema.fields.map((column) => {
-        return {
-          dataKey: column.name,
-          label: column.name,
-          type: column.type,
-        };
-      });
-      data = (
-        <Box
-          sx={{
-            height: '100%',
-            width: '100%',
-            overflow: 'auto',
-            overflowY: 'hidden',
-          }}
-        >
-          <DataTable
-            rowCount={parsedData.data.length}
-            rowGetter={({ index }) => parsedData.data[index]}
-            columns={columnsContent}
-          />
-        </Box>
-      );
-    } else if (
-      previewData.result.serialization_type === SerializationType.Image
-    ) {
-      const srcFromBase64 = 'data:image/png;base64,' + previewData.result.data;
-      data = <Image src={srcFromBase64} duration={0} fit="contain" />;
-    } else if (
-      previewData.result.serialization_type === SerializationType.Json
-    ) {
-      // Convert to pretty-printed version.
-      const prettyJson = JSON.stringify(
-        JSON.parse(previewData.result.data),
-        null,
-        2
-      );
-      data = (
-        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-          {prettyJson}
-        </Typography>
-      );
-    } else if (
-      previewData.result.serialization_type === SerializationType.String
-    ) {
-      data = (
-        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-          {previewData.result.data}
-        </Typography>
-      );
-    } else {
-      errorComponent = (
-        <Box>
-          <Alert severity="warning">
-            <Typography
-              sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}
-            >
-              Artifact contains binary data that cannot be previewed.
-            </Typography>
-          </Alert>
-        </Box>
-      );
+    switch (previewData.result.serialization_type) {
+      case SerializationType.Table:
+        const parsedData = JSON.parse(previewData.result.data);
+        const columnsContent = parsedData.schema.fields.map((column) => {
+          return {
+            dataKey: column.name,
+            label: column.name,
+            type: column.type,
+          };
+        });
+        data = (
+          <Box
+            sx={{
+              height: '100%',
+              width: '100%',
+              overflow: 'auto',
+              overflowY: 'hidden',
+            }}
+          >
+            <DataTable
+              rowCount={parsedData.data.length}
+              rowGetter={({ index }) => parsedData.data[index]}
+              columns={columnsContent}
+            />
+          </Box>
+        );
+        break;
+      case SerializationType.Image:
+        const srcFromBase64 =
+          'data:image/png;base64,' + previewData.result.data;
+        data = <Image src={srcFromBase64} duration={0} fit="contain" />;
+        break;
+      case SerializationType.Json:
+        // Convert to pretty-printed version.
+        const prettyJson = JSON.stringify(
+          JSON.parse(previewData.result.data),
+          null,
+          2
+        );
+        data = <TextBlock text={prettyJson} />;
+        break;
+      case SerializationType.String:
+        data = <TextBlock text={previewData.result.data} />;
+        break;
+      default:
+        errorComponent = (
+          <Box>
+            <Alert severity="warning">
+              <TextBlock text="Artifact contains binary data that cannot be previewed." />
+            </Alert>
+          </Box>
+        );
     }
   }
 
