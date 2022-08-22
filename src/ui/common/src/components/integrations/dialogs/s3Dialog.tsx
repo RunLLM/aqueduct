@@ -17,7 +17,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 const Placeholders: S3Config = {
   type: S3CredentialType.AccessKey,
   bucket: 'aqueduct',
-  region: '',
+  region: 'us-east-1',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
@@ -203,7 +203,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       {s3Type === S3CredentialType.ConfigFileContent && configUploadTab}
 
       <FormControlLabel
-        label="Use this integration for Aqueduct storage."
+        label="Use this integration for Aqueduct metadata storage."
         control={<Checkbox checked={useAsStorage === 'true'} onChange={(event) => setUseAsStorage(event.target.checked ? 'true' : 'false')} />}
       />
     </Box>
