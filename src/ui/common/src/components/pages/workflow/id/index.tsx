@@ -279,22 +279,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           <Button
             style={{ marginRight: '16px' }}
             onClick={() => {
-              console.log('View Artifact details clicked');
-              // TODO: Get workflowDagResultId:
-              //workflow.selectedResult.id
-              // Then get artifact id:
-              // TODO: Get artifact ID
-              // Finally, construct URL to be used here:
-              // TODO: Build URL here:
-              // `/${pathPrefix}/workflow/:workflowDagResultId/artifact/:artifactId`
-              //exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
-              // artifact will be the selected node, so currentNode.id
-              console.log('navigating to artifact ...');
-              console.log('selectedWorkflowResult: ', workflow.selectedResult);
-
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
