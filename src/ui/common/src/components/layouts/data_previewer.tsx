@@ -2,6 +2,7 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 import Image from 'mui-image';
 import React from 'react';
 
@@ -11,7 +12,6 @@ import { ExecutionStatus, LoadingStatusEnum } from '../../utils/shared';
 import { Error } from '../../utils/shared';
 import DataTable from '../tables/DataTable';
 import LogBlock, { LogLevel } from '../text/LogBlock';
-import TextBlock from '../text/TextBlock';
 
 type Props = {
   previewData: ArtifactResult;
@@ -68,7 +68,9 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
     errorComponent = (
       <Box>
         <Alert severity="error">
-          <TextBlock text={loadingStatus.err} />
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+            {loadingStatus.err}
+          </Typography>
         </Alert>
       </Box>
     );
@@ -110,7 +112,14 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
       case SerializationType.Image:
         const srcFromBase64 =
           'data:image/png;base64,' + previewData.result.data;
-        data = <Image src={srcFromBase64} duration={0} fit="contain" />;
+        data = (
+          <Image
+            src={srcFromBase64}
+            duration={0}
+            fit="contain"
+            width="max-content"
+          />
+        );
         break;
       case SerializationType.Json:
         // Convert to pretty-printed version.
@@ -119,16 +128,26 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
           null,
           2
         );
-        data = <TextBlock text={prettyJson} />;
+        data = (
+          <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+            {prettyJson}
+          </Typography>
+        );
         break;
       case SerializationType.String:
-        data = <TextBlock text={previewData.result.data} />;
+        data = (
+          <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+            {previewData.result.data}
+          </Typography>
+        );
         break;
       default:
         errorComponent = (
           <Box>
-            <Alert severity="warning">
-              <TextBlock text="Artifact contains binary data that cannot be previewed." />
+            <Alert severity="info">
+              <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+                Artifact contains binary data that cannot be previewed.
+              </Typography>
             </Alert>
           </Box>
         );
