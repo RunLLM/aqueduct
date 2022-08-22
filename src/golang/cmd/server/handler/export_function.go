@@ -126,7 +126,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	return &exportFunctionResponse{
-		fileName: args.operatorId.String(),
+		fileName: operatorObject.Name,
 		program:  bytes.NewBuffer(program),
 	}, http.StatusOK, nil
 }
