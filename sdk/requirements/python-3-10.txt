@@ -10,3 +10,4 @@ plotly
 pyyaml
 great_expectations
 ruamel.yaml
+Pillow

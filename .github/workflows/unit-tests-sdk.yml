@@ -19,10 +19,10 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./sdk
-        run: pip3 install .
+        run: python3 -m pip install .
 
       - name: Install pytest
-        run: pip3 install pytest
+        run: python3 -m pip install pytest
 
       - name: Run Tests
         working-directory: ./sdk

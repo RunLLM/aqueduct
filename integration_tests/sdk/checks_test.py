@@ -5,7 +5,7 @@ from constants import CHURN_SQL_QUERY, SENTIMENT_SQL_QUERY
 from test_metrics.constant.model import constant_metric
 from utils import get_integration_name, run_flow_test, run_sentiment_model
 
-from aqueduct import CheckSeverity, check
+from aqueduct import CheckSeverity, check, op
 
 
 @check()
@@ -106,8 +106,8 @@ def test_delete_check(client):
         check_artifact_on_sql.get()
 
     metric_artifact = constant_metric(sql_artifact)
-    check_artifact_on_metric = success_on_single_table_input(metric_artifact)
-    metric_artifact.remove_check(name="success_on_single_table_input")
+    check_artifact_on_metric = success_on_single_metric_input(metric_artifact)
+    metric_artifact.remove_check(name="success_on_single_metric_input")
     with pytest.raises(ArtifactNotFoundException):
         check_artifact_on_metric.get()
 
@@ -117,28 +117,25 @@ def test_check_wrong_input_type(client):
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # User function receives a dataframe when it's expecting a metric.
-    check_artifact = success_on_single_metric_input(sql_artifact)
     with pytest.raises(AqueductError):
-        check_artifact.get()
+        check_artifact = success_on_single_metric_input(sql_artifact)
 
-    # TODO(ENG-862): the following code this should not surface an internal error,
+    # TODO(ENG-862): the following code should not surface an internal error,
     #  since its the user's fault.
     # Running a function operator on a check output, which is not allowed.
     check_artifact = success_on_single_table_input(sql_artifact)
-    fn_artifact = run_sentiment_model(check_artifact)
     with pytest.raises(Exception):
-        fn_artifact.get()
+        fn_artifact = run_sentiment_model(check_artifact)
 
 
 def test_check_wrong_number_of_inputs(client):
     db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(query=SENTIMENT_SQL_QUERY)
-    check_artifact = success_on_single_table_input(sql_artifact1, sql_artifact2)
 
     # TODO(ENG-863): Do we want a more specific error here?
     with pytest.raises(AqueductError):
-        check_artifact.get()
+        check_artifact = success_on_single_table_input(sql_artifact1, sql_artifact2)
 
 
 def test_check_with_numpy_bool_output(client):
@@ -191,5 +188,6 @@ def test_check_failure_with_varying_severity(client):
     nonblocking_check = failure_nonblocking_check(sql_artifact)
     run_flow_test(client, artifacts=[sql_artifact, nonblocking_check])
 
-    blocking_check = failure_blocking_check(sql_artifact)
-    run_flow_test(client, artifacts=[sql_artifact, blocking_check], expect_success=False)
+    # In eager execution, this check should fail before we can publish the flow.
+    with pytest.raises(AqueductError):
+        blocking_check = failure_blocking_check(sql_artifact)

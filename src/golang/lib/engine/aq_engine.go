@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"path"
 	"reflect"
@@ -27,6 +28,7 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -75,8 +77,10 @@ type aqEngine struct {
 	GithubManager  github.Manager
 	Vault          vault.Vault
 	CronjobManager cronjob.CronjobManager
-	StorageConfig  *shared.StorageConfig
 	AqPath         string
+
+	// Only used for previews.
+	PreviewCacheManager preview_cache.CacheManager
 
 	// Readers and Writers needed for workflow management
 	*EngineReaders
@@ -96,53 +100,35 @@ type workflowRunMetadata struct {
 type WorkflowPreviewResult struct {
 	Status    shared.ExecutionStatus
 	Operators map[uuid.UUID]shared.ExecutionState
-	Artifacts map[uuid.UUID]PreviewArtifactResults
+	Artifacts map[uuid.UUID]PreviewArtifactResult
 }
 
-type previewFloatArtifactResponse struct {
-	Val float64 `json:"val"`
-}
-
-type previewBoolArtifactResponse struct {
-	Passed bool `json:"passed"`
-}
-
-type previewParamArtifactResponse struct {
-	Val string `json:"val"`
-}
-
-type previewTableArtifactResponse struct {
-	TableSchema []map[string]string `json:"table_schema"`
-	Data        string              `json:"data"`
-}
-
-type PreviewArtifactResults struct {
-	Table  *previewTableArtifactResponse `json:"table"`
-	Metric *previewFloatArtifactResponse `json:"metric"`
-	Check  *previewBoolArtifactResponse  `json:"check"`
-	Param  *previewParamArtifactResponse `json:"param"`
+type PreviewArtifactResult struct {
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
+	Content           string                            `json:"content"`
 }
 
 func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
+	previewCacheManager preview_cache.CacheManager,
 	vault vault.Vault,
 	aqPath string,
-	storageConfig *shared.StorageConfig,
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
-		Database:       database,
-		GithubManager:  githubManager,
-		Vault:          vault,
-		CronjobManager: cronjobManager,
-		StorageConfig:  storageConfig,
-		AqPath:         aqPath,
-		EngineReaders:  engineReaders,
-		EngineWriters:  engineWriters,
+		Database:            database,
+		GithubManager:       githubManager,
+		PreviewCacheManager: previewCacheManager,
+		Vault:               vault,
+		CronjobManager:      cronjobManager,
+		AqPath:              aqPath,
+		EngineReaders:       engineReaders,
+		EngineWriters:       engineWriters,
 	}, nil
 }
 
@@ -164,7 +150,6 @@ func (eng *aqEngine) ScheduleWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
-		eng.StorageConfig,
 		nil,
 	)
 	err := eng.CronjobManager.DeployCronJob(
@@ -258,8 +243,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.UserReader,
 		engineJobManager,
 		eng.Vault,
-		eng.StorageConfig,
-		false, // is not preview
+		nil, /* artifactCacheManager */
+		operator.Publish,
 		eng.Database,
 	)
 	if err != nil {
@@ -275,7 +260,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	workflowRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &workflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -285,8 +270,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 	// Make sure to persist the dag results on exit.
 	defer func() {
 		log.Info("workflowRunMetadata: ")
-		log.Info(workflowRunMetadata)
-		err = dag.PersistResult(ctx, workflowRunMetadata.Status)
+		log.Info(wfRunMetadata)
+
+		err = dag.PersistResult(ctx, wfRunMetadata.Status)
 		if err != nil {
 			log.Errorf("Error when persisting dag results: %v", err)
 		}
@@ -297,19 +283,19 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	workflowRunMetadata.Status = shared.RunningExecutionStatus
+	wfRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
-		workflowRunMetadata,
+		wfRunMetadata,
 		timeConfig,
-		true, // should persist results
+		operator.Publish,
 	)
 	if err != nil {
-		workflowRunMetadata.Status = shared.FailedExecutionStatus
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Error when executing workflow.")
+		wfRunMetadata.Status = shared.FailedExecutionStatus
+		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		workflowRunMetadata.Status = shared.SucceededExecutionStatus
+		wfRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
 	return shared.SucceededExecutionStatus, nil
@@ -342,8 +328,8 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.UserReader,
 		jobManager,
 		eng.Vault,
-		eng.StorageConfig,
-		true, // is a preview
+		eng.PreviewCacheManager,
+		operator.Preview,
 		eng.Database,
 	)
 	if err != nil {
@@ -361,25 +347,26 @@ func (eng *aqEngine) PreviewWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	workflowRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &workflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		Status:              shared.PendingExecutionStatus,
 	}
 
-	workflowRunMetadata.Status = shared.RunningExecutionStatus
+	wfRunMetadata.Status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
-		workflowRunMetadata,
+		wfRunMetadata,
 		timeConfig,
-		false, // should not persist results
+		operator.Preview,
 	)
 	if err != nil {
-		workflowRunMetadata.Status = shared.FailedExecutionStatus
+		log.Errorf("Workflow failed with error: %v", err)
+		wfRunMetadata.Status = shared.FailedExecutionStatus
 	} else {
-		workflowRunMetadata.Status = shared.SucceededExecutionStatus
+		wfRunMetadata.Status = shared.SucceededExecutionStatus
 	}
 
 	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
@@ -392,19 +379,28 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	// Only include artifact results that were successfully computed.
-	artifactResults := make(map[uuid.UUID]PreviewArtifactResults)
+	artifactResults := make(map[uuid.UUID]PreviewArtifactResult)
 	for _, artf := range dag.Artifacts() {
 		if artf.Computed(ctx) {
-			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
+			artifact_metadata, err := artf.GetMetadata(ctx)
 			if err != nil {
-				return nil, errors.Wrap(err, "Unable to convert artifact result.")
+				return nil, errors.Wrap(err, "Unable to get artifact metadata.")
 			}
-			artifactResults[artf.ID()] = *artifactResp
+
+			content, err := artf.GetContent(ctx)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to get artifact content.")
+			}
+			artifactResults[artf.ID()] = PreviewArtifactResult{
+				SerializationType: artifact_metadata.SerializationType,
+				ArtifactType:      artifact_metadata.ArtifactType,
+				Content:           base64.StdEncoding.EncodeToString(content),
+			}
 		}
 	}
 
 	return &WorkflowPreviewResult{
-		Status:    workflowRunMetadata.Status,
+		Status:    wfRunMetadata.Status,
 		Operators: execStateByOp,
 		Artifacts: artifactResults,
 	}, nil
@@ -661,7 +657,6 @@ func (eng *aqEngine) TriggerWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
-		eng.StorageConfig,
 		parameters,
 	)
 
@@ -687,7 +682,7 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
-	shouldPersistResults bool,
+	opExecMode operator.ExecutionMode,
 ) error {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
@@ -736,7 +731,7 @@ func (eng *aqEngine) execute(
 			}
 
 			// From here on we can assume that the operator has terminated.
-			if shouldPersistResults {
+			if opExecMode == operator.Publish {
 				err = op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
@@ -872,7 +867,6 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			},
 			eng.GithubManager.Config(),
 			eng.AqPath,
-			eng.StorageConfig,
 			nil,
 		)
 

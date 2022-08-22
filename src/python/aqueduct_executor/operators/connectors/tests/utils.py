@@ -1,20 +1,20 @@
 import pandas as pd
 import pytest
-from aqueduct_executor.operators.connectors.tabular import connector
+from aqueduct_executor.operators.connectors.data import connector
 
 
-def authenticate_test(conn: connector.TabularConnector):
+def authenticate_test(conn: connector.DataConnector):
     try:
         conn.authenticate()
     except ConnectionError as e:
         pytest.fail("Failed authentication %s" % e)
 
 
-def load_test(conn: connector.TabularConnector, params: dict, df: pd.DataFrame):
+def load_test(conn: connector.DataConnector, params: dict, df: pd.DataFrame):
     conn.load(params, df)
 
 
-def extract_test(conn: connector.TabularConnector, params: dict, expected_df: pd.DataFrame):
+def extract_test(conn: connector.DataConnector, params: dict, expected_df: pd.DataFrame):
     df = conn.extract(params)
     dup = pd.concat([df, expected_df]).drop_duplicates(keep=False)
     if dup.shape[0] != 0:

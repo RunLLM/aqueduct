@@ -4,6 +4,7 @@ import subprocess
 import sys
 import uuid
 from pathlib import Path
+from time import sleep
 
 import pytest
 import requests
@@ -71,7 +72,7 @@ class TestBackend:
         assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
-        assert len(set([item["integration_id"] for item in data])) == 1
+        assert len(set([item["integration_name"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1
 
     def test_endpoint_delete_integration(self):

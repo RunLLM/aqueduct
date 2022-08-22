@@ -2,13 +2,9 @@ package engine
 
 import (
 	"context"
-	"strconv"
 	"time"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -53,53 +49,4 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 // We should only stop orchestration on system or fatal user errors.
 func shouldStopExecution(execState *shared.ExecutionState) bool {
 	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
-}
-
-func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*PreviewArtifactResults, error) {
-	content, err := artf.GetContent(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if artf.Type() == db_artifact.FloatType {
-		val, err := strconv.ParseFloat(string(content), 32)
-		if err != nil {
-			return nil, err
-		}
-
-		return &PreviewArtifactResults{
-			Metric: &previewFloatArtifactResponse{
-				Val: val,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.BoolType {
-		passed, err := strconv.ParseBool(string(content))
-		if err != nil {
-			return nil, err
-		}
-
-		return &PreviewArtifactResults{
-			Check: &previewBoolArtifactResponse{
-				Passed: passed,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.JsonType {
-		return &PreviewArtifactResults{
-			Param: &previewParamArtifactResponse{
-				Val: string(content),
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.TableType {
-		metadata, err := artf.GetMetadata(ctx)
-		if err != nil {
-			metadata = &artifact_result.Metadata{}
-		}
-		return &PreviewArtifactResults{
-			Table: &previewTableArtifactResponse{
-				TableSchema: metadata.Schema,
-				Data:        string(content),
-			},
-		}, nil
-	}
-	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }

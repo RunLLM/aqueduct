@@ -61,7 +61,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		r,
 		aqContext.Id,
 		h.GithubManager,
-		h.StorageConfig,
+		aqContext.StorageConfig,
 	)
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to register workflow.")
@@ -166,7 +166,6 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
 		workflowDag,
-		h.StorageConfig,
 		h.JobManager,
 		h.Vault,
 		txn,

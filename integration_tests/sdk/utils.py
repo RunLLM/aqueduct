@@ -2,11 +2,11 @@ import time
 import uuid
 from typing import Dict, List, Optional, Union
 
-from aqueduct.check_artifact import CheckArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import ExecutionStatus
-from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
 from pandas import DataFrame
 
 # Should be set before each test runs.
@@ -14,7 +14,7 @@ from test_functions.sentiment.model import sentiment_model, sentiment_model_mult
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 
 import aqueduct
-from aqueduct import Flow
+from aqueduct import Flow, api_client
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None
@@ -36,11 +36,11 @@ def should_run_complex_models() -> bool:
 
 
 def generate_new_flow_name() -> str:
-    return "workflow_" + uuid.uuid4().hex[:8]
+    return "test_" + uuid.uuid4().hex
 
 
 def generate_table_name() -> str:
-    return "test_table_" + uuid.uuid4().hex[:8]
+    return "test_table_" + uuid.uuid4().hex[:24]
 
 
 def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
@@ -92,7 +92,7 @@ def run_sentiment_model_local_multiple_input(
 
 def run_flow_test(
     client: aqueduct.Client,
-    artifacts: List[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]],
+    artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact, ParamArtifact]],
     name: str = "",
     schedule: str = "",
     num_runs: int = 1,
@@ -119,7 +119,7 @@ def run_flow_test(
         artifacts=artifacts,
         schedule=schedule,
     )
-    print("Workflow registration succeeded. Workflow ID: %s" % flow.id())
+    print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
     try:
         wait_for_flow_runs(client, flow.id(), num_runs, expect_success)
@@ -147,9 +147,9 @@ def wait_for_flow_runs(
     begin = time.time()
 
     while True:
-        assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
-
         time.sleep(poll_threshold)
+
+        assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
 
         if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
             continue
@@ -192,6 +192,71 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
     try:
         client.delete_flow(str(workflow_id))
     except Exception as e:
-        print("Error deleting workflow %s with exception %s" % (workflow_id, e))
+        print("Error deleting workflow %s with exception: %s" % (workflow_id, e))
     else:
         print("Successfully deleted workflow %s" % (workflow_id))
+
+
+def check_flow_doesnt_exist(client, flow_id):
+    def stop_condition(client, flow_id):
+        try:
+            client.flow(flow_id)
+            return False
+        except:
+            return True
+
+    polling(
+        lambda: stop_condition(client, flow_id),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking flow doens't exist.",
+    )
+
+
+def check_table_doesnt_exist(integration, table):
+    def stop_condition(integration, table):
+        try:
+            integration.sql(f"SELECT * FROM {table}").get()
+            return False
+        except:
+            return True
+
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
+
+def check_table_exists(integration, table):
+    def stop_condition(integration, table):
+        try:
+            integration.sql(f"SELECT * FROM {table}").get()
+            return True
+        except:
+            return False
+
+    polling(
+        lambda: stop_condition(integration, table),
+        timeout=60,
+        poll_threshold=5,
+        timeout_comment="Timed out checking table doesn't exist.",
+    )
+
+
+def polling(
+    stop_condition_fn,
+    timeout=60,
+    poll_threshold=5,
+    timeout_comment="Timed out waiting for workflow run to complete.",
+):
+    begin = time.time()
+
+    while True:
+        assert time.time() - begin < timeout, timeout_comment
+
+        if stop_condition_fn():
+            break
+        else:
+            time.sleep(poll_threshold)

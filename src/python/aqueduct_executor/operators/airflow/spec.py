@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List, Literal, Union
 
-from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
+from aqueduct_executor.operators.connectors.data import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
 from aqueduct_executor.operators.utils import enums

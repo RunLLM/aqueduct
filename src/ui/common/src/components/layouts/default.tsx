@@ -35,7 +35,7 @@ export const DefaultLayout: React.FC<Props> = ({
         <Box
           sx={{
             marginLeft: MenuSidebarOffset,
-            marginRight: layoutType === 'page' ? MenuSidebarOffset : '0px',
+            marginRight: 0,
             width: '100%',
             marginTop: 3,
           }}

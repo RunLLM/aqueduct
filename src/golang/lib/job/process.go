@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
-	connectorPythonPath          = "operators.connectors.tabular.main"
+	connectorPythonPath          = "operators.connectors.data.main"
 	paramPythonPath              = "operators.param_executor.main"
 	systemMetricPythonPath       = "operators.system_metric_executor.main"
 	compileAirflowPythonPath     = "operators.airflow.main"
@@ -210,6 +210,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		spec.Type() == LoadJobType ||
 		spec.Type() == ExtractJobType ||
 		spec.Type() == LoadTableJobType ||
+		spec.Type() == DeleteSavedObjectsJobType ||
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
