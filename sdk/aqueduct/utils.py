@@ -105,13 +105,11 @@ def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
 
 MODEL_FILE_NAME = "model.py"
 MODEL_PICKLE_FILE_NAME = "model.pkl"
-AQUEDUCT_UTILS_FILE_NAME = "aqueduct_utils.py"
 PYTHON_VERSION_FILE_NAME = "python_version.txt"
 CONDA_VERSION_FILE_NAME = "conda_version.txt"
 RESERVED_FILE_NAMES = [
     MODEL_FILE_NAME,
     MODEL_PICKLE_FILE_NAME,
-    AQUEDUCT_UTILS_FILE_NAME,
     PYTHON_VERSION_FILE_NAME,
     CONDA_VERSION_FILE_NAME,
 ]
