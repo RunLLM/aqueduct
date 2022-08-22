@@ -15,6 +15,9 @@ build-function-test:
 build-param:
 	docker build . -t aqueducthq/param -f param/param.dockerfile --no-cache
 
+build-system-metric:
+	docker build . -t aqueducthq/system-metric -f system-metric/system-metric.dockerfile --no-cache
+
 build-base-connector:
 	docker build . -t aqueducthq/base_connector -f connectors/base.dockerfile --no-cache
 
