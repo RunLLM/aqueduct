@@ -12,6 +12,9 @@ Released on August 22, 2022.
 ### Enhancements
 * Caches previously computed function results to avoid repetitive
     recomputation. 
+* Enables using AWS S3 as Aqueduct's metadata store; when connecting an S3
+    integration, you can now optionally choose to store all Aqueduct metadata
+    in AWS S3.
 
 ### Bugfixes
 * Fixes a bug where the DAG view would ignore the selected version when
