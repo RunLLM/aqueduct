@@ -76,7 +76,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
 
-	containerImage, err := mapJobTypeToDockerImage(j, spec)
+	containerImage, err := mapJobTypeToDockerImage(spec)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
+func mapJobTypeToDockerImage(spec Spec) (string, error) {
 	switch spec.Type() {
 	// case WorkflowJobType:
 	// 	return j.conf.ExecutorDockerImage, nil
@@ -135,16 +135,16 @@ func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 		return DefaultFunctionDockerImage, nil
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
-		return mapIntegrationServiceToDockerImage(j, authenticateSpec.ConnectorName)
+		return mapIntegrationServiceToDockerImage(authenticateSpec.ConnectorName)
 	case ExtractJobType:
 		extractSpec := spec.(*ExtractSpec)
-		return mapIntegrationServiceToDockerImage(j, extractSpec.ConnectorName)
+		return mapIntegrationServiceToDockerImage(extractSpec.ConnectorName)
 	case LoadJobType:
 		loadSpec := spec.(*LoadSpec)
-		return mapIntegrationServiceToDockerImage(j, loadSpec.ConnectorName)
+		return mapIntegrationServiceToDockerImage(loadSpec.ConnectorName)
 	case DiscoverJobType:
 		discoverSpec := spec.(*DiscoverSpec)
-		return mapIntegrationServiceToDockerImage(j, discoverSpec.ConnectorName)
+		return mapIntegrationServiceToDockerImage(discoverSpec.ConnectorName)
 	case ParamJobType:
 		return DefaultParameterDockerImage, nil
 	case SystemMetricJobType:
@@ -154,7 +154,7 @@ func mapJobTypeToDockerImage(j *k8sJobManager, spec Spec) (string, error) {
 	}
 }
 
-func mapIntegrationServiceToDockerImage(j *k8sJobManager, service integration.Service) (string, error) {
+func mapIntegrationServiceToDockerImage(service integration.Service) (string, error) {
 	switch service {
 	case integration.Postgres, integration.Redshift, integration.AqueductDemo:
 		return DefaultPostgresConnectorDockerImage, nil
