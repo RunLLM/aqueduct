@@ -49,8 +49,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Box>
   );
 
-  console.log('allWorkflows: ', allWorkflows);
-
   const workflowList =
     allWorkflows.workflows.length > 0 ? (
       <Box sx={{ maxWidth: '1000px', width: '90%' }}>
