@@ -204,7 +204,14 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
 
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
-        control={<Checkbox checked={useAsStorage === 'true'} onChange={(event) => setUseAsStorage(event.target.checked ? 'true' : 'false')} />}
+        control={
+          <Checkbox
+            checked={useAsStorage === 'true'}
+            onChange={(event) =>
+              setUseAsStorage(event.target.checked ? 'true' : 'false')
+            }
+          />
+        }
       />
     </Box>
   );
