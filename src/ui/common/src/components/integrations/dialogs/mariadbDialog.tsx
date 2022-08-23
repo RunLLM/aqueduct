@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { IntegrationConfig, MariaDbConfig } from '../../../utils/integrations';
+import { MariaDbConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: MariaDbConfig = {
@@ -13,27 +13,11 @@ const Placeholders: MariaDbConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof MariaDbConfig, value: string) => void;
+  value?: MariaDbConfig;
 };
 
-export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [host, setHost] = useState<string>(null);
-  const [port, setPort] = useState<string>(null);
-  const [database, setDatabase] = useState<string>(null);
-  const [username, setUsername] = useState<string>(null);
-  const [password, setPassword] = useState<string>(null);
-
-  useEffect(() => {
-    const config: MariaDbConfig = {
-      host: host,
-      port: port,
-      database: database,
-      username: username,
-      password: password,
-    };
-    setDialogConfig(config);
-  }, [host, port, database, username, password]);
-
+export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -42,8 +26,8 @@ export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.host}
-        onChange={(event) => setHost(event.target.value)}
-        value={host}
+        onChange={(event) => onUpdateField('host', event.target.value)}
+        value={value?.host ?? null}
       />
 
       <IntegrationTextInputField
@@ -52,8 +36,8 @@ export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.port}
-        onChange={(event) => setPort(event.target.value)}
-        value={port}
+        onChange={(event) => onUpdateField('port', event.target.value)}
+        value={value?.port ?? null}
       />
 
       <IntegrationTextInputField
@@ -62,8 +46,8 @@ export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.database}
-        onChange={(event) => setDatabase(event.target.value)}
-        value={database}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database ?? null}
       />
 
       <IntegrationTextInputField
@@ -72,8 +56,8 @@ export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Username*"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => setUsername(event.target.value)}
-        value={username}
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username ?? null}
       />
 
       <IntegrationTextInputField
@@ -83,8 +67,8 @@ export const MariaDbDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setPassword(event.target.value)}
-        value={password}
+        onChange={(event) => onUpdateField('password', event.target.value)}
+        value={value?.password ?? null}
       />
     </Box>
   );

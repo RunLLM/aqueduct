@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { IntegrationConfig, PostgresConfig } from '../../../utils/integrations';
+import { PostgresConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: PostgresConfig = {
@@ -13,32 +13,11 @@ const Placeholders: PostgresConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof PostgresConfig, value: string) => void;
+  value?: PostgresConfig;
 };
 
-export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [host, setHost] = useState<string>(null);
-  const [port, setPort] = useState<string>(null);
-  const [database, setDatabase] = useState<string>(null);
-  const [username, setUsername] = useState<string>(null);
-  const [password, setPassword] = useState<string>(null);
-
-  useEffect(() => {
-    const config: PostgresConfig = {
-      host: host,
-      port: port,
-      database: database,
-      username: username,
-      password: undefined,
-    };
-
-    if (password && password !== '') {
-      config['password'] = password;
-    }
-
-    setDialogConfig(config);
-  }, [host, port, database, username, password]);
-
+export const PostgresDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -47,8 +26,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Host *"
         description="The hostname or IP address of the Postgres server."
         placeholder={Placeholders.host}
-        onChange={(event) => setHost(event.target.value)}
-        value={host}
+        onChange={(event) => onUpdateField('host', event.target.value)}
+        value={value?.host ?? null}
       />
 
       <IntegrationTextInputField
@@ -57,8 +36,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Port *"
         description="The port number of the Postgres server."
         placeholder={Placeholders.port}
-        onChange={(event) => setPort(event.target.value)}
-        value={port}
+        onChange={(event) => onUpdateField('port', event.target.value)}
+        value={value?.port ?? null}
       />
 
       <IntegrationTextInputField
@@ -67,8 +46,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Database *"
         description="The name of the specific database to connect to."
         placeholder={Placeholders.database}
-        onChange={(event) => setDatabase(event.target.value)}
-        value={database}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database ?? null}
       />
 
       <IntegrationTextInputField
@@ -77,8 +56,8 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Username *"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => setUsername(event.target.value)}
-        value={username}
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username ?? null}
       />
 
       <IntegrationTextInputField
@@ -88,8 +67,12 @@ export const PostgresDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setPassword(event.target.value)}
-        value={password}
+        onChange={(event) => {
+          if (!!event.target.value) {
+            onUpdateField('password', event.target.value);
+          }
+        }}
+        value={value?.password ?? null}
       />
     </Box>
   );
