@@ -8,6 +8,9 @@ Released on August 22, 2022.
     Python-serializable object. Under the hood, Aqueduct has special
     optimization for JSON blobs, images, and tables, in addition to supporting
     regular Python objects.
+* Enables eager execution when defining workflow artifacts; artifacts are now
+    immediately computed at definition time, before calling the `get` API, which
+    allows surfacing potential errors earlier during workflow construction.
 
 ### Enhancements
 * Caches previously computed function results to avoid repetitive
