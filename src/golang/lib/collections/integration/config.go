@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -47,3 +48,8 @@ type S3Config struct {
 
 // AirflowConfig contains the fields for connecting an Airflow integration.
 type AirflowConfig struct{}
+
+// GCSConfig contains the fields for connecting a Google Cloud Storage integration.
+type GCSConfig struct {
+	shared.GCSConfig
+}

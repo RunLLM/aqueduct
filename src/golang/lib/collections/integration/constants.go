@@ -57,6 +57,7 @@ const (
 	Sqlite       Service = "SQLite"
 	Airflow      Service = "Airflow"
 	Kubernetes   Service = "Kubernetes"
+	GCS          Service = "GCS"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
@@ -65,7 +66,7 @@ const (
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
 	switch svc {
-	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, AqueductDemo, Github, Sqlite, Airflow, Kubernetes:
+	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)
