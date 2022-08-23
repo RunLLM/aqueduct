@@ -140,7 +140,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(args.Config); err != nil {
+		if err := setIntegrationAsStorage(args.Service, args.Config); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -298,40 +298,60 @@ func validateAirflowConfig(
 
 // checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
 func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
-	if svc != integration.S3 {
-		// Only S3 integrations can be used for the storage layer
-		return false, nil
-	}
-
 	data, err := conf.Marshal()
 	if err != nil {
 		return false, err
 	}
 
-	var c integration.S3Config
-	if err := json.Unmarshal(data, &c); err != nil {
-		return false, err
+	switch svc {
+	case integration.S3:
+		var c integration.S3Config
+		if err := json.Unmarshal(data, &c); err != nil {
+			return false, err
+		}
+		return bool(c.UseAsStorage), nil
+	case integration.GCS:
+		var c integration.GCSConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return false, err
+		}
+		return bool(c.UseAsStorage), nil
+	default:
+		return false, errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
-
-	return bool(c.UseAsStorage), nil
 }
 
 // setIntegrationAsStorage use the integration config `conf` and updates the global
 // storage config with it.
-func setIntegrationAsStorage(conf auth.Config) error {
+func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 	data, err := conf.Marshal()
 	if err != nil {
 		return err
 	}
 
-	var c integration.S3Config
-	if err := json.Unmarshal(data, &c); err != nil {
-		return err
-	}
+	var storageConfig *shared.StorageConfig
 
-	storageConfig, err := convertS3IntegrationtoStorageConfig(&c)
-	if err != nil {
-		return err
+	switch svc {
+	case integration.S3:
+		var c integration.S3Config
+		if err := json.Unmarshal(data, &c); err != nil {
+			return err
+		}
+
+		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
+		if err != nil {
+			return err
+		}
+	case integration.GCS:
+		var c integration.GCSConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return err
+		}
+
+		storageConfig, err = convertGCSIntegrationtoStorageConfig(&c)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Change global storage config
@@ -411,6 +431,16 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	}
 
 	return storageConfig, nil
+}
+
+func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) (*shared.StorageConfig, error) {
+	return &shared.StorageConfig{
+		Type: shared.GCSStorageType,
+		GCSConfig: &shared.GCSConfig{
+			Bucket:          c.Bucket,
+			CredentialsPath: c.CredentialsPath,
+		},
+	}, nil
 }
 
 func validateKubernetesConfig(
