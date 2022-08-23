@@ -150,7 +150,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating integraiton ownership.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating integration ownership.")
 	}
 
 	if !hasPermission {
@@ -257,8 +257,9 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	return emptyResp, http.StatusOK, nil
 }
 
-// ConnectIntegration connects a new integration specified by `args`. It returns a status code for the request
-// and an error, if any.
+// UpdateIntegration updates an existing integration
+// given the `newName` and / or `newConfig`.
+
 func UpdateIntegration(
 	ctx context.Context,
 	integrationId uuid.UUID,
@@ -285,7 +286,6 @@ func UpdateIntegration(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	// This is a user-specific integration
 	_, err = integrationWriter.UpdateIntegration(
 		ctx,
 		integrationId,
