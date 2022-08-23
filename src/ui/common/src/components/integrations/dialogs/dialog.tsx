@@ -39,6 +39,8 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
+import { CSVDialog } from './csvDialog';
+import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
@@ -196,6 +198,9 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'GCS':
+      serviceDialog = <GCSDialog setDialogConfig={setConfig} />;
+      break;  
     case 'Airflow':
       serviceDialog = (
         <AirflowDialog
