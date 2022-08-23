@@ -52,6 +52,11 @@ class S3Config(models.BaseConfig):
     use_as_storage: str = ""
 
 
+class GCSConfig(models.BaseConfig):
+    bucket: str
+    credentials_path: str
+
+
 class SnowflakeConfig(models.BaseConfig):
     username: str
     password: str
