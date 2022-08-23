@@ -110,9 +110,11 @@ def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
 
 MODEL_FILE_NAME = "model.py"
 MODEL_PICKLE_FILE_NAME = "model.pkl"
+FUNCTION_SOURCE_FILE_NAME = "source.py"
 PYTHON_VERSION_FILE_NAME = "python_version.txt"
 CONDA_VERSION_FILE_NAME = "conda_version.txt"
 RESERVED_FILE_NAMES = [
+    FUNCTION_SOURCE_FILE_NAME,
     MODEL_FILE_NAME,
     MODEL_PICKLE_FILE_NAME,
     PYTHON_VERSION_FILE_NAME,
@@ -196,6 +198,12 @@ def serialize_function(
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
             pickle.dump(func, f)
+        
+        # Write function source code to file
+        with open(os.path.join(dir_path, "source.py"), "w") as f:
+            source = inspect.getsource(func)
+            print(source)
+            f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
