@@ -68,6 +68,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SQLITE = "SQLite"
     AIRFLOW = "Airflow"
     K8S = "Kubernetes"
+    GCS = "GCS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
