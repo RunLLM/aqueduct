@@ -21,11 +21,16 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
+  AirflowConfig,
   aqueductDemoName,
+  BigQueryConfig,
   CSVConfig,
+  formatService,
   Integration,
   IntegrationConfig,
-  formatService,
+  MySqlConfig,
+  PostgresConfig,
+  RedshiftConfig,
   S3Config,
   Service,
   SnowflakeConfig,
@@ -90,7 +95,7 @@ const IntegrationDialog: React.FC<Props> = ({
     setConfig((config) => {
       return { ...config, [field]: value };
     });
-  
+
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
@@ -123,7 +128,12 @@ const IntegrationDialog: React.FC<Props> = ({
 
   switch (service) {
     case 'Postgres':
-      serviceDialog = <PostgresDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <PostgresDialog
+          onUpdateField={setConfigField}
+          value={config as PostgresConfig}
+        />
+      );
       break;
     case 'Snowflake':
       serviceDialog = (
@@ -138,22 +148,49 @@ const IntegrationDialog: React.FC<Props> = ({
       serviceDialog = null;
       break;
     case 'MySQL':
-      serviceDialog = <MysqlDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <MysqlDialog
+          onUpdateField={setConfigField}
+          value={config as MySqlConfig}
+        />
+      );
       break;
     case 'Redshift':
-      serviceDialog = <RedshiftDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <RedshiftDialog
+          onUpdateField={setConfigField}
+          value={config as RedshiftConfig}
+        />
+      );
       break;
     case 'MariaDB':
-      serviceDialog = <MariaDbDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <MariaDbDialog
+          onUpdateField={setConfigField}
+          value={config as RedshiftConfig}
+        />
+      );
       break;
     case 'BigQuery':
-      serviceDialog = <BigQueryDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <BigQueryDialog
+          onUpdateField={setConfigField}
+          value={config as BigQueryConfig}
+        />
+      );
       break;
     case 'S3':
-      serviceDialog = <S3Dialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <S3Dialog onUpdateField={setConfigField} value={config as S3Config} />
+      );
       break;
     case 'Airflow':
-      serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <AirflowDialog
+          onUpdateField={setConfigField}
+          value={config as AirflowConfig}
+        />
+      );
       break;
     default:
       return null;
@@ -212,7 +249,7 @@ const IntegrationDialog: React.FC<Props> = ({
           <Alert sx={{ mt: 2 }} severity="error">
             <AlertTitle>
               {editMode
-                ? `Failed to upddate ${integrationToEdit.name}`
+                ? `Failed to update ${integrationToEdit.name}`
                 : `Unable to connect to ${service}`}
             </AlertTitle>
             <pre>{connectStatus.err}</pre>
@@ -243,7 +280,7 @@ export function isConfigComplete(
   if (isS3ConfigComplete(config as S3Config)) {
     return true;
   }
-  
+
   return (
     Object.values(config).length > 0 &&
     Object.values(config).every((x) => x === undefined || (x && x !== ''))

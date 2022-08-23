@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box';
-import { Stringifiable } from 'query-string';
 import React from 'react';
 
 import { SnowflakeConfig } from '../../../utils/integrations';
@@ -15,7 +14,7 @@ const Placeholders: SnowflakeConfig = {
 };
 
 type Props = {
-  onUpdateField: (field: keyof SnowflakeConfig, value: Stringifiable) => void;
+  onUpdateField: (field: keyof SnowflakeConfig, value: string) => void;
   value?: SnowflakeConfig;
   editMode: boolean;
 };
