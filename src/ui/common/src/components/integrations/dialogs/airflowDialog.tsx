@@ -24,8 +24,10 @@ export const AirflowDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
-  const [address, setAddress] = useState<string>(null);
-  const [s3CredsProfile, setS3CredsProfile] = useState<string>(null);
+  const [address, setAddress] = useState<string>(value?.host ?? null);
+  const [s3CredsProfile, setS3CredsProfile] = useState<string>(
+    value?.s3_credentials_profile ?? null
+  );
 
   useEffect(() => {
     if (address && address.startsWith('http://')) {
