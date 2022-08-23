@@ -280,7 +280,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: 'data',
   },
   ['GCS']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-cloud-storage.png',
     activated: true,
     category: 'data',
   },
