@@ -81,6 +81,8 @@ func (r *standardReaderImpl) GetArtifactsByWorkflowDagId(
 	workflowDagId uuid.UUID,
 	db database.Database,
 ) ([]DBArtifact, error) {
+	// Gets all artifact that is a node with an incoming or outgoing edge in the 
+	// `workflow_dag_edge` for the specified DAG.
 	getArtifactsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM artifact WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
