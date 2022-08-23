@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.config import EngineConfig
 from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
@@ -11,8 +12,6 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import (
     Operator,
@@ -42,33 +41,6 @@ class Metadata(BaseModel):
     description: Optional[str]
     schedule: Optional[Schedule]
     retention_policy: Optional[RetentionPolicy]
-
-
-class AqueductEngineConfig(BaseModel):
-    pass
-
-
-class AirflowEngineConfig(BaseModel):
-    integration_id: uuid.UUID
-
-
-class K8sEngineConfig(BaseModel):
-    integration_id: uuid.UUID
-
-
-class EngineConfig(BaseModel):
-    type: RuntimeType = RuntimeType.AQUEDUCT
-    aqueduct_config: Optional[AqueductEngineConfig]
-    airflow_config: Optional[AirflowEngineConfig]
-    k8s_config: Optional[K8sEngineConfig]
-
-
-class FlowConfig(BaseModel):
-    engine: Optional[Union[AirflowIntegration, K8sIntegration]]
-
-    class Config:
-        # Necessary to allow an engine field
-        arbitrary_types_allowed = True
 
 
 class DAG(BaseModel):

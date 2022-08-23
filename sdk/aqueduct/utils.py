@@ -15,21 +15,13 @@ import multipart
 import numpy as np
 import pandas as pd
 import requests
-from aqueduct.dag import (
-    DAG,
-    AirflowEngineConfig,
-    EngineConfig,
-    FlowConfig,
-    K8sEngineConfig,
-    RetentionPolicy,
-    Schedule,
-)
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
+from aqueduct.dag import DAG, RetentionPolicy, Schedule
 from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *
-from aqueduct.logger import logger
-from aqueduct.enums import OperatorType
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
+from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
 from croniter import croniter

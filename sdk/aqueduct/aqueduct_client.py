@@ -11,16 +11,13 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 
 from aqueduct import api_client, dag
 
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
-    AirflowEngineConfig,
-    EngineConfig,
-    FlowConfig,
-    K8sEngineConfig,
     Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
