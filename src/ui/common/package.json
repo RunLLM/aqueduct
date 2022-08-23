@@ -93,6 +93,7 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
+    "mui-image": "^1.0.7",
     "parcel": "2.6.0",
     "prettier": "^2.2.1",
     "react": "^18.1.0",

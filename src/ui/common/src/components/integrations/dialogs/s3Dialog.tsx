@@ -1,3 +1,4 @@
+import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -15,11 +16,13 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 const Placeholders: S3Config = {
   type: S3CredentialType.AccessKey,
   bucket: 'aqueduct',
+  region: 'us-east-1',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
+  use_as_storage: '',
 };
 
 type Props = {
@@ -38,6 +41,10 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
   useEffect(() => {
     if (!value?.type) {
       onUpdateField('type', S3CredentialType.AccessKey);
+    }
+
+    if (!value?.use_as_storage) {
+      onUpdateField('use_as_storage', 'false');
     }
   }, []);
 
@@ -154,6 +161,16 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={value?.bucket ?? null}
       />
 
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Region*"
+        description="The region the S3 bucket belongs to."
+        placeholder={Placeholders.region}
+        onChange={(event) => onUpdateField('region', event.target.value)}
+        value={value?.region ?? null}
+      />
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
           value={value?.type}
@@ -173,6 +190,21 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
       {value?.type === S3CredentialType.AccessKey && accessKeyTab}
       {value?.type === S3CredentialType.ConfigFilePath && configPathTab}
       {value?.type === S3CredentialType.ConfigFileContent && configUploadTab}
+
+      <FormControlLabel
+        label="Use this integration for Aqueduct metadata storage."
+        control={
+          <Checkbox
+            checked={value?.use_as_storage === 'true'}
+            onChange={(event) =>
+              onUpdateField(
+                'use_as_storage',
+                event.target.checked ? 'true' : 'false'
+              )
+            }
+          />
+        }
+      />
     </Box>
   );
 };

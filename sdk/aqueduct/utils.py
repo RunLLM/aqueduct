@@ -11,18 +11,23 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 import cloudpickle as pickle
+import multipart
 import numpy as np
 import pandas as pd
 import requests
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
 from PIL import Image
+from requests_toolbelt.multipart import decoder
 
 GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
@@ -495,3 +500,47 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             return ArtifactType.PICKLABLE
         except:
             raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+    parse = multipart.parse_options_header
+
+    result = {}
+
+    for part in multipart_data.parts:
+        field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+        field_name = parse(field_name)[1]["name"]
+
+        if field_name == "metadata":
+            result[field_name] = json.loads(part.content.decode(multipart_data.encoding))
+        elif field_name == "data":
+            result[field_name] = part.content
+        else:
+            raise AqueductError(
+                "Unexpected form field %s for artifact result response" % field_name
+            )
+
+    return result
+
+
+def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
+    """Generates an EngineConfig from the user provided configuration."""
+    if not (config and config.engine):
+        return EngineConfig()
+    elif isinstance(config.engine, AirflowIntegration):
+        return EngineConfig(
+            type=RuntimeType.AIRFLOW,
+            airflow_config=AirflowEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, K8sIntegration):
+        return EngineConfig(
+            type=RuntimeType.K8S,
+            k8s_config=K8sEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    else:
+        raise AqueductError("Unsupported engine configuration.")

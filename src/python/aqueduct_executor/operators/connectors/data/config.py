@@ -48,6 +48,9 @@ class S3Config(models.BaseConfig):
 
     bucket: str = ""
 
+    region: str = ""
+    use_as_storage: str = ""
+
 
 class SnowflakeConfig(models.BaseConfig):
     username: str

@@ -184,6 +184,7 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 		ArtifactReader:          readers.ArtifactReader,
 		ArtifactResultReader:    readers.ArtifactResultReader,
 		UserReader:              readers.UserReader,
+		IntegrationReader:       readers.IntegrationReader,
 	}
 }
 
