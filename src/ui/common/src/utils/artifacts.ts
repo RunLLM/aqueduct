@@ -5,13 +5,22 @@ export enum ArtifactType {
   String = 'string',
   Bool = 'boolean',
   Numeric = 'numeric',
-  Dict = 'dict',
+  Dict = 'dictionary',
   Tuple = 'tuple',
   Table = 'table',
   Json = 'json',
   Bytes = 'bytes',
   Image = 'image',
-  Picklable = 'Picklable',
+  Picklable = 'picklable',
+}
+
+export enum SerializationType {
+  String = 'string',
+  Table = 'table',
+  Json = 'json',
+  Bytes = 'bytes',
+  Image = 'image',
+  Pickle = 'pickle',
 }
 
 export type Artifact = {
@@ -29,6 +38,8 @@ export type GetArtifactResultResponse = {
   exec_state: ExecState;
   schema: Schema;
   data: string;
+  artifact_type: ArtifactType;
+  serialization_type: SerializationType;
 };
 
 // Takes the ID of an artifact in our DAG and the state of the currently

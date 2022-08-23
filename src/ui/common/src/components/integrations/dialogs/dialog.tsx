@@ -28,6 +28,7 @@ import {
   formatService,
   Integration,
   IntegrationConfig,
+  KubernetesConfig,
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
@@ -40,6 +41,7 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
@@ -195,6 +197,14 @@ const IntegrationDialog: React.FC<Props> = ({
           onUpdateField={setConfigField}
           value={config as AirflowConfig}
           editMode={editMode}
+        />
+      );
+      break;
+    case 'Kubernetes':
+      serviceDialog = (
+        <KubernetesDialog
+          onUpdateField={setConfigField}
+          value={config as KubernetesConfig}
         />
       );
       break;
