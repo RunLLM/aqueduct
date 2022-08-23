@@ -15,9 +15,12 @@ import multipart
 import numpy as np
 import pandas as pd
 import requests
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
@@ -519,3 +522,25 @@ def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any
             )
 
     return result
+
+
+def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
+    """Generates an EngineConfig from the user provided configuration."""
+    if not (config and config.engine):
+        return EngineConfig()
+    elif isinstance(config.engine, AirflowIntegration):
+        return EngineConfig(
+            type=RuntimeType.AIRFLOW,
+            airflow_config=AirflowEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, K8sIntegration):
+        return EngineConfig(
+            type=RuntimeType.K8S,
+            k8s_config=K8sEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    else:
+        raise AqueductError("Unsupported engine configuration.")
