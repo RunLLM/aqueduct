@@ -2,6 +2,7 @@ from typing import Any, List
 
 from aqueduct.aqueduct_client import Client, get_apikey, infer_requirements
 from aqueduct.constants import exports
+from aqueduct.dag import FlowConfig
 from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.enums import ArtifactType, CheckSeverity, LoadUpdateMode
 from aqueduct.flow import Flow
