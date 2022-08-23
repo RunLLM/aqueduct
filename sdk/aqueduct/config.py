@@ -20,6 +20,8 @@ class K8sEngineConfig(BaseModel):
 
 
 class EngineConfig(BaseModel):
+    # The runtime type dictates the engine config that is set.
+    # We default to the AqueductEngine.
     type: RuntimeType = RuntimeType.AQUEDUCT
     aqueduct_config: Optional[AqueductEngineConfig]
     airflow_config: Optional[AirflowEngineConfig]
