@@ -13,6 +13,7 @@ _CREDENTIALS_ENV_VAR = "GCS_CREDENTIALS"
 
 class GCSConnector(connector.DataConnector):
     _client: Any  # GCS client
+    _config: GCSConfig
 
     def __init__(self, config: GCSConfig):
         if _CREDENTIALS_ENV_VAR in os.environ in os.environ:
@@ -23,9 +24,10 @@ class GCSConnector(connector.DataConnector):
             config.credentials_path = temp_path
 
         self._client = storage.Client.from_service_account_json(config.credentials_path)
+        self._config = config
 
     def authenticate(self) -> None:
-        return super().authenticate()
+        self._client.list_buckets()
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for GCS.")
