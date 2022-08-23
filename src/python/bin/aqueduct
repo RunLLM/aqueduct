@@ -27,7 +27,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.0.10"
+package_version = "0.0.11"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -236,8 +236,6 @@ def update():
             for directory in directories:
                 os.mkdir(directory)
 
-            update_server_version()
-
             with open(os.path.join(server_directory, "config/config.yml"), "wb") as f:
                 f.write(requests.get(os.path.join(s3_server_prefix, "config/config.yml")).content)
 
@@ -245,6 +243,8 @@ def update():
 
             with open(os.path.join(server_directory, "db/demo.db"), "wb") as f:
                 f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).content)
+
+            update_server_version()
 
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
