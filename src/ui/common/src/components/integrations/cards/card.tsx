@@ -14,6 +14,7 @@ import WorkflowStatus from '../../workflows/workflowStatus';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
@@ -125,6 +126,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'S3':
       serviceCard = <S3Card integration={integration} />;
+      break;
+    case 'GCS':
+      serviceCard = <GCSCard integration={integration} />;
       break;
     case 'Airflow':
       serviceCard = <AirflowCard integration={integration} />;
