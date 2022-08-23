@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.0.10
+Released on August 22, 2022.
+
+### Key Features
+* Adds support for non-tabular data types; operators can now return any
+    Python-serializable object. Under the hood, Aqueduct has special
+    optimization for JSON blobs, images, and tables, in addition to supporting
+    regular Python objects.
+* Enables eager execution when defining workflow artifacts; artifacts are now
+    immediately computed at definition time, before calling the `get` API, which
+    surfaces potential errors earlier during workflow construction.
+
+### Enhancements
+* Caches previously computed function results to avoid repetitive
+    recomputation. 
+* Enables using AWS S3 as Aqueduct's metadata store; when connecting an S3
+    integration, you can now optionally choose to store all Aqueduct metadata
+    in AWS S3.
+
+### Bugfixes
+* Fixes a bug where the DAG view would ignore the selected version when
+    refreshing the page.
+
 ## 0.0.9
 Released on August 15, 2022.
 
