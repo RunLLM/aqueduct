@@ -261,6 +261,10 @@ def delete_object(name: str, delete_fn: Callable[[str], None]) -> SavedObjectDel
 def write_delete_saved_objects_results(
     storage: Storage, path: str, results: Dict[str, List[SavedObjectDelete]]
 ) -> None:
+    # `[object].json()`` gives me the json as a string which gets escaped in `json.dumps()``. 
+    # However, I cannot serialize it directly with `json.dumps()`` so I serialize with 
+    # `[object].json()` then `json.loads()` to convert it to a dictionary that is serializable
+    # by `json.dumps.()`.
     results_str = json.dumps(
         {
             integration: [
