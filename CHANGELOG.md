@@ -10,7 +10,7 @@ Released on August 22, 2022.
     regular Python objects.
 * Enables eager execution when defining workflow artifacts; artifacts are now
     immediately computed at definition time, before calling the `get` API, which
-    allows surfacing potential errors earlier during workflow construction.
+    surfaces potential errors earlier during workflow construction.
 
 ### Enhancements
 * Caches previously computed function results to avoid repetitive
