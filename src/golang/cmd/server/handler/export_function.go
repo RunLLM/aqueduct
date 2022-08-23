@@ -125,6 +125,11 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get function from storage")
 	}
 
+	sourceCode, err := extractUserReadableCode(program)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
+	}
+
 	return &exportFunctionResponse{
 		fileName: operatorObject.Name,
 		program:  bytes.NewBuffer(program),
@@ -134,4 +139,8 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
 	resp := interfaceResp.(*exportFunctionResponse)
 	response.SendSmallFileResponse(w, resp.fileName, resp.program)
+}
+
+func extractUserReadableCode(data []byte) ([]byte, error) {
+
 }
