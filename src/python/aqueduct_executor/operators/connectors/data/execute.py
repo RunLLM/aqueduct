@@ -296,8 +296,8 @@ def setup_connector(
             SqliteConnector as OpConnector,
         )
     elif connector_name == common.Name.GCS:
-        from aqueduct_executor.operators.connectors.data.gcs import ( # type: ignore
-            GCSConnector as OpConnector
+        from aqueduct_executor.operators.connectors.data.gcs import (  # type: ignore
+            GCSConnector as OpConnector,
         )
     else:
         raise Exception("Unknown connector name: %s" % connector_name)

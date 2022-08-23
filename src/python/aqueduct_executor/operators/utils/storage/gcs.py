@@ -24,7 +24,6 @@ class GCSStorage(Storage):
 
         self._client = storage.Client.from_service_account_json(config.credentials_path)
         self._config = config
-    
 
     def __del__(self):
         # Try to clean up temp credentials file
