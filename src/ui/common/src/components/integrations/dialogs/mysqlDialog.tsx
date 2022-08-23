@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { MySqlConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: MySqlConfig = {
@@ -15,9 +16,14 @@ const Placeholders: MySqlConfig = {
 type Props = {
   onUpdateField: (field: keyof MySqlConfig, value: string) => void;
   value?: MySqlConfig;
+  editMode: boolean;
 };
 
-export const MysqlDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const MysqlDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -28,6 +34,8 @@ export const MysqlDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
         value={value?.host ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -38,6 +46,8 @@ export const MysqlDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
         value={value?.port ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -48,6 +58,8 @@ export const MysqlDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
         value={value?.database ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField

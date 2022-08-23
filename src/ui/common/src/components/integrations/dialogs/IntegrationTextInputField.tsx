@@ -39,12 +39,8 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
         </Typography>
         <Typography variant="body2" sx={{ color: 'darkGray' }}>
           {description}
+          <em>{warning}</em>
         </Typography>
-        {warning && (
-          <Typography variant="body2" sx={{ color: 'orange.600' }}>
-            {warning}
-          </Typography>
-        )}
       </Box>
       <Box>
         <TextField

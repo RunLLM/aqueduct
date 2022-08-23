@@ -3,6 +3,7 @@ import Link from '@mui/material/Link';
 import React, { useState } from 'react';
 
 import { BigQueryConfig, FileData } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -13,9 +14,14 @@ const Placeholders: BigQueryConfig = {
 type Props = {
   onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
   value?: BigQueryConfig;
+  editMode: boolean;
 };
 
-export const BigQueryDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const BigQueryDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData) => {
     setFileName(fileData.name);
@@ -46,6 +52,8 @@ export const BigQueryDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.project_id}
         onChange={(event) => onUpdateField('project_id', event.target.value)}
         value={value?.project_id ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationFileUploadField

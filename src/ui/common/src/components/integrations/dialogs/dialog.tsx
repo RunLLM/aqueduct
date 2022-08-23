@@ -132,6 +132,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <PostgresDialog
           onUpdateField={setConfigField}
           value={config as PostgresConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -152,6 +153,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <MysqlDialog
           onUpdateField={setConfigField}
           value={config as MySqlConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -160,6 +162,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <RedshiftDialog
           onUpdateField={setConfigField}
           value={config as RedshiftConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -168,6 +171,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <MariaDbDialog
           onUpdateField={setConfigField}
           value={config as RedshiftConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -176,6 +180,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <BigQueryDialog
           onUpdateField={setConfigField}
           value={config as BigQueryConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -189,6 +194,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <AirflowDialog
           onUpdateField={setConfigField}
           value={config as AirflowConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -237,9 +243,9 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`The update will take effect for all ${numWorkflows} ${
+            {`Changing this integration will automatically update ${numWorkflows} ${
               numWorkflows === 1 ? 'workflow' : 'workflows'
-            } using this integration.`}
+            }.`}
           </Alert>
         )}
         {nameInput}

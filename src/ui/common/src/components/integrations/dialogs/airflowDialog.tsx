@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
 import { AirflowConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AirflowConfig = {
@@ -15,9 +16,14 @@ const Placeholders: AirflowConfig = {
 type Props = {
   onUpdateField: (field: keyof AirflowConfig, value: string) => void;
   value?: AirflowConfig;
+  editMode: boolean;
 };
 
-export const AirflowDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const AirflowDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   const [address, setAddress] = useState<string>(null);
   const [s3CredsProfile, setS3CredsProfile] = useState<string>(null);
 
@@ -47,6 +53,8 @@ export const AirflowDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.host}
         onChange={(event) => setAddress(event.target.value)}
         value={address}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField

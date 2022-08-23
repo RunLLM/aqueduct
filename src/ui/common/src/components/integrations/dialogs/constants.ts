@@ -1,4 +1,4 @@
 export const readOnlyFieldWarning =
-  "You couldn't edit this field once the integration is connected.";
+  "You won't be able to edit this field once the integration is connected.";
 export const readOnlyFieldDisableReason =
-  "You couldn't edit this field. To make changes, create a new integration instead.";
+  'You cannot edit this field. To make changes, create a new integration instead.';
