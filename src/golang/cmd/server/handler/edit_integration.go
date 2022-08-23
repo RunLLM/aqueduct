@@ -286,7 +286,6 @@ func UpdateIntegration(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	// This is a user-specific integration
 	_, err = integrationWriter.UpdateIntegration(
 		ctx,
 		integrationId,
