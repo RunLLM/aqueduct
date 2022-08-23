@@ -9,4 +9,4 @@ pyyaml
 typing_extensions
 Pillow
 packaging
-aqueduct-sdk==0.0.10
+aqueduct-sdk==0.0.11

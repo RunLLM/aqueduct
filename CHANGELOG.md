@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.11
+Released on August 23, 2022.
+
+### Important Note
+* If you did a fresh installation of Aqueduct v0.0.10, you may have run into a bug that says our
+    schema migrator did not run successfully. To fix this, run `aqueduct clear` and `pip3 install --upgrade aqueduct-ml`.
+    You can then start the server via `aqueduct start` and everything should work again.
+
+### Bugfixes
+* Fixes a bug where a fresh installation of Aqueduct fails due to a bug in the schema migration process.
+
 ## 0.0.10
 Released on August 22, 2022.
 
