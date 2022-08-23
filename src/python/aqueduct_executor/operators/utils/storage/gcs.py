@@ -1,16 +1,17 @@
-import os
-from typing import Any
-import uuid
 import io
+import os
+import uuid
+from typing import Any
 
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.storage.config import GCSStorageConfig
+from aqueduct_executor.operators.utils.storage.storage import Storage
 from google.cloud import storage
 
 _CREDENTIALS_ENV_VAR = "GCS_CREDENTIALS"
 
+
 class GCSStorage(Storage):
-    _client: Any # GCS client
+    _client: Any  # GCS client
     _config: GCSStorageConfig
 
     def __init__(self, config: GCSStorageConfig):
@@ -20,12 +21,9 @@ class GCSStorage(Storage):
             with open(temp_path, "w") as f:
                 f.write(os.environ[_CREDENTIALS_ENV_VAR])
             config.credentials_path = temp_path
-        
-        self._client = storage.Client.from_service_account_json(
-            config.credentials_path
-        )
+
+        self._client = storage.Client.from_service_account_json(config.credentials_path)
         self._config = config
-    
 
     def put(self, key: str, value: bytes) -> None:
         bucket = self._client.bucket(self._config.bucket)
@@ -35,7 +33,6 @@ class GCSStorage(Storage):
         f = io.BytesIO(value)
         blob.upload_from_file(f)
 
-    
     def get(self, key: str) -> bytes:
         bucket = self._client.bucket(self._config.bucket)
         blob = bucket.blob(key)
