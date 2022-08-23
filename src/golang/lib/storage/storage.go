@@ -27,6 +27,8 @@ func NewStorage(config *shared.StorageConfig) Storage {
 		return newS3Storage(config.S3Config)
 	case shared.FileStorageType:
 		return newFileStorage(config.FileConfig)
+	case shared.GCSStorageType:
+		return newGCSStorage(config.GCSConfig)
 	default:
 		log.Fatalf("Unsupported storage type: %s", config.Type)
 		return nil
