@@ -13,6 +13,7 @@ _CREDENTIALS_ENV_VAR = "GCS_CREDENTIALS"
 class GCSStorage(Storage):
     _client: Any  # GCS client
     _config: GCSStorageConfig
+    _temp_credentials_path: str = ""
 
     def __init__(self, config: GCSStorageConfig):
         if _CREDENTIALS_ENV_VAR in os.environ in os.environ:
@@ -20,14 +21,17 @@ class GCSStorage(Storage):
             temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
             with open(temp_path, "w") as f:
                 f.write(os.environ[_CREDENTIALS_ENV_VAR])
+            
             config.credentials_path = temp_path
+            self._temp_credentials_path = temp_path
 
         self._client = storage.Client.from_service_account_json(config.credentials_path)
         self._config = config
 
     def __del__(self):
-        # Try to clean up temp credentials file
-        os.remove(self._config.credentials_path)
+        if self._temp_credentials_path:
+            # Try to clean up temp credentials file
+            os.remove(self._config.credentials_path)
 
     def put(self, key: str, value: bytes) -> None:
         bucket = self._client.bucket(self._config.bucket)
