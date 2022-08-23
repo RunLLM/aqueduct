@@ -55,6 +55,16 @@ const IntegrationOptions: React.FC<Props> = ({
         sx={{ marginTop: 1 }}
         anchorEl={anchorEl}
         onClose={onMenuClose}
+        // These two fields controls positioning and alignment of the menu
+        // w.r.t. the button. https://mui.com/material-ui/react-popover/#anchor-playground
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
       >
         <MenuItem
           onClick={() => {
