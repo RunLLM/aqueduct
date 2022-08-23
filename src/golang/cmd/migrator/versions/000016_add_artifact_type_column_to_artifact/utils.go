@@ -280,7 +280,9 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			defer func() {
 				if err != nil {
 					putOperatorError := storage.NewStorage(storageConfig).Put(ctx, artifactResult.ContentPath, originalContent)
-					log.Errorf("Storage migration rollback failed due to error %s", putOperatorError)
+					if putOperatorError != nil {
+						log.Errorf("Storage migration rollback failed due to error %s", putOperatorError)
+					}
 				}
 			}()
 

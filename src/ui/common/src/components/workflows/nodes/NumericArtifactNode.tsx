@@ -1,4 +1,4 @@
-import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
@@ -12,7 +12,7 @@ type Props = {
 const NumericArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faChartLine}
+      icon={faHashtag}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Numeric"

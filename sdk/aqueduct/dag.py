@@ -1,9 +1,10 @@
 import copy
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.config import EngineConfig
 from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
@@ -40,20 +41,6 @@ class Metadata(BaseModel):
     description: Optional[str]
     schedule: Optional[Schedule]
     retention_policy: Optional[RetentionPolicy]
-
-
-class AqueductEngineConfig(BaseModel):
-    pass
-
-
-class AirflowEngineConfig(BaseModel):
-    integration_id: uuid.UUID
-
-
-class EngineConfig(BaseModel):
-    type: RuntimeType = RuntimeType.AQUEDUCT
-    aqueduct_config: Optional[AqueductEngineConfig]
-    airflow_config: Optional[AirflowEngineConfig]
 
 
 class DAG(BaseModel):
