@@ -59,6 +59,10 @@ var serviceToReadOnlyFields = map[integration.Service]map[string]bool{
 		"port":     true,
 		"database": true,
 	},
+	integration.S3: {
+		"bucket": true,
+		"region": true,
+	},
 	integration.Snowflake: {
 		"account_identifier": true,
 		"warehouse":          true,
