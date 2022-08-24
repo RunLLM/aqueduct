@@ -1,13 +1,9 @@
-<<<<<<< HEAD
-import { faCaretDown, faFlask, faPen } from '@fortawesome/free-solid-svg-icons';
-=======
 import {
   faCaretDown,
   faFlask,
   faPen,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons';
->>>>>>> 2640da16405aadfa794e87c26503038fb16765fe
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
@@ -26,10 +22,7 @@ type Props = {
   onUploadCsv?: () => void;
   onTestConnection?: () => void;
   onEdit?: () => void;
-<<<<<<< HEAD
-=======
   onDeleteIntegration?: () => void;
->>>>>>> 2640da16405aadfa794e87c26503038fb16765fe
 };
 
 const IntegrationOptions: React.FC<Props> = ({
@@ -37,10 +30,7 @@ const IntegrationOptions: React.FC<Props> = ({
   onUploadCsv,
   onTestConnection,
   onEdit,
-<<<<<<< HEAD
-=======
   onDeleteIntegration,
->>>>>>> 2640da16405aadfa794e87c26503038fb16765fe
 }) => {
   // Menu control based on
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
