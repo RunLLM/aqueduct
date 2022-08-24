@@ -4,7 +4,8 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
@@ -12,6 +13,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import {
+  handleDeleteIntegration,
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
   handleTestConnectIntegration,
@@ -35,8 +37,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+
   const integrationId: string = useParams().id;
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
+  const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
@@ -135,8 +139,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               );
               setShowTestConnectToast(true);
             }}
+            onDeleteIntegration={() => {
+              setShowDeleteTableDialog(true);
+            }}
           />
         </Box>
+        {showDeleteTableDialog && (
+        <DeleteIntegrationDialog
+          user={user}
+          integrationId={selectedIntegration.id}
+          integrationName={selectedIntegration.name}
+          onCloseDialog={() => setShowDeleteTableDialog(false)}
+        />)}
         {testConnectStatus && isFailed(testConnectStatus) && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
             Test-connect failed with error:
@@ -149,7 +163,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           variant="h4"
           gutterBottom
           component="div"
-          sx={{ marginY: 4 }}
+          sx={{ marginY: 4, mt: 4 }}
         >
           Workflows
         </Typography>
@@ -179,7 +193,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showTestConnectToast}
         onClose={handleCloseTestConnectToast}
-        key={'workflowheader-success-snackbar'}
+        key={'workflowheader-connect-attempt-info-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
@@ -194,7 +208,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showConnectSuccessToast}
         onClose={handleCloseConnectSuccessToast}
-        key={'workflowheader-error-snackbar'}
+        key={'workflowheader-connect-success-error-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
