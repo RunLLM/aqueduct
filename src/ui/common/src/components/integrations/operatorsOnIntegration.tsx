@@ -64,25 +64,29 @@ const OperatorsOnIntegration: React.FC = () => {
     operatorsByWorkflow[op.workflow_id].operators.push(op);
   });
 
-  return (
-    <Box>
-      {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
-        <WorkflowAccordion
-          expanded={expandedWf === wfId}
-          handleExpand={() => {
-            if (expandedWf === wfId) {
-              setExpandedWf('');
-              return;
-            }
-            setExpandedWf(wfId);
-          }}
-          key={wfId}
-          workflow={item.workflow}
-          operators={item.operators}
-        />
-      ))}
-    </Box>
-  );
+  if (Object.keys(operatorsByWorkflow).length > 0) {
+    return (
+      <Box>
+        {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
+          <WorkflowAccordion
+            expanded={expandedWf === wfId}
+            handleExpand={() => {
+              if (expandedWf === wfId) {
+                setExpandedWf('');
+                return;
+              }
+              setExpandedWf(wfId);
+            }}
+            key={wfId}
+            workflow={item.workflow}
+            operators={item.operators}
+          />
+        ))}
+      </Box>
+    );
+  } else {
+    return <Box>Integration is not used by any workflow.</Box>;
+  }
 };
 
 export default OperatorsOnIntegration;

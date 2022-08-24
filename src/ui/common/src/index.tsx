@@ -18,6 +18,7 @@ import { ConnectedIntegrations } from './components/integrations/connectedIntegr
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
+import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import { IntegrationDialog } from './components/integrations/dialogs/dialog';
 import {
   FileEventTarget,
@@ -340,6 +341,7 @@ export {
   DayOfWeek,
   deconstructCronString,
   DefaultLayout,
+  DeleteIntegrationDialog,
   DeleteWorkflowResponse,
   EdgeTypes,
   ExecutionStatus,

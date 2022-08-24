@@ -10,6 +10,7 @@ import aqueduct
 
 def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Changing Saves"
+    n_runs = 4
     integration = client.integration(name=integration_name)
 
     ###
@@ -58,4 +59,4 @@ def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
 
     ###
 
-    return flow.id()
+    return flow.id(), n_runs

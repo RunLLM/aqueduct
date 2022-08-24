@@ -19,7 +19,6 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
-  addTable,
   connectIntegration,
   CSVConfig,
   formatService,
@@ -30,7 +29,6 @@ import {
 } from '../../../utils/integrations';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
-import { CSVDialog } from './csvDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
@@ -39,118 +37,6 @@ import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-
-type AddTableDialogProps = {
-  user: UserProfile;
-  integrationId: string;
-  onCloseDialog: () => void;
-  onConnect: () => void;
-};
-
-export const AddTableDialog: React.FC<AddTableDialogProps> = ({
-  user,
-  integrationId,
-  onCloseDialog,
-  onConnect,
-}) => {
-  const [config, setConfig] = useState<CSVConfig>({
-    name: '',
-    csv: null,
-  });
-  const [disableConnect, setDisableConnect] = useState(true);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [errMsg, setErrMsg] = useState(null);
-
-  const handleSuccessToastClose = () => {
-    setShowSuccessToast(false);
-  };
-
-  useEffect(() => {
-    setDisableConnect(!isConfigComplete(config));
-  }, [config]);
-
-  const dialogHeader = (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-      }}
-    >
-      <Typography variant="h5">{'Upload CSV'}</Typography>
-      <img
-        height="45px"
-        src={
-          'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/csv-outline.png'
-        }
-      />
-    </Box>
-  );
-
-  const serviceDialog = (
-    <CSVDialog setDialogConfig={setConfig} setErrMsg={setErrMsg} />
-  );
-
-  const confirmConnect = () => {
-    setIsConnecting(true);
-    setErrMsg(null);
-    addTable(user, integrationId, config)
-      .then(() => {
-        setShowSuccessToast(true);
-        const successMessage =
-          'Successfully uploaded CSV file to the demo database!';
-        setSuccessMessage(successMessage);
-        onConnect();
-        setIsConnecting(false);
-      })
-      .catch((err) => {
-        const errorMessage = 'Unable to upload CSV file to the demo database: ';
-        setErrMsg(errorMessage + err.message);
-        setIsConnecting(false);
-      });
-  };
-
-  return (
-    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
-      <DialogTitle>{dialogHeader}</DialogTitle>
-      <DialogContent>
-        {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={showSuccessToast}
-          onClose={handleSuccessToastClose}
-          key={'integrations-dialog-success-snackbar'}
-          autoHideDuration={6000}
-        >
-          <Alert
-            onClose={handleSuccessToastClose}
-            severity="success"
-            sx={{ width: '100%' }}
-          >
-            {successMessage}
-          </Alert>
-        </Snackbar>
-      </DialogContent>
-      <DialogActions>
-        <Button autoFocus onClick={onCloseDialog}>
-          Cancel
-        </Button>
-        <LoadingButton
-          autoFocus
-          onClick={confirmConnect}
-          loading={isConnecting}
-          disabled={disableConnect}
-        >
-          Confirm
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
-  );
-};
 
 type IntegrationDialogProps = {
   user: UserProfile;

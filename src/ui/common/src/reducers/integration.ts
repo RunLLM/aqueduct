@@ -42,6 +42,7 @@ type DiscoverResponse = {
 
 export interface IntegrationState {
   connectionStatus: LoadingStatus;
+  deletionStatus: LoadingStatus;
   operators: IntegrationOperatorsState;
   objectNames: ListObjectsState;
   objects: Record<string, ObjectState>;
@@ -49,6 +50,7 @@ export interface IntegrationState {
 
 const initialState: IntegrationState = {
   connectionStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+  deletionStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   operators: {
     status: { loading: LoadingStatusEnum.Initial, err: '' },
     operators: [],
@@ -193,6 +195,38 @@ export const handleListIntegrationObjects = createAsyncThunk<
   }
 );
 
+export const handleDeleteIntegration = createAsyncThunk<
+  void,
+  { apiKey: string; integrationId: string }
+>(
+  'integration/delete',
+  async (
+    args: {
+      apiKey: string;
+      integrationId: string;
+      forceLoad?: boolean;
+    },
+    thunkAPI
+  ) => {
+    const { apiKey, integrationId } = args;
+    const response = await fetch(
+      `${apiAddress}/api/integration/${integrationId}/delete`,
+      {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+        },
+      }
+    );
+
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      return thunkAPI.rejectWithValue(responseBody.error);
+    }
+  }
+);
+
 export const handleTestConnectIntegration = createAsyncThunk<
   void,
   { apiKey: string; integrationId: string }
@@ -228,7 +262,11 @@ export const handleTestConnectIntegration = createAsyncThunk<
 export const integrationSlice = createSlice({
   name: 'integrationTablesReducer',
   initialState: initialState,
-  reducers: {},
+  reducers: {
+    resetDeletionStatus: (state) => {
+      state.deletionStatus = { loading: LoadingStatusEnum.Initial, err: '' };
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(handleLoadIntegrationObject.pending, (state, { meta }) => {
       const object = meta.arg.object;
@@ -307,6 +345,22 @@ export const integrationSlice = createSlice({
         state.objectNames.names = payload;
       }
     );
+
+    builder.addCase(handleDeleteIntegration.pending, (state) => {
+      state.deletionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+    });
+    builder.addCase(handleDeleteIntegration.rejected, (state, { payload }) => {
+      state.deletionStatus = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
+    });
+    builder.addCase(handleDeleteIntegration.fulfilled, (state) => {
+      state.deletionStatus = {
+        loading: LoadingStatusEnum.Succeeded,
+        err: '',
+      };
+    });
     builder.addCase(handleTestConnectIntegration.pending, (state) => {
       state.connectionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
@@ -327,5 +381,7 @@ export const integrationSlice = createSlice({
     );
   },
 });
+
+export const { resetDeletionStatus } = integrationSlice.actions;
 
 export default integrationSlice.reducer;
