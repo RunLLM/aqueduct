@@ -4,8 +4,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
+import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
@@ -14,7 +13,6 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import {
-  handleDeleteIntegration,
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
   handleTestConnectIntegration,
