@@ -188,7 +188,11 @@ const IntegrationDialog: React.FC<Props> = ({
       break;
     case 'S3':
       serviceDialog = (
-        <S3Dialog onUpdateField={setConfigField} value={config as S3Config} />
+        <S3Dialog 
+          onUpdateField={setConfigField}
+          value={config as S3Config}
+          editMode={editMode}
+        />
       );
       break;
     case 'Airflow':
