@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { RootState } from '../../stores/store';
-import { isFailed, isLoading } from '../../utils/shared';
+import { isFailed, isInitial, isLoading } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import WorkflowAccordion from '../workflows/accordion';
 
@@ -19,6 +19,12 @@ const OperatorsOnIntegration: React.FC = () => {
     return state.integrationReducer.operators;
   });
   const [expandedWf, setExpandedWf] = useState<string>('');
+  if (
+    isInitial(operatorsState.status) ||
+    isInitial(listWorkflowState.loadingStatus)
+  ) {
+    return null;
+  }
 
   if (
     isLoading(operatorsState.status) ||

@@ -3,12 +3,13 @@ package preview_cache
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func requirePathsDoNotExist(t *testing.T, execPaths *utils.ExecPaths, errMsgTemplate string) {
@@ -50,7 +51,6 @@ func storageConfigForCurrentDirectory(t *testing.T) *shared.StorageConfig {
 }
 
 func TestPreviewCacheCollision(t *testing.T) {
-
 	ctx := context.Background()
 
 	key := uuid.New()
@@ -92,7 +92,6 @@ func TestPreviewCacheCollision(t *testing.T) {
 	require.Nil(t, err)
 
 	requirePathsDoNotExist(t, execPaths, "%s should not exist anymore.")
-
 }
 
 func TestPreviewCacheEviction(t *testing.T) {

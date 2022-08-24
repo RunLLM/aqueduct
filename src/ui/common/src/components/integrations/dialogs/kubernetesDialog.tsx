@@ -1,10 +1,7 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import {
-  IntegrationConfig,
-  KubernetesConfig,
-} from '../../../utils/integrations';
+import { KubernetesConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
@@ -13,22 +10,11 @@ const Placeholders: KubernetesConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof KubernetesConfig, value: string) => void;
+  value?: KubernetesConfig;
 };
 
-export const KubernetesDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [kubeconfig_path, setKubeConfigPath] = useState<string>(null);
-  const [cluster_name, setClusterName] = useState<string>(null);
-
-  useEffect(() => {
-    const config: KubernetesConfig = {
-      kubeconfig_path: kubeconfig_path,
-      cluster_name: cluster_name,
-    };
-
-    setDialogConfig(config);
-  }, [kubeconfig_path, cluster_name]);
-
+export const KubernetesDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -37,8 +23,10 @@ export const KubernetesDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Kubernetes Config Path*"
         description="The path to the kubeconfig file."
         placeholder={Placeholders.kubeconfig_path}
-        onChange={(event) => setKubeConfigPath(event.target.value)}
-        value={kubeconfig_path}
+        onChange={(event) =>
+          onUpdateField('kubeconfig_path', event.target.value)
+        }
+        value={value?.kubeconfig_path ?? null}
       />
 
       <IntegrationTextInputField
@@ -47,8 +35,8 @@ export const KubernetesDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Cluster Name*"
         description="The name of the cluster that will be used."
         placeholder={Placeholders.cluster_name}
-        onChange={(event) => setClusterName(event.target.value)}
-        value={cluster_name}
+        onChange={(event) => onUpdateField('cluster_name', event.target.value)}
+        value={value?.cluster_name ?? null}
       />
     </Box>
   );

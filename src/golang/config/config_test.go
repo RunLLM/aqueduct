@@ -15,18 +15,16 @@ const (
 	testConfigPath = "test_config.yml"
 )
 
-var (
-	testConfig *serverConfiguration = &serverConfiguration{
-		AqPath:             "/home/user/aqueduct",
-		EncryptionKey:      "12345",
-		RetentionJobPeriod: "* * * * *",
-		ApiKey:             "user-api-key",
-		StorageConfig: &shared.StorageConfig{
-			Type:       shared.FileStorageType,
-			FileConfig: &shared.FileConfig{},
-		},
-	}
-)
+var testConfig *serverConfiguration = &serverConfiguration{
+	AqPath:             "/home/user/aqueduct",
+	EncryptionKey:      "12345",
+	RetentionJobPeriod: "* * * * *",
+	ApiKey:             "user-api-key",
+	StorageConfig: &shared.StorageConfig{
+		Type:       shared.FileStorageType,
+		FileConfig: &shared.FileConfig{},
+	},
+}
 
 func TestInit(t *testing.T) {
 	defer cleanup()

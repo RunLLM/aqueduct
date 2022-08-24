@@ -9,6 +9,7 @@ import { useParams } from 'react-router-dom';
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
+import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
@@ -16,6 +17,8 @@ import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
   handleTestConnectIntegration,
+  resetEditStatus,
+  resetTestConnectStatus,
 } from '../../../../reducers/integration';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
@@ -38,11 +41,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
 
   const integrationId: string = useParams().id;
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
   const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
+  const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
@@ -52,8 +57,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     setShowTestConnectToast(false);
   };
 
+  const handleCloseEditSuccessToast = () => {
+    setShowEditSuccessToast(false);
+  };
+
   const testConnectStatus = useSelector(
-    (state: RootState) => state.integrationReducer.connectionStatus
+    (state: RootState) => state.integrationReducer.testConnectStatus
   );
 
   const integrations = useSelector(
@@ -90,10 +99,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
     if (isSucceeded(testConnectStatus)) {
       setShowConnectSuccessToast(true);
+      dispatch(resetTestConnectStatus());
     }
   }, [testConnectStatus]);
 
-  let selectedIntegration = null;
+  let selectedIntegration: Integration = undefined;
 
   if (integrations) {
     (integrations as Integration[]).forEach((integration) => {
@@ -138,6 +148,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               );
               setShowTestConnectToast(true);
             }}
+            onEdit={() => setShowEditDialog(true)}
             onDeleteIntegration={() => {
               setShowDeleteTableDialog(true);
             }}
@@ -189,11 +200,23 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           }}
         />
       )}
+      {showEditDialog && (
+        <IntegrationDialog
+          user={user}
+          service={selectedIntegration.service}
+          onSuccess={() => setShowEditSuccessToast(true)}
+          onCloseDialog={() => {
+            setShowEditDialog(false);
+            dispatch(resetEditStatus());
+          }}
+          integrationToEdit={selectedIntegration}
+        />
+      )}
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showTestConnectToast}
         onClose={handleCloseTestConnectToast}
-        key={'workflowheader-connect-attempt-info-snackbar'}
+        key={'integration-test-connect-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
@@ -208,7 +231,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showConnectSuccessToast}
         onClose={handleCloseConnectSuccessToast}
-        key={'workflowheader-connect-success-error-snackbar'}
+        key={'integration-connect-success-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
@@ -217,6 +240,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           sx={{ width: '100%' }}
         >
           {`Successfully connected to ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showEditSuccessToast}
+        onClose={handleCloseEditSuccessToast}
+        key={'integration-edit-success-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseEditSuccessToast}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {`Successfully updated ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
     </Layout>
