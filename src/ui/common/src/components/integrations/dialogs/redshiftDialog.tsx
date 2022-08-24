@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { RedshiftConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: RedshiftConfig = {
@@ -15,9 +16,14 @@ const Placeholders: RedshiftConfig = {
 type Props = {
   onUpdateField: (field: keyof RedshiftConfig, value: string) => void;
   value?: RedshiftConfig;
+  editMode: boolean;
 };
 
-export const RedshiftDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const RedshiftDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -28,6 +34,9 @@ export const RedshiftDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
         value={value?.host ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -38,6 +47,9 @@ export const RedshiftDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
         value={value?.port ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -48,6 +60,9 @@ export const RedshiftDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
         value={value?.database ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField

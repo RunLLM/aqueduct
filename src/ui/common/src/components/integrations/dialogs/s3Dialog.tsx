@@ -10,6 +10,7 @@ import {
   S3CredentialType,
 } from '../../../utils/integrations';
 import { readCredentialsFile } from './bigqueryDialog';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -28,15 +29,28 @@ const Placeholders: S3Config = {
 type Props = {
   onUpdateField: (field: keyof S3Config, value: string) => void;
   value?: S3Config;
+  editMode: boolean;
 };
 
-export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const S3Dialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   const [fileName, setFileName] = useState<string>(null);
 
-  const setFile = (fileData: FileData) => {
-    setFileName(fileData.name);
-    onUpdateField('config_file_content', fileData.data);
+  const setFile = (fileData: FileData | null) => {
+    setFileName(fileData?.name ?? null);
+    onUpdateField('config_file_content', fileData?.data);
   };
+
+  const fileData =
+    fileName && !!value?.config_file_content
+      ? {
+          name: fileName,
+          data: value.config_file_content,
+        }
+      : null;
 
   useEffect(() => {
     if (!value?.type) {
@@ -133,7 +147,7 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
-        file={{ name: fileName, data: value?.config_file_content }}
+        file={fileData}
         placeholder={''}
         onFiles={(files) => {
           const file = files[0];
@@ -159,6 +173,9 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
         value={value?.bucket ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -169,6 +186,9 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
         value={value?.region ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
@@ -202,6 +222,7 @@ export const S3Dialog: React.FC<Props> = ({ onUpdateField, value }) => {
                 event.target.checked ? 'true' : 'false'
               )
             }
+            disabled={editMode}
           />
         }
       />

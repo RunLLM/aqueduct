@@ -24,7 +24,6 @@ import {
   AirflowConfig,
   aqueductDemoName,
   BigQueryConfig,
-  CSVConfig,
   formatService,
   Integration,
   IntegrationConfig,
@@ -83,10 +82,18 @@ const IntegrationDialog: React.FC<Props> = ({
     (state: RootState) => state.integrationReducer.editStatus
   );
 
+  const operators = useSelector(
+    (state: RootState) => state.integrationReducer.operators.operators
+  );
+
+  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
+
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
     !editMode &&
-    (!isConfigComplete(config) || name === '' || name === aqueductDemoName);
+    (!isConfigComplete(config, service) ||
+      name === '' ||
+      name === aqueductDemoName);
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };
@@ -128,6 +135,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <PostgresDialog
           onUpdateField={setConfigField}
           value={config as PostgresConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -136,6 +144,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <SnowflakeDialog
           onUpdateField={setConfigField}
           value={config as SnowflakeConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -147,6 +156,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <MysqlDialog
           onUpdateField={setConfigField}
           value={config as MySqlConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -155,6 +165,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <RedshiftDialog
           onUpdateField={setConfigField}
           value={config as RedshiftConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -163,6 +174,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <MariaDbDialog
           onUpdateField={setConfigField}
           value={config as RedshiftConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -171,12 +183,17 @@ const IntegrationDialog: React.FC<Props> = ({
         <BigQueryDialog
           onUpdateField={setConfigField}
           value={config as BigQueryConfig}
+          editMode={editMode}
         />
       );
       break;
     case 'S3':
       serviceDialog = (
-        <S3Dialog onUpdateField={setConfigField} value={config as S3Config} />
+        <S3Dialog
+          onUpdateField={setConfigField}
+          value={config as S3Config}
+          editMode={editMode}
+        />
       );
       break;
     case 'Airflow':
@@ -184,6 +201,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <AirflowDialog
           onUpdateField={setConfigField}
           value={config as AirflowConfig}
+          editMode={editMode}
         />
       );
       break;
@@ -238,6 +256,13 @@ const IntegrationDialog: React.FC<Props> = ({
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
+        {editMode && numWorkflows > 0 && (
+          <Alert sx={{ mb: 2 }} severity="info">
+            {`Changing this integration will automatically update ${numWorkflows} ${
+              numWorkflows === 1 ? 'workflow' : 'workflows'
+            }.`}
+          </Alert>
+        )}
         {nameInput}
         {serviceDialog}
 
@@ -271,16 +296,20 @@ const IntegrationDialog: React.FC<Props> = ({
 
 // Helper function to check if the Integration config is completely filled
 export function isConfigComplete(
-  config: IntegrationConfig | CSVConfig
+  config: IntegrationConfig,
+  service: Service
 ): boolean {
-  if (isS3ConfigComplete(config as S3Config)) {
-    return true;
-  }
+  switch (service) {
+    case 'S3':
+      return isS3ConfigComplete(config as S3Config);
 
-  // Make sure config is not empty and all fields are not empty as well.
-  return (
-    Object.values(config).length > 0 && Object.values(config).every((x) => !!x)
-  );
+    default:
+      // Make sure config is not empty and all fields are not empty as well.
+      return (
+        Object.values(config).length > 0 &&
+        Object.values(config).every((x) => !!x)
+      );
+  }
 }
 
 export default IntegrationDialog;
