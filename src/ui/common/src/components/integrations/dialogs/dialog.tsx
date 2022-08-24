@@ -277,9 +277,9 @@ export function isConfigComplete(
     return true;
   }
 
+  // Make sure config is not empty and all fields are not empty as well.
   return (
-    Object.values(config).length > 0 &&
-    Object.values(config).every((x) => x === undefined || (x && x !== ''))
+    Object.values(config).length > 0 && Object.values(config).every((x) => !!x)
   );
 }
 
