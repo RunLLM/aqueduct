@@ -15,7 +15,7 @@ import (
 
 // Route: /integration/{integrationId}/operators
 // Method: GET
-// Params: None
+// Params: integrationId
 // Request:
 //	Headers:
 //		`api-key`: user's API Key

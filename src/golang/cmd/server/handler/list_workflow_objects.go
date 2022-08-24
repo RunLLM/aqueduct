@@ -23,7 +23,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		all written objects for the given `workflowId`
+//		all objects written by `workflowId`
 
 type ListWorkflowObjectsArgs struct {
 	*aq_context.AqContext

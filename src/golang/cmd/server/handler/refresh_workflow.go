@@ -21,6 +21,16 @@ type RefreshWorkflowArgs struct {
 	Parameters map[string]string
 }
 
+// Route: /workflow/{workflowId}/refresh
+// Method: POST
+// Params: workflowId
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
+// Response: none
+//
 // Refresh workflow creates a new workflow version by
 // triggering running a workflow run.
 type RefreshWorkflowHandler struct {

@@ -7,6 +7,13 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 )
 
+// Route: /api/user
+// Method: GET
+// Params: None
+// Request
+//	Headers:
+//		`api-key`: user's API Key
+// Response: serialized `User` object.
 type GetUserProfileHandler struct {
 	GetHandler
 }
