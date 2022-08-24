@@ -24,7 +24,6 @@ import {
   AirflowConfig,
   aqueductDemoName,
   BigQueryConfig,
-  CSVConfig,
   formatService,
   Integration,
   IntegrationConfig,
@@ -92,7 +91,9 @@ const IntegrationDialog: React.FC<Props> = ({
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
     !editMode &&
-    (!isConfigComplete(config) || name === '' || name === aqueductDemoName);
+    (!isConfigComplete(config, service) ||
+      name === '' ||
+      name === aqueductDemoName);
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };
@@ -295,16 +296,20 @@ const IntegrationDialog: React.FC<Props> = ({
 
 // Helper function to check if the Integration config is completely filled
 export function isConfigComplete(
-  config: IntegrationConfig | CSVConfig
+  config: IntegrationConfig,
+  service: Service
 ): boolean {
-  if (isS3ConfigComplete(config as S3Config)) {
-    return true;
-  }
+  switch (service) {
+    case 'S3':
+      return isS3ConfigComplete(config as S3Config);
 
-  // Make sure config is not empty and all fields are not empty as well.
-  return (
-    Object.values(config).length > 0 && Object.values(config).every((x) => !!x)
-  );
+    default:
+      // Make sure config is not empty and all fields are not empty as well.
+      return (
+        Object.values(config).length > 0 &&
+        Object.values(config).every((x) => !!x)
+      );
+  }
 }
 
 export default IntegrationDialog;
