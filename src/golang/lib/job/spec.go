@@ -63,6 +63,10 @@ type ExecutorConfiguration struct {
 type Spec interface {
 	Type() JobType
 	JobName() string
+	// HasStorageConfig returns whether this job spec has a storage config.
+	HasStorageConfig() bool
+	// GetStorageConfig returns the storage config if the job spec has one, otherwise it returns an error.
+	GetStorageConfig() (*shared.StorageConfig, error)
 }
 
 // BaseSpec defines fields shared by all job specs.
@@ -80,6 +84,14 @@ type WorkflowRetentionSpec struct {
 	ExecutorConfig *ExecutorConfiguration
 }
 
+func (wrs *WorkflowRetentionSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (wrs *WorkflowRetentionSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("WorkflowRetention job specs don't have a storage config.")
+}
+
 type WorkflowSpec struct {
 	BaseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
@@ -89,6 +101,14 @@ type WorkflowSpec struct {
 	ExecutorConfig *ExecutorConfiguration
 }
 
+func (ws *WorkflowSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (ws *WorkflowSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("Workflow job specs don't have a storage config.")
+}
+
 // BasePythonSpec defines fields shared by all Python job specs.
 // These Python jobs can be one-off jobs (e.g. Authenticate, Discover)
 // or Workflow operators (e.g. Function, Extract, Load).
@@ -96,6 +116,14 @@ type BasePythonSpec struct {
 	BaseSpec
 	StorageConfig shared.StorageConfig `json:"storage_config"  yaml:"storage_config"`
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
+}
+
+func (bs *BasePythonSpec) HasStorageConfig() bool {
+	return true
+}
+
+func (bs *BasePythonSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return &bs.StorageConfig, nil
 }
 
 type FunctionSpec struct {

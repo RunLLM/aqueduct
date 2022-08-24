@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"io/ioutil"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -13,6 +14,7 @@ import (
 const (
 	defaultFunctionExtractPath = "/app/function/"
 	jobSpecEnvVarKey           = "JOB_SPEC"
+	gcsCredentialsEnvVarKey    = "GCS_CREDENTIALS"
 )
 
 type k8sJobManager struct {
@@ -74,7 +76,29 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
-	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
+	secretEnvVars := []string{}
+
+	if spec.HasStorageConfig() {
+		storageConfig, err := spec.GetStorageConfig()
+		if err != nil {
+			return err
+		}
+
+		switch storageConfig.Type {
+		case shared.S3StorageType:
+			// k8s clusters access S3 via credentials passed as a secret
+			secretEnvVars = append(secretEnvVars, k8s.AwsCredentialsSecretName)
+		case shared.GCSStorageType:
+			// For GCS the credentials must be provided as an environment variable
+			data, err := ioutil.ReadFile(storageConfig.GCSConfig.CredentialsPath)
+			if err != nil {
+				return err
+			}
+			environmentVariables[gcsCredentialsEnvVarKey] = string(data)
+		default:
+			return errors.Newf("Storage type %v is not supported for k8s job managers", storageConfig.Type)
+		}
+	}
 
 	containerImage, err := mapJobTypeToDockerImage(spec)
 	if err != nil {
