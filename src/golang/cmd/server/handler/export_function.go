@@ -28,7 +28,7 @@ type exportFunctionResponse struct {
 }
 
 // Route: /function/{operatorId}/export
-// Method: POST
+// Method: GET
 // Params: operatorId
 // Request
 //	Headers:
