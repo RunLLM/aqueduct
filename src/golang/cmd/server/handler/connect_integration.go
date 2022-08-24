@@ -35,7 +35,17 @@ const (
 
 var ErrNoIntegrationName = errors.New("Integration name is not provided")
 
-// ConnectIntegrationHandler connects a new integration for the organization.
+// Route: /integration/connect
+// Method: POST
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//		`integration-name`: the name for the integration
+//		`integration-service`: the service type for the integration
+//		`integration-config`: the json-serialized integration config
+//
+// Response: none
 type ConnectIntegrationHandler struct {
 	PostHandler
 
