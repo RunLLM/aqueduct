@@ -24,8 +24,10 @@ type watchWorkflowArgs struct {
 // Method: POST
 // Params: workflowId
 // Request
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response: None
 type WatchWorkflowHandler struct {
 	PostHandler

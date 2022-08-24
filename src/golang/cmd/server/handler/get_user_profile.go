@@ -12,8 +12,10 @@ import (
 // Params: None
 //
 // Request
-// 	Headers:
-// 		`api-key`: user's API Key
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
 // Response: serialized `User` object.
 type GetUserProfileHandler struct {
 	GetHandler

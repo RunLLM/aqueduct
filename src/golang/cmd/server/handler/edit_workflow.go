@@ -24,6 +24,7 @@ import (
 //		`api-key`: user's API Key
 //	Body:
 //		serialized `editWorkflowInput` object.
+//
 // Response: none
 type EditWorkflowHandler struct {
 	PostHandler

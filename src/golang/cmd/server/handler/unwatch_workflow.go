@@ -24,8 +24,10 @@ type unwatchWorkflowArgs struct {
 // Method: POST
 // Params: workflowId
 // Request
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response: None
 type UnwatchWorkflowHandler struct {
 	PostHandler
