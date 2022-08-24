@@ -165,6 +165,7 @@ export const S3Dialog: React.FC<Props> = ({
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
         value={value?.bucket ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
@@ -177,6 +178,7 @@ export const S3Dialog: React.FC<Props> = ({
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
         value={value?.region ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />

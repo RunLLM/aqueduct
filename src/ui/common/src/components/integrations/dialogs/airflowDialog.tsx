@@ -55,6 +55,7 @@ export const AirflowDialog: React.FC<Props> = ({
         placeholder={Placeholders.host}
         onChange={(event) => setAddress(event.target.value)}
         value={address}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />

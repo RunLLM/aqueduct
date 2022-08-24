@@ -52,6 +52,7 @@ export const BigQueryDialog: React.FC<Props> = ({
         placeholder={Placeholders.project_id}
         onChange={(event) => onUpdateField('project_id', event.target.value)}
         value={value?.project_id ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />

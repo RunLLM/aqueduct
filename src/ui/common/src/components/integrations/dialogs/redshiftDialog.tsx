@@ -34,6 +34,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
         value={value?.host ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
@@ -46,6 +47,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
         value={value?.port ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
@@ -58,6 +60,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
         value={value?.database ?? null}
+        disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
