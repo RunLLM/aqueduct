@@ -97,10 +97,6 @@ const IntegrationOptions: React.FC<Props> = ({
             Test Connection
           </Typography>
         </MenuItem>
-<<<<<<< HEAD
-=======
-
->>>>>>> 2640da16405aadfa794e87c26503038fb16765fe
         {!isDemo(integration) && (
           <MenuItem
             onClick={() => {
