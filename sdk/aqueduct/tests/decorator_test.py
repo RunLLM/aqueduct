@@ -51,7 +51,7 @@ def test_handle_reserved_file_dependencies():
         _package_files_and_requirements(
             python_function,
             dir_path=os.path.join(os.getcwd(), "test_function"),
-            file_dependencies=["aqueduct_utils.py", "file.py"],
+            file_dependencies=["conda_version.txt", "file.py"],
         )
 
 

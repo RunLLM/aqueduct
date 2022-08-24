@@ -87,6 +87,10 @@ jobs:
       - name: Run Imported Function Notebook
         timeout-minutes: 10
         run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb" --server_address localhost:8080
+      
+      - name: Run Util File Dependency Notebook
+        timeout-minutes: 10
+        run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb" --server_address localhost:8080
 
       - uses: actions/upload-artifact@v3
         if: always()
