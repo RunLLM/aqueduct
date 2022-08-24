@@ -97,7 +97,7 @@ const IntegrationOptions: React.FC<Props> = ({
             Test Connection
           </Typography>
         </MenuItem>
-        
+
         {!isDemo(integration) && (
           <MenuItem
             onClick={() => {

@@ -45,8 +45,7 @@ type SavedObjectResult struct {
 //	Body:
 //		json-serialized `deleteWorkflowInput` object.
 //
-// Response:
-//		json-serialized `deleteWorkflowResponse` object.
+// Response: json-serialized `deleteWorkflowResponse` object.
 //
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output objects in the user's data warehouse.

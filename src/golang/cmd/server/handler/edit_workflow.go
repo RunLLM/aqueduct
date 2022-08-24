@@ -19,10 +19,10 @@ import (
 // Method: POST
 // Params: workflowId
 // Request
-//	Headers:
-//		`api-key`: user's API Key
-//	Body:
-//		serialized `editWorkflowInput` object.
+// 	Headers:
+// 		`api-key`: user's API Key
+// 	Body:
+// 		serialized `editWorkflowInput` object.
 // Response: none
 type EditWorkflowHandler struct {
 	PostHandler
