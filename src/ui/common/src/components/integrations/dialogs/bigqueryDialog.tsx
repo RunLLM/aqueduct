@@ -23,10 +23,18 @@ export const BigQueryDialog: React.FC<Props> = ({
   editMode,
 }) => {
   const [fileName, setFileName] = useState<string>(null);
-  const setFile = (fileData: FileData) => {
-    setFileName(fileData.name);
-    onUpdateField('service_account_credentials', fileData.data);
+  const setFile = (fileData: FileData | null) => {
+    setFileName(fileData?.name ?? null);
+    onUpdateField('service_account_credentials', fileData?.data);
   };
+
+  const fileData =
+    fileName && !!value?.service_account_credentials
+      ? {
+          name: fileName,
+          data: value.service_account_credentials,
+        }
+      : null;
 
   const fileUploadDescription = (
     <>
@@ -61,7 +69,7 @@ export const BigQueryDialog: React.FC<Props> = ({
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
-        file={{ name: fileName, data: value?.service_account_credentials }}
+        file={fileData}
         placeholder={'Upload your service account key file.'}
         onFiles={(files) => {
           const file = files[0];

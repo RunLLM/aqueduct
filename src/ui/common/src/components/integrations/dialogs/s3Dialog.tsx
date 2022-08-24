@@ -39,10 +39,18 @@ export const S3Dialog: React.FC<Props> = ({
 }) => {
   const [fileName, setFileName] = useState<string>(null);
 
-  const setFile = (fileData: FileData) => {
-    setFileName(fileData.name);
-    onUpdateField('config_file_content', fileData.data);
+  const setFile = (fileData: FileData | null) => {
+    setFileName(fileData?.name ?? null);
+    onUpdateField('config_file_content', fileData?.data);
   };
+
+  const fileData =
+    fileName && !!value?.config_file_content
+      ? {
+          name: fileName,
+          data: value.config_file_content,
+        }
+      : null;
 
   useEffect(() => {
     if (!value?.type) {
@@ -139,7 +147,7 @@ export const S3Dialog: React.FC<Props> = ({
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
-        file={{ name: fileName, data: value?.config_file_content }}
+        file={fileData}
         placeholder={''}
         onFiles={(files) => {
           const file = files[0];
