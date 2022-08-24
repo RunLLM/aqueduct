@@ -11,12 +11,10 @@ import { Data, DataSchema } from 'src/utils/data';
 import {
   ArtifactResult,
   handleGetArtifactResults,
-  handleGetWorkflow,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
-import { isLoading } from '../../../../utils/shared';
-import { useAqueductConsts } from '../../../hooks/useAqueductConsts';
+import { exportCsv } from '../../../../utils/preview';
 import DefaultLayout from '../../../layouts/default';
 import KeyValueTable, {
   KeyValueTableType,
@@ -113,53 +111,20 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     }
   );
 
-  const { apiAddress } = useAqueductConsts();
-
-  // Set the title of the page on page load.
   useEffect(() => {
     document.title = 'Artifact | Aqueduct';
-  }, []);
 
-  // TODO: Fetch artifact data and render here.
-  useEffect(() => {
-    console.log('Fetching artifact data ...');
-    console.log('Url params: ');
-    console.log('workflowId: ', workflowId);
-    console.log('workflowDagResultId: ', workflowDagResultId);
-    console.log('artifactId: ', artifactId);
-    console.log('workflow regular useEffect: ', workflow);
-    //console.log('artifactResult: ', artifactResult);
-
-    // Fetching the workflow by Id:
-    // TODO: Might not need this call after all.
-    //dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-
-    console.log('fetching the artifact Result');
-    dispatch(
-      handleGetArtifactResults({
-        apiKey: user.apiKey,
-        workflowDagResultId,
-        artifactId,
-      })
-    );
-  }, []);
-
-  // After artifact details are fetched, get the workflow details
-  useEffect(() => {
-    // Fetch workflow details
-    console.log('other useEffect workflow: ', workflow);
-    // only get workflow if it's not currently loading one.
-    const loadingStatus = workflow.loadingStatus;
-
-    if (Object.keys(workflow.dags).length < 1 && !isLoading(loadingStatus)) {
-      console.log('Fetching workflow inside if statement ...');
-      dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+    // Check and see if we are loading the artifact result
+    if (!artifactResult) {
+      dispatch(
+        handleGetArtifactResults({
+          apiKey: user.apiKey,
+          workflowDagResultId,
+          artifactId,
+        })
+      );
     }
-  }, [artifactResult, workflowId]);
-
-  const artifactMetadata =
-    workflow?.dags[workflowDagResultId]?.artifacts[artifactId];
-  console.log('artifactMetadata: ', artifactMetadata);
+  }, []);
 
   if (!artifactResult || !artifactResult.result) {
     return (
@@ -170,16 +135,25 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   }
 
   const parsedData = JSON.parse(artifactResult.result.data);
-  console.log('artifact details parsedData: ', parsedData);
+  const artifactName: string = artifactResult.result.name;
 
   return (
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          <Box width="100%" display="flex">
-            <ArtifactDetailsHeader artifactName="churn_table" />
-            <Button variant="contained" sx={{ maxHeight: '32px' }}>
-              EXPORT
+          <Box width="100%" display="flex" alignItems="center">
+            <ArtifactDetailsHeader artifactName={artifactName} />
+            <Button
+              variant="contained"
+              sx={{ maxHeight: '32px' }}
+              onClick={() => {
+                exportCsv(
+                  parsedData,
+                  artifactName ? artifactName.replaceAll(' ', '_') : 'data'
+                );
+              }}
+            >
+              Export
             </Button>
           </Box>
           <Box width="100%" marginTop="12px">
@@ -193,20 +167,34 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
               <Typography variant="h5" component="div" marginBottom="8px">
                 Metrics
               </Typography>
-              <KeyValueTable
-                rows={mockMetrics}
-                tableType={KeyValueTableType.Metric}
-              />
+              {mockMetrics.data.length > 0 ? (
+                <KeyValueTable
+                  schema={kvSchema}
+                  rows={mockMetrics}
+                  tableType={KeyValueTableType.Metric}
+                />
+              ) : (
+                <Typography variant="body2">
+                  This artifact has no associated downstream Metrics.
+                </Typography>
+              )}
             </Box>
             <Box width="96px" />
             <Box width="100%">
               <Typography variant="h5" component="div" marginBottom="8px">
                 Checks
               </Typography>
-              <KeyValueTable
-                rows={mockChecks}
-                tableType={KeyValueTableType.Check}
-              />
+              {mockChecks.data.length > 0 ? (
+                <KeyValueTable
+                  schema={kvSchema}
+                  rows={mockChecks}
+                  tableType={KeyValueTableType.Check}
+                />
+              ) : (
+                <Typography variant="body2">
+                  This artifact has no associated downstream Checks.
+                </Typography>
+              )}
             </Box>
           </Box>
         </Box>

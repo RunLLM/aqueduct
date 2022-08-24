@@ -7,6 +7,7 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -57,7 +58,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const { workflowDagResultId, metricOperatorId } = useParams();
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
+  const [inputsExpanded, setInputsExpanded] = useState<boolean>(false);
+  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(false);
+
   const metricResult: OperatorResult | null = useSelector(
     (state: RootState) => {
       // First, check if there are any keys in the operatorResult's object.
@@ -72,7 +75,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   useEffect(() => {
     // TODO: Update this to contain the name of the operator
-    document.title = 'Operator | Aqueduct';
+    document.title = 'Metric Details | Aqueduct';
 
     // if (!metricResult) {
     //     dispatch(
@@ -101,28 +104,21 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%" display="flex">
-            <MetricDetailsHeader
-              // artifactName={metricResult.result.name}
-              artifactName="metric_result_placeholder"
-            />
+            <MetricDetailsHeader artifactName="metric_result_placeholder" />
           </Box>
 
           <Box display="flex" width="100%" paddingTop="40px">
             <Box width="100%">
-              <Typography variant="h5" component="div" marginBottom="8px">
-                Inputs:
-              </Typography>
-              {/* TODO: add accordion here for inputs to the metric. */}
               <Accordion
-                expanded={true}
+                expanded={inputsExpanded}
                 onChange={() => {
-                  console.log('on accordion change');
+                  setInputsExpanded(!inputsExpanded);
                 }}
               >
                 <AccordionSummary
                   expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  aria-controls="panel1bh-content"
-                  id="panel1bh-header"
+                  aria-controls="input-accordion-content"
+                  id="input-accordion-header"
                 >
                   <Typography
                     sx={{ width: '33%', flexShrink: 0 }}
@@ -130,7 +126,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                     component="div"
                     marginBottom="8px"
                   >
-                    Inputs
+                    Inputs:
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
@@ -143,14 +139,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             </Box>
             <Box width="32px" />
             <Box width="100%">
-              <Typography variant="h5" component="div" marginBottom="8px">
-                Outputs:
-              </Typography>
-              {/* TODO: add accordion here for inputs to the metric. */}
               <Accordion
-                expanded={true}
+                expanded={outputsExpanded}
                 onChange={() => {
                   console.log('on accordion change');
+                  setOutputsExpanded(!outputsExpanded);
                 }}
               >
                 <AccordionSummary
@@ -164,14 +157,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                     component="div"
                     marginBottom="8px"
                   >
-                    Inputs
+                    Output:
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Typography>
-                    Nulla facilisi. Phasellus sollicitudin nulla et quam mattis
-                    feugiat. Aliquam eget maximus est, id dignissim quam.
-                  </Typography>
+                  <Typography variant="h6">125.75</Typography>
                 </AccordionDetails>
               </Accordion>
             </Box>
@@ -197,7 +187,20 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             <Typography variant="h5" component="div" marginBottom="8px">
               Historical Outputs:
             </Typography>
-            {/* <StickyHeaderTable data={parsedData} /> */}
+            <Box>
+              <Plot
+                data={[
+                  {
+                    x: [1, 2, 3],
+                    y: [2, 6, 3],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { color: 'red' },
+                  },
+                ]}
+                layout={{ width: '100%', height: '100%' }}
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

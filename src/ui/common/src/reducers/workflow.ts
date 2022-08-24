@@ -220,7 +220,6 @@ export const handleGetWorkflow = createAsyncThunk<
     });
 
     const body = await res.json();
-    console.log('handleGetWorkflow body: ', body);
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
