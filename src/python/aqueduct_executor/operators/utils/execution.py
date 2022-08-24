@@ -16,7 +16,7 @@ _TIP_CREATE_BUG_REPORT = (
 )
 TIP_UNKNOWN_ERROR = f"Sorry, we've run into an unexpected error! {_TIP_CREATE_BUG_REPORT}"
 TIP_INTEGRATION_CONNECTION = (
-    "We have trouble connecting to the integration. "
+    "We were unable to connect to this integration. "
     "Please check your credentials or contact your integraiton provider."
 )
 TIP_DEMO_CONNECTION = f"We have trouble connecting to demo DB. {_TIP_CREATE_BUG_REPORT}"

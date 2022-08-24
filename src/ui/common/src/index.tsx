@@ -18,7 +18,7 @@ import { ConnectedIntegrations } from './components/integrations/connectedIntegr
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
-import { IntegrationDialog } from './components/integrations/dialogs/dialog';
+import IntegrationDialog from './components/integrations/dialogs/dialog';
 import {
   FileEventTarget,
   IntegrationFileUploadField,
@@ -100,12 +100,17 @@ import dataPreview, {
   getDataArtifactPreview,
 } from './reducers/dataPreview';
 import integration, {
+  handleConnectToNewIntegration,
+  handleEditIntegration,
   handleListIntegrationObjects,
   handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
+  handleTestConnectIntegration,
   integrationSlice,
   IntegrationState,
   objectKeyFn,
+  resetConnectNewStatus,
+  resetTestConnectStatus,
 } from './reducers/integration';
 import integrations, {
   handleLoadIntegrations,
@@ -183,7 +188,6 @@ import {
   addTable,
   AqueductDemoConfig,
   BigQueryConfig,
-  connectIntegration,
   CSVConfig,
   fetchBranches,
   fetchRepos,
@@ -313,7 +317,6 @@ export {
   CollapsedStatusBarWidthInPx,
   computeTopologicalOrder,
   ConnectedIntegrations,
-  connectIntegration,
   ContentSidebarOffsetInPx,
   createCronString,
   CSVConfig,
@@ -377,6 +380,8 @@ export {
   GoogleSheetsLoadParams,
   handleArchiveAllNotifications,
   handleArchiveNotification,
+  handleConnectToNewIntegration,
+  handleEditIntegration,
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
@@ -388,6 +393,7 @@ export {
   handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
   handleLoadIntegrations,
+  handleTestConnectIntegration,
   HeightTransition,
   HomePage,
   IconButton,
@@ -469,7 +475,9 @@ export {
   RedshiftDialog,
   RelationalDBExtractParams,
   RelationalDBLoadParams,
+  resetConnectNewStatus,
   resetSelectedNode,
+  resetTestConnectStatus,
   S3Card,
   S3Config,
   S3Dialog,
