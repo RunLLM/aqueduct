@@ -294,7 +294,7 @@ export const handleEditIntegration = createAsyncThunk<
   ) => {
     const { apiKey, integrationId, name, config } = args;
     Object.keys(config).forEach((k) => {
-      if (config[k] === undefined) {
+      if (!config[k]) {
         config[k] = '';
       }
     });
