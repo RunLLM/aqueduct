@@ -210,7 +210,7 @@ export const handleDeleteIntegration = createAsyncThunk<
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/test`,
+      `${apiAddress}/api/integration/${integrationId}/delete`,
       {
         method: 'POST',
         headers: {
@@ -262,7 +262,11 @@ export const handleTestConnectIntegration = createAsyncThunk<
 export const integrationSlice = createSlice({
   name: 'integrationTablesReducer',
   initialState: initialState,
-  reducers: {},
+  reducers: {
+    resetDeletionStatus: (state) => {
+      state.deletionStatus = { loading: LoadingStatusEnum.Initial, err: '' };
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(handleLoadIntegrationObject.pending, (state, { meta }) => {
       const object = meta.arg.object;
@@ -377,5 +381,8 @@ export const integrationSlice = createSlice({
     );
   },
 });
+
+
+export const { resetDeletionStatus } = integrationSlice.actions;
 
 export default integrationSlice.reducer;

@@ -6,13 +6,12 @@ import {
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { AppDispatch, RootState } from '../../../stores/store';
 import { isLoading, isSucceeded, isFailed } from '../../../utils/shared';
-import { handleDeleteIntegration } from '../../../reducers/integration';
+import { handleDeleteIntegration, resetDeletionStatus } from '../../../reducers/integration';
 
 import UserProfile from '../../../utils/auth';
 type Props = {
@@ -63,16 +62,10 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   };
 
   return (
-    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
-      <DialogTitle>Are you sure you want to delete the integration?</DialogTitle>
+    <>
+    <Dialog open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)} onClose={onCloseDialog} maxWidth="lg">
       <DialogContent>
-        {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
-            <Alert severity="error" sx={{ marginTop: 2 }}>
-              Integration deletion failed with error:
-              <br></br>
-              <pre>{deleteIntegrationStatus.err}</pre>
-            </Alert>
-          )}
+      Are you sure you want to delete the integration?
       </DialogContent>
       <DialogActions>
         <Button onClick={onCloseDialog}>
@@ -87,6 +80,24 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
         </LoadingButton>
       </DialogActions>
     </Dialog>
+    <Dialog open={isFailed(deleteIntegrationStatus)} onClose={onCloseDialog} maxWidth="lg">
+      {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
+        <Alert severity="error" sx={{ margin: 2 }}>
+          Integration deletion failed with error:
+          <br></br>
+          <pre>{deleteIntegrationStatus.err}</pre>
+        </Alert>
+      )}
+      <DialogActions>
+        <Button onClick={() => {
+          onCloseDialog();
+          dispatch(resetDeletionStatus());
+          }}>
+          Dismiss
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 };
 
