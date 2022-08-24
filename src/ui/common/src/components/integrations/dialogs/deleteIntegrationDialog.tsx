@@ -28,7 +28,6 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-
   const [isConnecting, setIsConnecting] = useState(false);
 
   const deleteIntegrationStatus = useSelector(
