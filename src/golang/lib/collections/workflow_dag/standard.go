@@ -126,6 +126,7 @@ func (r *standardReaderImpl) GetWorkflowDagsByOperatorId(
 	operatorId uuid.UUID,
 	db database.Database,
 ) ([]DBWorkflowDag, error) {
+	// Get all unique workflow DAGs which has an edge to the operator node with the id `operatorId` (is `from_id` or `to_id`)
 	query := fmt.Sprintf(`
 		SELECT DISTINCT %s FROM workflow_dag, workflow_dag_edge 
 		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
