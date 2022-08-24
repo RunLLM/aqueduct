@@ -382,7 +382,6 @@ export const integrationSlice = createSlice({
   },
 });
 
-
 export const { resetDeletionStatus } = integrationSlice.actions;
 
 export default integrationSlice.reducer;

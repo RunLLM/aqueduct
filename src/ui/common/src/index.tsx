@@ -16,9 +16,9 @@ import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
-import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
+import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import { IntegrationDialog } from './components/integrations/dialogs/dialog';
 import {
   FileEventTarget,
@@ -281,7 +281,6 @@ export {
   AccountPage,
   AddIntegrations,
   addTable,
-  DeleteIntegrationDialog,
   AddTableDialog,
   AllTransition,
   AqueductBezier,
@@ -342,6 +341,7 @@ export {
   DayOfWeek,
   deconstructCronString,
   DefaultLayout,
+  DeleteIntegrationDialog,
   DeleteWorkflowResponse,
   EdgeTypes,
   ExecutionStatus,

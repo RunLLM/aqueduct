@@ -4,16 +4,15 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
+import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
+import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import {
-  handleDeleteIntegration,
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
   handleTestConnectIntegration,
@@ -145,12 +144,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
         {showDeleteTableDialog && (
-        <DeleteIntegrationDialog
-          user={user}
-          integrationId={selectedIntegration.id}
-          integrationName={selectedIntegration.name}
-          onCloseDialog={() => setShowDeleteTableDialog(false)}
-        />)}
+          <DeleteIntegrationDialog
+            user={user}
+            integrationId={selectedIntegration.id}
+            integrationName={selectedIntegration.name}
+            onCloseDialog={() => setShowDeleteTableDialog(false)}
+          />
+        )}
         {testConnectStatus && isFailed(testConnectStatus) && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
             Test-connect failed with error:

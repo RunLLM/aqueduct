@@ -85,18 +85,20 @@ const IntegrationOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        {!isDemo(integration) && <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            onDeleteIntegration();
-          }}
-          disabled={inUse}
-        >
-          <FontAwesomeIcon color="gray.800" icon={faTrash} />
-          <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
-            Delete Integration
-          </Typography>
-        </MenuItem>}
+        {!isDemo(integration) && (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onDeleteIntegration();
+            }}
+            disabled={inUse}
+          >
+            <FontAwesomeIcon color="gray.800" icon={faTrash} />
+            <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
+              Delete Integration
+            </Typography>
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );
