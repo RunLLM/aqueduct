@@ -77,6 +77,7 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		r.Context(),
 		integrationId,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.Database,
 	)
 	if err != nil {

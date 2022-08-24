@@ -152,6 +152,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		r.Context(),
 		integrationId,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.Database,
 	)
 	if err != nil {

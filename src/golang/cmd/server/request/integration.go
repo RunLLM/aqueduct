@@ -34,6 +34,10 @@ func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]stri
 	}
 
 	integrationName := r.Header.Get(routes.IntegrationNameHeader)
+	if integrationName == "" {
+		return "", nil, errors.New("Integration name was not provided.")
+	}
+
 	return integrationName, configuration, nil
 }
 

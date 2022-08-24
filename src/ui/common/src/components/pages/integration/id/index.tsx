@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
+import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
@@ -38,9 +39,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+
   const integrationId: string = useParams().id;
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
+  const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
@@ -146,8 +149,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               setShowTestConnectToast(true);
             }}
             onEdit={() => setShowEditDialog(true)}
+            onDeleteIntegration={() => {
+              setShowDeleteTableDialog(true);
+            }}
           />
         </Box>
+        {showDeleteTableDialog && (
+          <DeleteIntegrationDialog
+            user={user}
+            integrationId={selectedIntegration.id}
+            integrationName={selectedIntegration.name}
+            onCloseDialog={() => setShowDeleteTableDialog(false)}
+          />
+        )}
         {testConnectStatus && isFailed(testConnectStatus) && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
             Test-connect failed with error:
@@ -160,7 +174,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           variant="h4"
           gutterBottom
           component="div"
-          sx={{ marginY: 4 }}
+          sx={{ marginY: 4, mt: 4 }}
         >
           Workflows
         </Typography>

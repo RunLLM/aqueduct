@@ -71,6 +71,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.IntegrationReader,
 		h.Database,
 	)
