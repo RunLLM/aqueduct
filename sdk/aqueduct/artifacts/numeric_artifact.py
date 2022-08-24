@@ -15,8 +15,14 @@ from aqueduct.dag import (
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
-from aqueduct.error import AqueductError
+from aqueduct.enums import (
+    ArtifactType,
+    CheckSeverity,
+    ExecutionMode,
+    FunctionGranularity,
+    FunctionType,
+)
+from aqueduct.error import AqueductError, InvalidArtifactTypeException
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -46,6 +52,11 @@ class NumericArtifact(BaseArtifact):
         >>> val = metric_artifact.get()
     """
 
+    BOUND_LOWER = "bound"
+    BOUND_UPPER = "upper"
+    BOUND_EQUAL = "equal"
+    BOUND_NOTEQUAL = "notequal"
+
     def __init__(
         self,
         dag: DAG,
@@ -57,14 +68,12 @@ class NumericArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self._content = content
+        self.set_content(content)
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self._content is None
-        else:
-            assert self._content is not None
+            assert self.content() is None
 
-        self._type = ArtifactType.NUMERIC
+        self.set_type(ArtifactType.NUMERIC)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
@@ -80,35 +89,31 @@ class NumericArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
+        if parameters is None and self.content() is not None:
+            return self.content()
+
+        previewed_artifact = artifact_utils.preview_artifact(
+            self._dag, self._artifact_id, parameters
+        )
+        if previewed_artifact.type() != ArtifactType.NUMERIC:
+            raise InvalidArtifactTypeException(
+                "Error: the computed result is expected to of type numeric, found %s"
+                % previewed_artifact.type()
+            )
+
+        assert (
+            isinstance(previewed_artifact.content(), int)
+            or isinstance(previewed_artifact.content(), float)
+            or isinstance(previewed_artifact.content(), np.number)
+        )
+
         if parameters:
-            artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
-            if artifact.type() != ArtifactType.NUMERIC:
-                raise Exception(
-                    "Error: the computed result is expected to of type numeric, found %s"
-                    % artifact.type()
-                )
-            assert (
-                isinstance(artifact._content, int)
-                or isinstance(artifact._content, float)
-                or isinstance(artifact._content, np.number)
-            )
-            return artifact._content
-
-        if self._content is None:
-            previewed_artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id)
-            assert (
-                isinstance(previewed_artifact._content, int)
-                or isinstance(previewed_artifact._content, float)
-                or isinstance(previewed_artifact._content, np.number)
-            )
-            self._content = previewed_artifact._content
-
-        return self._content
-
-    BOUND_LOWER = "bound"
-    BOUND_UPPER = "upper"
-    BOUND_EQUAL = "equal"
-    BOUND_NOTEQUAL = "notequal"
+            return previewed_artifact.content()
+        else:
+            # We are materializing an artifact generated from lazy execution.
+            assert self.content() is None
+            self.set_content(previewed_artifact.content())
+            return self.content()
 
     def list_preset_checks(self) -> List[str]:
         """Returns a list of all preset checks available on the numeric artifact.
@@ -126,6 +131,7 @@ class NumericArtifact(BaseArtifact):
         equal: Optional[float] = None,
         notequal: Optional[float] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
+        execution_mode: ExecutionMode = ExecutionMode.EAGER,
     ) -> bool_artifact.BoolArtifact:
         """Computes a bounds check on this metric with the specified boundary condition.
 
@@ -224,7 +230,13 @@ class NumericArtifact(BaseArtifact):
 
             bound_fn = check_not_equal_bound
 
-        return self.__apply_bound_fn_to_metric(bound_fn, name, description, severity)
+        return self.__apply_bound_fn_to_metric(
+            bound_fn,
+            name,
+            description,
+            severity,
+            execution_mode=execution_mode,
+        )
 
     def __apply_bound_fn_to_metric(
         self,
@@ -232,6 +244,7 @@ class NumericArtifact(BaseArtifact):
         check_name: str,
         check_description: str,
         severity: CheckSeverity = CheckSeverity.WARNING,
+        execution_mode: ExecutionMode = ExecutionMode.EAGER,
     ) -> bool_artifact.BoolArtifact:
         zip_file = serialize_function(check_function)
         function_spec = FunctionSpec(
@@ -259,20 +272,28 @@ class NumericArtifact(BaseArtifact):
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(check_name),
-                            type=ArtifactType.UNTYPED,
+                            type=ArtifactType.BOOL,
                         )
                     ],
                 ),
             ],
         )
 
-        # Issue preview request since this is an eager execution
-        artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-        assert isinstance(artifact, bool_artifact.BoolArtifact)
+        if execution_mode == ExecutionMode.EAGER:
+            # Issue preview request since this is an eager execution.
+            artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
+            if artifact.type() != ArtifactType.BOOL:
+                raise InvalidArtifactTypeException(
+                    "The computed artifact is expected to be type %s, but has type %s"
+                    % (ArtifactType.BOOL, artifact.type())
+                )
 
-        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
+            assert isinstance(artifact, bool_artifact.BoolArtifact)
 
-        return artifact
+            return artifact
+        else:
+            # We are in lazy mode.
+            return bool_artifact.BoolArtifact(self._dag, output_artifact_id)
 
     def remove_check(self, name: str) -> None:
         apply_deltas_to_dag(

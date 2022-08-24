@@ -110,5 +110,5 @@ class FlowRun:
             return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
         else:
             return generic_artifact.GenericArtifact(
-                self._dag, artifact_from_dag.id, artifact_from_dag.type, from_flow_run=True
+                self._dag, artifact_from_dag.id, from_flow_run=True
             )

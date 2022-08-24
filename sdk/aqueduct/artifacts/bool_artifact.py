@@ -9,7 +9,7 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidArtifactTypeException
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 
@@ -43,16 +43,14 @@ class BoolArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self._content = content
+        self.set_content(content)
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self._content is None
-        else:
-            assert self._content is not None
+            assert self.content() is None
 
-        self._type = ArtifactType.BOOL
+        self.set_type(ArtifactType.BOOL)
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
         """Materializes a BoolArtifact into a boolean.
 
         Returns:
@@ -66,24 +64,29 @@ class BoolArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
-        if parameters:
-            artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id, parameters)
-            if artifact.type() != ArtifactType.BOOL:
-                raise Exception(
-                    "Error: the computed result is expected to of type bool, found %s"
-                    % artifact.type()
-                )
-            assert isinstance(artifact._content, bool) or isinstance(artifact._content, np.bool_)
-            return artifact._content
+        if parameters is None and self.content() is not None:
+            return self.content()
 
-        if self._content is None:
-            previewed_artifact = artifact_utils.preview_artifact(self._dag, self._artifact_id)
-            assert isinstance(previewed_artifact._content, bool) or isinstance(
-                previewed_artifact._content, np.bool_
+        previewed_artifact = artifact_utils.preview_artifact(
+            self._dag, self._artifact_id, parameters
+        )
+        if previewed_artifact.type() != ArtifactType.BOOL:
+            raise InvalidArtifactTypeException(
+                "Error: the computed result is expected to of type bool, found %s"
+                % previewed_artifact.type()
             )
-            self._content = previewed_artifact._content
 
-        return self._content
+        assert isinstance(previewed_artifact.content(), bool) or isinstance(
+            previewed_artifact.content(), np.bool_
+        )
+
+        if parameters:
+            return previewed_artifact.content()
+        else:
+            # We are materializing an artifact generated from lazy execution.
+            assert self.content() is None
+            self.set_content(previewed_artifact.content())
+            return self.content()
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""

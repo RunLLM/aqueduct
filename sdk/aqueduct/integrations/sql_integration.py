@@ -7,8 +7,8 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
+from aqueduct.error import InvalidArtifactTypeException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -100,6 +100,7 @@ class RelationalDBIntegration(Integration):
         query: Union[str, RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
+        execution_mode: ExecutionMode = ExecutionMode.EAGER,
     ) -> TableArtifact:
         """
         Runs a SQL query against the RelationalDB integration.
@@ -192,20 +193,28 @@ class RelationalDBIntegration(Integration):
                         ArtifactMetadata(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
-                            type=ArtifactType.UNTYPED,
+                            type=ArtifactType.TABLE,
                         ),
                     ],
                 ),
             ],
         )
 
-        # Issue preview request since this is an eager execution
-        artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
-        assert isinstance(artifact, TableArtifact)
+        if execution_mode == ExecutionMode.EAGER:
+            # Issue preview request since this is an eager execution.
+            artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
+            if artifact.type() != ArtifactType.TABLE:
+                raise InvalidArtifactTypeException(
+                    "The computed artifact is expected to be type %s, but has type %s"
+                    % (ArtifactType.TABLE, artifact.type())
+                )
 
-        self._dag.must_get_artifact(sql_output_artifact_id).type = artifact.type()
+            assert isinstance(artifact, TableArtifact)
 
-        return artifact
+            return artifact
+        else:
+            # We are in lazy mode.
+            return TableArtifact(self._dag, sql_output_artifact_id)
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
         """
