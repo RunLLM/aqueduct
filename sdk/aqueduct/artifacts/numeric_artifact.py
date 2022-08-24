@@ -131,7 +131,7 @@ class NumericArtifact(BaseArtifact):
         equal: Optional[float] = None,
         notequal: Optional[float] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
+        lazy: bool = False,
     ) -> bool_artifact.BoolArtifact:
         """Computes a bounds check on this metric with the specified boundary condition.
 
@@ -152,6 +152,8 @@ class NumericArtifact(BaseArtifact):
         Returns:
             A bool artifact bound to this metric.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         input_mapping = {
             self.BOUND_UPPER: upper,
             self.BOUND_LOWER: lower,

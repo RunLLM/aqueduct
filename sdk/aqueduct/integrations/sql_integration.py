@@ -100,7 +100,7 @@ class RelationalDBIntegration(Integration):
         query: Union[str, RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
+        lazy: bool = False,
     ) -> TableArtifact:
         """
         Runs a SQL query against the RelationalDB integration.
@@ -116,6 +116,8 @@ class RelationalDBIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         integration_info = self._metadata
 
         # The sql operator name defaults to "[integration name] query 1". If another

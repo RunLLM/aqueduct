@@ -40,7 +40,7 @@ class S3Integration(Integration):
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
+        lazy: bool = False,
     ) -> BaseArtifact:
         """
         Reads one or more files from the S3 integration.
@@ -73,6 +73,8 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         if format:
             if artifact_type != ArtifactType.TABLE:
                 raise Exception(

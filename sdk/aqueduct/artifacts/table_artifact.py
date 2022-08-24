@@ -228,7 +228,7 @@ class TableArtifact(BaseArtifact):
         expectation_name: str,
         expectation_args: Optional[Dict[str, Any]] = None,
         severity: CheckSeverity = CheckSeverity.WARNING,
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
+        lazy: bool = False,
     ) -> bool_artifact.BoolArtifact:
         """Creates a check that validates with the table with great_expectations and its set of internal expectations.
         The expectations supported can be found here:
@@ -249,6 +249,7 @@ class TableArtifact(BaseArtifact):
         Returns:
             A bool artifact that represent the validation result of running the expectation provided on the table.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
             data_context_config = DataContextConfig(
@@ -330,7 +331,7 @@ class TableArtifact(BaseArtifact):
         self,
         column_id: Any = None,
         row_id: Any = None,
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
+        lazy: bool = False,
     ) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the number of missing values over a given column or row.
 
@@ -345,6 +346,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the number of missing values for the row/column on the applied table artifact.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
         if column_id is not None and row_id is not None:
             raise AqueductError(
@@ -397,9 +400,7 @@ class TableArtifact(BaseArtifact):
 
         return new_artifact
 
-    def number_of_rows(
-        self, execution_mode: ExecutionMode = ExecutionMode.EAGER
-    ) -> numeric_artifact.NumericArtifact:
+    def number_of_rows(self, lazy: bool = False) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the number of rows of this table
 
         Note: uses len() to determine row count over the pandas.DataFrame.
@@ -407,6 +408,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the number of rows on this table.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
 
         def internal_num_rows_metric(table: pd.DataFrame) -> float:
@@ -434,9 +437,7 @@ class TableArtifact(BaseArtifact):
 
         return new_artifact
 
-    def max(
-        self, column_id: Any, execution_mode: ExecutionMode = ExecutionMode.EAGER
-    ) -> numeric_artifact.NumericArtifact:
+    def max(self, column_id: Any, lazy: bool = False) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the maximum value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.max to compute value.
@@ -448,6 +449,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the max for the given column on the applied table artifact.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
 
         def internal_max_metric(table: pd.DataFrame) -> float:
@@ -478,9 +481,7 @@ class TableArtifact(BaseArtifact):
 
         return new_artifact
 
-    def min(
-        self, column_id: Any, execution_mode: ExecutionMode = ExecutionMode.EAGER
-    ) -> numeric_artifact.NumericArtifact:
+    def min(self, column_id: Any, lazy: bool = False) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the minimum value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.min to compute value.
@@ -492,6 +493,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the min for the given column on the applied table artifact.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
 
         def internal_min_metric(table: pd.DataFrame) -> float:
@@ -522,9 +525,7 @@ class TableArtifact(BaseArtifact):
 
         return new_artifact
 
-    def mean(
-        self, column_id: Any, execution_mode: ExecutionMode = ExecutionMode.EAGER
-    ) -> numeric_artifact.NumericArtifact:
+    def mean(self, column_id: Any, lazy: bool = False) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the mean value over the given column
 
         Note: takes a scalar column_id and uses pandas.DataFrame.mean to compute value.
@@ -536,6 +537,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the mean for the given column on the applied table artifact.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
 
         def internal_mean_metric(table: pd.DataFrame) -> float:
@@ -566,9 +569,7 @@ class TableArtifact(BaseArtifact):
 
         return new_artifact
 
-    def std(
-        self, column_id: Any, execution_mode: ExecutionMode = ExecutionMode.EAGER
-    ) -> numeric_artifact.NumericArtifact:
+    def std(self, column_id: Any, lazy: bool = False) -> numeric_artifact.NumericArtifact:
         """Creates a metric that represents the standard deviation value over the given column
 
         takes a scalar column_id and uses pandas.DataFrame.std to compute value
@@ -580,6 +581,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the standard deviation for the given column on the applied table artifact.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         table_name = self._get_table_name()
 
         def internal_std_metric(table: pd.DataFrame) -> float:
@@ -613,7 +616,7 @@ class TableArtifact(BaseArtifact):
         return new_artifact
 
     def system_metric(
-        self, metric_name: str, execution_mode: ExecutionMode = ExecutionMode.EAGER
+        self, metric_name: str, lazy: bool = False
     ) -> numeric_artifact.NumericArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
 
@@ -627,6 +630,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the requested system metric
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
         system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
