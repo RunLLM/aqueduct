@@ -18,6 +18,7 @@ func (r *standardReaderImpl) GetLatestWorkflowDagIdsByOrganizationId(
 	organizationId string,
 	db database.Database,
 ) ([]WorkflowDagId, error) {
+	// Get the latest workflow DAGs for all the workflows.
 	query := `
 		 SELECT workflow_dag.id FROM workflow_dag WHERE created_at IN (
 		 SELECT MAX(workflow_dag.created_at) FROM app_user, workflow, workflow_dag 
@@ -40,6 +41,8 @@ func (r *standardReaderImpl) GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperat
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
+	// Get all the unique `artifact_id`s with an outgoing edge to an operator with id `operatorIds`
+	// from workflow DAGs with ids in `workflowDagIds`
 	query := fmt.Sprintf(
 		`SELECT DISTINCT from_id AS artifact_id FROM workflow_dag_edge WHERE workflow_dag_id IN (%s) 
 		 AND to_id IN (%s);`,
@@ -64,6 +67,7 @@ func (r *standardReaderImpl) GetArtifactResultsByArtifactIds(
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
+	// Get all artifact results where the artifact id is in the given `artifactIds`.
 	query := fmt.Sprintf(
 		`SELECT artifact_result.artifact_id, artifact_result.workflow_dag_result_id, artifact_result.status, workflow_dag_result.created_at AS timestamp 
 		 FROM artifact_result, workflow_dag_result 
@@ -88,6 +92,8 @@ func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResult
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
+	// Get all unique artifact_id, execution_state, workflow_dag_result_id for all `workflow_dag_result_id`s
+	// in `workflowDagResultIds` and `artifact_id`s in `artifactIds`.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT
 			workflow_dag_edge.to_id AS artifact_id,
@@ -114,6 +120,8 @@ func (r *standardReaderImpl) GetWorkflowIdsFromOperatorIds(
 	db database.Database,
 ) ([]WorkflowIdsFromOperatorIdsResponse, error) {
 	// This query looks up all operators with at least one upstream
+	// Given a list of `operatorIds`, find all workflow DAGs that has the id in the
+	// `from_id` or `to_id` field.
 	query := fmt.Sprintf(
 		`
 			SELECT
