@@ -1,6 +1,6 @@
 import io
-from typing import Any
 import json
+from typing import Any
 
 from aqueduct_executor.operators.utils.storage.config import GCSStorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage

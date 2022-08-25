@@ -1,5 +1,5 @@
-from typing import Any, List
 import json
+from typing import Any, List
 
 from aqueduct_executor.operators.connectors.data import connector
 from aqueduct_executor.operators.connectors.data.config import GCSConfig
