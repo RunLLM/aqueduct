@@ -80,7 +80,7 @@ func (r *sqliteReaderImpl) GetLoadOperatorsForWorkflowAndIntegration(
 ) ([]DBOperator, error) {
 	// Get all load operators where table=objectName & integration_id=integrationId
 	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
-	// workflow. 
+	// workflow.
 	query := fmt.Sprintf(`
 	SELECT %s
 	FROM operator
@@ -115,7 +115,7 @@ func (r *sqliteReaderImpl) GetDistinctLoadOperatorsByWorkflowId(
 	// Get all unique load operator (defined as a unqiue combination of operator name,
 	// integration name, integration id, service, object name, and update mode) that
 	// has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
-	// workflow. 
+	// workflow.
 	query := `
 	SELECT DISTINCT
 			operator.name AS operator_name, 

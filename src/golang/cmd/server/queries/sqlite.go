@@ -25,7 +25,7 @@ func (r *sqliteReaderImpl) GetWorkflowLastRunByEngine(
 	engine shared.EngineType,
 	db database.Database,
 ) ([]WorkflowLastRunResponse, error) {
-	// Get all workflow ids, schedules, and times last run of workflows run by the specified 
+	// Get all workflow ids, schedules, and times last run of workflows run by the specified
 	// `engine`.
 	query := `
 		SELECT 
@@ -86,7 +86,7 @@ func (r *sqliteReaderImpl) GetLoadOperatorSpecByOrganization(
 	organizationId string,
 	db database.Database,
 ) ([]LoadOperatorSpecResponse, error) {
-	// Get the artifact id, artifact name, operator id, workflow name, workflow id, 
+	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
 	// and operator spec of all load operators (to_id) and the artifact(s) going to
 	// that operator (from_id; the table/object being written/saved) in the workflows
 	// owned by the specified organization.
@@ -114,10 +114,10 @@ func (r *sqliteReaderImpl) GetCheckResultsByArtifactIds(
 	if len(artifactIds) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
 	}
-	
+
 	// Get all unique combinations of artifact id, operator name,
 	// operator status, operator execution state, and workflow dag
-	// result id of all check operators of artifacts in the 
+	// result id of all check operators of artifacts in the
 	// `artifactIds` list (`from_id` in `artifactIds`).
 	query := fmt.Sprintf(
 		`SELECT DISTINCT

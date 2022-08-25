@@ -35,7 +35,7 @@ func (r *sqliteReaderImpl) GetKOffsetWorkflowDagResultsByWorkflowId(
 ) ([]WorkflowDagResult, error) {
 	// Get all workflow DAGs for the workflow specified by `workflowId` except for the k latest.
 	// https://itecnote.com/tecnote/sqlite-limit-offset-query/
-	// `LIMIT <skip>, <count>` is equivalent to `LIMIT <count> OFFSET <skip>` 
+	// `LIMIT <skip>, <count>` is equivalent to `LIMIT <count> OFFSET <skip>`
 	query := fmt.Sprintf(`
 		SELECT %s FROM workflow_dag_result, workflow_dag 
 		WHERE workflow_dag_result.workflow_dag_id = workflow_dag.id AND workflow_dag.workflow_id = $1
