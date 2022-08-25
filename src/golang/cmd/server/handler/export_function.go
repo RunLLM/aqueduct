@@ -35,8 +35,7 @@ type exportFunctionResponse struct {
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response:
-//	Body: a zip file for the function content.
+// Response: a zip file for the function content.
 type ExportFunctionHandler struct {
 	GetHandler
 
