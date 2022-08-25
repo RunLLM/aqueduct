@@ -206,7 +206,7 @@ const IntegrationDialog: React.FC<Props> = ({
           editMode={editMode}
         />
       );
-      break;  
+      break;
     case 'Airflow':
       serviceDialog = (
         <AirflowDialog

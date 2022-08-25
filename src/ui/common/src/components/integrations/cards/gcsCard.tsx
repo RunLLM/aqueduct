@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { Integration, GCSConfig } from '../../../utils/integrations';
+import { GCSConfig, Integration } from '../../../utils/integrations';
 
 type Props = {
   integration: Integration;

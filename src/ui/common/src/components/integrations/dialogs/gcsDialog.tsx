@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import React, { useState } from 'react';
 
-import { GCSConfig, FileData } from '../../../utils/integrations';
+import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -19,11 +19,11 @@ type Props = {
   editMode: boolean;
 };
 
-export const GCSDialog: React.FC<Props> = ({ 
+export const GCSDialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,
- }) => {
+}) => {
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
