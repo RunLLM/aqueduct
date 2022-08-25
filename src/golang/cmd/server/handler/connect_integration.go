@@ -298,6 +298,11 @@ func validateAirflowConfig(
 
 // checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
 func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
+	if svc != integration.S3 && svc != integration.GCS {
+		// Only S3 and GCS can be used for storage
+		return false, nil
+	}
+
 	data, err := conf.Marshal()
 	if err != nil {
 		return false, err
@@ -348,10 +353,9 @@ func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 			return err
 		}
 
-		storageConfig, err = convertGCSIntegrationtoStorageConfig(&c)
-		if err != nil {
-			return err
-		}
+		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
+	default:
+		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
 
 	// Change global storage config
@@ -433,14 +437,14 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	return storageConfig, nil
 }
 
-func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) (*shared.StorageConfig, error) {
+func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) *shared.StorageConfig {
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
 			Bucket:          c.Bucket,
 			CredentialsPath: c.CredentialsPath,
 		},
-	}, nil
+	}
 }
 
 func validateKubernetesConfig(
