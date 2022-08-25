@@ -61,7 +61,7 @@ def lint_golang(cwd):
 
 
 def lint_ui(cwd):
-    execute_command(["npm", "install"], join(cwd, "src/ui/common"))
+    execute_command(["npm", "install", "--force"], join(cwd, "src/ui/common"))
     execute_command(["npm", "run", "lint", "--", "--fix"], join(cwd, "src/ui/common"))
     execute_command(["npm", "link"], join(cwd, "src/ui/common"))
     execute_command(["npm", "link", "@aqueducthq/common"], join(cwd, "src/ui/app"))
