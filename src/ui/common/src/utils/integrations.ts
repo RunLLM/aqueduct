@@ -105,7 +105,7 @@ export type S3Config = {
 
 export type GCSConfig = {
   bucket: string;
-  credentials_path: string;
+  service_account_credentials?: string;
   use_as_storage: string;
 };
 

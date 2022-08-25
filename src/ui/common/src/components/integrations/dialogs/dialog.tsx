@@ -25,6 +25,7 @@ import {
   aqueductDemoName,
   BigQueryConfig,
   formatService,
+  GCSConfig,
   Integration,
   IntegrationConfig,
   KubernetesConfig,
@@ -39,7 +40,6 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
-import { CSVDialog } from './csvDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
@@ -199,7 +199,13 @@ const IntegrationDialog: React.FC<Props> = ({
       );
       break;
     case 'GCS':
-      serviceDialog = <GCSDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <GCSDialog
+          onUpdateField={setConfigField}
+          value={config as GCSConfig}
+          editMode={editMode}
+        />
+      );
       break;  
     case 'Airflow':
       serviceDialog = (
