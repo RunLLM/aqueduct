@@ -20,7 +20,9 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response: serialized `listIntegrationsResponse` containing all integrations accessible by the user.
+// Response:
+// 	Body:
+// 		serialized `listIntegrationsResponse` containing all integrations accessible by the user.
 type ListIntegrationsHandler struct {
 	GetHandler
 
