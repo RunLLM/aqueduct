@@ -25,6 +25,7 @@ import {
   aqueductDemoName,
   BigQueryConfig,
   formatService,
+  GCSConfig,
   Integration,
   IntegrationConfig,
   KubernetesConfig,
@@ -39,6 +40,7 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
+import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
@@ -192,6 +194,15 @@ const IntegrationDialog: React.FC<Props> = ({
         <S3Dialog
           onUpdateField={setConfigField}
           value={config as S3Config}
+          editMode={editMode}
+        />
+      );
+      break;
+    case 'GCS':
+      serviceDialog = (
+        <GCSDialog
+          onUpdateField={setConfigField}
+          value={config as GCSConfig}
           editMode={editMode}
         />
       );
