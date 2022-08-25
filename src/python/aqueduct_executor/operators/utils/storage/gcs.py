@@ -21,7 +21,7 @@ class GCSStorage(Storage):
             temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
             with open(temp_path, "w") as f:
                 f.write(os.environ[_CREDENTIALS_ENV_VAR])
-            
+
             config.credentials_path = temp_path
             self._temp_credentials_path = temp_path
 

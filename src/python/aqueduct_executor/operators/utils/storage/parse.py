@@ -1,7 +1,7 @@
 from aqueduct_executor.operators.utils.storage.config import StorageConfig
 from aqueduct_executor.operators.utils.storage.file import FileStorage
-from aqueduct_executor.operators.utils.storage.s3 import S3Storage
 from aqueduct_executor.operators.utils.storage.gcs import GCSStorage
+from aqueduct_executor.operators.utils.storage.s3 import S3Storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
 
