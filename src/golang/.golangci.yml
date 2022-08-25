@@ -23,7 +23,6 @@ linters:
     - exhaustive
     - makezero
     - nilerr
-    - gci
     - goconst
     - gofmt # has autofixer.
     - gofumpt # has autofixer.
