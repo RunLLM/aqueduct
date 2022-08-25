@@ -223,6 +223,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+	}
 
 	engineJobManager, err := job.NewJobManager(engineConfig)
 	if err != nil {

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 class StorageType(str, Enum, metaclass=MetaEnum):
     S3 = "s3"
     File = "file"
+    GCS = "gcs"
 
 
 class FileStorageConfig(BaseModel):
@@ -21,7 +22,13 @@ class S3StorageConfig(BaseModel):
     credentials_profile: str
 
 
+class GCSStorageConfig(BaseModel):
+    bucket: str
+    service_account_credentials: str
+
+
 class StorageConfig(BaseModel):
     type: StorageType
     file_config: Optional[FileStorageConfig] = None
     s3_config: Optional[S3StorageConfig] = None
+    gcs_config: Optional[GCSStorageConfig] = None

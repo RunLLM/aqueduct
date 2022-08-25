@@ -52,6 +52,12 @@ class S3Config(models.BaseConfig):
     use_as_storage: str = ""
 
 
+class GCSConfig(models.BaseConfig):
+    bucket: str
+    service_account_credentials: str
+    use_as_storage: str = ""
+
+
 class SnowflakeConfig(models.BaseConfig):
     username: str
     password: str
@@ -80,6 +86,7 @@ class SqliteConfig(models.BaseConfig):
 
 Config = Union[
     BigQueryConfig,
+    GCSConfig,
     MySqlConfig,
     PostgresConfig,
     S3Config,

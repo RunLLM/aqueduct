@@ -103,6 +103,12 @@ export type S3Config = {
   use_as_storage: string;
 };
 
+export type GCSConfig = {
+  bucket: string;
+  service_account_credentials?: string;
+  use_as_storage: string;
+};
+
 export type AqueductDemoConfig = Record<string, never>;
 
 export type AirflowConfig = {
@@ -129,6 +135,7 @@ export type IntegrationConfig =
   | GoogleSheetsConfig
   | SalesforceConfig
   | S3Config
+  | GCSConfig
   | AqueductDemoConfig
   | AirflowConfig
   | KubernetesConfig;
@@ -142,6 +149,7 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'CSV'
+  | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
   | 'Kubernetes';
@@ -268,6 +276,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['S3']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
+    activated: true,
+    category: 'data',
+  },
+  ['GCS']: {
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-cloud-storage.png',
     activated: true,
     category: 'data',
   },

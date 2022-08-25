@@ -77,12 +77,19 @@ func generateJobManagerConfig(
 			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
 		}, nil
 	case shared.K8sEngineType:
-		if dbWorkflowDag.StorageConfig.Type != shared.S3StorageType {
-			return nil, errors.New("Must use S3 storage config for K8s engine.")
+		if dbWorkflowDag.StorageConfig.Type != shared.S3StorageType && dbWorkflowDag.StorageConfig.Type != shared.GCSStorageType {
+			return nil, errors.New("Must use S3 or GCS storage config for K8s engine.")
 		}
-		awsAccessKeyId, awsSecretAccessKey, err := extractAwsCredentials(dbWorkflowDag.StorageConfig.S3Config)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
+
+		var awsAccessKeyId, awsSecretAccessKey string
+		if dbWorkflowDag.StorageConfig.Type == shared.S3StorageType {
+			keyId, secretKey, err := extractAwsCredentials(dbWorkflowDag.StorageConfig.S3Config)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
+			}
+
+			awsAccessKeyId = keyId
+			awsSecretAccessKey = secretKey
 		}
 
 		k8sIntegrationId := dbWorkflowDag.EngineConfig.K8sConfig.IntegrationId

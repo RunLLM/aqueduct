@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 const (
@@ -74,7 +75,20 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
-	secretEnvVars := []string{k8s.AwsCredentialsSecretName}
+	secretEnvVars := []string{}
+
+	if spec.HasStorageConfig() {
+		// This job spec has a storage config that k8s needs access to
+		storageConfig, err := spec.GetStorageConfig()
+		if err != nil {
+			return err
+		}
+
+		if storageConfig.Type == shared.S3StorageType {
+			// k8s clusters access S3 via credentials passed as a secret
+			secretEnvVars = append(secretEnvVars, k8s.AwsCredentialsSecretName)
+		}
+	}
 
 	containerImage, err := mapJobTypeToDockerImage(spec)
 	if err != nil {
