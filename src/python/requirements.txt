@@ -1,5 +1,6 @@
 boto3
 cloudpickle
+google-cloud-storage
 numpy
 pandas
 pydantic

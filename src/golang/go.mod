@@ -3,6 +3,7 @@ module github.com/aqueducthq/aqueduct
 go 1.16
 
 require (
+	cloud.google.com/go/storage v1.25.0
 	github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0
 	github.com/aws/aws-sdk-go v1.40.33
 	github.com/dropbox/godropbox v0.0.0-20200228041828-52ad444d3502
@@ -22,8 +23,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	google.golang.org/grpc v1.36.1
+	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
+	google.golang.org/api v0.88.0
+	google.golang.org/grpc v1.48.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.4.0
