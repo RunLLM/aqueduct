@@ -199,6 +199,8 @@ const IntegrationDialog: React.FC<Props> = ({
       );
       break;
     case 'GCS':
+      const gcsConfig = config as GCSConfig;
+      gcsConfig.use_as_storage = 'true';
       serviceDialog = (
         <GCSDialog
           onUpdateField={setConfigField}
