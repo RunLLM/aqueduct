@@ -26,7 +26,7 @@ var ErrNoAccessPermission = errors.New("You don't have permission to access this
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response: none (we expect caller to determine success / failure) based on
+// Response: none, we expect caller to determine success / failure based on
 // http status in addition to error message.
 //
 // TestIntegrationHandler tries to connect to an existing integration.
