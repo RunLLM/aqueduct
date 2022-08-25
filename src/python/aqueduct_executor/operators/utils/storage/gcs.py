@@ -46,4 +46,4 @@ class GCSStorage(Storage):
         blob = bucket.blob(key)
 
         print(f"reading from gcs: {key}")
-        return blob.download_as_bytes()
+        return bytes(blob.download_as_bytes())
