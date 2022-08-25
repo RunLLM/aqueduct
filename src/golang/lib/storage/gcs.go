@@ -81,5 +81,5 @@ func (g *gcsStorage) Delete(ctx context.Context, key string) error {
 // newClient returns a GCS client for this storage object.
 // The caller must call `defer client.Close()` on the returned storage client.
 func (g *gcsStorage) newClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, option.WithCredentialsFile(g.gcsConfig.CredentialsPath))
+	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(g.gcsConfig.ServiceAccountCredentials)))
 }

@@ -33,8 +33,8 @@ type FileConfig struct {
 }
 
 type GCSConfig struct {
-	Bucket          string `yaml:"bucket"  json:"bucket"`
-	CredentialsPath string `yaml:"credentialsPath"  json:"credentials_path"`
+	Bucket                    string `yaml:"bucket"  json:"bucket"`
+	ServiceAccountCredentials string `yaml:"serviceAccountCredentials"  json:"service_account_credentials"`
 }
 
 func (s *StorageConfig) Scan(value interface{}) error {
