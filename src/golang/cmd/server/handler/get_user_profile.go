@@ -17,8 +17,8 @@ import (
 //		`api-key`: user's API Key
 //
 // Response:
-// 	Body:
-// 		serialized `User` object.
+//	Body:
+//		serialized `User` object.
 type GetUserProfileHandler struct {
 	GetHandler
 }

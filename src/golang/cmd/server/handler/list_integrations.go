@@ -21,8 +21,8 @@ import (
 //		`api-key`: user's API Key
 //
 // Response:
-// 	Body:
-// 		serialized `listIntegrationsResponse` containing all integrations accessible by the user.
+//	Body:
+//		serialized `listIntegrationsResponse` containing all integrations accessible by the user.
 type ListIntegrationsHandler struct {
 	GetHandler
 
