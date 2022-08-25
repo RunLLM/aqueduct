@@ -16,7 +16,7 @@ class GCSStorage(Storage):
     _temp_credentials_path: str = ""
 
     def __init__(self, config: GCSStorageConfig):
-        if _CREDENTIALS_ENV_VAR in os.environ in os.environ:
+        if _CREDENTIALS_ENV_VAR in os.environ:
             # GCS credentials were provided via env variables instead of a filepath
             temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
             with open(temp_path, "w") as f:
