@@ -27,7 +27,6 @@ interface NotificationsPopoverProps {
 enum NotificationsTabs {
   All = 'All',
   Workflow = 'Workflow',
-  Team = 'Team',
 }
 
 export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
@@ -67,8 +66,6 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
           association === NotificationAssociation.Workflow ||
           association === NotificationAssociation.WorkflowDagResult
         );
-      } else if (activeTab === NotificationsTabs.Team) {
-        return association === NotificationAssociation.Organization;
       }
 
       return true;
@@ -100,12 +97,6 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
           key={NotificationsTabs.Workflow}
           label={NotificationsTabs.Workflow}
           value={NotificationsTabs.Workflow}
-          sx={{ '&:hover': { color: 'gray900' } }}
-        />
-        <Tab
-          key={NotificationsTabs.Team}
-          label={NotificationsTabs.Team}
-          value={NotificationsTabs.Team}
           sx={{ '&:hover': { color: 'gray900' } }}
         />
       </Tabs>
