@@ -1,7 +1,7 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
 import { FileData, GCSConfig } from '../../../utils/integrations';
@@ -100,8 +100,10 @@ export const GCSDialog: React.FC<Props> = ({
         }
       />
 
-      <Typography>We currently only support using Google Cloud Storage as the Aqueduct metadata storage.
-        Support for using it as a data integration will be added soon.
+      <Typography>
+        We currently only support using Google Cloud Storage as the Aqueduct
+        metadata storage. Support for using it as a data integration will be
+        added soon.
       </Typography>
     </Box>
   );
