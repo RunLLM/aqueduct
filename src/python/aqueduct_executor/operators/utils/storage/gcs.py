@@ -1,37 +1,22 @@
 import io
-import os
-import uuid
 from typing import Any
+import json
 
 from aqueduct_executor.operators.utils.storage.config import GCSStorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from google.cloud import storage
-
-_CREDENTIALS_ENV_VAR = "GCS_CREDENTIALS"
+from google.oauth2 import service_account
 
 
 class GCSStorage(Storage):
     _client: Any  # GCS client
     _config: GCSStorageConfig
-    _temp_credentials_path: str = ""
 
     def __init__(self, config: GCSStorageConfig):
-        if _CREDENTIALS_ENV_VAR in os.environ:
-            # GCS credentials were provided via env variables instead of a filepath
-            temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
-            with open(temp_path, "w") as f:
-                f.write(os.environ[_CREDENTIALS_ENV_VAR])
-
-            config.credentials_path = temp_path
-            self._temp_credentials_path = temp_path
-
-        self._client = storage.Client.from_service_account_json(config.credentials_path)
+        credentials_info = json.loads(config.service_account_credentials)
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        self._client = storage.Client(credentials=credentials)
         self._config = config
-
-    def __del__(self) -> None:
-        if self._temp_credentials_path:
-            # Try to clean up temp credentials file
-            os.remove(self._config.credentials_path)
 
     def put(self, key: str, value: bytes) -> None:
         bucket = self._client.bucket(self._config.bucket)

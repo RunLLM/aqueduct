@@ -24,7 +24,7 @@ class S3StorageConfig(BaseModel):
 
 class GCSStorageConfig(BaseModel):
     bucket: str
-    credentials_path: str
+    service_account_credentials: str
 
 
 class StorageConfig(BaseModel):

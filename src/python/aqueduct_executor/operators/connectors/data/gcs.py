@@ -1,12 +1,12 @@
-import os
-import uuid
 from typing import Any, List
+import json
 
 from aqueduct_executor.operators.connectors.data import connector
 from aqueduct_executor.operators.connectors.data.config import GCSConfig
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from google.cloud import storage
+from google.oauth2 import service_account
 
 _CREDENTIALS_ENV_VAR = "GCS_CREDENTIALS"
 
@@ -17,22 +17,10 @@ class GCSConnector(connector.DataConnector):
     _temp_credentials_path: str = ""
 
     def __init__(self, config: GCSConfig):
-        if _CREDENTIALS_ENV_VAR in os.environ:
-            # GCS credentials were provided via env variables instead of a filepath
-            temp_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
-            with open(temp_path, "w") as f:
-                f.write(os.environ[_CREDENTIALS_ENV_VAR])
-
-            config.credentials_path = temp_path
-            self._temp_credentials_path = temp_path
-
-        self._client = storage.Client.from_service_account_json(config.credentials_path)
+        credentials_info = json.loads(config.service_account_credentials)
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
+        self._client = storage.Client(credentials=credentials)
         self._config = config
-
-    def __del__(self) -> None:
-        if self._temp_credentials_path:
-            # Try to clean up temp credentials file
-            os.remove(self._config.credentials_path)
 
     def authenticate(self) -> None:
         self._client.list_buckets()

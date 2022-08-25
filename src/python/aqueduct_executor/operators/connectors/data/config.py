@@ -54,7 +54,7 @@ class S3Config(models.BaseConfig):
 
 class GCSConfig(models.BaseConfig):
     bucket: str
-    credentials_path: str
+    service_account_credentials: str
     use_as_storage: str = ""
 
 
