@@ -29,7 +29,7 @@ class GCSConnector(connector.DataConnector):
         self._client = storage.Client.from_service_account_json(config.credentials_path)
         self._config = config
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._temp_credentials_path:
             # Try to clean up temp credentials file
             os.remove(self._config.credentials_path)
@@ -49,5 +49,5 @@ class GCSConnector(connector.DataConnector):
     def delete(self, objects: Any) -> List[SavedObjectDelete]:
         raise Exception("Delete is not currently supported for GCS.")
 
-    def _delete_object(self, name, context) -> None:
+    def _delete_object(self, name: Any, context: Any) -> None:
         raise Exception("Delete helper is not implemented for GCS.")
