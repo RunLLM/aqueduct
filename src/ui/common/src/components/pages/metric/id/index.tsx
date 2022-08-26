@@ -1,6 +1,7 @@
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link, List, ListItem } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -9,7 +10,20 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, Link as RouterLink, useLocation } from 'react-router-dom';
+import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
+import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
+import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
+import { functionOperatorNodeIcon } from '../../../../components/workflows/nodes/FunctionOperatorNode';
+import { genericArtifactNodeIcon } from '../../../../components/workflows/nodes/GenericArtifactNode';
+import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
+import { jsonArtifactNodeIcon } from '../../../../components/workflows/nodes/JsonArtifactNode';
+import { metricOperatorNodeIcon } from '../../../../components/workflows/nodes/MetricOperatorNode';
+import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/NumericArtifactNode';
+import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
+import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
+import { NodeType } from '../../../../reducers/nodeSelection';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { OperatorResult } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -99,6 +113,70 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   //const parsedData = JSON.parse(metricResult.);
 
+  const metricInputs = [
+    {
+      name: 'bool_artifact',
+      nodeType: NodeType.BoolArtifact,
+      nodeIcon: boolArtifactNodeIcon,
+    },
+    {
+      name: 'checkOperator',
+      nodeType: NodeType.CheckOp,
+      nodeIcon: checkOperatorNodeIcon,
+    },
+    {
+      name: 'database_node',
+      nodeType: NodeType.LoadOp,
+      nodeIcon: databaseNodeIcon,
+    },
+    {
+      name: 'function_operator_node',
+      nodeType: NodeType.FunctionOp,
+      nodeIcon: functionOperatorNodeIcon,
+    },
+    {
+      name: 'generic_artifact_node',
+      nodeType: NodeType.GenericArtifact,
+      nodeIcon: genericArtifactNodeIcon,
+    },
+    {
+      name: 'image_artifact_node',
+      nodeType: NodeType.ImageArtifact,
+      nodeIcon: imageArtifactNodeIcon,
+    },
+    {
+      name: 'jsonArtifactNode',
+      nodeType: NodeType.JsonArtifact,
+      nodeIcon: jsonArtifactNodeIcon,
+    },
+    {
+      name: 'metric_operator_node',
+      nodeType: NodeType.MetricOp,
+      nodeIcon: metricOperatorNodeIcon
+    },
+    {
+      name: 'numeric_artifact_node',
+      nodeType: NodeType.NumericArtifact,
+      nodeIcon: numericArtifactNodeIcon,
+    },
+    {
+      name: 'string_artifact_node',
+      nodeType: NodeType.StringArtifact,
+      nodeIcon: stringArtifactNodeIcon,
+    },
+    {
+      name: 'table_artifact_node_icon',
+      nodeType: NodeType.TableArtifact,
+      nodeIcon: tableArtifactNodeIcon,
+    }
+  ];
+
+  const listStyle = {
+    width: '100%',
+    maxWidth: 360,
+    bgcolor: 'background.paper',
+  };
+
   return (
     <Layout user={user}>
       <Box width={'800px'}>
@@ -130,10 +208,29 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Typography>
-                    Nulla facilisi. Phasellus sollicitudin nulla et quam mattis
-                    feugiat. Aliquam eget maximus est, id dignissim quam.
-                  </Typography>
+                  <List sx={listStyle}>
+                    {
+                      metricInputs.map((metricInput) => {
+                        return (
+                          <ListItem divider>
+                            <Box display="flex">
+                              <Box sx={{ width: '16px', height: '16px', color: 'rgba(0,0,0,0.54)' }}>
+                                <FontAwesomeIcon icon={metricInput.nodeIcon} />
+                              </Box>
+                              <Link
+                                to={`${getPathPrefix()}/workflows`}
+                                component={RouterLink as any}
+                                sx={{ marginLeft: '16px' }}
+                                underline="none"
+                              >
+                                {metricInput.name}
+                              </Link>
+                            </Box>
+                          </ListItem>
+                        )
+                      })
+                    }
+                  </List>
                 </AccordionDetails>
               </Accordion>
             </Box>
@@ -187,7 +284,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             <Typography variant="h5" component="div" marginBottom="8px">
               Historical Outputs:
             </Typography>
-            <Box>
+            <Box display="flex" justifyContent="center">
               <Plot
                 data={[
                   {

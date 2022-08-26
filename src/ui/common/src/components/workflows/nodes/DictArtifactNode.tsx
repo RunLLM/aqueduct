@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const dictArtifactNodeIcon = faFileCode;
+
 const DictArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faFileCode}
+      icon={dictArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Dictionary"
