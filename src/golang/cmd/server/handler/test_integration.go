@@ -18,6 +18,17 @@ import (
 
 var ErrNoAccessPermission = errors.New("You don't have permission to access this integration.")
 
+// Route: /integration/{integrationId}/test
+// Method: POST
+// Params: integrationId
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
+// Response: none, we expect caller to determine success / failure based on
+// http status in addition to error message.
+//
 // TestIntegrationHandler tries to connect to an existing integration.
 type TestIntegrationHandler struct {
 	PostHandler

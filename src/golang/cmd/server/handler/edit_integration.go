@@ -25,7 +25,19 @@ var (
 	ErrEditIntegrationWithDemoName = errors.New("aqueduct_demo is reserved for demo integration. Please use another name.")
 )
 
-// ConnectIntegrationHandler connects a new integration for the organization.
+// Route: /integration/{integrationId}/edit
+// Method: POST
+// Params: integrationId
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//		`integration-name`: the updated name for the integration. Empty if no updates.
+//		`integration-config`: the json-serialized integration config.
+//							Could contain only updated fields. This field
+//							can be empty if there's no config updates.
+//
+// Response: none
 type EditIntegrationHandler struct {
 	PostHandler
 
