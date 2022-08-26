@@ -44,11 +44,30 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                 <TableCell
                   key={`table-header-col-${columnIndex}`}
                   align={'left'}
-                  style={{ minWidth: '80px' }}
+                  sx={{
+                    backgroundColor: 'blue.900',
+                    color: 'white',
+                    minWidth: '80px'
+                  }}
                 >
                   <Box flexDirection="column">
-                    <Typography variant="body1">{column.name}</Typography>
-                    <Typography variant="caption">{column.type}</Typography>
+                    <Typography variant="body1"
+                      sx={{
+                        textTransform: 'none',
+                        fontFamily: 'monospace',
+                        fontSize: '16px',
+                      }}>
+                      {column.name}
+                    </Typography>
+                    <Typography variant="caption"
+                      sx={{
+                        textTransform: 'none',
+                        fontFamily: 'monospace',
+                        fontSize: '12px',
+                      }}
+                    >
+                      {column.type}
+                    </Typography>
                   </Box>
                 </TableCell>
               ))}
