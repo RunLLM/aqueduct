@@ -112,12 +112,11 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		if err == database.ErrNoRows {
-			// OperatorResult was never created
-			// Use the WorkflowDagResult's status as this OperatorResult's status
-			response.Status = dbWorkflowDagResult.Status
+		if err != database.ErrNoRows {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
+		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status
+		response.Status = dbWorkflowDagResult.Status
 	} else {
 		response.Status = dbOperatorResult.Status
 	}
