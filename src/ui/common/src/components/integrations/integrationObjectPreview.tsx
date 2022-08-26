@@ -4,7 +4,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import React from 'react';
 
 import { ObjectState } from '../../reducers/integration';
-import { isFailed, isLoading, isSucceeded } from '../../utils/shared';
+import {
+  isFailed,
+  isInitial,
+  isLoading,
+  isSucceeded,
+} from '../../utils/shared';
 import DataTable from '../tables/DataTable';
 
 type Props = {
@@ -13,6 +18,10 @@ type Props = {
 };
 
 const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
+  if (isInitial(object.status)) {
+    return null;
+  }
+
   let content: React.ReactElement;
   if (isLoading(object.status)) {
     content = (

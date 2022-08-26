@@ -1,7 +1,8 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { IntegrationConfig, RedshiftConfig } from '../../../utils/integrations';
+import { RedshiftConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: RedshiftConfig = {
@@ -13,27 +14,16 @@ const Placeholders: RedshiftConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof RedshiftConfig, value: string) => void;
+  value?: RedshiftConfig;
+  editMode: boolean;
 };
 
-export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [host, setHost] = useState<string>(null);
-  const [port, setPort] = useState<string>(null);
-  const [database, setDatabase] = useState<string>(null);
-  const [username, setUsername] = useState<string>(null);
-  const [password, setPassword] = useState<string>(null);
-
-  useEffect(() => {
-    const config: RedshiftConfig = {
-      host: host,
-      port: port,
-      database: database,
-      username: username,
-      password: password,
-    };
-    setDialogConfig(config);
-  }, [host, port, database, username, password]);
-
+export const RedshiftDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -42,8 +32,11 @@ export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Host *"
         description="The public endpoint of the Redshift cluster."
         placeholder={Placeholders.host}
-        onChange={(event) => setHost(event.target.value)}
-        value={host}
+        onChange={(event) => onUpdateField('host', event.target.value)}
+        value={value?.host ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -52,8 +45,11 @@ export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Port *"
         description="The port number of the Redshift cluster."
         placeholder={Placeholders.port}
-        onChange={(event) => setPort(event.target.value)}
-        value={port}
+        onChange={(event) => onUpdateField('port', event.target.value)}
+        value={value?.port ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -62,8 +58,11 @@ export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Database *"
         description="The name of the specific database to connect to."
         placeholder={Placeholders.database}
-        onChange={(event) => setDatabase(event.target.value)}
-        value={database}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -72,8 +71,8 @@ export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Username *"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => setUsername(event.target.value)}
-        value={username}
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username ?? null}
       />
 
       <IntegrationTextInputField
@@ -83,8 +82,8 @@ export const RedshiftDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setPassword(event.target.value)}
-        value={password}
+        onChange={(event) => onUpdateField('password', event.target.value)}
+        value={value?.password ?? null}
       />
     </Box>
   );

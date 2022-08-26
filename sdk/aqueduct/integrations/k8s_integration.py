@@ -10,6 +10,6 @@ class K8sIntegration(Integration):
         self._metadata = metadata
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the Airflow integration."""
-        print("==================== Airflow Integration  =============================")
+        """Prints out a human-readable description of the K8s integration."""
+        print("==================== K8s Integration  =============================")
         self._metadata.describe()

@@ -33,6 +33,8 @@ const (
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
 
+var ErrNoIntegrationName = errors.New("Integration name is not provided")
+
 // ConnectIntegrationHandler connects a new integration for the organization.
 type ConnectIntegrationHandler struct {
 	PostHandler
@@ -72,9 +74,18 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	service, name, configMap, userOnly, err := request.ParseIntegrationConfigFromRequest(r)
+	service, userOnly, err := request.ParseIntegrationServiceFromRequest(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	if name == "" {
+		return nil, http.StatusBadRequest, ErrNoIntegrationName
 	}
 
 	if service == integration.Github || service == integration.GoogleSheets {
@@ -129,7 +140,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(args.Config); err != nil {
+		if err := setIntegrationAsStorage(args.Service, args.Config); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -182,7 +193,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	// Store config (including confidential information) as k8s secret
+	// Store config (including confidential information) in vault
 	if err := auth.WriteConfigToSecret(
 		ctx,
 		integrationObject.Id,
@@ -287,8 +298,8 @@ func validateAirflowConfig(
 
 // checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
 func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
-	if svc != integration.S3 {
-		// Only S3 integrations can be used for the storage layer
+	if svc != integration.S3 && svc != integration.GCS {
+		// Only S3 and GCS can be used for storage
 		return false, nil
 	}
 
@@ -297,30 +308,54 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 		return false, err
 	}
 
-	var c integration.S3Config
-	if err := json.Unmarshal(data, &c); err != nil {
-		return false, err
+	switch svc {
+	case integration.S3:
+		var c integration.S3Config
+		if err := json.Unmarshal(data, &c); err != nil {
+			return false, err
+		}
+		return bool(c.UseAsStorage), nil
+	case integration.GCS:
+		var c integration.GCSConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return false, err
+		}
+		return bool(c.UseAsStorage), nil
+	default:
+		return false, errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
-
-	return bool(c.UseAsStorage), nil
 }
 
 // setIntegrationAsStorage use the integration config `conf` and updates the global
 // storage config with it.
-func setIntegrationAsStorage(conf auth.Config) error {
+func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 	data, err := conf.Marshal()
 	if err != nil {
 		return err
 	}
 
-	var c integration.S3Config
-	if err := json.Unmarshal(data, &c); err != nil {
-		return err
-	}
+	var storageConfig *shared.StorageConfig
 
-	storageConfig, err := convertS3IntegrationtoStorageConfig(&c)
-	if err != nil {
-		return err
+	switch svc {
+	case integration.S3:
+		var c integration.S3Config
+		if err := json.Unmarshal(data, &c); err != nil {
+			return err
+		}
+
+		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
+		if err != nil {
+			return err
+		}
+	case integration.GCS:
+		var c integration.GCSConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return err
+		}
+
+		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
+	default:
+		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
 
 	// Change global storage config
@@ -400,6 +435,16 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	}
 
 	return storageConfig, nil
+}
+
+func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) *shared.StorageConfig {
+	return &shared.StorageConfig{
+		Type: shared.GCSStorageType,
+		GCSConfig: &shared.GCSConfig{
+			Bucket:                    c.Bucket,
+			ServiceAccountCredentials: c.ServiceAccountCredentials,
+		},
+	}
 }
 
 func validateKubernetesConfig(

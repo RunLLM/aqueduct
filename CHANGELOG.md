@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.0.12
+Released on August 25, 2022.
+
+### Key Features
+* Adds support for running workflows on Kubernetes. You can now register a Kubernetes integration
+    from the UI by providing the cluster's kubeconfig file and publish workflows
+    to run on Kubernetes by modifying the `config` argument in the SDK's `publish_flow` API. 
+* Enables using Google Cloud Storage (GCS) as Aqueduct's metadata store. You can register GCS as a storage
+    integration from the UI and store Aqueduct metadata in GCS.
+
+### Enhancements
+* Adds support for editing the authentication credentials of existing integrations from the UI.
+* Adds support for deleting integrations from the UI.
+* Adds support for deleting data created by Aqueduct when deleting a workflow; when deleting a workflow, 
+    you will now see an option to select the objects created by this workflow. 
+    
+### Bugfixes
+
+None! :tada:
+
 ## 0.0.11
 Released on August 23, 2022.
 

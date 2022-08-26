@@ -9,30 +9,36 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// ParseIntegrationConfigFromRequest parses the integration service, integration name, configuration,
-// and whether it is a user only integration from the request
-func ParseIntegrationConfigFromRequest(r *http.Request) (integration.Service, string, map[string]string, bool, error) {
+// ParseIntegrationServiceFromRequest parses the integration service, and whether the
+// service is user only.
+func ParseIntegrationServiceFromRequest(r *http.Request) (integration.Service, bool, error) {
 	serviceStr := r.Header.Get(routes.IntegrationServiceHeader)
 	service, err := integration.ParseService(serviceStr)
 	if err != nil {
-		return "", "", nil, false, err
+		return "", false, err
 	}
 
+	return service, isUserOnlyIntegration(service), nil
+}
+
+// ParseIntegrationConfigFromRequest parses the integration name and configuration,
+// from the request
+func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]string, error) {
 	configHeader := r.Header.Get(routes.IntegrationConfigHeader)
 	var configuration map[string]string
-	err = json.Unmarshal([]byte(configHeader), &configuration)
-	if err != nil {
-		return "", "", nil, false, errors.Newf("Unable to parse integration configuration: %v", err)
+	if len(configHeader) > 0 {
+		err := json.Unmarshal([]byte(configHeader), &configuration)
+		if err != nil {
+			return "", nil, errors.Wrap(err, "Unable to parse integration configuration: %v")
+		}
 	}
 
 	integrationName := r.Header.Get(routes.IntegrationNameHeader)
 	if integrationName == "" {
-		return "", "", nil, false, errors.New("Integration name was not provided.")
+		return "", nil, errors.New("Integration name was not provided.")
 	}
 
-	userOnly := isUserOnlyIntegration(service)
-
-	return service, integrationName, configuration, userOnly, nil
+	return integrationName, configuration, nil
 }
 
 // isUserOnlyIntegration returns whether the specified service is only accessible by the user.

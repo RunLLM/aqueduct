@@ -3,7 +3,7 @@ import UserProfile from './auth';
 
 const { apiAddress } = useAqueductConsts();
 
-const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'aqueduct_demo';
 
 export function isDemo(integration: Integration): boolean {
   return integration.name === aqueductDemoName;
@@ -103,6 +103,12 @@ export type S3Config = {
   use_as_storage: string;
 };
 
+export type GCSConfig = {
+  bucket: string;
+  service_account_credentials?: string;
+  use_as_storage: string;
+};
+
 export type AqueductDemoConfig = Record<string, never>;
 
 export type AirflowConfig = {
@@ -129,6 +135,7 @@ export type IntegrationConfig =
   | GoogleSheetsConfig
   | SalesforceConfig
   | S3Config
+  | GCSConfig
   | AqueductDemoConfig
   | AirflowConfig
   | KubernetesConfig;
@@ -142,6 +149,7 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'CSV'
+  | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
   | 'Kubernetes';
@@ -235,46 +243,6 @@ export async function fetchBranches(
   }
 }
 
-export async function connectIntegration(
-  user: UserProfile,
-  service: Service,
-  name: string,
-  config: IntegrationConfig
-): Promise<void> {
-  Object.keys(config).forEach((k) => {
-    if (config[k] === undefined) {
-      config[k] = '';
-    }
-  });
-
-  try {
-    const res = await fetch(`${apiAddress}/api/integration/connect`, {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-        'integration-name': name,
-        'integration-service': service,
-        'integration-config': JSON.stringify(config),
-      },
-    });
-
-    if (!res.ok) {
-      const message = await res.json();
-      throw new Error(message.error);
-    }
-  } catch (err) {
-    if (err instanceof TypeError) {
-      // This happens when we fail to fetch.
-      throw new Error(
-        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
-      );
-    } else {
-      // This should never happen.
-      throw err;
-    }
-  }
-}
-
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/440px-Postgresql_elephant.svg.png',
@@ -308,6 +276,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['S3']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
+    activated: true,
+    category: 'data',
+  },
+  ['GCS']: {
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-cloud-storage.png',
     activated: true,
     category: 'data',
   },

@@ -1,23 +1,26 @@
-import { Box } from '@mui/material';
+import { Checkbox, FormControlLabel } from '@mui/material';
+import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { BigQueryConfig, FileData } from '../../../utils/integrations';
+import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
-const Placeholders: BigQueryConfig = {
-  project_id: 'aqueduct_1234',
+const Placeholders: GCSConfig = {
+  bucket: 'aqueduct',
+  use_as_storage: '',
 };
 
 type Props = {
-  onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
-  value?: BigQueryConfig;
+  onUpdateField: (field: keyof GCSConfig, value: string) => void;
+  value?: GCSConfig;
   editMode: boolean;
 };
 
-export const BigQueryDialog: React.FC<Props> = ({
+export const GCSDialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,
@@ -42,11 +45,11 @@ export const BigQueryDialog: React.FC<Props> = ({
       <Link
         sx={{ fontSize: 'inherit' }}
         target="_blank"
-        href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
+        href="https://docs.aqueducthq.com/integrations/adding-an-integration/connecting-to-google-cloud-storage"
       >
         here
       </Link>
-      <> to get your service account key file.</>
+      <> to create a service account and get the service account key file.</>
     </>
   );
 
@@ -55,13 +58,13 @@ export const BigQueryDialog: React.FC<Props> = ({
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Project ID*"
-        description="The BigQuery project ID."
-        placeholder={Placeholders.project_id}
-        onChange={(event) => onUpdateField('project_id', event.target.value)}
-        value={value?.project_id ?? null}
-        disabled={editMode}
+        label="Bucket*"
+        description="The name of the GCS bucket."
+        placeholder={Placeholders.bucket}
+        onChange={(event) => onUpdateField('bucket', event.target.value)}
+        value={value?.bucket ?? null}
         warning={editMode ? undefined : readOnlyFieldWarning}
+        disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
@@ -80,6 +83,28 @@ export const BigQueryDialog: React.FC<Props> = ({
           setFile(null);
         }}
       />
+
+      <FormControlLabel
+        label="Use this integration for Aqueduct metadata storage."
+        control={
+          <Checkbox
+            checked={value?.use_as_storage === 'true'}
+            onChange={(event) =>
+              onUpdateField(
+                'use_as_storage',
+                event.target.checked ? 'true' : 'false'
+              )
+            }
+            disabled={true}
+          />
+        }
+      />
+
+      <Typography>
+        We currently only support using Google Cloud Storage as the Aqueduct
+        metadata storage. Support for using it as a data integration will be
+        added soon.
+      </Typography>
     </Box>
   );
 };

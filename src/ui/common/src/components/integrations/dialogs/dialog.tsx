@@ -5,32 +5,42 @@ import {
   Box,
   DialogActions,
   DialogContent,
-  Snackbar,
   Typography,
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
+import {
+  handleConnectToNewIntegration,
+  handleEditIntegration,
+} from '../../../reducers/integration';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
-import { AppDispatch } from '../../../stores/store';
+import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
-  addTable,
-  connectIntegration,
-  CSVConfig,
+  AirflowConfig,
+  aqueductDemoName,
+  BigQueryConfig,
   formatService,
+  GCSConfig,
+  Integration,
   IntegrationConfig,
+  KubernetesConfig,
+  MySqlConfig,
+  PostgresConfig,
+  RedshiftConfig,
   S3Config,
   Service,
+  SnowflakeConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
+import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { BigQueryDialog } from './bigqueryDialog';
-import { CSVDialog } from './csvDialog';
+import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
 import { MariaDbDialog } from './mariadbDialog';
@@ -40,147 +50,66 @@ import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 
-type AddTableDialogProps = {
-  user: UserProfile;
-  integrationId: string;
-  onCloseDialog: () => void;
-  onConnect: () => void;
-};
-
-export const AddTableDialog: React.FC<AddTableDialogProps> = ({
-  user,
-  integrationId,
-  onCloseDialog,
-  onConnect,
-}) => {
-  const [config, setConfig] = useState<CSVConfig>({
-    name: '',
-    csv: null,
-  });
-  const [disableConnect, setDisableConnect] = useState(true);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [errMsg, setErrMsg] = useState(null);
-
-  const handleSuccessToastClose = () => {
-    setShowSuccessToast(false);
-  };
-
-  useEffect(() => {
-    setDisableConnect(!isConfigComplete(config));
-  }, [config]);
-
-  const dialogHeader = (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-      }}
-    >
-      <Typography variant="h5">{'Upload CSV'}</Typography>
-      <img
-        height="45px"
-        src={
-          'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/csv-outline.png'
-        }
-      />
-    </Box>
-  );
-
-  const serviceDialog = (
-    <CSVDialog setDialogConfig={setConfig} setErrMsg={setErrMsg} />
-  );
-
-  const confirmConnect = () => {
-    setIsConnecting(true);
-    setErrMsg(null);
-    addTable(user, integrationId, config)
-      .then(() => {
-        setShowSuccessToast(true);
-        const successMessage =
-          'Successfully uploaded CSV file to the demo database!';
-        setSuccessMessage(successMessage);
-        onConnect();
-        setIsConnecting(false);
-      })
-      .catch((err) => {
-        const errorMessage = 'Unable to upload CSV file to the demo database: ';
-        setErrMsg(errorMessage + err.message);
-        setIsConnecting(false);
-      });
-  };
-
-  return (
-    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
-      <DialogTitle>{dialogHeader}</DialogTitle>
-      <DialogContent>
-        {serviceDialog}
-        {errMsg && <Alert severity="error">{errMsg}</Alert>}
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={showSuccessToast}
-          onClose={handleSuccessToastClose}
-          key={'integrations-dialog-success-snackbar'}
-          autoHideDuration={6000}
-        >
-          <Alert
-            onClose={handleSuccessToastClose}
-            severity="success"
-            sx={{ width: '100%' }}
-          >
-            {successMessage}
-          </Alert>
-        </Snackbar>
-      </DialogContent>
-      <DialogActions>
-        <Button autoFocus onClick={onCloseDialog}>
-          Cancel
-        </Button>
-        <LoadingButton
-          autoFocus
-          onClick={confirmConnect}
-          loading={isConnecting}
-          disabled={disableConnect}
-        >
-          Confirm
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-type IntegrationDialogProps = {
+type Props = {
   user: UserProfile;
   service: Service;
   onCloseDialog: () => void;
+  onSuccess: () => void;
+  integrationToEdit?: Integration;
 };
 
-export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
+const IntegrationDialog: React.FC<Props> = ({
   user,
   service,
   onCloseDialog,
+  onSuccess,
+  integrationToEdit = undefined,
 }) => {
+  const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
-  const [config, setConfig] = useState<IntegrationConfig>({});
-  const [disableConnect, setDisableConnect] = useState(true);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [config, setConfig] = useState<IntegrationConfig>(
+    editMode
+      ? { ...integrationToEdit.config } // make a copy to avoid accessing a state object
+      : {}
+  );
+  const [name, setName] = useState<string>(
+    editMode ? integrationToEdit.name : ''
+  );
 
-  const [name, setName] = useState('');
+  const connectNewStatus = useSelector(
+    (state: RootState) => state.integrationReducer.connectNewStatus
+  );
 
-  const handleSuccessToastClose = () => {
-    setShowSuccessToast(false);
-  };
+  const editStatus = useSelector(
+    (state: RootState) => state.integrationReducer.editStatus
+  );
+
+  const operators = useSelector(
+    (state: RootState) => state.integrationReducer.operators.operators
+  );
+
+  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
+
+  const connectStatus = editMode ? editStatus : connectNewStatus;
+  const disableConnect =
+    !editMode &&
+    (!isConfigComplete(config, service) ||
+      name === '' ||
+      name === aqueductDemoName);
+  const setConfigField = (field: string, value: string) =>
+    setConfig((config) => {
+      return { ...config, [field]: value };
+    });
 
   useEffect(() => {
-    setDisableConnect(
-      service !== 'Aqueduct Demo' && (!isConfigComplete(config) || name === '')
-    );
-  }, [config, name]);
+    if (isSucceeded(connectStatus)) {
+      dispatch(
+        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+      );
+      onSuccess();
+      onCloseDialog();
+    }
+  }, [connectStatus]);
 
   const dialogHeader = (
     <Box
@@ -191,7 +120,11 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         width: '100%',
       }}
     >
-      <Typography variant="h5">{'Connect to ' + service}</Typography>
+      <Typography variant="h5">
+        {!!integrationToEdit
+          ? `Edit ${integrationToEdit.name}`
+          : `Connecting to ${service}`}
+      </Typography>
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>
   );
@@ -200,62 +133,121 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
   switch (service) {
     case 'Postgres':
-      serviceDialog = <PostgresDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <PostgresDialog
+          onUpdateField={setConfigField}
+          value={config as PostgresConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'Snowflake':
-      serviceDialog = <SnowflakeDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <SnowflakeDialog
+          onUpdateField={setConfigField}
+          value={config as SnowflakeConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'Aqueduct Demo':
       serviceDialog = null;
       break;
     case 'MySQL':
-      serviceDialog = <MysqlDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <MysqlDialog
+          onUpdateField={setConfigField}
+          value={config as MySqlConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'Redshift':
-      serviceDialog = <RedshiftDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <RedshiftDialog
+          onUpdateField={setConfigField}
+          value={config as RedshiftConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'MariaDB':
-      serviceDialog = <MariaDbDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <MariaDbDialog
+          onUpdateField={setConfigField}
+          value={config as RedshiftConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'BigQuery':
-      serviceDialog = <BigQueryDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <BigQueryDialog
+          onUpdateField={setConfigField}
+          value={config as BigQueryConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'S3':
-      serviceDialog = <S3Dialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <S3Dialog
+          onUpdateField={setConfigField}
+          value={config as S3Config}
+          editMode={editMode}
+        />
+      );
+      break;
+    case 'GCS':
+      const gcsConfig = config as GCSConfig;
+      gcsConfig.use_as_storage = 'true';
+      serviceDialog = (
+        <GCSDialog
+          onUpdateField={setConfigField}
+          value={config as GCSConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'Airflow':
-      serviceDialog = <AirflowDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <AirflowDialog
+          onUpdateField={setConfigField}
+          value={config as AirflowConfig}
+          editMode={editMode}
+        />
+      );
       break;
     case 'Kubernetes':
-      serviceDialog = <KubernetesDialog setDialogConfig={setConfig} />;
+      serviceDialog = (
+        <KubernetesDialog
+          onUpdateField={setConfigField}
+          value={config as KubernetesConfig}
+        />
+      );
       break;
     default:
       return null;
   }
 
-  const confirmConnect = () => {
-    setIsConnecting(true);
-    setErrMsg(null);
-
-    connectIntegration(user, service, name, config)
-      .then(() => {
-        setShowSuccessToast(true);
-        setSuccessMessage('Successfully connected to ' + service + '!');
-        setIsConnecting(false);
-
-        // Load the list of integrations again.
-        // Force the load because we've added a new integration.
-        dispatch(
-          handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+  const onConfirmDialog = () => {
+    editMode
+      ? dispatch(
+          handleEditIntegration({
+            apiKey: user.apiKey,
+            integrationId: integrationToEdit.id,
+            name: name,
+            config: config,
+          })
+        )
+      : dispatch(
+          handleConnectToNewIntegration({
+            apiKey: user.apiKey,
+            service: service,
+            name: name,
+            config: config,
+          })
         );
-
-        onCloseDialog();
-        navigate('/integrations');
-      })
-      .catch((err) => {
-        setErrMsg(err.message);
-        setIsConnecting(false);
-      });
   };
 
   const nameInput = (
@@ -273,37 +265,30 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
     />
   );
 
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [errMsg, setErrMsg] = useState(null);
-
   return (
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <DialogTitle>{dialogHeader}</DialogTitle>
       <DialogContent>
+        {editMode && numWorkflows > 0 && (
+          <Alert sx={{ mb: 2 }} severity="info">
+            {`Changing this integration will automatically update ${numWorkflows} ${
+              numWorkflows === 1 ? 'workflow' : 'workflows'
+            }.`}
+          </Alert>
+        )}
         {nameInput}
         {serviceDialog}
 
-        {errMsg && (
+        {isFailed(connectStatus) && (
           <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Unable to connect to {service}</AlertTitle>
-            <pre>{errMsg}</pre>
+            <AlertTitle>
+              {editMode
+                ? `Failed to update ${integrationToEdit.name}`
+                : `Unable to connect to ${service}`}
+            </AlertTitle>
+            <pre>{connectStatus.err}</pre>
           </Alert>
         )}
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={showSuccessToast}
-          onClose={handleSuccessToastClose}
-          key={'integrations-dialog-success-snackbar'}
-          autoHideDuration={6000}
-        >
-          <Alert
-            onClose={handleSuccessToastClose}
-            severity="success"
-            sx={{ width: '100%' }}
-          >
-            {successMessage}
-          </Alert>
-        </Snackbar>
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={onCloseDialog}>
@@ -311,8 +296,8 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
         </Button>
         <LoadingButton
           autoFocus
-          onClick={confirmConnect}
-          loading={isConnecting}
+          onClick={onConfirmDialog}
+          loading={isLoading(connectStatus)}
           disabled={disableConnect}
         >
           Confirm
@@ -324,11 +309,20 @@ export const IntegrationDialog: React.FC<IntegrationDialogProps> = ({
 
 // Helper function to check if the Integration config is completely filled
 export function isConfigComplete(
-  config: IntegrationConfig | CSVConfig
+  config: IntegrationConfig,
+  service: Service
 ): boolean {
-  if (isS3ConfigComplete(config as S3Config)) {
-    return true;
-  }
+  switch (service) {
+    case 'S3':
+      return isS3ConfigComplete(config as S3Config);
 
-  return Object.values(config).every((x) => x === undefined || (x && x !== ''));
+    default:
+      // Make sure config is not empty and all fields are not empty as well.
+      return (
+        Object.values(config).length > 0 &&
+        Object.values(config).every((x) => !!x)
+      );
+  }
 }
+
+export default IntegrationDialog;

@@ -13,12 +13,11 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import UserProfile from '../../../utils/auth';
 import { addTable, CSVConfig } from '../../../utils/integrations';
 import { CSVDialog } from './csvDialog';
-import { isConfigComplete } from './dialog';
 
 type Props = {
   user: UserProfile;
@@ -37,7 +36,6 @@ const AddTableDialog: React.FC<Props> = ({
     name: '',
     csv: null,
   });
-  const [disableConnect, setDisableConnect] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -47,9 +45,7 @@ const AddTableDialog: React.FC<Props> = ({
     setShowSuccessToast(false);
   };
 
-  useEffect(() => {
-    setDisableConnect(!isConfigComplete(config));
-  }, [config]);
+  const disabled = !config.name || !config.csv;
 
   const dialogHeader = (
     <Box
@@ -123,7 +119,7 @@ const AddTableDialog: React.FC<Props> = ({
           autoFocus
           onClick={confirmConnect}
           loading={isConnecting}
-          disabled={disableConnect}
+          disabled={disabled}
         >
           Confirm
         </LoadingButton>
