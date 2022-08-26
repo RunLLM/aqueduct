@@ -43,12 +43,12 @@ class BoolArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self.set_content(content)
+        self._set_content(content)
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self.content() is None
+            assert self._get_content() is None
 
-        self.set_type(ArtifactType.BOOL)
+        self._set_type(ArtifactType.BOOL)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
         """Materializes a BoolArtifact into a boolean.
@@ -64,29 +64,29 @@ class BoolArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
-        if parameters is None and self.content() is not None:
-            return self.content()
+        if parameters is None and self._get_content() is not None:
+            return self._get_content()
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact.type() != ArtifactType.BOOL:
+        if previewed_artifact._get_type() != ArtifactType.BOOL:
             raise InvalidArtifactTypeException(
                 "Error: the computed result is expected to of type bool, found %s"
-                % previewed_artifact.type()
+                % previewed_artifact._get_type()
             )
 
-        assert isinstance(previewed_artifact.content(), bool) or isinstance(
-            previewed_artifact.content(), np.bool_
+        assert isinstance(previewed_artifact._get_content(), bool) or isinstance(
+            previewed_artifact._get_content(), np.bool_
         )
 
         if parameters:
-            return previewed_artifact.content()
+            return previewed_artifact._get_content()
         else:
             # We are materializing an artifact generated from lazy execution.
-            assert self.content() is None
-            self.set_content(previewed_artifact.content())
-            return self.content()
+            assert self._get_content() is None
+            self._set_content(previewed_artifact._get_content())
+            return self._get_content()
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""

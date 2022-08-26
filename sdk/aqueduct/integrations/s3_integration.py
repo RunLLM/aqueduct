@@ -136,10 +136,10 @@ class S3Integration(Integration):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact.type() != artifact_type:
+            if artifact._get_type() != artifact_type:
                 raise InvalidArtifactTypeException(
                     "The computed artifact is expected to be type %s, but has type %s"
-                    % (artifact_type, artifact.type())
+                    % (artifact_type, artifact._get_type())
                 )
 
             return artifact

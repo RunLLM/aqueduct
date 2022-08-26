@@ -91,12 +91,12 @@ class TableArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self.set_content(content)
+        self._set_content(content)
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self.content() is None
+            assert self._get_content() is None
 
-        self.set_type(ArtifactType.TABLE)
+        self._set_type(ArtifactType.TABLE)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -117,27 +117,27 @@ class TableArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
-        if parameters is None and self.content() is not None:
-            return self.content()
+        if parameters is None and self._get_content() is not None:
+            return self._get_content()
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact.type() != ArtifactType.TABLE:
+        if previewed_artifact._get_type() != ArtifactType.TABLE:
             raise InvalidArtifactTypeException(
                 "Error: the computed result is expected to of type table, found %s"
-                % previewed_artifact.type()
+                % previewed_artifact._get_type()
             )
 
-        assert isinstance(previewed_artifact.content(), pd.DataFrame)
+        assert isinstance(previewed_artifact._get_content(), pd.DataFrame)
 
         if parameters:
-            return previewed_artifact.content()
+            return previewed_artifact._get_content()
         else:
             # We are materializing an artifact generated from lazy execution.
-            assert self.content() is None
-            self.set_content(previewed_artifact.content())
-            return self.content()
+            assert self._get_content() is None
+            self._set_content(previewed_artifact._get_content())
+            return self._get_content()
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Returns a preview of the table artifact.
@@ -690,10 +690,10 @@ class TableArtifact(BaseArtifact):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact.type() != output_artifact_type_hint:
+            if artifact._get_type() != output_artifact_type_hint:
                 raise InvalidArtifactTypeException(
                     "The computed artifact is expected to be type %s, but has type %s"
-                    % (output_artifact_type_hint, artifact.type())
+                    % (output_artifact_type_hint, artifact._get_type())
                 )
 
             assert isinstance(artifact, numeric_artifact.NumericArtifact) or isinstance(

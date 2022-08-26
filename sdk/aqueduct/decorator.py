@@ -125,14 +125,14 @@ def wrap_spec(
         artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
         if (
             output_artifact_type_hint != ArtifactType.UNTYPED
-            and artifact.type() != output_artifact_type_hint
+            and artifact._get_type() != output_artifact_type_hint
         ):
             raise InvalidArtifactTypeException(
                 "The computed artifact is expected to be type %s, but has type %s"
-                % (output_artifact_type_hint, artifact.type())
+                % (output_artifact_type_hint, artifact._get_type())
             )
 
-        dag.must_get_artifact(output_artifact_id).type = artifact.type()
+        dag.must_get_artifact(output_artifact_id).type = artifact._get_type()
         return artifact
     else:
         # We are in lazy mode.

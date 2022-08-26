@@ -68,12 +68,12 @@ class NumericArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self.set_content(content)
+        self._set_content(content)
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self.content() is None
+            assert self._get_content() is None
 
-        self.set_type(ArtifactType.NUMERIC)
+        self._set_type(ArtifactType.NUMERIC)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
@@ -89,31 +89,31 @@ class NumericArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
-        if parameters is None and self.content() is not None:
-            return self.content()
+        if parameters is None and self._get_content() is not None:
+            return self._get_content()
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact.type() != ArtifactType.NUMERIC:
+        if previewed_artifact._get_type() != ArtifactType.NUMERIC:
             raise InvalidArtifactTypeException(
                 "Error: the computed result is expected to of type numeric, found %s"
-                % previewed_artifact.type()
+                % previewed_artifact._get_type()
             )
 
         assert (
-            isinstance(previewed_artifact.content(), int)
-            or isinstance(previewed_artifact.content(), float)
-            or isinstance(previewed_artifact.content(), np.number)
+            isinstance(previewed_artifact._get_content(), int)
+            or isinstance(previewed_artifact._get_content(), float)
+            or isinstance(previewed_artifact._get_content(), np.number)
         )
 
         if parameters:
-            return previewed_artifact.content()
+            return previewed_artifact._get_content()
         else:
             # We are materializing an artifact generated from lazy execution.
-            assert self.content() is None
-            self.set_content(previewed_artifact.content())
-            return self.content()
+            assert self._get_content() is None
+            self._set_content(previewed_artifact._get_content())
+            return self._get_content()
 
     def list_preset_checks(self) -> List[str]:
         """Returns a list of all preset checks available on the numeric artifact.
@@ -284,10 +284,10 @@ class NumericArtifact(BaseArtifact):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact.type() != ArtifactType.BOOL:
+            if artifact._get_type() != ArtifactType.BOOL:
                 raise InvalidArtifactTypeException(
                     "The computed artifact is expected to be type %s, but has type %s"
-                    % (ArtifactType.BOOL, artifact.type())
+                    % (ArtifactType.BOOL, artifact._get_type())
                 )
 
             assert isinstance(artifact, bool_artifact.BoolArtifact)

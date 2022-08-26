@@ -28,15 +28,15 @@ class GenericArtifact(BaseArtifact):
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self.set_type(artifact_type)
-        self.set_content(content)
+        self._set_type(artifact_type)
+        self._set_content(content)
 
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self.content() is None
+            assert self._get_content() is None
 
-        if self.content() is not None:
-            assert self.type() != ArtifactType.UNTYPED
+        if self._get_content() is not None:
+            assert self._get_type() != ArtifactType.UNTYPED
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
@@ -52,28 +52,31 @@ class GenericArtifact(BaseArtifact):
         """
         self._dag.must_get_artifact(self._artifact_id)
 
-        if parameters is None and self.content() is not None:
-            return self.content()
+        if parameters is None and self._get_content() is not None:
+            return self._get_content()
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if self.type() != ArtifactType.UNTYPED and previewed_artifact.type() != self.type():
+        if (
+            self._get_type() != ArtifactType.UNTYPED
+            and previewed_artifact._get_type() != self._get_type()
+        ):
             raise InvalidArtifactTypeException(
                 "The computed artifact is expected to be type %s, but has type %s"
-                % (self.type(), previewed_artifact.type())
+                % (self._get_type(), previewed_artifact._get_type())
             )
 
         if parameters:
-            return previewed_artifact.content()
+            return previewed_artifact._get_content()
         else:
             # We are materializing an artifact generated from lazy execution.
-            assert self.content() is None
-            self.set_content(previewed_artifact.content())
-            self.set_type(previewed_artifact.type())
-            return self.content()
+            assert self._get_content() is None
+            self._set_content(previewed_artifact._get_content())
+            self._set_type(previewed_artifact._get_type())
+            return self._get_content()
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""
         # TODO: make this more informative.
-        print("This is a %s artifact." % self.type())
+        print("This is a %s artifact." % self._get_type())

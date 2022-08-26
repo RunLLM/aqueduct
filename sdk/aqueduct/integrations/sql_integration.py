@@ -205,10 +205,10 @@ class RelationalDBIntegration(Integration):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
-            if artifact.type() != ArtifactType.TABLE:
+            if artifact._get_type() != ArtifactType.TABLE:
                 raise InvalidArtifactTypeException(
                     "The computed artifact is expected to be type %s, but has type %s"
-                    % (ArtifactType.TABLE, artifact.type())
+                    % (ArtifactType.TABLE, artifact._get_type())
                 )
 
             assert isinstance(artifact, TableArtifact)
