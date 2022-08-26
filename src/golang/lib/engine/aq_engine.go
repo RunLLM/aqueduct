@@ -200,6 +200,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	// Any errors after this point should be persisted to the WorkflowDagResult created above
 	defer func() {
+		if err != nil {
+			// Mark the workflow dag result as failed
+			status = shared.FailedExecutionStatus
+		}
+
 		workflow_utils.UpdateWorkflowDagResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
