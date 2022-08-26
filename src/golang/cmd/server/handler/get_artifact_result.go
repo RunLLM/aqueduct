@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -68,10 +69,11 @@ type getArtifactResultResponse struct {
 type GetArtifactResultHandler struct {
 	GetHandler
 
-	Database             database.Database
-	ArtifactReader       artifact.Reader
-	ArtifactResultReader artifact_result.Reader
-	WorkflowDagReader    workflow_dag.Reader
+	Database                database.Database
+	ArtifactReader          artifact.Reader
+	ArtifactResultReader    artifact_result.Reader
+	WorkflowDagReader       workflow_dag.Reader
+	WorkflowDagResultReader workflow_dag_result.Reader
 }
 
 func (*GetArtifactResultHandler) Name() string {
@@ -175,11 +177,21 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
+	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
+		ctx,
+		args.workflowDagResultId,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
+	}
+
 	dbArtifact, err := h.ArtifactReader.GetArtifact(ctx, args.artifactId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
+	execState := shared.ExecutionState{}
 	dbArtifactResult, err := h.ArtifactResultReader.GetArtifactResultByWorkflowDagResultIdAndArtifactId(
 		ctx,
 		args.workflowDagResultId,
@@ -187,12 +199,16 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
+		if err == database.ErrNoRows {
+			// ArtifactResult was never created
+			// Use the WorkflowDagResult's status as this ArtifactResult's status
+			execState.Status = dbWorkflowDagResult.Status
+		}
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
+	} else {
+		execState.Status = dbArtifactResult.Status
 	}
 
-	execState := shared.ExecutionState{
-		Status: dbArtifactResult.Status,
-	}
 	if !dbArtifactResult.ExecState.IsNull {
 		execState.FailureType = dbArtifactResult.ExecState.FailureType
 		execState.Error = dbArtifactResult.ExecState.Error

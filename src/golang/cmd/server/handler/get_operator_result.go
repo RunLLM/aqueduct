@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
@@ -41,9 +42,10 @@ type getOperatorResultArgs struct {
 type GetOperatorResultHandler struct {
 	GetHandler
 
-	Database             database.Database
-	OperatorReader       operator.Reader
-	OperatorResultReader operator_result.Reader
+	Database                database.Database
+	OperatorReader          operator.Reader
+	OperatorResultReader    operator_result.Reader
+	WorkflowDagResultReader workflow_dag_result.Reader
 }
 
 func (*GetOperatorResultHandler) Name() string {
@@ -93,6 +95,16 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	emptyResp := shared.ExecutionState{}
 
+	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
+		ctx,
+		args.workflowDagResultId,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
+	}
+
+	response := shared.ExecutionState{}
 	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
 		ctx,
 		args.workflowDagResultId,
@@ -100,14 +112,17 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
+		if err == database.ErrNoRows {
+			// OperatorResult was never created
+			// Use the WorkflowDagResult's status as this OperatorResult's status
+			response.Status = dbWorkflowDagResult.Status
+		}
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
+	} else {
+		response.Status = dbOperatorResult.Status
 	}
 
-	response := shared.ExecutionState{
-		Status: dbOperatorResult.Status,
-	}
-
-	if !dbOperatorResult.ExecState.IsNull {
+	if dbOperatorResult != nil && !dbOperatorResult.ExecState.IsNull {
 		response.FailureType = dbOperatorResult.ExecState.FailureType
 		response.Error = dbOperatorResult.ExecState.Error
 		response.UserLogs = dbOperatorResult.ExecState.UserLogs

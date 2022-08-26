@@ -53,10 +53,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagReader: s.WorkflowDagReader,
 		},
 		routes.GetArtifactResultRoute: &handler.GetArtifactResultHandler{
-			Database:             s.Database,
-			ArtifactReader:       s.ArtifactReader,
-			ArtifactResultReader: s.ArtifactResultReader,
-			WorkflowDagReader:    s.WorkflowDagReader,
+			Database:                s.Database,
+			ArtifactReader:          s.ArtifactReader,
+			ArtifactResultReader:    s.ArtifactResultReader,
+			WorkflowDagReader:       s.WorkflowDagReader,
+			WorkflowDagResultReader: s.WorkflowDagResultReader,
 		},
 		routes.GetArtifactVersionsRoute: &handler.GetArtifactVersionsHandler{
 			Database:     s.Database,
@@ -64,9 +65,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
-			Database:             s.Database,
-			OperatorReader:       s.OperatorReader,
-			OperatorResultReader: s.OperatorResultReader,
+			Database:                s.Database,
+			OperatorReader:          s.OperatorReader,
+			OperatorResultReader:    s.OperatorResultReader,
+			WorkflowDagResultReader: s.WorkflowDagResultReader,
 		},
 		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
