@@ -186,6 +186,37 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowDag.")
 	}
 
+	dbWorkflowDagResult, err := workflow_utils.CreateWorkflowDagResult(
+		ctx,
+		dbWorkflowDag.Id,
+		eng.WorkflowDagResultWriter,
+		eng.Database,
+	)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Error initializing workflowDagResult.")
+	}
+
+	status := shared.PendingExecutionStatus
+
+	// Any errors after this point should be persisted to the WorkflowDagResult created above
+	defer func() {
+		if err != nil {
+			// Mark the workflow dag result as failed
+			status = shared.FailedExecutionStatus
+		}
+
+		workflow_utils.UpdateWorkflowDagResultMetadata(
+			ctx,
+			dbWorkflowDagResult.Id,
+			status,
+			eng.WorkflowDagResultWriter,
+			eng.WorkflowReader,
+			eng.NotificationWriter,
+			eng.UserReader,
+			eng.Database,
+		)
+	}()
+
 	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
@@ -234,6 +265,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
+		dbWorkflowDagResult.Id,
 		dbWorkflowDag,
 		eng.WorkflowDagResultWriter,
 		eng.OperatorResultWriter,
@@ -264,26 +296,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
-		Status:              shared.PendingExecutionStatus,
 	}
 
-	// Make sure to persist the dag results on exit.
-	defer func() {
-		log.Info("workflowRunMetadata: ")
-		log.Info(wfRunMetadata)
-
-		err = dag.PersistResult(ctx, wfRunMetadata.Status)
-		if err != nil {
-			log.Errorf("Error when persisting dag results: %v", err)
-		}
-	}()
-
-	err = dag.InitializeResults(ctx)
+	err = dag.InitOpAndArtifactResults(ctx)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	wfRunMetadata.Status = shared.RunningExecutionStatus
+	status = shared.RunningExecutionStatus
 	err = eng.execute(
 		ctx,
 		dag,
@@ -292,10 +312,10 @@ func (eng *aqEngine) ExecuteWorkflow(
 		operator.Publish,
 	)
 	if err != nil {
-		wfRunMetadata.Status = shared.FailedExecutionStatus
+		status = shared.FailedExecutionStatus
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		wfRunMetadata.Status = shared.SucceededExecutionStatus
+		status = shared.SucceededExecutionStatus
 	}
 
 	return shared.SucceededExecutionStatus, nil
@@ -319,6 +339,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
+		uuid.Nil, /* workflowDagResultID */
 		dbWorkflowDag,
 		eng.WorkflowDagResultWriter,
 		eng.OperatorResultWriter,
