@@ -2,18 +2,14 @@ import { faBoxArchive, faInbox } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { List, Popover, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useState } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { handleArchiveAllNotifications } from '../../reducers/notifications';
 import { AppDispatch, RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
-import {
-  NotificationAssociation,
-  NotificationLogLevel,
-} from '../../utils/notifications';
+import { NotificationLogLevel } from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
-import { Tab, Tabs } from '../primitives/Tabs.styles';
 import NotificationListItem from './NotificationListItem';
 
 interface NotificationsPopoverProps {
@@ -22,11 +18,6 @@ interface NotificationsPopoverProps {
   anchorEl: Element | null;
   handleClose: () => void;
   open: boolean;
-}
-
-enum NotificationsTabs {
-  All = 'All',
-  Workflow = 'Workflow',
 }
 
 export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
@@ -40,13 +31,7 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
   const notificationsState = useSelector(
     (state: RootState) => state.notificationsReducer
   );
-  const [activeTab, setActiveTab] = useState(NotificationsTabs.All);
   const notifications: Notification[] = notificationsState.notifications;
-
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: string) => {
-    event.preventDefault();
-    setActiveTab(NotificationsTabs[newValue]);
-  };
 
   const handleArchiveAll = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -55,20 +40,7 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
 
   const filteredNotifications: Notification[] = notifications
     .filter((notification: Notification) => {
-      if (notification.level === NotificationLogLevel.Success) {
-        return false;
-      }
-      const association = notification.association.object;
-      if (activeTab === NotificationsTabs.All) {
-        return true;
-      } else if (activeTab === NotificationsTabs.Workflow) {
-        return (
-          association === NotificationAssociation.Workflow ||
-          association === NotificationAssociation.WorkflowDagResult
-        );
-      }
-
-      return true;
+      return notification.level !== NotificationLogLevel.Success;
     })
     .sort((a: Notification, b: Notification) => {
       // Sort notifications in reverse chronological order so that we render most recent notifications first.
@@ -86,21 +58,6 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         horizontal: 'right',
       }}
     >
-      <Tabs value={activeTab} onChange={handleChangeTab}>
-        <Tab
-          key={NotificationsTabs.All}
-          label={NotificationsTabs.All}
-          value={NotificationsTabs.All}
-          sx={{ '&:hover': { color: 'gray900' } }}
-        />
-        <Tab
-          key={NotificationsTabs.Workflow}
-          label={NotificationsTabs.Workflow}
-          value={NotificationsTabs.Workflow}
-          sx={{ '&:hover': { color: 'gray900' } }}
-        />
-      </Tabs>
-
       <Box role="tabpanel" sx={{ minHeight: '400px' }}>
         {filteredNotifications.length > 0 ? (
           <List>
