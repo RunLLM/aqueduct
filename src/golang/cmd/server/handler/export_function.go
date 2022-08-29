@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
@@ -15,6 +17,14 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+)
+
+const (
+	// Names of the files inside a zipped Function
+	sourceFile      = "source.py"
+	modelFile       = "model.py"
+	modelPickleFile = "model.pkl"
 )
 
 type exportFunctionArgs struct {
@@ -125,7 +135,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get function from storage")
 	}
 
-	sourceCode, err := extractUserReadableCode(program)
+	_, err = extractUserReadableCode(program)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
 	}
@@ -141,6 +151,71 @@ func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp 
 	response.SendSmallFileResponse(w, resp.fileName, resp.program)
 }
 
+// extractUserReadableCode takes the zipped function code and only returns a zipped file
+// containing the human-readable parts, i.e. source.py, requirements.txt, and python_version.txt
+// If no source code (i.e. source.py) is found, it simply returns the original zipped file.
 func extractUserReadableCode(data []byte) ([]byte, error) {
+	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, err
+	}
 
+	// Check if there is a source.py file, since older SDK clients did not generate this file
+	hasSourceFile := false
+	for _, zipFile := range zipReader.File {
+		if zipFile.Name == sourceFile {
+			hasSourceFile = true
+			break
+		}
+	}
+
+	if !hasSourceFile {
+		// There is no source.py file so we just return the original zipped file without human readable code
+		return data, nil
+	}
+
+	buf := new(bytes.Buffer) // This is where the new zipped file is written to
+	zipWriter := zip.NewWriter(buf)
+
+	for _, zipFile := range zipReader.File {
+		logrus.Warnf("File Name: %v", zipFile.Name)
+		if zipFile.Name == modelFile || zipFile.Name == modelPickleFile {
+			// These files are not human readable so we skip them
+			continue
+		}
+
+		if err := writeZipFile(zipWriter, zipFile); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// writeZipFile writes the contents of `zf` to `w`
+func writeZipFile(w *zip.Writer, zf *zip.File) error {
+	f, err := zf.Open()
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Read content of `zf`
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	newZipFile, err := w.Create(zf.Name)
+	if err != nil {
+		return err
+	}
+
+	// Copy `content` into `newZipFile`
+	_, err = newZipFile.Write(content)
+	return err
 }
