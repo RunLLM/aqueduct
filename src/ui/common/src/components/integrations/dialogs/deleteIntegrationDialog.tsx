@@ -13,6 +13,7 @@ import {
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
+
 type Props = {
   user: UserProfile;
   integrationId: string;
@@ -59,52 +60,76 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     );
   };
 
-  return (
-    <>
+  const operatorsState = useSelector((state: RootState) => {
+    return state.integrationReducer.operators;
+  });
+  
+  if (
+    isSucceeded(operatorsState.status) &&
+    operatorsState.operators.length === 0
+  ) {
+    return (
+      <>
+        <Dialog
+          open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
+          onClose={onCloseDialog}
+          maxWidth="lg"
+        >
+          <DialogContent>
+            Are you sure you want to delete the integration?
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onCloseDialog}>Cancel</Button>
+            <LoadingButton
+              autoFocus
+              onClick={confirmConnect}
+              loading={isConnecting}
+            >
+              Confirm
+            </LoadingButton>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={isFailed(deleteIntegrationStatus)}
+          onClose={onCloseDialog}
+          maxWidth="lg"
+        >
+          {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
+            <Alert severity="error" sx={{ margin: 2 }}>
+              Integration deletion failed with error:
+              <br></br>
+              <pre>{deleteIntegrationStatus.err}</pre>
+            </Alert>
+          )}
+          <DialogActions>
+            <Button
+              onClick={() => {
+                onCloseDialog();
+                dispatch(resetDeletionStatus());
+              }}
+            >
+              Dismiss
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  } else {
+    return (
       <Dialog
         open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
         onClose={onCloseDialog}
         maxWidth="lg"
       >
         <DialogContent>
-          Are you sure you want to delete the integration?
+          We cannot delete this integration because it is currently being used.
         </DialogContent>
         <DialogActions>
-          <Button onClick={onCloseDialog}>Cancel</Button>
-          <LoadingButton
-            autoFocus
-            onClick={confirmConnect}
-            loading={isConnecting}
-          >
-            Confirm
-          </LoadingButton>
+          <Button onClick={onCloseDialog}>Dismiss</Button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        open={isFailed(deleteIntegrationStatus)}
-        onClose={onCloseDialog}
-        maxWidth="lg"
-      >
-        {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
-          <Alert severity="error" sx={{ margin: 2 }}>
-            Integration deletion failed with error:
-            <br></br>
-            <pre>{deleteIntegrationStatus.err}</pre>
-          </Alert>
-        )}
-        <DialogActions>
-          <Button
-            onClick={() => {
-              onCloseDialog();
-              dispatch(resetDeletionStatus());
-            }}
-          >
-            Dismiss
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+      );
+  }
 };
 
 export default DeleteIntegrationDialog;

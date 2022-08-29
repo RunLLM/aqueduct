@@ -10,11 +10,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-
-import { RootState } from '../../stores/store';
 import { Integration, isDemo } from '../../utils/integrations';
-import { LoadingStatusEnum } from '../../utils/shared';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
@@ -37,16 +33,6 @@ const IntegrationOptions: React.FC<Props> = ({
   const onMenuClose = () => {
     setAnchorEl(null);
   };
-  const operatorsState = useSelector((state: RootState) => {
-    return state.integrationReducer.operators;
-  });
-  let inUse = true;
-  if (
-    operatorsState.status.loading === LoadingStatusEnum.Succeeded &&
-    operatorsState.operators.length === 0
-  ) {
-    inUse = false;
-  }
   return (
     <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
       {isDemo(integration) && (
@@ -117,7 +103,6 @@ const IntegrationOptions: React.FC<Props> = ({
               setAnchorEl(null);
               onDeleteIntegration();
             }}
-            disabled={inUse}
           >
             <FontAwesomeIcon color="gray.800" icon={faTrash} />
             <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
