@@ -120,6 +120,8 @@ func ValidateNodeOwnership(
 	nodeId uuid.UUID,
 	db database.Database,
 ) (bool, error) {
+	// Get the count of rows where the nodeId has an edge (is the `from_id` or `to_id`)
+	// in a workflow DAG belonging to a workflow owned by the the user's organization.
 	query := `
 		SELECT COUNT(*) AS count 
 		FROM workflow_dag_edge, workflow_dag, workflow, app_user 
