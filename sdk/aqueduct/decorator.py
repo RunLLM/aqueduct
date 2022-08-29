@@ -271,7 +271,7 @@ def op(
 
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *input_artifacts)
 
-            zip_file = serialize_function(func, file_dependencies, requirements)
+            zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
@@ -383,7 +383,7 @@ def metric(
 
             _type_check_decorated_function_arguments(OperatorType.METRIC, *input_artifacts)
 
-            zip_file = serialize_function(func, file_dependencies, requirements)
+            zip_file = serialize_function(func, name, file_dependencies, requirements)
 
             # TODO(ENG-735): Support granularity=FunctionGranularity.TABLE & granularity=FunctionGranularity.ROW
             function_spec = FunctionSpec(
@@ -518,7 +518,7 @@ def check(
 
             _type_check_decorated_function_arguments(OperatorType.CHECK, *input_artifacts)
 
-            zip_file = serialize_function(func, file_dependencies, requirements)
+            zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,

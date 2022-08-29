@@ -13,7 +13,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 import cloudpickle as pickle
 import multipart
 import numpy as np
-import pandas as pd
 import requests
 from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
@@ -110,11 +109,9 @@ def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
 
 MODEL_FILE_NAME = "model.py"
 MODEL_PICKLE_FILE_NAME = "model.pkl"
-FUNCTION_SOURCE_FILE_NAME = "source.py"
 PYTHON_VERSION_FILE_NAME = "python_version.txt"
 CONDA_VERSION_FILE_NAME = "conda_version.txt"
 RESERVED_FILE_NAMES = [
-    FUNCTION_SOURCE_FILE_NAME,
     MODEL_FILE_NAME,
     MODEL_PICKLE_FILE_NAME,
     PYTHON_VERSION_FILE_NAME,
@@ -160,6 +157,7 @@ def make_zip_dir() -> str:
 
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
+    op_name: str,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
 ) -> bytes:
@@ -169,6 +167,8 @@ def serialize_function(
     Arguments:
         func:
             The function to package
+        op_name:
+            The name of the function operator to package.    
         file_dependencies:
             A list of relative paths to files that the function needs to access.
         requirements:
@@ -200,7 +200,7 @@ def serialize_function(
             pickle.dump(func, f)
 
         # Write function source code to file
-        with open(os.path.join(dir_path, "source.py"), "w") as f:
+        with open(os.path.join(dir_path, op_name), "w") as f:
             source = inspect.getsource(func)
             print(source)
             f.write(source)

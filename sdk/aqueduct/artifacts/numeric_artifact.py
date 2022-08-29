@@ -248,7 +248,7 @@ class NumericArtifact(BaseArtifact):
         severity: CheckSeverity = CheckSeverity.WARNING,
         execution_mode: ExecutionMode = ExecutionMode.EAGER,
     ) -> bool_artifact.BoolArtifact:
-        zip_file = serialize_function(check_function)
+        zip_file = serialize_function(check_function, check_name)
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
             granularity=FunctionGranularity.TABLE,
