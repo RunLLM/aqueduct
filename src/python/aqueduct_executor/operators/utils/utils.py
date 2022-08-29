@@ -12,6 +12,7 @@ from aqueduct_executor.operators.utils.enums import (
     SerializationType,
     artifact_to_serialization,
 )
+from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
@@ -34,34 +35,32 @@ _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
 _METADATA_SERIALIZATION_TYPE_KEY = "serialization_type"
 
 
-def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
-    input_bytes = storage.get(path)
+def _read_csv(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
 
 
-def _read_table_input(storage: Storage, path: str) -> pd.DataFrame:
-    input_bytes = storage.get(path)
+def _read_table_input(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(input_bytes), orient="table")
 
 
-def _read_json_input(storage: Storage, path: str) -> Any:
-    return json.loads(storage.get(path).decode(_DEFAULT_ENCODING))
+def _read_json_input(input_bytes: bytes) -> Any:
+    return json.loads(input_bytes.decode(_DEFAULT_ENCODING))
 
 
-def _read_pickle_input(storage: Storage, path: str) -> Any:
-    return pickle.loads(storage.get(path))
+def _read_pickle_input(input_bytes: bytes) -> Any:
+    return pickle.loads(input_bytes)
 
 
-def _read_image_input(storage: Storage, path: str) -> Image.Image:
-    return Image.open(io.BytesIO(storage.get(path)))
+def _read_image_input(input_bytes: bytes) -> Image.Image:
+    return Image.open(io.BytesIO(input_bytes))
 
 
-def _read_string_input(storage: Storage, path: str) -> str:
-    return storage.get(path).decode(_DEFAULT_ENCODING)
+def _read_string_input(input_bytes: bytes) -> str:
+    return input_bytes.decode(_DEFAULT_ENCODING)
 
 
-def _read_bytes_input(storage: Storage, path: str) -> bytes:
-    return storage.get(path)
+def _read_bytes_input(input_bytes: bytes) -> bytes:
+    return input_bytes
 
 
 _deserialization_function_mapping = {
@@ -92,9 +91,13 @@ def read_artifacts(
     input_types: List[ArtifactType] = []
 
     for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
-        # TODO: wrap this in a try. Raise an exception if something went wrong.
-        input_content_bytes = storage.get(input_path)
-        input_metadata_bytes = storage.get(input_metadata_path)
+        try:
+            input_content_bytes = storage.get(input_path)
+            input_metadata_bytes = storage.get(input_metadata_path)
+        except Exception as e:
+            raise MissingInputPathsException(
+                "Unable to read inputs artifacts. Exception: %s" % str(e)
+            )
 
         artifact_metadata = json.loads(input_metadata_bytes.decode(_DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
@@ -104,8 +107,7 @@ def read_artifacts(
         if serialization_type not in _deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s" % serialization_type)
 
-        # TODO: feed the input_content_bytes in instead of input_path
-        inputs.append(_deserialization_function_mapping[serialization_type](storage, input_path))
+        inputs.append(_deserialization_function_mapping[serialization_type](input_content_bytes))
 
     return inputs, input_types
 
