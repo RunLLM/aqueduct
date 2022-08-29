@@ -22,7 +22,6 @@ import (
 
 const (
 	// Names of the files inside a zipped Function
-	sourceFile      = "source.py"
 	modelFile       = "model.py"
 	modelPickleFile = "model.pkl"
 )
@@ -152,8 +151,8 @@ func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp 
 }
 
 // extractUserReadableCode takes the zipped function code and only returns a zipped file
-// containing the human-readable parts, i.e. source.py, requirements.txt, and python_version.txt
-// If no source code (i.e. source.py) is found, it simply returns the original contents.
+// containing the human-readable parts, i.e. source code, requirements.txt, and python_version.txt
+// If no source code is found, it simply returns the original contents.
 // In all cases, it renames the top-level directory to `operatorName`.
 func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
@@ -161,11 +160,11 @@ func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 		return nil, err
 	}
 
-	// Check if there is a source.py file, since older SDK clients did not generate this file
+	// Check if there is a source file, since older SDK clients did not generate this file
 	hasSourceFile := false
 	for _, zipFile := range zipReader.File {
 		parts := strings.Split(zipFile.Name, "/")
-		if len(parts) == 2 && parts[1] == sourceFile {
+		if len(parts) == 2 && parts[1] == operatorName {
 			hasSourceFile = true
 			break
 		}
@@ -179,7 +178,7 @@ func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 		if hasSourceFile &&
 			len(parts) == 2 &&
 			(parts[1] == modelFile || parts[1] == modelPickleFile) {
-			// There is a source.py so we can skip the files that are not user-friendly to read
+			// There is a source file so we can skip the files that are not user-friendly to read
 			continue
 		}
 
