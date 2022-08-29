@@ -41,8 +41,8 @@ func (r *standardReaderImpl) GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperat
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
-	// Get all the unique `artifact_id`s with an outgoing edge to an operator with id `operatorIds`
-	// from workflow DAGs with ids in `workflowDagIds`
+	// Get all the unique `artifact_id`s with an outgoing edge to an operator specified by `operatorIds`
+	// from workflow DAGs specified by `workflowDagIds`.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT from_id AS artifact_id FROM workflow_dag_edge WHERE workflow_dag_id IN (%s) 
 		 AND to_id IN (%s);`,
