@@ -12,6 +12,15 @@ import (
 	"github.com/google/uuid"
 )
 
+// Route: /integrations
+// Method: GET
+// Params: None
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
+// Response: serialized `listIntegrationsResponse` containing all integrations accessible by the user.
 type ListIntegrationsHandler struct {
 	GetHandler
 

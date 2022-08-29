@@ -35,6 +35,18 @@ type SavedObjectResult struct {
 	Result shared.ExecutionState `json:"exec_state"`
 }
 
+// Route: /workflow/{workflowId}/delete
+// Method: POST
+// Params: workflowId
+// Request:
+//
+//	Headers:
+//		`api-key`: user's API Key
+//	Body:
+//		json-serialized `deleteWorkflowInput` object.
+//
+// Response: json-serialized `deleteWorkflowResponse` object.
+//
 // The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output objects in the user's data warehouse.
 type deleteWorkflowArgs struct {
@@ -45,11 +57,17 @@ type deleteWorkflowArgs struct {
 }
 
 type deleteWorkflowInput struct {
+	// This is a map from integration_id to list of object names.
 	ExternalDelete map[string][]string `json:"external_delete"`
-	Force          bool                `json:"force"`
+	// `Force` serve as a safe-guard for client to confirm the deletion.
+	// If `Force` is true, all objects specified in `ExternalDelete` field
+	// will be removed. Otherwise, we will not delete the objects.
+	Force bool `json:"force"`
 }
 
 type deleteWorkflowResponse struct {
+	// This is a map from integration_id to a list of `SavedObjectResult`
+	// implying if each object is successfully deleted.
 	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
 

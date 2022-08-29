@@ -1,3 +1,4 @@
+import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -5,59 +6,61 @@ import React, { useEffect, useState } from 'react';
 import { Tab, Tabs } from '../../../components/primitives/Tabs.styles';
 import {
   FileData,
-  IntegrationConfig,
   S3Config,
   S3CredentialType,
 } from '../../../utils/integrations';
 import { readCredentialsFile } from './bigqueryDialog';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
   type: S3CredentialType.AccessKey,
   bucket: 'aqueduct',
+  region: 'us-east-1',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
+  use_as_storage: '',
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof S3Config, value: string) => void;
+  value?: S3Config;
+  editMode: boolean;
 };
 
-export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [bucket, setBucket] = useState<string>(null);
-  const [accessKeyId, setAccessKeyId] = useState<string>(null);
-  const [secretAccessKey, setSecretAccessKey] = useState<string>(null);
-  const [configFilePath, setConfigFilePath] = useState<string>(null);
-  const [file, setFile] = useState<FileData>(null);
-  const [configFileProfile, setConfigFileProfile] = useState<string>(null);
-  const [s3Type, setS3Type] = useState<S3CredentialType>(
-    S3CredentialType.AccessKey
-  );
+export const S3Dialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
+  const [fileName, setFileName] = useState<string>(null);
+
+  const setFile = (fileData: FileData | null) => {
+    setFileName(fileData?.name ?? null);
+    onUpdateField('config_file_content', fileData?.data);
+  };
+
+  const fileData =
+    fileName && !!value?.config_file_content
+      ? {
+          name: fileName,
+          data: value.config_file_content,
+        }
+      : null;
 
   useEffect(() => {
-    const config: S3Config = {
-      type: s3Type,
-      bucket: bucket,
-      access_key_id: accessKeyId,
-      secret_access_key: secretAccessKey,
-      config_file_path: configFilePath,
-      config_file_content: file?.data ?? '',
-      config_file_profile: configFileProfile,
-    };
-    setDialogConfig(config);
-  }, [
-    bucket,
-    accessKeyId,
-    secretAccessKey,
-    configFilePath,
-    file,
-    configFileProfile,
-    s3Type,
-  ]);
+    if (!value?.type) {
+      onUpdateField('type', S3CredentialType.AccessKey);
+    }
+
+    if (!value?.use_as_storage) {
+      onUpdateField('use_as_storage', 'false');
+    }
+  }, []);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -65,9 +68,11 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
       required={true}
       label="AWS Profile*"
       description="The name of the profile specified in brackets in your credential file."
-      placeholder={Placeholders.secret_access_key}
-      onChange={(event) => setConfigFileProfile(event.target.value)}
-      value={secretAccessKey}
+      placeholder={Placeholders.config_file_profile}
+      onChange={(event) =>
+        onUpdateField('config_file_profile', event.target.value)
+      }
+      value={value?.config_file_profile ?? null}
     />
   );
 
@@ -82,8 +87,8 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
-        onChange={(event) => setAccessKeyId(event.target.value)}
-        value={accessKeyId}
+        onChange={(event) => onUpdateField('access_key_id', event.target.value)}
+        value={value?.access_key_id ?? null}
       />
 
       <IntegrationTextInputField
@@ -92,8 +97,10 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
-        onChange={(event) => setSecretAccessKey(event.target.value)}
-        value={secretAccessKey}
+        onChange={(event) =>
+          onUpdateField('secret_access_key', event.target.value)
+        }
+        value={value?.secret_access_key ?? null}
       />
     </Box>
   );
@@ -113,9 +120,11 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         required={true}
         label="AWS Credentials File Path*"
         description={'The absolute path to the credentials file'}
-        placeholder={Placeholders.access_key_id}
-        onChange={(event) => setConfigFilePath(event.target.value)}
-        value={accessKeyId}
+        placeholder={Placeholders.config_file_path}
+        onChange={(event) =>
+          onUpdateField('config_file_path', event.target.value)
+        }
+        value={value?.config_file_path ?? null}
       />
 
       {configProfileInput}
@@ -138,7 +147,7 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
-        file={file}
+        file={fileData}
         placeholder={''}
         onFiles={(files) => {
           const file = files[0];
@@ -162,12 +171,31 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Bucket*"
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
-        onChange={(event) => setBucket(event.target.value)}
-        value={bucket}
+        onChange={(event) => onUpdateField('bucket', event.target.value)}
+        value={value?.bucket ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Region*"
+        description="The region the S3 bucket belongs to."
+        placeholder={Placeholders.region}
+        onChange={(event) => onUpdateField('region', event.target.value)}
+        value={value?.region ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={s3Type} onChange={(_, value) => setS3Type(value)}>
+        <Tabs
+          value={value?.type}
+          onChange={(_, value) => onUpdateField('type', value)}
+        >
           <Tab value={S3CredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
             value={S3CredentialType.ConfigFilePath}
@@ -179,9 +207,25 @@ export const S3Dialog: React.FC<Props> = ({ setDialogConfig }) => {
           />
         </Tabs>
       </Box>
-      {s3Type === S3CredentialType.AccessKey && accessKeyTab}
-      {s3Type === S3CredentialType.ConfigFilePath && configPathTab}
-      {s3Type === S3CredentialType.ConfigFileContent && configUploadTab}
+      {value?.type === S3CredentialType.AccessKey && accessKeyTab}
+      {value?.type === S3CredentialType.ConfigFilePath && configPathTab}
+      {value?.type === S3CredentialType.ConfigFileContent && configUploadTab}
+
+      <FormControlLabel
+        label="Use this integration for Aqueduct metadata storage."
+        control={
+          <Checkbox
+            checked={value?.use_as_storage === 'true'}
+            onChange={(event) =>
+              onUpdateField(
+                'use_as_storage',
+                event.target.checked ? 'true' : 'false'
+              )
+            }
+            disabled={editMode}
+          />
+        }
+      />
     </Box>
   );
 };

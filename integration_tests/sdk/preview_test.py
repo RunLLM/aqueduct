@@ -106,7 +106,7 @@ def test_preview_artifact_caching(client):
 
     @op
     def slow_fn(df):
-        time.sleep(5)
+        time.sleep(10)
         return df
 
     @op
@@ -116,9 +116,9 @@ def test_preview_artifact_caching(client):
     # Check that the first run will take a while, but the second run will happen much faster.
     start = time.time()
     slow_output = slow_fn(sql_artifact)
-    _ = slow_output.get()
-    assert time.time() - start > 5
+    duration = time.time() - start
+    assert duration > 10
 
     start = time.time()
-    _ = noop(slow_output).get()
-    assert time.time() - start < 5
+    _ = noop(slow_output)
+    assert time.time() - start < duration

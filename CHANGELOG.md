@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.0.12
+Released on August 25, 2022.
+
+### Key Features
+* Adds support for running workflows on Kubernetes. You can now register a Kubernetes integration
+    from the UI by providing the cluster's kubeconfig file and publish workflows
+    to run on Kubernetes by modifying the `config` argument in the SDK's `publish_flow` API. 
+* Enables using Google Cloud Storage (GCS) as Aqueduct's metadata store. You can register GCS as a storage
+    integration from the UI and store Aqueduct metadata in GCS.
+
+### Enhancements
+* Adds support for editing the authentication credentials of existing integrations from the UI.
+* Adds support for deleting integrations from the UI.
+* Adds support for deleting data created by Aqueduct when deleting a workflow; when deleting a workflow, 
+    you will now see an option to select the objects created by this workflow. 
+    
+### Bugfixes
+
+None! :tada:
+
+## 0.0.11
+Released on August 23, 2022.
+
+### Important Note
+* If you did a fresh installation of Aqueduct v0.0.10, you may have run into a bug that says our
+    schema migrator did not run successfully. To fix this, run `aqueduct clear` and `pip3 install --upgrade aqueduct-ml`.
+    You can then start the server via `aqueduct start` and everything should work again.
+
+### Bugfixes
+* Fixes a bug where a fresh installation of Aqueduct fails due to a bug in the schema migration process.
+
+## 0.0.10
+Released on August 22, 2022.
+
+### Key Features
+* Adds support for non-tabular data types; operators can now return any
+    Python-serializable object. Under the hood, Aqueduct has special
+    optimization for JSON blobs, images, and tables, in addition to supporting
+    regular Python objects.
+* Enables eager execution when defining workflow artifacts; artifacts are now
+    immediately computed at definition time, before calling the `get` API, which
+    surfaces potential errors earlier during workflow construction.
+
+### Enhancements
+* Caches previously computed function results to avoid repetitive
+    recomputation. 
+* Enables using AWS S3 as Aqueduct's metadata store; when connecting an S3
+    integration, you can now optionally choose to store all Aqueduct metadata
+    in AWS S3.
+
+### Bugfixes
+* Fixes a bug where the DAG view would ignore the selected version when
+    refreshing the page.
+
 ## 0.0.9
 Released on August 15, 2022.
 

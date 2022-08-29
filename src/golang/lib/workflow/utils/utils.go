@@ -384,6 +384,19 @@ func UpdateWorkflowDagToLatest(
 	)
 }
 
+func CreateWorkflowDagResult(
+	ctx context.Context,
+	workflowDagId uuid.UUID,
+	workflowDagResultWriter workflow_dag_result.Writer,
+	db database.Database,
+) (*workflow_dag_result.WorkflowDagResult, error) {
+	return workflowDagResultWriter.CreateWorkflowDagResult(
+		ctx,
+		workflowDagId,
+		db,
+	)
+}
+
 func UpdateWorkflowDagResultMetadata(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,

@@ -67,6 +67,8 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     S3 = "S3"
     SQLITE = "SQLite"
     AIRFLOW = "Airflow"
+    K8S = "Kubernetes"
+    GCS = "GCS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -142,7 +144,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
-    IMAGE = "image"
+    IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
     PARAM = "param"
     NONE = "none"
@@ -161,3 +163,4 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
 class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
+    K8S = "k8s"

@@ -27,6 +27,15 @@ type exportFunctionResponse struct {
 	program  *bytes.Buffer
 }
 
+// Route: /function/{operatorId}/export
+// Method: GET
+// Params: operatorId
+// Request
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
+// Response: a zip file for the function content.
 type ExportFunctionHandler struct {
 	GetHandler
 

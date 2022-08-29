@@ -58,6 +58,7 @@ type Reader interface {
 		ctx context.Context,
 		integrationId uuid.UUID,
 		organizationId string,
+		userId uuid.UUID,
 		db database.Database,
 	) (bool, error)
 	GetIntegrationByNameAndUser(

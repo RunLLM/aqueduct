@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com>",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "alias": {
@@ -93,6 +93,7 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
+    "mui-image": "^1.0.7",
     "parcel": "2.6.0",
     "prettier": "^2.2.1",
     "react": "^18.1.0",
