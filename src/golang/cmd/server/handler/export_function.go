@@ -153,7 +153,8 @@ func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp 
 
 // extractUserReadableCode takes the zipped function code and only returns a zipped file
 // containing the human-readable parts, i.e. source.py, requirements.txt, and python_version.txt
-// If no source code (i.e. source.py) is found, it simply returns the original zipped file.
+// If no source code (i.e. source.py) is found, it simply returns the original contents.
+// In all cases, it renames the top-level directory to `operatorName`.
 func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
