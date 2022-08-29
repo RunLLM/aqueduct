@@ -6,6 +6,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -135,14 +136,16 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get function from storage")
 	}
 
-	_, err = extractUserReadableCode(program)
+	readableProgram, err := extractUserReadableCode(program, operatorObject.Name)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
 	}
 
+	logrus.Infof("Operator Name: %v", operatorObject.Name)
+
 	return &exportFunctionResponse{
 		fileName: operatorObject.Name,
-		program:  bytes.NewBuffer(program),
+		program:  bytes.NewBuffer(readableProgram),
 	}, http.StatusOK, nil
 }
 
@@ -154,7 +157,7 @@ func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp 
 // extractUserReadableCode takes the zipped function code and only returns a zipped file
 // containing the human-readable parts, i.e. source.py, requirements.txt, and python_version.txt
 // If no source code (i.e. source.py) is found, it simply returns the original zipped file.
-func extractUserReadableCode(data []byte) ([]byte, error) {
+func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, err
@@ -163,7 +166,10 @@ func extractUserReadableCode(data []byte) ([]byte, error) {
 	// Check if there is a source.py file, since older SDK clients did not generate this file
 	hasSourceFile := false
 	for _, zipFile := range zipReader.File {
-		if zipFile.Name == sourceFile {
+		logrus.Infof("File Name: %s", zipFile.Name)
+		parts := strings.Split(zipFile.Name, "/")
+		logrus.Infof("Parts: %v with length %v", parts, len(parts))
+		if len(parts) == 2 && parts[1] == sourceFile {
 			hasSourceFile = true
 			break
 		}
@@ -179,12 +185,18 @@ func extractUserReadableCode(data []byte) ([]byte, error) {
 
 	for _, zipFile := range zipReader.File {
 		logrus.Warnf("File Name: %v", zipFile.Name)
-		if zipFile.Name == modelFile || zipFile.Name == modelPickleFile {
+		parts := strings.Split(zipFile.Name, "/")
+		if len(parts) == 2 && (parts[1] == modelFile || parts[1] == modelPickleFile) {
 			// These files are not human readable so we skip them
 			continue
 		}
 
-		if err := writeZipFile(zipWriter, zipFile); err != nil {
+		// Generate a new file name using `operatorName`, because it is more user-friendly to read
+		// than the current directory name that is a unique UUID
+		parts[0] = operatorName
+		zipFileName := strings.Join(parts, "/")
+
+		if err := writeZipFile(zipWriter, zipFile, zipFileName); err != nil {
 			return nil, err
 		}
 	}
@@ -196,8 +208,8 @@ func extractUserReadableCode(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// writeZipFile writes the contents of `zf` to `w`
-func writeZipFile(w *zip.Writer, zf *zip.File) error {
+// writeZipFile writes the contents of `zf` to `w` in a file called `zfName`
+func writeZipFile(w *zip.Writer, zf *zip.File, zfName string) error {
 	f, err := zf.Open()
 	if err != nil {
 		return err
@@ -210,7 +222,7 @@ func writeZipFile(w *zip.Writer, zf *zip.File) error {
 		return err
 	}
 
-	newZipFile, err := w.Create(zf.Name)
+	newZipFile, err := w.Create(zfName)
 	if err != nil {
 		return err
 	}
