@@ -63,7 +63,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   const operatorsState = useSelector((state: RootState) => {
     return state.integrationReducer.operators;
   });
-  
+
   if (
     isSucceeded(operatorsState.status) &&
     operatorsState.operators.length === 0
@@ -128,7 +128,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
           <Button onClick={onCloseDialog}>Dismiss</Button>
         </DialogActions>
       </Dialog>
-      );
+    );
   }
 };
 
