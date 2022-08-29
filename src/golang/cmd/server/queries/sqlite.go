@@ -88,7 +88,7 @@ func (r *sqliteReaderImpl) GetLoadOperatorSpecByOrganization(
 ) ([]LoadOperatorSpecResponse, error) {
 	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
 	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
-	// that operator (`from_id`s; these artifacts are the objects that will be saved 
+	// that operator (`from_id`s; these artifacts are the objects that will be saved
 	// by the operator to the integration) in the workflows owned by the specified
 	// organization.
 	query := fmt.Sprintf(
