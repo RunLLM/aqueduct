@@ -92,13 +92,19 @@ def read_artifacts(
     input_types: List[ArtifactType] = []
 
     for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
-        artifact_metadata = json.loads(storage.get(input_metadata_path).decode(_DEFAULT_ENCODING))
+        # TODO: wrap this in a try. Raise an exception if something went wrong.
+        input_content_bytes = storage.get(input_path)
+        input_metadata_bytes = storage.get(input_metadata_path)
+
+        artifact_metadata = json.loads(input_metadata_bytes.decode(_DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
         input_types.append(artifact_type)
 
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
         if serialization_type not in _deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s" % serialization_type)
+
+        # TODO: feed the input_content_bytes in instead of input_path
         inputs.append(_deserialization_function_mapping[serialization_type](storage, input_path))
 
     return inputs, input_types
