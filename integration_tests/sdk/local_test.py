@@ -1,3 +1,5 @@
+from pandas._testing import assert_frame_equal
+
 from checks_test import success_on_single_table_input
 from constants import SENTIMENT_SQL_QUERY
 from pandas import DataFrame
@@ -18,7 +20,7 @@ def test_local_operator(client):
     output_cloud = output_artifact.get()
     output_local = run_sentiment_model_local(sql_artifact)
     assert output_cloud.count()[0] == output_local.count()[0]
-    assert output_cloud.equals(output_local)
+    assert_frame_equal(output_cloud, output_local)
 
 
 def test_local_metric(client):
@@ -44,7 +46,7 @@ def test_local_dataframe_input(client):
     output_cloud = run_sentiment_model(sql_artifact).get()
     output_local = run_sentiment_model_local(sql_artifact.get())
     assert type(output_local) is DataFrame
-    assert output_cloud.equals(output_local)
+    assert_frame_equal(output_cloud, output_local)
 
 
 def test_local_on_multiple_inputs(client):
@@ -54,4 +56,4 @@ def test_local_on_multiple_inputs(client):
     output_cloud = run_sentiment_model_multiple_input(sql_artifact, sql_artifact2).get()
     output_local = run_sentiment_model_local_multiple_input(sql_artifact, sql_artifact2)
     assert type(output_local) is DataFrame
-    assert output_cloud.equals(output_local)
+    assert_frame_equal(output_cloud, output_local)
