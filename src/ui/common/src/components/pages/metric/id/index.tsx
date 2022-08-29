@@ -10,7 +10,8 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, Link as RouterLink, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+
 import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
 import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
 import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
@@ -23,11 +24,10 @@ import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/
 import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
 import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
 import { NodeType } from '../../../../reducers/nodeSelection';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
-
 import { OperatorResult } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import DefaultLayout from '../../../layouts/default';
 import { LayoutProps } from '../../types';
 
@@ -72,8 +72,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const { workflowDagResultId, metricOperatorId } = useParams();
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(false);
-  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(false);
+  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
+  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
 
   const metricResult: OperatorResult | null = useSelector(
     (state: RootState) => {
@@ -113,6 +113,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   //const parsedData = JSON.parse(metricResult.);
 
+  // Set up different metric input types for rendering in the inputs list.
+  // TODO: transform/handle response from API and render these appropriately.
   const metricInputs = [
     {
       name: 'bool_artifact',
@@ -152,7 +154,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     {
       name: 'metric_operator_node',
       nodeType: NodeType.MetricOp,
-      nodeIcon: metricOperatorNodeIcon
+      nodeIcon: metricOperatorNodeIcon,
     },
     {
       name: 'numeric_artifact_node',
@@ -168,7 +170,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       name: 'table_artifact_node_icon',
       nodeType: NodeType.TableArtifact,
       nodeIcon: tableArtifactNodeIcon,
-    }
+    },
   ];
 
   const listStyle = {
@@ -209,27 +211,31 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 </AccordionSummary>
                 <AccordionDetails>
                   <List sx={listStyle}>
-                    {
-                      metricInputs.map((metricInput) => {
-                        return (
-                          <ListItem divider>
-                            <Box display="flex">
-                              <Box sx={{ width: '16px', height: '16px', color: 'rgba(0,0,0,0.54)' }}>
-                                <FontAwesomeIcon icon={metricInput.nodeIcon} />
-                              </Box>
-                              <Link
-                                to={`${getPathPrefix()}/workflows`}
-                                component={RouterLink as any}
-                                sx={{ marginLeft: '16px' }}
-                                underline="none"
-                              >
-                                {metricInput.name}
-                              </Link>
+                    {metricInputs.map((metricInput, index) => {
+                      return (
+                        <ListItem divider key={`metric-input-${index}`}>
+                          <Box display="flex">
+                            <Box
+                              sx={{
+                                width: '16px',
+                                height: '16px',
+                                color: 'rgba(0,0,0,0.54)',
+                              }}
+                            >
+                              <FontAwesomeIcon icon={metricInput.nodeIcon} />
                             </Box>
-                          </ListItem>
-                        )
-                      })
-                    }
+                            <Link
+                              to={`${getPathPrefix()}/workflows`}
+                              component={RouterLink as any}
+                              sx={{ marginLeft: '16px' }}
+                              underline="none"
+                            >
+                              {metricInput.name}
+                            </Link>
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
                   </List>
                 </AccordionDetails>
               </Accordion>
@@ -239,7 +245,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               <Accordion
                 expanded={outputsExpanded}
                 onChange={() => {
-                  console.log('on accordion change');
                   setOutputsExpanded(!outputsExpanded);
                 }}
               >
@@ -263,22 +268,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               </Accordion>
             </Box>
           </Box>
-
-          {/* <Box display="flex" width="100%" paddingTop="40px">
-                        <Box width="100%">
-                            <Typography variant="h5" component="div" marginBottom="8px">
-                                Metrics
-                            </Typography>
-                            <KeyValueTable />
-                        </Box>
-                        <Box width="96px" />
-                        <Box width="100%">
-                            <Typography variant="h5" component="div" marginBottom="8px">
-                                Checks
-                            </Typography>
-                            <KeyValueTable />
-                        </Box>
-                    </Box> */}
 
           <Box width="100%" marginTop="12px">
             <Typography variant="h5" component="div" marginBottom="8px">
