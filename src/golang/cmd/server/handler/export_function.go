@@ -18,7 +18,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -141,8 +140,6 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
 	}
 
-	logrus.Infof("Operator Name: %v", operatorObject.Name)
-
 	return &exportFunctionResponse{
 		fileName: operatorObject.Name,
 		program:  bytes.NewBuffer(readableProgram),
@@ -166,28 +163,22 @@ func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 	// Check if there is a source.py file, since older SDK clients did not generate this file
 	hasSourceFile := false
 	for _, zipFile := range zipReader.File {
-		logrus.Infof("File Name: %s", zipFile.Name)
 		parts := strings.Split(zipFile.Name, "/")
-		logrus.Infof("Parts: %v with length %v", parts, len(parts))
 		if len(parts) == 2 && parts[1] == sourceFile {
 			hasSourceFile = true
 			break
 		}
 	}
 
-	if !hasSourceFile {
-		// There is no source.py file so we just return the original zipped file without human readable code
-		return data, nil
-	}
-
 	buf := new(bytes.Buffer) // This is where the new zipped file is written to
 	zipWriter := zip.NewWriter(buf)
 
 	for _, zipFile := range zipReader.File {
-		logrus.Warnf("File Name: %v", zipFile.Name)
 		parts := strings.Split(zipFile.Name, "/")
-		if len(parts) == 2 && (parts[1] == modelFile || parts[1] == modelPickleFile) {
-			// These files are not human readable so we skip them
+		if hasSourceFile &&
+			len(parts) == 2 &&
+			(parts[1] == modelFile || parts[1] == modelPickleFile) {
+			// There is a source.py so we can skip the files that are not user-friendly to read
 			continue
 		}
 
