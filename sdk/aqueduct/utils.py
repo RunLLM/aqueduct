@@ -200,7 +200,8 @@ def serialize_function(
             pickle.dump(func, f)
 
         # Write function source code to file
-        with open(os.path.join(dir_path, op_name), "w") as f:
+        source_file = "{}.py".format(op_name)
+        with open(os.path.join(dir_path, source_file), "w") as f:
             source = inspect.getsource(func)
             print(source)
             f.write(source)

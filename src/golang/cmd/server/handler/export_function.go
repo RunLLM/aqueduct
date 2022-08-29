@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -163,8 +164,9 @@ func extractUserReadableCode(data []byte, operatorName string) ([]byte, error) {
 	// Check if there is a source file, since older SDK clients did not generate this file
 	hasSourceFile := false
 	for _, zipFile := range zipReader.File {
+		sourceFileName := fmt.Sprintf("%s.py", operatorName)
 		parts := strings.Split(zipFile.Name, "/")
-		if len(parts) == 2 && parts[1] == operatorName {
+		if len(parts) == 2 && parts[1] == sourceFileName {
 			hasSourceFile = true
 			break
 		}
