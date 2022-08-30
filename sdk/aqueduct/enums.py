@@ -158,6 +158,11 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
 
 
+class ExecutionMode(str, Enum, metaclass=MetaEnum):
+    EAGER = "eager"
+    LAZY = "lazy"
+
+
 class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"

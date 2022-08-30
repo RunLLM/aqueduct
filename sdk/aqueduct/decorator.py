@@ -1,9 +1,11 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
+import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.param_artifact import ParamArtifact
@@ -12,11 +14,17 @@ from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import (
     ArtifactType,
     CheckSeverity,
+    ExecutionMode,
     FunctionGranularity,
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.error import (
+    AqueductError,
+    InvalidArtifactTypeException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     CheckFunction,
@@ -51,6 +59,8 @@ def wrap_spec(
     *input_artifacts: BaseArtifact,
     op_name: str,
     description: str = "",
+    execution_mode: ExecutionMode = ExecutionMode.EAGER,
+    output_artifact_type_hint: ArtifactType = ArtifactType.UNTYPED,
 ) -> BaseArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
@@ -103,18 +113,37 @@ def wrap_spec(
                     ArtifactMetadata(
                         id=output_artifact_id,
                         name=artifact_name_from_op_name(op_name),
-                        type=ArtifactType.UNTYPED,
+                        type=output_artifact_type_hint,
                     )
                 ],
             ),
         ],
     )
 
-    # Issue preview request since this is an eager execution
-    artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
-    dag.must_get_artifact(output_artifact_id).type = artifact.type()
+    if execution_mode == ExecutionMode.EAGER:
+        # Issue preview request since this is an eager execution.
+        artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
+        if (
+            output_artifact_type_hint != ArtifactType.UNTYPED
+            and artifact._get_type() != output_artifact_type_hint
+        ):
+            raise InvalidArtifactTypeException(
+                "The computed artifact is expected to be type %s, but has type %s"
+                % (output_artifact_type_hint, artifact._get_type())
+            )
 
-    return artifact
+        dag.must_get_artifact(output_artifact_id).type = artifact._get_type()
+        return artifact
+    else:
+        # We are in lazy mode.
+        if output_artifact_type_hint == ArtifactType.TABLE:
+            return TableArtifact(dag, output_artifact_id)
+        elif output_artifact_type_hint == ArtifactType.NUMERIC:
+            return NumericArtifact(dag, output_artifact_id)
+        elif output_artifact_type_hint == ArtifactType.BOOL:
+            return BoolArtifact(dag, output_artifact_id)
+        else:
+            return GenericArtifact(dag, output_artifact_id, output_artifact_type_hint)
 
 
 def _type_check_decorator_arguments(
@@ -226,7 +255,9 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*input_artifacts: BaseArtifact) -> BaseArtifact:
+        def _wrapped_util(
+            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+        ) -> BaseArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -250,16 +281,27 @@ def op(
                 OperatorSpec(function=function_spec),
                 *input_artifacts,
                 op_name=name,
+                description=description,
+                execution_mode=execution_mode,
             )
 
             return new_function_artifact
 
+        def wrapped(*input_artifacts: BaseArtifact) -> BaseArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> DataFrame:
+        def local_func(*inputs: Any) -> Any:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
         setattr(wrapped, "local", local_func)
+
+        def lazy_mode(*input_artifacts: BaseArtifact) -> BaseArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
+
+        setattr(wrapped, "lazy", lazy_mode)
+
         return wrapped
 
     if callable(name):
@@ -324,13 +366,9 @@ def metric(
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
-        """
-        @wraps(...): updates `wrapped()` to look like `func()` by copying attributes (eg. __name__, __doc__, etc.)
-        """
 
-        @wraps(func)
-        def wrapped(
-            *input_artifacts: BaseArtifact,
+        def _wrapped_util(
+            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
         ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -356,24 +394,43 @@ def metric(
 
             metric_spec = MetricSpec(function=function_spec)
 
-            new_metric_artifact = wrap_spec(
+            numeric_artifact = wrap_spec(
                 OperatorSpec(metric=metric_spec),
                 *input_artifacts,
                 op_name=name,
                 description=description,
+                execution_mode=execution_mode,
+                output_artifact_type_hint=ArtifactType.NUMERIC,
             )
 
-            assert isinstance(new_metric_artifact, NumericArtifact)
-            new_metric_artifact.set_operator_type(OperatorType.METRIC)
+            assert isinstance(numeric_artifact, NumericArtifact)
 
-            return new_metric_artifact
+            numeric_artifact.set_operator_type(OperatorType.METRIC)
+
+            return numeric_artifact
+
+        """
+        @wraps(...): updates `wrapped()` to look like `func()` by copying attributes (eg. __name__, __doc__, etc.)
+        """
+
+        @wraps(func)
+        def wrapped(
+            *input_artifacts: BaseArtifact,
+        ) -> NumericArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> float:
+        def local_func(*inputs: Any) -> Union[int, float, np.number]:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
         setattr(wrapped, "local", local_func)
+
+        def lazy_mode(*input_artifacts: BaseArtifact) -> NumericArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
+
+        setattr(wrapped, "lazy", lazy_mode)
+
         return wrapped
 
     if callable(name):
@@ -444,13 +501,9 @@ def check(
             name = func.__name__
         if description is None:
             description = func.__doc__ or ""
-        """
-        @wraps(...): updates `wrapped()` to look like `func()` by copying attributes (eg. __name__, __doc__, etc.)
-        """
 
-        @wraps(func)
-        def wrapped(
-            *input_artifacts: BaseArtifact,
+        def _wrapped_util(
+            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
         ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -473,24 +526,43 @@ def check(
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
 
-            new_check_artifact = wrap_spec(
+            bool_artifact = wrap_spec(
                 OperatorSpec(check=check_spec),
                 *input_artifacts,
                 op_name=name,
                 description=description,
+                execution_mode=execution_mode,
+                output_artifact_type_hint=ArtifactType.BOOL,
             )
 
-            assert isinstance(new_check_artifact, BoolArtifact)
-            new_check_artifact.set_operator_type(OperatorType.CHECK)
+            assert isinstance(bool_artifact, BoolArtifact)
 
-            return new_check_artifact
+            bool_artifact.set_operator_type(OperatorType.CHECK)
+
+            return bool_artifact
+
+        """
+        @wraps(...): updates `wrapped()` to look like `func()` by copying attributes (eg. __name__, __doc__, etc.)
+        """
+
+        @wraps(func)
+        def wrapped(
+            *input_artifacts: BaseArtifact,
+        ) -> BoolArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> bool:
+        def local_func(*inputs: Any) -> Union[bool, np.bool_]:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
         setattr(wrapped, "local", local_func)
+
+        def lazy_mode(*input_artifacts: BaseArtifact) -> BoolArtifact:
+            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
+
+        setattr(wrapped, "lazy", lazy_mode)
+
         return wrapped
 
     if callable(name):

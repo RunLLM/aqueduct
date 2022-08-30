@@ -12,6 +12,7 @@ class BaseArtifact(ABC):
     _artifact_id: uuid.UUID
     _dag: DAG
     _type: ArtifactType
+    _content: Any
     _from_flow_run: bool
     _from_operator_type: Optional[OperatorType] = None
 
@@ -26,8 +27,17 @@ class BaseArtifact(ABC):
         """Fetch the name of this artifact."""
         return self._dag.must_get_artifact(artifact_id=self._artifact_id).name
 
-    def type(self) -> ArtifactType:
+    def _get_type(self) -> ArtifactType:
         return self._type
+
+    def _set_type(self, artifact_type: ArtifactType) -> None:
+        self._type = artifact_type
+
+    def _get_content(self) -> Any:
+        return self._content
+
+    def _set_content(self, content: Any) -> None:
+        self._content = content
 
     def set_operator_type(self, operator_type: OperatorType) -> None:
         self._from_operator_type = operator_type
