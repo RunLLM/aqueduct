@@ -61,6 +61,12 @@ func (*ExportFunctionHandler) Name() string {
 	return "ExportFunction"
 }
 
+func (*ExportFunctionHandler) Headers() []string {
+	return []string{
+		routes.ExportFnUserFriendlyHeader,
+	}
+}
+
 func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
