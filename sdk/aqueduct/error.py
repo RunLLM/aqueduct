@@ -42,6 +42,11 @@ class InvalidMetadataError(Error):
     pass
 
 
+# Exception raised when the type of an artifact does not meet the expectation.
+class InvalidArtifactTypeException(Error):
+    pass
+
+
 # A catch-all exception raised for all other errors.
 class AqueductError(Error):
     pass
