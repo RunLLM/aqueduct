@@ -432,48 +432,54 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
-        ([integrationTableKey, savedObjectsList]) => (
-          <FormControlLabel
-            key={integrationTableKey}
-            control={
-              <Checkbox
-                id={integrationTableKey}
-                onChange={updateSelectedObjects}
-              />
-            }
-            label={
-              <Box>
-                {displayObject(
-                  savedObjectsList[0].integration_name,
-                  savedObjectsList[0].object_name
-                )}
+        ([integrationTableKey, savedObjectsList]) => {
+          const sortedObjects = [...savedObjectsList].sort(
+            (object) => object.created_at
+          );
+          return (
+            <FormControlLabel
+              key={integrationTableKey}
+              control={
+                <Checkbox
+                  id={integrationTableKey}
+                  onChange={updateSelectedObjects}
+                />
+              }
+              label={
+                <Box>
+                  {displayObject(
+                    savedObjectsList[0].integration_name,
+                    savedObjectsList[0].object_name
+                  )}
 
-                <Typography
-                  style={{
-                    color: theme.palette.gray[600],
-                    paddingRight: '8px',
-                  }}
-                  variant="body2"
-                  display="inline"
-                >
-                  Update Mode:{' '}
-                  {savedObjectsList
-                    .map((object) => object.update_mode)
-                    .join(', ')}
-                </Typography>
-
-                <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
-                  <Typography display="inline">
-                    <FontAwesomeIcon
-                      icon={faCircleInfo}
-                      style={{ color: theme.palette.Info }}
-                    />
+                  <Typography
+                    style={{
+                      color: theme.palette.gray[600],
+                      paddingRight: '8px',
+                    }}
+                    variant="body2"
+                    display="inline"
+                  >
+                    Update Mode:{' '}
+                    {sortedObjects
+                      .map((object) => `${object.update_mode}`)
+                      .join(', ')}
+                    {sortedObjects.length > 1 ? ' (active)' : null}
                   </Typography>
-                </Tooltip>
-              </Box>
-            }
-          />
-        )
+
+                  <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
+                    <Typography display="inline">
+                      <FontAwesomeIcon
+                        icon={faCircleInfo}
+                        style={{ color: theme.palette.Info }}
+                      />
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              }
+            />
+          );
+        }
       )}
     </FormGroup>
   );
