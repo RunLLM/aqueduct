@@ -1,11 +1,9 @@
 import pandas as pd
-import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
 
-import aqueduct
 from aqueduct import check, metric, op
 
 
