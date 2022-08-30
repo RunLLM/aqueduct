@@ -454,7 +454,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           // Using a weird marginTop workaround.
           return (
             <FormControlLabel
-              style={{ marginTop: '-1.2em' }}
+              sx={{ marginTop: '-24px' }}
               key={integrationTableKey}
               control={
                 <Checkbox
@@ -463,13 +463,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                 />
               }
               label={
-                <div style={{ marginTop: '1.2em' }}>
+                <Box sx={{ paddingTop: '24px' }}>
                   {displayObject(
                     savedObjectsList[0].integration_name,
                     savedObjectsList[0].object_name,
                     sortedObjects
                   )}
-                </div>
+                </Box>
               }
             />
           );
