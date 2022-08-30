@@ -306,14 +306,15 @@ class TableArtifact(BaseArtifact):
             result = my_validator.validate()
             return bool(result.success)
 
-        zip_file = serialize_function(great_expectations_check_method)
+        check_name = "ge_table_check: {%s}" % expectation_name
+
+        zip_file = serialize_function(great_expectations_check_method, check_name)
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
             granularity=FunctionGranularity.TABLE,
             file=zip_file,
         )
         check_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
-        check_name = "ge_table_check: {%s}" % expectation_name
         check_description = "Check table with built in expectations from great expectations"
         new_artifact = self._apply_operator_to_table(
             check_spec,
@@ -380,7 +381,7 @@ class TableArtifact(BaseArtifact):
                 table_name,
             )
 
-        zip_file = serialize_function(metric_func)
+        zip_file = serialize_function(metric_func, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -417,7 +418,7 @@ class TableArtifact(BaseArtifact):
 
         metric_name = "num_rows"
         metric_description = "compute number of rows for %s" % table_name
-        zip_file = serialize_function(internal_num_rows_metric)
+        zip_file = serialize_function(internal_num_rows_metric, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -461,7 +462,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_max_metric)
+        zip_file = serialize_function(internal_max_metric, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -505,7 +506,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_min_metric)
+        zip_file = serialize_function(internal_min_metric, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -549,7 +550,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_mean_metric)
+        zip_file = serialize_function(internal_mean_metric, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -595,7 +596,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_std_metric)
+        zip_file = serialize_function(internal_std_metric, metric_name)
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,

@@ -13,7 +13,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 import cloudpickle as pickle
 import multipart
 import numpy as np
-import pandas as pd
 import requests
 from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
@@ -158,6 +157,7 @@ def make_zip_dir() -> str:
 
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
+    op_name: str,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
 ) -> bytes:
@@ -167,6 +167,8 @@ def serialize_function(
     Arguments:
         func:
             The function to package
+        op_name:
+            The name of the function operator to package.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
         requirements:
@@ -196,6 +198,12 @@ def serialize_function(
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
             pickle.dump(func, f)
+
+        # Write function source code to file
+        source_file = "{}.py".format(op_name)
+        with open(os.path.join(dir_path, source_file), "w") as f:
+            source = inspect.getsource(func)
+            f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
