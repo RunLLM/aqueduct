@@ -203,7 +203,6 @@ def serialize_function(
         source_file = "{}.py".format(op_name)
         with open(os.path.join(dir_path, source_file), "w") as f:
             source = inspect.getsource(func)
-            print(source)
             f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
