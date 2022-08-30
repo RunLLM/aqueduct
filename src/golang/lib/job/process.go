@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-co-op/gocron"
@@ -285,6 +286,20 @@ func (j *ProcessJobManager) Launch(
 	log.Infof("Running %s job %s.", spec.Type(), name)
 	if _, ok := j.getCmd(name); ok {
 		return ErrJobAlreadyExists
+	}
+
+	if spec.Type() == FunctionJobType {
+		fSpec, ok := spec.(*FunctionSpec)
+		if !ok {
+			return errors.New("Unable to cast to fn spec")
+		}
+
+		version, err := function.GetPythonVersion(ctx, fSpec.FunctionPath, &fSpec.StorageConfig)
+		if err != nil {
+			return err
+		}
+
+		log.Infof("Got Python Version: %v", version)
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
