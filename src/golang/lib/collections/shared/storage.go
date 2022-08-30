@@ -26,6 +26,8 @@ type S3Config struct {
 	Bucket             string `yaml:"bucket" json:"bucket"`
 	CredentialsPath    string `yaml:"credentialsPath" json:"credentials_path"`
 	CredentialsProfile string `yaml:"credentialsProfile"  json:"credentials_profile"`
+	AWSAccessKeyID     string `yaml:"awsAccessKeyId"  json:"aws_access_key_id"`
+	AWSSecretAccessKey string `yaml:"awsSecretAccessKey"  json:"aws_secret_access_key"`
 }
 
 type FileConfig struct {
