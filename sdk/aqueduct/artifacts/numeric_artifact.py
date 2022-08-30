@@ -32,8 +32,6 @@ from aqueduct.utils import (
     serialize_function,
 )
 
-import aqueduct
-
 
 class NumericArtifact(BaseArtifact):
     """This class represents a computed metric within the flow's DAG.

@@ -171,7 +171,7 @@ def validate_spec(spec: FunctionSpec) -> None:
 
 def handle_type_error_and_exit(
     spec: FunctionSpec, storage: Storage, exec_state: ExecutionState, err_tip: str
-):
+) -> None:
     exec_state.status = ExecutionStatus.FAILED
     exec_state.failure_type = FailureType.USER_FATAL
     exec_state.error = Error(
