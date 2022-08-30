@@ -1,6 +1,5 @@
 import {
   faCircleCheck,
-  faCircleInfo,
   faCircleXmark,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -428,20 +427,20 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       <Typography variant="body1">
         [{integration}] <b>{name}</b>
       </Typography>
-      {sortedObjects && <Typography
-        style={{
-          color: theme.palette.gray[600],
-          paddingRight: '8px',
-        }}
-        variant="body2"
-        display="inline"
-      >
-        Update Mode:{' '}
-        {sortedObjects
-          .map((object) => `${object.update_mode}`)
-          .join(', ')}
-        {sortedObjects.length > 1 && ' (active)'}
-      </Typography>}
+      {sortedObjects && (
+        <Typography
+          style={{
+            color: theme.palette.gray[600],
+            paddingRight: '8px',
+          }}
+          variant="body2"
+          display="inline"
+        >
+          Update Mode:{' '}
+          {sortedObjects.map((object) => `${object.update_mode}`).join(', ')}
+          {sortedObjects.length > 1 && ' (active)'}
+        </Typography>
+      )}
     </>
   );
   const listSavedObjects = (
@@ -455,23 +454,24 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           // Using a weird marginTop workaround.
           return (
             <FormControlLabel
-              style={{ marginTop: "-1.2em"}}
+              style={{ marginTop: '-1.2em' }}
               key={integrationTableKey}
               control={
                 <Checkbox
                   id={integrationTableKey}
                   onChange={updateSelectedObjects}
                 />
-                }
-            label={
-            <div style={{ marginTop: "1.2em" }}> 
-              {displayObject(
-                savedObjectsList[0].integration_name,
-                savedObjectsList[0].object_name,
-                sortedObjects
-              )}
-            </div>
-            }/>
+              }
+              label={
+                <div style={{ marginTop: '1.2em' }}>
+                  {displayObject(
+                    savedObjectsList[0].integration_name,
+                    savedObjectsList[0].object_name,
+                    sortedObjects
+                  )}
+                </div>
+              }
+            />
           );
         }
       )}
