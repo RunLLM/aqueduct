@@ -323,6 +323,11 @@ func (bfo *baseFunctionOperator) jobSpec(
 		}
 	}
 
+	expectedOutputTypes := make([]string, 0, 1)
+	for _, output := range bfo.outputs {
+		expectedOutputTypes = append(expectedOutputTypes, string(output.Type()))
+	}
+
 	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
 	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
 	return &job.FunctionSpec{
@@ -334,15 +339,16 @@ func (bfo *baseFunctionOperator) jobSpec(
 		),
 		FunctionPath: fn.StoragePath,
 		/* `FunctionExtractPath` is set by the job manager at launch time. */
-		EntryPointFile:      entryPoint.File,
-		EntryPointClass:     entryPoint.ClassName,
-		EntryPointMethod:    entryPoint.Method,
-		CustomArgs:          fn.CustomArgs,
-		InputContentPaths:   inputContentPaths,
-		InputMetadataPaths:  inputMetadataPaths,
-		OutputContentPaths:  outputContentPaths,
-		OutputMetadataPaths: outputMetadataPaths,
-		OperatorType:        bfo.Type(),
-		CheckSeverity:       checkSeverity,
+		EntryPointFile:              entryPoint.File,
+		EntryPointClass:             entryPoint.ClassName,
+		EntryPointMethod:            entryPoint.Method,
+		CustomArgs:                  fn.CustomArgs,
+		InputContentPaths:           inputContentPaths,
+		InputMetadataPaths:          inputMetadataPaths,
+		OutputContentPaths:          outputContentPaths,
+		OutputMetadataPaths:         outputMetadataPaths,
+		ExpectedOutputArtifactTypes: expectedOutputTypes,
+		OperatorType:                bfo.Type(),
+		CheckSeverity:               checkSeverity,
 	}
 }

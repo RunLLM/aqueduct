@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.enums import ExecutionStatus
 from aqueduct.error import IncompleteFlowException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
@@ -166,9 +167,13 @@ def test_refresh_flow(client):
     # Wait for the first run, then refresh the workflow and verify that it runs at least
     # one more time.
     try:
-        num_initial_runs = wait_for_flow_runs(client, flow.id())
+        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
         client.trigger(flow.id())
-        wait_for_flow_runs(client, flow.id(), num_runs=num_initial_runs + 1)
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
     finally:
         client.delete_flow(flow.id())
 
@@ -186,7 +191,7 @@ def test_get_artifact_from_flow(client):
         artifacts=[output_artifact],
     )
     try:
-        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
         artifact_return = flow.latest().artifact(output_artifact.name())
         assert artifact_return.name() == output_artifact.name()
         assert artifact_return.get().equals(output_artifact.get())
@@ -207,7 +212,7 @@ def test_get_artifact_reuse_for_computation(client):
         artifacts=[output_artifact],
     )
     try:
-        wait_for_flow_runs(client, flow.id(), num_runs=1)
+        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
         artifact_return = flow.latest().artifact(output_artifact.name())
         with pytest.raises(Exception):
             output_artifact = run_sentiment_model(artifact_return)
@@ -235,8 +240,16 @@ def test_multiple_flows_with_same_schedule(client):
             schedule="* * * * *",
         )
 
-        wait_for_flow_runs(client, flow_1.id(), 2, True)
-        wait_for_flow_runs(client, flow_2.id(), 2, True)
+        wait_for_flow_runs(
+            client,
+            flow_1.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
+        wait_for_flow_runs(
+            client,
+            flow_2.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
     finally:
         delete_flow(client, flow_1.id())
         delete_flow(client, flow_2.id())
