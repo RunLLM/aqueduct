@@ -20,6 +20,8 @@ class S3StorageConfig(BaseModel):
     bucket: str
     credentials_path: str
     credentials_profile: str
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
 
 
 class GCSStorageConfig(BaseModel):
