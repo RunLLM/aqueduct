@@ -305,7 +305,7 @@ class TableArtifact(BaseArtifact):
             # Run validation to return the result
             result = my_validator.validate()
             return bool(result.success)
-        
+
         check_name = "ge_table_check: {%s}" % expectation_name
 
         zip_file = serialize_function(great_expectations_check_method, check_name)

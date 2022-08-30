@@ -168,7 +168,7 @@ def serialize_function(
         func:
             The function to package
         op_name:
-            The name of the function operator to package.    
+            The name of the function operator to package.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
         requirements:
