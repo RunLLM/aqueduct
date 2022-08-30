@@ -13,7 +13,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
 } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -424,10 +423,26 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }
   };
 
-  const displayObject = (integration, name) => (
-    <Typography variant="body1">
-      [{integration}] <b>{name}</b>
-    </Typography>
+  const displayObject = (integration, name, sortedObjects) => (
+    <>
+      <Typography variant="body1">
+        [{integration}] <b>{name}</b>
+      </Typography>
+      {sortedObjects && <Typography
+        style={{
+          color: theme.palette.gray[600],
+          paddingRight: '8px',
+        }}
+        variant="body2"
+        display="inline"
+      >
+        Update Mode:{' '}
+        {sortedObjects
+          .map((object) => `${object.update_mode}`)
+          .join(', ')}
+        {sortedObjects.length > 1 && ' (active)'}
+      </Typography>}
+    </>
   );
   const listSavedObjects = (
     <FormGroup>
@@ -436,48 +451,27 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           const sortedObjects = [...savedObjectsList].sort(
             (object) => object.created_at
           );
+          // Cannot align the checkbox to the top of a multi-line label.
+          // Using a weird marginTop workaround.
           return (
             <FormControlLabel
+              style={{ marginTop: "-1.2em"}}
               key={integrationTableKey}
               control={
                 <Checkbox
                   id={integrationTableKey}
                   onChange={updateSelectedObjects}
                 />
-              }
-              label={
-                <Box>
-                  {displayObject(
-                    savedObjectsList[0].integration_name,
-                    savedObjectsList[0].object_name
-                  )}
-
-                  <Typography
-                    style={{
-                      color: theme.palette.gray[600],
-                      paddingRight: '8px',
-                    }}
-                    variant="body2"
-                    display="inline"
-                  >
-                    Update Mode:{' '}
-                    {sortedObjects
-                      .map((object) => `${object.update_mode}`)
-                      .join(', ')}
-                    {sortedObjects.length > 1 ? ' (active)' : null}
-                  </Typography>
-
-                  <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
-                    <Typography display="inline">
-                      <FontAwesomeIcon
-                        icon={faCircleInfo}
-                        style={{ color: theme.palette.Info }}
-                      />
-                    </Typography>
-                  </Tooltip>
-                </Box>
-              }
-            />
+                }
+            label={
+            <div style={{ marginTop: "1.2em" }}> 
+              {displayObject(
+                savedObjectsList[0].integration_name,
+                savedObjectsList[0].object_name,
+                sortedObjects
+              )}
+            </div>
+            }/>
           );
         }
       )}
@@ -674,7 +668,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                     <ListItemText
                       primary={displayObject(
                         integrationName,
-                        objectResult.name
+                        objectResult.name,
+                        null
                       )}
                     />
                   </ListItem>
