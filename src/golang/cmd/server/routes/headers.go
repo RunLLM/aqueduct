@@ -11,5 +11,8 @@ const (
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
 
+	// Export Function headers
+	ExportFnUserFriendlyHeader = "user-friendly"
+
 	TableNameHeader = "table-name"
 )

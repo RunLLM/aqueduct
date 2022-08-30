@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -30,6 +31,8 @@ const (
 type exportFunctionArgs struct {
 	*aq_context.AqContext
 	operatorId uuid.UUID
+	// Whether to export only the user-friendly function code
+	userFriendly bool
 }
 
 type exportFunctionResponse struct {
@@ -70,6 +73,8 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIdStr)
 	}
 
+	userFriendly := request.ParseExportUserFriendlyFromRequest(r)
+
 	ok, err := h.OperatorReader.ValidateOperatorOwnership(
 		r.Context(),
 		aqContext.OrganizationId,
@@ -84,8 +89,9 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}
 
 	return &exportFunctionArgs{
-		AqContext:  aqContext,
-		operatorId: operatorId,
+		AqContext:    aqContext,
+		operatorId:   operatorId,
+		userFriendly: userFriendly,
 	}, http.StatusOK, nil
 }
 
@@ -135,14 +141,17 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get function from storage")
 	}
 
-	readableProgram, err := extractUserReadableCode(program, operatorObject.Name)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
+	if args.userFriendly {
+		// Only the user-friendly code should be returned
+		program, err = extractUserReadableCode(program, operatorObject.Name)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to export function code")
+		}
 	}
 
 	return &exportFunctionResponse{
 		fileName: operatorObject.Name,
-		program:  bytes.NewBuffer(readableProgram),
+		program:  bytes.NewBuffer(program),
 	}, http.StatusOK, nil
 }
 
