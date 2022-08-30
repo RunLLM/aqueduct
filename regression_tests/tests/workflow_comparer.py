@@ -2,8 +2,8 @@ import argparse
 import os
 import subprocess
 import sys
-from io import StringIO
 from contextlib import redirect_stdout
+from io import StringIO
 
 from aqueduct import Client, get_apikey
 
