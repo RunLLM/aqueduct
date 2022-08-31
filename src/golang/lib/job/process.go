@@ -326,9 +326,6 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 		return shared.RunningExecutionStatus, nil
 	}
 
-	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success
-	//  execution status when it should be failure.
-	// TODO(ENG-1196): workflows that do not completely succeed still return a success execution status here.
 	err = command.cmd.Wait()
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.

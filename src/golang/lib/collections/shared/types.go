@@ -25,6 +25,7 @@ const (
 	RunningExecutionStatus   ExecutionStatus = "running"
 	PendingExecutionStatus   ExecutionStatus = "pending"
 	UnknownExecutionStatus   ExecutionStatus = "unknown"
+	CanceledExecutionStatus  ExecutionStatus = "canceled"
 )
 
 type FailureType int64

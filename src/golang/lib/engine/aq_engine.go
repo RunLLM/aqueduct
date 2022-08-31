@@ -747,6 +747,7 @@ func (eng *aqEngine) execute(
 			} else if execState.Status == shared.RunningExecutionStatus {
 				continue
 			}
+
 			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
 				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
@@ -759,8 +760,26 @@ func (eng *aqEngine) execute(
 				}
 			}
 
-			// We can continue orchestration on non-fatal errors.
+			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
+			// and check operators with warning severity.
 			if shouldStopExecution(execState) {
+				for id, op := range workflowDag.Operators() {
+					// Skip if this operator has already been completed or is in progress.
+					if _, ok := completedOps[id]; ok {
+						continue
+					}
+					if _, ok := inProgressOps[id]; ok {
+						continue
+					}
+
+					changes := map[string]interface{}{operator_result.ExecStateColumn: shared.CanceledExecutionStatus}
+					_, err := eng.OperatorResultWriter.UpdateOperatorResult(ctx, id, changes, eng.Database)
+
+					if err != nil {
+						return errors.Wrapf(err, "Unable to update operator state in database.", op.Name())
+					}
+				}
+
 				return opFailureError(*execState.FailureType, op)
 			}
 

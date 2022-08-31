@@ -311,7 +311,6 @@ func (w *workflowDagImpl) OperatorInputs(op operator.Operator) ([]artifact.Artif
 }
 
 func (w *workflowDagImpl) InitOpAndArtifactResults(ctx context.Context) error {
-	// TODO(ENG-599): wrap these writes into a transaction.
 	// Initialize the operators and artifact results.
 	for _, op := range w.Operators() {
 		err := op.InitializeResult(ctx, w.resultID)
