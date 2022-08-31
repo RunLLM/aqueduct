@@ -98,6 +98,7 @@ def read_artifacts(
             _ = storage.get(input_path)
             _ = storage.get(input_metadata_path)
         except Exception as e:
+            # TODO(ENG-1627): think about retrying the parent operator in such instances.
             raise MissingInputPathsException(
                 "Unable to read inputs artifacts. Exception: %s" % str(e)
             )

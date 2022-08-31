@@ -96,7 +96,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 				bo.outputExecPaths[i].ArtifactMetadataPath = cacheEntry.ArtifactMetadataPath
 				bo.outputExecPaths[i].ArtifactContentPath = cacheEntry.ArtifactContentPath
 
-				// The op metadata path is updated for both for this operator and its output artifacts.
+				// The op metadata path is updated for both this operator and its output artifacts.
 				bo.outputExecPaths[i].OpMetadataPath = cacheEntry.OpMetadataPath
 				bo.metadataPath = cacheEntry.OpMetadataPath
 			}

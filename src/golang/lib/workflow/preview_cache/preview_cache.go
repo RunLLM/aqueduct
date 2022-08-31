@@ -2,13 +2,13 @@ package preview_cache
 
 import (
 	"context"
-	"github.com/dropbox/godropbox/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	lru "github.com/hashicorp/golang-lru"
+	log "github.com/sirupsen/logrus"
 )
 
 // Entry is the object that a cache-user will be fetching.
@@ -137,10 +137,11 @@ func NewInMemoryPreviewCacheManager(
 		ctx := context.Background()
 
 		entry := castCachedValueToEntry(val)
-		if entry == nil {
+		if entry != nil {
+			deleteDataForEntry(ctx, storageConfig, *entry)
+		} else {
 			log.Error("Error when evicting cached entry: Preview Artifact Cache is storing an unexpected data structure.")
 		}
-		deleteDataForEntry(ctx, storageConfig, *entry)
 	})
 	if err != nil {
 		return nil, err
