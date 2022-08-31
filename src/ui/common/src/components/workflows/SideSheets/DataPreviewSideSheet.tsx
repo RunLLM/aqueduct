@@ -26,11 +26,13 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
     (state: RootState) => state.workflowReducer.operatorResults[operatorId]
   );
 
+  console.log('dataPreviewSidesheet operatorResult: ', operatorResult.result);
+
   return (
     <Box p={1} sx={{ height: '75%', overflow: 'auto' }}>
       <DataPreviewer
         previewData={artifactResult}
-        error={operatorResult?.result?.status.error}
+        error={operatorResult?.result?.executionState?.error}
       />
     </Box>
   );
