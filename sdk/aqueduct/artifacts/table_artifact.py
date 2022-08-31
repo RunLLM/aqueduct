@@ -55,7 +55,6 @@ from great_expectations.data_context.types.base import (
 from great_expectations.validator.validator import Validator
 from ruamel import yaml
 
-import aqueduct
 from aqueduct import globals
 
 
@@ -251,6 +250,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A bool artifact that represent the validation result of running the expectation provided on the table.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
@@ -349,6 +350,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the number of missing values for the row/column on the applied table artifact.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -411,6 +414,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the number of rows on this table.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -452,6 +457,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the max for the given column on the applied table artifact.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -496,6 +503,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the min for the given column on the applied table artifact.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -540,6 +549,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the mean for the given column on the applied table artifact.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -584,6 +595,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the standard deviation for the given column on the applied table artifact.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         table_name = self._get_table_name()
@@ -633,6 +646,8 @@ class TableArtifact(BaseArtifact):
         Returns:
             A numeric artifact that represents the requested system metric
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)

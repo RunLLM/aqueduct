@@ -128,7 +128,6 @@ class RelationalDBIntegration(Integration):
         """
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
-
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         integration_info = self._metadata

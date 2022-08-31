@@ -22,6 +22,7 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
+from aqueduct import globals
 from aqueduct.error import AqueductError, InvalidArtifactTypeException
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
@@ -31,6 +32,7 @@ from aqueduct.utils import (
     get_description_for_metric,
     serialize_function,
 )
+
 
 
 class NumericArtifact(BaseArtifact):
@@ -153,6 +155,8 @@ class NumericArtifact(BaseArtifact):
         Returns:
             A bool artifact bound to this metric.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         input_mapping = {
