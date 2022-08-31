@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 
-import globals
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
