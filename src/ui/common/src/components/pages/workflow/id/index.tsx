@@ -1,5 +1,7 @@
+import { Drawer } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
@@ -34,11 +36,9 @@ import {
 } from '../../../../utils/sidesheets';
 import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
 import {
-  AqueductSidebar,
   BottomSidebarHeaderHeightInPx,
   BottomSidebarHeightInPx,
   getBottomSideSheetWidth,
-  SidebarPosition,
 } from '../../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
@@ -323,15 +323,28 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         </Box>
       </Box>
 
+      {/*
+              {currentNode.type !== NodeType.None && (
+                <AqueductSidebar
+                  zIndex={10}
+                  position={SidebarPosition.bottom}
+                  getSideSheetTitle={getNodeLabel}
+                  getSideSheetHeadingContent={getNodeActionButton}
+                >
+                  {getDataSideSheetContent(user, currentNode)}
+                </AqueductSidebar>
+              }
+      */}
+
       {currentNode.type !== NodeType.None && (
-        <AqueductSidebar
-          zIndex={10}
-          position={SidebarPosition.bottom}
-          getSideSheetTitle={getNodeLabel}
-          getSideSheetHeadingContent={getNodeActionButton}
-        >
-          {getDataSideSheetContent(user, currentNode)}
-        </AqueductSidebar>
+        <Drawer anchor="right" variant="persistent" open={true}>
+          <Box minWidth="800px" minHeight="80vh">
+            <Typography variant="h5" marginLeft="16px" marginBottom="16px">
+              {getNodeLabel()}
+            </Typography>
+            {getDataSideSheetContent(user, currentNode)}
+          </Box>
+        </Drawer>
       )}
 
       <WorkflowStatusBar user={user} />

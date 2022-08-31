@@ -99,6 +99,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
               width: '100%',
               overflow: 'auto',
               overflowY: 'hidden',
+              minWidth: '400px',
             }}
           >
             <DataTable
