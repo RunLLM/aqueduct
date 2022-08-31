@@ -4,7 +4,6 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-import aqueduct.globals
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import utils as artifact_utils
@@ -57,7 +56,7 @@ from great_expectations.validator.validator import Validator
 from ruamel import yaml
 
 import aqueduct
-from aqueduct import api_client
+from aqueduct import globals
 
 
 class TableArtifact(BaseArtifact):
@@ -178,7 +177,7 @@ class TableArtifact(BaseArtifact):
         """
         integration_info = config.integration_info
         integration_load_params = config.parameters
-        integrations_map = aqueduct.globals.__GLOBAL_API_CLIENT__.list_integrations()
+        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
 
         if integration_info.name not in integrations_map:
             raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)

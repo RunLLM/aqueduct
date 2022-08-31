@@ -2,14 +2,12 @@ import json
 import textwrap
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, Optional, Union
+from typing import DefaultDict, Dict, List, Union
 
-import aqueduct.globals
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from pydantic import BaseModel
 
-from aqueduct import api_client
+from aqueduct import globals
 
 from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
@@ -52,7 +50,7 @@ class Flow:
         if not isinstance(limit, int) or limit < 0:
             raise InvalidUserArgumentException("Limit must be a positive integer.")
 
-        resp = aqueduct.globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
         return [
             dag_result.to_readable_dict()
             for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
@@ -73,7 +71,7 @@ class Flow:
         # Instead, we'll need to fetch the parameter's value from the parameter operator's output.
         param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         for param_artifact in param_artifacts:
-            param_val = aqueduct.globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+            param_val = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
                 str(dag_result.id),
                 str(param_artifact.id),
             )
@@ -102,9 +100,7 @@ class Flow:
         for operator in dag.list_operators(
             filter_to=[OperatorType.CHECK, OperatorType.FUNCTION, OperatorType.METRIC]
         ):
-            serialized_function = aqueduct.globals.__GLOBAL_API_CLIENT__.export_serialized_function(
-                operator
-            )
+            serialized_function = globals.__GLOBAL_API_CLIENT__.export_serialized_function(operator)
             dag.update_operator_function(operator, serialized_function)
 
         return FlowRun(
@@ -117,7 +113,7 @@ class Flow:
         )
 
     def latest(self) -> FlowRun:
-        resp = aqueduct.globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
         if len(resp.workflow_dag_results) == 0:
             raise InvalidUserActionException("This flow has not been run yet.")
 
@@ -128,7 +124,7 @@ class Flow:
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         run_id = parse_user_supplied_id(run_id)
 
-        resp = aqueduct.globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
         assert (
             len(resp.workflow_dag_results) > 0
         ), "Every flow must have at least one run attached to it."
@@ -153,9 +149,7 @@ class Flow:
         Returns:
             A dictionary mapping the integration id to the list of table names/storage path.
         """
-        workflow_objects = aqueduct.globals.__GLOBAL_API_CLIENT__.list_saved_objects(
-            self._id
-        ).object_details
+        workflow_objects = globals.__GLOBAL_API_CLIENT__.list_saved_objects(self._id).object_details
         object_mapping = defaultdict(list)
         for item in workflow_objects:
             object_mapping[item.integration_name].append(item)
@@ -163,7 +157,7 @@ class Flow:
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""
-        resp = aqueduct.globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
 
@@ -171,7 +165,7 @@ class Flow:
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
         assert latest_metadata.retention_policy is not None, "A flow must have a retention policy."
 
-        url = generate_ui_url(aqueduct.globals.__GLOBAL_API_CLIENT__.construct_base_url(), self._id)
+        url = generate_ui_url(globals.__GLOBAL_API_CLIENT__.construct_base_url(), self._id)
 
         print(
             textwrap.dedent(

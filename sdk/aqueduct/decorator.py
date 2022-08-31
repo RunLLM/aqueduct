@@ -1,7 +1,6 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-import aqueduct.globals
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
@@ -34,8 +33,8 @@ from aqueduct.utils import (
     serialize_function,
 )
 
-from aqueduct import config
 from aqueduct import dag as dag_module
+from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
@@ -301,7 +300,7 @@ def op(
 
         setattr(wrapped, "lazy", lazy_mode)
 
-        if aqueduct.globals.__GLOBAL_CONFIG__.lazy:
+        if globals.__GLOBAL_CONFIG__.lazy:
             return lazy_mode
 
         return wrapped
@@ -433,7 +432,7 @@ def metric(
 
         setattr(wrapped, "lazy", lazy_mode)
 
-        if aqueduct.globals.__GLOBAL_CONFIG__.lazy:
+        if globals.__GLOBAL_CONFIG__.lazy:
             return lazy_mode
 
         return wrapped
@@ -568,7 +567,7 @@ def check(
 
         setattr(wrapped, "lazy", lazy_mode)
 
-        if aqueduct.globals.__GLOBAL_CONFIG__.lazy:
+        if globals.__GLOBAL_CONFIG__.lazy:
             return lazy_mode
         return wrapped
 
