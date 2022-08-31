@@ -763,7 +763,9 @@ func (eng *aqEngine) execute(
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
 			if shouldStopExecution(execState) {
+				log.Infof("Stopping execution of operator %v", op.ID())
 				for id, op := range workflowDag.Operators() {
+					log.Infof("Checking status of operator %v", id)
 					// Skip if this operator has already been completed or is in progress.
 					if _, ok := completedOps[id]; ok {
 						continue
@@ -772,12 +774,7 @@ func (eng *aqEngine) execute(
 						continue
 					}
 
-					changes := map[string]interface{}{operator_result.ExecStateColumn: shared.CanceledExecutionStatus}
-					_, err := eng.OperatorResultWriter.UpdateOperatorResult(ctx, id, changes, eng.Database)
-
-					if err != nil {
-						return errors.Wrapf(err, "Unable to update operator state in database.", op.Name())
-					}
+					op.Cancel(ctx)
 				}
 
 				return opFailureError(*execState.FailureType, op)

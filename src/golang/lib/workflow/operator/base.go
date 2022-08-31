@@ -59,6 +59,10 @@ func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.Id
 }
 
+func (bo *baseOperator) ResultID() uuid.UUID {
+	return bo.resultID
+}
+
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
@@ -287,6 +291,22 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 
 	for _, outputArtifact := range bo.outputs {
 		outputArtifact.Finish(ctx)
+	}
+}
+
+func (bo *baseOperator) Cancel(ctx context.Context) {
+	changes := map[string]interface{}{
+		operator_result.StatusColumn: shared.CanceledExecutionStatus,
+		operator_result.ExecStateColumn: &shared.ExecutionState{
+			Status: shared.CanceledExecutionStatus,
+		},
+	}
+
+	_, err := bo.resultWriter.UpdateOperatorResult(ctx, bo.resultID, changes, bo.db)
+	log.Errorf("Error when setting operator state to canceled: %v", err)
+
+	for _, output := range bo.outputs {
+		output.Cancel(ctx)
 	}
 }
 
