@@ -237,7 +237,7 @@ class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
     operator_name: str
-    created_at: int
+    created_at: str
     integration_name: str
     integration_id: uuid.UUID
     service: ServiceType
