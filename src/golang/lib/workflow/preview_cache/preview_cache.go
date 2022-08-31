@@ -73,8 +73,8 @@ func (c *inMemoryPreviewCacheManagerImpl) GetMulti(_ context.Context, artifactSi
 	return true, cachedEntries, nil
 }
 
-func (c *inMemoryPreviewCacheManagerImpl) Put(ctx context.Context, artifactSignature uuid.UUID, execPaths *utils.ExecPaths) error {
-	return c.putMulti(ctx, []uuid.UUID{artifactSignature}, []*utils.ExecPaths{execPaths})
+func (c *inMemoryPreviewCacheManagerImpl) Put(_ context.Context, artifactSignature uuid.UUID, execPaths *utils.ExecPaths) error {
+	return c.putMulti([]uuid.UUID{artifactSignature}, []*utils.ExecPaths{execPaths})
 }
 
 func castCachedValueToEntry(val interface{}) *Entry {
@@ -94,7 +94,7 @@ func isEqual(execPaths *utils.ExecPaths, entry *Entry) bool {
 	}
 }
 
-func (c *inMemoryPreviewCacheManagerImpl) putMulti(ctx context.Context, artifactSignatures []uuid.UUID, execPathsList []*utils.ExecPaths) error {
+func (c *inMemoryPreviewCacheManagerImpl) putMulti(artifactSignatures []uuid.UUID, execPathsList []*utils.ExecPaths) error {
 	for i, signatures := range artifactSignatures {
 
 		// If the entry already exists, delete the data it points to, since the entry will be overridden.
