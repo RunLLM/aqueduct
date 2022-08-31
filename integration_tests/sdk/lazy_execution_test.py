@@ -1,13 +1,12 @@
 import pandas as pd
 import pytest
-
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
 
-from aqueduct import check, metric, op, global_config
+from aqueduct import check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client):
@@ -143,7 +142,7 @@ def test_lazy_global_config(client):
         assert check_result._get_content() is None
 
         assert op_result.get() == "hello"
-        assert metric_result.get() ==  2.0
+        assert metric_result.get() == 2.0
         assert check_result.get()
 
         # After get(), everything should be materialized on the artifacts.

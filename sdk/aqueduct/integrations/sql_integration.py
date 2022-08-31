@@ -2,9 +2,8 @@ import json
 import re
 from typing import Optional, Union
 
-import pandas as pd
-
 import aqueduct.globals
+import pandas as pd
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -25,6 +24,7 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
+
 from aqueduct import config
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"

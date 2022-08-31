@@ -7,15 +7,14 @@ from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
-import yaml
-
 import aqueduct.globals
+import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
 from aqueduct.config import FlowConfig
 
-from aqueduct import api_client, dag, config
+from aqueduct import api_client, config, dag
 
 from .dag import (
     AddOrReplaceOperatorDelta,

@@ -3,9 +3,8 @@ import uuid
 from textwrap import wrap
 from typing import Any, Dict, List, Mapping, Optional, Union
 
-import plotly.graph_objects as go
-
 import aqueduct.globals
+import plotly.graph_objects as go
 from aqueduct.artifacts import (
     base_artifact,
     bool_artifact,

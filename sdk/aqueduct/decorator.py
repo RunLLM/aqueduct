@@ -1,9 +1,8 @@
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
-import numpy as np
-
 import aqueduct.globals
+import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -35,7 +34,8 @@ from aqueduct.utils import (
     serialize_function,
 )
 
-from aqueduct import config, dag as dag_module
+from aqueduct import config
+from aqueduct import dag as dag_module
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 

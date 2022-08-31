@@ -1,8 +1,7 @@
 from unittest.mock import MagicMock
 
-import pandas as pd
-
 import aqueduct.globals
+import pandas as pd
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact

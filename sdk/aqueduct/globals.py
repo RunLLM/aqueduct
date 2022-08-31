@@ -1,10 +1,10 @@
-from pydantic import BaseModel
-
 from aqueduct.api_client import APIClient
+from pydantic import BaseModel
 
 
 class GlobalConfig(BaseModel):
     """Defines the fields that are globally configurable with `aq.global_config()`."""
+
     lazy: bool
 
 

@@ -22,6 +22,7 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+
 from aqueduct import config
 
 

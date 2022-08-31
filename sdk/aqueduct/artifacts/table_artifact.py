@@ -4,9 +4,8 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-import pandas as pd
-
 import aqueduct.globals
+import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact

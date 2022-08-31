@@ -6,10 +6,9 @@ import uuid
 from pathlib import Path
 from time import sleep
 
+import aqueduct.globals
 import pytest
 import requests
-
-import aqueduct.globals
 import utils
 from setup.changing_saves_workflow import setup_changing_saves
 
