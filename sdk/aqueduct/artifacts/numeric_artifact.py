@@ -22,7 +22,6 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
-from aqueduct import globals
 from aqueduct.error import AqueductError, InvalidArtifactTypeException
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
@@ -33,6 +32,7 @@ from aqueduct.utils import (
     serialize_function,
 )
 
+from aqueduct import globals
 
 
 class NumericArtifact(BaseArtifact):
