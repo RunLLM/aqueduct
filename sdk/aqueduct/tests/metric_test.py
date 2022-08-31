@@ -3,6 +3,7 @@ import sys
 from io import StringIO
 from unittest.mock import MagicMock
 
+import aqueduct.globals
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.decorator import check, metric
 from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
@@ -37,7 +38,7 @@ def test_metric():
     )
     dag = metric_input._dag
 
-    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+    aqueduct.globals.__GLOBAL_API_CLIENT__.preview = MagicMock(
         side_effect=construct_mocked_preview(
             metric_artifact_name,
             ArtifactType.NUMERIC,
@@ -114,7 +115,7 @@ def test_metrics_and_checks_on_table_describe():
     check_artifact_name = f"{check_name} artifact"
     check_output = True
 
-    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+    aqueduct.globals.__GLOBAL_API_CLIENT__.preview = MagicMock(
         side_effect=construct_mocked_preview(
             check_artifact_name,
             ArtifactType.BOOL,

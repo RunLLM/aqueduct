@@ -5,6 +5,8 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
+
+import aqueduct.globals
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
@@ -177,7 +179,7 @@ class TableArtifact(BaseArtifact):
         """
         integration_info = config.integration_info
         integration_load_params = config.parameters
-        integrations_map = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        integrations_map = aqueduct.globals.__GLOBAL_API_CLIENT__.list_integrations()
 
         if integration_info.name not in integrations_map:
             raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)

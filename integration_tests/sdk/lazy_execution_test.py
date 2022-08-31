@@ -1,10 +1,13 @@
 import pandas as pd
+import pytest
+
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from utils import get_integration_name
 
-from aqueduct import check, metric, op
+from aqueduct import check, metric, op, global_config
 
 
 def test_lazy_sql_extractor(client):
@@ -103,3 +106,50 @@ def test_lazy_artifact_type(client):
     # For lazily generated artifact, even after we materialize its value, its type should still be
     # `GenericArtifact` and does not expose type-specific syntax sugars.
     assert isinstance(output_artifact, GenericArtifact)
+
+
+def test_lazy_global_config(client):
+    with pytest.raises(InvalidUserArgumentException):
+        global_config({"lazy": 1234})
+
+    try:
+        global_config({"lazy": True})
+
+        db = client.integration(name=get_integration_name())
+        sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+        assert sql_artifact._get_content() is None
+        assert isinstance(sql_artifact.get(), pd.DataFrame)
+        # After calling get(), artifact's content should be materialized.
+        assert sql_artifact._get_content() is not None
+
+        @op
+        def dummy_op():
+            return "hello"
+
+        @metric
+        def dummy_metric(arg):
+            return 2.0
+
+        @check
+        def dummy_check(arg):
+            return True
+
+        op_result = dummy_op()
+        metric_result = dummy_metric(op_result)
+        check_result = dummy_check(op_result)
+
+        assert op_result._get_content() is None
+        assert metric_result._get_content() is None
+        assert check_result._get_content() is None
+
+        assert op_result.get() == "hello"
+        assert metric_result.get() ==  2.0
+        assert check_result.get()
+
+        # After get(), everything should be materialized on the artifacts.
+        assert op_result._get_content() is not None
+        assert metric_result._get_content() is not None
+        assert check_result._get_content() is not None
+
+    finally:
+        global_config({"lazy": False})

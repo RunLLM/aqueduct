@@ -4,6 +4,8 @@ from textwrap import wrap
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 import plotly.graph_objects as go
+
+import aqueduct.globals
 from aqueduct.artifacts import (
     base_artifact,
     bool_artifact,
@@ -54,7 +56,7 @@ class FlowRun:
         """Prints out a human-readable description of the flow run."""
 
         url = generate_ui_url(
-            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
+            aqueduct.globals.__GLOBAL_API_CLIENT__.construct_base_url(),
             self._flow_id,
             self._id,
         )

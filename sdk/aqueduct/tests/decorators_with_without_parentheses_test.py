@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 
 import pandas as pd
+
+import aqueduct.globals
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -88,7 +90,7 @@ def test_decorators_with_without_parentheses():
             name = f"{decorator}_fn_{inp_type.replace(' ', '_')}"
             artifact_name = f"{name} artifact"
 
-            api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+            aqueduct.globals.__GLOBAL_API_CLIENT__.preview = MagicMock(
                 side_effect=construct_mocked_preview(
                     artifact_name,
                     expected_artifact_type,

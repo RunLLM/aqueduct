@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 
+import aqueduct.globals
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
@@ -72,7 +73,7 @@ class Github:
         self.branch = branch
 
     def list_branches(self) -> List[str]:
-        return api_client.__GLOBAL_API_CLIENT__.list_github_branches(self.repo_url)
+        return aqueduct.globals.__GLOBAL_API_CLIENT__.list_github_branches(self.repo_url)
 
     def op(
         self,

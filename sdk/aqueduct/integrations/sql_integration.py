@@ -3,6 +3,8 @@ import re
 from typing import Optional, Union
 
 import pandas as pd
+
+import aqueduct.globals
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -23,6 +25,7 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct import config
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -123,6 +126,9 @@ class RelationalDBIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        if aqueduct.globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
+
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         integration_info = self._metadata

@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
+import aqueduct.globals
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
@@ -37,7 +38,7 @@ def preview_artifact(
         make_copy=True,
     )
 
-    preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
+    preview_resp = aqueduct.globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
     artifact_response = preview_resp.artifact_results[artifact_id]
 
     serialization_type = artifact_response.serialization_type
