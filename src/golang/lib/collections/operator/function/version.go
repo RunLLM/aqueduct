@@ -33,7 +33,6 @@ func GetPythonVersion(ctx context.Context, path string, storageConfig *shared.St
 	}
 
 	return readPythonVersion(program)
-
 }
 
 // readPythonVersion looks for a file named `python_version.txt` in `program`, which
