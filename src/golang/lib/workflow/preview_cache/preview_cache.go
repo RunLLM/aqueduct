@@ -106,11 +106,11 @@ func (c *inMemoryPreviewCacheManagerImpl) putMulti(ctx context.Context, artifact
 				return errors.New("Preview Artifact Cache is storing an unexpected data structure.")
 			}
 
-			// If the entry already exists and has the same data, short-circuit as there is no need
-			// to update anything.
-			if isEqual(execPathsList[i], existingEntry) {
-				return nil
+			// If the entry already exists, then it must have the same data.
+			if !isEqual(execPathsList[i], existingEntry) {
+				return errors.New("When updating an existing entry in the preview cache, we expect the entry to be the same.")
 			}
+			return nil
 		}
 
 		c.cache.Add(signatures, Entry{
@@ -118,12 +118,6 @@ func (c *inMemoryPreviewCacheManagerImpl) putMulti(ctx context.Context, artifact
 			ArtifactMetadataPath: execPathsList[i].ArtifactMetadataPath,
 			OpMetadataPath:       execPathsList[i].OpMetadataPath,
 		})
-
-		// After adding the new value to the cache, delete the orphaned data if this overwrote an existing
-		// entry. This is best-effort.
-		if existingEntry != nil {
-			deleteDataForEntry(ctx, c.storageConfig, *existingEntry)
-		}
 	}
 	return nil
 }
