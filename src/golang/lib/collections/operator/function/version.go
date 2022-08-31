@@ -15,11 +15,11 @@ import (
 type PythonVersion string
 
 const (
-	PythonVersionUnknown = "unknown"
-	PythonVersion37      = "3.7"
-	PythonVersion38      = "3.8"
-	PythonVersion39      = "3.9"
-	PythonVersion310     = "3.10"
+	PythonVersionUnknown PythonVersion = "unknown"
+	PythonVersion37      PythonVersion = "3.7"
+	PythonVersion38      PythonVersion = "3.8"
+	PythonVersion39      PythonVersion = "3.9"
+	PythonVersion310     PythonVersion = "3.10"
 )
 
 const pythonVersionFile = "python_version.txt"
@@ -32,6 +32,13 @@ func GetPythonVersion(ctx context.Context, path string, storageConfig *shared.St
 		return PythonVersionUnknown, err
 	}
 
+	return readPythonVersion(program)
+
+}
+
+// readPythonVersion looks for a file named `python_version.txt` in `program`, which
+// is zipped file. It returns the Python version found in the file.
+func readPythonVersion(program []byte) (PythonVersion, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(program), int64(len(program)))
 	if err != nil {
 		return PythonVersionUnknown, err
