@@ -166,7 +166,34 @@ def test_lazy_global_config(client):
     finally:
         global_config({"lazy": False})
 
-def test_lazy_operators_backfilled_by_downstream(client):
+def test_lazy_artifacts_backfilled_by_downstream(client):
     @op
     def generate_number():
         return 2.0
+
+    @op
+    def double_number(x):
+        return 2 * x
+
+    # Eager execution will type the upstream operator, but will not backfill the contents!
+    num = generate_number.lazy()
+    assert num._get_type() == ArtifactType.UNTYPED
+    assert num._get_content() is None
+    output = double_number(num)
+
+    assert num._get_type() == ArtifactType.NUMERIC
+    assert num._get_content() is None
+    assert output._get_type() == ArtifactType.NUMERIC
+    assert output._get_content() == 4.0
+
+    # .get() will also type the upstream operator, same as above.
+    num = generate_number.lazy()
+    output = double_number.lazy(num)
+    assert output._get_type() == ArtifactType.UNTYPED
+    assert output._get_content() is None
+    assert output.get() == 4.0
+
+    assert num._get_type() == ArtifactType.NUMERIC
+    assert num._get_content() is None
+    assert output._get_type() == ArtifactType.NUMERIC
+    assert output._get_content() == 4.0
