@@ -26,7 +26,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -227,8 +226,6 @@ func ValidateConfig(
 	jobManager job.JobManager,
 	storageConfig *shared.StorageConfig,
 ) (int, error) {
-	configBytes, _ := config.Marshal()
-	log.Infof("config is %s", string(configBytes))
 	if service == integration.Airflow {
 		// Airflow authentication is performed via the Go client
 		// instead of the Python client, so we don't launch a job for it.
