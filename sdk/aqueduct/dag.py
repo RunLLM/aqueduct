@@ -1,11 +1,11 @@
 import copy
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -223,6 +223,9 @@ class DAG(BaseModel):
     def add_artifacts(self, artifacts: List[ArtifactMetadata]) -> None:
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
+
+    def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
+        self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.

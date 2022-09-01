@@ -7,7 +7,6 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
-from aqueduct.error import AqueductError, InvalidArtifactTypeException
 
 
 class GenericArtifact(BaseArtifact):
@@ -25,19 +24,20 @@ class GenericArtifact(BaseArtifact):
         content: Optional[Any] = None,
         from_flow_run: bool = False,
     ):
+        if content is not None:
+            assert artifact_type != ArtifactType.UNTYPED
+
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
-        self._set_type(artifact_type)
         self._set_content(content)
 
         if self._from_flow_run:
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-        if self._get_content() is not None:
-            assert self._get_type() != ArtifactType.UNTYPED
+
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
@@ -59,23 +59,13 @@ class GenericArtifact(BaseArtifact):
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if (
-            self._get_type() != ArtifactType.UNTYPED
-            and previewed_artifact._get_type() != self._get_type()
-        ):
-            raise InvalidArtifactTypeException(
-                "The computed artifact is expected to be type %s, but has type %s"
-                % (self._get_type(), previewed_artifact._get_type())
-            )
+        content = previewed_artifact._get_content()
 
-        if parameters:
-            return previewed_artifact._get_content()
-        else:
-            # We are materializing an artifact generated from lazy execution.
-            assert self._get_content() is None
-            self._set_content(previewed_artifact._get_content())
-            self._set_type(previewed_artifact._get_type())
-            return self._get_content()
+        # If the artifact was previously generated lazily, materialize the contents.
+        if self._get_content() is None:
+            self._set_content(content)
+
+        return content
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""

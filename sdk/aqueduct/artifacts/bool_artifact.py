@@ -51,8 +51,6 @@ class BoolArtifact(BaseArtifact):
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-        self._set_type(ArtifactType.BOOL)
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
         """Materializes a BoolArtifact into a boolean.
 
@@ -73,23 +71,14 @@ class BoolArtifact(BaseArtifact):
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact._get_type() != ArtifactType.BOOL:
-            raise InvalidArtifactTypeException(
-                "Error: the computed result is expected to of type bool, found %s"
-                % previewed_artifact._get_type()
-            )
+        content = previewed_artifact._get_content()
+        assert isinstance(content, bool) or isinstance(content, np.bool_)
 
-        assert isinstance(previewed_artifact._get_content(), bool) or isinstance(
-            previewed_artifact._get_content(), np.bool_
-        )
+        # If the artifact was previously generated lazily, materialize the contents.
+        if self._get_content() is None:
+            self._set_content(content)
 
-        if parameters:
-            return previewed_artifact._get_content()
-        else:
-            # We are materializing an artifact generated from lazy execution.
-            assert self._get_content() is None
-            self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+        return content
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""

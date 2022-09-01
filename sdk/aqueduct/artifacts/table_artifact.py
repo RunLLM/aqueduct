@@ -97,8 +97,6 @@ class TableArtifact(BaseArtifact):
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-        self._set_type(ArtifactType.TABLE)
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
 
@@ -124,21 +122,14 @@ class TableArtifact(BaseArtifact):
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact._get_type() != ArtifactType.TABLE:
-            raise InvalidArtifactTypeException(
-                "Error: the computed result is expected to of type table, found %s"
-                % previewed_artifact._get_type()
-            )
+        content = previewed_artifact._get_content()
+        assert isinstance(content, pd.DataFrame)
 
-        assert isinstance(previewed_artifact._get_content(), pd.DataFrame)
+        # If the artifact was previously generated lazily, materialize the contents.
+        if self._get_content() is None:
+            self._set_content(content)
 
-        if parameters:
-            return previewed_artifact._get_content()
-        else:
-            # We are materializing an artifact generated from lazy execution.
-            assert self._get_content() is None
-            self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+        return content
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Returns a preview of the table artifact.
@@ -708,16 +699,10 @@ class TableArtifact(BaseArtifact):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact._get_type() != output_artifact_type_hint:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (output_artifact_type_hint, artifact._get_type())
-                )
 
             assert isinstance(artifact, numeric_artifact.NumericArtifact) or isinstance(
                 artifact, bool_artifact.BoolArtifact
             )
-
             return artifact
         else:
             # We are in lazy mode.
