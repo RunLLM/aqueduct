@@ -108,6 +108,7 @@ Config = Union[
     MySqlConfig,
     PostgresConfig,
     S3Config,
+    AthenaConfig,
     SnowflakeConfig,
     SqlServerConfig,
     SqliteConfig,

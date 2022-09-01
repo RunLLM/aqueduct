@@ -103,6 +103,18 @@ export type S3Config = {
   use_as_storage: string;
 };
 
+export type AthenaConfig = {
+  type: AWSCredentialType;
+  access_key_id: string;
+  secret_access_key: string;
+  region: string;
+  config_file_path: string;
+  config_file_content: string;
+  config_file_profile: string;
+  database: string;
+  output_location: string;
+};
+
 export type GCSConfig = {
   bucket: string;
   service_account_credentials?: string;
@@ -135,6 +147,7 @@ export type IntegrationConfig =
   | GoogleSheetsConfig
   | SalesforceConfig
   | S3Config
+  | AthenaConfig
   | GCSConfig
   | AqueductDemoConfig
   | AirflowConfig
@@ -148,6 +161,7 @@ export type Service =
   | 'MySQL'
   | 'MariaDB'
   | 'S3'
+  | 'Athena'
   | 'CSV'
   | 'GCS'
   | 'Aqueduct Demo'
@@ -294,13 +308,18 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: 'data',
   },
+  ['Athena']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/athena.png',
+    activated: true,
+    category: 'data',
+  },
   ['Airflow']: {
-    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: false,
     category: 'compute',
   },
   ['Kubernetes']: {
-    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
     activated: true,
     category: 'compute',
   },
