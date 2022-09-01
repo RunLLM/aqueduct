@@ -99,9 +99,7 @@ class NumericArtifact(BaseArtifact):
 
         content = previewed_artifact._get_content()
         assert (
-            isinstance(content, int)
-            or isinstance(content, float)
-            or isinstance(content, np.number)
+            isinstance(content, int) or isinstance(content, float) or isinstance(content, np.number)
         )
 
         if self._get_content() is None:

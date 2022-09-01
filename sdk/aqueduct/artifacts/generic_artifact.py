@@ -37,7 +37,6 @@ class GenericArtifact(BaseArtifact):
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
 

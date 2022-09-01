@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
@@ -50,7 +50,10 @@ def preview_artifact(
     target_artifact_type = target_artifact_result.artifact_type
 
     existing_type_annotation = dag.must_get_artifact(target_artifact_id).type
-    if existing_type_annotation != ArtifactType.UNTYPED and existing_type_annotation != target_artifact_type:
+    if (
+        existing_type_annotation != ArtifactType.UNTYPED
+        and existing_type_annotation != target_artifact_type
+    ):
         raise InvalidArtifactTypeException(
             "The computed artifact is expected to be type %s, but has type %s"
             % (existing_type_annotation, target_artifact_type)
@@ -60,7 +63,7 @@ def preview_artifact(
     # Any non-target artifacts are guaranteed to be upstream of the target artifact (due to the SubgraphDAGDelta),
     # so if any of them are the result of a lazy operation, we'll want to backfill their types. *We do NOT backfill
     # their contents*, as those are stored on the Artifact class itself and not the underlying shared dag.
-    for artifact_id, artifact_result in preview_resp.artifact_results.values():
+    for artifact_id, artifact_result in preview_resp.artifact_results.items():
         # We've already processed the target artifact.
         if artifact_id == target_artifact_id:
             continue
@@ -74,7 +77,9 @@ def preview_artifact(
     elif target_artifact_type == ArtifactType.BOOL:
         return bool_artifact.BoolArtifact(dag, target_artifact_id, target_artifact_content)
     else:
-        return generic_artifact.GenericArtifact(dag, target_artifact_id, target_artifact_type, target_artifact_content)
+        return generic_artifact.GenericArtifact(
+            dag, target_artifact_id, target_artifact_type, target_artifact_content
+        )
 
 
 def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> Any:
@@ -85,5 +90,4 @@ def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> A
 
     content = deserialization_function_mapping[serialization_type](artifact_result.content)
     assert infer_artifact_type(content) == artifact_result.artifact_type
-
-
+    return content
