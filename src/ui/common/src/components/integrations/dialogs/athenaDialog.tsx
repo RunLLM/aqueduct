@@ -145,7 +145,7 @@ export const AthenaDialog: React.FC<Props> = ({
         SSO profile, you should use <code>SPECIFY PATH TO CREDENTIALS</code>{' '}
         instead.
       </Typography>
-      {/* add these message once integration edit is ready:
+      {/* TODO: add these message once integration edit is ready:
         Once connected, you would need to re-upload the file to update the credentials.
       */}
       <IntegrationFileUploadField
