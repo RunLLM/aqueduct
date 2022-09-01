@@ -136,7 +136,7 @@ class RelationalDBIntegration(Integration):
         # overwrite the existing one.
         sql_op_name = name
         if sql_op_name is None:
-            sql_op_name = self._dag.get_new_unique_op_name(
+            sql_op_name = self._dag.get_unclaimed_op_name(
                 prefix="%s query" % integration_info.name
             )
 

@@ -145,7 +145,7 @@ def add_load_operator(
                 % integration_info.name
             )
 
-    load_op_name = dag.get_new_unique_op_name(prefix="%s loader" % integration_info.name)
+    load_op_name = dag.get_unclaimed_op_name(prefix="%s loader" % integration_info.name)
 
     # Add the load operator as a terminal node.
     apply_deltas_to_dag(

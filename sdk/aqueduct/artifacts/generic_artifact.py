@@ -79,9 +79,9 @@ class GenericArtifact(BaseArtifact):
                 An error occurred because the requested integration could not be found.
             InvalidUserActionException:
                 An error occurred because you are trying to load non-relational data into a relational integration.
-            InvalidUserArgument
+            InvalidUserArgumentException:
+                An error occurred because some necessary fields are missing in the SaveConfig.
         """
-        must_be_relational = self._get_type() == ArtifactType.TABLE
         artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
 
     def describe(self) -> None:

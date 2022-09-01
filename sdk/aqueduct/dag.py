@@ -210,8 +210,12 @@ class DAG(BaseModel):
 
         return artifacts
 
-    def get_new_unique_op_name(self, prefix: str) -> str:
-        """TODO: documentation"""
+    def get_unclaimed_op_name(self, prefix: str) -> str:
+        """Returns an operator name that is guaranteed to not collide with any existing name in the dag.
+
+        Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
+        until we hit an unclaimed name.
+        """
         curr_suffix = 1
         while True:
             candidate_name = prefix + " %d" % curr_suffix

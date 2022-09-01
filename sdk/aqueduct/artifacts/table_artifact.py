@@ -163,6 +163,8 @@ class TableArtifact(BaseArtifact):
             InvalidIntegrationException:
                 An error occurred because the requested integration could not be
                 found.
+            InvalidUserArgumentException:
+                An error occurred because some necessary fields are missing in the SaveConfig.
         """
         artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
 
