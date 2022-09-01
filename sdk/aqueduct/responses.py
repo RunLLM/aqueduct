@@ -15,7 +15,7 @@ from aqueduct.enums import (
 )
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class Logs(BaseModel):
@@ -238,19 +238,12 @@ class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
     operator_name: str
-    modified_at: date
+    modified_at: str
     integration_name: str
     integration_id: uuid.UUID
     service: ServiceType
     object_name: str
     update_mode: str
-
-    @validator("modified_at", pre=True)
-    def parse_modified_at(cls, value):
-        return datetime.strptime(
-            value,
-            "%Y-%m-%dT%H:%M:%S.%f%z"
-        ).date()
 
 
 class ListWorkflowSavedObjectsResponse(BaseModel):

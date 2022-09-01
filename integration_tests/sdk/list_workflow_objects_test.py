@@ -68,7 +68,6 @@ def test_list_saved_objects(client):
         ]
         integration_name = list(data.keys())[0]
         assert len(data[integration_name]) == 3
-        print([(item.object_name, item.update_mode) for item in data[integration_name]])
         for i in range(3):
             item = data[integration_name][i]
             assert (item.object_name, item.update_mode) == data_set[i]
