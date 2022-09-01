@@ -142,6 +142,7 @@ def test_publish_flow_with_same_name(client):
             artifacts=[metric],
             name=flow_name,
             schedule=aqueduct.daily(hour=aqueduct.Hour(1)),
+            num_runs=2,
             delete_flow_after=False,
         )
         flow_ids_to_delete.add(flow.id())
