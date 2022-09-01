@@ -37,8 +37,8 @@ type SalesforceLoadParams struct {
 }
 
 type S3LoadParams struct {
-	Filepath string `json:"filepath"`
-	Format   string `json:"format"`
+	Filepath string  `json:"filepath"`
+	Format   *string `json:"format"`
 }
 
 func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, bool) {

@@ -28,7 +28,6 @@ from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
-    LoadSpec,
     MetricSpec,
     Operator,
     OperatorSpec,
@@ -149,7 +148,7 @@ class TableArtifact(BaseArtifact):
         return df.head(n)
 
     def save(self, config: SaveConfig) -> None:
-        """Configure this artifact to be written to a specific integration after its computed.
+        """Configure this artifact to be written to a specific integration after it's computed in a published flow.
 
         >>> db = client.integration(name="demo/")
         >>> customer_data = db.sql("SELECT * from customers")
@@ -165,35 +164,7 @@ class TableArtifact(BaseArtifact):
                 An error occurred because the requested integration could not be
                 found.
         """
-        integration_info = config.integration_info
-        integration_load_params = config.parameters
-        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
-
-        if integration_info.name not in integrations_map:
-            raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
-
-        # Add the load operator as a terminal node.
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=generate_uuid(),
-                        name="%s Loader" % integration_info.name,
-                        description="",
-                        spec=OperatorSpec(
-                            load=LoadSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
-                                parameters=integration_load_params,
-                            )
-                        ),
-                        inputs=[self._artifact_id],
-                    ),
-                    output_artifacts=[],
-                )
-            ],
-        )
+        artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 

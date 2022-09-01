@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 from aqueduct_executor.operators.connectors.data import common, models
 from pydantic import validator
@@ -20,7 +20,7 @@ class RelationalParams(models.BaseParams):
 
 class S3Params(models.BaseParams):
     filepath: str
-    format: common.S3TableFormat
+    format: Optional[common.S3TableFormat]
 
 
 Params = Union[RelationalParams, S3Params]

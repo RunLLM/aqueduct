@@ -4,12 +4,24 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
-from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
+from aqueduct.dag import (
+    DAG,
+    AddOrReplaceOperatorDelta,
+    SubgraphDAGDelta,
+    UpdateParametersDelta,
+    apply_deltas_to_dag,
+)
 from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidArtifactTypeException
+from aqueduct.error import (
+    InvalidArtifactTypeException,
+    InvalidIntegrationException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
+from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, SaveConfig
 from aqueduct.responses import ArtifactResult
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils import generate_uuid, infer_artifact_type
 
 from aqueduct import globals
 
@@ -106,3 +118,54 @@ def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> A
     content = deserialization_function_mapping[serialization_type](artifact_result.content)
     assert infer_artifact_type(content) == artifact_result.artifact_type
     return content
+
+
+def add_load_operator(
+    dag: DAG, artifact_id: uuid.UUID, artifact_type: ArtifactType, config: SaveConfig
+) -> None:
+    integration_info = config.integration_info
+    integration_load_params = config.parameters
+    integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
+
+    if integration_info.name not in integrations_map:
+        raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
+
+    # Non-tabular data cannot be saved into relational data stores.
+    if artifact_type != ArtifactType.TABLE and integration_info.is_relational():
+        raise InvalidUserActionException(
+            "Unable to load non-relational data into relational data store `%s`."
+            % integration_info.name
+        )
+
+    # Tabular data written into S3 must include a S3FileFormat hint.
+    if artifact_type == ArtifactType.TABLE and isinstance(config.parameters, S3LoadParams):
+        if config.parameters.format is None:
+            raise InvalidUserArgumentException(
+                "You must supply a file format when saving tabular data into S3 integration `%s`."
+                % integration_info.name
+            )
+
+    load_op_name = dag.get_new_unique_op_name(prefix="%s loader" % integration_info.name)
+
+    # Add the load operator as a terminal node.
+    apply_deltas_to_dag(
+        dag,
+        deltas=[
+            AddOrReplaceOperatorDelta(
+                op=Operator(
+                    id=generate_uuid(),
+                    name=load_op_name,
+                    description="",
+                    spec=OperatorSpec(
+                        load=LoadSpec(
+                            service=integration_info.service,
+                            integration_id=integration_info.id,
+                            parameters=integration_load_params,
+                        )
+                    ),
+                    inputs=[artifact_id],
+                ),
+                output_artifacts=[],
+            )
+        ],
+    )

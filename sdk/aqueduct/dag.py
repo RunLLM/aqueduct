@@ -210,6 +210,21 @@ class DAG(BaseModel):
 
         return artifacts
 
+    def get_new_unique_op_name(self, prefix: str) -> str:
+        """TODO: documentation"""
+        curr_suffix = 1
+        while True:
+            candidate_name = prefix + " %d" % curr_suffix
+            colliding_op = self.get_operator(with_name=candidate_name)
+            if colliding_op is None:
+                # We've found an unallocated name!
+                op_name = candidate_name
+                break
+            curr_suffix += 1
+
+        assert op_name is not None
+        return op_name
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:

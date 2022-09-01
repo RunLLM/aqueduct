@@ -25,6 +25,20 @@ class IntegrationInfo(BaseModel):
         }
         print(json.dumps(description_map, sort_keys=False, indent=4))
 
+    def is_relational(self) -> bool:
+        """Returns whether the integration connects to a relational data store."""
+        return self.service in [
+            ServiceType.POSTGRES,
+            ServiceType.SNOWFLAKE,
+            ServiceType.MYSQL,
+            ServiceType.REDSHIFT,
+            ServiceType.MARIADB,
+            ServiceType.SQLSERVER,
+            ServiceType.BIGQUERY,
+            ServiceType.AQUEDUCTDEMO,
+            ServiceType.SQLITE,
+        ]
+
 
 class Integration(ABC):
     """

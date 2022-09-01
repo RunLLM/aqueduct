@@ -93,7 +93,7 @@ class GoogleSheetsLoadParams(BaseModel):
 
 class S3LoadParams(BaseModel):
     filepath: str
-    format: S3TableFormat
+    format: Optional[S3TableFormat]
 
 
 UnionLoadParams = Union[
