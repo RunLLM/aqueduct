@@ -65,6 +65,7 @@ type ArtifactImpl struct {
 
 	execPaths *utils.ExecPaths
 
+	writer       artifact.Writer
 	resultWriter artifact_result.Writer
 	resultID     uuid.UUID
 
@@ -81,6 +82,7 @@ func NewArtifact(
 	signature uuid.UUID,
 	dbArtifact artifact.DBArtifact,
 	execPaths *utils.ExecPaths,
+	artifactWriter artifact.Writer,
 	artifactResultWriter artifact_result.Writer,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
@@ -97,6 +99,7 @@ func NewArtifact(
 		description:         dbArtifact.Description,
 		artifactType:        dbArtifact.Type,
 		execPaths:           execPaths,
+		writer:              artifactWriter,
 		resultWriter:        artifactResultWriter,
 		resultID:            uuid.Nil,
 		previewCacheManager: previewCacheManager,
@@ -192,6 +195,40 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	}
 }
 
+// For lazily published workflows, we will need to update the artifact type in the database
+// to something more specific than UNTYPED, so that we can enforce types in the future.
+// Errors are ignored, since this update is meant to be best-effort.
+func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
+	ctx context.Context,
+) {
+	if a.artifactType != artifact.Untyped {
+		return
+	}
+
+	if !a.Computed(ctx) {
+		return
+	}
+
+	metadata, err := a.GetMetadata(ctx)
+	if err != nil {
+		log.Errorf("Error when fetching artifact metadata: %v", err)
+		return
+	}
+
+	changes := map[string]interface{}{
+		artifact.TypeColumn: metadata.ArtifactType,
+	}
+
+	_, err = a.writer.UpdateArtifact(ctx, a.ID(), changes, a.db)
+	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"changes": changes,
+			},
+		).Errorf("Unable to update the artifact type: %v", err)
+	}
+}
+
 func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.ExecutionState) error {
 	if a.previewCacheManager != nil {
 		return errors.Newf("Artifact %s is cache-aware, so it cannot be persisted.", a.Name())
@@ -205,6 +242,8 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.Exec
 	}
 
 	a.updateArtifactResultAfterComputation(ctx, execState)
+	a.updateArtifactTypeAfterComputation(ctx)
+
 	a.resultsPersisted = true
 	return nil
 }
