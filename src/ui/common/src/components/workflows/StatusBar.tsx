@@ -430,9 +430,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
-      const opExecState: ExecState = operatorResult.result?.executionState;
-      const operatorExecutionStatus: ExecutionStatus =
-        operatorResult.result?.status;
+      const opExecState: ExecState = operatorResult.result?.exec_state;
+      const operatorExecutionStatus: ExecutionStatus = operatorResult.result
+        ? operatorResult.result.exec_state.status
+        : null;
 
       if (
         operatorExecutionStatus === ExecutionStatus.Failed &&

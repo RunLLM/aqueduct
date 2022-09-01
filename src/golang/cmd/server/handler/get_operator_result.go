@@ -51,7 +51,7 @@ type GetOperatorResultHandler struct {
 type GetOperatorResultResponse struct {
 	Name           string                `json:"name"`
 	Description    string                `json:"description"`
-	ExecutionState shared.ExecutionState `json:"executionState"`
+	ExecState shared.ExecutionState `json:"exec_state"`
 	// TODO: Roll these into just ExecutionState when done.
 	//UserLogs    *shared.Logs            `json:"user_logs"`
 	Status shared.ExecutionStatus `json:"status"`
@@ -140,20 +140,18 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	executionState := shared.ExecutionState{
-		Status:      dbOperatorResult.Status,
-		FailureType: nil,
-		Error:       nil,
-		UserLogs:    nil,
+		Status: dbOperatorResult.ExecState.Status,
 	}
 
 	if dbOperatorResult != nil && !dbOperatorResult.ExecState.IsNull {
 		executionState.FailureType = dbOperatorResult.ExecState.FailureType
 		executionState.Error = dbOperatorResult.ExecState.Error
 		executionState.UserLogs = dbOperatorResult.ExecState.UserLogs
+		executionState.Status = dbOperatorResult.ExecState.Status
 	}
 
 	response := GetOperatorResultResponse{
-		ExecutionState: executionState, Name: dbOperator.Name, Description: dbOperator.Description, Status: executionState.Status, //FailureType: executionState.FailureType, Error: executionState.Error, UserLogs: executionState.UserLogs,
+		ExecState: executionState, Name: dbOperator.Name, Description: dbOperator.Description, Status: executionState.Status, //FailureType: executionState.FailureType, Error: executionState.Error, UserLogs: executionState.UserLogs,
 	}
 
 	return response, http.StatusOK, nil

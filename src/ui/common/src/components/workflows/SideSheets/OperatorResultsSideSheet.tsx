@@ -40,10 +40,10 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   );
   const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
   const logs =
-    workflow.operatorResults[currentNode.id]?.result?.executionState
-      ?.user_logs ?? {};
+    workflow.operatorResults[currentNode.id]?.result?.exec_state?.user_logs ??
+    {};
   const operatorError =
-    workflow.operatorResults[currentNode.id]?.result?.executionState?.error;
+    workflow.operatorResults[currentNode.id]?.result?.exec_state?.error;
   const integrations = useSelector(
     (state: RootState) => state.integrationsReducer
   );
@@ -56,7 +56,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
 
   const operatorSpec = operator.spec;
   const execState: ExecState =
-    workflow.operatorResults[currentNode.id]?.result?.executionState;
+    workflow.operatorResults[currentNode.id]?.result?.exec_state;
 
   let spec, integration, actions;
 
