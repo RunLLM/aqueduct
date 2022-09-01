@@ -165,3 +165,8 @@ def test_lazy_global_config(client):
 
     finally:
         global_config({"lazy": False})
+
+def test_lazy_operators_backfilled_by_downstream(client):
+    @op
+    def generate_number():
+        return 2.0
