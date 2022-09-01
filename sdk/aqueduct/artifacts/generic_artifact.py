@@ -38,7 +38,6 @@ class GenericArtifact(BaseArtifact):
             assert self._get_content() is None
 
 
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
 
