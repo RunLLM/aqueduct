@@ -1,5 +1,6 @@
 import {
   faCircleCheck,
+  faCircleInfo,
   faCircleXmark,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -12,6 +13,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -422,58 +424,56 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }
   };
 
-  const displayObject = (integration, name, sortedObjects) => (
-    <>
-      <Typography variant="body1">
-        [{integration}] <b>{name}</b>
-      </Typography>
-      {sortedObjects && (
-        <Typography
-          style={{
-            color: theme.palette.gray[600],
-            paddingRight: '8px',
-          }}
-          variant="body2"
-          display="inline"
-        >
-          Update Mode:{' '}
-          {sortedObjects.map((object) => `${object.update_mode}`).join(', ')}
-          {sortedObjects.length > 1 && ' (active)'}
-        </Typography>
-      )}
-    </>
+  const displayObject = (integration, name) => (
+    <Typography variant="body1">
+      [{integration}] <b>{name}</b>
+    </Typography>
   );
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
-        ([integrationTableKey, savedObjectsList]) => {
-          const sortedObjects = [...savedObjectsList].sort(
-            (object) => object.created_at
-          );
-          // Cannot align the checkbox to the top of a multi-line label.
-          // Using a weird marginTop workaround.
-          return (
-            <FormControlLabel
-              sx={{ marginTop: '-24px' }}
-              key={integrationTableKey}
-              control={
-                <Checkbox
-                  id={integrationTableKey}
-                  onChange={updateSelectedObjects}
-                />
-              }
-              label={
-                <Box sx={{ paddingTop: '24px' }}>
-                  {displayObject(
-                    savedObjectsList[0].integration_name,
-                    savedObjectsList[0].object_name,
-                    sortedObjects
-                  )}
-                </Box>
-              }
-            />
-          );
-        }
+        ([integrationTableKey, savedObjectsList]) => (
+          <FormControlLabel
+            key={integrationTableKey}
+            control={
+              <Checkbox
+                id={integrationTableKey}
+                onChange={updateSelectedObjects}
+              />
+            }
+            label={
+              <Box>
+                {displayObject(
+                  savedObjectsList[0].integration_name,
+                  savedObjectsList[0].object_name
+                )}
+
+                <Typography
+                  style={{
+                    color: theme.palette.gray[600],
+                    paddingRight: '8px',
+                  }}
+                  variant="body2"
+                  display="inline"
+                >
+                  Update Mode:{' '}
+                  {savedObjectsList
+                    .map((object) => object.update_mode)
+                    .join(', ')}
+                </Typography>
+
+                <Tooltip title="Multiple update modes have been associated with this object throughout workflow deployments.">
+                  <Typography display="inline">
+                    <FontAwesomeIcon
+                      icon={faCircleInfo}
+                      style={{ color: theme.palette.Info }}
+                    />
+                  </Typography>
+                </Tooltip>
+              </Box>
+            }
+          />
+        )
       )}
     </FormGroup>
   );
@@ -668,8 +668,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                     <ListItemText
                       primary={displayObject(
                         integrationName,
-                        objectResult.name,
-                        null
+                        objectResult.name
                       )}
                     />
                   </ListItem>
