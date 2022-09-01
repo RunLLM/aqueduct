@@ -18,24 +18,21 @@ class AthenaConnector(connector.DataConnector):
         self.output_location = config.output_location
         self.database = config.database
 
-    def authenticate(self) -> None:
-        print("authenticating athena...")
+    def _list_tables(self) -> List[str]:
         client = self.session.client("athena")
-        client.list_table_metadata(CatalogName=DEFAULT_CATALOG, DatabaseName=self.database)
-        print("authenticated")
+        tables = client.list_table_metadata(CatalogName=DEFAULT_CATALOG, DatabaseName=self.database)
+        return [table["Name"] for table in tables["TableMetadataList"]]
+
+    def authenticate(self) -> None:
+        self._list_tables()
 
     def discover(self) -> List[str]:
-        raise Exception("Discover is not supported for Athena.")
+        return self._list_tables()
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         if params.query == LIST_TABLES_QUERY_ATHENA:
-            client = self.session.client("athena")
-            tables = client.list_table_metadata(
-                CatalogName=DEFAULT_CATALOG, DatabaseName=self.database
-            )
-            name_list = [table["Name"] for table in tables["TableMetadataList"]]
-            return pd.DataFrame(name_list, columns=["Tables"])
+            return pd.DataFrame(self._list_tables(), columns=["Tables"])
         else:
             return wr.athena.read_sql_query(
                 sql=params.query,

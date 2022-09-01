@@ -85,6 +85,7 @@ func GetRelationalDatabaseIntegrations() map[Service]bool {
 		BigQuery:     true,
 		AqueductDemo: true,
 		Sqlite:       true,
+		Athena:       true,
 	}
 }
 
