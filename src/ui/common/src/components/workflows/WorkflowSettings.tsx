@@ -442,13 +442,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Typography>
       )}
     </>
+  );
 
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
         ([integrationTableKey, savedObjectsList]) => {
-          const sortedObjects = [...savedObjectsList].sort(
-            (object) => Date.parse(object.modified_at)
+          const sortedObjects = [...savedObjectsList].sort((object) =>
+            Date.parse(object.modified_at)
           );
           // Cannot align the checkbox to the top of a multi-line label.
           // Using a weird marginTop workaround.
