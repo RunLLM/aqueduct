@@ -60,20 +60,18 @@ def test_list_saved_objects(client):
         # Check all in same integration
         assert len(data.keys()) == 1
 
-        # table_name, update_mode
-        data_set = set(
-            [
-                ("table_1", LoadUpdateMode.APPEND),
-                ("table_1", LoadUpdateMode.REPLACE),
-                ("table_2", LoadUpdateMode.REPLACE),
-            ]
-        )
+        # table_name, update_mode in order of latest created
+        data_set = [
+            ("table_2", LoadUpdateMode.REPLACE),
+            ("table_1", LoadUpdateMode.APPEND),
+            ("table_1", LoadUpdateMode.REPLACE),
+        ]
         integration_name = list(data.keys())[0]
         assert len(data[integration_name]) == 3
-        assert (
-            set([(item.object_name, item.update_mode) for item in data[integration_name]])
-            == data_set
-        )
+        print([(item.object_name, item.update_mode) for item in data[integration_name]])
+        for i in range(3):
+            item = data[integration_name][i]
+            assert (item.object_name, item.update_mode) == data_set[i]
 
         # Check mapping can be accessed correctly
         # Can be accessed by string of integration name

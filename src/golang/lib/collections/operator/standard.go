@@ -20,7 +20,7 @@ type standardWriterImpl struct{}
 
 type GetDistinctLoadOperatorsByWorkflowIdResponse struct {
 	OperatorName    string              `db:"operator_name" json:"operator_name"`
-	CreatedAt       time.Time           `db:"created_at" json:"created_at"`
+	ModifiedAt       time.Time           `db:"modified_at" json:"modified_at"`
 	IntegrationName string              `db:"integration_name" json:"integration_name"`
 	IntegrationId   uuid.UUID           `db:"integration_id" json:"integration_id"`
 	Service         integration.Service `db:"service" json:"service"`
