@@ -122,7 +122,12 @@ def run_flow_test(
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
     try:
-        wait_for_flow_runs(client, flow.id(), num_runs, expect_success)
+        expect_status = ExecutionStatus.SUCCEEDED if expect_success else ExecutionStatus.FAILED
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[expect_status] * num_runs,
+        )
     finally:
         if delete_flow_after:
             delete_flow(client, flow.id())
@@ -132,15 +137,14 @@ def run_flow_test(
 def wait_for_flow_runs(
     client: aqueduct.Client,
     flow_id: uuid.UUID,
-    num_runs: int = 1,
-    expect_success: bool = True,
+    expect_statuses: List[ExecutionStatus],
 ) -> int:
     """
-    Returns only when the specified flow has run successfully at least `num_runs` times.
-    Any run failure is not tolerated. Will timeout after a few minutes.
+    Returns only when the specified flow has run at least len(expect_statuses) times.
+    Each status expectation corresponds to a single flow run.
 
     Returns:
-        The number of successful runs this flow has performed.
+        The number of runs this flow has performed.
     """
     timeout = 500
     poll_threshold = 5
@@ -167,18 +171,15 @@ def wait_for_flow_runs(
         if any(status == ExecutionStatus.PENDING for status in statuses):
             continue
 
-        if len(flow_runs) < num_runs:
+        if len(flow_runs) < len(expect_statuses):
             continue
 
-        if expect_success:
-            assert all(
-                status == ExecutionStatus.SUCCEEDED for status in statuses
-            ), "At least one workflow run failed!"
-        else:
-            # We expect them all to fail.
-            assert all(
-                status == ExecutionStatus.FAILED for status in statuses
-            ), "At least one workflow succeeded!"
+        # Need to reverse one of the lists for comparison, because the last run is always prepended in the backend response.
+        expect_status_strs = [status.value for status in reversed(expect_statuses)]
+        assert statuses == expect_status_strs, (
+            "Unexpected workflow run status(es). In reverse chronological order, expected %s, got %s. "
+            % (expect_status_strs, statuses)
+        )
 
         print(
             "Workflow %s was created and ran successfully at least %s times!"
