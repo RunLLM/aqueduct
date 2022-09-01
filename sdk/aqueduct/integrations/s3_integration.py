@@ -1,7 +1,6 @@
 import json
 from typing import List, Optional, Union
 
-import globals
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact

@@ -2,7 +2,6 @@ import textwrap
 import uuid
 from typing import Optional
 
-import globals
 from aqueduct.artifacts import (
     base_artifact,
     bool_artifact,
