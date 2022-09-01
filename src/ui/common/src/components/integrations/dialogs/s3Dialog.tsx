@@ -7,7 +7,7 @@ import { Tab, Tabs } from '../../../components/primitives/Tabs.styles';
 import {
   FileData,
   S3Config,
-  S3CredentialType,
+  AWSCredentialType,
 } from '../../../utils/integrations';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
@@ -15,7 +15,7 @@ import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
-  type: S3CredentialType.AccessKey,
+  type: AWSCredentialType.AccessKey,
   bucket: 'aqueduct',
   region: 'us-east-1',
   access_key_id: '',
@@ -54,7 +54,7 @@ export const S3Dialog: React.FC<Props> = ({
 
   useEffect(() => {
     if (!value?.type) {
-      onUpdateField('type', S3CredentialType.AccessKey);
+      onUpdateField('type', AWSCredentialType.AccessKey);
     }
 
     if (!value?.use_as_storage) {
@@ -196,20 +196,20 @@ export const S3Dialog: React.FC<Props> = ({
           value={value?.type}
           onChange={(_, value) => onUpdateField('type', value)}
         >
-          <Tab value={S3CredentialType.AccessKey} label="Enter Access Keys" />
+          <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
-            value={S3CredentialType.ConfigFilePath}
+            value={AWSCredentialType.ConfigFilePath}
             label="Specify Path to Credentials"
           />
           <Tab
-            value={S3CredentialType.ConfigFileContent}
+            value={AWSCredentialType.ConfigFileContent}
             label="Upload Credentials File"
           />
         </Tabs>
       </Box>
-      {value?.type === S3CredentialType.AccessKey && accessKeyTab}
-      {value?.type === S3CredentialType.ConfigFilePath && configPathTab}
-      {value?.type === S3CredentialType.ConfigFileContent && configUploadTab}
+      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
+      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
+      {value?.type === AWSCredentialType.ConfigFileContent && configUploadTab}
 
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
@@ -235,15 +235,15 @@ export function isS3ConfigComplete(config: S3Config): boolean {
     return false;
   }
 
-  if (config.type === S3CredentialType.AccessKey) {
+  if (config.type === AWSCredentialType.AccessKey) {
     return !!config.access_key_id && !!config.secret_access_key;
   }
 
-  if (config.type === S3CredentialType.ConfigFilePath) {
+  if (config.type === AWSCredentialType.ConfigFilePath) {
     return !!config.config_file_profile && !!config.config_file_path;
   }
 
-  if (config.type === S3CredentialType.ConfigFileContent) {
+  if (config.type === AWSCredentialType.ConfigFileContent) {
     return !!config.config_file_profile && !!config.config_file_content;
   }
 

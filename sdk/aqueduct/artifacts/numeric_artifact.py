@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 from aqueduct.artifacts import bool_artifact
@@ -90,7 +90,7 @@ class NumericArtifact(BaseArtifact):
         self._dag.must_get_artifact(self._artifact_id)
 
         if parameters is None and self._get_content() is not None:
-            return self._get_content()
+            return self._get_content()  # type: ignore
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
@@ -108,12 +108,12 @@ class NumericArtifact(BaseArtifact):
         )
 
         if parameters:
-            return previewed_artifact._get_content()
+            return previewed_artifact._get_content()  # type: ignore
         else:
             # We are materializing an artifact generated from lazy execution.
             assert self._get_content() is None
             self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+            return self._get_content()  # type: ignore
 
     def list_preset_checks(self) -> List[str]:
         """Returns a list of all preset checks available on the numeric artifact.

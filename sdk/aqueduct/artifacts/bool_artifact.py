@@ -65,7 +65,7 @@ class BoolArtifact(BaseArtifact):
         self._dag.must_get_artifact(self._artifact_id)
 
         if parameters is None and self._get_content() is not None:
-            return self._get_content()
+            return self._get_content()  # type: ignore
 
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
@@ -81,12 +81,12 @@ class BoolArtifact(BaseArtifact):
         )
 
         if parameters:
-            return previewed_artifact._get_content()
+            return previewed_artifact._get_content()  # type: ignore
         else:
             # We are materializing an artifact generated from lazy execution.
             assert self._get_content() is None
             self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+            return self._get_content()  # type: ignore
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""

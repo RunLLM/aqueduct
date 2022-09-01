@@ -85,14 +85,14 @@ export type SalesforceConfig = {
   code?: string;
 };
 
-export enum S3CredentialType {
+export enum AWSCredentialType {
   AccessKey = 'access_key',
   ConfigFilePath = 'config_file_path',
   ConfigFileContent = 'config_file_content',
 }
 
 export type S3Config = {
-  type: S3CredentialType;
+  type: AWSCredentialType;
   bucket: string;
   region: string;
   access_key_id: string;
