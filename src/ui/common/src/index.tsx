@@ -32,8 +32,9 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import CodeBlock from './components/layouts/codeblock';
-import DataPreviewer from './components/layouts/data_previewer';
+import CodeBlock from './components/layouts/codeBlock';
+import { filteredList, SearchBar } from './components/layouts/search';
+import DataPreviewer from './components/layouts/dataPreviewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
   MenuSidebarWidth,
@@ -377,6 +378,8 @@ export {
   GetWorkflowResponse,
   GithubConfig,
   GithubMetadata,
+  filteredList, 
+  SearchBar,
   GoogleSheetsConfig,
   GoogleSheetsExtractParams,
   GoogleSheetsLoadParams,

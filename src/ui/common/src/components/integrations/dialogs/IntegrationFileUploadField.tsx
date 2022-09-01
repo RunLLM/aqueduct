@@ -1,7 +1,7 @@
 import { Box, Button, Input, Typography } from '@mui/material';
 import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
-import CodeBlock from '../../../components/layouts/codeblock';
+import { CodeBlock } from '../../layouts/codeBlock';
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
 
