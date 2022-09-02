@@ -217,23 +217,23 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	timeConfig := &engine.AqueductTimeConfig{
-		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
-		ExecTimeout:          engine.DefaultExecutionTimeout,
-		CleanupTimeout:       engine.DefaultCleanupTimeout,
-	}
-	emptyParams := make(map[string]string)
+	// timeConfig := &engine.AqueductTimeConfig{
+	// 	OperatorPollInterval: engine.DefaultPollIntervalMillisec,
+	// 	ExecTimeout:          engine.DefaultExecutionTimeout,
+	// 	CleanupTimeout:       engine.DefaultCleanupTimeout,
+	// }
+	// emptyParams := make(map[string]string)
 
-	_, err = h.Engine.TriggerWorkflow(
-		ctx,
-		workflowId,
-		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
-		timeConfig,
-		emptyParams,
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
-	}
+	// _, err = h.Engine.TriggerWorkflow(
+	// 	ctx,
+	// 	workflowId,
+	// 	shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
+	// 	timeConfig,
+	// 	emptyParams,
+	// )
+	// if err != nil {
+	// 	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	// }
 
 	if !args.isUpdate {
 		// If this workflow is newly created, automatically add the user to the workflow's
