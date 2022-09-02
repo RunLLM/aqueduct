@@ -32,6 +32,8 @@ from aqueduct.utils import (
     serialize_function,
 )
 
+from aqueduct import globals
+
 
 class NumericArtifact(BaseArtifact):
     """This class represents a computed number within the flow's DAG.
@@ -153,6 +155,8 @@ class NumericArtifact(BaseArtifact):
         Returns:
             A bool artifact bound to this metric.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         input_mapping = {

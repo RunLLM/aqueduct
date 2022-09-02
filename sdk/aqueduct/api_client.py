@@ -1,6 +1,5 @@
 import io
 import json
-import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import multipart
@@ -481,7 +480,3 @@ class APIClient:
         operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
         operator_resp = requests.get(operator_url, headers=headers)
         return operator_resp.content
-
-
-# Initialize a unconfigured api client. It will be configured when the user construct an Aqueduct client.
-__GLOBAL_API_CLIENT__ = APIClient()
