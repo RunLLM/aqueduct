@@ -72,6 +72,10 @@ func (*PreviewHandler) Name() string {
 	return "Preview"
 }
 
+// This custom implementation of SendResponse constructs a multipart form response with the following fields:
+// "metadata" contains a json serialized blob of operator and artifact result metadata.
+// For each artifact, it generates a field with artifact id as the field name and artifact content
+// as the value.
 func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{}) {
 	resp := response.(*previewResponse)
 	multipartWriter := multipart.NewWriter(w)
