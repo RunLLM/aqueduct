@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,6 +35,8 @@ func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 	}
 
 	bucket := u.Host
+
+	u.Path = strings.TrimLeft(u.Path, "/")
 	key = path.Join(u.Path, key)
 
 	return bucket, key, nil

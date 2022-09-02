@@ -86,6 +86,7 @@ func ValidateDagOperatorIntegrationOwnership(
 	ctx context.Context,
 	operators map[uuid.UUID]operator.DBOperator,
 	organizationId string,
+	userId uuid.UUID,
 	integrationReader integration.Reader,
 	db database.Database,
 ) (bool, error) {
@@ -103,6 +104,7 @@ func ValidateDagOperatorIntegrationOwnership(
 			ctx,
 			integrationId,
 			organizationId,
+			userId,
 			db,
 		)
 		if err != nil {

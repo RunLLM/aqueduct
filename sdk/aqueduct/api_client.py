@@ -7,6 +7,7 @@ import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
+from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
@@ -427,7 +428,7 @@ class APIClient:
 
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
-    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
+    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> Any:
         """Returns an empty string if the operator was not successfully executed."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
@@ -436,9 +437,17 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
-        if resp.json()["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
+        parsed_response = utils.parse_artifact_result_response(resp)
+
+        if parsed_response["metadata"]["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
+            print("Artifact result unavailable due to unsuccessful execution.")
             return ""
-        return str(resp.json()["data"])
+
+        serialization_type = parsed_response["metadata"]["serialization_type"]
+        if serialization_type not in deserialization_function_mapping:
+            raise Exception("Unsupported serialization type %s." % serialization_type)
+
+        return deserialization_function_mapping[serialization_type](parsed_response["data"])
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]

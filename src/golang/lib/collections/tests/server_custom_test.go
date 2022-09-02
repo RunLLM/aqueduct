@@ -161,5 +161,4 @@ func TestGetWorkflowLastRunByEngine(t *testing.T) {
 	actualResponse := lastRunResponse[0]
 
 	requireDeepEqual(t, expectedResponse, actualResponse)
-
 }

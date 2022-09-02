@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	lru "github.com/hashicorp/golang-lru"
 	log "github.com/sirupsen/logrus"
@@ -37,13 +38,7 @@ type inMemoryPreviewCacheManagerImpl struct {
 	storageConfig *shared.StorageConfig
 }
 
-func deleteDataForEntry(ctx context.Context, storageConfig *shared.StorageConfig, val interface{}) {
-	entry, ok := val.(Entry)
-	if !ok {
-		log.Error("Preview Artifact Cache is storing an unexpected data structure. Cannot delete storage paths.")
-		return
-	}
-
+func deleteDataForEntry(ctx context.Context, storageConfig *shared.StorageConfig, entry Entry) {
 	utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactContentPath)
 	utils.CleanupStorageFile(ctx, storageConfig, entry.ArtifactMetadataPath)
 	utils.CleanupStorageFile(ctx, storageConfig, entry.OpMetadataPath)
@@ -78,16 +73,44 @@ func (c *inMemoryPreviewCacheManagerImpl) GetMulti(_ context.Context, artifactSi
 	return true, cachedEntries, nil
 }
 
-func (c *inMemoryPreviewCacheManagerImpl) Put(ctx context.Context, artifactSignature uuid.UUID, execPaths *utils.ExecPaths) error {
-	return c.putMulti(ctx, []uuid.UUID{artifactSignature}, []*utils.ExecPaths{execPaths})
+func (c *inMemoryPreviewCacheManagerImpl) Put(_ context.Context, artifactSignature uuid.UUID, execPaths *utils.ExecPaths) error {
+	return c.putMulti([]uuid.UUID{artifactSignature}, []*utils.ExecPaths{execPaths})
 }
 
-func (c *inMemoryPreviewCacheManagerImpl) putMulti(ctx context.Context, artifactSignatures []uuid.UUID, execPathsList []*utils.ExecPaths) error {
+func castCachedValueToEntry(val interface{}) *Entry {
+	entry, ok := val.(Entry)
+	if !ok {
+		return nil
+	}
+	return &entry
+}
+
+// isEqual checks whether an execPath has the same data as a preview cache entry.
+func isEqual(execPaths *utils.ExecPaths, entry *Entry) bool {
+	return *execPaths == utils.ExecPaths{
+		ArtifactContentPath:  entry.ArtifactContentPath,
+		ArtifactMetadataPath: entry.ArtifactMetadataPath,
+		OpMetadataPath:       entry.OpMetadataPath,
+	}
+}
+
+func (c *inMemoryPreviewCacheManagerImpl) putMulti(artifactSignatures []uuid.UUID, execPathsList []*utils.ExecPaths) error {
 	for i, signatures := range artifactSignatures {
+
 		// If the entry already exists, delete the data it points to, since the entry will be overridden.
-		val, ok := c.cache.Peek(signatures)
-		if ok {
-			deleteDataForEntry(ctx, c.storageConfig, val)
+		var existingEntry *Entry
+		val, exists := c.cache.Peek(signatures)
+		if exists {
+			existingEntry = castCachedValueToEntry(val)
+			if existingEntry == nil {
+				return errors.New("Preview Artifact Cache is storing an unexpected data structure.")
+			}
+
+			// If the entry already exists, then it must have the same data.
+			if !isEqual(execPathsList[i], existingEntry) {
+				return errors.New("When updating an existing entry in the preview cache, we expect the entry to be the same.")
+			}
+			return nil
 		}
 
 		c.cache.Add(signatures, Entry{
@@ -106,7 +129,13 @@ func NewInMemoryPreviewCacheManager(
 	// Cleanup storage paths on eviction.
 	cache, err := lru.NewWithEvict(numEntries, func(key interface{}, val interface{}) {
 		ctx := context.Background()
-		deleteDataForEntry(ctx, storageConfig, val)
+
+		entry := castCachedValueToEntry(val)
+		if entry != nil {
+			deleteDataForEntry(ctx, storageConfig, *entry)
+		} else {
+			log.Error("Error when evicting cached entry: Preview Artifact Cache is storing an unexpected data structure.")
+		}
 	})
 	if err != nil {
 		return nil, err

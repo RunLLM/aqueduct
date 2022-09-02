@@ -65,8 +65,11 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SALESFORCE = "Salesforce"
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
+    ATHENA = "Athena"
     SQLITE = "SQLite"
     AIRFLOW = "Airflow"
+    K8S = "Kubernetes"
+    GCS = "GCS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -79,6 +82,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     BIGQUERY = "BigQuery"
     AQUEDUCTDEMO = "Aqueduct Demo"
     SQLITE = "SQLite"
+    ATHENA = "Athena"
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
@@ -142,7 +146,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
-    IMAGE = "image"
+    IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
     PARAM = "param"
 
@@ -156,6 +160,12 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
 
 
+class ExecutionMode(str, Enum, metaclass=MetaEnum):
+    EAGER = "eager"
+    LAZY = "lazy"
+
+
 class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
+    K8S = "k8s"

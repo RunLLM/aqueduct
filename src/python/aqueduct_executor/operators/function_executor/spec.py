@@ -9,7 +9,7 @@ except ImportError:
 
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
-from pydantic import BaseModel, Extra, parse_obj_as, validator
+from pydantic import BaseModel, Extra, parse_obj_as
 
 
 class FunctionSpec(BaseModel):
@@ -27,7 +27,7 @@ class FunctionSpec(BaseModel):
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    expected_output_artifact_type: Optional[enums.ArtifactType]
+    expected_output_artifact_types: List[enums.ArtifactType]
     operator_type: enums.OperatorType
 
     # This is specific to the check operator. This is left unset by any other function type.

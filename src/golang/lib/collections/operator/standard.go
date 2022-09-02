@@ -95,6 +95,8 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	workflowDagId uuid.UUID,
 	db database.Database,
 ) ([]DBOperator, error) {
+	// Gets all operators that are a node with an incoming (id in `to_id`) or outgoing edge
+	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
 	getOperatorsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM operator WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 

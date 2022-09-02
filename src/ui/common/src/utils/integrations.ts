@@ -3,7 +3,7 @@ import UserProfile from './auth';
 
 const { apiAddress } = useAqueductConsts();
 
-const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'aqueduct_demo';
 
 export function isDemo(integration: Integration): boolean {
   return integration.name === aqueductDemoName;
@@ -85,20 +85,40 @@ export type SalesforceConfig = {
   code?: string;
 };
 
-export enum S3CredentialType {
+export enum AWSCredentialType {
   AccessKey = 'access_key',
   ConfigFilePath = 'config_file_path',
   ConfigFileContent = 'config_file_content',
 }
 
 export type S3Config = {
-  type: S3CredentialType;
+  type: AWSCredentialType;
   bucket: string;
+  region: string;
   access_key_id: string;
   secret_access_key: string;
   config_file_path: string;
   config_file_content: string;
   config_file_profile: string;
+  use_as_storage: string;
+};
+
+export type AthenaConfig = {
+  type: AWSCredentialType;
+  access_key_id: string;
+  secret_access_key: string;
+  region: string;
+  config_file_path: string;
+  config_file_content: string;
+  config_file_profile: string;
+  database: string;
+  output_location: string;
+};
+
+export type GCSConfig = {
+  bucket: string;
+  service_account_credentials?: string;
+  use_as_storage: string;
 };
 
 export type AqueductDemoConfig = Record<string, never>;
@@ -109,6 +129,11 @@ export type AirflowConfig = {
   password: string;
   s3_credentials_path: string;
   s3_credentials_profile: string;
+};
+
+export type KubernetesConfig = {
+  kubeconfig_path: string;
+  cluster_name: string;
 };
 
 export type IntegrationConfig =
@@ -122,8 +147,11 @@ export type IntegrationConfig =
   | GoogleSheetsConfig
   | SalesforceConfig
   | S3Config
+  | AthenaConfig
+  | GCSConfig
   | AqueductDemoConfig
-  | AirflowConfig;
+  | AirflowConfig
+  | KubernetesConfig;
 
 export type Service =
   | 'Postgres'
@@ -133,9 +161,12 @@ export type Service =
   | 'MySQL'
   | 'MariaDB'
   | 'S3'
+  | 'Athena'
   | 'CSV'
+  | 'GCS'
   | 'Aqueduct Demo'
-  | 'Airflow';
+  | 'Airflow'
+  | 'Kubernetes';
 
 type Info = {
   logo: string;
@@ -226,46 +257,6 @@ export async function fetchBranches(
   }
 }
 
-export async function connectIntegration(
-  user: UserProfile,
-  service: Service,
-  name: string,
-  config: IntegrationConfig
-): Promise<void> {
-  Object.keys(config).forEach((k) => {
-    if (config[k] === undefined) {
-      config[k] = '';
-    }
-  });
-
-  try {
-    const res = await fetch(`${apiAddress}/api/integration/connect`, {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-        'integration-name': name,
-        'integration-service': service,
-        'integration-config': JSON.stringify(config),
-      },
-    });
-
-    if (!res.ok) {
-      const message = await res.json();
-      throw new Error(message.error);
-    }
-  } catch (err) {
-    if (err instanceof TypeError) {
-      // This happens when we fail to fetch.
-      throw new Error(
-        'Unable to connect to the Aqueduct server. Please double check that the Aqueduct server is running and accessible.'
-      );
-    } else {
-      // This should never happen.
-      throw err;
-    }
-  }
-}
-
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/440px-Postgresql_elephant.svg.png',
@@ -302,6 +293,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: 'data',
   },
+  ['GCS']: {
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-cloud-storage.png',
+    activated: true,
+    category: 'data',
+  },
   ['Aqueduct Demo']: {
     logo: '/assets/aqueduct.png',
     activated: true,
@@ -312,9 +308,19 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: 'data',
   },
+  ['Athena']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/athena.png',
+    activated: true,
+    category: 'data',
+  },
   ['Airflow']: {
-    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: false,
+    category: 'compute',
+  },
+  ['Kubernetes']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
+    activated: true,
     category: 'compute',
   },
 };

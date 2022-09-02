@@ -11,6 +11,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 
 from aqueduct import api_client, dag
 
@@ -18,8 +19,6 @@ from .artifact import Artifact
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
-    AirflowEngineConfig,
-    EngineConfig,
     Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
@@ -32,12 +31,12 @@ from .error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from .flow import Flow, FlowConfig
-from .flow_run import _show_dag
+from .flow import Flow
 from .github import Github
 from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import Integration, IntegrationInfo
+from .integrations.k8s_integration import K8sIntegration
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
@@ -46,6 +45,7 @@ from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_va
 from .responses import Error, SavedObjectDelete, SavedObjectUpdate
 from .utils import (
     _infer_requirements,
+    generate_engine_config,
     generate_ui_url,
     generate_uuid,
     infer_artifact_type,
@@ -226,6 +226,7 @@ class Client:
         GoogleSheetsIntegration,
         RelationalDBIntegration,
         AirflowIntegration,
+        K8sIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -270,6 +271,10 @@ class Client:
             )
         elif integration_info.service == ServiceType.AIRFLOW:
             return AirflowIntegration(
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.K8S:
+            return K8sIntegration(
                 metadata=integration_info,
             )
         else:
@@ -386,15 +391,10 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
+        dag.engine_config = generate_engine_config(config)
 
-        if config and config.engine:
+        if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
-            dag.engine_config = EngineConfig(
-                type=RuntimeType.AIRFLOW,
-                airflow_config=AirflowEngineConfig(
-                    integration_id=config.engine._metadata.id,
-                ),
-            )
             resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
 
@@ -518,32 +518,6 @@ class Client:
             raise Exception(
                 f"Failed to delete {len(failures)} saved objects.\nFailures\n{failures_string}"
             )
-
-    def show_dag(self, artifacts: Optional[List[BaseArtifact]] = None) -> None:
-        """Prints out the flow as a pyplot graph.
-
-        A user outside the notebook environment will be redirected to a page in their browser
-        containing the graph.
-
-        Args:
-            artifacts:
-                If specified the subgraph terminating at these artifacts will be specified.
-                Otherwise, the entire graph is printed.
-        """
-        dag = self._dag
-        if artifacts is not None:
-            dag = apply_deltas_to_dag(
-                self._dag,
-                deltas=[
-                    SubgraphDAGDelta(
-                        artifact_ids=[artifact.id() for artifact in artifacts],
-                        include_load_operators=True,
-                        include_check_artifacts=True,
-                    ),
-                ],
-                make_copy=True,
-            )
-        _show_dag(dag)
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""

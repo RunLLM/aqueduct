@@ -133,6 +133,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.IntegrationReader,
 		h.Database,
 	)

@@ -57,6 +57,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
 
 
 class ArtifactType(str, Enum, metaclass=MetaEnum):
+    UNTYPED = "untyped"
     STRING = "string"
     BOOL = "boolean"
     NUMERIC = "numeric"

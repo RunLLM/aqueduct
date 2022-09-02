@@ -9,6 +9,7 @@ from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_del
 from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
 from aqueduct.responses import ArtifactResult
+from aqueduct.utils import infer_artifact_type
 
 from aqueduct import api_client
 
@@ -45,6 +46,8 @@ def preview_artifact(
 
     artifact_type = artifact_response.artifact_type
     content = deserialization_function_mapping[serialization_type](artifact_response.content)
+
+    assert infer_artifact_type(content) == artifact_type
 
     if artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(dag, artifact_id, content)

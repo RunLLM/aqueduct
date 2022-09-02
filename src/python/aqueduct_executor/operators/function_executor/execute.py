@@ -33,6 +33,7 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
 from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
 from pandas import DataFrame
@@ -138,6 +139,49 @@ def _execute_function(
     return result, inferred_result_type, system_metadata
 
 
+def validate_spec(spec: FunctionSpec) -> None:
+    if len(spec.input_content_paths) != len(spec.input_metadata_paths):
+        raise Exception(
+            "Found inconsistent number of input paths (%d) and input metadata paths (%d)"
+            % (
+                len(spec.input_content_paths),
+                len(spec.input_metadata_paths),
+            )
+        )
+
+    if len(spec.output_content_paths) != len(spec.output_metadata_paths):
+        raise Exception(
+            "Found inconsistent number of output paths (%d) and output metadata paths (%d)"
+            % (
+                len(spec.output_content_paths),
+                len(spec.output_metadata_paths),
+            )
+        )
+    if spec.expected_output_artifact_types is not None and len(
+        spec.expected_output_artifact_types
+    ) != len(spec.output_content_paths):
+        raise Exception(
+            "Found inconsistent number of expected output artifact types (%d) and output content paths (%d)"
+            % (
+                len(spec.expected_output_artifact_types),
+                len(spec.output_content_paths),
+            )
+        )
+
+
+def handle_type_error_and_exit(
+    spec: FunctionSpec, storage: Storage, exec_state: ExecutionState, err_tip: str
+) -> None:
+    exec_state.status = ExecutionStatus.FAILED
+    exec_state.failure_type = FailureType.USER_FATAL
+    exec_state.error = Error(
+        context="",
+        tip=err_tip,
+    )
+    utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    sys.exit(1)
+
+
 def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
@@ -147,6 +191,8 @@ def run(spec: FunctionSpec) -> None:
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
+        validate_spec(spec)
+
         # Read the input data from intermediate storage.
         inputs, _ = utils.read_artifacts(
             storage, spec.input_content_paths, spec.input_metadata_paths
@@ -161,16 +207,15 @@ def run(spec: FunctionSpec) -> None:
 
         print("Function invoked successfully!")
 
-        # Perform type checking for metric and check operators.
-        type_error = False
+        # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
             if not (
                 isinstance(result, int)
                 or isinstance(result, float)
                 or isinstance(result, np.number)
             ):
-                type_error = True
-                type_error_tip = TIP_NOT_NUMERIC
+                handle_type_error_and_exit(spec, storage, exec_state, TIP_NOT_NUMERIC)
+
         elif spec.operator_type == OperatorType.CHECK:
             if isinstance(result, pd.Series) and result.dtype == "bool":
                 # Cast pd.Series to a bool.
@@ -182,18 +227,20 @@ def run(spec: FunctionSpec) -> None:
                 # Cast np.bool_ to a bool.
                 result = bool(result)
             else:
-                type_error = True
-                type_error_tip = TIP_NOT_BOOL
-
-        if type_error:
-            exec_state.status = ExecutionStatus.FAILED
-            exec_state.failure_type = FailureType.USER_FATAL
-            exec_state.error = Error(
-                context="",
-                tip=type_error_tip,
-            )
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-            sys.exit(1)
+                handle_type_error_and_exit(spec, storage, exec_state, TIP_NOT_BOOL)
+        else:
+            for expected_output_type in spec.expected_output_artifact_types:
+                if (
+                    expected_output_type != ArtifactType.UNTYPED
+                    and expected_output_type != result_type
+                ):
+                    handle_type_error_and_exit(
+                        spec,
+                        storage,
+                        exec_state,
+                        "Expected type %s, but output is of type %s."
+                        % (expected_output_type, result_type),
+                    )
 
         utils.write_artifact(
             storage,

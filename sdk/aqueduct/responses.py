@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
-from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import (
     ArtifactType,
     ExecutionStatus,

@@ -27,6 +27,10 @@ func (r *postgresReaderImpl) GetWorkflowsWithLatestRunResult(
 	organizationId string,
 	db database.Database,
 ) ([]latestWorkflowResponse, error) {
+	// Get workflow metadata (id, name, description, creation time, last run time, and last run status)
+	// for all workflows whose `organization_id` is `organizationId` ordered by when the workflow was created.
+	// Get the last run DAG by getting the max created_at timestamp for all workflow DAGs associated with each
+	// workflow in the organization.
 	query := `SELECT * FROM (SELECT DISTINCT ON (wf.id) wf.id AS id, wf.name AS name, 
 		 wf.description AS description, wf.created_at AS created_at, 
 		 wfdr.created_at AS last_run_at, wfdr.status as status 

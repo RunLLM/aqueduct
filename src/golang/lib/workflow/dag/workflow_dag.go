@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -37,18 +36,14 @@ type WorkflowDag interface {
 	// OperatorInputs returns all the artifacts that are fed as input to the given operator.
 	OperatorInputs(operator.Operator) ([]artifact.Artifact, error)
 
-	// InitializeResult initializes the dag result in the database.
-	// Also initializes the operators and artifacts contained in this dag.
-	InitializeResults(ctx context.Context) error
-
-	// PersistResult updates the dag result in the database after execution.
-	// InitializeResult() must have already been called.
-	// *Does not* persist the operators or artifacts contained in this dag.
-	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
+	// InitOpAndArtifactResults initializes the operators and artifact results for this dag.
+	InitOpAndArtifactResults(ctx context.Context) error
 }
 
 type workflowDagImpl struct {
 	dbWorkflowDag *workflow_dag.DBWorkflowDag
+	// resultID corresponds to the WorkflowDagResult created for the current run of this dag
+	resultID uuid.UUID
 
 	operators           map[uuid.UUID]operator.Operator
 	artifacts           map[uuid.UUID]artifact.Artifact
@@ -61,10 +56,6 @@ type workflowDagImpl struct {
 	notificationWriter notification.Writer
 	userReader         user.Reader
 	db                 database.Database
-
-	// Corresponds to the workflow dag result entry in the database.
-	// This is empty if InitializeResults() has not been called.
-	resultID uuid.UUID
 }
 
 // Assumption: all dag's start with operators.
@@ -155,9 +146,11 @@ func computeArtifactSignatures(
 
 func NewWorkflowDag(
 	ctx context.Context,
+	workflowDagResultID uuid.UUID,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 	dagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
+	artifactWriter db_artifact.Writer,
 	artifactResultWriter artifact_result.Writer,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
@@ -192,6 +185,7 @@ func NewWorkflowDag(
 			artifactIDToSignatures[dbArtifact.Id],
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
+			artifactWriter,
 			artifactResultWriter,
 			&dbWorkflowDag.StorageConfig,
 			artifactCacheManager,
@@ -256,6 +250,7 @@ func NewWorkflowDag(
 
 	return &workflowDagImpl{
 		dbWorkflowDag:       dbWorkflowDag,
+		resultID:            workflowDagResultID,
 		operators:           operators,
 		artifacts:           artifacts,
 		opToOutputArtifacts: opToOutputArtifactIDs,
@@ -267,7 +262,6 @@ func NewWorkflowDag(
 		notificationWriter: notificationWriter,
 		userReader:         userReader,
 		db:                 db,
-		resultID:           uuid.Nil,
 	}, nil
 }
 
@@ -318,20 +312,9 @@ func (w *workflowDagImpl) OperatorInputs(op operator.Operator) ([]artifact.Artif
 	return artifacts, nil
 }
 
-func (w *workflowDagImpl) InitializeResults(ctx context.Context) error {
-	if w.resultWriter == nil {
-		return errors.New("Workflow dag's result writer cannot be nil.")
-	}
-
-	// Create a database record of workflow dag result and set its status to `pending`.
+func (w *workflowDagImpl) InitOpAndArtifactResults(ctx context.Context) error {
 	// TODO(ENG-599): wrap these writes into a transaction.
-	dagResult, err := w.resultWriter.CreateWorkflowDagResult(ctx, w.dbWorkflowDag.Id, w.db)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create workflow dag result record.")
-	}
-	w.resultID = dagResult.Id
-
-	// Also initialize the operators and artifact results.
+	// Initialize the operators and artifact results.
 	for _, op := range w.Operators() {
 		err := op.InitializeResult(ctx, w.resultID)
 		if err != nil {
@@ -344,26 +327,6 @@ func (w *workflowDagImpl) InitializeResults(ctx context.Context) error {
 			return err
 		}
 	}
-
-	return nil
-}
-
-func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.ExecutionStatus) error {
-	if w.resultID == uuid.Nil {
-		return errors.New("Workflow's dag result was not initialized before calling PersistResult.")
-	}
-
-	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
-	utils.UpdateWorkflowDagResultMetadata(
-		ctx,
-		w.resultID,
-		status,
-		w.resultWriter,
-		w.workflowReader,
-		w.notificationWriter,
-		w.userReader,
-		w.db,
-	)
 
 	return nil
 }

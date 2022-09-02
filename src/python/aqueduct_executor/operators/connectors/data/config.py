@@ -27,7 +27,7 @@ class PostgresConfig(models.BaseConfig):
     port: Optional[str] = "5432"
 
 
-class S3CredentialType(str, Enum, metaclass=MetaEnum):
+class AWSCredentialType(str, Enum, metaclass=MetaEnum):
     ACCESS_KEY = "access_key"
     CONFIG_FILE_PATH = "config_file_path"
     CONFIG_FILE_CONTENT = "config_file_content"
@@ -35,7 +35,7 @@ class S3CredentialType(str, Enum, metaclass=MetaEnum):
 
 class S3Config(models.BaseConfig):
     # default type to ACCESS_KEY mainly for backward compatibility
-    type: S3CredentialType = S3CredentialType.ACCESS_KEY
+    type: AWSCredentialType = AWSCredentialType.ACCESS_KEY
 
     # Access key credentials
     access_key_id: str = ""
@@ -47,6 +47,33 @@ class S3Config(models.BaseConfig):
     config_file_profile: str = ""
 
     bucket: str = ""
+
+    region: str = ""
+    use_as_storage: str = ""
+
+
+class AthenaConfig(models.BaseConfig):
+    # default type to ACCESS_KEY mainly for backward compatibility
+    type: AWSCredentialType = AWSCredentialType.ACCESS_KEY
+
+    # Access key credentials
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+
+    # Config credentials
+    config_file_path: str = ""
+    config_file_content: str = ""
+    config_file_profile: str = ""
+
+    database: str = ""
+    output_location: str = ""
+
+
+class GCSConfig(models.BaseConfig):
+    bucket: str
+    service_account_credentials: str
+    use_as_storage: str = ""
 
 
 class SnowflakeConfig(models.BaseConfig):
@@ -77,9 +104,11 @@ class SqliteConfig(models.BaseConfig):
 
 Config = Union[
     BigQueryConfig,
+    GCSConfig,
     MySqlConfig,
     PostgresConfig,
     S3Config,
+    AthenaConfig,
     SnowflakeConfig,
     SqlServerConfig,
     SqliteConfig,

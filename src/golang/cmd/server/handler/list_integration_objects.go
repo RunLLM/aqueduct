@@ -28,9 +28,8 @@ import (
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
-// Response:
-//  Body:
-//		objects written by workflows at the integration.
+//
+// Response: objects written by workflows at the integration.
 
 // Get objects from the specified integration.
 type ListIntegrationObjectsHandler struct {

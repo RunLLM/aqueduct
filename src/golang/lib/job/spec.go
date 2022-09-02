@@ -63,6 +63,10 @@ type ExecutorConfiguration struct {
 type Spec interface {
 	Type() JobType
 	JobName() string
+	// HasStorageConfig returns whether this job spec has a storage config.
+	HasStorageConfig() bool
+	// GetStorageConfig returns the storage config if the job spec has one, otherwise it returns an error.
+	GetStorageConfig() (*shared.StorageConfig, error)
 }
 
 // BaseSpec defines fields shared by all job specs.
@@ -80,6 +84,14 @@ type WorkflowRetentionSpec struct {
 	ExecutorConfig *ExecutorConfiguration
 }
 
+func (wrs *WorkflowRetentionSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (wrs *WorkflowRetentionSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("WorkflowRetention job specs don't have a storage config.")
+}
+
 type WorkflowSpec struct {
 	BaseSpec
 	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
@@ -87,6 +99,14 @@ type WorkflowSpec struct {
 	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
 	AqPath         string               `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
+}
+
+func (ws *WorkflowSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (ws *WorkflowSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("Workflow job specs don't have a storage config.")
 }
 
 // BasePythonSpec defines fields shared by all Python job specs.
@@ -98,19 +118,28 @@ type BasePythonSpec struct {
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
 }
 
+func (bs *BasePythonSpec) HasStorageConfig() bool {
+	return true
+}
+
+func (bs *BasePythonSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return &bs.StorageConfig, nil
+}
+
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath        string        `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath string        `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile      string        `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass     string        `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod    string        `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs          string        `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths   []string      `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths  []string      `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths  []string      `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	OperatorType        operator.Type `json:"operator_type" yaml:"operator_type"`
+	FunctionPath                string        `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath         string        `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile              string        `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass             string        `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod            string        `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs                  string        `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths           []string      `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths          []string      `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths          []string      `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths         []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	ExpectedOutputArtifactTypes []string      `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
+	OperatorType                operator.Type `json:"operator_type" yaml:"operator_type"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`

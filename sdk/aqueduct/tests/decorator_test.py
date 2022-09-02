@@ -51,15 +51,17 @@ def test_handle_reserved_file_dependencies():
         _package_files_and_requirements(
             python_function,
             dir_path=os.path.join(os.getcwd(), "test_function"),
-            file_dependencies=["aqueduct_utils.py", "file.py"],
+            file_dependencies=["conda_version.txt", "file.py"],
         )
 
 
 def test_serialize_function():
     initial_state = set(os.listdir())
     dependencies = ["./test_dependency_folder/helper_function.py"]
+    op_name = "helper_fn"
     zip_file = serialize_function(
         func=python_function,
+        op_name=op_name,
         file_dependencies=dependencies,
     )
     final_state = set(os.listdir())
@@ -73,6 +75,7 @@ def test_serialize_function():
         "model.py",
         "model.pkl",
         "requirements.txt",
+        "{}.py".format(op_name),
     ]
     zip_files = [name.split("/")[-1] for name in zip_file.namelist() if name.split("/")[-1]]
     assert set(zip_files) == set(files)

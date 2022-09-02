@@ -1,6 +1,7 @@
 from typing import Any, List
 
 from aqueduct.aqueduct_client import Client, get_apikey, infer_requirements
+from aqueduct.config import FlowConfig
 from aqueduct.constants import exports
 from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.enums import ArtifactType, CheckSeverity, LoadUpdateMode

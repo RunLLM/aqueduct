@@ -152,6 +152,9 @@ export async function exportFunction(
     method: 'GET',
     headers: {
       'api-key': user.apiKey,
+      // We only want the user-friendly function code to be exported.
+      // The actual value does not matter, but the header has to be present and not an empty string.
+      'user-friendly': 'true',
     },
   });
 

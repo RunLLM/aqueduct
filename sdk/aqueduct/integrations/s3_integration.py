@@ -3,9 +3,14 @@ from typing import List, Optional, Union
 
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, S3TableFormat
+from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
+from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -35,6 +40,7 @@ class S3Integration(Integration):
         merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
+        lazy: bool = False,
     ) -> BaseArtifact:
         """
         Reads one or more files from the S3 integration.
@@ -67,6 +73,8 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         if format:
             if artifact_type != ArtifactType.TABLE:
                 raise Exception(
@@ -118,18 +126,33 @@ class S3Integration(Integration):
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            type=ArtifactType.UNTYPED,
+                            type=artifact_type,
                         ),
                     ],
                 )
             ],
         )
 
-        # Issue preview request since this is an eager execution
-        artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-        self._dag.must_get_artifact(output_artifact_id).type = artifact.type()
+        if execution_mode == ExecutionMode.EAGER:
+            # Issue preview request since this is an eager execution.
+            artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
+            if artifact._get_type() != artifact_type:
+                raise InvalidArtifactTypeException(
+                    "The computed artifact is expected to be type %s, but has type %s"
+                    % (artifact_type, artifact._get_type())
+                )
 
-        return artifact
+            return artifact
+        else:
+            # We are in lazy mode.
+            if artifact_type == ArtifactType.TABLE:
+                return TableArtifact(self._dag, output_artifact_id)
+            elif artifact_type == ArtifactType.NUMERIC:
+                return NumericArtifact(self._dag, output_artifact_id)
+            elif artifact_type == ArtifactType.BOOL:
+                return BoolArtifact(self._dag, output_artifact_id)
+            else:
+                return GenericArtifact(self._dag, output_artifact_id, artifact_type)
 
     def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
         """

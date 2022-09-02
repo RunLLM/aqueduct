@@ -11,18 +11,22 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 import cloudpickle as pickle
+import multipart
 import numpy as np
-import pandas as pd
 import requests
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
 from PIL import Image
+from requests_toolbelt.multipart import decoder
 
 GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
@@ -113,13 +117,11 @@ def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
 
 MODEL_FILE_NAME = "model.py"
 MODEL_PICKLE_FILE_NAME = "model.pkl"
-AQUEDUCT_UTILS_FILE_NAME = "aqueduct_utils.py"
 PYTHON_VERSION_FILE_NAME = "python_version.txt"
 CONDA_VERSION_FILE_NAME = "conda_version.txt"
 RESERVED_FILE_NAMES = [
     MODEL_FILE_NAME,
     MODEL_PICKLE_FILE_NAME,
-    AQUEDUCT_UTILS_FILE_NAME,
     PYTHON_VERSION_FILE_NAME,
     CONDA_VERSION_FILE_NAME,
 ]
@@ -163,6 +165,7 @@ def make_zip_dir() -> str:
 
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
+    op_name: str,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
 ) -> bytes:
@@ -172,6 +175,8 @@ def serialize_function(
     Arguments:
         func:
             The function to package
+        op_name:
+            The name of the function operator to package.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
         requirements:
@@ -201,6 +206,12 @@ def serialize_function(
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
             pickle.dump(func, f)
+
+        # Write function source code to file
+        source_file = "{}.py".format(op_name)
+        with open(os.path.join(dir_path, source_file), "w") as f:
+            source = inspect.getsource(func)
+            f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
@@ -503,3 +514,47 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             return ArtifactType.PICKLABLE
         except:
             raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+    parse = multipart.parse_options_header
+
+    result = {}
+
+    for part in multipart_data.parts:
+        field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+        field_name = parse(field_name)[1]["name"]
+
+        if field_name == "metadata":
+            result[field_name] = json.loads(part.content.decode(multipart_data.encoding))
+        elif field_name == "data":
+            result[field_name] = part.content
+        else:
+            raise AqueductError(
+                "Unexpected form field %s for artifact result response" % field_name
+            )
+
+    return result
+
+
+def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
+    """Generates an EngineConfig from the user provided configuration."""
+    if not (config and config.engine):
+        return EngineConfig()
+    elif isinstance(config.engine, AirflowIntegration):
+        return EngineConfig(
+            type=RuntimeType.AIRFLOW,
+            airflow_config=AirflowEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, K8sIntegration):
+        return EngineConfig(
+            type=RuntimeType.K8S,
+            k8s_config=K8sEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    else:
+        raise AqueductError("Unsupported engine configuration.")

@@ -1,12 +1,9 @@
 import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import {
-  BigQueryConfig,
-  FileData,
-  IntegrationConfig,
-} from '../../../utils/integrations';
+import { BigQueryConfig, FileData } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -15,24 +12,29 @@ const Placeholders: BigQueryConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
+  value?: BigQueryConfig;
+  editMode: boolean;
 };
 
-export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [projectId, setProjectId] = useState<string>(null);
-  const [file, setFile] = useState(null);
+export const BigQueryDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
+  const [fileName, setFileName] = useState<string>(null);
+  const setFile = (fileData: FileData | null) => {
+    setFileName(fileData?.name ?? null);
+    onUpdateField('service_account_credentials', fileData?.data);
+  };
 
-  useEffect(() => {
-    let contents = null;
-    if (file) {
-      contents = file.data;
-    }
-    const config: BigQueryConfig = {
-      project_id: projectId,
-      service_account_credentials: contents,
-    };
-    setDialogConfig(config);
-  }, [projectId, file]);
+  const fileData =
+    fileName && !!value?.service_account_credentials
+      ? {
+          name: fileName,
+          data: value.service_account_credentials,
+        }
+      : null;
 
   const fileUploadDescription = (
     <>
@@ -56,15 +58,18 @@ export const BigQueryDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Project ID*"
         description="The BigQuery project ID."
         placeholder={Placeholders.project_id}
-        onChange={(event) => setProjectId(event.target.value)}
-        value={projectId}
+        onChange={(event) => onUpdateField('project_id', event.target.value)}
+        value={value?.project_id ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationFileUploadField
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
-        file={file}
+        file={fileData}
         placeholder={'Upload your service account key file.'}
         onFiles={(files) => {
           const file = files[0];

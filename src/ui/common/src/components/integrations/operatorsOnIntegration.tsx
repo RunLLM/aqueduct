@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { RootState } from '../../stores/store';
-import { isFailed, isLoading } from '../../utils/shared';
+import { isFailed, isInitial, isLoading } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import WorkflowAccordion from '../workflows/accordion';
 
@@ -19,6 +19,12 @@ const OperatorsOnIntegration: React.FC = () => {
     return state.integrationReducer.operators;
   });
   const [expandedWf, setExpandedWf] = useState<string>('');
+  if (
+    isInitial(operatorsState.status) ||
+    isInitial(listWorkflowState.loadingStatus)
+  ) {
+    return null;
+  }
 
   if (
     isLoading(operatorsState.status) ||
@@ -64,25 +70,29 @@ const OperatorsOnIntegration: React.FC = () => {
     operatorsByWorkflow[op.workflow_id].operators.push(op);
   });
 
-  return (
-    <Box>
-      {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
-        <WorkflowAccordion
-          expanded={expandedWf === wfId}
-          handleExpand={() => {
-            if (expandedWf === wfId) {
-              setExpandedWf('');
-              return;
-            }
-            setExpandedWf(wfId);
-          }}
-          key={wfId}
-          workflow={item.workflow}
-          operators={item.operators}
-        />
-      ))}
-    </Box>
-  );
+  if (Object.keys(operatorsByWorkflow).length > 0) {
+    return (
+      <Box>
+        {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
+          <WorkflowAccordion
+            expanded={expandedWf === wfId}
+            handleExpand={() => {
+              if (expandedWf === wfId) {
+                setExpandedWf('');
+                return;
+              }
+              setExpandedWf(wfId);
+            }}
+            key={wfId}
+            workflow={item.workflow}
+            operators={item.operators}
+          />
+        ))}
+      </Box>
+    );
+  } else {
+    return <Box>Integration is not used by any workflow.</Box>;
+  }
 };
 
 export default OperatorsOnIntegration;

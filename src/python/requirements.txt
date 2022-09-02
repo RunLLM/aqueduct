@@ -1,5 +1,6 @@
 boto3
 cloudpickle
+google-cloud-storage
 numpy
 pandas
 pydantic
@@ -8,4 +9,5 @@ distro
 pyyaml
 typing_extensions
 Pillow
-aqueduct-sdk==0.0.9
+packaging
+aqueduct-sdk==0.0.12

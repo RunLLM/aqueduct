@@ -25,6 +25,8 @@ func (r *postgresReaderImpl) GetWorkflowLastRunByEngine(
 	engine shared.EngineType,
 	db database.Database,
 ) ([]WorkflowLastRunResponse, error) {
+	// Get all workflow ids, schedules, and times last run of workflows run by the specified
+	// `engine`.
 	query := `
 		SELECT 
 			workflow.id AS workflow_id, 
@@ -65,6 +67,8 @@ func (r *postgresReaderImpl) GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
 	engine shared.EngineType,
 	db database.Database,
 ) ([]WorkflowDagId, error) {
+	// Get the latest-created workflow DAG ids of workflows belonging to the organization
+	// and run by the specified engine.
 	query := `
 		 SELECT workflow_dag.id FROM workflow_dag WHERE created_at IN (
 		 SELECT MAX(workflow_dag.created_at) FROM app_user, workflow, workflow_dag 
@@ -83,6 +87,11 @@ func (r *postgresReaderImpl) GetLoadOperatorSpecByOrganization(
 	organizationId string,
 	db database.Database,
 ) ([]LoadOperatorSpecResponse, error) {
+	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
+	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
+	// that operator (`from_id`s; these artifacts are the objects that will be saved
+	// by the operator to the integration) in the workflows owned by the specified
+	// organization.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, artifact.name AS artifact_name, operator.id AS load_operator_id, workflow.name AS workflow_name, workflow.id AS workflow_id, operator.spec 
 		 FROM app_user, workflow, workflow_dag, workflow_dag_edge, operator, artifact
@@ -108,6 +117,10 @@ func (r *postgresReaderImpl) GetCheckResultsByArtifactIds(
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
+	// Get all unique combinations of artifact id, operator name,
+	// operator status, operator execution state, and workflow dag
+	// result id of all check operators of artifacts in the
+	// `artifactIds` list (`from_id` in `artifactIds`).
 	query := fmt.Sprintf(
 		`SELECT DISTINCT
 			workflow_dag_edge.from_id AS artifact_id,

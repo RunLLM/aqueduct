@@ -7,8 +7,12 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
+from aqueduct.error import (
+    InvalidArtifactTypeException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -29,6 +33,7 @@ LIST_TABLES_QUERY_SQLSERVER = (
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
@@ -77,6 +82,8 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self._metadata.service == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
+        elif self._metadata.service == ServiceType.ATHENA:
+            list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
         return sql_artifact.get()
@@ -100,6 +107,7 @@ class RelationalDBIntegration(Integration):
         query: Union[str, RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
+        lazy: bool = False,
     ) -> TableArtifact:
         """
         Runs a SQL query against the RelationalDB integration.
@@ -115,6 +123,8 @@ class RelationalDBIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         integration_info = self._metadata
 
         # The sql operator name defaults to "[integration name] query 1". If another
@@ -192,20 +202,28 @@ class RelationalDBIntegration(Integration):
                         ArtifactMetadata(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
-                            type=ArtifactType.UNTYPED,
+                            type=ArtifactType.TABLE,
                         ),
                     ],
                 ),
             ],
         )
 
-        # Issue preview request since this is an eager execution
-        artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
-        assert isinstance(artifact, TableArtifact)
+        if execution_mode == ExecutionMode.EAGER:
+            # Issue preview request since this is an eager execution.
+            artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
+            if artifact._get_type() != ArtifactType.TABLE:
+                raise InvalidArtifactTypeException(
+                    "The computed artifact is expected to be type %s, but has type %s"
+                    % (ArtifactType.TABLE, artifact._get_type())
+                )
 
-        self._dag.must_get_artifact(sql_output_artifact_id).type = artifact.type()
+            assert isinstance(artifact, TableArtifact)
 
-        return artifact
+            return artifact
+        else:
+            # We are in lazy mode.
+            return TableArtifact(self._dag, sql_output_artifact_id)
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
         """
@@ -220,6 +238,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        if self._metadata.service == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation is not supported for integration type %s."
+                % self._metadata.service.value
+            )
+
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),
