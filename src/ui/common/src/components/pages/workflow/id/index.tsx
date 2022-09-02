@@ -66,12 +66,19 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const switchSideSheet = sideSheetSwitcher(dispatch);
+
   const openSideSheetState = useSelector(
     (state: RootState) => state.openSideSheetReducer
   );
+
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
+
+  const operatorResult = useSelector(
+    (state: RootState) => state.workflowReducer.operatorResults[currentNode.id]
+  );
+
   const dagPosition = useSelector(
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
@@ -263,6 +270,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const getNodeActionButton = () => {
+    console.log('currentNodeType: ', currentNode.type);
+
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
@@ -295,6 +304,26 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             }
           >
             Export CSV
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.MetricOp) {
+      console.log('currentNode is metricOp.');
+      // Get the metrics id, and navigate to the metric details page.
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              console.log('View Metric details clicked.');
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/metric/${currentNode.id}`
+              );
+            }}
+          >
+            View Metric Details
           </Button>
         </Box>
       );

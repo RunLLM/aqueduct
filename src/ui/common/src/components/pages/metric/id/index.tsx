@@ -1,7 +1,7 @@
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
+import { CircularProgress, Link, List, ListItem } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -10,11 +10,12 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
 import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
 import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
 import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
+import { dictArtifactNodeIcon } from '../../../../components/workflows/nodes/DictArtifactNode';
 import { functionOperatorNodeIcon } from '../../../../components/workflows/nodes/FunctionOperatorNode';
 import { genericArtifactNodeIcon } from '../../../../components/workflows/nodes/GenericArtifactNode';
 import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
@@ -24,10 +25,16 @@ import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/
 import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
 import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
 import { NodeType } from '../../../../reducers/nodeSelection';
-import { OperatorResult } from '../../../../reducers/workflow';
+import {
+  handleGetArtifactResults,
+  handleGetOperatorResults,
+  handleGetWorkflow,
+} from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
+import { LoadingStatusEnum } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import { LayoutProps } from '../../types';
 
@@ -71,47 +78,92 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowDagResultId, metricOperatorId } = useParams();
+  const navigate = useNavigate();
+  const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+
+  // Log url params
+  console.log('workflowId: ', workflowId);
+  console.log('workflowDagResultId: ', workflowDagResultId);
+  console.log('metricOperatorId: ', metricOperatorId);
+
   const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
   const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
 
-  const metricResult: OperatorResult | null = useSelector(
-    (state: RootState) => {
-      // First, check if there are any keys in the operatorResult's object.
-      const operatorResults = state.workflowReducer.operatorResults;
-      if (Object.keys(operatorResults).length < 1) {
-        return null;
-      }
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
+  console.log(workflow);
+  //const artifactResults = useSelector((state: RootState) => state.workflowReducer.artifactResults);
+  //const operator = (workflow.selectedDag?.operators ?? {})[metricOperatorId];
+  const workflowDag = workflow.dagResults.find((currentDag) => {
+    console.log('currentDagId: ', currentDag.id);
+    return currentDag.id === workflowDagResultId;
+  });
 
-      return operatorResults[metricOperatorId];
-    }
-  );
+  console.log('workflowDag: ', workflowDag);
+
+  const workflowDagId = workflowDag?.workflow_dag_id;
+  console.log('workflowDagResultId: ', workflowDagResultId);
+  console.log('workflowDagId: ', workflowDagId);
+
+  const operator = (workflow.dags[workflowDagId]?.operators ?? {})[
+    metricOperatorId
+  ];
+  console.log('operator before if check: ', operator);
+
+  // // Get the operatorSpec so that we can show more metadata about the operator.
+  // const operatorSpec = operator?.spec;
+  // console.log('operatorSpec: ', operatorSpec);
+
+  // const logs =
+  //   workflow.operatorResults[metricOperatorId]?.result?.exec_state?.user_logs ??
+  //   {};
+  // console.log('logs: ', logs);
+  // const operatorError =
+  //   workflow?.operatorResults[metricOperatorId]?.result?.exec_state?.error;
+  // console.log('operatorError', operatorError);
+
+  // // Get the execution state of the operator:
+  // // TODO: Show execution state in a badge component next to title of operator.
+  // const execState: ExecState =
+  //   workflow?.operatorResults[metricOperatorId]?.result?.exec_state;
+  // console.log('execState: ', execState);
+
+  // const metricResult: OperatorResult | null = useSelector(
+  //   (state: RootState) => {
+  //     // First, check if there are any keys in the operatorResult's object.
+  //     const operatorResults = state.workflowReducer.operatorResults;
+  //     if (Object.keys(operatorResults).length < 1) {
+  //       return null;
+  //     }
+
+  //     return operatorResults[metricOperatorId];
+  //   }
+  // );
+
+  const metricResult = workflow.operatorResults[metricOperatorId];
+  console.log('metricResult: ', metricResult);
 
   useEffect(() => {
     // TODO: Update this to contain the name of the operator
     document.title = 'Metric Details | Aqueduct';
 
-    // if (!metricResult) {
-    //     dispatch(
-    //         handleGetOperatorResults({
-    //             apiKey: user.apiKey,
-    //             workflowDagResultId,
-    //             operatorId: metricOperatorId,
-    //         })
-    //     );
-    // }
+    console.log('wf loading before fetch: ', workflow.loadingStatus.loading);
+    console.log('fetching workflow ...');
+    dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
   }, []);
 
-  // TODO: Bring this back after done getting the metricResults.
-  // if (!metricResult || !metricResult.result) {
-  //     return (
-  //         <Layout user={user}>
-  //             <CircularProgress />
-  //         </Layout>
-  //     );
-  // }
-
-  //const parsedData = JSON.parse(metricResult.);
+  useEffect(() => {
+    console.log('workflow useEffect: ', workflow);
+    if (workflow.dagResults.length > 0) {
+      console.log('fetching operator results...');
+      dispatch(
+        handleGetOperatorResults({
+          apiKey: user.apiKey,
+          workflowDagResultId,
+          operatorId: metricOperatorId,
+        })
+      );
+    }
+  }, [workflow.dagResults]);
 
   // Set up different metric input types for rendering in the inputs list.
   // TODO: transform/handle response from API and render these appropriately.
@@ -173,18 +225,199 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     },
   ];
 
+  const artifactTypeToIconMapping = {
+    [ArtifactType.String]: stringArtifactNodeIcon,
+    [ArtifactType.Bool]: boolArtifactNodeIcon,
+    [ArtifactType.Numeric]: numericArtifactNodeIcon,
+    [ArtifactType.Dict]: dictArtifactNodeIcon,
+    // TODO: figure out if we should use other icon for tuple
+    [ArtifactType.Tuple]: dictArtifactNodeIcon,
+    [ArtifactType.Table]: tableArtifactNodeIcon,
+    [ArtifactType.Json]: jsonArtifactNodeIcon,
+    // TODO: figure out what to show for bytes.
+    [ArtifactType.Bytes]: dictArtifactNodeIcon,
+    [ArtifactType.Image]: imageArtifactNodeIcon,
+    // TODO: Figure out what to show for Picklable
+    [ArtifactType.Picklable]: dictArtifactNodeIcon,
+  };
+
   const listStyle = {
     width: '100%',
     maxWidth: 360,
     bgcolor: 'background.paper',
   };
 
+  // return null if we don't have the workflow loaded.
+  // This workflow doesn't exist.
+  if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
+    console.log('Workflow not found. going to 404 page');
+    navigate('/404');
+    return null;
+  }
+
+  // This is the stuff that we'd love to see on console!!!
+  if (operator) {
+    const inputs = operator.inputs;
+    const outputs = operator.outputs;
+
+    const operatorArtifacts = [...inputs, ...outputs];
+    // fetch output artifacts.
+    operatorArtifacts.map((artifactId) => {
+      if (!workflow.artifactResults[artifactId])
+        dispatch(
+          handleGetArtifactResults({
+            apiKey: user.apiKey,
+            workflowDagResultId,
+            artifactId,
+          })
+        );
+    });
+
+    console.log('operator inputs: ', inputs);
+    console.log('operator outputs: ', outputs);
+  }
+
+  // TODO: Bring this back after done getting the metricResults.
+  console.log('workflow before loading check: ', workflow);
+  console.log('workflow loading Status: ', workflow.loadingStatus.loading);
+  if (!metricResult || !metricResult.result) {
+    return (
+      <Layout user={user}>
+        <CircularProgress />
+      </Layout>
+    );
+  }
+
+  // Function to get the numerical value of the metric output
+  const getOperatorOutput = () => {
+    if (!operator || !operator.outputs) {
+      return <CircularProgress />;
+    }
+
+    console.log(
+      'getOperatorOutput artifactResults: ',
+      workflow.artifactResults
+    );
+
+    return operator.outputs.map((artifactId) => {
+      const artifactResult = workflow.artifactResults[artifactId];
+      if (!artifactResult) {
+        return null;
+      }
+
+      // TODO: Check the serialization_type of the artifacts and show a link
+      // to table vew artifacts when present.
+
+      if (artifactResult.result) {
+        console.log('RESULT: ', artifactResult.result);
+        if (artifactResult.result.artifact_type === 'table') {
+          // Link to appropriate artifact details page
+          // Show tableIcon here as part of the link.
+          return (
+            <Box key={artifactId}>
+              <Typography variant="body1">TEST</Typography>
+            </Box>
+          );
+        } else {
+          // Render inline if possible
+          return (
+            <Box>
+              <Typography variant="body1">
+                {artifactResult.result.data}
+              </Typography>
+            </Box>
+          );
+        }
+      }
+
+      return null;
+    });
+  };
+
+  // TODO: refactor getOperatorInput and getOperatorOutput to just one function.
+  // was playing around with design before i figured they can be the same.
+  const getOperatorInput = () => {
+    if (!operator || !operator.inputs) {
+      return <CircularProgress />;
+    }
+
+    return operator.inputs.map((artifactId, index) => {
+      const artifactResult = workflow.artifactResults[artifactId];
+      if (!artifactResult) {
+        return null;
+      }
+
+      if (artifactResult.result) {
+        return (
+          <ListItem divider key={`metric-input-${index}`}>
+            <Box display="flex">
+              <Box
+                sx={{
+                  width: '16px',
+                  height: '16px',
+                  color: 'rgba(0,0,0,0.54)',
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={
+                    artifactTypeToIconMapping[artifactResult.result.artifact_type]
+                  }
+                />
+              </Box>
+              <Link
+                to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
+                component={RouterLink as any}
+                sx={{ marginLeft: '16px' }}
+                underline="none"
+              >
+                {artifactResult.result.name}
+              </Link>
+            </Box>
+          </ListItem>
+        );
+      }
+
+      return null;
+    });
+
+    // return metricInputs.map((metricInput, index) => {
+    //   return (
+    //     <ListItem divider key={`metric-input-${index}`}>
+    //       <Box display="flex">
+    //         <Box
+    //           sx={{
+    //             width: '16px',
+    //             height: '16px',
+    //             color: 'rgba(0,0,0,0.54)',
+    //           }}
+    //         >
+    //           <FontAwesomeIcon icon={metricInput.nodeIcon} />
+    //         </Box>
+    //         <Link
+    //           to={`${getPathPrefix()}/workflows`}
+    //           component={RouterLink as any}
+    //           sx={{ marginLeft: '16px' }}
+    //           underline="none"
+    //         >
+    //           {metricInput.name}
+    //         </Link>
+    //       </Box>
+    //     </ListItem>
+    //   );
+    // });
+  };
+
   return (
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          <Box width="100%" display="flex">
-            <MetricDetailsHeader artifactName="metric_result_placeholder" />
+          <Box width="100%">
+            <MetricDetailsHeader artifactName={metricResult.result.name} />
+            {metricResult.result?.description && (
+              <Typography variant="body1">
+                {metricResult.result.description}
+              </Typography>
+            )}
           </Box>
 
           <Box display="flex" width="100%" paddingTop="40px">
@@ -210,33 +443,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <List sx={listStyle}>
-                    {metricInputs.map((metricInput, index) => {
-                      return (
-                        <ListItem divider key={`metric-input-${index}`}>
-                          <Box display="flex">
-                            <Box
-                              sx={{
-                                width: '16px',
-                                height: '16px',
-                                color: 'rgba(0,0,0,0.54)',
-                              }}
-                            >
-                              <FontAwesomeIcon icon={metricInput.nodeIcon} />
-                            </Box>
-                            <Link
-                              to={`${getPathPrefix()}/workflows`}
-                              component={RouterLink as any}
-                              sx={{ marginLeft: '16px' }}
-                              underline="none"
-                            >
-                              {metricInput.name}
-                            </Link>
-                          </Box>
-                        </ListItem>
-                      );
-                    })}
-                  </List>
+                  <List sx={listStyle}>{getOperatorInput()}</List>
                 </AccordionDetails>
               </Accordion>
             </Box>
@@ -263,7 +470,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Typography variant="h6">125.75</Typography>
+                  <React.Fragment>{getOperatorOutput()}</React.Fragment>
                 </AccordionDetails>
               </Accordion>
             </Box>
