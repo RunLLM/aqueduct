@@ -16,6 +16,7 @@ import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
+import { LambdaCard } from './lambdaCard';
 import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
 import { MySqlCard } from './mysqlCard';
@@ -136,6 +137,8 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     case 'Kubernetes':
       serviceCard = <KubernetesCard integration={integration} />;
       break;
+    case 'Lambda':
+      serviceCard = <LambdaCard integration={integration} />;
     default:
       serviceCard = null;
   }

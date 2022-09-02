@@ -136,6 +136,10 @@ export type KubernetesConfig = {
   cluster_name: string;
 };
 
+export type LambdaConfig = {
+  role_arn: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -151,7 +155,8 @@ export type IntegrationConfig =
   | GCSConfig
   | AqueductDemoConfig
   | AirflowConfig
-  | KubernetesConfig;
+  | KubernetesConfig
+  | LambdaConfig;
 
 export type Service =
   | 'Postgres'
@@ -166,7 +171,8 @@ export type Service =
   | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
-  | 'Kubernetes';
+  | 'Kubernetes'
+  | 'Lambda';
 
 type Info = {
   logo: string;
@@ -320,6 +326,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Kubernetes']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
+    activated: true,
+    category: 'compute',
+  },
+  ['Lambda']: {
+    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
     activated: true,
     category: 'compute',
   },

@@ -30,6 +30,7 @@ import {
   Integration,
   IntegrationConfig,
   KubernetesConfig,
+  LambdaConfig,
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
@@ -45,6 +46,7 @@ import { BigQueryDialog } from './bigqueryDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
+import { LambdaDialog } from './lambdaDialog';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
@@ -234,6 +236,13 @@ const IntegrationDialog: React.FC<Props> = ({
         <KubernetesDialog
           onUpdateField={setConfigField}
           value={config as KubernetesConfig}
+        />
+      );
+    case 'Lambda':
+      serviceDialog = (
+        <LambdaDialog
+          onUpdateField={setConfigField}
+          value={config as LambdaConfig}
         />
       );
       break;
