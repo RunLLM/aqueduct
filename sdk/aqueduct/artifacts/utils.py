@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
@@ -46,9 +45,7 @@ def preview_artifact(
         raise Exception("Unsupported serialization type %s." % serialization_type)
 
     artifact_type = artifact_response.artifact_type
-    content = deserialization_function_mapping[serialization_type](
-        base64.b64decode(artifact_response.content)
-    )
+    content = deserialization_function_mapping[serialization_type](artifact_response.content)
 
     assert infer_artifact_type(content) == artifact_type
 

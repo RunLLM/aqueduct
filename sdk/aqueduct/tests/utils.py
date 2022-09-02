@@ -1,4 +1,3 @@
-import base64
 import json
 import uuid
 from typing import List
@@ -196,7 +195,7 @@ def construct_mocked_preview(
             output_artifact_id: ArtifactResult(
                 serialization_type=serialization_type,
                 artifact_type=artifact_type,
-                content=base64.b64encode(serialized_content),
+                content=serialized_content,
             ),
         }
 
