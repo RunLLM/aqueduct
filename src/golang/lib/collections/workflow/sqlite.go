@@ -61,12 +61,10 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 	query := `
 		WITH workflow_results AS
 		(
-			SELECT
-				wf.id AS id, wf.name AS name, 
-		 		wf.description AS description, wf.created_at AS created_at, 
+			SELECT wf.id AS id, wf.name AS name,
+		 		wf.description AS description, wf.created_at AS created_at,
 		 		wfdr.created_at AS last_run_at, wfdr.status as status
-			FROM
-				workflow AS wf
+			FROM workflow AS wf
 				INNER JOIN app_user ON wf.user_id = app_user.id
 				INNER JOIN workflow_dag AS wfd ON wf.id = wfd.workflow_id
 				LEFT JOIN workflow_dag_result AS wfdr ON wfd.id = wfdr.workflow_dag_id
@@ -74,31 +72,14 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 		),
 		latest_result AS
 		(
-			SELECT 
-				id, MAX(created_at) AS last_run_at 
-	  		FROM 
-				workflow_results
-	  		GROUP BY wf.id
-		),
-		SELECT
-			wf.id AS id, wf.name AS name, 
-		 	wf.description AS description, wf.created_at AS created_at, 
-		 	wfdr.created_at AS last_run_at, wfdr.status as status 
-		 	FROM workflow AS wf, app_user, workflow_dag AS wfd, workflow_dag_result AS wfdr, 
-		 		(
-					SELECT 
-						wf.id AS id, MAX(wfdr.created_at) AS last_run_at 
-		  			FROM workflow AS wf, app_user, workflow_dag AS wfd, workflow_dag_result AS wfdr 
-		  			WHERE app_user.organization_id = $1 
-		  			AND wf.user_id = app_user.id AND wfd.workflow_id = wf.id AND wfdr.workflow_dag_id = wfd.id 
-		  			GROUP BY wf.id
-				) AS wflr 
-		WHERE 
-			app_user.organization_id = $1 
-		 	AND wf.user_id = app_user.id 
-			AND wfd.workflow_id = wf.id 
-			AND wfdr.workflow_dag_id = wfd.id 
-			AND wf.id = wflr.id AND wfdr.created_at = wflr.last_run_at 
+			SELECT id, MAX(last_run_at) AS last_run_at
+	  		FROM workflow_results
+	  		GROUP BY id
+		)
+		SELECT wfr.id, wfr.name, wfr.description, wfr.created_at, wfr.last_run_at, wfr.status
+		FROM workflow_results AS wfr, latest_result AS lr
+		WHERE wfr.id = lr.id
+		AND wfr.last_run_at = lr.last_run_at
 		ORDER BY created_at DESC;`
 
 	var latestWorkflowResponse []latestWorkflowResponse
