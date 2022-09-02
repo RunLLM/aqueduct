@@ -8,7 +8,11 @@ from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidArtifactTypeException, InvalidUserArgumentException
+from aqueduct.error import (
+    InvalidArtifactTypeException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -234,6 +238,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        if self._metadata.service == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation is not supported for integration type %s."
+                % self._metadata.service.value
+            )
+
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),

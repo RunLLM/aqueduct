@@ -187,7 +187,7 @@ export const AthenaDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         label="S3 Output Location*"
-        description="The S3 path where Athena query results are written. This is required by the Athena API, and Aqueduct garbage collect these data after each query."
+        description="The S3 path where Athena query results are written. This is required by the Athena API, and Aqueduct garbage collects this data after each query."
         placeholder={Placeholders.output_location}
         onChange={(event) =>
           onUpdateField('output_location', event.target.value)

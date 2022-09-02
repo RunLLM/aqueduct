@@ -23,14 +23,8 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
     OperatorType,
-    ServiceType,
 )
-from aqueduct.error import (
-    AqueductError,
-    InvalidArtifactTypeException,
-    InvalidIntegrationException,
-    InvalidUserActionException,
-)
+from aqueduct.error import AqueductError, InvalidArtifactTypeException, InvalidIntegrationException
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -180,12 +174,6 @@ class TableArtifact(BaseArtifact):
                 found.
         """
         integration_info = config.integration_info
-        if integration_info.service == ServiceType.ATHENA:
-            raise InvalidUserActionException(
-                "Save operation is not supported for integration type %s."
-                % integration_info.service.value
-            )
-
         integration_load_params = config.parameters
         integrations_map = api_client.__GLOBAL_API_CLIENT__.list_integrations()
 

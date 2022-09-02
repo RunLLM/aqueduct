@@ -38,6 +38,8 @@ class AthenaConnector(connector.DataConnector):
                 sql=params.query,
                 database=self.database,
                 boto3_session=self.session,
+                # Disabling ctas improves generality at a cost of performance.
+                # More details here: https://aws-sdk-pandas.readthedocs.io/en/stable/stubs/awswrangler.athena.read_sql_query.html
                 ctas_approach=False,
                 s3_output=self.output_location,
                 keep_files=False,

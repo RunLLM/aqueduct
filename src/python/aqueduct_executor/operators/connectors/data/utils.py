@@ -17,7 +17,11 @@ def _session_from_config_file_path(config: Union[S3Config, AthenaConfig]) -> bot
     """
     os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.config_file_path
     os.environ["AWS_CONFIG_FILE"] = config.config_file_path
-    return boto3.Session(profile_name=config.config_file_profile)
+    session = boto3.Session(profile_name=config.config_file_profile)
+    # This ensures the credential is cached by the session in memory, so even if the temp credential
+    # file is removed, we can still access AWS resources.
+    session.get_credentials()
+    return session
 
 
 def _session_from_config_file_content(
@@ -37,8 +41,6 @@ def _session_from_config_file_content(
         return _session_from_config_file_path(config)
     finally:
         # always remove the temp file.
-        # TODO: remove debug print here.
-        print("temp file removed!")
         os.remove(temp_path)
 
 
