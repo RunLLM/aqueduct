@@ -8,4 +8,4 @@ from pydantic import BaseModel
 class ArtifactMetadata(BaseModel):
     id: uuid.UUID
     name: str
-    type: Optional[ArtifactType]
+    type: ArtifactType
