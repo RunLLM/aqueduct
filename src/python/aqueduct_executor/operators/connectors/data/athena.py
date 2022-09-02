@@ -25,6 +25,15 @@ class AthenaConnector(connector.DataConnector):
 
     def authenticate(self) -> None:
         self._list_tables()
+        # This checks whether the S3 output path is valid.
+        wr.athena.read_sql_query(
+            sql="SELECT 1;",
+            database=self.database,
+            boto3_session=self.session,
+            ctas_approach=False,
+            s3_output=self.output_location,
+            keep_files=False,
+        )
 
     def discover(self) -> List[str]:
         return self._list_tables()
