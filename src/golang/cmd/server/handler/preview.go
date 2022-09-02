@@ -6,8 +6,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -42,23 +42,22 @@ type previewArgs struct {
 }
 
 type previewResponse struct {
-	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactContents map[uuid.UUID][]byte 				  `json:"artifact_contents"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifact_types_metadata"`
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactContents      map[uuid.UUID][]byte                `json:"artifact_contents"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
 }
 
 type previewResponseMetadata struct {
-	Status          shared.ExecutionStatus                `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState   `json:"operator_results"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata		  `json:"artifact_types_metadata"`
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
 }
 
 type artifactTypeMetadata struct {
 	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
 }
-
 
 type PreviewHandler struct {
 	PostHandler
@@ -73,44 +72,50 @@ func (*PreviewHandler) Name() string {
 	return "Preview"
 }
 
-func checkError(w http.ResponseWriter, err error) {
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{}) {
-
 	resp := response.(*previewResponse)
-	mw := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mw.FormDataContentType())
+	multipartWriter := multipart.NewWriter(w)
+	defer multipartWriter.Close()
+
+	w.Header().Set("Content-Type", multipartWriter.FormDataContentType())
 
 	responseMetadata := previewResponseMetadata{
-		Status: resp.Status,
-		OperatorResults: resp.OperatorResults,
+		Status:                resp.Status,
+		OperatorResults:       resp.OperatorResults,
 		ArtifactTypesMetadata: resp.ArtifactTypesMetadata,
 	}
 
 	jsonBlob, err := json.Marshal(responseMetadata)
-	checkError(w, err)
-
-	fw, err := mw.CreateFormField("metadata")
-	checkError(w, err)
-
-	_, err = fw.Write(jsonBlob)
-	checkError(w, err)
-
-	for artifact_id, artifact_content := range resp.ArtifactContents {
-		fw, err := mw.CreateFormField(artifact_id.String())
-		checkError(w, err)
-
-		_, err = fw.Write(artifact_content)
-		checkError(w, err)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	err = mw.Close()
-	checkError(w, err)
+	fw, err := multipartWriter.CreateFormField(metadataFormFieldName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = fw.Write(jsonBlob)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for artifact_id, artifact_content := range resp.ArtifactContents {
+		fw, err := multipartWriter.CreateFormField(artifact_id.String())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = fw.Write(artifact_content)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -194,22 +199,20 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		statusCode = http.StatusBadRequest
 	}
 
-
-	// Only include artifact results that were successfully computed.
-	artifactContents := make(map[uuid.UUID][]byte)
-	artifactTypesMetadata := make(map[uuid.UUID]artifactTypeMetadata)
+	artifactContents := make(map[uuid.UUID][]byte, len(workflowPreviewResult.Artifacts))
+	artifactTypesMetadata := make(map[uuid.UUID]artifactTypeMetadata, len(workflowPreviewResult.Artifacts))
 	for id, artf := range workflowPreviewResult.Artifacts {
 		artifactContents[id] = artf.Content
 		artifactTypesMetadata[id] = artifactTypeMetadata{
 			SerializationType: artf.SerializationType,
-			ArtifactType: artf.ArtifactType,
+			ArtifactType:      artf.ArtifactType,
 		}
 	}
 
 	return &previewResponse{
-		Status:          workflowPreviewResult.Status,
-		OperatorResults: workflowPreviewResult.Operators,
-		ArtifactContents: artifactContents,
+		Status:                workflowPreviewResult.Status,
+		OperatorResults:       workflowPreviewResult.Operators,
+		ArtifactContents:      artifactContents,
 		ArtifactTypesMetadata: artifactTypesMetadata,
 	}, statusCode, nil
 }

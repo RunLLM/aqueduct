@@ -15,7 +15,6 @@ from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEn
 
 from aqueduct import api_client, dag
 
-from .artifact import Artifact
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,

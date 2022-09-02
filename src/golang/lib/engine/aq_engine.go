@@ -107,7 +107,7 @@ type WorkflowPreviewResult struct {
 type PreviewArtifactResult struct {
 	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
-	Content           []byte               	            `json:"content"`
+	Content           []byte                            `json:"content"`
 }
 
 func NewAqEngine(
