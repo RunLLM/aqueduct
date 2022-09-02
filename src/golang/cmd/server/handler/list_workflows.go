@@ -23,6 +23,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // Route: /workflows
@@ -99,6 +100,8 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
 
+	logrus.Warnf("Num flows: %v", len(dbWorkflows))
+
 	workflowIds := make([]uuid.UUID, 0, len(dbWorkflows))
 	for _, dbWorkflow := range dbWorkflows {
 		workflowIds = append(workflowIds, dbWorkflow.Id)
@@ -120,17 +123,26 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		}
 
 		for _, dbWorkflow := range dbWorkflows {
-			workflows = append(workflows,
-				workflowResponse{
-					Id:              dbWorkflow.Id,
-					Name:            dbWorkflow.Name,
-					Description:     dbWorkflow.Description,
-					CreatedAt:       dbWorkflow.CreatedAt.Unix(),
-					LastRunAt:       dbWorkflow.LastRunAt.Unix(),
-					Status:          dbWorkflow.Status,
-					WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
-				},
-			)
+			response := workflowResponse{
+				Id:              dbWorkflow.Id,
+				Name:            dbWorkflow.Name,
+				Description:     dbWorkflow.Description,
+				CreatedAt:       dbWorkflow.CreatedAt.Unix(),
+				WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
+			}
+
+			if !dbWorkflow.LastRunAt.IsNull {
+				response.LastRunAt = dbWorkflow.LastRunAt.Time.Unix()
+			}
+
+			if !dbWorkflow.Status.IsNull {
+				response.Status = dbWorkflow.Status.ExecutionStatus
+			} else {
+				// There are no workflow runs yet for this workflow
+				response.Status = shared.PendingExecutionStatus
+			}
+
+			workflows = append(workflows, response)
 		}
 	}
 

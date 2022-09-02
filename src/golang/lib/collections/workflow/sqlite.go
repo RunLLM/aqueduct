@@ -63,7 +63,7 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 		(
 			SELECT wf.id AS id, wf.name AS name,
 		 		wf.description AS description, wf.created_at AS created_at,
-		 		wfdr.created_at AS last_run_at, wfdr.status as status
+		 		wfdr.created_at AS run_at, wfdr.status as status
 			FROM workflow AS wf
 				INNER JOIN app_user ON wf.user_id = app_user.id
 				INNER JOIN workflow_dag AS wfd ON wf.id = wfd.workflow_id
@@ -72,14 +72,17 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 		),
 		latest_result AS
 		(
-			SELECT id, MAX(last_run_at) AS last_run_at
+			SELECT id, MAX(run_at) AS last_run_at
 	  		FROM workflow_results
 	  		GROUP BY id
 		)
-		SELECT wfr.id, wfr.name, wfr.description, wfr.created_at, wfr.last_run_at, wfr.status
+		SELECT wfr.id, wfr.name, wfr.description, wfr.created_at, wfr.run_at AS last_run_at, wfr.status
 		FROM workflow_results AS wfr, latest_result AS lr
 		WHERE wfr.id = lr.id
-		AND wfr.last_run_at = lr.last_run_at
+		AND 
+		(	wfr.run_at = lr.last_run_at
+			OR (wfr.run_at IS NULL AND lr.last_run_at IS NULL)
+		)
 		ORDER BY created_at DESC;`
 
 	var latestWorkflowResponse []latestWorkflowResponse

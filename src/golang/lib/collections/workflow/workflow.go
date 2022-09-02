@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
 )
@@ -20,12 +21,12 @@ type Workflow struct {
 }
 
 type latestWorkflowResponse struct {
-	Id          uuid.UUID              `db:"id" json:"id"`
-	Name        string                 `db:"name" json:"name"`
-	Description string                 `db:"description" json:"description"`
-	CreatedAt   time.Time              `db:"created_at" json:"created_at"`
-	LastRunAt   time.Time              `db:"last_run_at" json:"last_run_at"`
-	Status      shared.ExecutionStatus `db:"status" json:"status"`
+	Id          uuid.UUID                  `db:"id" json:"id"`
+	Name        string                     `db:"name" json:"name"`
+	Description string                     `db:"description" json:"description"`
+	CreatedAt   time.Time                  `db:"created_at" json:"created_at"`
+	LastRunAt   utils.NullTime             `db:"last_run_at" json:"last_run_at"`
+	Status      shared.NullExecutionStatus `db:"status" json:"status"`
 }
 
 // Use to associate a workflow.name, workflow.id with workflow_dag_result.id (ENG-625)
