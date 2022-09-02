@@ -81,33 +81,18 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const navigate = useNavigate();
   const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
 
-  // Log url params
-  console.log('workflowId: ', workflowId);
-  console.log('workflowDagResultId: ', workflowDagResultId);
-  console.log('metricOperatorId: ', metricOperatorId);
-
   const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
   const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
 
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-  console.log(workflow);
-  //const artifactResults = useSelector((state: RootState) => state.workflowReducer.artifactResults);
-  //const operator = (workflow.selectedDag?.operators ?? {})[metricOperatorId];
   const workflowDag = workflow.dagResults.find((currentDag) => {
-    console.log('currentDagId: ', currentDag.id);
     return currentDag.id === workflowDagResultId;
   });
 
-  console.log('workflowDag: ', workflowDag);
-
   const workflowDagId = workflowDag?.workflow_dag_id;
-  console.log('workflowDagResultId: ', workflowDagResultId);
-  console.log('workflowDagId: ', workflowDagId);
-
   const operator = (workflow.dags[workflowDagId]?.operators ?? {})[
     metricOperatorId
   ];
-  console.log('operator before if check: ', operator);
 
   // // Get the operatorSpec so that we can show more metadata about the operator.
   // const operatorSpec = operator?.spec;
@@ -127,34 +112,16 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   //   workflow?.operatorResults[metricOperatorId]?.result?.exec_state;
   // console.log('execState: ', execState);
 
-  // const metricResult: OperatorResult | null = useSelector(
-  //   (state: RootState) => {
-  //     // First, check if there are any keys in the operatorResult's object.
-  //     const operatorResults = state.workflowReducer.operatorResults;
-  //     if (Object.keys(operatorResults).length < 1) {
-  //       return null;
-  //     }
-
-  //     return operatorResults[metricOperatorId];
-  //   }
-  // );
-
   const metricResult = workflow.operatorResults[metricOperatorId];
-  console.log('metricResult: ', metricResult);
 
   useEffect(() => {
     // TODO: Update this to contain the name of the operator
     document.title = 'Metric Details | Aqueduct';
-
-    console.log('wf loading before fetch: ', workflow.loadingStatus.loading);
-    console.log('fetching workflow ...');
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
   }, []);
 
   useEffect(() => {
-    console.log('workflow useEffect: ', workflow);
     if (workflow.dagResults.length > 0) {
-      console.log('fetching operator results...');
       dispatch(
         handleGetOperatorResults({
           apiKey: user.apiKey,
@@ -167,7 +134,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   // Set up different metric input types for rendering in the inputs list.
   // TODO: transform/handle response from API and render these appropriately.
-  const metricInputs = [
+  const mockMetricInputs = [
     {
       name: 'bool_artifact',
       nodeType: NodeType.BoolArtifact,
@@ -255,7 +222,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     return null;
   }
 
-  // This is the stuff that we'd love to see on console!!!
   if (operator) {
     const inputs = operator.inputs;
     const outputs = operator.outputs;
@@ -272,14 +238,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
           })
         );
     });
-
-    console.log('operator inputs: ', inputs);
-    console.log('operator outputs: ', outputs);
   }
 
-  // TODO: Bring this back after done getting the metricResults.
-  console.log('workflow before loading check: ', workflow);
-  console.log('workflow loading Status: ', workflow.loadingStatus.loading);
   if (!metricResult || !metricResult.result) {
     return (
       <Layout user={user}>
@@ -294,11 +254,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       return <CircularProgress />;
     }
 
-    console.log(
-      'getOperatorOutput artifactResults: ',
-      workflow.artifactResults
-    );
-
     return operator.outputs.map((artifactId) => {
       const artifactResult = workflow.artifactResults[artifactId];
       if (!artifactResult) {
@@ -307,6 +262,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
       // TODO: Check the serialization_type of the artifacts and show a link
       // to table vew artifacts when present.
+      // TODO: Do the same thing that we're doing over in inputs :)
 
       if (artifactResult.result) {
         console.log('RESULT: ', artifactResult.result);
@@ -360,7 +316,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               >
                 <FontAwesomeIcon
                   icon={
-                    artifactTypeToIconMapping[artifactResult.result.artifact_type]
+                    artifactTypeToIconMapping[
+                      artifactResult.result.artifact_type
+                    ]
                   }
                 />
               </Box>
@@ -379,32 +337,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
       return null;
     });
-
-    // return metricInputs.map((metricInput, index) => {
-    //   return (
-    //     <ListItem divider key={`metric-input-${index}`}>
-    //       <Box display="flex">
-    //         <Box
-    //           sx={{
-    //             width: '16px',
-    //             height: '16px',
-    //             color: 'rgba(0,0,0,0.54)',
-    //           }}
-    //         >
-    //           <FontAwesomeIcon icon={metricInput.nodeIcon} />
-    //         </Box>
-    //         <Link
-    //           to={`${getPathPrefix()}/workflows`}
-    //           component={RouterLink as any}
-    //           sx={{ marginLeft: '16px' }}
-    //           underline="none"
-    //         >
-    //           {metricInput.name}
-    //         </Link>
-    //       </Box>
-    //     </ListItem>
-    //   );
-    // });
   };
 
   return (
