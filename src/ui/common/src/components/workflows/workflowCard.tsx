@@ -23,13 +23,13 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
 
   const lastUpdatedTime = new Date(workflow['last_run_at'] * 1000);
 
-  const lastRunComponent = (
+  const lastRunComponent = workflow['last_run_at'] ? (
     <Box sx={{ fontSize: 1, my: 1 }}>
       <Typography variant="subtitle1">
         <strong>Workflow Last Run:</strong> {lastUpdatedTime.toLocaleString()}
       </Typography>
     </Box>
-  );
+  ) : {};
 
   const cardContent = (
     <Card>
