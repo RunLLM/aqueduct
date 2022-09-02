@@ -457,7 +457,7 @@ func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) *shared.Stor
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
-			Bucket:                    c.Bucket,
+			Bucket: c.Bucket,
 			ServiceAccountCredentials: c.ServiceAccountCredentials,
 		},
 	}
