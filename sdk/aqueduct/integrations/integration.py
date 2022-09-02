@@ -37,6 +37,7 @@ class IntegrationInfo(BaseModel):
             ServiceType.BIGQUERY,
             ServiceType.AQUEDUCTDEMO,
             ServiceType.SQLITE,
+            ServiceType.ATHENA,
         ]
 
 
