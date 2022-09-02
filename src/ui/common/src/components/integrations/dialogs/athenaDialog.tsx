@@ -1,38 +1,37 @@
-import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
 import { Tab, Tabs } from '../../../components/primitives/Tabs.styles';
 import {
+  AthenaConfig,
   AWSCredentialType,
   FileData,
-  S3Config,
 } from '../../../utils/integrations';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
-const Placeholders: S3Config = {
+const Placeholders: AthenaConfig = {
   type: AWSCredentialType.AccessKey,
-  bucket: 'aqueduct',
-  region: 'us-east-1',
   access_key_id: '',
   secret_access_key: '',
+  region: 'us-east-1',
   config_file_path: '',
   config_file_content: '',
   config_file_profile: '',
-  use_as_storage: '',
+  database: '',
+  output_location: '',
 };
 
 type Props = {
-  onUpdateField: (field: keyof S3Config, value: string) => void;
-  value?: S3Config;
+  onUpdateField: (field: keyof AthenaConfig, value: string) => void;
+  value?: AthenaConfig;
   editMode: boolean;
 };
 
-export const S3Dialog: React.FC<Props> = ({
+export const AthenaDialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,
@@ -55,10 +54,6 @@ export const S3Dialog: React.FC<Props> = ({
   useEffect(() => {
     if (!value?.type) {
       onUpdateField('type', AWSCredentialType.AccessKey);
-    }
-
-    if (!value?.use_as_storage) {
-      onUpdateField('use_as_storage', 'false');
     }
   }, []);
 
@@ -101,6 +96,16 @@ export const S3Dialog: React.FC<Props> = ({
           onUpdateField('secret_access_key', event.target.value)
         }
         value={value?.secret_access_key ?? null}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={true}
+        label="Region*"
+        description="The region the Athena database belongs to."
+        placeholder={Placeholders.region}
+        onChange={(event) => onUpdateField('region', event.target.value)}
+        value={value?.region ?? null}
       />
     </Box>
   );
@@ -168,11 +173,11 @@ export const S3Dialog: React.FC<Props> = ({
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Bucket*"
-        description="The name of the S3 bucket."
-        placeholder={Placeholders.bucket}
-        onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? null}
+        label="Database*"
+        description="The name of the Athena database."
+        placeholder={Placeholders.database}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database ?? null}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -181,11 +186,13 @@ export const S3Dialog: React.FC<Props> = ({
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Region*"
-        description="The region the S3 bucket belongs to."
-        placeholder={Placeholders.region}
-        onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? null}
+        label="S3 Output Location*"
+        description="The S3 path where Athena query results are written. This is required by the Athena API, and Aqueduct garbage collects this data after each query."
+        placeholder={Placeholders.output_location}
+        onChange={(event) =>
+          onUpdateField('output_location', event.target.value)
+        }
+        value={value?.output_location ?? null}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -210,33 +217,19 @@ export const S3Dialog: React.FC<Props> = ({
       {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
       {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
       {value?.type === AWSCredentialType.ConfigFileContent && configUploadTab}
-
-      <FormControlLabel
-        label="Use this integration for Aqueduct metadata storage."
-        control={
-          <Checkbox
-            checked={value?.use_as_storage === 'true'}
-            onChange={(event) =>
-              onUpdateField(
-                'use_as_storage',
-                event.target.checked ? 'true' : 'false'
-              )
-            }
-            disabled={editMode}
-          />
-        }
-      />
     </Box>
   );
 };
 
-export function isS3ConfigComplete(config: S3Config): boolean {
-  if (!config.bucket) {
+export function isAthenaConfigComplete(config: AthenaConfig): boolean {
+  if (!config.output_location || !config.database) {
     return false;
   }
 
   if (config.type === AWSCredentialType.AccessKey) {
-    return !!config.access_key_id && !!config.secret_access_key;
+    return (
+      !!config.access_key_id && !!config.secret_access_key && !!config.region
+    );
   }
 
   if (config.type === AWSCredentialType.ConfigFilePath) {

@@ -13,6 +13,7 @@ class Name(Enum, metaclass=enums.MetaEnum):
     MARIA_DB = "MariaDB"
     AZURE_SQL = "AzureSQL"
     S3 = "S3"
+    ATHENA = "Athena"
     SQLITE = "SQLite"
     AQUEDUCT_DEMO = "Aqueduct Demo"
     GCS = "GCS"

@@ -8,7 +8,11 @@ from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidArtifactTypeException, InvalidUserArgumentException
+from aqueduct.error import (
+    InvalidArtifactTypeException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -29,6 +33,7 @@ LIST_TABLES_QUERY_SQLSERVER = (
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
@@ -77,6 +82,8 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self._metadata.service == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
+        elif self._metadata.service == ServiceType.ATHENA:
+            list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
         return sql_artifact.get()
@@ -231,6 +238,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        if self._metadata.service == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation is not supported for integration type %s."
+                % self._metadata.service.value
+            )
+
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),

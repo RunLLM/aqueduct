@@ -354,6 +354,10 @@ def install_s3():
     execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
 
 
+def install_athena():
+    execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
+
+
 def install_mysql():
     system = platform.system()
     if system == "Linux":
@@ -425,6 +429,8 @@ def install(system):
         install_snowflake()
     elif system == "s3":
         install_s3()
+    elif system == "athena":
+        install_athena()
     elif system == "mysql" or system == "mariadb":
         install_mysql()
     elif system == "sqlserver" or system == "azuresql":
@@ -541,7 +547,7 @@ if __name__ == "__main__":
     install_args.add_argument(
         "system",
         nargs=1,
-        help="Supported integrations: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, snowflake, bigquery.",
+        help="Supported integrations: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, athena, snowflake, bigquery.",
     )
 
     apikey_args = subparsers.add_parser("apikey", help="Display your Aqueduct API key.")
