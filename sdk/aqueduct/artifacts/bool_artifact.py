@@ -16,9 +16,12 @@ from aqueduct.utils import format_header_for_print, get_description_for_check
 class BoolArtifact(BaseArtifact):
     """This class represents a bool within the flow's DAG.
 
-    Any annotated python function that returns a boolean will
-    return this class when that function is called. This is also returned from pre-defined
-    functions like metric.bound(...).
+    Any `@check`-annotated python function that returns a boolean will
+    return this class when that function is called. This class can also
+    be returned from pre-defined functions like metric.bound(...).
+
+    Any `@op`-annotated python function that returns a boolean
+    will return this class when that function is called in non-lazy mode.
 
     Examples:
         >>> @check

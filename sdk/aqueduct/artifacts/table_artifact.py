@@ -63,7 +63,9 @@ class TableArtifact(BaseArtifact):
     """This class represents a computed table within the flow's DAG.
 
     Any `@op`-annotated python function that returns a dataframe will
-    return this class when that function is called called.
+    return this class when that function is called.
+
+    Any SQL query will also return this class.
 
     Examples:
         >>> @op

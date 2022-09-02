@@ -34,10 +34,13 @@ from aqueduct.utils import (
 
 
 class NumericArtifact(BaseArtifact):
-    """This class represents a computed metric within the flow's DAG.
+    """This class represents a computed number within the flow's DAG.
 
-    Any `@metric`-annotated python function that returns a float will
-    return this class when that function is called.
+    Any `@metric`-annotated python function that returns a number
+    will return this class when that function is called.
+
+    Any `@op`-annotated python function that returns a number
+    will return this class when that function is called in non-lazy mode.
 
     Examples:
         >>> @metric
