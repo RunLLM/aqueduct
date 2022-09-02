@@ -22,7 +22,7 @@ const Placeholders: AthenaConfig = {
   config_file_content: '',
   config_file_profile: '',
   database: '',
-  output_location: '',
+  output_location: 's3://bucket/path/to/folder/',
 };
 
 type Props = {
@@ -187,7 +187,9 @@ export const AthenaDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         label="S3 Output Location*"
-        description="The S3 path where Athena query results are written. This is required by the Athena API, and Aqueduct garbage collects this data after each query."
+        description="The S3 path where Athena query results are written. If the path does not exist 
+        in advance, Aqueduct attempts to create it. Data written to this location is garbage collected
+        after each query."
         placeholder={Placeholders.output_location}
         onChange={(event) =>
           onUpdateField('output_location', event.target.value)
