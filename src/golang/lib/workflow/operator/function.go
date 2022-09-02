@@ -21,12 +21,6 @@ func newFunctionOperator(
 ) (Operator, error) {
 	base.jobName = generateFunctionJobName()
 
-	outputs := base.outputs
-
-	if len(outputs) == 0 {
-		return nil, errWrongNumOutputs
-	}
-
 	return &functionOperatorImpl{
 		base,
 	}, nil

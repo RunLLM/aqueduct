@@ -2,7 +2,6 @@ package dag
 
 import (
 	"context"
-
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
@@ -70,6 +69,7 @@ func computeArtifactSignatures(
 
 	// Queue that stores the frontier of operators as we perform a BFS over the dag.
 	q := make([]uuid.UUID, 0, 1)
+	// TODO: pass this in
 	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 
 	for _, dbOperator := range dbOperators {
@@ -111,33 +111,31 @@ func computeArtifactSignatures(
 			bytesToHash = append(bytesToHash, []byte(currOp.Spec.Param().Val)...)
 		}
 
-		if len(currOp.Outputs) > 1 {
-			return nil, errors.Newf("Multiple output artifacts is currently unsupported.")
-		}
-
 		// Compute that signature for each output artifact.
 		// The assumption is that there is only one output.
-		outputArtifactID := currOp.Outputs[0]
-		bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
+		for _, outputArtifactID := range currOp.Outputs {
+			bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
 
-		// Compute that final hash and add it to the map, then continue traversing.
-		artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
-		processedArtifactIds[outputArtifactID] = true
+			// Compute that final hash and add it to the map, then continue traversing.
+			artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
+			processedArtifactIds[outputArtifactID] = true
 
-		// Find the next downstream operators. We must have already visited all the operator's inputs.
-		for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
-			nextOp := dbOperators[nextOpID]
+			// Find the next downstream operators that consume this output artifact.
+			// In order to process it next, we must have already visited all the operator's inputs.
+			for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
+				nextOp := dbOperators[nextOpID]
 
-			depsComputed := true
-			for _, inputArtifactID := range nextOp.Inputs {
-				if _, ok := processedArtifactIds[inputArtifactID]; !ok {
-					depsComputed = false
-					break
+				depsComputed := true
+				for _, inputArtifactID := range nextOp.Inputs {
+					if _, ok := processedArtifactIds[inputArtifactID]; !ok {
+						depsComputed = false
+						break
+					}
 				}
-			}
 
-			if depsComputed {
-				q = append(q, nextOpID)
+				if depsComputed {
+					q = append(q, nextOpID)
+				}
 			}
 		}
 	}
@@ -164,10 +162,29 @@ func NewWorkflowDag(
 	dbArtifacts := dbWorkflowDag.Artifacts
 	dbOperators := dbWorkflowDag.Operators
 
+	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
+	for _, dbOperator := range dbOperators {
+		for _, outputArtifactID := range dbOperator.Outputs {
+			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
+		}
+		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+	}
+
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
 	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(opExecMode == operator.Preview)
+		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
+		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
+		if !ok {
+			// TODO: This path is unused! Maybe we don't even need to initialize it at all.
+			opMetadataPath = utils.InitializePath(opExecMode == operator.Preview)
+		}
+
+		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(
+			opExecMode == operator.Preview,
+			opMetadataPath,
+		)
 	}
 
 	// Compute signatures for each artifact.

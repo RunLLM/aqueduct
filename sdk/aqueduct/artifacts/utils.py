@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union, List
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.dag import DAG
@@ -29,11 +29,22 @@ def preview_artifact(
     Will handle all type inference of the target artifact, as well as any upstream artifacts
     that were lazily computed.
     """
+    return preview_artifacts(dag, [target_artifact_id], parameters)[0]
+
+
+def preview_artifacts(
+    dag: DAG, target_artifact_ids: List[uuid.UUID], parameters: Optional[Dict[str, Any]] = None
+) -> List[Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]]:
+    """Batch version of `preview_artifact()`
+
+    Returns a list of artifacts, each corresponding to one of the provided `target_artifact_ids`, in
+    the same order.
+    """
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[
             SubgraphDAGDelta(
-                artifact_ids=[target_artifact_id],
+                artifact_ids=target_artifact_ids,
                 include_load_operators=False,
             ),
             UpdateParametersDelta(
@@ -45,24 +56,42 @@ def preview_artifact(
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 
-    assert target_artifact_id in preview_resp.artifact_results.keys()
-    target_artifact_result = preview_resp.artifact_results[target_artifact_id]
-    target_artifact_content = _get_content_from_artifact_result_resp(target_artifact_result)
-    target_artifact_type = target_artifact_result.artifact_type
+    # Process all the target artifacts first. Assumption: the preview response contains a result entry
+    # for each target artifact.
+    output_artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]] = []
+    for target_artifact_id in target_artifact_ids:
+        assert target_artifact_id in preview_resp.artifact_results.keys(), \
+            "Preview is expected to return a result for each target artifact."
+        target_artifact_result = preview_resp.artifact_results[target_artifact_id]
 
-    _update_artifact_type(dag, target_artifact_id, target_artifact_type)
+        # Fetch the inferred type of the target artifact.
+        target_artifact_type = target_artifact_result.artifact_type
+        _update_artifact_type(dag, target_artifact_id, target_artifact_type)
+
+        # Fetch the content of the target artifact.
+        target_artifact_content = _get_content_from_artifact_result_resp(target_artifact_result)
+
+        # Create the target artifact.
+        output_artifacts.append(
+            to_artifact_class(
+                dag,
+                target_artifact_id,
+                target_artifact_type,
+                target_artifact_content,
+            )
+        )
 
     # Any non-target artifacts are guaranteed to be upstream of the target artifact (due to the SubgraphDAGDelta),
     # so if any of them are the result of a lazy operation, we'll want to backfill their types. *We do NOT backfill
     # their contents*, as those are stored on the Artifact class itself and not the underlying shared dag.
     for artifact_id, artifact_result in preview_resp.artifact_results.items():
         # We've already processed the target artifact.
-        if artifact_id == target_artifact_id:
+        if artifact_id in target_artifact_ids:
             continue
 
         _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
-    return to_artifact_class(dag, target_artifact_id, target_artifact_type, target_artifact_content)
+    return output_artifacts
 
 
 def to_artifact_class(

@@ -55,9 +55,10 @@ def wrap_spec(
     *input_artifacts: BaseArtifact,
     op_name: str,
     description: str = "",
+    num_outputs: int = 1,
     execution_mode: ExecutionMode = ExecutionMode.EAGER,
     output_artifact_type_hint: ArtifactType = ArtifactType.UNTYPED,
-) -> BaseArtifact:
+) -> List[BaseArtifact]:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -77,7 +78,12 @@ def wrap_spec(
             The name of the operator that generated this artifact.
         description:
             The description for this operator.
+        TODO: talk about the type_hint
+    Returns:
+        A list of artifacts, representing the outputs of the function.
     """
+    assert num_outputs > 0, "Non-load operators must have at least one output artifact."
+
     for artifact in input_artifacts:
         if artifact._from_flow_run:
             raise InvalidUserActionException(
@@ -92,7 +98,27 @@ def wrap_spec(
         _ = dag.must_get_artifact(artifact.id())
 
     operator_id = generate_uuid()
-    output_artifact_id = generate_uuid()
+    output_artifact_ids = [generate_uuid() for _ in range(num_outputs)]
+
+    if len(output_artifact_ids) == 1:
+        output_artifacts = [
+            ArtifactMetadata(
+                id=output_artifact_ids[0],
+                name=artifact_name_from_op_name(op_name),
+                type=output_artifact_type_hint,
+            )
+        ]
+    else:
+        # Functions with multiple outputs do not have type hints, since we infer them at runtime.
+        # The output artifacts will be named with a suffix index starting at 1.
+        output_artifacts = [
+            ArtifactMetadata(
+                id=output_artifact_id,
+                name=artifact_name_from_op_name(op_name) + " %d" % (i + 1),
+                type=ArtifactType.UNTYPED,
+            )
+            for i, output_artifact_id in enumerate(output_artifact_ids)
+        ]
 
     apply_deltas_to_dag(
         dag,
@@ -104,25 +130,22 @@ def wrap_spec(
                     description=description,
                     spec=spec,
                     inputs=[artifact.id() for artifact in input_artifacts],
-                    outputs=[output_artifact_id],
+                    outputs=output_artifact_ids,
                 ),
-                output_artifacts=[
-                    ArtifactMetadata(
-                        id=output_artifact_id,
-                        name=artifact_name_from_op_name(op_name),
-                        type=output_artifact_type_hint,
-                    )
-                ],
+                output_artifacts=output_artifacts
             ),
         ],
     )
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
-        return artifact_utils.preview_artifact(dag, output_artifact_id)
+        return artifact_utils.preview_artifacts(dag, output_artifact_ids)
     else:
         # We are in lazy mode.
-        return to_artifact_class(dag, output_artifact_id, output_artifact_type_hint)
+        return [
+            to_artifact_class(dag, output_artifact_id, output_artifact_type_hint)
+            for output_artifact_id in output_artifact_ids
+        ]
 
 
 def _type_check_decorator_arguments(
@@ -213,6 +236,7 @@ def op(
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
+    num_outputs: int = 1,
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -238,6 +262,7 @@ def op(
             look for a `requirements.txt` file in the same directory as the decorated function
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
+        TODO(`num_outputs`: documentation)
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -294,6 +319,7 @@ def op(
                 OperatorSpec(function=function_spec),
                 *artifacts,
                 op_name=name,
+                num_outputs=num_outputs,
                 description=description,
                 execution_mode=execution_mode,
             )

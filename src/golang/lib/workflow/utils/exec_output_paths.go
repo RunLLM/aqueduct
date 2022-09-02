@@ -17,15 +17,18 @@ type ExecPaths struct {
 	ArtifactMetadataPath string
 }
 
-func InitializeExecOutputPaths(isPreview bool) *ExecPaths {
+func InitializeExecOutputPaths(isPreview bool, opMetadataPath string) *ExecPaths {
+	return &ExecPaths{
+		OpMetadataPath:       opMetadataPath,
+		ArtifactContentPath:  InitializePath(isPreview),
+		ArtifactMetadataPath: InitializePath(isPreview),
+	}
+}
+
+func InitializePath(isPreview bool) string {
 	var pathPrefix string
 	if isPreview {
 		pathPrefix = previewDir
 	}
-
-	return &ExecPaths{
-		OpMetadataPath:       filepath.Join(pathPrefix, uuid.New().String()),
-		ArtifactContentPath:  filepath.Join(pathPrefix, uuid.New().String()),
-		ArtifactMetadataPath: filepath.Join(pathPrefix, uuid.New().String()),
-	}
+	return filepath.Join(pathPrefix, uuid.New().String())
 }
