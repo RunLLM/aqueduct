@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
@@ -73,7 +73,9 @@ def preview_artifact(
         )
 
 
-def _update_artifact_type(dag: DAG, artifact_id: uuid.UUID, new_artifact_type: ArtifactType):
+def _update_artifact_type(
+    dag: DAG, artifact_id: uuid.UUID, new_artifact_type: ArtifactType
+) -> None:
     """Update's the type for an untyped artifact in the DAG.
 
     Fails if there is a type mismatch with an already existing type. This is safe to use as much

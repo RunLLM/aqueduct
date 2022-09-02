@@ -8,7 +8,7 @@ from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 from utils import get_integration_name
 
-from aqueduct import check, global_config, metric, op, ArtifactType
+from aqueduct import ArtifactType, check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client):
@@ -166,6 +166,7 @@ def test_lazy_global_config(client):
     finally:
         global_config({"lazy": False})
 
+
 def test_lazy_artifacts_backfilled_by_downstream(client):
     @op
     def generate_number():
@@ -197,3 +198,20 @@ def test_lazy_artifacts_backfilled_by_downstream(client):
     assert num._get_content() is None
     assert output._get_type() == ArtifactType.NUMERIC
     assert output._get_content() == 4.0
+
+
+def test_lazy_artifacts_with_custom_parameters(client):
+    """Checks that we do not manifest the contents of a lazy artifact when custom parameters are provided."""
+    num = client.create_param("number", default=10)
+
+    @op
+    def double_number(num):
+        return 2 * num
+
+    doubled = double_number.lazy(num)
+    assert doubled._get_type() == ArtifactType.UNTYPED
+    assert doubled._get_content() is None
+
+    assert doubled.get(parameters={"number": 20}) == 40
+    assert doubled._get_type() == ArtifactType.NUMERIC
+    assert doubled._get_content() is None  # do not manifest the contents!
