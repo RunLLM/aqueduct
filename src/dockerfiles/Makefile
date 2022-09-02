@@ -18,8 +18,11 @@ build-system-metric:
 build-base-connector:
 	docker build . -t aqueducthq/base_connector -f connectors/base.dockerfile --no-cache
 
-build-connectors: build-bigquery-connector build-mysql-connector build-postgres-connector \
-	build-s3-connector build-snowflake-connector build-sqlserver-connector
+build-connectors: build-athena-connector build-bigquery-connector build-mysql-connector \
+	build-postgres-connector build-s3-connector build-snowflake-connector build-sqlserver-connector
+
+build-athena-connector:
+	docker build . -t aqueducthq/athena-connector -f connectors/athena.dockerfile --no-cache
 
 build-bigquery-connector:
 	docker build . -t aqueducthq/bigquery-connector -f connectors/bigquery.dockerfile --no-cache
@@ -49,6 +52,7 @@ publish-system-metric:
 	docker push aqueducthq/system-metric
 
 publish-connectors:
+	docker push aqueducthq/athena-connector
 	docker push aqueducthq/bigquery-connector
 	docker push aqueducthq/mysql-connector
 	docker push aqueducthq/postgres-connector
