@@ -22,7 +22,7 @@ const Placeholders: AthenaConfig = {
   config_file_content: '',
   config_file_profile: '',
   database: '',
-  output_location: '',
+  output_location: 's3://<BUCKET_NAME>/PATH/TO/FOLDER/',
 };
 
 type Props = {
