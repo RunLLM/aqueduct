@@ -1,12 +1,14 @@
+import math
+
 import pandas as pd
 import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.error import InvalidUserArgumentException
-from constants import SENTIMENT_SQL_QUERY
+from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 from utils import get_integration_name
 
-from aqueduct import check, global_config, metric, op
+from aqueduct import check, global_config, metric, op, ArtifactType
 
 
 def test_lazy_sql_extractor(client):
@@ -114,6 +116,7 @@ def test_lazy_global_config(client):
     try:
         global_config({"lazy": True})
 
+        # Basic SQL artifact that was lazily computed.
         db = client.integration(name=get_integration_name())
         sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
         assert sql_artifact._get_content() is None
@@ -121,6 +124,14 @@ def test_lazy_global_config(client):
         # After calling get(), artifact's content should be materialized.
         assert sql_artifact._get_content() is not None
 
+        # For a lazily-created metric used pre-defined functions.
+        sql_artifact = db.sql(query=WINE_SQL_QUERY)
+        max_metric = sql_artifact.max(column_id="fixed_acidity")
+        assert max_metric._get_content() is None
+        assert math.isclose(max_metric.get(), 15.899, rel_tol=1e-3)
+        assert max_metric._get_content() is not None
+
+        # For a workflow defined with the .lazy() decorator attribute.
         @op
         def dummy_op():
             return "hello"
@@ -138,6 +149,7 @@ def test_lazy_global_config(client):
         check_result = dummy_check(op_result)
 
         assert op_result._get_content() is None
+        assert op_result._get_type() == ArtifactType.UNTYPED
         assert metric_result._get_content() is None
         assert check_result._get_content() is None
 
@@ -147,6 +159,7 @@ def test_lazy_global_config(client):
 
         # After get(), everything should be materialized on the artifacts.
         assert op_result._get_content() is not None
+        assert op_result._get_type() == ArtifactType.STRING
         assert metric_result._get_content() is not None
         assert check_result._get_content() is not None
 
