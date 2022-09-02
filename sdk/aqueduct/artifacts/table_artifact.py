@@ -24,7 +24,7 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import AqueductError, InvalidArtifactTypeException, InvalidIntegrationException
+from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -126,7 +126,7 @@ class TableArtifact(BaseArtifact):
         assert isinstance(content, pd.DataFrame)
 
         # If the artifact was previously generated lazily, materialize the contents.
-        if self._get_content() is None:
+        if parameters is None and self._get_content() is None:
             self._set_content(content)
 
         return content

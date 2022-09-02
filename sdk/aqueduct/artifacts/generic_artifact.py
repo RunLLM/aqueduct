@@ -24,6 +24,7 @@ class GenericArtifact(BaseArtifact):
         content: Optional[Any] = None,
         from_flow_run: bool = False,
     ):
+        # Cannot initialize a generic artifact's content without also setting its type.
         if content is not None:
             assert artifact_type != ArtifactType.UNTYPED
 
@@ -60,7 +61,7 @@ class GenericArtifact(BaseArtifact):
         content = previewed_artifact._get_content()
 
         # If the artifact was previously generated lazily, materialize the contents.
-        if self._get_content() is None:
+        if parameters is None and self._get_content() is None:
             self._set_content(content)
 
         return content

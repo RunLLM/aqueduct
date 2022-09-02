@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, TYPE_CHECKING, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
@@ -49,16 +49,7 @@ def preview_artifact(
     target_artifact_content = _get_content_from_artifact_result_resp(target_artifact_result)
     target_artifact_type = target_artifact_result.artifact_type
 
-    existing_type_annotation = dag.must_get_artifact(target_artifact_id).type
-    if (
-        existing_type_annotation != ArtifactType.UNTYPED
-        and existing_type_annotation != target_artifact_type
-    ):
-        raise InvalidArtifactTypeException(
-            "The computed artifact is expected to be type %s, but has type %s"
-            % (existing_type_annotation, target_artifact_type)
-        )
-    dag.update_artifact_type(target_artifact_id, target_artifact_type)
+    _update_artifact_type(dag, target_artifact_id, target_artifact_type)
 
     # Any non-target artifacts are guaranteed to be upstream of the target artifact (due to the SubgraphDAGDelta),
     # so if any of them are the result of a lazy operation, we'll want to backfill their types. *We do NOT backfill
@@ -68,7 +59,7 @@ def preview_artifact(
         if artifact_id == target_artifact_id:
             continue
 
-        dag.update_artifact_type(artifact_id, artifact_result.artifact_type)
+        _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
     if target_artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(dag, target_artifact_id, target_artifact_content)
@@ -80,6 +71,28 @@ def preview_artifact(
         return generic_artifact.GenericArtifact(
             dag, target_artifact_id, target_artifact_type, target_artifact_content
         )
+
+
+def _update_artifact_type(dag: DAG, artifact_id: uuid.UUID, new_artifact_type: ArtifactType):
+    """Update's the type for an untyped artifact in the DAG.
+
+    Fails if there is a type mismatch with an already existing type. This is safe to use as much
+    as you want (eg. for backfills), since it will not change types arbitrarily.
+    """
+    artifact = dag.must_get_artifact(artifact_id)
+    existing_type_annotation = artifact.type
+    if (
+        existing_type_annotation != ArtifactType.UNTYPED
+        and existing_type_annotation != new_artifact_type
+    ):
+        raise InvalidArtifactTypeException(
+            "The artifact %s was expected to have type %s, but instead computed type %s"
+            % (artifact.name, existing_type_annotation, new_artifact_type)
+        )
+
+    # If the artifact was already typed, we've verified that the type does not change above.
+    if existing_type_annotation == ArtifactType.UNTYPED:
+        dag.update_artifact_type(artifact_id, new_artifact_type)
 
 
 def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> Any:

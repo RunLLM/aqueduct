@@ -8,8 +8,6 @@ import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType
-from aqueduct.error import AqueductError, InvalidArtifactTypeException
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 
@@ -75,7 +73,7 @@ class BoolArtifact(BaseArtifact):
         assert isinstance(content, bool) or isinstance(content, np.bool_)
 
         # If the artifact was previously generated lazily, materialize the contents.
-        if self._get_content() is None:
+        if parameters is None and self._get_content() is None:
             self._set_content(content)
 
         return content

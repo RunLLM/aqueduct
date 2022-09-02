@@ -22,7 +22,7 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
-from aqueduct.error import AqueductError, InvalidArtifactTypeException
+from aqueduct.error import AqueductError
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -102,7 +102,7 @@ class NumericArtifact(BaseArtifact):
             isinstance(content, int) or isinstance(content, float) or isinstance(content, np.number)
         )
 
-        if self._get_content() is None:
+        if parameters is None and self._get_content() is None:
             self._set_content(content)
 
         return content
