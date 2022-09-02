@@ -21,7 +21,10 @@ export type DataSchema = {
 
 export type Data = {
   schema?: DataSchema;
-  data: (string | number | boolean)[][];
+  //data: (string | number | boolean)[][];
+  // data is an array of objects whose keys correspond to the schema above.
+  // each record of data is a row on the table.
+  data: any[]
 };
 
 export type DataPreviewLoadSpec = {

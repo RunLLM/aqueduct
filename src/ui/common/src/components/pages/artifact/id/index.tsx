@@ -1,13 +1,13 @@
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, CircularProgress } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Data, DataSchema } from 'src/utils/data';
-
+import { Data, DataSchema } from '../../../../utils/data';
+import { Button } from '../../../primitives/Button.styles';
 import {
   ArtifactResult,
   handleGetArtifactResults,
