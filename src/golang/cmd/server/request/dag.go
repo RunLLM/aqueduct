@@ -80,7 +80,7 @@ func ParseDagSummaryFromRequest(
 	}
 
 	return &DagSummary{
-		Dag:                        &workflowDag,
+		Dag: &workflowDag,
 		FileContentsByOperatorUUID: fileContents,
 	}, http.StatusOK, nil
 }
