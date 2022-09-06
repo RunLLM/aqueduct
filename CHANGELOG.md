@@ -4,7 +4,8 @@
 Released on September 6, 2022.
 
 ### Key Features
-* Adds AWS Athena integration.
+* Adds AWS Athena integration. You can now execute SQL queries against AWS Athena using the Aqueduct integration API. 
+    (Since Athena is a query service, we do not support saving data to Athena.)
 
 ### Enhancements
 * Simplifies the presentation of the notifications pane to be a single box.
@@ -13,7 +14,7 @@ Released on September 6, 2022.
 * Adds support for optionally lazily executing functions during workflow
     definition. You can also set the global configuration for all functions to
     be lazy by using `aqueduct.global_config({"lazy": True})`.
-    ```python
+```python
 @op
 def my_op(input):
   # ... modify your data...
@@ -21,7 +22,7 @@ def my_op(input):
 
 result = my_op.lazy(input) # This will not execute immediately.
 result.get() # This will force execution of `my_op`.
-    ```
+```
 * Enforces typing for saved data; only tabular data is now saveable to
     relational DBs.
 * Makes exported function code human-readable. When you download the code for a
