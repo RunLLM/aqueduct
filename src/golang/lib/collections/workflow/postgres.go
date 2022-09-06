@@ -40,8 +40,8 @@ func (r *postgresReaderImpl) GetWorkflowsWithLatestRunResult(
 		FROM 
 			workflow AS wf 
 			INNER JOIN app_user ON wf.user_id = app_user.id
-			LEFT JOIN workflow_dag AS wfd ON wf.id = wfd.workflow_id
-			LEFT JOIN workflow_dag_result AS wfdr ON wfd.id = wfdr.dag_id
+			INNER JOIN workflow_dag AS wfd ON wf.id = wfd.workflow_id
+			LEFT JOIN workflow_dag_result AS wfdr ON wfd.id = wfdr.workflow_dag_id
 		WHERE app_user.organization_id = $1 
 		ORDER BY wf.id, wfdr.created_at DESC
 	) AS temp
