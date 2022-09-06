@@ -1,7 +1,7 @@
 import React from 'react';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { InputAdornment, TextField, Typography } from '@mui/material';
+import { Box, Divider, InputAdornment, TextField, Typography } from '@mui/material';
 import { Autocomplete } from '@mui/material';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
@@ -73,8 +73,13 @@ export const filteredList = (
   filterText: string,
   allItems: any[],
   matchOn: (item: any) => string,
-  listItems: (item: any, idx: number) => JSX.Element | JSX.Element[],
+  listItems: (item: any, idx: number) => JSX.Element,
+  noItemsMessage: JSX.Element,
   ) => {
+  if (allItems.length === 0) {
+    return noItemsMessage;
+  }
+  
   const matches = (allItems.filter((item) => {
     if (filterText.length > 0) {
       return match(matchOn(item), filterText).length > 0;
@@ -85,5 +90,15 @@ export const filteredList = (
 
   const noMatchesText = <Typography variant="h5">No matches found.</Typography>;
 
-  return matches.length === 0 ? noMatchesText : matches;
+  return matches.length === 0 ? noMatchesText : (
+    <Box sx={{ maxWidth: '1000px', width: '90%' }}>
+      {matches.map((item, idx) => {
+        return (
+          <React.Fragment key={idx}>
+            {item}
+            {idx < matches.length - 1 && <Divider />}
+          </React.Fragment>
+        );
+      })}
+    </Box>);
 };

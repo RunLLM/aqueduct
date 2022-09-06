@@ -41,8 +41,14 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       </Box>
     );
   }
+
+  const noItemsMessage = (
+    <Typography variant="h5">
+      There are no data artifacts yet.
+    </Typography>
+  );
     
-  const dataCards = filteredList(filterText, Object.values(dataCardsInfo.data.latest_versions), (dataCardInfo) => dataCardName(dataCardInfo), displayFilteredCards);
+  const dataCards = filteredList(filterText, Object.values(dataCardsInfo.data.latest_versions), (dataCardInfo) => dataCardName(dataCardInfo), displayFilteredCards, noItemsMessage);
   
   useEffect(() => {
     document.title = 'Data | Aqueduct';
