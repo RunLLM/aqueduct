@@ -219,7 +219,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   // return null if we don't have the workflow loaded.
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    console.log('Workflow not found. going to 404 page');
     navigate('/404');
     return null;
   }
@@ -267,7 +266,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       // TODO: Do the same thing that we're doing over in inputs :)
 
       if (artifactResult.result) {
-        console.log('RESULT: ', artifactResult.result);
         if (artifactResult.result.artifact_type === 'table') {
           // Link to appropriate artifact details page
           // Show tableIcon here as part of the link.
@@ -352,7 +350,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       pandas_version: '0.0.1'
     },
     data: [
-      // [{status: 'Succeeded', timestamp: '03/14/2022 04:00 PST', value: '124.5'},
       { status: 'Succeeded', timestamp: '03/14/2022 04:00 PST', value: 124.5 },
       { status: 'Succeeded', timestamp: '03/15/2022 04:00 PST', value: 128.5 },
       { status: 'Warning', timestamp: '03/16/2022 04:00 PST', value: 127.5 },

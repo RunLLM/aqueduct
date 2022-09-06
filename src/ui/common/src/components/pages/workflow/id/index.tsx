@@ -270,8 +270,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const getNodeActionButton = () => {
-    console.log('currentNodeType: ', currentNode.type);
-
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
@@ -290,8 +288,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -308,17 +305,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         </Box>
       );
     } else if (currentNode.type === NodeType.MetricOp) {
-      console.log('currentNode is metricOp.');
       // Get the metrics id, and navigate to the metric details page.
       return (
         <Box>
           <Button
             style={{ marginRight: '16px' }}
             onClick={() => {
-              console.log('View Metric details clicked.');
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}

@@ -17,14 +17,11 @@ interface StickyHeaderTableProps {
 }
 
 const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
-  console.log('stringified data: ', JSON.stringify(data));
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const rows = data.data;
   const columns = data.schema.fields;
-
-  console.log('stickyHeader data: ', data);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -91,10 +88,7 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                     key={`table-row-${rowIndex}`}
                   >
                     {columns.map((column, columnIndex) => {
-                      console.log('row', row);
-                      console.log('col', column);
                       const value = row[column.name];
-                      console.log('value: ', value)
 
                       return (
                         <TableCell
