@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.0.13
+Released on September 6, 2022.
+
+### Key Features
+* Adds AWS Athena integration.
+
+### Enhancements
+* Simplifies the presentation of the notifications pane to be a single box.
+* Improves workflow metadata persistence: A newly created workflow will now
+    show on the UI even before any runs are finished and persisted.
+* Adds support for optionally lazily executing functions during workflow
+    definition. You can also set the global configuration for all functions to
+    be lazy by using `aqueduct.global_config({"lazy": True})`.
+    ```python
+@op
+def my_op(input):
+  # ... modify your data...
+  return output
+
+result = my_op.lazy(input) # This will not execute immediately.
+result.get() # This will force execution of `my_op`.
+    ```
+* Enforces typing for saved data; only tabular data is now saveable to
+    relational DBs.
+* Makes exported function code human-readable. When you download the code for a
+    function, it will include a file with the name of the operator, which will
+    have the function's Python code.
+
+### Bugfixes
+
+None! :tada:
+
 ## 0.0.12
 Released on August 25, 2022.
 
@@ -15,7 +47,7 @@ Released on August 25, 2022.
 * Adds support for deleting integrations from the UI.
 * Adds support for deleting data created by Aqueduct when deleting a workflow; when deleting a workflow, 
     you will now see an option to select the objects created by this workflow. 
-    
+ 
 ### Bugfixes
 
 None! :tada:
