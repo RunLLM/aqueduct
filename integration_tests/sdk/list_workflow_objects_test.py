@@ -68,6 +68,5 @@ def test_list_saved_objects(client):
         assert len(data[integration]) == 3
 
     finally:
-        pass
-        # for flow_id in flow_ids_to_delete:
-        # delete_flow(client, flow_id)
+        for flow_id in flow_ids_to_delete:
+            delete_flow(client, flow_id)
