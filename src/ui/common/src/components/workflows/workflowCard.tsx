@@ -29,7 +29,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
         <strong>Workflow Last Run:</strong> {lastUpdatedTime.toLocaleString()}
       </Typography>
     </Box>
-  ) : {};
+  ) : null;
 
   const cardContent = (
     <Card>
