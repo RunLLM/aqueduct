@@ -6,16 +6,17 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Data, DataSchema } from '../../../../utils/data';
-import { Button } from '../../../primitives/Button.styles';
+
 import {
   ArtifactResult,
   handleGetArtifactResults,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { Data, DataSchema } from '../../../../utils/data';
 import { exportCsv } from '../../../../utils/preview';
 import DefaultLayout from '../../../layouts/default';
+import { Button } from '../../../primitives/Button.styles';
 import KeyValueTable, {
   KeyValueTableType,
 } from '../../../tables/KeyValueTable';

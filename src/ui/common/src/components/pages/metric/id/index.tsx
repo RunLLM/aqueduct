@@ -11,8 +11,8 @@ import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import { Data } from '../../../../utils/data';
 
+import StickyHeaderTable from '../../../../components/tables/StickyHeaderTable';
 import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
 import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
 import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
@@ -34,11 +34,11 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
+import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import { LayoutProps } from '../../types';
-import StickyHeaderTable from '../../../../components/tables/StickyHeaderTable';
 
 type MetricDetailsHeaderProps = {
   artifactName: string;
@@ -317,7 +317,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 <FontAwesomeIcon
                   icon={
                     artifactTypeToIconMapping[
-                    artifactResult.result.artifact_type
+                      artifactResult.result.artifact_type
                     ]
                   }
                 />
@@ -347,18 +347,22 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         { name: 'timestamp', type: 'varchar' },
         { name: 'value', type: 'float' },
       ],
-      pandas_version: '0.0.1'
+      pandas_version: '0.0.1',
     },
     data: [
       { status: 'Succeeded', timestamp: '03/14/2022 04:00 PST', value: 124.5 },
       { status: 'Succeeded', timestamp: '03/15/2022 04:00 PST', value: 128.5 },
       { status: 'Warning', timestamp: '03/16/2022 04:00 PST', value: 127.5 },
       { status: 'Error', timestamp: '03/17/2922 04:00 PST', value: 100 },
-    ]
+    ],
   };
 
-  const mockHistoricalMetricTimestamps = mockHistoricalMetrics.data.map((mockHistoricalData) => mockHistoricalData.timestamp);
-  const mockHistoricalMetricValues = mockHistoricalMetrics.data.map((mockHistoricalData) => mockHistoricalData.value);
+  const mockHistoricalMetricTimestamps = mockHistoricalMetrics.data.map(
+    (mockHistoricalData) => mockHistoricalData.timestamp
+  );
+  const mockHistoricalMetricValues = mockHistoricalMetrics.data.map(
+    (mockHistoricalData) => mockHistoricalData.value
+  );
 
   return (
     <Layout user={user}>
