@@ -24,7 +24,7 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import AqueductError, InvalidIntegrationException
+from aqueduct.error import AqueductError
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -146,27 +146,6 @@ class TableArtifact(BaseArtifact):
         """
         df = self.get(parameters=parameters)
         return df.head(n)
-
-    def save(self, config: SaveConfig) -> None:
-        """Configure this artifact to be written to a specific integration after it's computed in a published flow.
-
-        >>> db = client.integration(name="demo/")
-        >>> customer_data = db.sql("SELECT * from customers")
-        >>> churn_predictions = predict_churn(customer_data)
-        >>> churn_predictions.save(config=db.config(table="churn_predictions"))
-
-        Args:
-            config:
-                SaveConfig object generated from integration using
-                the <integration>.config(...) method.
-        Raises:
-            InvalidIntegrationException:
-                An error occurred because the requested integration could not be
-                found.
-            InvalidUserArgumentException:
-                An error occurred because some necessary fields are missing in the SaveConfig.
-        """
-        artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 

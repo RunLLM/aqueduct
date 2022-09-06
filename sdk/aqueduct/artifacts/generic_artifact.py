@@ -7,7 +7,6 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
-from aqueduct.operators import SaveConfig
 
 
 class GenericArtifact(BaseArtifact):
@@ -66,23 +65,6 @@ class GenericArtifact(BaseArtifact):
             self._set_content(content)
 
         return content
-
-    def save(self, config: SaveConfig) -> None:
-        """Configure this artifact to be written to a specific integration after it's computed in a published flow.
-
-        Args:
-            config:
-                SaveConfig object generated from integration using
-                the <integration>.config(...) method.
-        Raises:
-            InvalidIntegrationException:
-                An error occurred because the requested integration could not be found.
-            InvalidUserActionException:
-                An error occurred because you are trying to load non-relational data into a relational integration.
-            InvalidUserArgumentException:
-                An error occurred because some necessary fields are missing in the SaveConfig.
-        """
-        artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""
