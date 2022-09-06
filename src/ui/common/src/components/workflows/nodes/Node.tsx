@@ -70,7 +70,7 @@ export const Node: React.FC<Props> = ({
   } else if (execState?.status === ExecutionStatus.Canceled) {
     backgroundColor = selected ? 'gray.700' : 'gray.500';
     hoverColor = 'gray.600';
-  } else if (execState?.status === ExecutionStatus.Pending){
+  } else if (execState?.status === ExecutionStatus.Pending) {
     backgroundColor = selected ? 'blue.300' : 'blue.100';
     hoverColor = 'blue.200';
   }
