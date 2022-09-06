@@ -32,14 +32,17 @@ from aqueduct.utils import (
     serialize_function,
 )
 
-import aqueduct
+from aqueduct import globals
 
 
 class NumericArtifact(BaseArtifact):
-    """This class represents a computed metric within the flow's DAG.
+    """This class represents a computed number within the flow's DAG.
 
-    Any `@metric`-annotated python function that returns a float will
-    return this class when that function is called.
+    Any `@metric`-annotated python function that returns a number
+    will return this class when that function is called.
+
+    Any `@op`-annotated python function that returns a number
+    will return this class when that function is called in non-lazy mode.
 
     Examples:
         >>> @metric
@@ -152,6 +155,8 @@ class NumericArtifact(BaseArtifact):
         Returns:
             A bool artifact bound to this metric.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         input_mapping = {

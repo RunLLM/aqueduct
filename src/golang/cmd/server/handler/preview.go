@@ -2,9 +2,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -38,9 +42,21 @@ type previewArgs struct {
 }
 
 type previewResponse struct {
-	Status          shared.ExecutionStatus                     `json:"status"`
-	OperatorResults map[uuid.UUID]shared.ExecutionState        `json:"operator_results"`
-	ArtifactResults map[uuid.UUID]engine.PreviewArtifactResult `json:"artifact_results"`
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactContents      map[uuid.UUID][]byte                `json:"artifact_contents"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
+}
+
+type previewResponseMetadata struct {
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
+}
+
+type artifactTypeMetadata struct {
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
 }
 
 type PreviewHandler struct {
@@ -54,6 +70,56 @@ type PreviewHandler struct {
 
 func (*PreviewHandler) Name() string {
 	return "Preview"
+}
+
+// This custom implementation of SendResponse constructs a multipart form response with the following fields:
+// "metadata" contains a json serialized blob of operator and artifact result metadata.
+// For each artifact, it generates a field with artifact id as the field name and artifact content
+// as the value.
+func (*PreviewHandler) SendResponse(w http.ResponseWriter, response interface{}) {
+	resp := response.(*previewResponse)
+	multipartWriter := multipart.NewWriter(w)
+	defer multipartWriter.Close()
+
+	w.Header().Set("Content-Type", multipartWriter.FormDataContentType())
+
+	responseMetadata := previewResponseMetadata{
+		Status:                resp.Status,
+		OperatorResults:       resp.OperatorResults,
+		ArtifactTypesMetadata: resp.ArtifactTypesMetadata,
+	}
+
+	jsonBlob, err := json.Marshal(responseMetadata)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fw, err := multipartWriter.CreateFormField(metadataFormFieldName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = fw.Write(jsonBlob)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for artifact_id, artifact_content := range resp.ArtifactContents {
+		fw, err := multipartWriter.CreateFormField(artifact_id.String())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = fw.Write(artifact_content)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -137,10 +203,21 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		statusCode = http.StatusBadRequest
 	}
 
+	artifactContents := make(map[uuid.UUID][]byte, len(workflowPreviewResult.Artifacts))
+	artifactTypesMetadata := make(map[uuid.UUID]artifactTypeMetadata, len(workflowPreviewResult.Artifacts))
+	for id, artf := range workflowPreviewResult.Artifacts {
+		artifactContents[id] = artf.Content
+		artifactTypesMetadata[id] = artifactTypeMetadata{
+			SerializationType: artf.SerializationType,
+			ArtifactType:      artf.ArtifactType,
+		}
+	}
+
 	return &previewResponse{
-		Status:          workflowPreviewResult.Status,
-		OperatorResults: workflowPreviewResult.Operators,
-		ArtifactResults: workflowPreviewResult.Artifacts,
+		Status:                workflowPreviewResult.Status,
+		OperatorResults:       workflowPreviewResult.Operators,
+		ArtifactContents:      artifactContents,
+		ArtifactTypesMetadata: artifactTypesMetadata,
 	}, statusCode, nil
 }
 

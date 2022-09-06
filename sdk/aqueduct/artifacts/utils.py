@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import base64
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
-from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
-from aqueduct.responses import ArtifactResult
 from aqueduct.utils import infer_artifact_type
 
-from aqueduct import api_client
+from aqueduct import globals
 
 if TYPE_CHECKING:
     from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -38,7 +35,7 @@ def preview_artifact(
         make_copy=True,
     )
 
-    preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
+    preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
     artifact_response = preview_resp.artifact_results[artifact_id]
 
     serialization_type = artifact_response.serialization_type
@@ -46,9 +43,7 @@ def preview_artifact(
         raise Exception("Unsupported serialization type %s." % serialization_type)
 
     artifact_type = artifact_response.artifact_type
-    content = deserialization_function_mapping[serialization_type](
-        base64.b64decode(artifact_response.content)
-    )
+    content = deserialization_function_mapping[serialization_type](artifact_response.content)
 
     assert infer_artifact_type(content) == artifact_type
 

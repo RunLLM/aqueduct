@@ -1,8 +1,8 @@
 import io
 import json
-import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
+import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
@@ -18,6 +18,7 @@ from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    ArtifactResult,
     DeleteWorkflowResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
@@ -29,6 +30,7 @@ from aqueduct.responses import (
     SavedObjectUpdate,
 )
 from aqueduct.utils import GITHUB_ISSUE_LINK
+from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
 
@@ -263,6 +265,37 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
+    def _construct_preview_response(self, response: requests.Response) -> PreviewResponse:
+        artifact_results = {}
+        artifact_result_constructor = {}
+        preview_response = {}
+        is_metadata_received = False
+        multipart_data = decoder.MultipartDecoder.from_response(response)
+        parse = multipart.parse_options_header
+
+        for part in multipart_data.parts:
+            field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+            field_name = parse(field_name)[1]["name"]
+
+            if field_name == "metadata":
+                is_metadata_received = True
+                metadata = json.loads(part.content.decode(multipart_data.encoding))
+            elif utils.is_string_valid_uuid(field_name):
+                if is_metadata_received:
+                    artifact_result_constructor = metadata["artifact_types_metadata"][field_name]
+                    artifact_result_constructor["content"] = part.content
+                    artifact_results[field_name] = ArtifactResult(**artifact_result_constructor)
+                else:
+                    raise AqueductError("Unable to retrieve artifacts metadata")
+            else:
+                raise AqueductError("Unable to get correct preview response")
+
+        preview_response["status"] = metadata["status"]
+        preview_response["operator_results"] = metadata["operator_results"]
+        preview_response["artifact_results"] = artifact_results
+
+        return PreviewResponse(**preview_response)
+
     def preview(
         self,
         dag: DAG,
@@ -292,7 +325,7 @@ class APIClient:
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
-        preview_resp = PreviewResponse(**resp.json())
+        preview_resp = self._construct_preview_response(resp)
         _handle_preview_resp(preview_resp, dag)
         return preview_resp
 
@@ -447,7 +480,3 @@ class APIClient:
         operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
         operator_resp = requests.get(operator_url, headers=headers)
         return operator_resp.content
-
-
-# Initialize a unconfigured api client. It will be configured when the user construct an Aqueduct client.
-__GLOBAL_API_CLIENT__ = APIClient()

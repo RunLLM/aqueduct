@@ -12,6 +12,7 @@ from aqueduct.error import AqueductError, InvalidArtifactTypeException
 
 class GenericArtifact(BaseArtifact):
     """This class represents a generic artifact within the flow's DAG.
+
     Currently, a generic artifact can be any artifact other than table, numeric, bool, or parameter
     generated from eager execution, or an artifact of unknown type generated from lazy execution.
     """

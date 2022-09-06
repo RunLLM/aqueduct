@@ -8,7 +8,6 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.param_artifact import ParamArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import (
@@ -20,7 +19,6 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import (
-    AqueductError,
     InvalidArtifactTypeException,
     InvalidUserActionException,
     InvalidUserArgumentException,
@@ -34,9 +32,9 @@ from aqueduct.utils import (
     generate_uuid,
     serialize_function,
 )
-from pandas import DataFrame
 
 from aqueduct import dag as dag_module
+from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
@@ -302,6 +300,9 @@ def op(
 
         setattr(wrapped, "lazy", lazy_mode)
 
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
+
         return wrapped
 
     if callable(name):
@@ -430,6 +431,9 @@ def metric(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
+
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
 
         return wrapped
 
@@ -563,6 +567,8 @@ def check(
 
         setattr(wrapped, "lazy", lazy_mode)
 
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
         return wrapped
 
     if callable(name):
