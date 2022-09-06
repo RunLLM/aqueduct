@@ -32,7 +32,7 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import CodeBlock from './components/layouts/codeBlock';
+import { CodeBlock } from './components/layouts/codeBlock';
 import DataPreviewer from './components/layouts/dataPreviewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
