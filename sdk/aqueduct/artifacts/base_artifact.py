@@ -3,7 +3,12 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag import (
+    DAG,
+    AddOrReplaceOperatorDelta,
+    apply_deltas_to_dag,
+    find_duplicate_load_operator,
+)
 from aqueduct.enums import ArtifactType, OperatorType
 from aqueduct.error import (
     InvalidIntegrationException,
@@ -100,10 +105,11 @@ class BaseArtifact(ABC):
                     % integration_info.name
                 )
 
-        # We need to deduplicate the name of load operators based on the artifact it is loading,
-        # along with the name of the integration. This allows multiple artifacts to write to the
-        # same integration, as well as single artifacts to write to multiple integrations.
-        load_op_name = " %s %s loader" % (self.name(), integration_info.name)
+        # We deduplicate load operators based on name (and therefore integration) AND
+        # the input artifact. This allows multiple artifacts to write to the same integration,
+        # as well as a single artifact to write to multiple integrations, all while keeping
+        # the name of the load operator readable.
+        load_op_name = " %s loader" % integration_info.name
 
         # Add the load operator as a terminal node.
         apply_deltas_to_dag(
@@ -124,6 +130,7 @@ class BaseArtifact(ABC):
                         inputs=[self._artifact_id],
                     ),
                     output_artifacts=[],
-                )
+                    find_duplicate_fn=find_duplicate_load_operator,
+                ),
             ],
         )
