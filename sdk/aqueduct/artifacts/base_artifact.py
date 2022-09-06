@@ -3,12 +3,15 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
+from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
 from aqueduct.enums import ArtifactType, OperatorType
+from aqueduct.error import InvalidIntegrationException, InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.operators import SaveConfig, S3LoadParams, Operator, OperatorSpec, LoadSpec
+from aqueduct.utils import generate_uuid
+from aqueduct import globals
 
 
 class BaseArtifact(ABC):
-
     _artifact_id: uuid.UUID
     _dag: DAG
     _content: Any
@@ -53,3 +56,69 @@ class BaseArtifact(ABC):
     @abstractmethod
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass
+
+    def save(self, config: SaveConfig) -> None:
+        """Configure this artifact to be written to a specific integration after it's computed in a published flow.
+
+        Args:
+            config:
+                SaveConfig object generated from integration using
+                the <integration>.config(...) method.
+        Raises:
+            InvalidIntegrationException:
+                An error occurred because the requested integration could not be
+                found.
+            InvalidUserActionException:
+                An error occurred because you are trying to load non-relational data into a relational integration.
+            InvalidUserArgumentException:
+                An error occurred because some necessary fields are missing in the SaveConfig.
+        """
+        integration_info = config.integration_info
+        integration_load_params = config.parameters
+        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
+
+        if integration_info.name not in integrations_map:
+            raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
+
+        # Non-tabular data cannot be saved into relational data stores.
+        if self._get_type() != ArtifactType.TABLE and integration_info.is_relational():
+            raise InvalidUserActionException(
+                "Unable to load non-relational data into relational data store `%s`."
+                % integration_info.name
+            )
+
+        # Tabular data written into S3 must include a S3FileFormat hint.
+        if self._get_type() == ArtifactType.TABLE and isinstance(config.parameters, S3LoadParams):
+            if config.parameters.format is None:
+                raise InvalidUserArgumentException(
+                    "You must supply a file format when saving tabular data into S3 integration `%s`."
+                    % integration_info.name
+                )
+
+        # We need to deduplicate the name of load operators based on the artifact it is loading,
+        # along with the name of the integration. This allows multiple artifacts to write to the
+        # same integration, as well as single artifacts to write to multiple integrations.
+        load_op_name = " %s %s loader" % (self.name(), integration_info.name)
+
+        # Add the load operator as a terminal node.
+        apply_deltas_to_dag(
+            self._dag,
+            deltas=[
+                AddOrReplaceOperatorDelta(
+                    op=Operator(
+                        id=generate_uuid(),
+                        name=load_op_name,
+                        description="",
+                        spec=OperatorSpec(
+                            load=LoadSpec(
+                                service=integration_info.service,
+                                integration_id=integration_info.id,
+                                parameters=integration_load_params,
+                            )
+                        ),
+                        inputs=[self._artifact_id],
+                    ),
+                    output_artifacts=[],
+                )
+            ],
+        )

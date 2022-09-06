@@ -22,7 +22,7 @@ from .dag import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
+from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType, OperatorType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,

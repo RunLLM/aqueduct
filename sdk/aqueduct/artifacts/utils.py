@@ -4,12 +4,24 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
-from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
+from aqueduct.dag import (
+    DAG,
+    AddOrReplaceOperatorDelta,
+    SubgraphDAGDelta,
+    UpdateParametersDelta,
+    apply_deltas_to_dag,
+)
 from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidArtifactTypeException
+from aqueduct.error import (
+    InvalidArtifactTypeException,
+    InvalidIntegrationException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
+from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, SaveConfig
 from aqueduct.responses import ArtifactResult
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils import generate_uuid, infer_artifact_type
 
 from aqueduct import globals
 

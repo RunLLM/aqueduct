@@ -10,7 +10,6 @@ from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,

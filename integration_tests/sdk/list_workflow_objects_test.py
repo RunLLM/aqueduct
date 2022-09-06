@@ -1,5 +1,5 @@
 import pytest
-from constants import SENTIMENT_SQL_QUERY
+from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import delete_flow, generate_new_flow_name, get_integration_name, run_flow_test
 
 from aqueduct import LoadUpdateMode
@@ -12,49 +12,34 @@ def test_list_saved_objects(client):
     flow_ids_to_delete = set()
 
     try:
-        table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
+        table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.REPLACE))
 
-        # Tables don't already exist already so cannot append or replace it.
+        # This will create the table.
         flow_ids_to_delete.add(
             run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
         )
 
-        ###
-
-        table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
+        # Change to append mode.
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
-
         flow_ids_to_delete.add(
             run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id()
         )
 
-        ###
-
-        table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
+        # Redundant append mode change.
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
-
         flow_ids_to_delete.add(
             run_flow_test(client, [table], name=name, num_runs=3, delete_flow_after=False).id()
         )
 
-        ###
-
-        table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
+        # Create a different table from the same artifact.
         table.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
-
         flow_ids_to_delete.add(
             run_flow_test(client, [table], name=name, num_runs=4, delete_flow_after=False).id()
         )
 
         ###
-
         assert len(flow_ids_to_delete) == 1
-
         data = client.flow(list(flow_ids_to_delete)[0]).list_saved_objects()
 
         # Check all in same integration
@@ -78,9 +63,11 @@ def test_list_saved_objects(client):
         # Check mapping can be accessed correctly
         # Can be accessed by string of integration name
         assert len(data[get_integration_name()]) == 3
+
         # Can be accessed by Integration object with integration name
         assert len(data[integration]) == 3
 
     finally:
-        for flow_id in flow_ids_to_delete:
-            delete_flow(client, flow_id)
+        pass
+        # for flow_id in flow_ids_to_delete:
+            # delete_flow(client, flow_id)
