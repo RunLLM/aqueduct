@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 type ExecutionStatus string
@@ -107,7 +106,6 @@ func getPendingArtifactResultStatuses(ctx context.Context, db database.Database)
 
 	var artifactIds []artifactStatusInformation
 	err := db.Query(ctx, &artifactIds, query)
-	log.Println("error is", err)
 
 	return artifactIds, err
 }
@@ -118,7 +116,6 @@ func getFailedArtifactResultStatuses(ctx context.Context, db database.Database) 
 	var artifactIds []artifactStatusInformation
 	err := db.Query(ctx, &artifactIds, query)
 
-	fmt.Println("returning", artifactIds)
 	return artifactIds, err
 }
 
@@ -131,7 +128,6 @@ func getPendingOperatorResultStatuses(ctx context.Context, db database.Database)
 	var operatorIds []operatorStatusInformation
 	err := db.Query(ctx, &operatorIds, query)
 
-	fmt.Println("returning", operatorIds)
 	return operatorIds, err
 }
 

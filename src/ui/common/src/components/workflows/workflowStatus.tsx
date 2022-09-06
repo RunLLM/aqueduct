@@ -12,8 +12,6 @@ export const Status: React.FC<Props> = ({ status }) => {
   const statusIcons = [];
   const runStatus = status.toLowerCase();
 
-  console.log('status is', status, runStatus)
-
   if (runStatus === ExecutionStatus.Succeeded) {
     statusIcons.push(<Chip label="Succeeded" color="success" size="small" />);
   } else if (runStatus === ExecutionStatus.Failed) {
