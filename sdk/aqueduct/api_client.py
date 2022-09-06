@@ -53,7 +53,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
         assert op_result.error is not None
         return (
-            f"Operator {op_name} failed!\n"
+            f"Operator `{op_name}` failed!\n"
             f"{op_result.error.context}\n"
             f"\n"
             f"{op_result.error.tip}\n"

@@ -24,15 +24,13 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import AqueductError, InvalidArtifactTypeException, InvalidIntegrationException
+from aqueduct.error import AqueductError
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
-    LoadSpec,
     MetricSpec,
     Operator,
     OperatorSpec,
-    SaveConfig,
     SystemMetricSpec,
 )
 from aqueduct.utils import (
@@ -97,8 +95,6 @@ class TableArtifact(BaseArtifact):
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-        self._set_type(ArtifactType.TABLE)
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
 
@@ -124,21 +120,14 @@ class TableArtifact(BaseArtifact):
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact._get_type() != ArtifactType.TABLE:
-            raise InvalidArtifactTypeException(
-                "Error: the computed result is expected to of type table, found %s"
-                % previewed_artifact._get_type()
-            )
+        content = previewed_artifact._get_content()
+        assert isinstance(content, pd.DataFrame)
 
-        assert isinstance(previewed_artifact._get_content(), pd.DataFrame)
+        # If the artifact was previously generated lazily, materialize the contents.
+        if parameters is None and self._get_content() is None:
+            self._set_content(content)
 
-        if parameters:
-            return previewed_artifact._get_content()
-        else:
-            # We are materializing an artifact generated from lazy execution.
-            assert self._get_content() is None
-            self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+        return content
 
     def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Returns a preview of the table artifact.
@@ -156,53 +145,6 @@ class TableArtifact(BaseArtifact):
         """
         df = self.get(parameters=parameters)
         return df.head(n)
-
-    def save(self, config: SaveConfig) -> None:
-        """Configure this artifact to be written to a specific integration after its computed.
-
-        >>> db = client.integration(name="demo/")
-        >>> customer_data = db.sql("SELECT * from customers")
-        >>> churn_predictions = predict_churn(customer_data)
-        >>> churn_predictions.save(config=db.config(table="churn_predictions"))
-
-        Args:
-            config:
-                SaveConfig object generated from integration using
-                the <integration>.config(...) method.
-        Raises:
-            InvalidIntegrationException:
-                An error occurred because the requested integration could not be
-                found.
-        """
-        integration_info = config.integration_info
-        integration_load_params = config.parameters
-        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
-
-        if integration_info.name not in integrations_map:
-            raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
-
-        # Add the load operator as a terminal node.
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=generate_uuid(),
-                        name="%s Loader" % integration_info.name,
-                        description="",
-                        spec=OperatorSpec(
-                            load=LoadSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
-                                parameters=integration_load_params,
-                            )
-                        ),
-                        inputs=[self._artifact_id],
-                    ),
-                    output_artifacts=[],
-                )
-            ],
-        )
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 
@@ -708,16 +650,10 @@ class TableArtifact(BaseArtifact):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact._get_type() != output_artifact_type_hint:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (output_artifact_type_hint, artifact._get_type())
-                )
 
             assert isinstance(artifact, numeric_artifact.NumericArtifact) or isinstance(
                 artifact, bool_artifact.BoolArtifact
             )
-
             return artifact
         else:
             # We are in lazy mode.

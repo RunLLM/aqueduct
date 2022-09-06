@@ -1,11 +1,11 @@
 import copy
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -210,6 +210,25 @@ class DAG(BaseModel):
 
         return artifacts
 
+    def get_unclaimed_op_name(self, prefix: str) -> str:
+        """Returns an operator name that is guaranteed to not collide with any existing name in the dag.
+
+        Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
+        until we hit an unclaimed name.
+        """
+        curr_suffix = 1
+        while True:
+            candidate_name = prefix + " %d" % curr_suffix
+            colliding_op = self.get_operator(with_name=candidate_name)
+            if colliding_op is None:
+                # We've found an unallocated name!
+                op_name = candidate_name
+                break
+            curr_suffix += 1
+
+        assert op_name is not None
+        return op_name
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:
@@ -223,6 +242,9 @@ class DAG(BaseModel):
     def add_artifacts(self, artifacts: List[ArtifactMetadata]) -> None:
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
+
+    def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
+        self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.

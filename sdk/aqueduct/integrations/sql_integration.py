@@ -2,18 +2,13 @@ import json
 import re
 from typing import Optional, Union
 
-import aqueduct.globals
 import pandas as pd
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
-from aqueduct.error import (
-    InvalidArtifactTypeException,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -137,17 +132,8 @@ class RelationalDBIntegration(Integration):
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
         sql_op_name = name
-
-        default_sql_op_prefix = "%s query" % integration_info.name
-        default_sql_op_index = 1
-        while sql_op_name is None:
-            candidate_op_name = default_sql_op_prefix + " %d" % default_sql_op_index
-            colliding_op = self._dag.get_operator(with_name=candidate_op_name)
-            if colliding_op is None:
-                sql_op_name = candidate_op_name  # break out of the loop!
-            default_sql_op_index += 1
-
-        assert sql_op_name is not None
+        if sql_op_name is None:
+            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % integration_info.name)
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -217,14 +203,7 @@ class RelationalDBIntegration(Integration):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
-            if artifact._get_type() != ArtifactType.TABLE:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (ArtifactType.TABLE, artifact._get_type())
-                )
-
             assert isinstance(artifact, TableArtifact)
-
             return artifact
         else:
             # We are in lazy mode.
