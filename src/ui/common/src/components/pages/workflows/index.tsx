@@ -2,13 +2,13 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { filteredList, SearchBar } from '../../layouts/search';
 
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
+import { filteredList, SearchBar } from '../../layouts/search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
 
@@ -56,11 +56,11 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   const displayFilteredWorkflows = (workflow, _) => {
     return (
-    <Box my={2}>
-      <WorkflowCard workflow={workflow} />
-    </Box>
+      <Box my={2}>
+        <WorkflowCard workflow={workflow} />
+      </Box>
     );
-  }
+  };
 
   const noItemsMessage = (
     <Typography variant="h5">
@@ -72,13 +72,23 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
-  const workflowList = filteredList(filterText, allWorkflows.workflows, getOptionLabel, displayFilteredWorkflows, noItemsMessage);
+  const workflowList = filteredList(
+    filterText,
+    allWorkflows.workflows,
+    getOptionLabel,
+    displayFilteredWorkflows,
+    noItemsMessage
+  );
 
   return (
     <Layout user={user}>
       <Box p={2}>
         {heading}
-        <SearchBar options={allWorkflows.workflows} getOptionLabel={getOptionLabel} setSearchTerm={setFilterText}/>
+        <SearchBar
+          options={allWorkflows.workflows}
+          getOptionLabel={getOptionLabel}
+          setSearchTerm={setFilterText}
+        />
         {workflowList}
       </Box>
     </Layout>

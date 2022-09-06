@@ -1,5 +1,5 @@
+import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import match from 'autosuggest-highlight/match';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,10 +8,9 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataCard, dataCardName } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
-import { SearchBar, filteredList } from '../../layouts/search';
 import DefaultLayout from '../../layouts/default';
+import { filteredList, SearchBar } from '../../layouts/search';
 import { LayoutProps } from '../types';
-import { Typography } from '@mui/material';
 
 type Props = {
   user: UserProfile;
@@ -40,16 +39,20 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         </Card>
       </Box>
     );
-  }
+  };
 
   const noItemsMessage = (
-    <Typography variant="h5">
-      There are no data artifacts yet.
-    </Typography>
+    <Typography variant="h5">There are no data artifacts yet.</Typography>
   );
-    
-  const dataCards = filteredList(filterText, Object.values(dataCardsInfo.data.latest_versions), (dataCardInfo) => dataCardName(dataCardInfo), displayFilteredCards, noItemsMessage);
-  
+
+  const dataCards = filteredList(
+    filterText,
+    Object.values(dataCardsInfo.data.latest_versions),
+    (dataCardInfo) => dataCardName(dataCardInfo),
+    displayFilteredCards,
+    noItemsMessage
+  );
+
   useEffect(() => {
     document.title = 'Data | Aqueduct';
   }, []);
@@ -62,7 +65,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       return option;
     }
     return dataCardName(option);
-  }
+  };
 
   return (
     <Layout user={user}>
@@ -71,8 +74,12 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         <Typography variant="h2" gutterBottom component="div">
           Data
         </Typography>
-        
-        <SearchBar options={Object.values(dataCardsInfo.data.latest_versions)} getOptionLabel={getOptionLabel} setSearchTerm={setFilterText}/>
+
+        <SearchBar
+          options={Object.values(dataCardsInfo.data.latest_versions)}
+          getOptionLabel={getOptionLabel}
+          setSearchTerm={setFilterText}
+        />
 
         <Box sx={{ my: 3, ml: 1 }}>
           <Box
