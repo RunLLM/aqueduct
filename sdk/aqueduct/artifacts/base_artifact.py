@@ -3,11 +3,16 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
+from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, OperatorType
-from aqueduct.error import InvalidIntegrationException, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import SaveConfig, S3LoadParams, Operator, OperatorSpec, LoadSpec
+from aqueduct.error import (
+    InvalidIntegrationException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
+from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, SaveConfig
 from aqueduct.utils import generate_uuid
+
 from aqueduct import globals
 
 

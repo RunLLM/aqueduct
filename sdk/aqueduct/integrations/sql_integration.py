@@ -8,10 +8,7 @@ from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
-from aqueduct.error import (
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -136,9 +133,7 @@ class RelationalDBIntegration(Integration):
         # overwrite the existing one.
         sql_op_name = name
         if sql_op_name is None:
-            sql_op_name = self._dag.get_unclaimed_op_name(
-                prefix="%s query" % integration_info.name
-            )
+            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % integration_info.name)
 
         extract_params = query
         if isinstance(extract_params, str):
