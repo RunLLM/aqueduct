@@ -13,7 +13,6 @@ def test_list_saved_objects(client):
 
     try:
         table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.REPLACE))
 
         # Tables don't already exist already so cannot append or replace it.
@@ -24,7 +23,6 @@ def test_list_saved_objects(client):
         ###
 
         table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
 
         flow_ids_to_delete.add(
@@ -34,7 +32,6 @@ def test_list_saved_objects(client):
         ###
 
         table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
 
         flow_ids_to_delete.add(
@@ -44,7 +41,6 @@ def test_list_saved_objects(client):
         ###
 
         table = integration.sql(query=SENTIMENT_SQL_QUERY)
-
         table.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
 
         flow_ids_to_delete.add(
@@ -52,9 +48,7 @@ def test_list_saved_objects(client):
         )
 
         ###
-
         assert len(flow_ids_to_delete) == 1
-
         data = client.flow(list(flow_ids_to_delete)[0]).list_saved_objects()
 
         # Check all in same integration

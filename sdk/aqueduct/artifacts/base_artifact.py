@@ -3,14 +3,15 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
+from aqueduct.dag import DAG, apply_deltas_to_dag, AddOrReplaceOperatorDelta
 from aqueduct.enums import ArtifactType, OperatorType
-from aqueduct.operators import SaveConfig
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.error import InvalidIntegrationException, InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.operators import SaveConfig, S3LoadParams, Operator, OperatorSpec, LoadSpec
+from aqueduct.utils import generate_uuid
+from aqueduct import globals
 
 
 class BaseArtifact(ABC):
-
     _artifact_id: uuid.UUID
     _dag: DAG
     _content: Any
@@ -72,4 +73,50 @@ class BaseArtifact(ABC):
             InvalidUserArgumentException:
                 An error occurred because some necessary fields are missing in the SaveConfig.
         """
-        artifact_utils.add_load_operator(self._dag, self._artifact_id, self._get_type(), config)
+        integration_info = config.integration_info
+        integration_load_params = config.parameters
+        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
+
+        if integration_info.name not in integrations_map:
+            raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
+
+        # Non-tabular data cannot be saved into relational data stores.
+        if self._get_type() != ArtifactType.TABLE and integration_info.is_relational():
+            raise InvalidUserActionException(
+                "Unable to load non-relational data into relational data store `%s`."
+                % integration_info.name
+            )
+
+        # Tabular data written into S3 must include a S3FileFormat hint.
+        if self._get_type() == ArtifactType.TABLE and isinstance(config.parameters, S3LoadParams):
+            if config.parameters.format is None:
+                raise InvalidUserArgumentException(
+                    "You must supply a file format when saving tabular data into S3 integration `%s`."
+                    % integration_info.name
+                )
+
+        load_op_name = self._dag.get_unclaimed_op_name(prefix="%s loader" % integration_info.name)
+
+        # Add the load operator as a terminal node.
+        apply_deltas_to_dag(
+            self._dag,
+            deltas=[
+                AddOrReplaceOperatorDelta(
+                    op=Operator(
+                        id=generate_uuid(),
+                        name=load_op_name,
+                        description="",
+                        spec=OperatorSpec(
+                            load=LoadSpec(
+                                service=integration_info.service,
+                                integration_id=integration_info.id,
+                                parameters=integration_load_params,
+                            )
+                        ),
+                        inputs=[self._artifact_id],
+                    ),
+                    output_artifacts=[],
+                )
+            ],
+        )
+

@@ -31,7 +31,6 @@ from aqueduct.operators import (
     MetricSpec,
     Operator,
     OperatorSpec,
-    SaveConfig,
     SystemMetricSpec,
 )
 from aqueduct.utils import (
