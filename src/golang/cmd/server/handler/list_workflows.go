@@ -23,7 +23,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // Route: /workflows
@@ -99,8 +98,6 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
-
-	logrus.Warnf("Num flows: %v", len(dbWorkflows))
 
 	workflowIds := make([]uuid.UUID, 0, len(dbWorkflows))
 	for _, dbWorkflow := range dbWorkflows {
