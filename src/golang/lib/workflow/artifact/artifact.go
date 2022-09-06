@@ -162,7 +162,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 ) {
 	// The execution status we receive as the input to this function is the
 	// execution status of the operator that was supposed to create this
-	// artifact. If that artifact failed, we mark this artifact as canceled
+	// artifact. If that operator failed, we mark this artifact as canceled
 	// instead of failed because it was never generated.
 	artifactExecState := *execState
 	if execState.Status == shared.FailedExecutionStatus {

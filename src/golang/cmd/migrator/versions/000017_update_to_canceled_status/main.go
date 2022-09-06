@@ -47,7 +47,7 @@ func Up(ctx context.Context, db database.Database) error {
 		}
 	}
 
-	// Finally, update all failed operators to be canceled. In the new status
+	// Finally, update all failed artifacts to be canceled. In the new status
 	// setting, failed operators lead to canceled artifacts because the artifacts
 	// themselves are never created.
 	failedArtifactStatuses, err := getFailedArtifactResultStatuses(ctx, db)
@@ -79,9 +79,9 @@ func Down(ctx context.Context, db database.Database) error {
 	}
 
 	for _, operatorStatusInfo := range canceledOperatorStatuses {
-		operatorStatusInfo.ExecState.Status = CanceledExecutionStatus
+		operatorStatusInfo.ExecState.Status = PendingExecutionStatus
 		changes := map[string]interface{}{
-			"status":          CanceledExecutionStatus,
+			"status":          PendingExecutionStatus,
 			"execution_state": &operatorStatusInfo.ExecState,
 		}
 
