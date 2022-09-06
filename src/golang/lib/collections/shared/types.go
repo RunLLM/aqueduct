@@ -102,7 +102,6 @@ type NullExecutionStatus struct {
 func (n *NullExecutionStatus) Scan(value interface{}) error {
 	if value == nil {
 		n.IsNull = true
-		n.ExecutionStatus = UnknownExecutionStatus
 		return nil
 	}
 

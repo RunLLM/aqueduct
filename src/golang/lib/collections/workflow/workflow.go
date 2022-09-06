@@ -20,7 +20,7 @@ type Workflow struct {
 	RetentionPolicy RetentionPolicy `db:"retention_policy" json:"retention_policy"`
 }
 
-type latestWorkflowResponse struct {
+type LatestWorkflowResponse struct {
 	Id          uuid.UUID                  `db:"id" json:"id"`
 	Name        string                     `db:"name" json:"name"`
 	Description string                     `db:"description" json:"description"`
@@ -75,7 +75,7 @@ type Reader interface {
 		ctx context.Context,
 		organizationId string,
 		db database.Database,
-	) ([]latestWorkflowResponse, error)
+	) ([]LatestWorkflowResponse, error)
 	GetNotificationWorkflowMetadata(
 		ctx context.Context,
 		ids []uuid.UUID,

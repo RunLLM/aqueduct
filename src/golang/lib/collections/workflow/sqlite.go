@@ -53,7 +53,7 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 	ctx context.Context,
 	organizationId string,
 	db database.Database,
-) ([]latestWorkflowResponse, error) {
+) ([]LatestWorkflowResponse, error) {
 	// Get workflow metadata (id, name, description, creation time, last run time, and last run status)
 	// for all workflows whose `organization_id` is `organizationId` ordered by when the workflow was created.
 	// Get the last run DAG by getting the max created_at timestamp for all workflow DAGs associated with each
@@ -85,7 +85,7 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 		)
 		ORDER BY created_at DESC;`
 
-	var latestWorkflowResponse []latestWorkflowResponse
+	var latestWorkflowResponse []LatestWorkflowResponse
 	err := db.Query(ctx, &latestWorkflowResponse, query, organizationId)
 	return latestWorkflowResponse, err
 }
