@@ -24,6 +24,7 @@ export const theme = {
       500: '#0073E6',
       400: '#0080FF',
       300: '#4DA6FF',
+      200: '#66B3FF',
       100: '#CCE6FF',
       50: '#E6F2FF',
     },
@@ -82,5 +83,6 @@ export const theme = {
     DarkSuccessMain: 'rgba(102, 187, 106, 1)',
     DarkSuccessMain75: 'rgba(102, 187, 106, 0.75)',
     DarkSuccessMain50: 'rgba(102, 187, 106, 0.5)',
+    LogoDarkBlue: '#002F5E',
   },
 };
