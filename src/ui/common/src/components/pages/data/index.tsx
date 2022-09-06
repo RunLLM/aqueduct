@@ -55,7 +55,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   }, []);
 
   const getOptionLabel = (option) => {
-    // When option string is invalid, non of 'options' will be selected
+    // When option string is invalid, none of 'options' will be selected
     // and the component will try to directly render the input string.
     // This check prevents applying `dataCardName` to the string.
     if (typeof option === 'string') {
