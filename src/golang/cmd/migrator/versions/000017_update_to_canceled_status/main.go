@@ -22,7 +22,10 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Then do the same for all pending operators.
@@ -38,7 +41,10 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &operatorStatusInfo.ExecState,
 		}
 
-		utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		err = utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Finally, update all failed operators to be canceled. In the new status
@@ -56,7 +62,10 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -76,7 +85,10 @@ func Down(ctx context.Context, db database.Database) error {
 			"execution_state": &operatorStatusInfo.ExecState,
 		}
 
-		utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		err = utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Then do the same for all artifact statuses. However, there's a small hitch
@@ -102,7 +114,10 @@ func Down(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
