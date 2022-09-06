@@ -95,7 +95,10 @@ class BaseArtifact(ABC):
                     % integration_info.name
                 )
 
-        load_op_name = self._dag.get_unclaimed_op_name(prefix="%s loader" % integration_info.name)
+        # We need to deduplicate the name of load operators based on the artifact it is loading,
+        # along with the name of the integration. This allows multiple artifacts to write to the
+        # same integration, as well as single artifacts to write to multiple integrations.
+        load_op_name = " %s %s loader" % (self.name(), integration_info.name)
 
         # Add the load operator as a terminal node.
         apply_deltas_to_dag(
@@ -119,4 +122,3 @@ class BaseArtifact(ABC):
                 )
             ],
         )
-

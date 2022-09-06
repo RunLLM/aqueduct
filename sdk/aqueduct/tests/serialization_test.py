@@ -372,7 +372,8 @@ def test_load_serialization():
                 service=ServiceType.GOOGLE_SHEETS,
                 integration_id=integration_id,
                 parameters=GoogleSheetsLoadParams(
-                    filepath="test_sheet.csv", save_mode=GoogleSheetsSaveMode.OVERWRITE
+                    filepath="test_sheet.csv",
+                    save_mode=GoogleSheetsSaveMode.OVERWRITE,
                 ),
             ),
         ),
@@ -426,6 +427,40 @@ def test_load_serialization():
                     "parameters": {
                         "filepath": "test.json",
                         "format": S3TableFormat.JSON,
+                    },
+                }
+            },
+            "inputs": [str(other_ids[0])],
+            "outputs": [],
+        }
+    )
+
+    load_operator_s3_without_format = Operator(
+        id=op_id,
+        name="Load Operator S3",
+        description="",
+        spec=OperatorSpec(
+            load=LoadSpec(
+                service=ServiceType.S3,
+                integration_id=integration_id,
+                parameters=S3LoadParams(
+                    filepath="test.json",
+                ),
+            ),
+        ),
+        inputs=[other_ids[0]],
+    )
+    assert load_operator_s3_without_format.json(exclude_none=True) == json.dumps(
+        {
+            "id": str(op_id),
+            "name": "Load Operator S3",
+            "description": "",
+            "spec": {
+                "load": {
+                    "service": ServiceType.S3,
+                    "integration_id": str(integration_id),
+                    "parameters": {
+                        "filepath": "test.json",
                     },
                 }
             },

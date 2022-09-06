@@ -17,7 +17,7 @@ from aqueduct.enums import (
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):
@@ -94,6 +94,10 @@ class GoogleSheetsLoadParams(BaseModel):
 class S3LoadParams(BaseModel):
     filepath: str
     format: Optional[S3TableFormat]
+
+    # Must do this to prevent confusion with GoogleSheetsLoadParams.
+    class Config:
+        extra = Extra.forbid
 
 
 UnionLoadParams = Union[

@@ -54,7 +54,7 @@ def test_list_saved_objects(client):
             ]
         )
         integration_name = list(data.keys())[0]
-        assert len(data[integration_name]) == 4
+        assert len(data[integration_name]) == 3
         assert (
             set([(item.object_name, item.update_mode) for item in data[integration_name]])
             == data_set
@@ -62,11 +62,12 @@ def test_list_saved_objects(client):
 
         # Check mapping can be accessed correctly
         # Can be accessed by string of integration name
-        assert len(data[get_integration_name()]) == 4
+        assert len(data[get_integration_name()]) == 3
 
         # Can be accessed by Integration object with integration name
-        assert len(data[integration]) == 4
+        assert len(data[integration]) == 3
 
     finally:
-        for flow_id in flow_ids_to_delete:
-            delete_flow(client, flow_id)
+        pass
+        # for flow_id in flow_ids_to_delete:
+            # delete_flow(client, flow_id)
