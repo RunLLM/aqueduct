@@ -107,7 +107,7 @@ class BaseArtifact(ABC):
 
         # We deduplicate load operators based on name (and therefore integration) AND
         # the input artifact. This allows multiple artifacts to write to the same integration,
-        # as well as single artifacts to write to multiple integrations, all while keeping
+        # as well as a single artifact to write to multiple integrations, all while keeping
         # the name of the load operator readable.
         load_op_name = " %s loader" % integration_info.name
 

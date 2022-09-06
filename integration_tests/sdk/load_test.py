@@ -46,13 +46,11 @@ def test_list_saved_objects(client):
         assert len(data.keys()) == 1
 
         # table_name, update_mode
-        data_set = set(
-            [
-                ("table_1", LoadUpdateMode.APPEND),
-                ("table_1", LoadUpdateMode.REPLACE),
-                ("table_2", LoadUpdateMode.REPLACE),
-            ]
-        )
+        data_set = {
+            ("table_1", LoadUpdateMode.APPEND),
+            ("table_1", LoadUpdateMode.REPLACE),
+            ("table_2", LoadUpdateMode.REPLACE),
+        }
         integration_name = list(data.keys())[0]
         assert len(data[integration_name]) == 3
         assert (
@@ -70,3 +68,33 @@ def test_list_saved_objects(client):
     finally:
         for flow_id in flow_ids_to_delete:
             delete_flow(client, flow_id)
+
+
+@pytest.mark.publish
+def test_multiple_artifacts_saved_to_same_integration(client):
+    integration = client.integration(name=get_integration_name())
+
+    table_1 = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table_1.save(integration.config(table="table_1", update_mode=LoadUpdateMode.REPLACE))
+    table_2 = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table_2.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
+
+    flow = run_flow_test(client, artifacts=[table_1, table_2], delete_flow_after=False)
+    try:
+        data = client.flow(flow.id()).list_saved_objects()
+
+        assert len(data.keys()) == 1
+        data_set = {
+            ("table_1", LoadUpdateMode.REPLACE),
+            ("table_2", LoadUpdateMode.REPLACE),
+        }
+
+        integration_name = list(data.keys())[0]
+        assert len(data[integration_name]) == 2
+        assert (
+            set([(item.object_name, item.update_mode) for item in data[integration_name]])
+            == data_set
+        )
+
+    finally:
+        delete_flow(client, flow.id())

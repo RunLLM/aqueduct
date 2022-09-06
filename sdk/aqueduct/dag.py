@@ -345,7 +345,7 @@ class AddOrReplaceOperatorDelta(DAGDelta):
         find_duplicate_fn:
             A caller-supplied function that defines when we want the new operator to replace
             and old one. Returns the operator to replace, or None if no collision is found.
-            Defaults to replacing any operator with the same name.
+            Defaults to replacing an operator with the same name.
     """
 
     def __init__(
@@ -388,14 +388,14 @@ class AddOrReplaceOperatorDelta(DAGDelta):
                     ),
                 )
 
-            # The colliding operator cannot be an dependency of the new operator. Otherwise, we would
+            # The colliding operator cannot be a dependency of the new operator. Otherwise, we would
             # not be able to remove the colliding operator.
             downstream_op_ids = dag.list_downstream_operators(colliding_op.id)
             for op_id in downstream_op_ids:
                 downstream_op = dag.must_get_operator(op_id)
                 if len(set(downstream_op.outputs).intersection(set(self.op.inputs))) > 0:
                     raise InvalidUserActionException(
-                        "Attempting to replace operator `%s`, but it cannot be overwritten since"
+                        "Attempting to replace operator `%s`, but it cannot be overwritten "
                         "because it is an upstream dependency of the new operator `%s`."
                         % (colliding_op.name, self.op.name)
                     )
