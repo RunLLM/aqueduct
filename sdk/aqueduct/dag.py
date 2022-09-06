@@ -246,14 +246,6 @@ class DAG(BaseModel):
     def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
         self.must_get_artifact(artifact_id).type = artifact_type
 
-    def update_operator_name(self, name: str, new_name: str):
-        """WARNING: should only ever be used to cleanup the name of Load Operators."""
-        assert name in self.operator_by_name, "Operator %s does not exist." % name
-        op = self.operator_by_name[name]
-
-        self.operators[str(op.id)].name = new_name
-        self.operator_by_name[op.name].name = new_name
-
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.
 
