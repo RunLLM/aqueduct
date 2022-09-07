@@ -66,7 +66,6 @@ class FlowRun:
             """
             )
         )
-
         param_artifacts = self._dag.list_artifacts(filter_to=[ArtifactType.PARAM])
         print(format_header_for_print("Parameters "))
         for param_artifact in param_artifacts:
@@ -91,20 +90,43 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
 
+        content = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(self.id(), artifact_from_dag.id)
+
         if not isinstance(artifact_from_dag.type, ArtifactType):
             raise InternalAqueductError("The artifact's type can not be recognized.")
 
         if artifact_from_dag.type is ArtifactType.TABLE:
-            return table_artifact.TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return table_artifact.TableArtifact(
+                self._dag,
+                artifact_from_dag.id,
+                from_flow_run=True,
+                content=content,
+            )
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return numeric_artifact.NumericArtifact(
-                self._dag, artifact_from_dag.id, from_flow_run=True
+                self._dag,
+                artifact_from_dag.id,
+                from_flow_run=True,
+                content=content,
             )
         elif artifact_from_dag.type is ArtifactType.BOOL:
-            return bool_artifact.BoolArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return bool_artifact.BoolArtifact(
+                self._dag,
+                artifact_from_dag.id,
+                from_flow_run=True,
+                content=content,
+            )
         elif artifact_from_dag.type is ArtifactType.PARAM:
-            return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return param_artifact.ParamArtifact(
+                self._dag,
+                artifact_from_dag.id,
+                from_flow_run=True,
+                content=content,
+            )
         else:
             return generic_artifact.GenericArtifact(
-                self._dag, artifact_from_dag.id, from_flow_run=True
+                self._dag,
+                artifact_from_dag.id,
+                from_flow_run=True,
+                content=content,
             )

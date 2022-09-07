@@ -104,12 +104,22 @@ class InvalidUserArgumentException(Error):
     pass
 
 
+# Exception raised when the user does something that makes sense, but is currently unsupported
+# by the system.
+class UnsupportedUserActionException(Error):
+    pass
+
+
 # Exception raised when user attempts to use an invalid file name as a file dependency.
 class ReservedFileNameException(Error):
     pass
 
 
 class ArtifactNotFoundException(Error):
+    pass
+
+
+class ArtifactNeverComputedException(Error):
     pass
 
 

@@ -7,6 +7,7 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType
+from aqueduct.error import ArtifactNeverComputedException, UnsupportedUserActionException
 
 
 class GenericArtifact(BaseArtifact):
@@ -30,13 +31,10 @@ class GenericArtifact(BaseArtifact):
 
         self._dag = dag
         self._artifact_id = artifact_id
+
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
         self._set_content(content)
-
-        if self._from_flow_run:
-            # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self._get_content() is None
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
@@ -51,6 +49,16 @@ class GenericArtifact(BaseArtifact):
                 An unexpected error occurred in the server.
         """
         self._dag.must_get_artifact(self._artifact_id)
+
+        if self._from_flow_run:
+            if self._get_content() is None:
+                raise ArtifactNeverComputedException(
+                    "This artifact was part of an existing flow run but was never computed successfully!",
+                )
+            elif parameters is not None:
+                raise UnsupportedUserActionException(
+                    "Parameterizing historical artifacts is not currently supported."
+                )
 
         if parameters is None and self._get_content() is not None:
             return self._get_content()
