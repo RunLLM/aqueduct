@@ -4,17 +4,16 @@
 Released on September 6, 2022.
 
 ### Key Features
-* Adds AWS Athena integration. You can now execute SQL queries against AWS Athena using the Aqueduct integration API. 
-    (Since Athena is a query service, we do not support saving data to Athena.)
+* Adds AWS Athena integration. You can now execute SQL queries against AWS Athena using the Aqueduct
+    integration API. (Since Athena is a query service, we do not support saving data to Athena.)
 
 ### Enhancements
-* Removes team and workflow notification categories and simplifies the presentation of the notifications pane to be a single 
-    box containing all notifications.
-* Improves workflow metadata persistence: A newly created workflow will now
-    show on the UI even before any runs are finished and persisted.
-* Adds support for optionally lazily executing functions during workflow
-    definition. You can also set the global configuration for all functions to
-    be lazy by using `aqueduct.global_config({"lazy": True})`.
+* Removes team and workflow notification categories and simplifies the presentation of the
+    notifications pane to be a single box containing all notifications.
+* Improves workflow metadata persistence: A newly created workflow will now show on the UI even
+    before any runs are finished and persisted.
+* Adds support for optionally lazily executing functions during workflow definition. You can also set
+    the global configuration for all functions to be lazy by using `aqueduct.global_config({"lazy": True})`.
 ```python
 @op
 def my_op(input):
@@ -24,11 +23,9 @@ def my_op(input):
 result = my_op.lazy(input) # This will not execute immediately.
 result.get() # This will force execution of `my_op`.
 ```
-* Enforces typing for saved data; only tabular data is now saveable to
-    relational DBs.
-* Makes exported function code human-readable. When you download the code for a
-    function, it will include a file with the name of the operator, which will
-    have the function's Python code.
+* Enforces typing for saved data; only tabular data is now saveable to relational DBs.
+* Makes exported function code human-readable. When you download the code for a function, it will
+    include a file with the name of the operator, which will have the function's Python code.
 
 ### Bugfixes
 
