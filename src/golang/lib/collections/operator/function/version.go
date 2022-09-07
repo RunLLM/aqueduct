@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -62,7 +62,7 @@ func readPythonVersion(program []byte) (PythonVersion, error) {
 	}
 	defer f.Close()
 
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
 	if err != nil {
 		return PythonVersionUnknown, err
 	}
