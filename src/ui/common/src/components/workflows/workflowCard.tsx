@@ -98,7 +98,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
         >
           <Alert
             onClose={handleInfoToastClose}
-            severity="success"
+            severity="info"
             sx={{ width: '100%' }}
           >
             {toastMessage}
