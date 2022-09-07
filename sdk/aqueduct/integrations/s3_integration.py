@@ -10,7 +10,6 @@ from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -21,6 +20,8 @@ from aqueduct.operators import (
     SaveConfig,
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+
+from aqueduct import globals
 
 
 class S3Integration(Integration):
@@ -73,6 +74,8 @@ class S3Integration(Integration):
         Returns:
             Artifact or a tuple of artifacts representing the S3 Files.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         if format:
@@ -135,14 +138,7 @@ class S3Integration(Integration):
 
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
-            artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact._get_type() != artifact_type:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (artifact_type, artifact._get_type())
-                )
-
-            return artifact
+            return artifact_utils.preview_artifact(self._dag, output_artifact_id)
         else:
             # We are in lazy mode.
             if artifact_type == ArtifactType.TABLE:

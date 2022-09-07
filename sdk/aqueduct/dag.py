@@ -1,11 +1,11 @@
 import copy
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -210,6 +210,25 @@ class DAG(BaseModel):
 
         return artifacts
 
+    def get_unclaimed_op_name(self, prefix: str) -> str:
+        """Returns an operator name that is guaranteed to not collide with any existing name in the dag.
+
+        Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
+        until we hit an unclaimed name.
+        """
+        curr_suffix = 1
+        while True:
+            candidate_name = prefix + " %d" % curr_suffix
+            colliding_op = self.get_operator(with_name=candidate_name)
+            if colliding_op is None:
+                # We've found an unallocated name!
+                op_name = candidate_name
+                break
+            curr_suffix += 1
+
+        assert op_name is not None
+        return op_name
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:
@@ -223,6 +242,9 @@ class DAG(BaseModel):
     def add_artifacts(self, artifacts: List[ArtifactMetadata]) -> None:
         for artifact in artifacts:
             self.artifacts[str(artifact.id)] = artifact
+
+    def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
+        self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.
@@ -286,6 +308,29 @@ class DAGDelta(ABC):
         pass
 
 
+# These helpers are meant to be fed into `AddOrReplaceOperatorDelta` as different ways
+# of resolving whether an operator already exists in the DAG or not.
+
+
+def find_duplicate_operator_by_name(dag: DAG, op: Operator) -> Optional[Operator]:
+    return dag.get_operator(with_name=op.name)
+
+
+def find_duplicate_load_operator(dag: DAG, op: Operator) -> Optional[Operator]:
+    """Load operators are only duplicates if they are loading the same artifact into the same integration."""
+    assert get_operator_type(op) == OperatorType.LOAD
+    assert len(op.inputs) == 1
+
+    artifact_to_load = dag.must_get_artifact(op.inputs[0])
+    existing_load_ops = dag.list_operators(
+        filter_to=[OperatorType.LOAD], on_artifact_id=artifact_to_load.id
+    )
+    for existing_load_op in existing_load_ops:
+        if existing_load_op.name == op.name:
+            return existing_load_op
+    return None
+
+
 class AddOrReplaceOperatorDelta(DAGDelta):
     """Adds an operator and its output artifacts to the DAG.
 
@@ -297,9 +342,20 @@ class AddOrReplaceOperatorDelta(DAGDelta):
             The new operator to add.
         output_artifacts:
             The output artifacts for this operation.
+        find_duplicate_fn:
+            A caller-supplied function that defines when we want the new operator to replace
+            and old one. Returns the operator to replace, or None if no collision is found.
+            Defaults to replacing an operator with the same name.
     """
 
-    def __init__(self, op: Operator, output_artifacts: List[ArtifactMetadata]):
+    def __init__(
+        self,
+        op: Operator,
+        output_artifacts: List[ArtifactMetadata],
+        find_duplicate_fn: Callable[
+            [DAG, Operator], Optional[Operator]
+        ] = find_duplicate_operator_by_name,
+    ):
         # Check that the operator's outputs correspond to the given output artifacts.
         if len(op.outputs) != len(output_artifacts):
             raise InternalAqueductError(
@@ -314,26 +370,34 @@ class AddOrReplaceOperatorDelta(DAGDelta):
 
         self.op = op
         self.output_artifacts = output_artifacts
+        self.find_duplicate_fn = find_duplicate_fn
 
     def apply(self, dag: DAG) -> None:
-        # If there exists an operator with the same name, remove it and its dependencies first!
-        colliding_op = dag.get_operator(with_name=self.op.name)
+        # Find any colliding operator, and remove it and its dependencies first!
+        colliding_op = self.find_duplicate_fn(dag, self.op)
         if colliding_op is not None:
             if get_operator_type(self.op) != get_operator_type(colliding_op):
                 raise InvalidUserActionException(
-                    "Another operator exists with the same name %s, but is of a different type %s."
-                    % (self.op.name, get_operator_type(self.op)),
+                    "Attempting to replace operator `%s` with a new operator `%s` of type %s, "
+                    "but the existing operator has type %s."
+                    % (
+                        colliding_op.name,
+                        self.op.name,
+                        get_operator_type(self.op),
+                        get_operator_type(colliding_op),
+                    ),
                 )
 
-            # The colliding operator cannot be an dependency of the new operator. Otherwise, we would
+            # The colliding operator cannot be a dependency of the new operator. Otherwise, we would
             # not be able to remove the colliding operator.
             downstream_op_ids = dag.list_downstream_operators(colliding_op.id)
             for op_id in downstream_op_ids:
                 downstream_op = dag.must_get_operator(op_id)
                 if len(set(downstream_op.outputs).intersection(set(self.op.inputs))) > 0:
                     raise InvalidUserActionException(
-                        "Another operator exists with the same name %s, but cannot be overwritten "
-                        "because it is a dependency of the new operator." % self.op.name,
+                        "Attempting to replace operator `%s`, but it cannot be overwritten "
+                        "because it is an upstream dependency of the new operator `%s`."
+                        % (colliding_op.name, self.op.name)
                     )
 
             logger().info(
