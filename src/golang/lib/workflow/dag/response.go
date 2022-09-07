@@ -55,28 +55,28 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	DbWorkflowDag *workflow_dag.DBWorkflowDag,
-	DbWorkflowDagResult *workflow_dag_result.WorkflowDagResult,
-	DbOperatorResults []operator_result.OperatorResult,
-	DbArtifactResults []artifact_result.ArtifactResult,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dbWorkflowDagResult *workflow_dag_result.WorkflowDagResult,
+	dbOperatorResults []operator_result.OperatorResult,
+	dbArtifactResults []artifact_result.ArtifactResult,
 ) *ResultResponse {
 	metadataResponse := MetadataResponse{
-		DagId:         DbWorkflowDag.Id,
-		DagCreatedAt:  DbWorkflowDag.CreatedAt,
-		StorageConfig: &DbWorkflowDag.StorageConfig,
-		EngineConfig:  &DbWorkflowDag.EngineConfig,
+		DagId:         dbWorkflowDag.Id,
+		DagCreatedAt:  dbWorkflowDag.CreatedAt,
+		StorageConfig: &dbWorkflowDag.StorageConfig,
+		EngineConfig:  &dbWorkflowDag.EngineConfig,
 
-		WorkflowId: DbWorkflowDag.WorkflowId,
+		WorkflowId: dbWorkflowDag.WorkflowId,
 	}
 
 	rawResultResponse := RawResultResponse{
-		Id:        DbWorkflowDagResult.Id,
-		Status:    DbWorkflowDagResult.Status,
-		CreatedAt: DbWorkflowDagResult.CreatedAt,
+		Id:        dbWorkflowDagResult.Id,
+		Status:    dbWorkflowDagResult.Status,
+		CreatedAt: dbWorkflowDagResult.CreatedAt,
 	}
 
-	if DbWorkflowDag.Metadata != nil {
-		wfMetadata := DbWorkflowDag.Metadata
+	if dbWorkflowDag.Metadata != nil {
+		wfMetadata := dbWorkflowDag.Metadata
 		metadataResponse.WorkflowCreatedAt = wfMetadata.CreatedAt
 		metadataResponse.UserId = wfMetadata.UserId
 		metadataResponse.Name = wfMetadata.Name
@@ -85,33 +85,54 @@ func NewResultResponseFromDbObjects(
 		metadataResponse.RetentionPolicy = &wfMetadata.RetentionPolicy
 	}
 
-	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse)
-	artifactsResponse := make(map[uuid.UUID]artifact.ResultResponse)
-	for _, opResult := range DbOperatorResults {
-		if op, ok := DbWorkflowDag.Operators[opResult.OperatorId]; ok {
+	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse, len(dbWorkflowDag.Operators))
+	artifactsResponse := make(map[uuid.UUID]artifact.ResultResponse, len(dbWorkflowDag.Artifacts))
+	artifactToUpstreamOpId := make(map[uuid.UUID]uuid.UUID, len(dbWorkflowDag.Artifacts))
+	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dbWorkflowDag.Artifacts))
+
+	for _, opResult := range dbOperatorResults {
+		if op, ok := dbWorkflowDag.Operators[opResult.OperatorId]; ok {
 			opResultResponse := operator.NewResultResponseFromDbObjects(&op, &opResult)
 			operatorsResponse[op.Id] = *opResultResponse
 		}
 	}
 
-	// Handle operators without results
-	for id, op := range DbWorkflowDag.Operators {
+	// Handle operators without results and update artifact maps
+	for id, op := range dbWorkflowDag.Operators {
 		if _, ok := operatorsResponse[id]; !ok {
 			operatorsResponse[id] = *(operator.NewResultResponseFromDbObjects(&op, nil))
 		}
+
+		for _, id := range op.Outputs {
+			artifactToUpstreamOpId[id] = op.Id
+		}
+
+		for _, id := range op.Inputs {
+			artifactToDownstreamOpIds[id] = append(artifactToDownstreamOpIds[id], op.Id)
+		}
 	}
 
-	for _, artfResult := range DbArtifactResults {
-		if artf, ok := DbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
-			artfResultResponse := artifact.NewResultResponseFromDbObjects(&artf, &artfResult)
+	for _, artfResult := range dbArtifactResults {
+		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+			artfResultResponse := artifact.NewResultResponseFromDbObjects(
+				&artf,
+				&artfResult,
+				artifactToUpstreamOpId[artf.Id],
+				artifactToDownstreamOpIds[artf.Id],
+			)
 			artifactsResponse[artf.Id] = *artfResultResponse
 		}
 	}
 
 	// Handle artifacts without results
-	for id, artf := range DbWorkflowDag.Artifacts {
+	for id, artf := range dbWorkflowDag.Artifacts {
 		if _, ok := artifactsResponse[id]; !ok {
-			artifactsResponse[id] = *(artifact.NewResultResponseFromDbObjects(&artf, nil))
+			artifactsResponse[id] = *(artifact.NewResultResponseFromDbObjects(
+				&artf,
+				nil,
+				artifactToUpstreamOpId[artf.Id],
+				artifactToDownstreamOpIds[artf.Id],
+			))
 		}
 	}
 
