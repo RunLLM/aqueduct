@@ -8,7 +8,8 @@ Released on September 6, 2022.
     (Since Athena is a query service, we do not support saving data to Athena.)
 
 ### Enhancements
-* Simplifies the presentation of the notifications pane to be a single box.
+* Removes team and workflow notification categories and simplifies the presentation of the notifications pane to be a single 
+    box containing all notifications.
 * Improves workflow metadata persistence: A newly created workflow will now
     show on the UI even before any runs are finished and persisted.
 * Adds support for optionally lazily executing functions during workflow
