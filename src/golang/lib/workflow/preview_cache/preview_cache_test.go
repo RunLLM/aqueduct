@@ -24,6 +24,18 @@ func requirePathsDoNotExist(t *testing.T, execPaths *utils.ExecPaths, errMsgTemp
 	}
 }
 
+func requirePathsDoExist(t *testing.T, execPaths *utils.ExecPaths, errMsgTemplate string) {
+	if _, err := os.Stat(execPaths.OpMetadataPath); err != nil {
+		require.Fail(t, fmt.Sprintf(errMsgTemplate, execPaths.OpMetadataPath))
+	}
+	if _, err := os.Stat(execPaths.ArtifactMetadataPath); err != nil {
+		require.Fail(t, fmt.Sprintf(errMsgTemplate, execPaths.ArtifactMetadataPath))
+	}
+	if _, err := os.Stat(execPaths.ArtifactContentPath); err != nil {
+		require.Fail(t, fmt.Sprintf(errMsgTemplate, execPaths.ArtifactContentPath))
+	}
+}
+
 func writePathsToFilesystem(t *testing.T, execPaths *utils.ExecPaths) {
 	f, err := os.Create(execPaths.OpMetadataPath)
 	_ = f.Close()
@@ -35,6 +47,17 @@ func writePathsToFilesystem(t *testing.T, execPaths *utils.ExecPaths) {
 
 	f, err = os.Create(execPaths.ArtifactMetadataPath)
 	_ = f.Close()
+	require.Nil(t, err)
+}
+
+func removePathsToFilesystem(t *testing.T, execPaths *utils.ExecPaths) {
+	err := os.Remove(execPaths.OpMetadataPath)
+	require.Nil(t, err)
+
+	err = os.Remove(execPaths.ArtifactContentPath)
+	require.Nil(t, err)
+
+	err = os.Remove(execPaths.ArtifactMetadataPath)
 	require.Nil(t, err)
 }
 
@@ -82,16 +105,19 @@ func TestPreviewCacheCollision(t *testing.T) {
 		ArtifactContentPath:  execPaths.ArtifactContentPath,
 	}, entry)
 
-	// Write the same key to the path.
+	// Write the same key to the path. This will error, since the entry is not the same.
+	// Nothing will be cleaned up.
 	newExecPaths := &utils.ExecPaths{
 		"op_metadata_path2",
 		"artifact_content_path2",
 		"artifact_metadata_path2",
 	}
 	err = cache.Put(ctx, key, newExecPaths)
-	require.Nil(t, err)
+	require.Error(t, err, "we expect the entry to be the same")
 
-	requirePathsDoNotExist(t, execPaths, "%s should not exist anymore.")
+	requirePathsDoExist(t, execPaths, "%s should continue to exist.")
+	removePathsToFilesystem(t, execPaths)
+	requirePathsDoNotExist(t, execPaths, "%s should have been removed.")
 }
 
 func TestPreviewCacheEviction(t *testing.T) {

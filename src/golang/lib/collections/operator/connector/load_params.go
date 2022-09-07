@@ -38,7 +38,9 @@ type SalesforceLoadParams struct {
 
 type S3LoadParams struct {
 	Filepath string `json:"filepath"`
-	Format   string `json:"format"`
+
+	// Pointer because it must be deserialized into an Optional[S3TableFormat] on the python operator side.
+	Format *string `json:"format"`
 }
 
 func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, bool) {

@@ -1,9 +1,7 @@
 import textwrap
 import uuid
-from textwrap import wrap
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Optional
 
-import plotly.graph_objects as go
 from aqueduct.artifacts import (
     base_artifact,
     bool_artifact,
@@ -12,14 +10,12 @@ from aqueduct.artifacts import (
     param_artifact,
     table_artifact,
 )
-from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, DisplayNodeType, ExecutionStatus, OperatorType
+from aqueduct.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import InternalAqueductError
-from aqueduct.operators import Operator
 from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
-from aqueduct import api_client
+from aqueduct import globals
 
 
 class FlowRun:
@@ -54,7 +50,7 @@ class FlowRun:
         """Prints out a human-readable description of the flow run."""
 
         url = generate_ui_url(
-            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
+            globals.__GLOBAL_API_CLIENT__.construct_base_url(),
             self._flow_id,
             self._id,
         )

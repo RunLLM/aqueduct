@@ -12,6 +12,7 @@ from aqueduct_executor.operators.utils.enums import (
     SerializationType,
     artifact_to_serialization,
 )
+from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
@@ -92,6 +93,16 @@ def read_artifacts(
     input_types: List[ArtifactType] = []
 
     for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
+        # Make sure that the input paths exist.
+        try:
+            _ = storage.get(input_path)
+            _ = storage.get(input_metadata_path)
+        except Exception as e:
+            # TODO(ENG-1627): think about retrying the parent operator in such instances.
+            raise MissingInputPathsException(
+                "Unable to read inputs artifacts. Exception: %s" % str(e)
+            )
+
         artifact_metadata = json.loads(storage.get(input_metadata_path).decode(_DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
         input_types.append(artifact_type)
@@ -99,6 +110,7 @@ def read_artifacts(
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
         if serialization_type not in _deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s" % serialization_type)
+
         inputs.append(_deserialization_function_mapping[serialization_type](storage, input_path))
 
     return inputs, input_types

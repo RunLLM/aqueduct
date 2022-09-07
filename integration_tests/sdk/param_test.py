@@ -3,8 +3,8 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import pytest
-from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.enums import ArtifactType, ExecutionStatus
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
 from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
@@ -77,6 +77,10 @@ def test_get_with_custom_parameter(client):
 
     with pytest.raises(InvalidUserArgumentException):
         param_doubled.get(parameters={"non-existant param": 10})
+
+    # Check that changing the type of the parameter will error.
+    with pytest.raises(AqueductError):
+        param_doubled.get(parameters={"number": "NOT A NUMBER"})
 
 
 @op
@@ -171,7 +175,11 @@ def test_trigger_flow_with_different_param(client):
 
     try:
         client.trigger(flow.id(), parameters={"num1": 10})
-        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
 
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
@@ -194,7 +202,11 @@ def test_trigger_flow_with_different_sql_param(client):
 
     try:
         client.trigger(flow.id(), parameters={"table_name": "customer_activity"})
-        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
 
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
