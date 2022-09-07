@@ -1,4 +1,6 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
+import { CodeBlock } from './components/CodeBlock';
+import DataPreviewer from './components/DataPreviewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -32,14 +34,11 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import { CodeBlock } from './components/CodeBlock';
-import DataPreviewer from './components/DataPreviewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
-import { filteredList, SearchBar } from './components/Search';
 import AqueductSidebar, {
   BottomSidebarHeaderHeightInPx,
   BottomSidebarHeightInPx,
@@ -67,6 +66,7 @@ import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
+import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
