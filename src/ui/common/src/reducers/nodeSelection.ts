@@ -12,6 +12,7 @@ export enum NodeType {
   ImageArtifact = 'imageArtifact',
   DictArtifact = 'dictArtifact',
   GenericArtifact = 'genericArtifact',
+  UntypedArtifact = 'untypedArtifact',
   ExtractOp = 'extractOp',
   LoadOp = 'loadOp',
   FunctionOp = 'functionOp',
@@ -42,6 +43,7 @@ export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {
   [ArtifactType.Image]: NodeType.ImageArtifact,
   [ArtifactType.Bytes]: NodeType.GenericArtifact,
   [ArtifactType.Picklable]: NodeType.GenericArtifact,
+  [ArtifactType.Untyped]: NodeType.GenericArtifact,
 } as const;
 
 export type SelectedNode = {

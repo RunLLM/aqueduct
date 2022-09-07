@@ -1,9 +1,9 @@
 import { Box, Button, Input, Typography } from '@mui/material';
 import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
-import CodeBlock from '../../../components/layouts/codeblock';
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
+import { CodeBlock } from '../../CodeBlock';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
