@@ -238,8 +238,8 @@ def run(spec: FunctionSpec) -> None:
                         spec,
                         storage,
                         exec_state,
-                        "Expected type %s, but output is of type %s."
-                        % (expected_output_type, result_type),
+                        "Expected %s type %s, but output is of type %s."
+                        % (spec.name, expected_output_type, result_type),
                     )
 
         utils.write_artifact(

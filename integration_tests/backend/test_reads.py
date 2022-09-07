@@ -1,10 +1,7 @@
 import json
 import os
-import subprocess
-import sys
 import uuid
 from pathlib import Path
-from time import sleep
 
 import pytest
 import requests
@@ -12,6 +9,7 @@ import utils
 from setup.changing_saves_workflow import setup_changing_saves
 
 import aqueduct
+from aqueduct import globals
 
 
 class TestBackend:
@@ -40,7 +38,7 @@ class TestBackend:
     def response(cls, endpoint, additional_headers):
         headers = {"api-key": pytest.api_key}
         headers.update(additional_headers)
-        url = aqueduct.api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
+        url = globals.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
         return url, headers
 
     @classmethod

@@ -8,7 +8,6 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.param_artifact import ParamArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import (
@@ -20,7 +19,6 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import (
-    AqueductError,
     InvalidArtifactTypeException,
     InvalidUserActionException,
     InvalidUserArgumentException,
@@ -34,9 +32,9 @@ from aqueduct.utils import (
     generate_uuid,
     serialize_function,
 )
-from pandas import DataFrame
 
 from aqueduct import dag as dag_module
+from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
@@ -122,18 +120,7 @@ def wrap_spec(
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
-        artifact = artifact_utils.preview_artifact(dag, output_artifact_id)
-        if (
-            output_artifact_type_hint != ArtifactType.UNTYPED
-            and artifact._get_type() != output_artifact_type_hint
-        ):
-            raise InvalidArtifactTypeException(
-                "The computed artifact is expected to be type %s, but has type %s"
-                % (output_artifact_type_hint, artifact._get_type())
-            )
-
-        dag.must_get_artifact(output_artifact_id).type = artifact._get_type()
-        return artifact
+        return artifact_utils.preview_artifact(dag, output_artifact_id)
     else:
         # We are in lazy mode.
         if output_artifact_type_hint == ArtifactType.TABLE:
@@ -302,6 +289,9 @@ def op(
 
         setattr(wrapped, "lazy", lazy_mode)
 
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
+
         return wrapped
 
     if callable(name):
@@ -430,6 +420,9 @@ def metric(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
+
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
 
         return wrapped
 
@@ -563,6 +556,8 @@ def check(
 
         setattr(wrapped, "lazy", lazy_mode)
 
+        if globals.__GLOBAL_CONFIG__.lazy:
+            return lazy_mode
         return wrapped
 
     if callable(name):

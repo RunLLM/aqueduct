@@ -65,6 +65,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SALESFORCE = "Salesforce"
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
+    ATHENA = "Athena"
     SQLITE = "SQLite"
     AIRFLOW = "Airflow"
     K8S = "Kubernetes"
@@ -81,6 +82,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     BIGQUERY = "BigQuery"
     AQUEDUCTDEMO = "Aqueduct Demo"
     SQLITE = "SQLite"
+    ATHENA = "Athena"
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):

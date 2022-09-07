@@ -6,7 +6,7 @@ from aqueduct.error import InvalidGithubQueryError
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
 
-from aqueduct import api_client
+from aqueduct import globals
 
 from .decorator import OutputArtifactFunction, wrap_spec
 from .operators import (
@@ -72,7 +72,7 @@ class Github:
         self.branch = branch
 
     def list_branches(self) -> List[str]:
-        return api_client.__GLOBAL_API_CLIENT__.list_github_branches(self.repo_url)
+        return globals.__GLOBAL_API_CLIENT__.list_github_branches(self.repo_url)
 
     def op(
         self,
