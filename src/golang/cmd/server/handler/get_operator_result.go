@@ -53,10 +53,10 @@ type GetOperatorResultResponse struct {
 	Description string                `json:"description"`
 	ExecState   shared.ExecutionState `json:"exec_state"`
 	// TODO: Roll these into just ExecutionState when done.
-	//UserLogs    *shared.Logs            `json:"user_logs"`
+	// UserLogs    *shared.Logs            `json:"user_logs"`
 	Status shared.ExecutionStatus `json:"status"`
-	//FailureType *shared.FailureType     `json:"failure_type"`
-	//Error       *shared.Error           `json:"error"`
+	// FailureType *shared.FailureType     `json:"failure_type"`
+	// Error       *shared.Error           `json:"error"`
 }
 
 func (*GetOperatorResultHandler) Name() string {
@@ -106,7 +106,6 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	emptyResp := GetOperatorResultResponse{}
 	dbOperator, err := h.OperatorReader.GetOperator(ctx, args.operatorId, h.Database)
-
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator.")
 	}
