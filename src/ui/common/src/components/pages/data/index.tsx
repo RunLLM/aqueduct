@@ -9,7 +9,7 @@ import UserProfile from '../../../utils/auth';
 import { DataCard, dataCardName } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
-import { filteredList, SearchBar } from '../../layouts/search';
+import { filteredList, SearchBar } from '../../Search';
 import { LayoutProps } from '../types';
 
 type Props = {

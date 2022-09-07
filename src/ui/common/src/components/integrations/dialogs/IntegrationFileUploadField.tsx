@@ -3,7 +3,7 @@ import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
-import { CodeBlock } from '../../layouts/codeBlock';
+import { CodeBlock } from '../../CodeBlock';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 

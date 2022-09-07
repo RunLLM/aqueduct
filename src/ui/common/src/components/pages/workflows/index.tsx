@@ -8,7 +8,7 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
-import { filteredList, SearchBar } from '../../layouts/search';
+import { filteredList, SearchBar } from '../../Search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
 
@@ -68,7 +68,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       <Link href="https://github.com/aqueducthq/aqueduct/blob/main/sdk">
         Python SDK
       </Link>
-      !
+      <span>!</span>
     </Typography>
   );
 

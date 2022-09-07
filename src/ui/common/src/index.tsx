@@ -32,14 +32,14 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import { CodeBlock } from './components/layouts/codeBlock';
-import DataPreviewer from './components/layouts/dataPreviewer';
+import { CodeBlock } from './components/CodeBlock';
+import DataPreviewer from './components/DataPreviewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
-import { filteredList, SearchBar } from './components/layouts/search';
+import { filteredList, SearchBar } from './components/Search';
 import AqueductSidebar, {
   BottomSidebarHeaderHeightInPx,
   BottomSidebarHeightInPx,
