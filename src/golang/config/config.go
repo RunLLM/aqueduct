@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -69,7 +68,7 @@ func Init(path string) error {
 
 // loadConfig reads the file at `configPath` into `globalConfig`.
 func loadConfig() error {
-	bts, err := ioutil.ReadFile(globalConfigPath)
+	bts, err := os.ReadFile(globalConfigPath)
 	if err != nil {
 		return err
 	}
@@ -104,5 +103,5 @@ func dumpConfig() error {
 		return err
 	}
 
-	return ioutil.WriteFile(globalConfigPath, data, 0o664)
+	return os.WriteFile(globalConfigPath, data, 0o664)
 }
