@@ -6,11 +6,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -88,13 +91,37 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 
+	emptyResp := struct{}{}
+
+	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		args.WorkflowId,
+		h.WorkflowReader,
+		nil,
+		nil,
+		nil,
+		nil,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	}
+
+	if dag.EngineConfig.Type == shared.AirflowEngineType {
+		// This is an Airflow workflow
+		if err := airflow.TriggerWorkflow(ctx, dag); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow on Airflow.")
+		}
+		return emptyResp, http.StatusOK, nil
+	}
+
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err := h.Engine.TriggerWorkflow(
+	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		args.WorkflowId,
 		shared_utils.AppendPrefix(args.WorkflowId.String()),
@@ -102,8 +129,8 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		args.Parameters,
 	)
 	if err != nil {
-		return struct{}{}, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
 	}
 
-	return struct{}{}, http.StatusOK, nil
+	return emptyResp, http.StatusOK, nil
 }
