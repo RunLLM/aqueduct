@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -225,7 +225,7 @@ func writeZipFile(w *zip.Writer, zf *zip.File, zfName string) error {
 	defer f.Close()
 
 	// Read content of `zf`
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}

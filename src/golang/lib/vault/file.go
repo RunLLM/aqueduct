@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -59,11 +58,11 @@ func (f *fileVault) Put(ctx context.Context, name string, secrets map[string]str
 	}
 
 	// the WriteFile method returns an error if unsuccessful
-	return ioutil.WriteFile(f.getFullPath(name), gcm.Seal(nonce, nonce, serialized, nil), filePermissionCode)
+	return os.WriteFile(f.getFullPath(name), gcm.Seal(nonce, nonce, serialized, nil), filePermissionCode)
 }
 
 func (f *fileVault) Get(ctx context.Context, name string) (map[string]string, error) {
-	ciphertext, err := ioutil.ReadFile(f.getFullPath(name))
+	ciphertext, err := os.ReadFile(f.getFullPath(name))
 	if err != nil {
 		return nil, err
 	}
