@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../../../stores/store';
 import { getUpstreamOperator } from '../../../utils/artifacts';
-import DataPreviewer from '../../layouts/data_previewer';
+import DataPreviewer from '../../DataPreviewer';
 
 type Props = {
   artifactId: string;

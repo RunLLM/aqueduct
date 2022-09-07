@@ -2,7 +2,6 @@ package migrator
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -78,7 +77,7 @@ func Create(name string, language ScriptLanguage) error {
 // nextVersion returns the next available schema version in the sequence.
 // It does this by checking the migration dirs that exist in internal/migration.
 func nextVersion() (int64, error) {
-	files, err := ioutil.ReadDir(migrationFilePath)
+	files, err := os.ReadDir(migrationFilePath)
 	if err != nil {
 		return -1, err
 	}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 
 	"cloud.google.com/go/storage"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -43,7 +42,7 @@ func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 	defer rc.Close()
 
-	data, err := ioutil.ReadAll(rc)
+	data, err := io.ReadAll(rc)
 	if err != nil {
 		return nil, err
 	}
