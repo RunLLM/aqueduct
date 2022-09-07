@@ -60,7 +60,7 @@ export const SearchBar: React.FC<Props> = ({
         const parts = parse(label, matches);
         return (
           <li {...props}>
-            <div>
+            <Box>
               {parts.map((part, index) => (
                 <span
                   key={index}
@@ -71,7 +71,7 @@ export const SearchBar: React.FC<Props> = ({
                   {part.text}
                 </span>
               ))}
-            </div>
+            </Box>
           </li>
         );
       }}
