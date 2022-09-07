@@ -37,12 +37,13 @@ func LogRoute(
 	for k, v := range r.Header {
 		if _, ok := excludedHeaderFields[k]; !ok {
 			if obfuscateFunction, obfuscate := HeaderObfuscationFunctionMap[k]; obfuscate {
-				headers[k], err = obfuscateFunction(v)
-				if err != nil {
+				result, obfuscateError := obfuscateFunction(v)
+				if obfuscateError != nil {
 					log.Errorf("Unable to obfuscate header for: "+k+"%v", err)
 					// Since this is a logging route, we drop headers we cant obfuscate
 					continue
 				}
+				headers[k] = result
 			} else {
 				headers[k] = v
 			}

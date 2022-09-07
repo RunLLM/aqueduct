@@ -23,6 +23,7 @@ import UserProfile from '../../../utils/auth';
 import {
   AirflowConfig,
   aqueductDemoName,
+  AthenaConfig,
   BigQueryConfig,
   formatService,
   GCSConfig,
@@ -39,6 +40,7 @@ import {
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
+import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -209,6 +211,15 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Athena':
+      serviceDialog = (
+        <AthenaDialog
+          onUpdateField={setConfigField}
+          value={config as AthenaConfig}
+          editMode={editMode}
+        />
+      );
+      break;
     case 'Airflow':
       serviceDialog = (
         <AirflowDialog
@@ -315,6 +326,8 @@ export function isConfigComplete(
   switch (service) {
     case 'S3':
       return isS3ConfigComplete(config as S3Config);
+    case 'Athena':
+      return isAthenaConfigComplete(config as AthenaConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

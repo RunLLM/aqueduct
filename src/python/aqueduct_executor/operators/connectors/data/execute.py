@@ -299,6 +299,17 @@ def setup_connector(
         from aqueduct_executor.operators.connectors.data.gcs import (  # type: ignore
             GCSConnector as OpConnector,
         )
+    elif connector_name == common.Name.ATHENA:
+        try:
+            import awswrangler
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Athena connector. Have you run `aqueduct install athena`?"
+            )
+
+        from aqueduct_executor.operators.connectors.data.athena import (  # type: ignore
+            AthenaConnector as OpConnector,
+        )
     else:
         raise Exception("Unknown connector name: %s" % connector_name)
 

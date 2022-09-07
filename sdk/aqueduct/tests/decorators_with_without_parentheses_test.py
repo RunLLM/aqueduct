@@ -5,11 +5,11 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.decorator import check, metric, op
-from aqueduct.enums import ArtifactType, ExecutionStatus, SerializationType
+from aqueduct.enums import ArtifactType, SerializationType
 from aqueduct.tests.utils import construct_mocked_preview, default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file
 
-from aqueduct import api_client
+from aqueduct import globals
 
 
 def test_decorators_with_without_parentheses():
@@ -88,7 +88,7 @@ def test_decorators_with_without_parentheses():
             name = f"{decorator}_fn_{inp_type.replace(' ', '_')}"
             artifact_name = f"{name} artifact"
 
-            api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(
+            globals.__GLOBAL_API_CLIENT__.preview = MagicMock(
                 side_effect=construct_mocked_preview(
                     artifact_name,
                     expected_artifact_type,

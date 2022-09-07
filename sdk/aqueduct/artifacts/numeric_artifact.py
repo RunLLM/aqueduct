@@ -22,7 +22,7 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
-from aqueduct.error import AqueductError, InvalidArtifactTypeException
+from aqueduct.error import AqueductError
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -32,12 +32,17 @@ from aqueduct.utils import (
     serialize_function,
 )
 
+from aqueduct import globals
+
 
 class NumericArtifact(BaseArtifact):
-    """This class represents a computed metric within the flow's DAG.
+    """This class represents a computed number within the flow's DAG.
 
-    Any `@metric`-annotated python function that returns a float will
-    return this class when that function is called.
+    Any `@metric`-annotated python function that returns a number
+    will return this class when that function is called.
+
+    Any `@op`-annotated python function that returns a number
+    will return this class when that function is called in non-lazy mode.
 
     Examples:
         >>> @metric
@@ -71,8 +76,6 @@ class NumericArtifact(BaseArtifact):
             # If the artifact is initialized from a flow run, then it should not contain any content.
             assert self._get_content() is None
 
-        self._set_type(ArtifactType.NUMERIC)
-
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
 
@@ -93,25 +96,16 @@ class NumericArtifact(BaseArtifact):
         previewed_artifact = artifact_utils.preview_artifact(
             self._dag, self._artifact_id, parameters
         )
-        if previewed_artifact._get_type() != ArtifactType.NUMERIC:
-            raise InvalidArtifactTypeException(
-                "Error: the computed result is expected to of type numeric, found %s"
-                % previewed_artifact._get_type()
-            )
 
+        content = previewed_artifact._get_content()
         assert (
-            isinstance(previewed_artifact._get_content(), int)
-            or isinstance(previewed_artifact._get_content(), float)
-            or isinstance(previewed_artifact._get_content(), np.number)
+            isinstance(content, int) or isinstance(content, float) or isinstance(content, np.number)
         )
 
-        if parameters:
-            return previewed_artifact._get_content()
-        else:
-            # We are materializing an artifact generated from lazy execution.
-            assert self._get_content() is None
-            self._set_content(previewed_artifact._get_content())
-            return self._get_content()
+        if parameters is None and self._get_content() is None:
+            self._set_content(content)
+
+        return content
 
     def list_preset_checks(self) -> List[str]:
         """Returns a list of all preset checks available on the numeric artifact.
@@ -150,6 +144,8 @@ class NumericArtifact(BaseArtifact):
         Returns:
             A bool artifact bound to this metric.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         input_mapping = {
@@ -282,14 +278,7 @@ class NumericArtifact(BaseArtifact):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-            if artifact._get_type() != ArtifactType.BOOL:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (ArtifactType.BOOL, artifact._get_type())
-                )
-
             assert isinstance(artifact, bool_artifact.BoolArtifact)
-
             return artifact
         else:
             # We are in lazy mode.

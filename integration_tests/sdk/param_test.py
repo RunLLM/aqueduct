@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 import pandas as pd
 import pytest
 from aqueduct.enums import ArtifactType, ExecutionStatus
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
 from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
@@ -77,6 +77,10 @@ def test_get_with_custom_parameter(client):
 
     with pytest.raises(InvalidUserArgumentException):
         param_doubled.get(parameters={"non-existant param": 10})
+
+    # Check that changing the type of the parameter will error.
+    with pytest.raises(AqueductError):
+        param_doubled.get(parameters={"number": "NOT A NUMBER"})
 
 
 @op

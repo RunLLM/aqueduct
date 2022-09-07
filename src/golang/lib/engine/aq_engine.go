@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"path"
 	"reflect"
@@ -108,7 +107,7 @@ type WorkflowPreviewResult struct {
 type PreviewArtifactResult struct {
 	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
-	Content           string                            `json:"content"`
+	Content           []byte                            `json:"content"`
 }
 
 func NewAqEngine(
@@ -417,7 +416,7 @@ func (eng *aqEngine) PreviewWorkflow(
 			artifactResults[artf.ID()] = PreviewArtifactResult{
 				SerializationType: artifact_metadata.SerializationType,
 				ArtifactType:      artifact_metadata.ArtifactType,
-				Content:           base64.StdEncoding.EncodeToString(content),
+				Content:           content,
 			}
 		}
 	}
