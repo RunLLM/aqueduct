@@ -16,6 +16,7 @@ type Response struct {
 }
 
 type RawResultResponse struct {
+	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
 	Id          uuid.UUID              `json:"id"`
 	ContentPath string                 `json:"content_path"`
 	ExecState   *shared.ExecutionState `json:"exec_state"`

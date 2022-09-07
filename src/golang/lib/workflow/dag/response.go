@@ -38,6 +38,7 @@ type Response struct {
 }
 
 type RawResultResponse struct {
+	// Contains only the `result`. It mostly mirrors 'workflow_dag_result' schema.
 	Id uuid.UUID `json:"id"`
 
 	// TODO (ENG-1613, ENG-1614):

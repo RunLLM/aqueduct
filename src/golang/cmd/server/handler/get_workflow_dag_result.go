@@ -100,7 +100,7 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getWorkflowDagResultArgs)
 
-	emptyResp := getWorkflowResponse{}
+	emptyResp := dag.ResultResponse{}
 
 	dbWorkflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
 		ctx,

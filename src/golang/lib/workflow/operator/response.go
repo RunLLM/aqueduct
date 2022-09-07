@@ -18,13 +18,13 @@ type Response struct {
 }
 
 type RawResultResponse struct {
+	// Contains only the `result`. It mostly mirrors 'operator_result' schema.
 	Id        uuid.UUID              `json:"id"`
 	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
 	Response
-	// TODO: Rename this to DBOperatorResult
 	Result *RawResultResponse `json:"result"`
 }
 
