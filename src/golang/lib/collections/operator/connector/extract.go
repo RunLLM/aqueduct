@@ -38,6 +38,8 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 	switch e.Service {
 	case integration.Postgres, integration.AqueductDemo:
 		params = &PostgresExtractParams{}
+	case integration.Athena:
+		params = &AthenaExtractParams{}
 	case integration.Snowflake:
 		params = &SnowflakeExtractParams{}
 	case integration.MySql:

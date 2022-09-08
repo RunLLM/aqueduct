@@ -34,6 +34,7 @@ export enum ExecutionStatus {
   Failed = 'failed',
   Pending = 'pending',
   Canceled = 'canceled',
+  Registered = 'registered',
 }
 
 export type ExecState = {

@@ -1,0 +1,162 @@
+package handler
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+// Route: /workflow/{workflowDagId}/result/{workflowDagResultId}
+// Method: GET
+// Params:
+//	`workflowId`: ID for `workflow` object
+// Request:
+//	Headers:
+//		`api-key`: user's API Key
+// Response:
+//	Body:
+//		serialized `dag.ResultResponse`
+
+type getWorkflowDagResultArgs struct {
+	*aq_context.AqContext
+	WorkflowId          uuid.UUID
+	WorkflowDagResultId uuid.UUID
+}
+
+type GetWorkflowDagResultHandler struct {
+	GetHandler
+
+	Database                database.Database
+	ArtifactReader          artifact.Reader
+	ArtifactResultReader    artifact_result.Reader
+	OperatorReader          operator.Reader
+	OperatorResultReader    operator_result.Reader
+	UserReader              user.Reader
+	WorkflowReader          workflow.Reader
+	WorkflowDagReader       workflow_dag.Reader
+	WorkflowDagEdgeReader   workflow_dag_edge.Reader
+	WorkflowDagResultReader workflow_dag_result.Reader
+}
+
+func (*GetWorkflowDagResultHandler) Name() string {
+	return "GetWorkflowDagResult"
+}
+
+func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
+	if err != nil {
+		return nil, statusCode, err
+	}
+
+	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowId, err := uuid.Parse(workflowIdStr)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
+	}
+
+	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
+	}
+
+	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+		r.Context(),
+		workflowId,
+		aqContext.OrganizationId,
+		h.Database,
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
+	}
+	if !ok {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
+	}
+
+	return &getWorkflowDagResultArgs{
+		AqContext:           aqContext,
+		WorkflowId:          workflowId,
+		WorkflowDagResultId: workflowDagResultId,
+	}, http.StatusOK, nil
+}
+
+func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*getWorkflowDagResultArgs)
+
+	emptyResp := dag.ResultResponse{}
+
+	dbWorkflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
+		ctx,
+		args.WorkflowDagResultId,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
+	}
+
+	// Read dag structure
+	constructedDag, err := workflow_utils.ReadWorkflowDagFromDatabase(
+		ctx,
+		dbWorkflowDag.Id,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
+	}
+
+	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
+		ctx,
+		args.WorkflowDagResultId,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
+	}
+
+	operatorResults, err := h.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
+		ctx,
+		[]uuid.UUID{args.WorkflowDagResultId},
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator results.")
+	}
+
+	artifactResults, err := h.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
+		ctx,
+		[]uuid.UUID{args.WorkflowDagResultId},
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact results.")
+	}
+
+	return dag.NewResultResponseFromDbObjects(
+		constructedDag,
+		dbWorkflowDagResult,
+		operatorResults,
+		artifactResults,
+	), http.StatusOK, nil
+}

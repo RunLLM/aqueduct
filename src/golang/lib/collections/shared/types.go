@@ -24,8 +24,12 @@ const (
 	FailedExecutionStatus    ExecutionStatus = "failed"
 	RunningExecutionStatus   ExecutionStatus = "running"
 	PendingExecutionStatus   ExecutionStatus = "pending"
-	UnknownExecutionStatus   ExecutionStatus = "unknown"
 	CanceledExecutionStatus  ExecutionStatus = "canceled"
+	// Registered is a special state that indicates a workflow has been registered
+	// but has no workflow runs yet
+	RegisteredExecutionStatus ExecutionStatus = "registered"
+	UnknownExecutionStatus    ExecutionStatus = "unknown"
+>>>>>>> main
 )
 
 type FailureType int64
@@ -92,5 +96,25 @@ func (n *NullExecutionState) Scan(value interface{}) error {
 	}
 
 	n.ExecutionState, n.IsNull = *logs, false
+	return nil
+}
+
+type NullExecutionStatus struct {
+	ExecutionStatus
+	IsNull bool
+}
+
+func (n *NullExecutionStatus) Scan(value interface{}) error {
+	if value == nil {
+		n.IsNull = true
+		return nil
+	}
+
+	s, ok := value.(string)
+	if !ok {
+		return errors.New("Type assertion to string failed")
+	}
+
+	n.ExecutionStatus, n.IsNull = ExecutionStatus(s), false
 	return nil
 }

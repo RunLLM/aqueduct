@@ -15,6 +15,8 @@ type RelationalDBExtractParams struct {
 
 type PostgresExtractParams struct{ RelationalDBExtractParams }
 
+type AthenaExtractParams struct{ RelationalDBExtractParams }
+
 type SnowflakeExtractParams struct{ RelationalDBExtractParams }
 
 type MySqlExtractParams struct{ RelationalDBExtractParams }

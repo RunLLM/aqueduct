@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -202,4 +204,73 @@ func TestUpdateWorkflow(t *testing.T) {
 	)
 	require.Nil(t, err)
 	requireDeepEqual(t, testWorkflow, *newWorkflow)
+}
+
+func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
+	defer resetDatabase(t)
+
+	// Create 2 test workflows
+	testWorkflows := seedWorkflow(t, 2)
+	testWorkflow1, testWorkflow2 := testWorkflows[0], testWorkflows[1]
+
+	// Create DAG for workflow 1
+	testWorkflow1DAGs := seedWorkflowDagWithWorkflows(t, 1, []uuid.UUID{testWorkflow1.Id})
+	testWorkflow1DAG := testWorkflow1DAGs[0]
+
+	// Create DAG for workflow 2
+	seedWorkflowDagWithWorkflows(t, 1, []uuid.UUID{testWorkflow2.Id})
+
+	// Create DAG result for workflow 1 only
+	testWorkflow1Results := seedWorkflowDagResultWithDags(t, 1, []uuid.UUID{testWorkflow1DAG.Id})
+	testWorkflow1Result := testWorkflow1Results[0]
+
+	latestResults, err := readers.workflowReader.GetWorkflowsWithLatestRunResult(context.Background(), testOrganizationId, db)
+	require.Nil(t, err)
+	require.Len(t, latestResults, 2)
+
+	expectedResults := []workflow.LatestWorkflowResponse{
+		{
+			Id:          testWorkflow1.Id,
+			Name:        testWorkflow1.Name,
+			Description: testWorkflow1.Description,
+			CreatedAt:   testWorkflow1.CreatedAt,
+			LastRunAt: utils.NullTime{
+				Time:   testWorkflow1Result.CreatedAt,
+				IsNull: false,
+			},
+			Status: shared.NullExecutionStatus{
+				ExecutionStatus: testWorkflow1Result.Status,
+				IsNull:          false,
+			},
+		},
+		{
+			Id:          testWorkflow2.Id,
+			Name:        testWorkflow2.Name,
+			Description: testWorkflow2.Description,
+			CreatedAt:   testWorkflow2.CreatedAt,
+			LastRunAt: utils.NullTime{
+				IsNull: true,
+			},
+			Status: shared.NullExecutionStatus{
+				IsNull: true,
+			},
+		},
+	}
+
+	for _, expectedResult := range expectedResults {
+		foundMatch := false
+
+		for _, actualResult := range latestResults {
+			if expectedResult.Id == actualResult.Id {
+				requireDeepEqual(t, expectedResult, actualResult)
+				foundMatch = true
+				break
+			}
+		}
+
+		if !foundMatch {
+			t.Errorf("Unable to find matching result for workflow %v", expectedResult.Id)
+			t.FailNow()
+		}
+	}
 }

@@ -8,7 +8,7 @@ from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidArtifactTypeException, InvalidUserArgumentException
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -20,6 +20,8 @@ from aqueduct.operators import (
 )
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 
+from aqueduct import globals
+
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
 LIST_TABLES_QUERY_MYSQL = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('mysql', 'sys', 'performance_schema');"
@@ -29,6 +31,7 @@ LIST_TABLES_QUERY_SQLSERVER = (
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
@@ -77,6 +80,8 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self._metadata.service == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
+        elif self._metadata.service == ServiceType.ATHENA:
+            list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
         return sql_artifact.get()
@@ -116,6 +121,8 @@ class RelationalDBIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         integration_info = self._metadata
@@ -125,17 +132,8 @@ class RelationalDBIntegration(Integration):
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
         sql_op_name = name
-
-        default_sql_op_prefix = "%s query" % integration_info.name
-        default_sql_op_index = 1
-        while sql_op_name is None:
-            candidate_op_name = default_sql_op_prefix + " %d" % default_sql_op_index
-            colliding_op = self._dag.get_operator(with_name=candidate_op_name)
-            if colliding_op is None:
-                sql_op_name = candidate_op_name  # break out of the loop!
-            default_sql_op_index += 1
-
-        assert sql_op_name is not None
+        if sql_op_name is None:
+            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % integration_info.name)
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -205,14 +203,7 @@ class RelationalDBIntegration(Integration):
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
             artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
-            if artifact._get_type() != ArtifactType.TABLE:
-                raise InvalidArtifactTypeException(
-                    "The computed artifact is expected to be type %s, but has type %s"
-                    % (ArtifactType.TABLE, artifact._get_type())
-                )
-
             assert isinstance(artifact, TableArtifact)
-
             return artifact
         else:
             # We are in lazy mode.
@@ -231,6 +222,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        if self._metadata.service == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation is not supported for integration type %s."
+                % self._metadata.service.value
+            )
+
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),

@@ -24,7 +24,6 @@ func (w *standardWriterImpl) CreateOperatorResult(
 ) (*OperatorResult, error) {
 	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
-
 	args := []interface{}{workflowDagResultId, operatorId, shared.PendingExecutionStatus}
 
 	var operatorResult OperatorResult

@@ -11,19 +11,18 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.param_artifact import ParamArtifact
-from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
+from aqueduct.config import FlowConfig
 
-from aqueduct import api_client, dag
+from aqueduct import dag, globals
 
 from .dag import (
-    DAG,
     AddOrReplaceOperatorDelta,
     Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import ArtifactType, ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
+from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -41,7 +40,7 @@ from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
-from .responses import Error, SavedObjectDelete, SavedObjectUpdate
+from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     generate_engine_config,
@@ -52,6 +51,14 @@ from .utils import (
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
+
+
+def global_config(config_dict: Dict[str, Any]) -> None:
+    if globals.GLOBAL_LAZY_KEY in config_dict:
+        lazy_val = config_dict[globals.GLOBAL_LAZY_KEY]
+        if not isinstance(lazy_val, bool):
+            raise InvalidUserArgumentException("Must supply a boolean for the lazy key.")
+        globals.__GLOBAL_CONFIG__.lazy = lazy_val
 
 
 def get_apikey() -> str:
@@ -114,10 +121,10 @@ class Client:
         if api_key == "":
             api_key = get_apikey()
 
-        api_client.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
+        globals.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
             str, IntegrationInfo
-        ] = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        ] = globals.__GLOBAL_API_CLIENT__.list_integrations()
         self._dag = dag.__GLOBAL_DAG__
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
@@ -214,7 +221,7 @@ class Client:
         Returns:
             A dictionary mapping from integration name to additional info.
         """
-        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
         return self._connected_integrations
 
     def integration(
@@ -242,7 +249,7 @@ class Client:
                 provided integration or the provided integration is of an
                 incompatible type.
         """
-        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
 
         if name not in self._connected_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
@@ -292,7 +299,7 @@ class Client:
         """
         return [
             workflow_resp.to_readable_dict()
-            for workflow_resp in api_client.__GLOBAL_API_CLIENT__.list_workflows()
+            for workflow_resp in globals.__GLOBAL_API_CLIENT__.list_workflows()
         ]
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
@@ -310,7 +317,7 @@ class Client:
 
         if all(
             uuid.UUID(flow_id) != workflow.id
-            for workflow in api_client.__GLOBAL_API_CLIENT__.list_workflows()
+            for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows()
         ):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
@@ -394,7 +401,7 @@ class Client:
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
-            resp = api_client.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
 
             file = "{}_airflow.py".format(name)
@@ -407,10 +414,10 @@ class Client:
                 )
             )
         else:
-            flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
-            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
+            globals.__GLOBAL_API_CLIENT__.construct_base_url(),
             str(flow_id),
         )
         print("Url: ", url)
@@ -465,7 +472,7 @@ class Client:
             )
 
         flow_id = parse_user_supplied_id(flow_id)
-        api_client.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(
         self,
@@ -498,7 +505,7 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        resp = api_client.__GLOBAL_API_CLIENT__.delete_workflow(
+        resp = globals.__GLOBAL_API_CLIENT__.delete_workflow(
             flow_id, saved_objects_to_delete, force
         )
 
@@ -521,9 +528,9 @@ class Client:
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
         print("============================= Aqueduct Client =============================")
-        print("Connected endpoint: %s" % api_client.__GLOBAL_API_CLIENT__.aqueduct_address)
+        print("Connected endpoint: %s" % globals.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
-        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)

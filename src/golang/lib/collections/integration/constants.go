@@ -58,6 +58,7 @@ const (
 	Airflow      Service = "Airflow"
 	Kubernetes   Service = "Kubernetes"
 	GCS          Service = "GCS"
+	Athena       Service = "Athena"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
@@ -66,7 +67,7 @@ const (
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
 	switch svc {
-	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS:
+	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)
@@ -84,6 +85,7 @@ func GetRelationalDatabaseIntegrations() map[Service]bool {
 		BigQuery:     true,
 		AqueductDemo: true,
 		Sqlite:       true,
+		Athena:       true,
 	}
 }
 

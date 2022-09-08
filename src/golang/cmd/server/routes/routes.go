@@ -39,6 +39,7 @@ const (
 	DeleteWorkflowRoute          = "/api/workflow/{workflowId}/delete"
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
 	RefreshWorkflowRoute         = "/api/workflow/{workflowId}/refresh"
+	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
 	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
 	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
 )
