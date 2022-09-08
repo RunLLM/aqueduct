@@ -7,12 +7,17 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -39,9 +44,15 @@ type RefreshWorkflowArgs struct {
 type RefreshWorkflowHandler struct {
 	PostHandler
 
-	Database       database.Database
-	WorkflowReader workflow.Reader
-	Engine         engine.Engine
+	Database database.Database
+	Engine   engine.Engine
+	Vault    vault.Vault
+
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	OperatorReader        operator.Reader
+	ArtifactReader        artifact.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -97,10 +108,10 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		ctx,
 		args.WorkflowId,
 		h.WorkflowReader,
-		nil,
-		nil,
-		nil,
-		nil,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
 		h.Database,
 	)
 	if err != nil {
@@ -109,7 +120,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	if dag.EngineConfig.Type == shared.AirflowEngineType {
 		// This is an Airflow workflow
-		if err := airflow.TriggerWorkflow(ctx, dag); err != nil {
+		if err := airflow.TriggerWorkflow(ctx, dag, h.Vault); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow on Airflow.")
 		}
 		return emptyResp, http.StatusOK, nil

@@ -23,7 +23,6 @@ func TriggerWorkflow(
 		return err
 	}
 
-	// Create Airflow API client
 	cli, err := newClient(ctx, authConf)
 	if err != nil {
 		return err
