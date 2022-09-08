@@ -3,6 +3,7 @@ package operator_result
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -20,11 +21,19 @@ func (w *standardWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
+	now time.Time,
 	db database.Database,
 ) (*OperatorResult, error) {
-	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn}
+	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn, ExecStateColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
-	args := []interface{}{workflowDagResultId, operatorId, shared.PendingExecutionStatus}
+	execState := shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &now,
+		},
+	}
+
+	args := []interface{}{workflowDagResultId, operatorId, shared.PendingExecutionStatus, &execState}
 
 	var operatorResult OperatorResult
 	err := db.Query(ctx, &operatorResult, insertOperatorStmt, args...)

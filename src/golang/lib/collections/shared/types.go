@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -49,13 +50,21 @@ type Error struct {
 	Tip     string `json:"tip"`
 }
 
+type ExecutionTimestamps struct {
+	PendingAt   *time.Time `json:"pending_at"`
+	RunningAt   *time.Time `json:"running_at"`
+	FailedAt    *time.Time `json:"failed_at"`
+	SucceededAt *time.Time `json:"succeeded_at"`
+}
+
 type ExecutionState struct {
 	UserLogs *Logs           `json:"user_logs"`
 	Status   ExecutionStatus `json:"status"`
 
 	// These fields are only set if status == Failed.
-	FailureType *FailureType `json:"failure_type"`
-	Error       *Error       `json:"error"`
+	FailureType *FailureType         `json:"failure_type"`
+	Error       *Error               `json:"error"`
+	Timestamps  *ExecutionTimestamps `json:"timestamps"`
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {

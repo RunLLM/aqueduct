@@ -2,6 +2,7 @@ package operator_result
 
 import (
 	"context"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -40,6 +41,7 @@ type Writer interface {
 		ctx context.Context,
 		workflowDagResultId uuid.UUID,
 		operatorId uuid.UUID,
+		now time.Time,
 		db database.Database,
 	) (*OperatorResult, error)
 	InsertOperatorResult(

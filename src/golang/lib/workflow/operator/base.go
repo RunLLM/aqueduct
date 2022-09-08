@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
@@ -45,6 +46,7 @@ type baseOperator struct {
 	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
 	execMode         ExecutionMode
+	timestamps       shared.ExecutionTimestamps
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -200,16 +202,23 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 		return errors.New("Operator's result writer cannot be nil.")
 	}
 
+	now := time.Now()
 	operatorResult, err := bo.resultWriter.CreateOperatorResult(
 		ctx,
 		dagResultID,
 		bo.ID(),
+		now,
 		bo.db,
 	)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create operator result record.")
 	}
+
 	bo.resultID = operatorResult.Id
+	bo.timestamps = shared.ExecutionTimestamps{
+		PendingAt: &now,
+	}
+
 	return nil
 }
 
