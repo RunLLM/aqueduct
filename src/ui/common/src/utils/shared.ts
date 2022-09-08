@@ -33,6 +33,7 @@ export enum ExecutionStatus {
   Succeeded = 'succeeded',
   Failed = 'failed',
   Pending = 'pending',
+  Canceled = 'canceled',
   Registered = 'registered',
 }
 

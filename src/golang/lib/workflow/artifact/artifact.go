@@ -33,6 +33,10 @@ type Artifact interface {
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
 
+	// Cancel sets the state of this artifact result to reflect the fact that it
+	// was never created.
+	Cancel(ctx context.Context)
+
 	// Computed indicates whether this artifact has been computed or not.
 	// An artifact is only considered "computed" if its results have been written to storage.
 	// This is *NOT* the same as having the operator's execution state == SUCCEEDED. For example,
@@ -148,7 +152,7 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 		a.db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to create operator result record.")
+		return errors.Wrap(err, "Failed to create artifact result record.")
 	}
 
 	a.resultID = artifactResult.Id
@@ -159,9 +163,18 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	ctx context.Context,
 	execState *shared.ExecutionState,
 ) {
+	// The execution status we receive as the input to this function is the
+	// execution status of the operator that was supposed to create this
+	// artifact. If that operator failed, we mark this artifact as canceled
+	// instead of failed because it was never generated.
+	artifactExecState := *execState
+	if execState.Status == shared.FailedExecutionStatus {
+		artifactExecState.Status = shared.CanceledExecutionStatus
+	}
+
 	changes := map[string]interface{}{
-		artifact_result.StatusColumn:    execState.Status,
-		artifact_result.ExecStateColumn: execState,
+		artifact_result.StatusColumn:    artifactExecState.Status,
+		artifact_result.ExecStateColumn: &artifactExecState,
 		artifact_result.MetadataColumn:  nil,
 	}
 
@@ -265,6 +278,20 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 		if err != nil {
 			log.Errorf("Error when updating the result of artifact %s: %v", a.ID(), err)
 		}
+	}
+}
+
+func (a *ArtifactImpl) Cancel(ctx context.Context) {
+	changes := map[string]interface{}{
+		artifact_result.StatusColumn: shared.CanceledExecutionStatus,
+		artifact_result.ExecStateColumn: &shared.ExecutionState{
+			Status: shared.CanceledExecutionStatus,
+		},
+	}
+
+	_, err := a.resultWriter.UpdateArtifactResult(ctx, a.resultID, changes, a.db)
+	if err != nil {
+		log.Errorf("Unable to set artifact result status to canceled: %v", err)
 	}
 }
 

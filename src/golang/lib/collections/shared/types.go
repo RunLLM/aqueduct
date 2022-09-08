@@ -24,6 +24,7 @@ const (
 	FailedExecutionStatus    ExecutionStatus = "failed"
 	RunningExecutionStatus   ExecutionStatus = "running"
 	PendingExecutionStatus   ExecutionStatus = "pending"
+	CanceledExecutionStatus  ExecutionStatus = "canceled"
 	// Registered is a special state that indicates a workflow has been registered
 	// but has no workflow runs yet
 	RegisteredExecutionStatus ExecutionStatus = "registered"
