@@ -11,11 +11,11 @@ export type OperatorResponse = {
   outputs: string[];
 };
 
-export type OperatorRawResultResponse = {
+export type OperatorResultStatusResponse = {
   id: string;
   exec_state?: ExecState;
 };
 
 export type OperatorResultResponse = OperatorResponse & {
-  result?: OperatorRawResultResponse;
+  result?: OperatorResultStatusResponse;
 };

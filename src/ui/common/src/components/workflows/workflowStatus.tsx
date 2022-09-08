@@ -18,6 +18,8 @@ export const Status: React.FC<Props> = ({ status }) => {
     statusIcons.push(<Chip label="Failed" color="error" size="small" />);
   } else if (runStatus === ExecutionStatus.Pending) {
     statusIcons.push(<Chip label="In Progress" color="default" size="small" />);
+  } else if (runStatus === ExecutionStatus.Registered) {
+    statusIcons.push(<Chip label="Pending" color="info" size="small" />);
   }
 
   return (

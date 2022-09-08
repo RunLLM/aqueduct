@@ -11,12 +11,12 @@ export type ArtifactResponse = {
   to: string[];
 };
 
-export type ArtifactRawResultResponse = {
+export type ArtifactResultStatusResponse = {
   id: string;
   content_path: string;
   exec_state?: ExecState;
 };
 
 export type ArtifactResultResponse = ArtifactResponse & {
-  result?: ArtifactRawResultResponse;
+  result?: ArtifactResultStatusResponse;
 };
