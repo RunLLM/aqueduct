@@ -135,8 +135,9 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 			if !dbWorkflow.Status.IsNull {
 				response.Status = dbWorkflow.Status.ExecutionStatus
 			} else {
-				// There are no workflow runs yet for this workflow
-				response.Status = shared.PendingExecutionStatus
+				// There are no workflow runs yet for this workflow, so we simply return
+				// that the workflow has been registered
+				response.Status = shared.RegisteredExecutionStatus
 			}
 
 			workflows = append(workflows, response)
