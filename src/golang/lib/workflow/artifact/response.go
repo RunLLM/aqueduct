@@ -13,6 +13,12 @@ type Response struct {
 	Description string        `json:"description"`
 	Type        artifact.Type `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
+
+	// upstream operator ID, must be unique.
+	From uuid.UUID `json:"from"`
+
+	// downstream operator IDs, could be multiple or empty.
+	To []uuid.UUID `json:"to"`
 }
 
 type RawResultResponse struct {
@@ -28,30 +34,34 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	DbArtifact *artifact.DBArtifact,
-	DbArtifactResult *artifact_result.ArtifactResult,
+	dbArtifact *artifact.DBArtifact,
+	dbArtifactResult *artifact_result.ArtifactResult,
+	from uuid.UUID,
+	to []uuid.UUID,
 ) *ResultResponse {
 	metadata := Response{
-		Id:          DbArtifact.Id,
-		Name:        DbArtifact.Name,
-		Description: DbArtifact.Description,
-		Type:        DbArtifact.Type,
+		Id:          dbArtifact.Id,
+		Name:        dbArtifact.Name,
+		Description: dbArtifact.Description,
+		Type:        dbArtifact.Type,
+		From:        from,
+		To:          to,
 	}
 
-	if DbArtifactResult == nil {
+	if dbArtifactResult == nil {
 		return &ResultResponse{Response: metadata}
 	}
 
 	var execState *shared.ExecutionState = nil
-	if !DbArtifactResult.ExecState.IsNull {
-		execState = &DbArtifactResult.ExecState.ExecutionState
+	if !dbArtifactResult.ExecState.IsNull {
+		execState = &dbArtifactResult.ExecState.ExecutionState
 	}
 
 	return &ResultResponse{
 		Response: metadata,
 		Result: &RawResultResponse{
-			Id:          DbArtifactResult.Id,
-			ContentPath: DbArtifactResult.ContentPath,
+			Id:          dbArtifactResult.Id,
+			ContentPath: dbArtifactResult.ContentPath,
 			ExecState:   execState,
 		},
 	}
