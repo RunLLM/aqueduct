@@ -82,7 +82,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	emptyResp := ListWorkflowObjectsResponse{}
 
-	// Get all specs  for the workflow.
+	// Get all specs for the workflow.
 	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
