@@ -8,7 +8,7 @@ import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
-from aqueduct.error import ArtifactNeverComputedException, UnsupportedUserActionException
+from aqueduct.error import ArtifactNeverComputedException
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
 
@@ -68,7 +68,7 @@ class BoolArtifact(BaseArtifact):
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
             elif parameters is not None:
-                raise UnsupportedUserActionException(
+                raise NotImplementedError(
                     "Parameterizing historical artifacts is not currently supported."
                 )
 

@@ -27,7 +27,6 @@ from aqueduct.enums import (
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
-    UnsupportedUserActionException,
 )
 from aqueduct.operators import (
     CheckSpec,
@@ -122,7 +121,7 @@ class TableArtifact(BaseArtifact):
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
             elif parameters is not None:
-                raise UnsupportedUserActionException(
+                raise NotImplementedError(
                     "Parameterizing historical artifacts is not currently supported."
                 )
 

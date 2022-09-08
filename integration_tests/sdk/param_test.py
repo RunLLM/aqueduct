@@ -4,7 +4,8 @@ from typing import Any, Dict, List
 import pandas as pd
 import pytest
 from aqueduct.enums import ArtifactType, ExecutionStatus
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.error import AqueductError, InvalidUserArgumentException, UnsupportedUserActionException, \
+    ArtifactNeverComputedException
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
 from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
@@ -205,9 +206,12 @@ def test_trigger_flow_with_different_sql_param(client):
     sql_artifact = db.sql(query="select * from {{ table_name}}")
 
     flow_name = generate_new_flow_name()
-    flow = run_flow_test(client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False)
 
+    flow_id = None
     try:
+        flow = run_flow_test(client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False)
+        flow_id = flow.id()
+
         client.trigger(flow.id(), parameters={"table_name": "customer_activity"})
         wait_for_flow_runs(
             client,
@@ -227,4 +231,47 @@ def test_trigger_flow_with_different_sql_param(client):
         param_artifact = latest_run.artifact(name="table_name")
         assert param_artifact.get() == "customer_activity"
     finally:
-        client.delete_flow(flow.id())
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_parameterizing_published_artifact(client):
+    @op
+    def generate_num():
+        return 1234
+
+    output = generate_num()
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="generate_num artifact")
+
+        assert artifact.get() == 1234
+        with pytest.raises(NotImplementedError):
+            artifact.get(parameters={"name": "val"})
+
+    finally:
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_materializing_failed_artifact(client):
+    @op
+    def fail_fn():
+        5/0
+
+    output = fail_fn.lazy()
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], expect_success=False, delete_flow_after=False)
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="fail_fn artifact")
+        with pytest.raises(ArtifactNeverComputedException):
+            artifact.get()
+
+    finally:
+        client.delete_flow(flow_id)
