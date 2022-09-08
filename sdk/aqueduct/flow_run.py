@@ -122,8 +122,8 @@ class FlowRun:
             return param_artifact.ParamArtifact(
                 self._dag,
                 artifact_from_dag.id,
-                from_flow_run=True,
                 content=content,
+                from_flow_run=True,
             )
         else:
             return generic_artifact.GenericArtifact(

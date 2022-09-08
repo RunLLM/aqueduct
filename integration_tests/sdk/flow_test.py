@@ -288,12 +288,11 @@ def test_fetching_historical_flows_uses_old_data(client):
         flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
         flows_to_delete.append(flow.id())
 
-        # Now, change the data that the new flow relies on (using the old flow).
+        # Now, change the data that the new flow relies on, by populating data the same way as the setup flow.
         @op
         def generate_new_table():
             return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
 
-        # TODO: refactor this.
         table = generate_new_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
         run_flow_test(
