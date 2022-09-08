@@ -131,6 +131,10 @@ export type AirflowConfig = {
   s3_credentials_profile: string;
 };
 
+export type SQLiteConfig = {
+  database: string;
+};
+
 export type KubernetesConfig = {
   kubeconfig_path: string;
   cluster_name: string;
@@ -166,7 +170,8 @@ export type Service =
   | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
-  | 'Kubernetes';
+  | 'Kubernetes'
+  | 'SQLite';
 
 type Info = {
   logo: string;

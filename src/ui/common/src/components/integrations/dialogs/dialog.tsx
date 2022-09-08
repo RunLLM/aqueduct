@@ -36,6 +36,7 @@ import {
   S3Config,
   Service,
   SnowflakeConfig,
+  SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
@@ -51,6 +52,7 @@ import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
+import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
   user: UserProfile;
@@ -234,6 +236,15 @@ const IntegrationDialog: React.FC<Props> = ({
         <KubernetesDialog
           onUpdateField={setConfigField}
           value={config as KubernetesConfig}
+        />
+      );
+      break;
+    case 'SQLite':
+      serviceDialog = (
+        <SQLiteDialog
+          onUpdateField={setConfigField}
+          value={config as SQLiteConfig}
+          editMode={editMode}
         />
       );
       break;
