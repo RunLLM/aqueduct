@@ -173,12 +173,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Alert>
         )}
 
-        {
-          selectedIntegration.name === 'aqueduct_demo' &&
-            <Typography variant="body1" sx={{ my: 1 }}>
-              You can see the documentation for the Aqueduct Demo database <Link href="https://docs.aqueducthq.com/integrations/aqueduct-demo-integration">here</Link>.
-            </Typography>
-        }
+        {selectedIntegration.name === 'aqueduct_demo' && (
+          <Typography variant="body1" sx={{ my: 1 }}>
+            You can see the documentation for the Aqueduct Demo database{' '}
+            <Link href="https://docs.aqueducthq.com/integrations/aqueduct-demo-integration">
+              here
+            </Link>
+            .
+          </Typography>
+        )}
 
         <IntegrationObjectList user={user} integration={selectedIntegration} />
 
