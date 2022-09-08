@@ -7,6 +7,8 @@ export type ArtifactResponse = {
   name: string;
   description: string;
   type: ArtifactType;
+  from: string;
+  to: string[];
 };
 
 export type ArtifactResultStatusResponse = {
