@@ -50,7 +50,10 @@ const AddIntegrations: React.FC<Props> = ({
 
             const iconWrapper = (
               <Box
-                onClick={() => setShowDialog(integration.activated)}
+                onClick={() => {
+                  console.log(integration);
+                  setShowDialog(integration.activated);
+                }}
                 sx={{
                   width: '160px',
                   height: '128px',
