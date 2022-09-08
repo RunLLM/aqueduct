@@ -124,9 +124,10 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       }}
     >
       {listItems.map((listItem, index) => {
+        const key = listItem.nodeId.length > 0 ? listItem.nodeId : index;
         return (
           <Box
-            key={index}
+            key={key}
             sx={{
               display: 'flex',
               flexDirection: 'row',
@@ -156,7 +157,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
                 }}
                 onClick={() => {
-                  if (listItem.nodeId && listItem.type) {
+                  if (listItem.nodeId.length > 0 && listItem.type.length > 0) {
                     switchSideSheet(listItem.nodeId, listItem.type);
                   }
                 }}
@@ -445,9 +446,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;

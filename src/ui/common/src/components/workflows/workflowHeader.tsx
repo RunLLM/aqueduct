@@ -10,6 +10,8 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { handleLoadIntegrations } from '../../reducers/integrations';
+import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
@@ -21,14 +23,20 @@ import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../../stores/store';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   user: UserProfile;
   workflowDag: WorkflowDag;
+  workflowId: string;
 };
 
-const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
+const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
+  const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
+  const navigate = useNavigate();
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -43,8 +51,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleSuccessToastClose = () => {
+  const handleSuccessToastClose = async () => {
     setShowSuccessToast(false);
+    await dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+    await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(selectResultIdx(0));
+    navigate(`/workflow/${workflowId}`, { replace: true });
   };
 
   const handleErrorToastClose = () => {
@@ -57,7 +69,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -239,7 +251,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showSuccessToast}
         onClose={handleSuccessToastClose}
         key={'workflowheader-success-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleSuccessToastClose}
@@ -254,7 +266,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showErrorToast}
         onClose={handleErrorToastClose}
         key={'workflowheader-error-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleErrorToastClose}
