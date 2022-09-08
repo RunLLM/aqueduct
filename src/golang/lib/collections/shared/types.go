@@ -29,7 +29,6 @@ const (
 	// but has no workflow runs yet
 	RegisteredExecutionStatus ExecutionStatus = "registered"
 	UnknownExecutionStatus    ExecutionStatus = "unknown"
->>>>>>> main
 )
 
 type FailureType int64
