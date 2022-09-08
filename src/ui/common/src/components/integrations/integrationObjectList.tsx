@@ -1,10 +1,10 @@
-import { faRefresh } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
-  Autocomplete,
+  CircularProgress,
   Link,
-  TextField,
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -12,11 +12,11 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-  handleListIntegrationObjects,
   handleLoadIntegrationObject,
   objectKeyFn,
 } from '../../reducers/integration';
 import { AppDispatch, RootState } from '../../stores/store';
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { Integration } from '../../utils/integrations';
 import { isLoading } from '../../utils/shared';
@@ -28,6 +28,8 @@ type Props = {
   onUploadCsv?: () => void;
 };
 
+const DefaultTableListLimit = 5;
+
 const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
   const listObjectNamesState = useSelector(
     (state: RootState) => state.integrationReducer.objectNames
@@ -35,11 +37,12 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
   const objectsState = useSelector(
     (state: RootState) => state.integrationReducer.objects
   );
+
+  const [limitTableList, setLimitTableList] = useState(true);
+
   const dispatch: AppDispatch = useDispatch();
   const [selectedObject, setSelectedObject] = useState<string>('');
-  const objectKey = objectKeyFn(selectedObject);
-  const objectState = objectsState[objectKey];
-  const hasObject = !!selectedObject && !!objectState;
+  const [openPanel, setOpenPanel] = useState<number>(-1);
 
   useEffect(() => {
     dispatch(
@@ -74,75 +77,87 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
     );
   }
 
+  const handleChange = (idx: number) => {
+    if (openPanel === idx) {
+      // Close the panel we previously opened.
+      setOpenPanel(-1);
+      setSelectedObject('');
+    } else {
+      // Open a new panel.
+      setOpenPanel(idx);
+      setSelectedObject(listObjectNamesState.names[idx]);
+    }
+  };
+
+  const tablesList = [];
+  const tableListLimit: number =
+    limitTableList && DefaultTableListLimit < listObjectNamesState.names.length
+      ? DefaultTableListLimit
+      : listObjectNamesState.names.length;
+  for (let i = 0; i < tableListLimit; i++) {
+    const element = (
+      <Accordion
+        expanded={openPanel === i}
+        sx={{ width: '100%' }}
+        key={i}
+        onChange={() => handleChange(i)}
+      >
+        <AccordionSummary sx={{ backgroundColor: theme.palette.gray[50] }}>
+          {' '}
+          {listObjectNamesState.names[i]}{' '}
+        </AccordionSummary>
+        <AccordionDetails>
+          <IntegrationObjectPreview
+            objectName={selectedObject}
+            object={objectsState[objectKeyFn(selectedObject)]}
+          />
+        </AccordionDetails>
+      </Accordion>
+    );
+    tablesList.push(element);
+  }
+
+  const tablesDisplay: React.ReactNode = (
+    <Box width="900px">
+      {tablesList}
+
+      {listObjectNamesState.names.length > DefaultTableListLimit && (
+        <Typography
+          variant="body2"
+          sx={{
+            textDecoration: 'underline',
+            color: theme.palette.blue[400],
+            cursor: 'pointer',
+            mt: 1,
+          }}
+          onClick={() => setLimitTableList(!limitTableList)}
+        >
+          See {limitTableList ? 'more' : 'fewer'} tables...
+        </Typography>
+      )}
+    </Box>
+  );
+
   const listObjectNamesLoading = isLoading(listObjectNamesState.status);
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom component="div">
-        Preview
+      <Typography variant="h5" gutterBottom component="div">
+        Data
       </Typography>
+
+      <Typography variant="body2" sx={{ mb: 1 }}>
+        These are the tables stored in {integration.name}. You can click into
+        any of the tables below to see a preview of the data.
+      </Typography>
+
       <Box
         display="flex"
         flexDirection="row"
         alignContent="center"
         alignItems="center"
       >
-        <Autocomplete
-          disablePortal
-          value={selectedObject}
-          sx={{
-            verticalAlign: 'middle',
-            display: 'inline-block',
-            width: '35ch',
-          }}
-          onChange={(_, val: string) => setSelectedObject(val)}
-          options={listObjectNamesState.names}
-          loading={listObjectNamesLoading}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Base Table"
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <React.Fragment>
-                    {params.InputProps.endAdornment}
-                  </React.Fragment>
-                ),
-              }}
-            />
-          )}
-        />
-        <FontAwesomeIcon
-          className={listObjectNamesLoading ? 'fa-spin' : ''}
-          style={{
-            marginLeft: '15px',
-            fontSize: '2em',
-            verticalAlign: 'middle',
-            display: 'inline-block',
-            color: listObjectNamesLoading ? 'grey' : 'black',
-            cursor: listObjectNamesLoading ? 'default' : 'pointer',
-          }}
-          icon={faRefresh}
-          onClick={() => {
-            if (!listObjectNamesLoading) {
-              dispatch(
-                handleListIntegrationObjects({
-                  apiKey: user.apiKey,
-                  integrationId: integration.id,
-                  forceLoad: true,
-                })
-              );
-            }
-          }}
-        />
+        {listObjectNamesLoading ? <CircularProgress /> : <>{tablesDisplay}</>}
       </Box>
-
-      {hasObject && (
-        <IntegrationObjectPreview
-          objectName={selectedObject}
-          object={objectState}
-        />
-      )}
     </Box>
   );
 };

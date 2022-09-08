@@ -171,7 +171,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         )}
         <IntegrationObjectList user={user} integration={selectedIntegration} />
         <Typography
-          variant="h4"
+          variant="h5"
           gutterBottom
           component="div"
           sx={{ marginY: 4, mt: 4 }}
@@ -180,6 +180,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         </Typography>
         <OperatorsOnIntegration />
       </Box>
+
       {showAddTableDialog && (
         <AddTableDialog
           user={user}
@@ -200,6 +201,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           }}
         />
       )}
+
       {showEditDialog && (
         <IntegrationDialog
           user={user}
@@ -212,6 +214,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           integrationToEdit={selectedIntegration}
         />
       )}
+
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showTestConnectToast}
@@ -227,6 +230,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           {`Attempting to connect to ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
+
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showConnectSuccessToast}
@@ -242,6 +246,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           {`Successfully connected to ${selectedIntegration.name}`}
         </Alert>
       </Snackbar>
+
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showEditSuccessToast}
