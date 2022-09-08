@@ -83,7 +83,8 @@ def wrap_spec(
     for artifact in input_artifacts:
         if artifact._from_flow_run:
             raise InvalidUserActionException(
-                "Artifact fetched from flow run cannot be reused for computation."
+                "Artifact %s fetched from flow run cannot be reused for computation."
+                % artifact.name
             )
 
     dag = dag_module.__GLOBAL_DAG__
