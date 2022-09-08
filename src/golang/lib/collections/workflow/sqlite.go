@@ -58,6 +58,12 @@ func (r *sqliteReaderImpl) GetWorkflowsWithLatestRunResult(
 	// for all workflows whose `organization_id` is `organizationId` ordered by when the workflow was created.
 	// Get the last run DAG by getting the max created_at timestamp for all workflow DAGs associated with each
 	// workflow in the organization.
+
+	// We want to return 1 row for each workflow, so we use a LEFT JOIN between the workflow_dag
+	// and workflow_dag_result tables. A LEFT JOIN outputs all rows in the left table even if there
+	// is no match with a row in the right table. If there is no match, the columns of the right table
+	// are NULL.
+	// This means that `last_run_at` and `status` in the query output can be NULL.
 	query := `
 		WITH workflow_results AS
 		(
