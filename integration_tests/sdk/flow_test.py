@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import IncompleteFlowException
 from constants import SENTIMENT_SQL_QUERY

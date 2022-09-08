@@ -24,7 +24,11 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import AqueductError, ArtifactNeverComputedException, UnsupportedUserActionException
+from aqueduct.error import (
+    AqueductError,
+    ArtifactNeverComputedException,
+    UnsupportedUserActionException,
+)
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,
@@ -83,8 +87,8 @@ class TableArtifact(BaseArtifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        from_flow_run: bool = False,
         content: Optional[pd.DataFrame] = None,
+        from_flow_run: bool = False,
     ):
         self._dag = dag
         self._artifact_id = artifact_id

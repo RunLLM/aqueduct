@@ -90,7 +90,9 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
 
-        content = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(self.id(), artifact_from_dag.id)
+        content = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+            self._id, str(artifact_from_dag.id)
+        )
 
         if not isinstance(artifact_from_dag.type, ArtifactType):
             raise InternalAqueductError("The artifact's type can not be recognized.")
@@ -99,22 +101,22 @@ class FlowRun:
             return table_artifact.TableArtifact(
                 self._dag,
                 artifact_from_dag.id,
-                from_flow_run=True,
                 content=content,
+                from_flow_run=True,
             )
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return numeric_artifact.NumericArtifact(
                 self._dag,
                 artifact_from_dag.id,
-                from_flow_run=True,
                 content=content,
+                from_flow_run=True,
             )
         elif artifact_from_dag.type is ArtifactType.BOOL:
             return bool_artifact.BoolArtifact(
                 self._dag,
                 artifact_from_dag.id,
-                from_flow_run=True,
                 content=content,
+                from_flow_run=True,
             )
         elif artifact_from_dag.type is ArtifactType.PARAM:
             return param_artifact.ParamArtifact(
@@ -127,6 +129,7 @@ class FlowRun:
             return generic_artifact.GenericArtifact(
                 self._dag,
                 artifact_from_dag.id,
-                from_flow_run=True,
+                artifact_from_dag.type,
                 content=content,
+                from_flow_run=True,
             )

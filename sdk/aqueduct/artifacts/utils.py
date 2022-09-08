@@ -74,7 +74,11 @@ def preview_artifact(
         _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
     if target_artifact_type == ArtifactType.TABLE:
-        return table_artifact.TableArtifact(dag, target_artifact_id, target_artifact_content)
+        return table_artifact.TableArtifact(
+            dag,
+            target_artifact_id,
+            target_artifact_content,
+        )
     elif target_artifact_type == ArtifactType.NUMERIC:
         return numeric_artifact.NumericArtifact(dag, target_artifact_id, target_artifact_content)
     elif target_artifact_type == ArtifactType.BOOL:

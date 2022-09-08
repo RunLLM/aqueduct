@@ -104,16 +104,6 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-def _check_param_vals(dag, expected_vals: List[Any]):
-    """Check that all parameter artifacts have a one-to-one correspondence with `expected_vals`."""
-    artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
-    for artifact in artifacts:
-        op = dag.must_get_operator(with_output_artifact_id=artifact.id)
-        param_val = json.loads(op.spec.param.val)
-        assert param_val in expected_vals
-        expected_vals.remove(param_val)
-
-
 @pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
@@ -122,7 +112,7 @@ def test_edit_param_for_flow(client):
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
 
-    flow_name = "Edit Parameter Test Flow"
+    flow_name = generate_new_flow_name()
     flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
     flow_id = flow.id()
 
@@ -141,8 +131,14 @@ def test_edit_param_for_flow(client):
         # Verify that the parameters were edited as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [row_to_add])
-        _check_param_vals(flow.latest()._dag, [new_row_to_add])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="new row")
+        assert param_artifact.get() == row_to_add
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="new row")
+        assert param_artifact.get() == new_row_to_add
 
     finally:
         client.delete_flow(flow.id())
@@ -184,8 +180,19 @@ def test_trigger_flow_with_different_param(client):
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [5, 5])
-        _check_param_vals(flow.latest()._dag, [5, 10])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        num1_artifact = historical_run.artifact(name="num1")
+        num2_artifact = historical_run.artifact(name="num2")
+        assert num1_artifact.get() == 5
+        assert num2_artifact.get() == 5
+
+        latest_run = flow.latest()
+        num1_artifact = latest_run.artifact(name="num1")
+        num2_artifact = latest_run.artifact(name="num2")
+        assert num1_artifact.get() == 10
+        assert num2_artifact.get() == 5
+
     finally:
         client.delete_flow(flow.id())
 
@@ -211,7 +218,13 @@ def test_trigger_flow_with_different_sql_param(client):
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, expected_vals=["hotel_reviews"])
-        _check_param_vals(flow.latest()._dag, expected_vals=["customer_activity"])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="table_name")
+        assert param_artifact.get() == "hotel_reviews"
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="table_name")
+        assert param_artifact.get() == "customer_activity"
     finally:
         client.delete_flow(flow.id())

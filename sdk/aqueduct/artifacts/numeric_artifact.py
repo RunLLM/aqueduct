@@ -22,7 +22,11 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
-from aqueduct.error import AqueductError, ArtifactNeverComputedException, UnsupportedUserActionException
+from aqueduct.error import (
+    AqueductError,
+    ArtifactNeverComputedException,
+    UnsupportedUserActionException,
+)
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
@@ -64,8 +68,8 @@ class NumericArtifact(BaseArtifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        from_flow_run: bool = False,
         content: Optional[Union[int, float, np.number]] = None,
+        from_flow_run: bool = False,
     ):
         self._dag = dag
         self._artifact_id = artifact_id
