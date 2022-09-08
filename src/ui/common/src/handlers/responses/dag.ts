@@ -29,14 +29,14 @@ export type DagResponse = DagMetadataResponse & {
   artifacts: { [id: string]: ArtifactResponse };
 };
 
-export type DagRawResultResponse = {
+export type DagResultStatusResponse = {
   id: string;
   status: ExecutionStatus;
   created_at: number;
 };
 
 export type DagResultResponse = DagMetadataResponse & {
-  result?: DagRawResultResponse;
+  result?: DagResultStatusResponse;
   operators: { [id: string]: OperatorResultResponse };
   artifacts: { [id: string]: ArtifactResultResponse };
 };
