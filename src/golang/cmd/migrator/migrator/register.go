@@ -127,6 +127,6 @@ func init() {
 	registeredMigrations[17] = &migration{
 		upPostgres: _000017.Up, upSqlite: _000017.Up,
 		downPostgres: _000017.Down,
-		name:         "add canceled status",
+		name:         "add canceled status to results",
 	}
 }
