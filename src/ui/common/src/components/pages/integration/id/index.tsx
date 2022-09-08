@@ -1,5 +1,6 @@
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -154,6 +155,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
           />
         </Box>
+
         {showDeleteTableDialog && (
           <DeleteIntegrationDialog
             user={user}
@@ -162,6 +164,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             onCloseDialog={() => setShowDeleteTableDialog(false)}
           />
         )}
+
         {testConnectStatus && isFailed(testConnectStatus) && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
             Test-connect failed with error:
@@ -169,7 +172,16 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             <pre>{testConnectStatus.err}</pre>
           </Alert>
         )}
+
+        {
+          selectedIntegration.name === 'aqueduct_demo' &&
+            <Typography variant="body1" sx={{ my: 1 }}>
+              You can see the documentation for the Aqueduct Demo database <Link href="https://docs.aqueducthq.com/integrations/aqueduct-demo-integration">here</Link>.
+            </Typography>
+        }
+
         <IntegrationObjectList user={user} integration={selectedIntegration} />
+
         <Typography
           variant="h5"
           gutterBottom

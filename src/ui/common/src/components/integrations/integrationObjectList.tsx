@@ -102,7 +102,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
         key={i}
         onChange={() => handleChange(i)}
       >
-        <AccordionSummary sx={{ backgroundColor: theme.palette.gray[50] }}>
+        <AccordionSummary sx={{ backgroundColor: theme.palette.gray[25] }}>
           {' '}
           {listObjectNamesState.names[i]}{' '}
         </AccordionSummary>
