@@ -14,24 +14,18 @@ class ParamArtifact(BaseArtifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        content: Optional[Any] = None,
-        from_flow_run: bool = False,
     ):
         """The APIClient is only included because decorated functions operators acting on this parameter
         will need a handle to an API client."""
+
         self._dag = dag
         self._artifact_id = artifact_id
+        self._from_flow_run = False
 
-        # If the artifact was part of a published flow, fetch the data. This does not necessarily
-        # mean that the artifact was successfully computed.
-        self._from_flow_run = from_flow_run
-        if self._from_flow_run:
-            self._set_content(content)
-        else:
-            # Set the content of this parameter from the SDK dag's operator spec.
-            param_op = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-            assert param_op.spec.param is not None, "Artifact is not a parameter."
-            self._set_content(json.loads(param_op.spec.param.val))
+        # Set the content of this parameter from the SDK dag's operator spec.
+        param_op = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        assert param_op.spec.param is not None, "Artifact is not a parameter."
+        self._set_content(json.loads(param_op.spec.param.val))
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         if parameters is not None:

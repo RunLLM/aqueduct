@@ -97,6 +97,9 @@ class FlowRun:
         if not isinstance(artifact_from_dag.type, ArtifactType):
             raise InternalAqueductError("The artifact's type can not be recognized.")
 
+        assert (
+            artifact_from_dag.type != ArtifactType.PARAM
+        ), "No such thing as a parameter type in a published flow."
         if artifact_from_dag.type is ArtifactType.TABLE:
             return table_artifact.TableArtifact(
                 self._dag,
@@ -113,13 +116,6 @@ class FlowRun:
             )
         elif artifact_from_dag.type is ArtifactType.BOOL:
             return bool_artifact.BoolArtifact(
-                self._dag,
-                artifact_from_dag.id,
-                content=content,
-                from_flow_run=True,
-            )
-        elif artifact_from_dag.type is ArtifactType.PARAM:
-            return param_artifact.ParamArtifact(
                 self._dag,
                 artifact_from_dag.id,
                 content=content,
