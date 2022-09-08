@@ -1,5 +1,3 @@
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -21,6 +19,7 @@ import KeyValueTable, {
   KeyValueTableType,
 } from '../../../tables/KeyValueTable';
 import StickyHeaderTable from '../../../tables/StickyHeaderTable';
+import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 
 const kvSchema: DataSchema = {
@@ -51,40 +50,6 @@ const mockChecks: Data = {
     ['warning_check', 'Warning'],
     ['none_check', 'None'],
   ],
-};
-
-type ArtifactDetailsHeaderProps = {
-  artifactName: string;
-  createdAt?: string;
-  sourceLocation?: string;
-};
-
-const ArtifactDetailsHeader: React.FC<ArtifactDetailsHeaderProps> = ({
-  artifactName,
-  // TODO: add these back once we have support for getting createdAt and sourceLocation.
-  //createdAt,
-  //sourceLocation,
-}) => {
-  return (
-    <Box width="100%" display="flex" alignItems="center">
-      <FontAwesomeIcon
-        height="24px"
-        width="24px"
-        style={{ marginRight: '8px' }}
-        icon={faCircleCheck}
-        color={'green'}
-      />
-      <Typography variant="h4" component="div">
-        {artifactName}
-      </Typography>
-      {/* <Typography marginTop="4px" variant="caption" component="div">
-                Created: {createdAt}
-            </Typography>
-            <Typography variant="caption" component="div">
-                Source: <Link>{sourceLocation}</Link>
-            </Typography> */}
-    </Box>
-  );
 };
 
 type ArtifactDetailsPageProps = {
@@ -143,7 +108,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%" display="flex" alignItems="center">
-            <ArtifactDetailsHeader artifactName={artifactName} />
+            <DetailsPageHeader name={artifactName} />
             <Button
               variant="contained"
               sx={{ maxHeight: '32px' }}

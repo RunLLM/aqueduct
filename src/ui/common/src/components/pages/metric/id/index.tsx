@@ -1,4 +1,3 @@
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Link, List, ListItem } from '@mui/material';
@@ -39,36 +38,7 @@ import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import { LayoutProps } from '../../types';
-
-type MetricDetailsHeaderProps = {
-  artifactName: string;
-  createdAt?: string;
-};
-
-const MetricDetailsHeader: React.FC<MetricDetailsHeaderProps> = ({
-  artifactName,
-  createdAt,
-}) => {
-  return (
-    <Box width="100%" display="flex" alignItems="center">
-      <FontAwesomeIcon
-        height="24px"
-        width="24px"
-        style={{ marginRight: '8px' }}
-        icon={faCircleCheck}
-        color={'green'}
-      />
-      <Typography variant="h4" component="div">
-        {artifactName}
-      </Typography>
-      {createdAt && (
-        <Typography marginTop="4px" variant="caption" component="div">
-          Created: {createdAt}
-        </Typography>
-      )}
-    </Box>
-  );
-};
+import DetailsPageHeader from '../../components/DetailsPageHeader';
 
 type MetricDetailsPageProps = {
   user: UserProfile;
@@ -95,24 +65,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const operator = (workflow.dags[workflowDagId]?.operators ?? {})[
     metricOperatorId
   ];
-
-  // // Get the operatorSpec so that we can show more metadata about the operator.
-  // const operatorSpec = operator?.spec;
-  // console.log('operatorSpec: ', operatorSpec);
-
-  // const logs =
-  //   workflow.operatorResults[metricOperatorId]?.result?.exec_state?.user_logs ??
-  //   {};
-  // console.log('logs: ', logs);
-  // const operatorError =
-  //   workflow?.operatorResults[metricOperatorId]?.result?.exec_state?.error;
-  // console.log('operatorError', operatorError);
-
-  // // Get the execution state of the operator:
-  // // TODO: Show execution state in a badge component next to title of operator.
-  // const execState: ExecState =
-  //   workflow?.operatorResults[metricOperatorId]?.result?.exec_state;
-  // console.log('execState: ', execState);
 
   const metricResult = workflow.operatorResults[metricOperatorId];
 
@@ -369,7 +321,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%">
-            <MetricDetailsHeader artifactName={metricResult.result.name} />
+            <DetailsPageHeader name={metricResult.result.name} />
             {metricResult.result?.description && (
               <Typography variant="body1">
                 {metricResult.result.description}

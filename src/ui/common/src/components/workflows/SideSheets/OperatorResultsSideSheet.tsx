@@ -20,8 +20,8 @@ import {
   RelationalDBExtractParams,
   RelationalDBLoadParams,
 } from '../../../utils/operators';
-import DataPreviewer from '../../DataPreviewer';
 import { ExecState } from '../../../utils/shared';
+import DataPreviewer from '../../DataPreviewer';
 import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';

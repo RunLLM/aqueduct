@@ -52,11 +52,7 @@ type GetOperatorResultResponse struct {
 	Name        string                `json:"name"`
 	Description string                `json:"description"`
 	ExecState   shared.ExecutionState `json:"exec_state"`
-	// TODO: Roll these into just ExecutionState when done.
-	// UserLogs    *shared.Logs            `json:"user_logs"`
 	Status shared.ExecutionStatus `json:"status"`
-	// FailureType *shared.FailureType     `json:"failure_type"`
-	// Error       *shared.Error           `json:"error"`
 }
 
 func (*GetOperatorResultHandler) Name() string {
