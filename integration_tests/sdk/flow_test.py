@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import pandas as pd
 import pytest
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import IncompleteFlowException
@@ -16,8 +17,6 @@ from utils import (
     run_sentiment_model_multiple_input,
     wait_for_flow_runs,
 )
-import pandas as pd
-
 
 import aqueduct
 from aqueduct import LoadUpdateMode, check, op
@@ -273,7 +272,9 @@ def test_fetching_historical_flows_uses_old_data(client):
         setup_flow_name = generate_new_flow_name()
         table = generate_initial_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
-        setup_flow = run_flow_test(client, name=setup_flow_name, artifacts=[table], delete_flow_after=False)
+        setup_flow = run_flow_test(
+            client, name=setup_flow_name, artifacts=[table], delete_flow_after=False
+        )
         flows_to_delete.append(setup_flow.id())
 
         @op
@@ -295,7 +296,9 @@ def test_fetching_historical_flows_uses_old_data(client):
         # TODO: refactor this.
         table = generate_new_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
-        run_flow_test(client, name=setup_flow_name, artifacts=[table], num_runs=2, delete_flow_after=False)
+        run_flow_test(
+            client, name=setup_flow_name, artifacts=[table], num_runs=2, delete_flow_after=False
+        )
 
         # Fetching the historical flow and materializing the data will not use the new data
         # that was just written. It will use a snapshot of the old data instead.

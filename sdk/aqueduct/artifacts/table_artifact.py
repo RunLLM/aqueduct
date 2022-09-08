@@ -24,10 +24,7 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import (
-    AqueductError,
-    ArtifactNeverComputedException,
-)
+from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.operators import (
     CheckSpec,
     FunctionSpec,

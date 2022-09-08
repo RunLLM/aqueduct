@@ -22,10 +22,7 @@ from aqueduct.enums import (
     FunctionGranularity,
     FunctionType,
 )
-from aqueduct.error import (
-    AqueductError,
-    ArtifactNeverComputedException,
-)
+from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
 from aqueduct.utils import (
     artifact_name_from_op_name,
