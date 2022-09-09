@@ -41,9 +41,6 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
           <TableHead>
             <TableRow>
               {columns.map((column, columnIndex) => {
-                console.log('col: ', column);
-                console.log('colIndex: ', columnIndex);
-
                 return (
                   <TableCell
                     key={`table-header-col-${columnIndex}`}
@@ -77,16 +74,14 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                       </Typography>
                     </Box>
                   </TableCell>
-                )
-              }
-              )}
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            {rows
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, rowIndex) => {
-                console.log('row: ', row);
-                console.log('rowIndex: ', rowIndex);
                 return (
                   <TableRow
                     hover
@@ -95,11 +90,7 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                     key={`table-row-${rowIndex}`}
                   >
                     {columns.map((column, columnIndex) => {
-                      console.log('columnnearval: ', column);
                       const value = row[column.name];
-                      console.log('value: ', value);
-
-
                       return (
                         <TableCell
                           key={`table-col-${columnIndex}`}

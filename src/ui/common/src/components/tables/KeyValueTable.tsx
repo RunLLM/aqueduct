@@ -71,10 +71,7 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({
                 key={`tableBody-${rowIndex}`}
               >
                 {schema.fields.map((column, columnIndex) => {
-                  console.log('kvtable row: ', row);
-                  console.log('kvtable column: ', column);
                   const value = row[column.name.toLowerCase()];
-                  console.log('kvtable value: ', value);
 
                   // For title columns we should just render the text.
                   // For a check's value column, we should render the appropriate icon.
@@ -84,7 +81,7 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({
                       align={tableAlign as TableCellProps['align']}
                     >
                       {tableType === KeyValueTableType.Metric ||
-                        column.name === 'title' ? (
+                      column.name === 'title' ? (
                         value
                       ) : (
                         <CheckTableItem checkValue={value as string} />

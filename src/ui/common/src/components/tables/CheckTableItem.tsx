@@ -19,7 +19,6 @@ export const CheckTableItem: React.FC<MetricTableItemProps> = ({
 }) => {
   let iconColor = theme.palette.black;
   let checkIcon = faMinus;
-  console.log('checkValue: ', checkValue);
 
   switch (checkValue.toLowerCase()) {
     case 'true': {
