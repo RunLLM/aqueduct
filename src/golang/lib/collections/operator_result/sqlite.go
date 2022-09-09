@@ -40,7 +40,7 @@ func (w *sqliteWriterImpl) CreateOperatorResult(
 		return nil, err
 	}
 
-	args := []interface{}{id, workflowDagResultId, operatorId, shared.PendingExecutionStatus, execState}
+	args := []interface{}{id, workflowDagResultId, operatorId, execState.Status, execState}
 
 	var operatorResult OperatorResult
 	err = db.Query(ctx, &operatorResult, insertOperatorStmt, args...)

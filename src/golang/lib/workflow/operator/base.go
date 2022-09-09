@@ -150,8 +150,6 @@ func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
 
 	execState.Timestamps = execTimestamps
 	bo.execState = *execState
-
-	return
 }
 
 func updateOperatorResultAfterComputation(
