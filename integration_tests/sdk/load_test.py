@@ -106,10 +106,12 @@ def test_lazy_artifact_with_save(client):
 
     @op()
     def copy_field(df):
-        df['new'] = df['review']
+        df["new"] = df["review"]
         return df
 
     review_copied = copy_field.lazy(reviews)
-    review_copied.save(config=db.config(table="test_timestamp_succeeded", update_mode=LoadUpdateMode.REPLACE))
+    review_copied.save(
+        config=db.config(table="test_timestamp_succeeded", update_mode=LoadUpdateMode.REPLACE)
+    )
 
     run_flow_test(client, artifacts=[review_copied])
