@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const tableArtifactNodeIcon = faTableColumns;
+
 const TableArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faTableColumns}
+      icon={tableArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Table"
