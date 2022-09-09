@@ -13,9 +13,8 @@ def no_return() -> None:
 def test_operator_with_no_return(client):
     result = no_return()
     assert result.get() is None
-    flow = run_flow_test(client, artifacts=[result], delete_flow_after=False)
-
     try:
+        flow = run_flow_test(client, artifacts=[result], delete_flow_after=False)
         artifact_return = flow.latest().artifact("no_return artifact")
         assert artifact_return.get() is None
     finally:
