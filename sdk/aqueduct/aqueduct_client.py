@@ -4,12 +4,16 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.artifacts.utils import to_artifact_class
 from aqueduct.config import FlowConfig
 
@@ -51,12 +55,6 @@ from .utils import (
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
-
-if TYPE_CHECKING:
-    from aqueduct.artifacts.bool_artifact import BoolArtifact
-    from aqueduct.artifacts.generic_artifact import GenericArtifact
-    from aqueduct.artifacts.numeric_artifact import NumericArtifact
-    from aqueduct.artifacts.table_artifact import TableArtifact
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:
