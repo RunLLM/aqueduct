@@ -33,7 +33,7 @@ import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
 import { Operator } from '../../utils/operators';
-import ExecutionStatus, { FailureType } from '../../utils/shared';
+import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
 enum WorkflowStatusTabs {
@@ -374,8 +374,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         type: 'tableArtifact',
       };
 
-      const artifactStatus = artifactResult.result?.status;
-      const artifactExecState = artifactResult.result?.exec_state;
+      const artifactStatus: ExecutionStatus = artifactResult.result?.status;
+      const artifactExecState: ExecState = artifactResult.result?.exec_state;
+
       if (
         artifactStatus === ExecutionStatus.Failed &&
         artifactExecState.failure_type == FailureType.UserNonFatal
@@ -404,6 +405,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const operatorName = operators[operatorId].name
         ? operators[operatorId].name
         : 'Operator';
+
       const operatorResult: OperatorResult =
         workflow.operatorResults[operatorId];
 
@@ -431,16 +433,19 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
-      const opStatus = operatorResult.result?.status;
-      const opExecState = operatorResult.result;
+      const opExecState: ExecState = operatorResult.result?.exec_state;
+      const operatorExecutionStatus: ExecutionStatus = operatorResult.result
+        ? operatorResult.result.exec_state.status
+        : null;
+
       if (
-        opStatus === ExecutionStatus.Failed &&
+        operatorExecutionStatus === ExecutionStatus.Failed &&
         opExecState.failure_type === FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Warning for ${operatorName}`;
         newWorkflowStatusItem.message = opExecState.error?.tip;
-      } else if (opStatus === ExecutionStatus.Failed) {
+      } else if (operatorExecutionStatus === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
@@ -453,7 +458,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
         }
-      } else if (opStatus === ExecutionStatus.Succeeded) {
+      } else if (operatorExecutionStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `${operatorName} succeeded`;
         newWorkflowStatusItem.message = `Operator successfully executed`;
@@ -466,8 +471,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       normalizedWorkflowStatusItems.push(newWorkflowStatusItem);
 
       // LEFT off here, see the normalize logs function and work from there :)
-      if (!!operatorResult.result?.user_logs) {
-        const logs = operatorResult.result.user_logs;
+      if (opExecState && opExecState.user_logs) {
+        const logs = opExecState?.user_logs;
         const stdoutLines = (logs.stdout ?? '').split('\n');
         for (let i = 0; i < stdoutLines.length - 1; i++) {
           normalizedWorkflowStatusItems.push({
