@@ -345,10 +345,13 @@ def test_non_jsonable_param_types(client):
     assert isinstance(output, GenericArtifact)
     assert output.get() == EmptyClass
 
-    # TODO: finish this up!
     @op
     def must_be_bytes(input):
         assert isinstance(input, bytes)
         return input
 
+    bytes_param = client.create_param("bytes", default=b'hello world')
+    output = must_be_bytes(bytes_param)
 
+    assert isinstance(output, GenericArtifact)
+    assert output.get() == b'hello world'
