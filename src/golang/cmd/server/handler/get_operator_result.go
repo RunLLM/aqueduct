@@ -49,10 +49,10 @@ type GetOperatorResultHandler struct {
 }
 
 type GetOperatorResultResponse struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	ExecState   shared.ExecutionState `json:"exec_state"`
-	Status shared.ExecutionStatus `json:"status"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	ExecState   shared.ExecutionState  `json:"exec_state"`
+	Status      shared.ExecutionStatus `json:"status"`
 }
 
 func (*GetOperatorResultHandler) Name() string {
