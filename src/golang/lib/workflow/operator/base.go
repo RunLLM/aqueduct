@@ -302,6 +302,22 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 	}
 }
 
+func (bo *baseOperator) Cancel(ctx context.Context) {
+	changes := map[string]interface{}{
+		operator_result.StatusColumn: shared.CanceledExecutionStatus,
+		operator_result.ExecStateColumn: &shared.ExecutionState{
+			Status: shared.CanceledExecutionStatus,
+		},
+	}
+
+	_, err := bo.resultWriter.UpdateOperatorResult(ctx, bo.resultID, changes, bo.db)
+	log.Errorf("Error when setting operator state to canceled: %v", err)
+
+	for _, output := range bo.outputs {
+		output.Cancel(ctx)
+	}
+}
+
 // Any operator that runs a python function serialized from storage should use this instead of baseOperator.
 type baseFunctionOperator struct {
 	baseOperator

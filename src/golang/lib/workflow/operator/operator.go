@@ -50,6 +50,10 @@ type Operator interface {
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	// Also calls Finish() on all the operator's output artifacts.
 	Finish(ctx context.Context)
+
+	// Cancel updates the status of this operator execution if the result of the
+	// execution will not be generated.
+	Cancel(ctx context.Context)
 }
 
 // This should only be used within the boundaries of the execution engine.

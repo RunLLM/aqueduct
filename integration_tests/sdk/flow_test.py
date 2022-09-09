@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
+import pandas as pd
 import pytest
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import IncompleteFlowException
 from constants import SENTIMENT_SQL_QUERY
@@ -19,7 +19,7 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct import LoadUpdateMode, check
+from aqueduct import LoadUpdateMode, check, op
 
 
 def test_basic_flow(client):
@@ -254,3 +254,56 @@ def test_multiple_flows_with_same_schedule(client):
     finally:
         delete_flow(client, flow_1.id())
         delete_flow(client, flow_2.id())
+
+
+@pytest.mark.publish
+def test_fetching_historical_flows_uses_old_data(client):
+    db = client.integration(name=get_integration_name())
+
+    # Write a new table into the demo db.
+    flows_to_delete = []
+    try:
+        initial_table = pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
+
+        @op
+        def generate_initial_table():
+            return initial_table
+
+        setup_flow_name = generate_new_flow_name()
+        table = generate_initial_table()
+        table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
+        setup_flow = run_flow_test(
+            client, name=setup_flow_name, artifacts=[table], delete_flow_after=False
+        )
+        flows_to_delete.append(setup_flow.id())
+
+        @op
+        def noop(df):
+            return df
+
+        # Create a new flow that extracts this data.
+        output = db.sql("Select * from test_table", name="Test Table Query")
+        assert output.get().equals(initial_table)
+
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flows_to_delete.append(flow.id())
+
+        # Now, change the data that the new flow relies on, by populating data the same way as the setup flow.
+        @op
+        def generate_new_table():
+            return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
+
+        table = generate_new_table()
+        table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
+        run_flow_test(
+            client, name=setup_flow_name, artifacts=[table], num_runs=2, delete_flow_after=False
+        )
+
+        # Fetching the historical flow and materializing the data will not use the new data
+        # that was just written. It will use a snapshot of the old data instead.
+        artifact = flow.latest().artifact(name="Test Table Query artifact")
+        assert artifact.get().equals(initial_table)
+
+    finally:
+        for flow_id in flows_to_delete:
+            delete_flow(client, flow_id)

@@ -1,10 +1,15 @@
-import json
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import pandas as pd
 import pytest
-from aqueduct.enums import ArtifactType, ExecutionStatus
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.enums import ExecutionStatus
+from aqueduct.error import (
+    AqueductError,
+    ArtifactNeverComputedException,
+    InvalidUserArgumentException,
+)
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
 from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
@@ -104,16 +109,6 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-def _check_param_vals(dag, expected_vals: List[Any]):
-    """Check that all parameter artifacts have a one-to-one correspondence with `expected_vals`."""
-    artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
-    for artifact in artifacts:
-        op = dag.must_get_operator(with_output_artifact_id=artifact.id)
-        param_val = json.loads(op.spec.param.val)
-        assert param_val in expected_vals
-        expected_vals.remove(param_val)
-
-
 @pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
@@ -122,11 +117,13 @@ def test_edit_param_for_flow(client):
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
 
-    flow_name = "Edit Parameter Test Flow"
-    flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
-    flow_id = flow.id()
+    flow_name = generate_new_flow_name()
 
+    flow_id = None
     try:
+        flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+        flow_id = flow.id()
+
         # Edit the flow with a different row to append and re-publish
         new_row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
         new_row_param = client.create_param(name="new row", default=new_row_to_add)
@@ -141,11 +138,19 @@ def test_edit_param_for_flow(client):
         # Verify that the parameters were edited as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [row_to_add])
-        _check_param_vals(flow.latest()._dag, [new_row_to_add])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="new row")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == row_to_add
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="new row")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == new_row_to_add
 
     finally:
-        client.delete_flow(flow.id())
+        client.delete_flow(flow_id)
 
     assert flow_id == flow.id()
 
@@ -184,8 +189,23 @@ def test_trigger_flow_with_different_param(client):
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [5, 5])
-        _check_param_vals(flow.latest()._dag, [5, 10])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        num1_artifact = historical_run.artifact(name="num1")
+        num2_artifact = historical_run.artifact(name="num2")
+        assert isinstance(num1_artifact, NumericArtifact)
+        assert isinstance(num2_artifact, NumericArtifact)
+        assert num1_artifact.get() == 5
+        assert num2_artifact.get() == 5
+
+        latest_run = flow.latest()
+        num1_artifact = latest_run.artifact(name="num1")
+        num2_artifact = latest_run.artifact(name="num2")
+        assert isinstance(num1_artifact, NumericArtifact)
+        assert isinstance(num2_artifact, NumericArtifact)
+        assert num1_artifact.get() == 10
+        assert num2_artifact.get() == 5
+
     finally:
         client.delete_flow(flow.id())
 
@@ -198,9 +218,14 @@ def test_trigger_flow_with_different_sql_param(client):
     sql_artifact = db.sql(query="select * from {{ table_name}}")
 
     flow_name = generate_new_flow_name()
-    flow = run_flow_test(client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False)
 
+    flow_id = None
     try:
+        flow = run_flow_test(
+            client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False
+        )
+        flow_id = flow.id()
+
         client.trigger(flow.id(), parameters={"table_name": "customer_activity"})
         wait_for_flow_runs(
             client,
@@ -211,7 +236,62 @@ def test_trigger_flow_with_different_sql_param(client):
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, expected_vals=["hotel_reviews"])
-        _check_param_vals(flow.latest()._dag, expected_vals=["customer_activity"])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="table_name")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == "hotel_reviews"
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="table_name")
+        assert param_artifact.get() == "customer_activity"
+        assert isinstance(param_artifact, GenericArtifact)
     finally:
-        client.delete_flow(flow.id())
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_parameterizing_published_artifact(client):
+    @op
+    def generate_num():
+        return 1234
+
+    output = generate_num()
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="generate_num artifact")
+
+        assert artifact.get() == 1234
+        assert isinstance(artifact, NumericArtifact)
+        with pytest.raises(NotImplementedError):
+            artifact.get(parameters={"name": "val"})
+
+    finally:
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_materializing_failed_artifact(client):
+    @op
+    def fail_fn():
+        5 / 0
+
+    output = fail_fn.lazy()
+    flow_id = None
+    try:
+        flow = run_flow_test(
+            client, artifacts=[output], expect_success=False, delete_flow_after=False
+        )
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="fail_fn artifact")
+        assert isinstance(artifact, GenericArtifact)
+        with pytest.raises(ArtifactNeverComputedException):
+            artifact.get()
+
+    finally:
+        client.delete_flow(flow_id)

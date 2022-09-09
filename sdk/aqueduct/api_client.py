@@ -427,7 +427,7 @@ class APIClient:
 
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
-    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> Any:
+    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> Optional[Any]:
         """Returns an empty string if the operator was not successfully executed."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
@@ -440,7 +440,7 @@ class APIClient:
 
         if parsed_response["metadata"]["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
             print("Artifact result unavailable due to unsuccessful execution.")
-            return ""
+            return None
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
         if serialization_type not in deserialization_function_mapping:
@@ -474,9 +474,3 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
-
-    def export_serialized_function(self, operator: Operator) -> bytes:
-        headers = self._generate_auth_headers()
-        operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
-        operator_resp = requests.get(operator_url, headers=headers)
-        return operator_resp.content

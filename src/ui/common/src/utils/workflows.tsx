@@ -83,6 +83,7 @@ export type GetWorkflowResponse = {
 
 export type SavedObject = {
   operator_name: string;
+  modified_at: string;
   integration_name: string;
   integration_id: string;
   service: string;
