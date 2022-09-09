@@ -393,10 +393,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
 	for _, op := range dag.Operators() {
-		execState, err := op.GetExecState(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get operator execution state.")
-		}
+		execState := op.ExecState()
 		execStateByOp[op.ID()] = *execState
 	}
 
@@ -734,7 +731,7 @@ func (eng *aqEngine) execute(
 		}
 
 		for _, op := range inProgressOps {
-			execState, err := op.GetExecState(ctx)
+			execState, err := op.Poll(ctx)
 			if err != nil {
 				return err
 			}

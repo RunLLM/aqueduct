@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -25,17 +26,23 @@ type Operator interface {
 	JobSpec() job.Spec
 
 	// Launch kicks off the execution of this operator, using operator's job spec.
-	// Poll on `GetExecState()` afterwards to determine when this operator has completed.
+	// Use `Poll()` afterwards to determine when this operator has completed.
 	Launch(ctx context.Context) error
 
-	// GetExecState performs a non-blocking fetch for the execution state of this operator.
-	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
+	// Poll performs a non-blocking fetch and update for the execution state of this operator.
+	// Returns the execState updated.
+	Poll(ctx context.Context) (*shared.ExecutionState, error)
+
+	// ExecState returns the operators ExecState since the last `Poll()` or `Launch()`
+	ExecState() *shared.ExecutionState
 
 	// InitializeResult initializes the operator in the database.
 	// TODO: document.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult writes the results of this operator execution to the database.
+	// The result persisted is based on the last `Poll()`.
+	//
 	// Errors if the artifact hasn ot yet been computed, or InitializeResult() hasn't been called yet.
 	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
@@ -90,6 +97,8 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
+	now := time.Now()
+
 	baseOp := baseOperator{
 		dbOperator:   &dbOperator,
 		resultWriter: opResultWriter,
@@ -110,6 +119,12 @@ func NewOperator(
 		db:                  db,
 
 		execMode: execMode,
+		execState: shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
+				PendingAt: &now,
+			},
+		},
 
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,

@@ -2,7 +2,6 @@ package operator_result
 
 import (
 	"context"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -30,7 +29,7 @@ func (w *noopWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
-	now time.Time,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*OperatorResult, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)

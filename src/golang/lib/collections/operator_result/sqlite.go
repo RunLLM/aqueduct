@@ -2,7 +2,6 @@ package operator_result
 
 import (
 	"context"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -30,7 +29,7 @@ func (w *sqliteWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
-	now time.Time,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*OperatorResult, error) {
 	insertColumns := []string{IdColumn, WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn, ExecStateColumn}
@@ -41,14 +40,7 @@ func (w *sqliteWriterImpl) CreateOperatorResult(
 		return nil, err
 	}
 
-	execState := shared.ExecutionState{
-		Status: shared.PendingExecutionStatus,
-		Timestamps: &shared.ExecutionTimestamps{
-			PendingAt: &now,
-		},
-	}
-
-	args := []interface{}{id, workflowDagResultId, operatorId, shared.PendingExecutionStatus, &execState}
+	args := []interface{}{id, workflowDagResultId, operatorId, shared.PendingExecutionStatus, execState}
 
 	var operatorResult OperatorResult
 	err = db.Query(ctx, &operatorResult, insertOperatorStmt, args...)

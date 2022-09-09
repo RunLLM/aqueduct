@@ -46,7 +46,7 @@ type baseOperator struct {
 	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
 	execMode         ExecutionMode
-	timestamps       shared.ExecutionTimestamps
+	execState        shared.ExecutionState
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -78,6 +78,7 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 }
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	bo.updateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
 		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))
@@ -109,7 +110,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
-// fetchExecState assumes that the operator has been computed already.
+// fetchAndUpdateExecState assumes that the operator has been computed already.
 func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionState {
 	var execState shared.ExecutionState
 	err := utils.ReadFromStorage(
@@ -125,49 +126,32 @@ func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionSta
 			"Unable to read operator metadata from storage. Operator may have failed before writing metadata.",
 		)
 	}
+
 	return &execState
 }
 
-// GetExecState takes a more wholelistic view of the operator's status than the job manager does,
-// and can be called at any time. Because of this, the logic for figuring out the correct state is
-// a little more involved.
-func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionState, error) {
-	if bo.jobName == "" {
-		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
-	}
-
-	status, err := bo.jobManager.Poll(ctx, bo.jobName)
-	if err != nil {
-		// If the job does not exist, this could mean that
-		// 1) it is hasn't been run yet (pending),
-		// 2) it has run already at sometime in the past, but has been garbage collected
-		// 3) it has run already at sometime in the past, but did not go through the job manager.
-		//    (this can happen when the output artifacts have already been cached).
-		if err == job.ErrJobNotExist {
-			// Check whether the operator has actually completed.
-			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
-				return bo.fetchExecState(ctx), nil
-			}
-
-			// Otherwise, this job has not run yet and is in a pending state.
-			return &shared.ExecutionState{
-				Status: shared.PendingExecutionStatus,
-			}, nil
-		} else {
-			// This is just an internal polling error state.
-			return unknownSystemFailureExecState(err, "Unable to poll job manager."), nil
-		}
+// updateExecState and merge timestamps with current state based on the status of the new state.
+// Other fields of bo.execState will be replaced.
+func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
+	now := time.Now()
+	// copy current timestamps to merge these time
+	execTimestamps := bo.execState.Timestamps
+	if execState.Status == shared.FailedExecutionStatus {
+		execTimestamps.FailedAt = &now
+	} else if execState.Status == shared.SucceededExecutionStatus {
+		execTimestamps.SucceededAt = &now
+	} else if execState.Status == shared.RunningExecutionStatus {
+		execTimestamps.RunningAt = &now
 	} else {
-		// The job just completed, so we know we can fetch the results (succeeded/failed).
-		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
-			return bo.fetchExecState(ctx), nil
-		}
-
-		// The job must exist at this point, but it hasn't completed (running).
-		return &shared.ExecutionState{
-			Status: shared.RunningExecutionStatus,
-		}, nil
+		// This method shouldn't get called under other states.
+		// As an additional safeguard, we do nothing for other states if it's called.
+		return
 	}
+
+	execState.Timestamps = execTimestamps
+	bo.execState = *execState
+
+	return
 }
 
 func updateOperatorResultAfterComputation(
@@ -202,12 +186,11 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 		return errors.New("Operator's result writer cannot be nil.")
 	}
 
-	now := time.Now()
 	operatorResult, err := bo.resultWriter.CreateOperatorResult(
 		ctx,
 		dagResultID,
 		bo.ID(),
-		now,
+		&bo.execState,
 		bo.db,
 	)
 	if err != nil {
@@ -215,11 +198,58 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 	}
 
 	bo.resultID = operatorResult.Id
-	bo.timestamps = shared.ExecutionTimestamps{
-		PendingAt: &now,
-	}
 
 	return nil
+}
+
+func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error) {
+	if bo.jobName == "" {
+		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
+	}
+
+	// The operator is already terminated. No need to update status.
+	if bo.execState.Status == shared.SucceededExecutionStatus || bo.execState.Status == shared.FailedExecutionStatus {
+		return bo.ExecState(), nil
+	}
+
+	status, err := bo.jobManager.Poll(ctx, bo.jobName)
+	if err != nil {
+		// If the job does not exist, this could mean that
+		// 1) it is hasn't been run yet (pending),
+		// 2) it has run already at sometime in the past, but has been garbage collected
+		// 3) it has run already at sometime in the past, but did not go through the job manager.
+		//    (this can happen when the output artifacts have already been cached).
+		if err == job.ErrJobNotExist {
+			// Check whether the operator has actually completed.
+			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
+				execState := bo.fetchExecState(ctx)
+				bo.updateExecState(execState)
+				return bo.ExecState(), nil
+			}
+
+			// Otherwise, this job has not run yet and is in a pending state.
+			return bo.ExecState(), nil
+		} else {
+			// This is just an internal polling error state.
+			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
+			bo.updateExecState(execState)
+			return bo.ExecState(), nil
+		}
+	} else {
+		// The job just completed, so we know we can fetch the results (succeeded/failed).
+		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
+			execState := bo.fetchExecState(ctx)
+			bo.updateExecState(execState)
+			return bo.ExecState(), nil
+		}
+
+		// The job must exist at this point, but it hasn't completed (running).
+		return bo.ExecState(), nil
+	}
+}
+
+func (bo *baseOperator) ExecState() *shared.ExecutionState {
+	return &bo.execState
 }
 
 func (bo *baseOperator) PersistResult(ctx context.Context) error {
@@ -236,10 +266,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 		return errors.Newf("Operator %s was already persisted!", bo.Name())
 	}
 
-	execState, err := bo.GetExecState(ctx)
-	if err != nil {
-		return err
-	}
+	execState := bo.ExecState()
 	if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
 		return errors.Newf("Operator %s has neither succeeded or failed, so it does not have results that can be persisted.", bo.Name())
 	}
@@ -254,7 +281,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	)
 
 	for _, outputArtifact := range bo.outputs {
-		err = outputArtifact.PersistResult(ctx, execState)
+		err := outputArtifact.PersistResult(ctx, execState)
 		if err != nil {
 			log.Errorf("Error occurred when persisting artifact %s.", outputArtifact.Name())
 		}
