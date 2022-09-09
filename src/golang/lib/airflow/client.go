@@ -72,6 +72,9 @@ func (c *client) getTaskStates(dagId string, dagRunId string) (map[string]airflo
 
 // trigerDAGRun triggers a new DAGRun for the dag specified.
 func (c *client) triggerDAGRun(dagId string) error {
-	_, _, err := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagId).Execute()
+	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagId)
+	// The PostDagRun API requires the request to have a DAGRun initialized
+	request = request.DAGRun(*airflow.NewDAGRunWithDefaults())
+	_, _, err := request.Execute()
 	return err
 }
