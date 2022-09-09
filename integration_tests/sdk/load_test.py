@@ -2,7 +2,7 @@ import pytest
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import delete_flow, generate_new_flow_name, get_integration_name, run_flow_test
 
-from aqueduct import LoadUpdateMode
+from aqueduct import LoadUpdateMode, op
 
 
 @pytest.mark.publish
@@ -97,3 +97,19 @@ def test_multiple_artifacts_saved_to_same_integration(client):
 
     finally:
         delete_flow(client, flow.id())
+
+
+@pytest.mark.publish
+def test_lazy_artifact_with_save(client):
+    db = client.integration(get_integration_name())
+    reviews = db.sql(SHORT_SENTIMENT_SQL_QUERY)
+
+    @op()
+    def copy_field(df):
+        df['new'] = df['review']
+        return df
+
+    review_copied = copy_field.lazy(reviews)
+    review_copied.save(config=db.config(table="test_timestamp_succeeded", update_mode=LoadUpdateMode.REPLACE))
+
+    run_flow_test(client, artifacts=[review_copied])

@@ -91,7 +91,7 @@ class BaseArtifact(ABC):
             raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
 
         # Non-tabular data cannot be saved into relational data stores.
-        if self._get_type() != ArtifactType.TABLE and integration_info.is_relational():
+        if self._get_type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE] and integration_info.is_relational():
             raise InvalidUserActionException(
                 "Unable to load non-relational data into relational data store `%s`."
                 % integration_info.name
