@@ -8,7 +8,13 @@ from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType, SerializationType
+from aqueduct.enums import (
+    ArtifactType,
+    ExecutionMode,
+    LoadUpdateMode,
+    SerializationType,
+    ServiceType,
+)
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (

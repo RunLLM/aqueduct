@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 import cloudpickle as pickle
 import numpy as np
 import pandas as pd
-
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,

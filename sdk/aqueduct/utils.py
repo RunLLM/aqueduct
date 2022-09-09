@@ -14,18 +14,20 @@ import cloudpickle as pickle
 import multipart
 import numpy as np
 import requests
-from aqueduct.serialization import artifact_type_to_serialization_type, serialization_function_mapping, \
-    bytes_to_base64_string
-
 from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig, LambdaEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType, SerializationType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, SerializationType, TriggerType
 from aqueduct.error import *
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator, ParamSpec
+from aqueduct.serialization import (
+    artifact_type_to_serialization_type,
+    bytes_to_base64_string,
+    serialization_function_mapping,
+)
 from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame

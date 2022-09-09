@@ -47,13 +47,15 @@ from .operators import Operator, OperatorSpec
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
+    construct_param_spec,
     generate_engine_config,
     generate_ui_url,
     generate_uuid,
     infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
-    schedule_from_cron_string, construct_param_spec, serialize_param_val,
+    schedule_from_cron_string,
+    serialize_param_val,
 )
 
 
@@ -444,7 +446,9 @@ class Client:
             for name, new_val in parameters.items():
                 param_spec = self._dag.must_get_operator(with_name=name).spec.param
                 assert param_spec is not None
-                serialized_params[name] = serialize_param_val(new_val, param_spec.serialization_type)
+                serialized_params[name] = serialize_param_val(
+                    new_val, param_spec.serialization_type
+                )
             serialized_params_str = json.dumps(serialized_params)
 
         flow_id = parse_user_supplied_id(flow_id)

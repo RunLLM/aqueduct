@@ -12,12 +12,8 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
-from aqueduct.operators import (
-    Operator,
-    OperatorSpec,
-    get_operator_type,
-)
-from aqueduct.utils import infer_artifact_type, construct_param_spec
+from aqueduct.operators import Operator, OperatorSpec, get_operator_type
+from aqueduct.utils import construct_param_spec, infer_artifact_type
 
 
 class DAGDelta(ABC):
@@ -299,6 +295,7 @@ class UpdateParametersDelta(DAGDelta):
 
     The parameters are expected to have already been serialized into strings, and validated.
     """
+
     def __init__(
         self,
         parameters: Optional[Dict[str, Any]],
