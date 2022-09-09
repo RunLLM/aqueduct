@@ -31,12 +31,12 @@ const App = () => {
   let routesContent: React.ReactElement;
   routesContent = (
     <Routes>
-      <Route path={`${ pathPrefix ?? "/" }`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
+      <Route path={`${pathPrefix ?? "/"}`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflows`} element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/login`} element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path={`/${pathPrefix}/login`} element={user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
     </Routes>
@@ -44,9 +44,9 @@ const App = () => {
 
   const muiTheme = createTheme(theme);
   return (
-      <ThemeProvider theme={muiTheme}>
-        <BrowserRouter>{routesContent}</BrowserRouter>
-      </ThemeProvider>
+    <ThemeProvider theme={muiTheme}>
+      <BrowserRouter>{routesContent}</BrowserRouter>
+    </ThemeProvider>
   );
 };
 
@@ -56,9 +56,7 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </React.StrictMode>
+  <Provider store={store}>
+    <App />
+  </Provider>
 )
