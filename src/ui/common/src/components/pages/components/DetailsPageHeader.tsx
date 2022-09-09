@@ -13,7 +13,6 @@ type DetailsPageHeaderProps = {
 
 export const DetailsPageHeader: React.FC<DetailsPageHeaderProps> = ({
   name,
-  // TODO: add these back once we have support for getting createdAt and sourceLocation.
   createdAt,
   sourceLocation,
 }) => {
