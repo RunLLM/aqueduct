@@ -11,7 +11,7 @@ from aqueduct.dag import (
     UpdateParametersDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.deserialize import deserialization_function_mapping
+from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
 from aqueduct.error import (
     InvalidArtifactTypeException,
@@ -71,6 +71,7 @@ def preview_artifact(
         if artifact_id == target_artifact_id:
             continue
 
+        assert artifact_result.artifact_type is not ArtifactType.PARAM
         _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
     return to_artifact_class(dag, target_artifact_id, target_artifact_type, target_artifact_content)
@@ -111,7 +112,7 @@ def _update_artifact_type(
         and existing_type_annotation != new_artifact_type
     ):
         raise InvalidArtifactTypeException(
-            "The artifact %s was expected to have type %s, but instead computed type %s"
+            "The artifact `%s` was expected to have type %s, but instead computed type %s"
             % (artifact.name, existing_type_annotation, new_artifact_type)
         )
 

@@ -3,8 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/storage"
-
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/google/uuid"
 )
@@ -44,7 +42,10 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			*po.storageConfig,
 			po.metadataPath,
 		),
-		Val:                po.dbOperator.Spec.Param().Val,
+		Val:               po.dbOperator.Spec.Param().Val,
+		ExpectedType:      po.dbOperator.Spec.Param().Type,
+		SerializationType: po.dbOperator.Spec.Param().SerializationType,
+
 		OutputMetadataPath: po.outputExecPaths[0].ArtifactMetadataPath,
 		OutputContentPath:  po.outputExecPaths[0].ArtifactContentPath,
 	}
@@ -53,20 +54,5 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 // All the parameter operator does is write the parameter value to storage,
 // to be consuemd by downstream operators.
 func (po *paramOperatorImpl) Launch(ctx context.Context) error {
-	writer := storage.NewStorage(po.storageConfig)
-
-	err := writer.Put(
-		ctx,
-		po.outputExecPaths[0].ArtifactContentPath,
-		[]byte(po.dbOperator.Spec.Param().Val),
-	)
-	if err != nil {
-		return err
-	}
-
-	writer.Put(
-		ctx,
-		po
-	)
-
+	return po.launch(ctx, po.JobSpec())
 }

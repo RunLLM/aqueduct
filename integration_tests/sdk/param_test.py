@@ -318,3 +318,37 @@ def test_materializing_failed_artifact(client):
 
     finally:
         client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_non_jsonable_param_types(client):
+    class EmptyClass:
+        """
+        For some reason, this class must be nested inside this test,
+        otherwise we get a pickle error on the backend: 'No module named `param_test`'.
+        """
+        def __init__(self):
+            pass
+
+    @op
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is pickleabe, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        assert input == EmptyClass
+        return input
+
+    picklable_param = client.create_param("pickleable", default=EmptyClass)
+    output = must_be_picklable(picklable_param)
+
+    assert isinstance(output, GenericArtifact)
+    assert output.get() == EmptyClass
+
+    # TODO: finish this up!
+    @op
+    def must_be_bytes(input):
+        assert isinstance(input, bytes)
+        return input
+
+

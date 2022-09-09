@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -147,9 +148,11 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	BasePythonSpec
-	Val                string `json:"val"  yaml:"val"`
-	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	Val                string           `json:"val"  yaml:"val"`
+	ExpectedType       db_artifact.Type `json:"expected_type" yaml:"expected_type"`
+	SerializationType  string           `json:"serialization_type" yaml:"serialization_type"`
+	OutputContentPath  string           `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string           `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {

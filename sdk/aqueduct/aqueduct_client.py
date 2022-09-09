@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -18,7 +19,13 @@ from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
-from .dag import Metadata, SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
+from .dag import (
+    AddOrReplaceOperatorDelta,
+    Metadata,
+    SubgraphDAGDelta,
+    apply_deltas_to_dag,
+    validate_overwriting_parameters,
+)
 from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
@@ -39,6 +46,7 @@ from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
 from .operators import serialize_parameter_value
 from .responses import SavedObjectUpdate
+from .serialization import serialization_function_mapping, bytes_to_base64_string, _artifact_type_to_serialization_type
 from .utils import (
     _infer_requirements,
     generate_engine_config,

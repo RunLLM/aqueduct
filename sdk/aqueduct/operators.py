@@ -13,7 +13,7 @@ from aqueduct.enums import (
     OperatorType,
     S3TableFormat,
     SalesforceExtractType,
-    ServiceType,
+    ServiceType, SerializationType,
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
@@ -154,6 +154,8 @@ class CheckSpec(BaseModel):
 
 class ParamSpec(BaseModel):
     val: str
+    type: ArtifactType
+    serialization_type: SerializationType
 
 
 class OperatorSpec(BaseModel):
@@ -215,7 +217,7 @@ def get_operator_type_from_spec(spec: OperatorSpec) -> OperatorType:
     else:
         raise AqueductError("Invalid operator type")
 
-
+# TODO: remov ethis
 def serialize_parameter_value(name: str, val: Any) -> str:
     """A parameter must be JSON serializable."""
     try:

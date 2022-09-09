@@ -1,4 +1,3 @@
-import json
 import sys
 
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
@@ -11,7 +10,8 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import infer_artifact_type
+from aqueduct_executor.operators.utils.utils import infer_artifact_type, base64_string_to_bytes, \
+    deserialization_function_mapping
 
 
 def run(spec: ParamSpec) -> None:
@@ -22,16 +22,23 @@ def run(spec: ParamSpec) -> None:
 
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
-    deserialized_value = json.loads(spec.val)
-    artifact_type = infer_artifact_type(deserialized_value)
 
     try:
+        val_bytes = base64_string_to_bytes(spec.val)
+        val = deserialization_function_mapping[spec.serialization_type](val_bytes)
+
+        inferred_type = infer_artifact_type(val)
+        if inferred_type != spec.expected_type:
+            raise Exception(
+                "Supplied parameter expects type `%s`, but got `%s` instead." % (spec.expected_type, inferred_type)
+            )
+
         utils.write_artifact(
             storage,
-            artifact_type,
+            spec.expected_type,
             spec.output_content_path,
             spec.output_metadata_path,
-            deserialized_value,
+            val,
             system_metadata={},
         )
         exec_state.status = enums.ExecutionStatus.SUCCEEDED

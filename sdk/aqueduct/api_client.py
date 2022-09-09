@@ -6,7 +6,7 @@ import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
-from aqueduct.deserialize import deserialization_function_mapping
+from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
