@@ -33,22 +33,22 @@ const kvSchema: DataSchema = {
 const mockMetrics: Data = {
   schema: kvSchema,
   data: [
-    ['avg_churn', '0.04'],
-    ['avg_workflows', '455'],
-    ['avg_users', '1.2'],
-    ['avg_users', '5'],
+    { title: 'avg_churn', value: '0.04' },
+    { title: 'avg_workflows', value: '455' },
+    { title: 'avg_users', value: '1.2' },
+    { title: 'avg_user_subscription_len', value: '12' },
   ],
 };
 
 const mockChecks: Data = {
   schema: kvSchema,
   data: [
-    ['reasonable_churn', 'True'],
-    ['wf_count_small', 'False'],
-    ['bounds_check', 'True'],
-    ['avg_users_check', 'False'],
-    ['warning_check', 'Warning'],
-    ['none_check', 'None'],
+    { title: 'reasonable_churn', value: 'True' },
+    { title: 'wf_count_small', value: 'False' },
+    { title: 'bounds_check', value: 'True' },
+    { title: 'avg_users_check', value: 'False' },
+    { title: 'warning_check', value: 'Warning' },
+    { title: 'none_check', value: 'None' },
   ],
 };
 
@@ -78,7 +78,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   );
 
   useEffect(() => {
-    document.title = 'Artifact | Aqueduct';
+    document.title = 'Artifact Details | Aqueduct';
 
     // Check and see if we are loading the artifact result
     if (!artifactResult) {
@@ -91,6 +91,14 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       );
     }
   }, []);
+
+  useEffect(() => {
+    if (!artifactResult || !artifactResult.result) {
+      return;
+    }
+
+    document.title = `${artifactResult.result.name} | Aqueduct`;
+  }, [artifactResult]);
 
   if (!artifactResult || !artifactResult.result) {
     return (

@@ -37,8 +37,8 @@ import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
-import { LayoutProps } from '../../types';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
+import { LayoutProps } from '../../types';
 
 type MetricDetailsPageProps = {
   user: UserProfile;
@@ -85,6 +85,14 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       );
     }
   }, [workflow.dagResults]);
+
+  useEffect(() => {
+    if (!metricResult || !metricResult.result) {
+      return;
+    }
+
+    document.title = `${metricResult.result.name} | Aqueduct`;
+  });
 
   // Set up different metric input types for rendering in the inputs list.
   // TODO: transform/handle response from API and render these appropriately.

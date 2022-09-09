@@ -40,46 +40,53 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
-              {columns.map((column, columnIndex) => (
-                <TableCell
-                  key={`table-header-col-${columnIndex}`}
-                  align={'left'}
-                  sx={{
-                    backgroundColor: 'blue.900',
-                    color: 'white',
-                    minWidth: '80px',
-                  }}
-                >
-                  <Box flexDirection="column">
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        textTransform: 'none',
-                        fontFamily: 'monospace',
-                        fontSize: '16px',
-                      }}
-                    >
-                      {column.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        textTransform: 'none',
-                        fontFamily: 'monospace',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {column.type}
-                    </Typography>
-                  </Box>
-                </TableCell>
-              ))}
+              {columns.map((column, columnIndex) => {
+                console.log('col: ', column);
+                console.log('colIndex: ', columnIndex);
+
+                return (
+                  <TableCell
+                    key={`table-header-col-${columnIndex}`}
+                    align={'left'}
+                    sx={{
+                      backgroundColor: 'blue.900',
+                      color: 'white',
+                      minWidth: '80px',
+                    }}
+                  >
+                    <Box flexDirection="column">
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          textTransform: 'none',
+                          fontFamily: 'monospace',
+                          fontSize: '16px',
+                        }}
+                      >
+                        {column.name}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          textTransform: 'none',
+                          fontFamily: 'monospace',
+                          fontSize: '12px',
+                        }}
+                      >
+                        {column.type}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                )
+              }
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, rowIndex) => {
+                console.log('row: ', row);
+                console.log('rowIndex: ', rowIndex);
                 return (
                   <TableRow
                     hover
@@ -88,7 +95,10 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
                     key={`table-row-${rowIndex}`}
                   >
                     {columns.map((column, columnIndex) => {
+                      console.log('columnnearval: ', column);
                       const value = row[column.name];
+                      console.log('value: ', value);
+
 
                       return (
                         <TableCell
