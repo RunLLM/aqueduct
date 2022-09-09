@@ -9,6 +9,7 @@ from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.artifacts.utils import to_artifact_class
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import (
     ArtifactType,
@@ -124,14 +125,7 @@ def wrap_spec(
         return artifact_utils.preview_artifact(dag, output_artifact_id)
     else:
         # We are in lazy mode.
-        if output_artifact_type_hint == ArtifactType.TABLE:
-            return TableArtifact(dag, output_artifact_id)
-        elif output_artifact_type_hint == ArtifactType.NUMERIC:
-            return NumericArtifact(dag, output_artifact_id)
-        elif output_artifact_type_hint == ArtifactType.BOOL:
-            return BoolArtifact(dag, output_artifact_id)
-        else:
-            return GenericArtifact(dag, output_artifact_id, output_artifact_type_hint)
+        return to_artifact_class(dag, output_artifact_id, output_artifact_type_hint)
 
 
 def _type_check_decorator_arguments(

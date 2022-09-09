@@ -4,13 +4,13 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.utils import to_artifact_class
 from aqueduct.config import FlowConfig
 
 from aqueduct import dag, globals
@@ -51,6 +51,12 @@ from .utils import (
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
+
+if TYPE_CHECKING:
+    from aqueduct.artifacts.bool_artifact import BoolArtifact
+    from aqueduct.artifacts.generic_artifact import GenericArtifact
+    from aqueduct.artifacts.numeric_artifact import NumericArtifact
+    from aqueduct.artifacts.table_artifact import TableArtifact
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:
@@ -162,7 +168,9 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> ParamArtifact:
+    def create_param(
+        self, name: str, default: Any, description: str = ""
+    ) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -210,10 +218,8 @@ class Client:
                 )
             ],
         )
-        return ParamArtifact(
-            self._dag,
-            output_artifact_id,
-        )
+
+        return to_artifact_class(self._dag, output_artifact_id, artifact_type, default)
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
