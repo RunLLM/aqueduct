@@ -42,12 +42,14 @@ import MenuSidebar, {
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
+import ArtifactDetailsPage from './components/pages/artifact/id';
 import DataPage from './components/pages/data';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
+import MetricDetailsPage from './components/pages/metric/id';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -56,6 +58,8 @@ import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
+import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
+import PaginatedTable from './components/tables/PaginatedTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -283,6 +287,7 @@ export {
   AqueductStraight,
   archiveNotification,
   Artifact,
+  ArtifactDetailsPage,
   ArtifactResult,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
@@ -394,6 +399,7 @@ export {
   integrationsSlice,
   IntegrationState,
   IntegrationTextInputField,
+  OperatorExecStateTableType,
   listNotifications,
   ListWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
@@ -417,6 +423,7 @@ export {
   MenuSidebarOffset,
   MenuSidebarWidth,
   Metric,
+  MetricDetailsPage,
   MetricOperatorNode,
   MySqlCard,
   MySqlConfig,
@@ -493,6 +500,7 @@ export {
   Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
+  PaginatedTable,
   store,
   SupportedIntegrations,
   Tab,

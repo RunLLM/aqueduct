@@ -36,7 +36,7 @@ export const Node: React.FC<Props> = ({
 
   let execState: ExecState;
   if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result;
+    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
   } else {
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
