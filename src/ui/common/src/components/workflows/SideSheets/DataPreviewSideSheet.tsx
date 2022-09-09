@@ -33,7 +33,7 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
     >
       <DataPreviewer
         previewData={artifactResult}
-        error={operatorResult?.result?.error}
+        error={operatorResult?.result?.exec_state?.error}
       />
     </Box>
   );

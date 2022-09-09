@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const metricOperatorNodeIcon = faTemperatureHalf;
+
 const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faTemperatureHalf}
+      icon={metricOperatorNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Metric"

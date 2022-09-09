@@ -20,6 +20,7 @@ import {
   RelationalDBExtractParams,
   RelationalDBLoadParams,
 } from '../../../utils/operators';
+import { ExecState } from '../../../utils/shared';
 import DataPreviewer from '../../DataPreviewer';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
@@ -38,8 +39,10 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   );
   const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
   const logs =
-    workflow.operatorResults[currentNode.id]?.result?.user_logs ?? {};
-  const operatorError = workflow.operatorResults[currentNode.id]?.result?.error;
+    workflow.operatorResults[currentNode.id]?.result?.exec_state?.user_logs ??
+    {};
+  const operatorError =
+    workflow.operatorResults[currentNode.id]?.result?.exec_state?.error;
   const integrations = useSelector(
     (state: RootState) => state.integrationsReducer
   );
@@ -51,7 +54,8 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   };
 
   const operatorSpec = operator.spec;
-  const execState = workflow.operatorResults[currentNode.id]?.result;
+  const execState: ExecState =
+    workflow.operatorResults[currentNode.id]?.result?.exec_state;
 
   let spec, integration, actions;
 
