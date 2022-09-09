@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const numericArtifactNodeIcon = faHashtag;
+
 const NumericArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faHashtag}
+      icon={numericArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Numeric"

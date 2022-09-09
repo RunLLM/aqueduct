@@ -54,6 +54,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Box>
   );
 
+  // TODO: Figure out why we have a _ here, probably don't need it since it's unused.
   const displayFilteredWorkflows = (workflow, _) => {
     return (
       <Box my={2}>
