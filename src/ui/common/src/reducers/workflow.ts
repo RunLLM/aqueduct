@@ -454,14 +454,19 @@ export const workflowSlice = createSlice({
       (state, action) => {
         const response = action.payload;
         const savedObjects = {};
-        response.object_details.map((object) => {
-          const key = String([object.integration_name, object.object_name]);
-          if (savedObjects[key]) {
-            savedObjects[key].push(object);
-          } else {
-            savedObjects[key] = [object];
-          }
-        });
+
+        // Only run this code if there are saved objects. If there are none, then just skip
+        // this altogether.
+        if (!!response.object_details) {
+          response.object_details.map((object) => {
+            const key = String([object.integration_name, object.object_name]);
+            if (savedObjects[key]) {
+              savedObjects[key].push(object);
+            } else {
+              savedObjects[key] = [object];
+            }
+          });
+        }
 
         state.savedObjects.loadingStatus = {
           loading: LoadingStatusEnum.Succeeded,
