@@ -1,3 +1,5 @@
+import inspect
+import warnings
 from functools import wraps
 from typing import Any, Callable, List, Optional, Union
 
@@ -25,6 +27,7 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
+from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -181,6 +184,36 @@ def _type_check_decorated_function_arguments(
                 )
 
 
+def _convert_argument_to_parameter(
+    *input_artifacts: Any, function_argument_names: List[str]
+) -> List[BaseArtifact]:
+    """
+    Converts non-artifact inputs to parameters.
+    """
+    dag = dag_module.__GLOBAL_DAG__
+
+    artifacts = list(input_artifacts)
+    for idx, artifact in enumerate(artifacts):
+        if not isinstance(artifact, BaseArtifact):
+            arg_name = function_argument_names[idx]
+            if dag.get_operator(with_name=arg_name) is not None:
+                raise InvalidUserArgumentException(
+                    """Input to function argument "%s" is not an artifact type. We tried implicitly \
+creating a parameter named "%s", but an existing operator or parameter with the same name already exist."""
+                    % (arg_name, arg_name)
+                )
+
+            new_artifact = create_param(dag=dag, name=arg_name, default=artifact)
+            warnings.warn(
+                """Input to function argument "%s" is not an artifact type. We have implicitly \
+created a parameter named "%s" and your input will be used as its default value. This parameter \
+will be used when running the function."""
+                % (arg_name, arg_name)
+            )
+            artifacts[idx] = new_artifact
+    return artifacts
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -251,7 +284,11 @@ def op(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            _type_check_decorated_function_arguments(OperatorType.FUNCTION, *input_artifacts)
+            artifacts = _convert_argument_to_parameter(
+                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            )
+
+            _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
@@ -261,7 +298,7 @@ def op(
             )
             new_function_artifact = wrap_spec(
                 OperatorSpec(function=function_spec),
-                *input_artifacts,
+                *artifacts,
                 op_name=name,
                 description=description,
                 execution_mode=execution_mode,
@@ -366,7 +403,11 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            _type_check_decorated_function_arguments(OperatorType.METRIC, *input_artifacts)
+            artifacts = _convert_argument_to_parameter(
+                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            )
+
+            _type_check_decorated_function_arguments(OperatorType.METRIC, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
 
@@ -381,7 +422,7 @@ def metric(
 
             numeric_artifact = wrap_spec(
                 OperatorSpec(metric=metric_spec),
-                *input_artifacts,
+                *artifacts,
                 op_name=name,
                 description=description,
                 execution_mode=execution_mode,
@@ -504,7 +545,11 @@ def check(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            _type_check_decorated_function_arguments(OperatorType.CHECK, *input_artifacts)
+            artifacts = _convert_argument_to_parameter(
+                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            )
+
+            _type_check_decorated_function_arguments(OperatorType.CHECK, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
@@ -516,7 +561,7 @@ def check(
 
             bool_artifact = wrap_spec(
                 OperatorSpec(check=check_spec),
-                *input_artifacts,
+                *artifacts,
                 op_name=name,
                 description=description,
                 execution_mode=execution_mode,
