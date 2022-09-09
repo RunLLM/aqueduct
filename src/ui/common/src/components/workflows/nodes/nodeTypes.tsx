@@ -3,7 +3,7 @@ import CheckOperatorNode from './CheckOperatorNode';
 import DatabaseNode from './DatabaseNode';
 import DictArtifactNode from './DictArtifactNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
-import GeneticArtifactNode from './GenericArtifactNode';
+import GenericArtifactNode from './GenericArtifactNode';
 import ImageArtifactNode from './ImageArtifactNode';
 import JsonArtifactNode from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
@@ -20,7 +20,7 @@ export const nodeTypes = {
   stringArtifact: StringArtifactNode,
   imageArtifact: ImageArtifactNode,
   dictArtifact: DictArtifactNode,
-  genericArtifact: GeneticArtifactNode,
+  genericArtifact: GenericArtifactNode,
   function: FunctionOperatorNode,
 
   // These are generic DAG nodes
