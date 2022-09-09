@@ -36,6 +36,9 @@ class GenericArtifact(BaseArtifact):
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
         self._set_content(content)
+        # This is only relevant to generic artifact produced from flow_run.artifact().
+        # We need this to distinguish between when an artifact's content is None versus
+        # when it fails to compute successfully.
         self._execution_status = execution_status
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
