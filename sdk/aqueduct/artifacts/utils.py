@@ -4,24 +4,18 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
-from aqueduct.dag import (
-    DAG,
-    AddOrReplaceOperatorDelta,
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import (
     SubgraphDAGDelta,
     UpdateParametersDelta,
     apply_deltas_to_dag,
+    validate_overwriting_parameters,
 )
-from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.enums import ArtifactType
-from aqueduct.error import (
-    InvalidArtifactTypeException,
-    InvalidIntegrationException,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
-from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, SaveConfig
+from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.responses import ArtifactResult
-from aqueduct.utils import generate_uuid, infer_artifact_type
+from aqueduct.serialization import deserialization_function_mapping
+from aqueduct.utils import infer_artifact_type
 
 from aqueduct import globals
 
@@ -40,6 +34,10 @@ def preview_artifact(
     Will handle all type inference of the target artifact, as well as any upstream artifacts
     that were lazily computed.
     """
+
+    if parameters is not None:
+        validate_overwriting_parameters(dag, parameters)
+
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[

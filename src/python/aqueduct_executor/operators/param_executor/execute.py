@@ -10,8 +10,11 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import infer_artifact_type, base64_string_to_bytes, \
-    deserialization_function_mapping
+from aqueduct_executor.operators.utils.utils import (
+    base64_string_to_bytes,
+    deserialization_function_mapping,
+    infer_artifact_type,
+)
 
 
 def run(spec: ParamSpec) -> None:
@@ -30,7 +33,8 @@ def run(spec: ParamSpec) -> None:
         inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
             raise Exception(
-                "Supplied parameter expects type `%s`, but got `%s` instead." % (spec.expected_type, inferred_type)
+                "Supplied parameter expects type `%s`, but got `%s` instead."
+                % (spec.expected_type, inferred_type)
             )
 
         utils.write_artifact(

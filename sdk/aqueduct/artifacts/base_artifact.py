@@ -3,8 +3,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import (
-    DAG,
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import (
     AddOrReplaceOperatorDelta,
     apply_deltas_to_dag,
     find_duplicate_load_operator,

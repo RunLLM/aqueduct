@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import os
@@ -19,9 +18,9 @@ from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
-from .dag import (
+from .dag import Metadata
+from .dag_deltas import (
     AddOrReplaceOperatorDelta,
-    Metadata,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
@@ -44,9 +43,8 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import serialize_parameter_value
+from .operators import Operator, OperatorSpec
 from .responses import SavedObjectUpdate
-from .serialization import serialization_function_mapping, bytes_to_base64_string, _artifact_type_to_serialization_type
 from .utils import (
     _infer_requirements,
     generate_engine_config,
@@ -55,7 +53,7 @@ from .utils import (
     infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
-    schedule_from_cron_string,
+    schedule_from_cron_string, construct_param_spec, serialize_param_val,
 )
 
 
@@ -429,6 +427,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        serialized_params_str = None
         if parameters is not None:
             flow = self.flow(flow_id)
             runs = flow.list_runs(limit=1)
@@ -441,17 +440,15 @@ class Client:
                 )
             validate_overwriting_parameters(flow.latest()._dag, parameters)
 
-        serialized_params = None
-        if parameters is not None:
-            if any(not isinstance(name, str) for name in parameters):
-                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
-
-            serialized_params = json.dumps(
-                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
-            )
+            serialized_params: Dict[str, str] = {}
+            for name, new_val in parameters.items():
+                param_spec = self._dag.must_get_operator(with_name=name).spec.param
+                assert param_spec is not None
+                serialized_params[name] = serialize_param_val(new_val, param_spec.serialization_type)
+            serialized_params_str = json.dumps(serialized_params)
 
         flow_id = parse_user_supplied_id(flow_id)
-        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params_str)
 
     def delete_flow(
         self,

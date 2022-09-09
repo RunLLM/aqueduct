@@ -1,15 +1,16 @@
 import base64
 import io
 import json
-from typing import Any, Dict, Callable
+from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.enums import SerializationType, ArtifactType
+from aqueduct.enums import ArtifactType, SerializationType
 from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
+
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
@@ -35,7 +36,7 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
-deserialization_function_mapping: Dict[str, Callable[..., bytes]] = {
+deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     SerializationType.TABLE: _read_table_content,
     SerializationType.JSON: _read_json_content,
     SerializationType.PICKLE: _read_pickle_content,
@@ -46,7 +47,7 @@ deserialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 
 
 def _write_table_output(output: pd.DataFrame) -> bytes:
-    output_str = output.to_json(orient="table", date_format="iso", index=False)
+    output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
     return output_str.encode(_DEFAULT_ENCODING)
 
 
@@ -65,14 +66,14 @@ def _write_bytes_output(output: bytes) -> bytes:
 
 
 def _write_pickle_output(output: Any) -> bytes:
-    return pickle.dumps(output)
+    return bytes(pickle.dumps(output))
 
 
 def _write_json_output(output: Any) -> bytes:
     return json.dumps(output).encode(_DEFAULT_ENCODING)
 
 
-serialization_function_mapping = {
+serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
     SerializationType.PICKLE: _write_pickle_output,
@@ -107,7 +108,9 @@ artifact_to_serialization = {
 }
 
 
-def _artifact_type_to_serialization_type(artifact_type: ArtifactType, content: Any) -> SerializationType:
+def artifact_type_to_serialization_type(
+    artifact_type: ArtifactType, content: Any
+) -> SerializationType:
     """Copy of the same method on in aqueduct executor."""
     if artifact_type == ArtifactType.TABLE:
         serialization_type = SerializationType.TABLE
@@ -131,6 +134,6 @@ def _artifact_type_to_serialization_type(artifact_type: ArtifactType, content: A
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
     assert serialization_type is not None and (
-            serialization_type in artifact_to_serialization[artifact_type]
+        serialization_type in artifact_to_serialization[artifact_type]
     )
     return serialization_type

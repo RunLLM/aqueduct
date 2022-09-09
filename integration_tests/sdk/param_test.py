@@ -62,16 +62,6 @@ def test_basic_param_creation(client):
     assert_frame_equal(kv_df.get(), pd.DataFrame(data=kv))
 
 
-def test_non_jsonable_parameter(client):
-    with pytest.raises(InvalidUserArgumentException):
-        _ = client.create_param(name="bad param", default=b"cant serialize me")
-
-    param = client.create_param(name="number", default=8)
-    param_doubled = double_number_input(param)
-    with pytest.raises(InvalidUserArgumentException):
-        _ = param_doubled.get(parameters={"number": b"cant serialize me"})
-
-
 def test_get_with_custom_parameter(client):
     param = client.create_param(name="number", default=8)
     assert param.get() == 8
@@ -327,6 +317,7 @@ def test_non_jsonable_param_types(client):
         For some reason, this class must be nested inside this test,
         otherwise we get a pickle error on the backend: 'No module named `param_test`'.
         """
+
         def __init__(self):
             pass
 
@@ -350,8 +341,8 @@ def test_non_jsonable_param_types(client):
         assert isinstance(input, bytes)
         return input
 
-    bytes_param = client.create_param("bytes", default=b'hello world')
+    bytes_param = client.create_param("bytes", default=b"hello world")
     output = must_be_bytes(bytes_param)
 
     assert isinstance(output, GenericArtifact)
-    assert output.get() == b'hello world'
+    assert output.get() == b"hello world"

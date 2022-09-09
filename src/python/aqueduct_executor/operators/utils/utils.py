@@ -1,11 +1,12 @@
+import base64
 import io
 import json
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
-import base64
 import cloudpickle as pickle
 import numpy as np
 import pandas as pd
+
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -125,7 +126,9 @@ def read_system_metadata(
 def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str
 ) -> List[Dict[str, Any]]:
-    metadata_inputs = [_read_json_input(storage.get(input_path)) for input_path in input_metadata_paths]
+    metadata_inputs = [
+        _read_json_input(storage.get(input_path)) for input_path in input_metadata_paths
+    ]
     print("key name is", key_name)
     print("metadata_inputs is", metadata_inputs)
     if any(key_name not in metadata for metadata in metadata_inputs):
@@ -219,7 +222,9 @@ def write_artifact(
     if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
 
-    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = artifact_type_to_serialization_type(artifact_type, content).value
+    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = artifact_type_to_serialization_type(
+        artifact_type, content
+    ).value
 
     _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
         storage,
@@ -229,7 +234,9 @@ def write_artifact(
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING))
 
 
-def artifact_type_to_serialization_type(artifact_type: ArtifactType, content: Any) -> SerializationType:
+def artifact_type_to_serialization_type(
+    artifact_type: ArtifactType, content: Any
+) -> SerializationType:
     if artifact_type == ArtifactType.TABLE:
         serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:

@@ -6,8 +6,9 @@ import pandas as pd
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType, SerializationType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
@@ -148,8 +149,8 @@ class RelationalDBIntegration(Integration):
             matches = re.findall(TAG_PATTERN, extract_params.query)
             for match in matches:
                 param_name = match.strip(" {}")
-                param_op = self._dag.get_operator(with_name=param_name)
-                if param_op is None:
+                param_artifact = self._dag.get_artifact_by_name(param_name)
+                if param_artifact is None:
                     # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
                     if param_name in BUILT_IN_EXPANSIONS:
                         continue
@@ -159,15 +160,13 @@ class RelationalDBIntegration(Integration):
                     )
 
                 # Check that the parameter corresponds to a string value.
-                assert param_op.spec.param is not None
-                param_val = json.loads(param_op.spec.param.val)
-                if not isinstance(param_val, str):
+                if param_artifact.type != ArtifactType.STRING:
                     raise InvalidUserArgumentException(
                         "The parameter `%s` must be defined as a string. Instead, got type %s"
-                        % (param_name, type(param_val).__name__)
+                        % (param_name, param_artifact.type)
                     )
-                assert len(param_op.outputs) == 1
-                sql_input_artifact_ids.append(param_op.outputs[0])
+
+                sql_input_artifact_ids.append(param_artifact.id)
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()

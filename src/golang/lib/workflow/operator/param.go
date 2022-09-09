@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/google/uuid"
 )
@@ -43,7 +44,7 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			po.metadataPath,
 		),
 		Val:               po.dbOperator.Spec.Param().Val,
-		ExpectedType:      po.dbOperator.Spec.Param().Type,
+		ExpectedType:      po.outputs[0].Type(),
 		SerializationType: po.dbOperator.Spec.Param().SerializationType,
 
 		OutputMetadataPath: po.outputExecPaths[0].ArtifactMetadataPath,

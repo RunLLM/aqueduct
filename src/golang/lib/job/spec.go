@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"

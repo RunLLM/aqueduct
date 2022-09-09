@@ -14,21 +14,18 @@ import cloudpickle as pickle
 import multipart
 import numpy as np
 import requests
-from aqueduct.config import (
-    AirflowEngineConfig,
-    EngineConfig,
-    FlowConfig,
-    K8sEngineConfig,
-    LambdaEngineConfig,
-)
+from aqueduct.serialization import artifact_type_to_serialization_type, serialization_function_mapping, \
+    bytes_to_base64_string
+
+from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig, LambdaEngineConfig
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType, SerializationType
 from aqueduct.error import *
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
-from aqueduct.operators import Operator
+from aqueduct.operators import Operator, ParamSpec
 from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
@@ -521,6 +518,23 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             return ArtifactType.PICKLABLE
         except:
             raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
+    serialization_type = artifact_type_to_serialization_type(artifact_type, val)
+    assert serialization_type in serialization_function_mapping
+
+    # We must base64 encode the resulting bytes, since we can't be sure
+    # what encoding it was written in (eg. Image types are not encoded as "utf8").
+    return ParamSpec(
+        val=serialize_param_val(val, serialization_type),
+        serialization_type=serialization_type,
+    )
+
+
+def serialize_param_val(val: Any, serialization_type: SerializationType) -> str:
+    val_bytes = serialization_function_mapping[serialization_type](val)
+    return bytes_to_base64_string(val_bytes)
 
 
 def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:

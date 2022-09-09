@@ -6,7 +6,6 @@ import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
-from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
@@ -29,6 +28,7 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.utils import GITHUB_ISSUE_LINK
 from requests_toolbelt.multipart import decoder
 
