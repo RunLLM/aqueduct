@@ -139,6 +139,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Lambda':
       serviceCard = <LambdaCard integration={integration} />;
+      break;
     default:
       serviceCard = null;
   }
