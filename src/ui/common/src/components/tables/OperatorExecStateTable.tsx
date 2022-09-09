@@ -9,12 +9,12 @@ import * as React from 'react';
 import { Data, DataSchema } from '../../utils/data';
 import { CheckTableItem } from './CheckTableItem';
 
-export enum KeyValueTableType {
+export enum OperatorExecStateTableType {
   Metric = 'metric',
   Check = 'check',
 }
 
-interface KeyValueTableProps {
+interface OperatorExecStateTableProps {
   rows: Data;
   schema?: DataSchema;
   height?: string;
@@ -22,7 +22,7 @@ interface KeyValueTableProps {
   maxHeight?: string;
   stickyHeader?: boolean;
   tableAlign?: string;
-  tableType: KeyValueTableType;
+  tableType: OperatorExecStateTableType;
 }
 
 const kvSchema: DataSchema = {
@@ -33,7 +33,7 @@ const kvSchema: DataSchema = {
   pandas_version: '0.0.1', // TODO: Figure out what to set this value to.
 };
 
-export const KeyValueTable: React.FC<KeyValueTableProps> = ({
+export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
   rows,
   schema = kvSchema,
   height = '440px',
@@ -80,8 +80,8 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({
                       key={`cell-${rowIndex}-${columnIndex}`}
                       align={tableAlign as TableCellProps['align']}
                     >
-                      {tableType === KeyValueTableType.Metric ||
-                      column.name === 'title' ? (
+                      {tableType === OperatorExecStateTableType.Metric ||
+                        column.name === 'title' ? (
                         value
                       ) : (
                         <CheckTableItem checkValue={value as string} />
@@ -98,4 +98,4 @@ export const KeyValueTable: React.FC<KeyValueTableProps> = ({
   );
 };
 
-export default KeyValueTable;
+export default OperatorExecStateTable;

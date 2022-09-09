@@ -12,13 +12,13 @@ import * as React from 'react';
 
 import { Data } from '../../utils/data';
 
-interface StickyHeaderTableProps {
+interface PaginatedTableProps {
   data: Data;
 }
 
-const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
+const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const rows = data.data;
   const columns = data.schema.fields;
@@ -107,7 +107,7 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={[5, 10, 25, 50, 100]}
         component="div"
         count={rows.length}
         rowsPerPage={rowsPerPage}
@@ -119,4 +119,4 @@ const StickyHeaderTable: React.FC<StickyHeaderTableProps> = ({ data }) => {
   );
 };
 
-export default StickyHeaderTable;
+export default PaginatedTable;

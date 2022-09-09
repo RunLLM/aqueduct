@@ -10,11 +10,11 @@ import React from 'react';
 
 import { theme } from '../../styles/theme/theme';
 
-interface MetricTableItemProps {
+interface CheckTableItemProps {
   checkValue: string;
 }
 
-export const CheckTableItem: React.FC<MetricTableItemProps> = ({
+export const CheckTableItem: React.FC<CheckTableItemProps> = ({
   checkValue,
 }) => {
   let iconColor = theme.palette.black;

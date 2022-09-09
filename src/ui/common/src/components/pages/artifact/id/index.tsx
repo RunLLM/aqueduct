@@ -15,10 +15,10 @@ import { Data, DataSchema } from '../../../../utils/data';
 import { exportCsv } from '../../../../utils/preview';
 import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
-import KeyValueTable, {
-  KeyValueTableType,
-} from '../../../tables/KeyValueTable';
-import StickyHeaderTable from '../../../tables/StickyHeaderTable';
+import OperatorExecStateTable, {
+  OperatorExecStateTableType,
+} from '../../../tables/OperatorExecStateTable';
+import PaginatedTable from '../../../tables/PaginatedTable';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 
@@ -134,7 +134,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             <Typography variant="h5" component="div" marginBottom="8px">
               Preview
             </Typography>
-            <StickyHeaderTable data={parsedData} />
+            <PaginatedTable data={parsedData} />
           </Box>
           <Box display="flex" width="100%" paddingTop="40px">
             <Box width="100%">
@@ -142,10 +142,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 Metrics
               </Typography>
               {mockMetrics.data.length > 0 ? (
-                <KeyValueTable
+                <OperatorExecStateTable
                   schema={kvSchema}
                   rows={mockMetrics}
-                  tableType={KeyValueTableType.Metric}
+                  tableType={OperatorExecStateTableType.Metric}
                 />
               ) : (
                 <Typography variant="body2">
@@ -159,10 +159,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 Checks
               </Typography>
               {mockChecks.data.length > 0 ? (
-                <KeyValueTable
+                <OperatorExecStateTable
                   schema={kvSchema}
                   rows={mockChecks}
-                  tableType={KeyValueTableType.Check}
+                  tableType={OperatorExecStateTableType.Check}
                 />
               ) : (
                 <Typography variant="body2">

@@ -70,8 +70,8 @@ import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
-import { KeyValueTableType } from './components/tables/KeyValueTable';
-import StickyHeaderTable from './components/tables/StickyHeaderTable';
+import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
+import PaginatedTable from './components/tables/PaginatedTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -419,7 +419,7 @@ export {
   integrationsSlice,
   IntegrationState,
   IntegrationTextInputField,
-  KeyValueTableType,
+  OperatorExecStateTableType,
   listNotifications,
   ListWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
@@ -521,7 +521,7 @@ export {
   Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
-  StickyHeaderTable,
+  PaginatedTable,
   store,
   SupportedIntegrations,
   Tab,

@@ -11,7 +11,7 @@ import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
-import StickyHeaderTable from '../../../../components/tables/StickyHeaderTable';
+import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
 import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
 import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
@@ -277,7 +277,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 <FontAwesomeIcon
                   icon={
                     artifactTypeToIconMapping[
-                      artifactResult.result.artifact_type
+                    artifactResult.result.artifact_type
                     ]
                   }
                 />
@@ -410,7 +410,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 ]}
                 layout={{ width: '100%', height: '100%' }}
               />
-              <StickyHeaderTable data={mockHistoricalMetrics} />
+              <PaginatedTable data={mockHistoricalMetrics} />
             </Box>
           </Box>
         </Box>
