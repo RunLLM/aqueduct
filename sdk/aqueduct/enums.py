@@ -70,6 +70,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     AIRFLOW = "Airflow"
     K8S = "Kubernetes"
     GCS = "GCS"
+    LAMBDA = "Lambda"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -170,3 +171,4 @@ class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
     K8S = "k8s"
+    LAMBDA = "lambda"
