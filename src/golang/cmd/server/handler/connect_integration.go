@@ -26,6 +26,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -236,6 +237,12 @@ func ValidateConfig(
 		// Kuerbnetes authentication is performed via initializing a k8s client
 		// instead of the Python client, so we don't launch a job for it.
 		return validateKubernetesConfig(ctx, config)
+	}
+
+	if service == integration.Lambda {
+		// Lambda authentication is performed by creating Lambda jobs
+		// instead of the Python client, so we don't launch a job for it.
+		return validateLambdaConfig(ctx, config)
 	}
 
 	// Schedule authenticate job
@@ -462,6 +469,19 @@ func validateKubernetesConfig(
 	config auth.Config,
 ) (int, error) {
 	if err := engine.AuthenticateK8sConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateLambdaConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	logrus.Info("inside validateLambdaConfig")
+	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
+		logrus.Info(err)
 		return http.StatusBadRequest, err
 	}
 
