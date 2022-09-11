@@ -22,7 +22,7 @@ func PollJob(
 	for {
 		select {
 		case <-poller.C:
-			status, err := manager.Poll(ctx, name)
+			status, err := manager.Poll(ctx, name, "", nil)
 			if err != nil {
 				return shared.UnknownExecutionStatus, err
 			}

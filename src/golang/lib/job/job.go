@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 type JobManager interface {
 	Config() Config
 	Launch(ctx context.Context, name string, spec Spec) error
-	Poll(ctx context.Context, name string) (shared.ExecutionStatus, error)
+	Poll(ctx context.Context, name string, metadataPath string, storageConfig *shared.StorageConfig) (shared.ExecutionStatus, error)
 	DeployCronJob(ctx context.Context, name string, period string, spec Spec) error
 	CronJobExists(ctx context.Context, name string) bool
 	EditCronJob(ctx context.Context, name string, cronString string) error
@@ -38,6 +39,14 @@ func NewJobManager(conf Config) (JobManager, error) {
 			return nil, ErrInvalidJobManagerConfig
 		}
 		return NewK8sJobManager(k8sConfig)
+	}
+	if conf.Type() == LambdaType {
+		lambdaConfig, ok := conf.(*LambdaJobManagerConfig)
+		if !ok {
+			return nil, ErrInvalidJobManagerConfig
+		}
+		logrus.Info("Creating a LambdaJobManager")
+		return NewLambdaJobManager(lambdaConfig)
 	}
 
 	return nil, ErrInvalidJobManagerConfig

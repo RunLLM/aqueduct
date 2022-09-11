@@ -9,6 +9,7 @@ type ManagerType string
 const (
 	ProcessType ManagerType = "process"
 	K8sType     ManagerType = "k8s"
+	LambdaType  ManagerType = "lambda"
 )
 
 type Config interface {
@@ -32,12 +33,22 @@ type K8sJobManagerConfig struct {
 	AwsRegion string `yaml:"awsRegion" json:"aws_region"`
 }
 
-func (*K8sJobManagerConfig) Type() ManagerType {
-	return K8sType
+type LambdaJobManagerConfig struct {
+	RoleArn            string `yaml:"roleArn" json:"role_arn"`
+	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
 }
 
 func (*ProcessConfig) Type() ManagerType {
 	return ProcessType
+}
+
+func (*K8sJobManagerConfig) Type() ManagerType {
+	return K8sType
+}
+
+func (*LambdaJobManagerConfig) Type() ManagerType {
+	return LambdaType
 }
 
 func RegisterGobTypes() {

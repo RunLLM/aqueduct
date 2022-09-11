@@ -117,6 +117,7 @@ func NewOperator(
 
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,
+		launchNumber:     0,
 	}
 
 	if dbOperator.Spec.IsFunction() {

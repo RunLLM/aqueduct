@@ -105,7 +105,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	)
 }
 
-func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+func (j *k8sJobManager) Poll(ctx context.Context, name string, metadataPath string, storageConfig *shared.StorageConfig) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, ErrJobNotExist

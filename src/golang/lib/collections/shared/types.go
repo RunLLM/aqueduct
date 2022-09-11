@@ -27,8 +27,9 @@ const (
 	CanceledExecutionStatus  ExecutionStatus = "canceled"
 	// Registered is a special state that indicates a workflow has been registered
 	// but has no workflow runs yet
-	RegisteredExecutionStatus ExecutionStatus = "registered"
-	UnknownExecutionStatus    ExecutionStatus = "unknown"
+	RegisteredExecutionStatus      ExecutionStatus = "registered"
+	UnknownExecutionStatus         ExecutionStatus = "unknown"
+	LambdaCompletedExecutionStatus ExecutionStatus = "lambda_completed"
 )
 
 type FailureType int64

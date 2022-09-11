@@ -45,6 +45,7 @@ type baseOperator struct {
 	// This cannot be set if the operator is cache-aware, since this only happens in non-preview paths.
 	resultsPersisted bool
 	execMode         ExecutionMode
+	launchNumber     int
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -76,6 +77,11 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 }
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+
+	if bo.launchNumber >= 1 {
+		return nil
+	}
+
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
 		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))
@@ -103,6 +109,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 			return nil
 		}
 	}
+	bo.launchNumber = bo.launchNumber + 1
 
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
@@ -133,8 +140,7 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
 	}
-
-	status, err := bo.jobManager.Poll(ctx, bo.jobName)
+	status, err := bo.jobManager.Poll(ctx, bo.jobName, bo.metadataPath, bo.storageConfig)
 	if err != nil {
 		// If the job does not exist, this could mean that
 		// 1) it is hasn't been run yet (pending),
@@ -157,7 +163,7 @@ func (bo *baseOperator) GetExecState(ctx context.Context) (*shared.ExecutionStat
 		}
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
-		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
+		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus || status == shared.LambdaCompletedExecutionStatus {
 			return bo.fetchExecState(ctx), nil
 		}
 

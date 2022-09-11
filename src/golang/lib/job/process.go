@@ -306,7 +306,7 @@ func (j *ProcessJobManager) Launch(
 	return cmd.Start()
 }
 
-func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+func (j *ProcessJobManager) Poll(ctx context.Context, name string, metadataPath string, storageConfig *shared.StorageConfig) (shared.ExecutionStatus, error) {
 	command, ok := j.getCmd(name)
 	if !ok {
 		return shared.UnknownExecutionStatus, ErrJobNotExist
