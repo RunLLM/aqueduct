@@ -42,6 +42,35 @@ build-snowflake-connector:
 build-sqlserver-connector:
 	docker build . -t aqueducthq/sqlserver-connector:0.0.13 -f connectors/sqlserver.dockerfile --no-cache
 
+build-lambda-images: build-lambda-function build-lambda-param build-lambda-system-metric build-lambda-snowflake
+
+build-lambda-function:
+	docker build . -t hsubbaraj/lambda-function -f lambda/function/function.dockerfile --no-cache
+
+build-lambda-param:
+	docker build . -t hsubbaraj/lambda-param -f lambda/param/param.dockerfile --no-cache
+
+build-lambda-system-metric:
+	docker build . -t hsubbaraj/lambda-system-metric -f lambda/system-metric/system-metric.dockerfile --no-cache
+
+build-lambda-connectors: build-lambda-snowflake build-lambda-athena build-lambda-bigquery build-lambda-postgres build-lambda-s3
+
+build-lambda-snowflake:
+	docker build . -t hsubbaraj/lambda-snowflake -f lambda/connectors/snowflake.dockerfile --no-cache
+
+build-lambda-athena:
+	docker build . -t aqueducthq/lambda-athena -f lambda/connectors/athena.dockerfile --no-cache
+
+build-lambda-bigquery:
+	docker build . -t aqueducthq/lambda-bigquery -f lambda/connectors/bigquery.dockerfile --no-cache
+
+build-lambda-postgres:
+	docker build . -t aqueducthq/lambda-postgres -f lambda/connectors/postgres.dockerfile --no-cache
+
+build-lambda-s3:
+	docker build . -t aqueducthq/lambda-s3 -f lambda/connectors/s3.dockerfile --no-cache
+
+
 publish-function:
 	docker push aqueducthq/function:0.0.13
 
@@ -59,6 +88,12 @@ publish-connectors:
 	docker push aqueducthq/s3-connector:0.0.13
 	docker push aqueducthq/snowflake-connector:0.0.13
 	docker push aqueducthq/sqlserver-connector:0.0.13
+
+publish-lambda:
+	docker push hsubbaraj/lambda-function
+	docker push hsubbaraj/lambda-snowflake
+	docker push hsubbaraj/lambda-param
+	docker push hsubbaraj/lambda-system-metric
 
 .PHONY:
 
