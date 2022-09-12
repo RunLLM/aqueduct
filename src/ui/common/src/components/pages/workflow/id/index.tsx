@@ -38,7 +38,6 @@ import {
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
 import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
-import { getBottomSideSheetWidth } from '../../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
@@ -231,10 +230,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   // absolute-positioned, it's required in order to align the content with
   // the status bar's width.
   const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
-  const contentWidth = getBottomSideSheetWidth(
-    openSideSheetState.workflowStatusBarOpen,
-    fullWindowWidth
-  );
+  // const contentWidth = getBottomSideSheetWidth(
+  //   openSideSheetState.workflowStatusBarOpen,
+  //   fullWindowWidth
+  // );
+  const contentWidth = '100%';
   const contentBottomOffsetInPx = 0;
 
   // if (openSideSheetState.bottomSideSheetOpen) {
