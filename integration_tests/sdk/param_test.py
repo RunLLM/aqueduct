@@ -12,7 +12,7 @@ from aqueduct.error import (
 )
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
-from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
+from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs, delete_flow
 
 from aqueduct import metric, op
 
@@ -346,3 +346,32 @@ def test_non_jsonable_param_types(client):
 
     assert isinstance(output, GenericArtifact)
     assert output.get() == b"hello world"
+
+
+def test_parameter_type_changes(client):
+    @op
+    def noop(input):
+        return input
+
+    param = client.create_param("number", default=1234)
+    output = noop(param)
+
+    # TODO(ENG-1684): This should be a more specific error.
+    with pytest.raises(Exception):
+        output.get(parameters={"number": "This is a string."})
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        # TODO(ENG-1684): we should not allow the user to trigger successfully with the wrong type.
+        client.trigger(flow_id, parameters={"number": "This is a string"})
+        wait_for_flow_runs(
+            client,
+            flow_id,
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+        )
+    finally:
+        delete_flow(client, flow_id)
+

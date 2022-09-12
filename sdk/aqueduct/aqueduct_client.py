@@ -444,11 +444,9 @@ class Client:
 
             serialized_params: Dict[str, str] = {}
             for name, new_val in parameters.items():
-                param_spec = self._dag.must_get_operator(with_name=name).spec.param
-                assert param_spec is not None
-                serialized_params[name] = serialize_param_val(
-                    new_val, param_spec.serialization_type
-                )
+                artifact_type = infer_artifact_type(new_val)
+                serialized_params[name] = construct_param_spec(new_val, artifact_type).val
+
             serialized_params_str = json.dumps(serialized_params)
 
         flow_id = parse_user_supplied_id(flow_id)
