@@ -7,6 +7,9 @@ import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { theme } from '../../../../styles/theme/theme';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -236,13 +239,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     openSideSheetState.workflowStatusBarOpen,
     fullWindowWidth
   );
-  let contentBottomOffsetInPx;
+  let contentBottomOffsetInPx = 0;
 
-  if (openSideSheetState.bottomSideSheetOpen) {
-    contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
-  } else {
-    contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
-  }
+  // if (openSideSheetState.bottomSideSheetOpen) {
+  //   contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
+  // } else {
+  //   contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
+  // }
 
   const getNodeLabel = () => {
     if (
@@ -323,32 +326,28 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         </Box>
       </Box>
 
-      {/*
-              {currentNode.type !== NodeType.None && (
-                <AqueductSidebar
-                  zIndex={10}
-                  position={SidebarPosition.bottom}
-                  getSideSheetTitle={getNodeLabel}
-                  getSideSheetHeadingContent={getNodeActionButton}
-                >
-                  {getDataSideSheetContent(user, currentNode)}
-                </AqueductSidebar>
-              }
-      */}
-
       {currentNode.type !== NodeType.None && (
         <Drawer anchor="right" variant="persistent" open={true}>
-          <Box minWidth="800px" minHeight="80vh">
-            <Typography variant="h5" marginLeft="16px" marginBottom="16px">
-              {getNodeLabel()}
-            </Typography>
-            {getDataSideSheetContent(user, currentNode)}
+          <Box width="800px" maxWidth="800px" minHeight="80vh">
+            <Box width="100%" sx={{ backgroundColor: theme.palette.gray['100'] }} display="flex">
+              <Box sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }} onClick={onPaneClicked}>
+                <FontAwesomeIcon icon={faChevronRight} />
+              </Box>
+              <Typography variant="h5" padding="16px">
+                {getNodeLabel()}
+              </Typography>
+              <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>{getNodeActionButton()}</Box>
+            </Box>
+            <Box marginLeft="16px">
+              {getDataSideSheetContent(user, currentNode)}
+            </Box>
           </Box>
         </Drawer>
-      )}
+      )
+      }
 
       <WorkflowStatusBar user={user} />
-    </Layout>
+    </Layout >
   );
 };
 
