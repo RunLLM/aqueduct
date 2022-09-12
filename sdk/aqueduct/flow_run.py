@@ -69,13 +69,17 @@ class FlowRun:
         param_operators = self._dag.list_operators(filter_to=[OperatorType.PARAM])
         print(format_header_for_print("Parameters "))
         for param_op in param_operators:
-            param_content = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+            (
+                param_content,
+                execution_status,
+            ) = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
                 self._id, str(param_op.outputs[0])
             )
 
-            if param_content is None:
+            if execution_status != ExecutionStatus.SUCCEEDED:
                 param_content = "Parameter not successfully initialized."
-            print("* " + param_op.name + ": " + param_content)
+
+            print("* " + param_op.name + ": " + str(param_content))
 
     def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.
