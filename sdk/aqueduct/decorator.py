@@ -199,7 +199,7 @@ def _convert_argument_to_parameter(
             if dag.get_operator(with_name=arg_name) is not None:
                 raise InvalidUserArgumentException(
                     """Input to function argument "%s" is not an artifact type. We tried implicitly \
-creating a parameter named "%s", but an existing operator or parameter with the same name already exist."""
+creating a parameter named "%s", but an existing operator or parameter with the same name already exists."""
                     % (arg_name, arg_name)
                 )
 

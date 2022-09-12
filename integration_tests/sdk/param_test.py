@@ -95,17 +95,20 @@ def test_implicitly_created_parameter(client):
 
     result = func(2)
     assert result.get() == 2
-    client._dag.must_get_operator(with_name="foo")
+    assert result.get(parameters={"foo": 10}) == 10
 
-    client.create_param("bar", default="hello")
+    bar_param = client.create_param("bar", default="hello")
 
     @op
     def another_func(bar):
-        return foo
+        return bar
 
     with pytest.raises(InvalidUserArgumentException):
         # This should error because we try to implicitly create a parameter "bar" but it already exists.
         result = another_func(2)
+
+    result = another_func(bar_param)
+    assert result.get() == "hello"
 
 
 @op
