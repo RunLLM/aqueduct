@@ -26,7 +26,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -479,9 +478,7 @@ func validateLambdaConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
-	logrus.Info("inside validateLambdaConfig")
 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
-		logrus.Info(err)
 		return http.StatusBadRequest, err
 	}
 

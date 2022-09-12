@@ -15,9 +15,7 @@ export const LambdaDetailCard: React.FC<Props> = ({ integration }) => {
       <Typography variant="body1">
         <strong>Lambda Role ARN: </strong>
       </Typography>
-      <Typography variant="body1">
-        {config.role_arn}
-      </Typography>
+      <Typography variant="body1">{config.role_arn}</Typography>
     </Box>
   );
 };

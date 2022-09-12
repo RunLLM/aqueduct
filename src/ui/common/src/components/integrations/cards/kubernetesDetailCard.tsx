@@ -15,15 +15,11 @@ export const KubernetesDetailCard: React.FC<Props> = ({ integration }) => {
       <Typography variant="body1">
         <strong>Kubernetes Config Path: </strong>
       </Typography>
-      <Typography variant="body1">
-        {config.kubeconfig_path}
-      </Typography>
+      <Typography variant="body1">{config.kubeconfig_path}</Typography>
       <Typography variant="body1">
         <strong>Cluster Name: </strong>
       </Typography>
-      <Typography variant="body1">
-        {config.cluster_name}
-      </Typography>
+      <Typography variant="body1">{config.cluster_name}</Typography>
     </Box>
   );
 };

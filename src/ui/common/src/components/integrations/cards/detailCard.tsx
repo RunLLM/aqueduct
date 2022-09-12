@@ -54,40 +54,43 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       serviceCard = <S3Card integration={integration} />;
       break;
     case 'Kubernetes':
-      serviceCard = <KubernetesDetailCard integration={integration} />
+      serviceCard = <KubernetesDetailCard integration={integration} />;
       break;
     case 'Lambda':
-      serviceCard = <LambdaDetailCard integration={integration} />
+      serviceCard = <LambdaDetailCard integration={integration} />;
       break;
     default:
       serviceCard = null;
   }
 
-  if (integration.service === 'Kubernetes' || integration.service === 'Lambda') {
+  if (
+    integration.service === 'Kubernetes' ||
+    integration.service === 'Lambda'
+  ) {
     return (
       <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '900px',
-      }}
-    >
-      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <img
-          height="45px"
-          src={SupportedIntegrations[integration.service].logo}
-        />
-        <Box sx={{ ml: 3 }}>
-          <Box display="flex" flexDirection="row">
-            <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
-              {integration.name}
-            </Typography>
-          </Box>
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '900px',
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+          <img
+            height="45px"
+            src={SupportedIntegrations[integration.service].logo}
+          />
+          <Box sx={{ ml: 3 }}>
+            <Box display="flex" flexDirection="row">
+              <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
+                {integration.name}
+              </Typography>
+            </Box>
             {serviceCard}
+          </Box>
         </Box>
       </Box>
-    </Box>
-    )
+    );
   }
 
   return (
