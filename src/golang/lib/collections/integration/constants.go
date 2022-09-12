@@ -57,9 +57,9 @@ const (
 	Sqlite       Service = "SQLite"
 	Airflow      Service = "Airflow"
 	Kubernetes   Service = "Kubernetes"
+	Lambda       Service = "Lambda"
 	GCS          Service = "GCS"
 	Athena       Service = "Athena"
-	Lambda       Service = "Lambda"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
