@@ -427,7 +427,9 @@ class APIClient:
 
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
-    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> Optional[Any]:
+    def get_artifact_result_data(
+        self, dag_result_id: str, artifact_id: str
+    ) -> Tuple[Optional[Any], ExecutionStatus]:
         """Returns an empty string if the operator was not successfully executed."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
@@ -437,16 +439,20 @@ class APIClient:
         utils.raise_errors(resp)
 
         parsed_response = utils.parse_artifact_result_response(resp)
+        execution_status = parsed_response["metadata"]["exec_state"]["status"]
 
-        if parsed_response["metadata"]["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
+        if execution_status != ExecutionStatus.SUCCEEDED:
             print("Artifact result unavailable due to unsuccessful execution.")
-            return None
+            return None, execution_status
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
         if serialization_type not in deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s." % serialization_type)
 
-        return deserialization_function_mapping[serialization_type](parsed_response["data"])
+        return (
+            deserialization_function_mapping[serialization_type](parsed_response["data"]),
+            execution_status,
+        )
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]

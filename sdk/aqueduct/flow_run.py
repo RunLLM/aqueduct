@@ -94,7 +94,7 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
 
-        content = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+        content, execution_status = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
             self._id, str(artifact_from_dag.id)
         )
 
@@ -129,4 +129,5 @@ class FlowRun:
                 artifact_from_dag.type,
                 content=content,
                 from_flow_run=True,
+                execution_status=execution_status,
             )
