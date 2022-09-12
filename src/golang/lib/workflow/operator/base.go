@@ -78,6 +78,10 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 }
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
+	if bo.execState.Status != shared.PendingExecutionStatus {
+		return ErrInvalidStatusToLaunch
+	}
+
 	bo.updateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
@@ -140,10 +144,8 @@ func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
 		execTimestamps.FinishedAt = &now
 	} else if execState.Status == shared.RunningExecutionStatus {
 		execTimestamps.RunningAt = &now
-	} else {
-		// This method shouldn't get called under other states.
-		// As an additional safeguard, we do nothing for other states if it's called.
-		return
+	} else if execState.Status == shared.PendingExecutionStatus {
+		execTimestamps.PendingAt = &now
 	}
 
 	execState.Timestamps = execTimestamps
