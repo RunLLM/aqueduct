@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.0.14
+Released on September 12, 2022.
+
+### Enhancements
+* Enables searching through workflows list.
+* Workflows are now displayed on the workflows page even before any runs have
+    been created.
+* Adds canceled state to operator lifecycle; when upstream operators fail,
+    downstream operators and artifact  are now marked as canceled rather than 
+    being marked as permanently in progress.
+* Adds ability to connect new SQLite DB from UI.
+* Redesigns integration viewing page to explicitly show DB tables rather than
+    previous select menu.
+
+### Bugfixes
+* Fixes bug where browser console throws error when there is no write operator
+    in workflow DAG.
+* Fixes bug where operators previously could not return `None`.
+
 ## 0.0.13
 Released on September 6, 2022.
 
