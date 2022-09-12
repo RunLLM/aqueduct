@@ -240,6 +240,7 @@ const IntegrationDialog: React.FC<Props> = ({
           value={config as KubernetesConfig}
         />
       );
+      break;
     case 'Lambda':
       serviceDialog = (
         <LambdaDialog
