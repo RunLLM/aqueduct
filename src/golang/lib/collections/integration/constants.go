@@ -69,11 +69,7 @@ const (
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
 	switch svc {
-<<<<<<< HEAD
 	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS, Lambda:
-=======
-	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Lambda, Kubernetes, GCS:
->>>>>>> c06ef6bbbfa12c445ad85f3d4e6c757ad3570e61
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)
