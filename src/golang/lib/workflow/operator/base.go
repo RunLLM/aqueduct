@@ -136,10 +136,8 @@ func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
 	now := time.Now()
 	// copy current timestamps to merge these time
 	execTimestamps := bo.execState.Timestamps
-	if execState.Status == shared.FailedExecutionStatus {
-		execTimestamps.FailedAt = &now
-	} else if execState.Status == shared.SucceededExecutionStatus {
-		execTimestamps.SucceededAt = &now
+	if execState.Terminated() {
+		execTimestamps.FinishedAt = &now
 	} else if execState.Status == shared.RunningExecutionStatus {
 		execTimestamps.RunningAt = &now
 	} else {
@@ -206,7 +204,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 	}
 
 	// The operator is already terminated. No need to update status.
-	if bo.execState.Status == shared.SucceededExecutionStatus || bo.execState.Status == shared.FailedExecutionStatus {
+	if bo.execState.Terminated() {
 		return bo.ExecState(), nil
 	}
 
@@ -265,8 +263,8 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	}
 
 	execState := bo.ExecState()
-	if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
-		return errors.Newf("Operator %s has neither succeeded or failed, so it does not have results that can be persisted.", bo.Name())
+	if !execState.Terminated() {
+		return errors.Newf("Operator %s is not terminated, so it does not have results that can be persisted.", bo.Name())
 	}
 
 	// Best effort writes after this point.
@@ -279,7 +277,14 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	)
 
 	for _, outputArtifact := range bo.outputs {
-		err := outputArtifact.PersistResult(ctx, execState)
+		// If the operator failed, for now, we assume the downstream artifact is never generated.
+		// In this case, we will mark these artifacts as cancelled.
+		artifactExecState := *execState
+		if execState.Status == shared.FailedExecutionStatus {
+			artifactExecState.Status = shared.CanceledExecutionStatus
+		}
+
+		err := outputArtifact.PersistResult(ctx, &artifactExecState)
 		if err != nil {
 			log.Errorf("Error occurred when persisting artifact %s.", outputArtifact.Name())
 		}
@@ -300,20 +305,10 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 	}
 }
 
-func (bo *baseOperator) Cancel(ctx context.Context) {
-	changes := map[string]interface{}{
-		operator_result.StatusColumn: shared.CanceledExecutionStatus,
-		operator_result.ExecStateColumn: &shared.ExecutionState{
-			Status: shared.CanceledExecutionStatus,
-		},
-	}
-
-	_, err := bo.resultWriter.UpdateOperatorResult(ctx, bo.resultID, changes, bo.db)
-	log.Errorf("Error when setting operator state to canceled: %v", err)
-
-	for _, output := range bo.outputs {
-		output.Cancel(ctx)
-	}
+func (bo *baseOperator) Cancel() {
+	bo.updateExecState(&shared.ExecutionState{
+		Status: shared.CanceledExecutionStatus,
+	})
 }
 
 // Any operator that runs a python function serialized from storage should use this instead of baseOperator.

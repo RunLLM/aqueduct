@@ -54,7 +54,9 @@ func NewResultResponseFromDbObjects(
 
 	var execState *shared.ExecutionState = nil
 	if !dbArtifactResult.ExecState.IsNull {
-		execState = &dbArtifactResult.ExecState.ExecutionState
+		// make a copy of execState's value
+		execStateVal := dbArtifactResult.ExecState.ExecutionState
+		execState = &execStateVal
 	}
 
 	return &ResultResponse{

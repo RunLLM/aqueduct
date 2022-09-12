@@ -91,6 +91,7 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
+    CANCELED = "canceled"
 
 
 class FailureType(Enum, metaclass=MetaEnum):

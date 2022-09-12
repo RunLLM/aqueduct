@@ -746,7 +746,7 @@ func (eng *aqEngine) execute(
 				continue
 			}
 
-			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+			if !execState.Terminated() {
 				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
 
@@ -762,7 +762,7 @@ func (eng *aqEngine) execute(
 			// and check operators with warning severity.
 			if shouldStopExecution(execState) {
 				log.Infof("Stopping execution of operator %v", op.ID())
-				for id, op := range workflowDag.Operators() {
+				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
 					// Skip if this operator has already been completed or is in progress.
 					if _, ok := completedOps[id]; ok {
@@ -772,7 +772,13 @@ func (eng *aqEngine) execute(
 						continue
 					}
 
-					op.Cancel(ctx)
+					dagOp.Cancel()
+					if opExecMode == operator.Publish {
+						err = dagOp.PersistResult(ctx)
+						if err != nil {
+							return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+						}
+					}
 				}
 
 				return opFailureError(*execState.FailureType, op)

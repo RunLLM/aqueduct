@@ -21,14 +21,14 @@ var ErrInvalidStorageConfig = errors.New("Invalid Storage Config")
 type ExecutionStatus string
 
 const (
-	SucceededExecutionStatus ExecutionStatus = "succeeded"
-	FailedExecutionStatus    ExecutionStatus = "failed"
-	RunningExecutionStatus   ExecutionStatus = "running"
-	PendingExecutionStatus   ExecutionStatus = "pending"
-	CanceledExecutionStatus  ExecutionStatus = "canceled"
-	// Registered is a special state that indicates a workflow has been registered
-	// but has no workflow runs yet
+	// Registered is a special state that indicates a object has been registered
+	// but has no runs yet. This is typically used in workflows.
 	RegisteredExecutionStatus ExecutionStatus = "registered"
+	PendingExecutionStatus    ExecutionStatus = "pending"
+	RunningExecutionStatus    ExecutionStatus = "running"
+	CanceledExecutionStatus   ExecutionStatus = "canceled"
+	FailedExecutionStatus     ExecutionStatus = "failed"
+	SucceededExecutionStatus  ExecutionStatus = "succeeded"
 	UnknownExecutionStatus    ExecutionStatus = "unknown"
 )
 
@@ -54,11 +54,13 @@ type Error struct {
 	Tip     string `json:"tip"`
 }
 
+// This should mirror all ExecutionStatus
+
 type ExecutionTimestamps struct {
-	PendingAt   *time.Time `json:"pending_at"`
-	RunningAt   *time.Time `json:"running_at"`
-	FailedAt    *time.Time `json:"failed_at"`
-	SucceededAt *time.Time `json:"succeeded_at"`
+	RegisteredAt *time.Time `json:"registered_at"`
+	PendingAt    *time.Time `json:"pending_at"`
+	RunningAt    *time.Time `json:"running_at"`
+	FinishedAt   *time.Time `json:"finished_at"`
 }
 
 type ExecutionState struct {
@@ -69,6 +71,10 @@ type ExecutionState struct {
 	FailureType *FailureType         `json:"failure_type"`
 	Error       *Error               `json:"error"`
 	Timestamps  *ExecutionTimestamps `json:"timestamps"`
+}
+
+func (e ExecutionState) Terminated() bool {
+	return e.Status == FailedExecutionStatus || e.Status == SucceededExecutionStatus || e.Status == CanceledExecutionStatus
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {

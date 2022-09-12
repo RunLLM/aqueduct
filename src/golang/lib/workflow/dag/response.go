@@ -16,19 +16,19 @@ import (
 
 type MetadataResponse struct {
 	// Dag metadata
-	DagId         uuid.UUID             `json:"dag_id"`
-	DagCreatedAt  time.Time             `json:"dag_created_at"`
-	StorageConfig *shared.StorageConfig `json:"storage_config"`
-	EngineConfig  *shared.EngineConfig  `json:"engine_config"`
+	DagId         uuid.UUID            `json:"dag_id"`
+	DagCreatedAt  time.Time            `json:"dag_created_at"`
+	StorageConfig shared.StorageConfig `json:"storage_config"`
+	EngineConfig  shared.EngineConfig  `json:"engine_config"`
 
 	// Workflow metadata
-	WorkflowId        uuid.UUID                 `json:"workflow_id"`
-	WorkflowCreatedAt time.Time                 `json:"workflow_created_at"`
-	UserId            uuid.UUID                 `json:"user_id"`
-	Name              string                    `json:"name"`
-	Description       string                    `json:"description"`
-	Schedule          *workflow.Schedule        `json:"schedule"`
-	RetentionPolicy   *workflow.RetentionPolicy `json:"retention_policy"`
+	WorkflowId        uuid.UUID                `json:"workflow_id"`
+	WorkflowCreatedAt time.Time                `json:"workflow_created_at"`
+	UserId            uuid.UUID                `json:"user_id"`
+	Name              string                   `json:"name"`
+	Description       string                   `json:"description"`
+	Schedule          workflow.Schedule        `json:"schedule"`
+	RetentionPolicy   workflow.RetentionPolicy `json:"retention_policy"`
 }
 
 type Response struct {
@@ -63,8 +63,8 @@ func NewResultResponseFromDbObjects(
 	metadataResponse := MetadataResponse{
 		DagId:         dbWorkflowDag.Id,
 		DagCreatedAt:  dbWorkflowDag.CreatedAt,
-		StorageConfig: &dbWorkflowDag.StorageConfig,
-		EngineConfig:  &dbWorkflowDag.EngineConfig,
+		StorageConfig: dbWorkflowDag.StorageConfig,
+		EngineConfig:  dbWorkflowDag.EngineConfig,
 
 		WorkflowId: dbWorkflowDag.WorkflowId,
 	}
@@ -81,8 +81,8 @@ func NewResultResponseFromDbObjects(
 		metadataResponse.UserId = wfMetadata.UserId
 		metadataResponse.Name = wfMetadata.Name
 		metadataResponse.Description = wfMetadata.Description
-		metadataResponse.Schedule = &wfMetadata.Schedule
-		metadataResponse.RetentionPolicy = &wfMetadata.RetentionPolicy
+		metadataResponse.Schedule = wfMetadata.Schedule
+		metadataResponse.RetentionPolicy = wfMetadata.RetentionPolicy
 	}
 
 	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse, len(dbWorkflowDag.Operators))
