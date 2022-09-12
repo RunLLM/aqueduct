@@ -24,26 +24,28 @@ export const AirflowDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
-  const [address, setAddress] = useState<string>(value?.host ?? null);
+  const [host, setHost] = useState<string>(value?.host ?? null);
   const [s3CredsProfile, setS3CredsProfile] = useState<string>(
     value?.s3_credentials_profile ?? null
   );
 
   useEffect(() => {
-    if (address && address.startsWith('http://')) {
-      // Backend requires the protocol to be stripped
-      onUpdateField('host', address.substring(7));
-    }
-
-    if (address && address.startsWith('https://')) {
-      // Backend requires the protocol to be stripped
-      onUpdateField('host', address.substring(8));
+    if (host) {
+      if (host.startsWith('http://')) {
+        // Backend requires the protocol to be stripped
+        onUpdateField('host', host.substring(7));
+      } else if (host.startsWith('https://')) {
+        // Backend requires the protocol to be stripped
+        onUpdateField('host', host.substring(8));
+      } else {
+        onUpdateField('host', host);
+      }
     }
 
     if (s3CredsProfile && s3CredsProfile !== 'default') {
       onUpdateField('s3_credentials_profile', s3CredsProfile);
     }
-  }, [address, s3CredsProfile]);
+  }, [host, s3CredsProfile]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -53,8 +55,8 @@ export const AirflowDialog: React.FC<Props> = ({
         label="Host *"
         description="The hostname of the Airflow server."
         placeholder={Placeholders.host}
-        onChange={(event) => setAddress(event.target.value)}
-        value={address}
+        onChange={(event) => setHost(event.target.value)}
+        value={host}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

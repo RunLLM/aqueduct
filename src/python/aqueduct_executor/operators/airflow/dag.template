@@ -103,7 +103,11 @@ with DAG(
         'retries': 0,
     },
     start_date=datetime(2022, 1, 1, 1),
+    {% if schedule %}
     schedule_interval='{{ schedule }}',
+    {% else %}
+    schedule_interval={{ schedule }},
+    {% endif %}
     catchup=False,
     tags=['aqueduct'],
 ) as dag:

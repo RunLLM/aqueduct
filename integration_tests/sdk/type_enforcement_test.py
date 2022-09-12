@@ -43,7 +43,7 @@ def test_flow_fails_on_unexpected_type_output_for_lazy(client):
     flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
 
     try:
-        # Because we not are violating our inferred types, this will fail!
+        # Because we are violating our inferred types, this will fail!
         client.trigger(flow.id(), parameters={"output_type_toggle": False})
         wait_for_flow_runs(
             client,

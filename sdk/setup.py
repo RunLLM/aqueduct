@@ -18,7 +18,7 @@ else:
 
 setuptools.setup(
     name="aqueduct-sdk",
-    version="0.0.13",
+    version="0.0.14",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
     description="Python SDK for the Aqueduct prediction infrastructure",

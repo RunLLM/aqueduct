@@ -54,6 +54,10 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
     It returns the DAG file.
     """
 
+    schedule = None
+    if spec.cron_schedule:
+        schedule = spec.cron_schedule
+
     # Init Airflow tasks
     tasks = []
     task_to_alias = {}
@@ -75,7 +79,7 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
     template = env.get_template("dag.template")
     r = template.render(
         dag_id=spec.dag_id,
-        schedule=spec.cron_schedule,
+        schedule=schedule,
         tasks=tasks,
         edges=edges,
         task_to_alias=task_to_alias,
