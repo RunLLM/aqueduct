@@ -216,15 +216,3 @@ def get_operator_type_from_spec(spec: OperatorSpec) -> OperatorType:
         return OperatorType.SYSTEM_METRIC
     else:
         raise AqueductError("Invalid operator type")
-
-
-# TODO: remov ethis
-def serialize_parameter_value(name: str, val: Any) -> str:
-    """A parameter must be JSON serializable."""
-    try:
-        return str(json.dumps(val))
-    except Exception as e:
-        raise InvalidUserArgumentException(
-            "Provided parameter %s must be able to be converted into a JSON object: %s"
-            % (name, str(e))
-        )

@@ -34,10 +34,6 @@ def preview_artifact(
     Will handle all type inference of the target artifact, as well as any upstream artifacts
     that were lazily computed.
     """
-
-    if parameters is not None:
-        validate_overwriting_parameters(dag, parameters)
-
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[

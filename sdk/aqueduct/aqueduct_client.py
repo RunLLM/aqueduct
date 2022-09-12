@@ -55,7 +55,6 @@ from .utils import (
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
-    serialize_param_val,
 )
 
 
