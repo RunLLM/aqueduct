@@ -37,7 +37,7 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
+import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
@@ -220,29 +220,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  // NOTE(vikram): This is a compliated bit of nonsense code. Because the
-  // percentages are relative, we need to reset the base width to be the full
-  // window width to take advantage of the helper function here. This ensures
-  // that the ReactFlow canvas and the status bars below are the same width.
-  // Here, `fullWindowWidth` refers to the full width of the viewport, which
-  // is the current 100% + the width of the menu sidebar. This is a hack that
-  // breaks the abstraction, but because the WorkflowStatusBar overlay is
-  // absolute-positioned, it's required in order to align the content with
-  // the status bar's width.
-  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
-  // const contentWidth = getBottomSideSheetWidth(
-  //   openSideSheetState.workflowStatusBarOpen,
-  //   fullWindowWidth
-  // );
-  const contentWidth = '100%';
-  const contentBottomOffsetInPx = 0;
-
-  // if (openSideSheetState.bottomSideSheetOpen) {
-  //   contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
-  // } else {
-  //   contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
-  // }
-
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -291,7 +268,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       <Box
         sx={{
           display: 'flex',
-          width: contentWidth,
+          width: '100%',
           height: '100%',
           flexDirection: 'column',
         }}
@@ -307,7 +284,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             flex: 1,
             mt: 2,
             p: 3,
-            mb: contentBottomOffsetInPx,
+            mb: 0,
             width: '100%',
             boxSizing: 'border-box',
             backgroundColor: 'gray.50',
