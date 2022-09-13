@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 import requests
 import utils
+from exec_state import assert_exec_state
 from setup.changing_saves_workflow import setup_changing_saves
+from setup.flow_with_failure import setup_flow_with_failure
 
 import aqueduct
 from aqueduct import globals
@@ -18,6 +20,8 @@ class TestBackend:
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
     CONNECT_INTEGRATION_TEMPLATE = "/api/integration/connect"
     DELETE_INTEGRATION_TEMPLATE = "/api/integration/%s/delete"
+    GET_WORKFLOW_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
+
     WORKFLOW_PATH = Path(__file__).parent / "setup"
     DEMO_DB_PATH = os.path.join(os.environ["HOME"], ".aqueduct/server/db/demo.db")
 
@@ -25,14 +29,17 @@ class TestBackend:
     def setup_class(cls):
         cls.client = aqueduct.Client(pytest.api_key, pytest.server_address)
         cls.integration = cls.client.integration(name=pytest.integration)
-        cls.flows = {"changing_saves": setup_changing_saves(cls.client, pytest.integration)}
-        for flow, n_runs in cls.flows.values():
-            utils.wait_for_flow_runs(cls.client, flow, n_runs)
+        cls.flows = {
+            "changing_saves": setup_changing_saves(cls.client, pytest.integration),
+            "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
+        }
+        for flow_id, n_runs in cls.flows.values():
+            utils.wait_for_flow_runs(cls.client, flow_id, n_runs)
 
     @classmethod
     def teardown_class(cls):
-        for flow, _ in cls.flows.values():
-            utils.delete_flow(cls.client, flow)
+        for flow_id, _ in cls.flows.values():
+            utils.delete_flow(cls.client, flow_id)
 
     @classmethod
     def response(cls, endpoint, additional_headers):
@@ -109,3 +116,43 @@ class TestBackend:
     def test_endpoint_test_integration(self):
         resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id)
         assert resp.ok
+
+    def test_endpoint_get_workflow_dag_result(self):
+        flow_id = self.flows["flow_with_failure"][0]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+        resp = self.get_response(
+            self.GET_WORKFLOW_RESULT_TEMPLATE % (flow_id, runs[0]["run_id"])
+        ).json()
+        assert resp["result"]["status"] == "failed"
+
+        # operators
+        operators = resp["operators"]
+        assert len(operators) == 3
+        for op in operators.values():
+            name = op["name"]
+            exec_state = op["result"]["exec_state"]
+
+            if "query" in name:  # extract
+                assert_exec_state(exec_state, "succeeded")
+            elif name == "bad_op":
+                assert_exec_state(exec_state, "failed")
+            elif name == "bad_op_downstream":
+                assert_exec_state(exec_state, "canceled")
+            else:
+                raise Exception(f"unexpected operator name {name}")
+
+        # artifacts
+        artifacts = resp["artifacts"]
+        for artf in artifacts.values():
+            name = artf["name"]
+            exec_state = artf["result"]["exec_state"]
+
+            if "query" in name:
+                assert_exec_state(exec_state, "succeeded")
+            elif name == "bad_op artifact":
+                assert_exec_state(exec_state, "canceled")
+            elif name == "bad_op_downstream artifact":
+                assert_exec_state(exec_state, "canceled")
+            else:
+                raise Exception(f"unexpected operator name {name}")
