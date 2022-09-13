@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -19,34 +20,47 @@ import (
 // Operator is an interface for managing and inspecting the lifecycle of an operator
 // used by a workflow run.
 type Operator interface {
+	// Property getters. Retrieve property of the operator without making any changes.
 	Type() operator.Type
 	Name() string
 	ID() uuid.UUID
 	JobSpec() job.Spec
+	// ExecState returns the operators ExecState since the last `Poll()` or `Launch()`
+	ExecState() *shared.ExecutionState
+
+	// Execution methods. These methods trigger or interact with jobs
+	// and update operator's state.
+	// However, they do not persist anything to DB.
 
 	// Launch kicks off the execution of this operator, using operator's job spec.
-	// Poll on `GetExecState()` afterwards to determine when this operator has completed.
+	// It sets the operator's execState to 'Running' without updating DB.
+	// Use `Poll()` afterwards to determine when this operator has completed.
 	Launch(ctx context.Context) error
 
-	// GetExecState performs a non-blocking fetch for the execution state of this operator.
-	GetExecState(ctx context.Context) (*shared.ExecutionState, error)
+	// Poll performs a non-blocking fetch and update for the execution state of this operator.
+	// Returns the execState updated. This does not persist the exec state to DB.
+	Poll(ctx context.Context) (*shared.ExecutionState, error)
+
+	// Cancel updates the status of this operator execution if the result of the
+	// execution will not be generated. This does not persist the exec state to DB.
+	Cancel()
+
+	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
+	// Also calls Finish() on all the operator's output artifacts.
+	Finish(ctx context.Context)
+
+	// DB methods, these methods update DB based on current operator's state.
 
 	// InitializeResult initializes the operator in the database.
 	// TODO: document.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult writes the results of this operator execution to the database.
+	// The result persisted is based on the last `Poll()`.
+	//
 	// Errors if the artifact hasn ot yet been computed, or InitializeResult() hasn't been called yet.
 	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
-
-	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
-	// Also calls Finish() on all the operator's output artifacts.
-	Finish(ctx context.Context)
-
-	// Cancel updates the status of this operator execution if the result of the
-	// execution will not be generated.
-	Cancel(ctx context.Context)
 }
 
 // This should only be used within the boundaries of the execution engine.
@@ -94,6 +108,8 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
+	now := time.Now()
+
 	baseOp := baseOperator{
 		dbOperator:   &dbOperator,
 		resultWriter: opResultWriter,
@@ -114,6 +130,12 @@ func NewOperator(
 		db:                  db,
 
 		execMode: execMode,
+		execState: shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
+				PendingAt: &now,
+			},
+		},
 
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,

@@ -20,11 +20,13 @@ func (w *standardWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*OperatorResult, error) {
-	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn}
+	insertColumns := []string{WorkflowDagResultIdColumn, OperatorIdColumn, StatusColumn, ExecStateColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
-	args := []interface{}{workflowDagResultId, operatorId, shared.PendingExecutionStatus}
+
+	args := []interface{}{workflowDagResultId, operatorId, execState.Status, execState}
 
 	var operatorResult OperatorResult
 	err := db.Query(ctx, &operatorResult, insertOperatorStmt, args...)
