@@ -1,7 +1,6 @@
 import textwrap
 import uuid
-from datetime import datetime, date
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
