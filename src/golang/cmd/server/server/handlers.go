@@ -165,9 +165,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:             s.Vault,
 		},
 		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
-			Database:       s.Database,
-			WorkflowReader: s.WorkflowReader,
-			Engine:         s.AqEngine,
+			Database: s.Database,
+			Engine:   s.AqEngine,
+			Vault:    s.Vault,
+
+			WorkflowReader:        s.WorkflowReader,
+			WorkflowDagReader:     s.WorkflowDagReader,
+			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
+			OperatorReader:        s.OperatorReader,
+			ArtifactReader:        s.ArtifactReader,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,
