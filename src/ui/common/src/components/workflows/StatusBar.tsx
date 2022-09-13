@@ -141,7 +141,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
             {listItem ? workflowStatusIcons[listItem.level] : null}
             <Box
               sx={{
-                marginLeft: 2,
+                mx: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 verticalAlign: 'middle',
@@ -151,6 +151,8 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 sx={{
                   fontFamily: 'Monospace',
                   fontWeight: 'bold',
+                  marginRight: 2,
+                  whiteSpace: 'normal',
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
                 }}
                 onClick={() => {
@@ -443,9 +445,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
