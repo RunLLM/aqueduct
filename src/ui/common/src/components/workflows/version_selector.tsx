@@ -12,8 +12,8 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectResultIdx } from '../../reducers/workflow';
 
+import { selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { dateString } from '../../utils/metadata';
@@ -79,7 +79,7 @@ export const VersionSelector: React.FC = () => {
         </MenuItem>
       );
     });
-  }
+  };
 
   let menuItems = getMenuItems();
   useEffect(() => {

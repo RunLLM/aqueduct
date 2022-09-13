@@ -10,10 +10,13 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
-
 import { RootState } from '../../stores/store';
+import { AppDispatch } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
@@ -23,9 +26,6 @@ import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../../stores/store';
-import { useNavigate } from 'react-router-dom';
 
 type Props = {
   user: UserProfile;
@@ -69,7 +69,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
