@@ -124,8 +124,7 @@ class TestBackend:
         resp = self.get_response(
             self.GET_WORKFLOW_RESULT_TEMPLATE % (flow_id, runs[0]["run_id"])
         ).json()
-        assert resp["result"]["status"] == "failed"
-
+        assert_exec_state(resp["result"]["exec_state"], "failed")
         # operators
         operators = resp["operators"]
         assert len(operators) == 3
