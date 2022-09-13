@@ -21,7 +21,6 @@ import {
   RelationalDBLoadParams,
 } from '../../../utils/operators';
 import DataPreviewer from '../../DataPreviewer';
-import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import LogViewer from '../log_viewer';
@@ -307,7 +306,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
     <Box
       p={1}
       sx={{
-        height: `calc(100% - ${BottomSidebarHeaderHeightInPx}px)`,
+        height: '100%',
       }}
     >
       <Tabs
