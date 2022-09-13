@@ -113,6 +113,10 @@ class ArtifactNotFoundException(Error):
     pass
 
 
+class ArtifactNeverComputedException(Error):
+    pass
+
+
 # Exception raised when user tries to use a file defined outside of provided function
 # directory as a dependency.
 class InvalidDependencyFilePath(Error):

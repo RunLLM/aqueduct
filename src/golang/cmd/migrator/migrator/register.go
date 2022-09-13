@@ -19,6 +19,7 @@ import (
 	_000014 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000014_add_exec_state_column_to_artifact_result"
 	_000015 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000015_artifact_result_exec_state_column_backfill"
 	_000016 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000016_add_artifact_type_column_to_artifact"
+	_000017 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000017_update_to_canceled_status"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -121,5 +122,11 @@ func init() {
 		upPostgres: _000016.UpPostgres, upSqlite: _000016.UpSqlite,
 		downPostgres: _000016.DownPostgres,
 		name:         "add type column to artifact",
+	}
+
+	registeredMigrations[17] = &migration{
+		upPostgres: _000017.Up, upSqlite: _000017.Up,
+		downPostgres: _000017.Down,
+		name:         "add canceled status to results",
 	}
 }

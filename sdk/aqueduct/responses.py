@@ -1,5 +1,6 @@
 import textwrap
 import uuid
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
@@ -236,6 +237,7 @@ class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
     operator_name: str
+    modified_at: str
     integration_name: str
     integration_id: uuid.UUID
     service: ServiceType

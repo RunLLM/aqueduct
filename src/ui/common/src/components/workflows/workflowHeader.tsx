@@ -127,7 +127,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       <DialogTitle>Trigger a Workflow Run?</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
-          This will a run of <code>{name}</code> immediately.
+          This will trigger a run of <code>{name}</code> immediately.
         </Box>
 
         {Object.keys(paramNameToDefault).length > 0 && (

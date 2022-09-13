@@ -91,7 +91,7 @@ const OperatorsOnIntegration: React.FC = () => {
       </Box>
     );
   } else {
-    return <Box>Integration is not used by any workflow.</Box>;
+    return <Box>This integration is not used by any workflows.</Box>;
   }
 };
 
