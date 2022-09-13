@@ -9,19 +9,16 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.param_artifact import ParamArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.config import FlowConfig
+from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
-from .dag import (
-    AddOrReplaceOperatorDelta,
-    Metadata,
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-    validate_overwriting_parameters,
-)
+from .dag import Metadata, SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
 from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
@@ -39,7 +36,7 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
+from .operators import serialize_parameter_value
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
@@ -162,7 +159,9 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> ParamArtifact:
+    def create_param(
+        self, name: str, default: Any, description: str = ""
+    ) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -179,41 +178,7 @@ class Client:
         Returns:
             A parameter artifact.
         """
-        if default is None:
-            raise InvalidUserArgumentException("Parameter default value cannot be None.")
-
-        artifact_type = infer_artifact_type(default)
-
-        val = serialize_parameter_value(name, default)
-
-        operator_id = generate_uuid()
-        output_artifact_id = generate_uuid()
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=operator_id,
-                        name=name,
-                        description=description,
-                        spec=OperatorSpec(param=ParamSpec(val=val)),
-                        inputs=[],
-                        outputs=[output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        ArtifactMetadata(
-                            id=output_artifact_id,
-                            name=name,
-                            type=artifact_type,
-                        ),
-                    ],
-                )
-            ],
-        )
-        return ParamArtifact(
-            self._dag,
-            output_artifact_id,
-        )
+        return create_param(self._dag, name, default, description)
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
