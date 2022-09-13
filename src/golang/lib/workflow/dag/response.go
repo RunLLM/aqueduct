@@ -41,10 +41,7 @@ type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'workflow_dag_result' schema.
 	Id uuid.UUID `json:"id"`
 
-	// TODO (ENG-1613, ENG-1614):
-	// These will be replaced with ExecutionState with ExecState
-	Status    shared.ExecutionStatus `json:"status"`
-	CreatedAt time.Time              `json:"created_at"`
+	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
@@ -70,9 +67,13 @@ func NewResultResponseFromDbObjects(
 	}
 
 	rawResultResponse := RawResultResponse{
-		Id:        dbWorkflowDagResult.Id,
-		Status:    dbWorkflowDagResult.Status,
-		CreatedAt: dbWorkflowDagResult.CreatedAt,
+		Id: dbWorkflowDagResult.Id,
+	}
+
+	if !dbWorkflowDagResult.ExecState.IsNull {
+		// make a value copy of execState
+		execStateVal := dbWorkflowDagResult.ExecState.ExecutionState
+		rawResultResponse.ExecState = &execStateVal
 	}
 
 	if dbWorkflowDag.Metadata != nil {

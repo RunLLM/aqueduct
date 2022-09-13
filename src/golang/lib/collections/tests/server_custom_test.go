@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -136,8 +137,8 @@ func TestGetWorkflowLastRunByEngine(t *testing.T) {
 	require.Nil(t, err)
 
 	// Create 2 workflow DAG results for each workflow DAG
-	seedWorkflowDagResultWithDags(t, 2, []uuid.UUID{workflow1DAG.Id, workflow1DAG.Id})
-	workflow2DAGResults := seedWorkflowDagResultWithDags(t, 2, []uuid.UUID{workflow2DAG.Id, workflow2DAG.Id})
+	seedWorkflowDagResultWithDags(t, 2, time.Now(), []uuid.UUID{workflow1DAG.Id, workflow1DAG.Id})
+	workflow2DAGResults := seedWorkflowDagResultWithDags(t, 2, time.Now(), []uuid.UUID{workflow2DAG.Id, workflow2DAG.Id})
 
 	lastRunAt := workflow2DAGResults[0].CreatedAt
 	if workflow2DAGResults[1].CreatedAt.After(lastRunAt) {

@@ -221,7 +221,7 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 	seedWorkflowDagWithWorkflows(t, 1, []uuid.UUID{testWorkflow2.Id})
 
 	// Create DAG result for workflow 1 only
-	testWorkflow1Results := seedWorkflowDagResultWithDags(t, 1, []uuid.UUID{testWorkflow1DAG.Id})
+	testWorkflow1Results := seedWorkflowDagResultWithDags(t, 1, time.Now(), []uuid.UUID{testWorkflow1DAG.Id})
 	testWorkflow1Result := testWorkflow1Results[0]
 
 	latestResults, err := readers.workflowReader.GetWorkflowsWithLatestRunResult(context.Background(), testOrganizationId, db)

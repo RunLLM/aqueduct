@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -168,7 +169,7 @@ func TestGetWorkflowDagByWorkflowDagResultId(t *testing.T) {
 	testWorkflowDags := seedWorkflowDag(t, numWorkflowDags)
 	testDagIds := randWorkflowDagIdsFromList(numWorkflowDagResults, testWorkflowDags)
 
-	testDagResults := seedWorkflowDagResultWithDags(t, numWorkflowDagResults, testDagIds)
+	testDagResults := seedWorkflowDagResultWithDags(t, numWorkflowDagResults, time.Now(), testDagIds)
 
 	workflowDag, err := readers.workflowDagReader.GetWorkflowDagByWorkflowDagResultId(
 		context.Background(),

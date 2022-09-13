@@ -387,12 +387,14 @@ func UpdateWorkflowDagToLatest(
 func CreateWorkflowDagResult(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
+	execState *shared.ExecutionState,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	db database.Database,
 ) (*workflow_dag_result.WorkflowDagResult, error) {
 	return workflowDagResultWriter.CreateWorkflowDagResult(
 		ctx,
 		workflowDagId,
+		execState,
 		db,
 	)
 }
@@ -400,7 +402,7 @@ func CreateWorkflowDagResult(
 func UpdateWorkflowDagResultMetadata(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
-	status shared.ExecutionStatus,
+	execState *shared.ExecutionState,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
@@ -408,7 +410,8 @@ func UpdateWorkflowDagResultMetadata(
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		workflow_dag_result.StatusColumn: status,
+		workflow_dag_result.StatusColumn:    execState.Status,
+		workflow_dag_result.ExecStateColumn: execState,
 	}
 
 	_, err := workflowDagResultWriter.UpdateWorkflowDagResult(
