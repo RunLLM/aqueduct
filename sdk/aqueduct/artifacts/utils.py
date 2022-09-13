@@ -73,20 +73,27 @@ def preview_artifact(
 
         _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
-    if target_artifact_type == ArtifactType.TABLE:
+    return to_artifact_class(dag, target_artifact_id, target_artifact_type, target_artifact_content)
+
+
+def to_artifact_class(
+    dag: DAG,
+    artifact_id: uuid.UUID,
+    artifact_type: ArtifactType = ArtifactType.UNTYPED,
+    content: Optional[Any] = None,
+) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
+    if artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(
             dag,
-            target_artifact_id,
-            target_artifact_content,
+            artifact_id,
+            content,
         )
-    elif target_artifact_type == ArtifactType.NUMERIC:
-        return numeric_artifact.NumericArtifact(dag, target_artifact_id, target_artifact_content)
-    elif target_artifact_type == ArtifactType.BOOL:
-        return bool_artifact.BoolArtifact(dag, target_artifact_id, target_artifact_content)
+    elif artifact_type == ArtifactType.NUMERIC:
+        return numeric_artifact.NumericArtifact(dag, artifact_id, content)
+    elif artifact_type == ArtifactType.BOOL:
+        return bool_artifact.BoolArtifact(dag, artifact_id, content)
     else:
-        return generic_artifact.GenericArtifact(
-            dag, target_artifact_id, target_artifact_type, target_artifact_content
-        )
+        return generic_artifact.GenericArtifact(dag, artifact_id, artifact_type, content)
 
 
 def _update_artifact_type(

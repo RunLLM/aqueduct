@@ -32,11 +32,13 @@ func NewResultResponseFromDbObjects(
 	dbOperator *operator.DBOperator,
 	dbOperatorResult *operator_result.OperatorResult,
 ) *ResultResponse {
+	// make a value copy of `Spec` field
+	spec := dbOperator.Spec
 	metadata := Response{
 		Id:          dbOperator.Id,
 		Name:        dbOperator.Name,
 		Description: dbOperator.Description,
-		Spec:        &dbOperator.Spec,
+		Spec:        &spec,
 		Inputs:      dbOperator.Inputs,
 		Outputs:     dbOperator.Outputs,
 	}
@@ -47,7 +49,9 @@ func NewResultResponseFromDbObjects(
 
 	var execState *shared.ExecutionState = nil
 	if !dbOperatorResult.ExecState.IsNull {
-		execState = &dbOperatorResult.ExecState.ExecutionState
+		// make a value copy of execState
+		execStateVal := dbOperatorResult.ExecState.ExecutionState
+		execState = &execStateVal
 	}
 
 	return &ResultResponse{

@@ -37,7 +37,7 @@ func waitForInProgressOperators(
 		}
 
 		for opID, op := range inProgressOps {
-			execState, err := op.GetExecState(ctx)
+			execState, err := op.Poll(ctx)
 
 			// Resolve any jobs that aren't actively running or failed. We don't are if they succeeded or failed,
 			// since this is called after engestration exits.

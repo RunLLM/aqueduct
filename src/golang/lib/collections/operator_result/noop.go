@@ -29,6 +29,7 @@ func (w *noopWriterImpl) CreateOperatorResult(
 	ctx context.Context,
 	workflowDagResultId uuid.UUID,
 	operatorId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*OperatorResult, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
