@@ -60,7 +60,6 @@ interface ActiveWorkflowStatusTabProps {
 }
 
 export const StatusBarHeaderHeightInPx = 41;
-//export const StatusBarHeaderHeightInPx = 82;
 export const CollapsedStatusBarWidthInPx = 75;
 export const StatusBarWidthInPx = 432;
 export const StatusBarListHeightInPx = 800;
@@ -121,10 +120,8 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     <Box
       sx={{
         width: `${StatusBarWidthInPx}px`,
-        //height: `calc(100% - ${StatusBarHeaderHeightInPx}px)`,
         height: `${StatusBarListHeightInPx - StatusBarHeaderHeightInPx}px`,
         overflowY: 'scroll',
-        //overflowX: 'auto',
         backgroundColor: 'white',
       }}
     >
@@ -137,7 +134,6 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               flexDirection: 'row',
               width: '100%',
               backgroundColor: 'white',
-              //p: 2,
               borderBottom: `1px solid`,
               borderColor: 'gray.500',
               alignItems: 'start',
@@ -148,7 +144,6 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
             </Box>
             <Box
               sx={{
-                //marginLeft: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 verticalAlign: 'middle',
@@ -166,11 +161,8 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 onClick={() => {
                   if (listItem.nodeId && listItem.type) {
                     switchSideSheet(listItem.nodeId, listItem.type);
-                    //const collapseWorkflowStatusBar = (event: React.MouseEvent) => {
-                    //  event.preventDefault();
                     dispatch(setWorkflowStatusBarOpenState(false));
                     setActiveWorkflowStatusTab(WorkflowStatusTabs.Collapsed);
-                    //};
                   }
                 }}
               >
@@ -525,10 +517,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   console.log('collapsed: ', collapsed);
 
   const statusBarIconStyles = {
-    //mx: collapsed ? 0 : 1,
     mx: 1,
     py: 1,
-    //width: collapsed ? '100%' : '40px',
     width: '40px',
     cursor: 'pointer',
     alignItems: 'start',
@@ -540,42 +530,25 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       sx={{
         position: 'absolute',
         left: '700px',
-        //bottom: 0,
         top: '123px',
-        //right: '40%',
         height: collapsed
           ? `${StatusBarHeaderHeightInPx}px`
           : `${StatusBarListHeightInPx}px`,
-        //zIndex: collapsed ? null : 10,
         zIndex: 10,
         border: `1px solid ${theme.palette.gray['500']}`,
-        //borderColor: theme.palette.gray['500'],
-        //borderStyle: 'solid',
         borderRadius: '8px',
-        //borderStyle: 'solid',
-        //borderColor: theme.palette.gray['700'],
       }}
     >
       <Box
         sx={{
           display: 'flex',
-          //flexDirection: collapsed ? 'column' : 'row',
           flexDirection: 'row',
-          //alignItems: collapsed ? 'start' : 'center',
           alignItems: 'center',
           justifyContent: 'space-evenly',
-          //px: collapsed ? 1 : 0,
           px: 0,
-          //ml: collapsed ? 1 : 0,
           ml: 0,
-          //py: collapsed ? 0 : 1,
-          //py: 1,
           height: `${StatusBarHeaderHeightInPx}px`,
-          //height: `${StatusBarHeaderHeightInPx}px`,
-          //width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
           width: StatusBarWidthInPx,
-          //backgroundColor: theme.palette.gray['100'],
-          //backgroundColor: 'white'
           borderBottom: collapsed
             ? null
             : `1px solid ${theme.palette.gray['500']}`,

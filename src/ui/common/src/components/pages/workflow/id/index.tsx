@@ -370,8 +370,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Drawer>
       )}
-
-      {/* <WorkflowStatusBar user={user} /> */}
     </Layout>
   );
 };
