@@ -58,7 +58,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
     integration.service === 'Kubernetes' ||
     integration.service === 'Lambda'
   ) {
-    return <></>;
+    return null;
   }
 
   if (integration.service === 'S3') {

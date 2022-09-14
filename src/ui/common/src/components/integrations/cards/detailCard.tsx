@@ -9,8 +9,8 @@ import {
 import { LoadingStatus } from '../../../utils/shared';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
-import { KubernetesDetailCard } from './kubernetesDetailCard';
-import { LambdaDetailCard } from './lambdaDetailCard';
+import { KubernetesCard } from './kubernetesCard';
+import { LambdaCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
 import { MySqlCard } from './mysqlCard';
 import { PostgresCard } from './postgresCard';
@@ -54,10 +54,10 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       serviceCard = <S3Card integration={integration} />;
       break;
     case 'Kubernetes':
-      serviceCard = <KubernetesDetailCard integration={integration} />;
+      serviceCard = <KubernetesCard integration={integration} />;
       break;
     case 'Lambda':
-      serviceCard = <LambdaDetailCard integration={integration} />;
+      serviceCard = <LambdaCard integration={integration} />;
       break;
     default:
       serviceCard = null;

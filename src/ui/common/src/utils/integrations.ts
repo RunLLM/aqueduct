@@ -335,7 +335,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: 'compute',
   },
   ['Lambda']: {
-    logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
     activated: true,
     category: 'compute',
   },
