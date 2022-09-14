@@ -1,6 +1,8 @@
 import {
+  faChevronDown,
   faChevronLeft,
   faChevronRight,
+  faChevronUp,
   faCircleCheck,
   faCircleExclamation,
   faCircleInfo,
@@ -450,9 +452,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
@@ -509,11 +510,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   };
 
   const collapsed = activeWorkflowStatusTab === WorkflowStatusTabs.Collapsed;
+  console.log('collapsed: ', collapsed);
 
   const statusBarIconStyles = {
     mx: collapsed ? 0 : 1,
+    //mx: 1,
     py: 1,
-    width: collapsed ? '100%' : '40px',
+    //width: collapsed ? '100%' : '40px',
+    width: '40px',
     cursor: 'pointer',
     alignItems: 'start',
     display: 'flex',
@@ -524,9 +528,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       sx={{
         position: 'absolute',
         bottom: 0,
-        right: 0,
+        top: '110px',
+        right: '40%',
+        height: collapsed ? `${StatusBarHeaderHeightInPx}px` : '100%',
         zIndex: 10,
-        height: '100%',
         borderTop: '0px',
         borderLeft: '1px',
         borderRight: '0px',
@@ -539,24 +544,31 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       <Box
         sx={{
           display: 'flex',
-          flexDirection: collapsed ? 'column' : 'row',
-          alignItems: collapsed ? 'start' : 'center',
-          px: collapsed ? 1 : 0,
-          ml: collapsed ? 1 : 0,
-          py: collapsed ? 0 : 1,
+          //flexDirection: collapsed ? 'column' : 'row',
+          flexDirection: 'row',
+          //alignItems: collapsed ? 'start' : 'center',
+          alignItems: 'center',
+          //px: collapsed ? 1 : 0,
+          px: 0,
+          //ml: collapsed ? 1 : 0,
+          ml: 0,
+          //py: collapsed ? 0 : 1,
+          py: 1,
           height: collapsed ? undefined : `${StatusBarHeaderHeightInPx}px`,
-          width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
+          //height: `${StatusBarHeaderHeightInPx}px`,
+          //width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
+          width: StatusBarWidthInPx,
         }}
       >
         <Box sx={{ cursor: 'pointer', my: 2, mx: collapsed ? 0 : 1 }}>
           {collapsed ? (
             <FontAwesomeIcon
-              icon={faChevronLeft}
+              icon={faChevronDown}
               onClick={expandWorkflowStatusbar}
             />
           ) : (
             <FontAwesomeIcon
-              icon={faChevronRight}
+              icon={faChevronUp}
               onClick={collapseWorkflowStatusBar}
             />
           )}
