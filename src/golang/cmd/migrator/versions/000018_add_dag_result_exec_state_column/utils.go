@@ -3,7 +3,6 @@ package _000018_add_dag_result_exec_state_column
 import (
 	"context"
 	"database/sql/driver"
-	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -104,7 +103,7 @@ type partialWorkflowDagResult struct {
 }
 
 func getAllDagResults(ctx context.Context, db database.Database) ([]partialWorkflowDagResult, error) {
-	query := fmt.Sprintf("SELECT id, status, created_at FROM workflow_dag_result;")
+	query := "SELECT id, status, created_at FROM workflow_dag_result;"
 
 	var results []partialWorkflowDagResult
 	err := db.Query(ctx, &results, query)
