@@ -111,9 +111,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     [key: string]: string;
   }>({});
 
-  // Takes in a map of parameter names to values and transforms it into a map from
-  // parameter names to parameter specs, which include the base64-encoded value and
-  // serialization_type.
+  // Returns the map of parameters, from name to serialized spec (which includes the
+  // base64-encoded value and serialization_type).
   const serializeParameters = () => {
     let serializedParams = {}
     Object.entries(paramNameToValMap).forEach(([key, strVal]) => {
@@ -124,30 +123,30 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
         // For numbers and booleans, we serialize them to json.
         if (typeof val === "number" || typeof val === "boolean") {
-          serializedParams[key] = {
+          serializedParams[key] = JSON.stringify({
             val: btoa(JSON.stringify(val)),
             serialization_type: SerializationType.Json,
-          }
+          })
         }
         // All other jsonable values are serialized as strings.
-        serializedParams[key] = {
+        serializedParams[key] = JSON.stringify({
           val: btoa(strVal),
           serialization_type: SerializationType.String,
-        }
+        })
       } catch(err){
         // Non-jsonable values (such as plain strings) are also serialized as strings.
-        serializedParams[key] = {
+        serializedParams[key] = JSON.stringify({
           val: btoa(strVal),
           serialization_type: SerializationType.String,
-        }
+        })
       }
     })
     return serializedParams
   }
 
   const triggerWorkflowRun = () => {
-    const parameters = new FormData();
-    parameters.append('parameters', serializeParameters());
+    // const parameters = new FormData();
+    // parameters.append('parameters', serializeParameters());
 
     setShowRunWorkflowDialog(false);
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
@@ -155,7 +154,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       headers: {
         'api-key': user.apiKey,
       },
-      body: parameters,
+      body: JSON.stringify({
+        'parameters': serializeParameters(),
+      }),
     })
       .then((res) => {
         res.json().then((body) => {
