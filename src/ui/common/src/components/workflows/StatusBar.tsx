@@ -141,7 +141,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
             {listItem ? workflowStatusIcons[listItem.level] : null}
             <Box
               sx={{
-                marginLeft: 2,
+                mx: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 verticalAlign: 'middle',
@@ -151,6 +151,8 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 sx={{
                   fontFamily: 'Monospace',
                   fontWeight: 'bold',
+                  marginRight: 2,
+                  whiteSpace: 'normal',
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
                 }}
                 onClick={() => {
