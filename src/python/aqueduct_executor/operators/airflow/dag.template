@@ -1,7 +1,7 @@
 from datetime import datetime
 from airflow.models import DAG
 
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonVirtualenvOperator
 
 from aqueduct_executor.operators.function_executor import execute as func_execute
 from aqueduct_executor.operators.function_executor import spec as func_spec
@@ -12,6 +12,26 @@ from aqueduct_executor.operators.system_metric_executor import spec as sys_metri
 from aqueduct_executor.operators.connectors.data import execute as conn_execute
 from aqueduct_executor.operators.connectors.data import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
+
+# Python requirements for each Airflow task
+VENV_REQUIREMENTS=[
+    aqueduct-ml,
+    awswrangler,
+    boto3,
+    cloudpickle,
+    distro,
+    google-cloud-bigquery,
+    mysqlclient,
+    pandas,
+    psycopg2-binary,
+    pyarrow,
+    pydantic,
+    pyodbc,
+    pyyaml,
+    snowflake-sqlalchemy,
+    SQLAlchemy,
+    typing_extensions,
+]
 
 def invoke_task(spec, **kwargs):
     '''
@@ -118,8 +138,10 @@ with DAG(
 
 
     {% for task in tasks %}
-    {{ task.alias }} = PythonOperator(
+    {{ task.alias }} = PythonVirtualenvOperator(
         task_id='{{ task.id }}',
+        requirements=VENV_REQUIREMENTS,
+        system_site_packages=False,
         python_callable=invoke_task,
         op_args=[
     {{ task.spec.json(indent=4, separators=(',', ': ')) }}
