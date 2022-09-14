@@ -7,10 +7,8 @@ import (
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -38,8 +36,6 @@ func SyncWorkflowDags(
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
 	vault vault.Vault,
 	db database.Database,
 ) error {
@@ -67,13 +63,10 @@ func SyncWorkflowDags(
 		if err := syncWorkflowDag(
 			ctx,
 			&dbDag,
-			workflowReader,
 			workflowDagResultReader,
 			workflowDagResultWriter,
 			operatorResultWriter,
 			artifactResultWriter,
-			notificationWriter,
-			userReader,
 			vault,
 			db,
 		); err != nil {
@@ -90,13 +83,10 @@ func SyncWorkflowDags(
 func syncWorkflowDag(
 	ctx context.Context,
 	dbDag *workflow_dag.DBWorkflowDag,
-	workflowReader workflow.Reader,
 	workflowDagResultReader workflow_dag_result.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
 	vault vault.Vault,
 	db database.Database,
 ) error {
@@ -157,12 +147,9 @@ func syncWorkflowDag(
 			cli,
 			dbDag,
 			&dagRun,
-			workflowReader,
 			workflowDagResultWriter,
 			operatorResultWriter,
 			artifactResultWriter,
-			notificationWriter,
-			userReader,
 			db,
 		); err != nil {
 			return err
@@ -180,12 +167,9 @@ func syncWorkflowDagResult(
 	cli *client,
 	dbDag *workflow_dag.DBWorkflowDag,
 	run *airflow.DAGRun,
-	workflowReader workflow.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
 	db database.Database,
 ) error {
 	txn, err := db.BeginTx(ctx)
@@ -198,10 +182,7 @@ func syncWorkflowDagResult(
 		ctx,
 		dbDag,
 		run,
-		workflowReader,
 		workflowDagResultWriter,
-		notificationWriter,
-		userReader,
 		txn,
 	)
 	if err != nil {

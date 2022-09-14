@@ -6,12 +6,9 @@ import (
 
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -24,10 +21,7 @@ func createWorkflowDagResult(
 	ctx context.Context,
 	dbDag *workflow_dag.DBWorkflowDag,
 	run *airflow.DAGRun,
-	workflowReader workflow.Reader,
 	workflowDagResultWriter workflow_dag_result.Writer,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
 	db database.Database,
 ) (*workflow_dag_result.WorkflowDagResult, error) {
 	workflowDagStatus := mapDagStateToStatus(*run.State)

@@ -178,8 +178,6 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.WorkflowDagResultWriter,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,
-		h.NotificationWriter,
-		h.UserReader,
 		h.Vault,
 		h.Database,
 	); err != nil {
