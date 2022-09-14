@@ -26,6 +26,8 @@ import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
+import {SerializationType} from "../../utils/artifacts";
+import {Param} from "../../utils/operators";
 
 type Props = {
   user: UserProfile;
@@ -100,7 +102,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         return operator.spec.param !== undefined;
       })
       .map((operator) => {
-        return { [operator.name]: operator.spec.param.val };
+        return { [operator.name]: atob(operator.spec.param.val) };
       })
   );
 
@@ -109,9 +111,43 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     [key: string]: string;
   }>({});
 
+  // Takes in a map of parameter names to values and transforms it into a map from
+  // parameter names to parameter specs, which include the base64-encoded value and
+  // serialization_type.
+  const serializeParameters = () => {
+    let serializedParams = {}
+    Object.entries(paramNameToValMap).forEach(([key, strVal]) => {
+      // Serialize the user's input string appropriately into base64. The input can either be a
+      // 1) number 2) string 3) json.
+      try {
+        let val = JSON.parse(strVal)
+
+        // For numbers and booleans, we serialize them to json.
+        if (typeof val === "number" || typeof val === "boolean") {
+          serializedParams[key] = {
+            val: btoa(JSON.stringify(val)),
+            serialization_type: SerializationType.Json,
+          }
+        }
+        // All other jsonable values are serialized as strings.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.String,
+        }
+      } catch(err){
+        // Non-jsonable values (such as plain strings) are also serialized as strings.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.String,
+        }
+      }
+    })
+    return serializedParams
+  }
+
   const triggerWorkflowRun = () => {
     const parameters = new FormData();
-    parameters.append('parameters', JSON.stringify(paramNameToValMap));
+    parameters.append('parameters', serializeParameters());
 
     setShowRunWorkflowDialog(false);
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {

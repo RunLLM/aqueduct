@@ -222,14 +222,13 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		ExecTimeout:          engine.DefaultExecutionTimeout,
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
-	emptyParams := make(map[string]string)
 
 	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		workflowId,
 		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
 		timeConfig,
-		emptyParams,
+		nil, /* parameters */
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")

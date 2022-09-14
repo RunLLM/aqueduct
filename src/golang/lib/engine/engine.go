@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -34,7 +35,7 @@ type Engine interface {
 		ctx context.Context,
 		workflowId uuid.UUID,
 		timeConfig *AqueductTimeConfig,
-		parameters map[string]string,
+		parameters map[string]param.Param,
 	) (shared.ExecutionStatus, error)
 	DeleteWorkflow(
 		ctx context.Context,
@@ -56,7 +57,7 @@ type Engine interface {
 		workflowId uuid.UUID,
 		name string,
 		timeConfig *AqueductTimeConfig,
-		parameters map[string]string,
+		parameters map[string]param.Param,
 	) (shared.ExecutionStatus, error)
 }
 

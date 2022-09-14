@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -26,7 +28,7 @@ import (
 
 type RefreshWorkflowArgs struct {
 	WorkflowId uuid.UUID
-	Parameters map[string]string
+	Parameters map[string]param.Param
 }
 
 // Route: /workflow/{workflowId}/refresh
@@ -92,6 +94,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The user-defined parameters could not be extracted in current format.")
 	}
+	log.Errorf("Parameters in refresh_workflow: %v", parameters)
 
 	return &RefreshWorkflowArgs{
 		WorkflowId: workflowId,

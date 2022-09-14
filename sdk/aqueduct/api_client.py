@@ -15,7 +15,7 @@ from aqueduct.error import (
 )
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
-from aqueduct.operators import Operator
+from aqueduct.operators import Operator, ParamSpec
 from aqueduct.responses import (
     ArtifactResult,
     DeleteWorkflowResponse,
@@ -371,16 +371,21 @@ class APIClient:
     def refresh_workflow(
         self,
         flow_id: str,
-        serialized_params: Optional[str] = None,
+        serialized_param_specs: Dict[str, str],
     ) -> None:
+        """
+        `serialized_param_specs`: a dictionary from parameter names to serialized
+            parameter specs, which include the base64-encoded parameter value and the
+            parameter serialization type.
+        """
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
-        body = {}
-        if serialized_params is not None:
-            body["parameters"] = serialized_params
+        body = {
+            "parameters": serialized_param_specs
+        }
 
-        response = requests.post(url, headers=headers, data=body)
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
 
     def delete_workflow(

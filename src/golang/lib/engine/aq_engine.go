@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"path"
 	"reflect"
 	"time"
@@ -169,7 +170,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	timeConfig *AqueductTimeConfig,
-	parameters map[string]string,
+	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
@@ -249,7 +250,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error updating workflowDag to latest.")
 	}
 
-	for name, newVal := range parameters {
+	// Overwrite the parameter specs for all custom parameters defined by the user.
+	for name, param := range parameters {
 		op := dbWorkflowDag.GetOperatorByName(name)
 		if op == nil {
 			continue
@@ -257,7 +259,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		if !op.Spec.IsParam() {
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
-		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
+		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = param.Val
+		dbWorkflowDag.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
 	}
 	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
 	if err != nil {
@@ -666,7 +669,7 @@ func (eng *aqEngine) TriggerWorkflow(
 	workflowId uuid.UUID,
 	name string,
 	timeConfig *AqueductTimeConfig,
-	parameters map[string]string,
+	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{

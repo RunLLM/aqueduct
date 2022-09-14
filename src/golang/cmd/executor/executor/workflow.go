@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -22,7 +23,7 @@ type WorkflowExecutor struct {
 
 	// The parameters to execute this workflow job with. If nil, then only default parameters
 	// will be used. These values not persisted to the db.
-	Parameters map[string]string
+	Parameters map[string]param.Param
 }
 
 func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowExecutor, error) {
