@@ -10,7 +10,6 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
-import { WorkflowStatusBar } from './StatusBar';
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
@@ -19,6 +18,7 @@ import { getNextUpdateTime } from '../../utils/cron';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
+import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
@@ -58,7 +58,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(

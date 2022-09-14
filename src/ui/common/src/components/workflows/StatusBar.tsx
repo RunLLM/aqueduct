@@ -1,7 +1,5 @@
 import {
   faChevronDown,
-  faChevronLeft,
-  faChevronRight,
   faChevronUp,
   faCircleCheck,
   faCircleExclamation,
@@ -465,8 +463,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
-            }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
+            err.context ?? ''
+          }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
@@ -544,7 +543,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         //bottom: 0,
         top: '123px',
         //right: '40%',
-        height: collapsed ? `${StatusBarHeaderHeightInPx}px` : `${StatusBarListHeightInPx}px`,
+        height: collapsed
+          ? `${StatusBarHeaderHeightInPx}px`
+          : `${StatusBarListHeightInPx}px`,
         //zIndex: collapsed ? null : 10,
         zIndex: 10,
         border: `1px solid ${theme.palette.gray['500']}`,
@@ -575,7 +576,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           width: StatusBarWidthInPx,
           //backgroundColor: theme.palette.gray['100'],
           //backgroundColor: 'white'
-          borderBottom: collapsed ? null : `1px solid ${theme.palette.gray['500']}`,
+          borderBottom: collapsed
+            ? null
+            : `1px solid ${theme.palette.gray['500']}`,
         }}
       >
         <Box
