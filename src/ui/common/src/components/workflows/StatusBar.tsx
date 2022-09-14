@@ -56,17 +56,21 @@ type WorkflowStatusItem = {
 };
 
 interface ActiveWorkflowStatusTabProps {
+  setActiveWorkflowStatusTab: (tab: WorkflowStatusTabs) => void;
   activeWorkflowStatusTab: string;
   listItems: WorkflowStatusItem[];
 }
 
 export const StatusBarHeaderHeightInPx = 50;
+//export const StatusBarHeaderHeightInPx = 82;
 export const CollapsedStatusBarWidthInPx = 75;
-export const StatusBarWidthInPx = 400;
+export const StatusBarWidthInPx = 432;
+export const StatusBarListHeightInPx = 800;
 
 const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   activeWorkflowStatusTab,
   listItems,
+  setActiveWorkflowStatusTab,
 }) => {
   const openSideSheetState = useSelector(
     (state: RootState) => state.openSideSheetReducer
@@ -120,7 +124,9 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       sx={{
         width: `${StatusBarWidthInPx}px`,
         maxWidth: `${StatusBarWidthInPx}px`,
-        height: `calc(100% - ${StatusBarHeaderHeightInPx}px)`,
+        //height: `calc(100% - ${StatusBarHeaderHeightInPx}px)`,
+        height: `${StatusBarListHeightInPx}px`,
+        //overflowY: 'none',
         overflowX: 'auto',
         backgroundColor: 'white',
       }}
@@ -160,6 +166,11 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 onClick={() => {
                   if (listItem.nodeId && listItem.type) {
                     switchSideSheet(listItem.nodeId, listItem.type);
+                    //const collapseWorkflowStatusBar = (event: React.MouseEvent) => {
+                    //  event.preventDefault();
+                    dispatch(setWorkflowStatusBarOpenState(false));
+                    setActiveWorkflowStatusTab(WorkflowStatusTabs.Collapsed);
+                    //};
                   }
                 }}
               >
@@ -513,8 +524,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   console.log('collapsed: ', collapsed);
 
   const statusBarIconStyles = {
-    mx: collapsed ? 0 : 1,
-    //mx: 1,
+    //mx: collapsed ? 0 : 1,
+    mx: 1,
     py: 1,
     //width: collapsed ? '100%' : '40px',
     width: '40px',
@@ -527,18 +538,19 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     <Box
       sx={{
         position: 'absolute',
-        bottom: 0,
+        left: '700px',
+        //bottom: 0,
         top: '110px',
-        right: '40%',
-        height: collapsed ? `${StatusBarHeaderHeightInPx}px` : '100%',
+        //right: '40%',
+        height: collapsed ? `${StatusBarHeaderHeightInPx}px` : `${StatusBarListHeightInPx}px`,
+        //zIndex: collapsed ? null : 10,
         zIndex: 10,
         borderTop: '0px',
-        borderLeft: '1px',
+        //borderLeft: '1px',
         borderRight: '0px',
         borderBottom: '0px',
-        borderColor: theme.palette.gray['500'],
-        borderStyle: 'solid',
-        backgroundColor: theme.palette.gray['100'],
+        //borderColor: theme.palette.gray['500'],
+        //borderStyle: 'solid',
       }}
     >
       <Box
@@ -554,13 +566,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           ml: 0,
           //py: collapsed ? 0 : 1,
           py: 1,
-          height: collapsed ? undefined : `${StatusBarHeaderHeightInPx}px`,
+          height: `${StatusBarHeaderHeightInPx}px`,
           //height: `${StatusBarHeaderHeightInPx}px`,
           //width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
           width: StatusBarWidthInPx,
+          backgroundColor: theme.palette.gray['100'],
         }}
       >
-        <Box sx={{ cursor: 'pointer', my: 2, mx: collapsed ? 0 : 1 }}>
+        <Box sx={{ cursor: 'pointer', my: 2, mx: 1 }}>
           {collapsed ? (
             <FontAwesomeIcon
               icon={faChevronDown}
@@ -658,6 +671,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       <ActiveWorkflowStatusTab
         activeWorkflowStatusTab={activeWorkflowStatusTab}
         listItems={listItems}
+        setActiveWorkflowStatusTab={setActiveWorkflowStatusTab}
       />
     </Box>
   );

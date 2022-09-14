@@ -1,6 +1,6 @@
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import { Error, ExecState, ExecutionStatus } from './shared';
+import { ExecState, ExecutionStatus } from './shared';
 
 export enum OperatorType {
   Function = 'function',

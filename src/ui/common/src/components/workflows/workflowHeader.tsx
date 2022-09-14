@@ -10,6 +10,7 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { WorkflowStatusBar } from './StatusBar';
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
@@ -57,7 +58,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -218,10 +219,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
-
-        {/* NOTE: Funnyily enough, `size=large` on a button is what
-                    makes it match the size of the `FormControl` when set to
-                    small. Go figure. */}
         <Button
           color="primary"
           sx={{ height: '100%' }}
@@ -231,6 +228,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           <FontAwesomeIcon icon={faPlay} />
           <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
         </Button>
+
+        <WorkflowStatusBar user={user} />
+
         {runWorkflowDialog}
       </Box>
 
