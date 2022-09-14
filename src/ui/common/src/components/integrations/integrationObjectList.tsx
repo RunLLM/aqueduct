@@ -54,6 +54,13 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
     );
   }, [selectedObject]);
 
+  if (
+    integration.service === 'Kubernetes' ||
+    integration.service === 'Lambda'
+  ) {
+    return null;
+  }
+
   if (integration.service === 'S3') {
     return (
       <Alert severity="warning" sx={{ width: '80%', mt: 4 }}>
