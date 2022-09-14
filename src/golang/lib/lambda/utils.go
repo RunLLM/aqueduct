@@ -35,13 +35,13 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
-	//TODO: REPLACE LATEST WITH IMAGE VERSION NUMBER
-	imageVersionNumber := "latest"
+	imageVersionNumber := "0.0.14"
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, imageVersionNumber)
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
-	cmd := exec.Command("docker", "pull", fmt.Sprintf("%s:%s", lambdaImageUri, imageVersionNumber))
+	cmd := exec.Command("docker", "pull", versionedLambdaImageUri)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err = cmd.Run()
@@ -55,12 +55,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 	ecrSvc := ecr.New(sess)
-	// TODO: GET LIST OF EXISTING REPOS AND MAKE SURE THAT THIS DOESN'T EXIST
-	// repositories, err := ecrSvc.DescribeRepositories(&ecr.DescribeRepositoriesInput{})
-	// if err != nil {
-	// 	return errors.Wrap(err, "Unable to describe repository.")
-	// }
-	// log.Info(repositories.Repositories[0].RepositoryName)
 
 	_, err = ecrSvc.DeleteRepository(
 		&ecr.DeleteRepositoryInput{
@@ -69,6 +63,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		},
 	)
 	if err != nil {
+		//No need to fail here, repository doesn't exist.
 		log.Info(err)
 	}
 
@@ -82,16 +77,13 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 				return errors.Wrap(err, "Unable to create ECR repository.")
 			}
 		} else {
-			log.Info(err)
 			return errors.Wrap(err, "Unable to create ECR repository.")
 		}
 	}
-	log.Info(result)
 
 	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, imageVersionNumber)
-	log.Info(repositoryUri)
 
-	cmd = exec.Command("docker", "tag", lambdaImageUri, repositoryUri)
+	cmd = exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
@@ -101,15 +93,12 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 
 	token, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
-		log.Info(err)
 		return errors.Wrap(err, "Unable to get authorization token.")
 	}
 	auth, err := extractToken(*token.AuthorizationData[0].AuthorizationToken, *token.AuthorizationData[0].ProxyEndpoint)
 	if err != nil {
-		log.Info(err)
 		return errors.Wrap(err, "Unable to extract username and password.")
 	}
-	log.Info(auth)
 
 	cmd = exec.Command(
 		"docker",
@@ -151,10 +140,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			MemorySize:   aws.Int64(1000),
 			Timeout:      aws.Int64(300),
 		}
-
-		log.Info(repositoryUri)
-		log.Info(userRepoName)
-		log.Info(roleArn)
 
 		createResult, err := lambdaService.CreateFunction(createArgs)
 		if err != nil {
@@ -201,7 +186,7 @@ func extractToken(token string, proxyEndpoint string) (*EcrAuth, error) {
 func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 	switch functionType {
 	case FunctionExecutorType:
-		return FunctionLambdaImage, FunctionLambdaFunction, nil
+		return FunctionLambdaImage38, FunctionLambdaFunction38, nil
 	case ParamExecutorType:
 		return ParameterLambdaImage, ParameterLambdaFunction, nil
 	case SystemMetricType:

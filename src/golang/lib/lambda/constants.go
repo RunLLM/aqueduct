@@ -1,7 +1,7 @@
 package lambda
 
 const (
-	FunctionLambdaFunction     = "aqueduct-function"
+	FunctionLambdaFunction38   = "aqueduct-function-38"
 	ParameterLambdaFunction    = "aqueduct-parameter"
 	SystemMetricLambdaFunction = "aqueduct-systemmetric"
 
@@ -11,13 +11,13 @@ const (
 	S3LambdaFunction        = "aqueduct-s3"
 	SnowflakeLambdaFunction = "aqueduct-snowflake"
 
-	FunctionLambdaImage     = "aqueducthq/lambda-function:0.0.13"
-	ParameterLambdaImage    = "aqueducthq/lambda-param:0.0.13"
-	SystemMetricLambdaImage = "aqueducthq/lambda-system-metric:0.0.13"
+	FunctionLambdaImage38   = "aqueducthq/lambda-function-38"
+	ParameterLambdaImage    = "aqueducthq/lambda-param"
+	SystemMetricLambdaImage = "aqueducthq/lambda-system-metric"
 
-	AthenaConnectorLambdaImage    = "aqueducthq/lambda-athena-connector:0.0.13"
-	BigQueryConnectorLambdaImage  = "aqueducthq/lambda-bigquery-connector:0.0.13"
-	PostgresConnectorLambdaImage  = "aqueducthq/lambda-postgres-connector:0.0.13"
-	S3ConnectorLambdaImage        = "aqueducthq/lambda-s3-connector:0.0.13"
-	SnowflakeConnectorLambdaImage = "aqueducthq/lambda-snowflake-connector:0.0.13"
+	AthenaConnectorLambdaImage    = "aqueducthq/lambda-athena-connector"
+	BigQueryConnectorLambdaImage  = "aqueducthq/lambda-bigquery-connector"
+	PostgresConnectorLambdaImage  = "aqueducthq/lambda-postgres-connector"
+	S3ConnectorLambdaImage        = "aqueducthq/lambda-s3-connector"
+	SnowflakeConnectorLambdaImage = "aqueducthq/lambda-snowflake-connector"
 )
