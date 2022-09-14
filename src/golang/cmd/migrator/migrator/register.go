@@ -21,6 +21,7 @@ import (
 	_000016 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000016_add_artifact_type_column_to_artifact"
 	_000017 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000017_update_to_canceled_status"
 	_000018 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000018_add_dag_result_exec_state_column"
+	_000019 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000019_add_serialization_type_value_to_param_op"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -135,5 +136,11 @@ func init() {
 		upPostgres: _000018.UpPostgres, upSqlite: _000018.UpSqlite,
 		downPostgres: _000018.DownPostgres,
 		name:         "add exec state to workflow_dag_result",
+	}
+
+	registeredMigrations[19] = &migration{
+		upPostgres: _000019.Up, upSqlite: _000019.Up,
+		downPostgres: _000019.Down,
+		name:         "add serialization type value to param op",
 	}
 }
