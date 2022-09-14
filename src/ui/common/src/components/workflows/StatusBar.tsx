@@ -61,7 +61,7 @@ interface ActiveWorkflowStatusTabProps {
   listItems: WorkflowStatusItem[];
 }
 
-export const StatusBarHeaderHeightInPx = 50;
+export const StatusBarHeaderHeightInPx = 41;
 //export const StatusBarHeaderHeightInPx = 82;
 export const CollapsedStatusBarWidthInPx = 75;
 export const StatusBarWidthInPx = 432;
@@ -123,11 +123,10 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     <Box
       sx={{
         width: `${StatusBarWidthInPx}px`,
-        maxWidth: `${StatusBarWidthInPx}px`,
         //height: `calc(100% - ${StatusBarHeaderHeightInPx}px)`,
-        height: `${StatusBarListHeightInPx}px`,
-        //overflowY: 'none',
-        overflowX: 'auto',
+        height: `${StatusBarListHeightInPx - StatusBarHeaderHeightInPx}px`,
+        overflowY: 'scroll',
+        //overflowX: 'auto',
         backgroundColor: 'white',
       }}
     >
@@ -140,19 +139,22 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               flexDirection: 'row',
               width: '100%',
               backgroundColor: 'white',
-              p: 2,
+              //p: 2,
               borderBottom: `1px solid`,
               borderColor: 'gray.500',
               alignItems: 'start',
             }}
           >
-            {listItem ? workflowStatusIcons[listItem.level] : null}
+            <Box sx={{ marginLeft: '8px', marginTop: '16px' }}>
+              {listItem ? workflowStatusIcons[listItem.level] : null}
+            </Box>
             <Box
               sx={{
-                mx: 2,
+                //marginLeft: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 verticalAlign: 'middle',
+                padding: 2,
               }}
             >
               <Typography
@@ -540,17 +542,17 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         position: 'absolute',
         left: '700px',
         //bottom: 0,
-        top: '110px',
+        top: '123px',
         //right: '40%',
         height: collapsed ? `${StatusBarHeaderHeightInPx}px` : `${StatusBarListHeightInPx}px`,
         //zIndex: collapsed ? null : 10,
         zIndex: 10,
-        borderTop: '0px',
-        //borderLeft: '1px',
-        borderRight: '0px',
-        borderBottom: '0px',
+        border: `1px solid ${theme.palette.gray['500']}`,
         //borderColor: theme.palette.gray['500'],
         //borderStyle: 'solid',
+        borderRadius: '8px',
+        //borderStyle: 'solid',
+        //borderColor: theme.palette.gray['700'],
       }}
     >
       <Box
@@ -560,33 +562,22 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           flexDirection: 'row',
           //alignItems: collapsed ? 'start' : 'center',
           alignItems: 'center',
+          justifyContent: 'space-evenly',
           //px: collapsed ? 1 : 0,
           px: 0,
           //ml: collapsed ? 1 : 0,
           ml: 0,
           //py: collapsed ? 0 : 1,
-          py: 1,
+          //py: 1,
           height: `${StatusBarHeaderHeightInPx}px`,
           //height: `${StatusBarHeaderHeightInPx}px`,
           //width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
           width: StatusBarWidthInPx,
-          backgroundColor: theme.palette.gray['100'],
+          //backgroundColor: theme.palette.gray['100'],
+          //backgroundColor: 'white'
+          borderBottom: collapsed ? null : `1px solid ${theme.palette.gray['500']}`,
         }}
       >
-        <Box sx={{ cursor: 'pointer', my: 2, mx: 1 }}>
-          {collapsed ? (
-            <FontAwesomeIcon
-              icon={faChevronDown}
-              onClick={expandWorkflowStatusbar}
-            />
-          ) : (
-            <FontAwesomeIcon
-              icon={faChevronUp}
-              onClick={collapseWorkflowStatusBar}
-            />
-          )}
-        </Box>
-
         <Box
           onClick={() => selectTab(WorkflowStatusTabs.Errors)}
           sx={{
@@ -647,24 +638,40 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           <Typography sx={{ ml: 1 }}>{numWorkflowLogs}</Typography>
         </Box>
 
-        <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Checks)}
-          sx={{
-            ...statusBarIconStyles,
-            color:
-              activeWorkflowStatusTab === WorkflowStatusTabs.Checks
-                ? theme.palette.green['500']
-                : theme.palette.green['400'],
-            borderBottom:
-              activeWorkflowStatusTab === WorkflowStatusTabs.Checks
-                ? `2px solid ${theme.palette.green['500']}`
-                : '', // green500
-            '&:hover': { color: theme.palette.green['500'] },
-            fontSize: '20px',
-          }}
-        >
-          <FontAwesomeIcon icon={faCircleCheck} />
-          <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
+        <Box>
+          <Box
+            onClick={() => selectTab(WorkflowStatusTabs.Checks)}
+            sx={{
+              ...statusBarIconStyles,
+              color:
+                activeWorkflowStatusTab === WorkflowStatusTabs.Checks
+                  ? theme.palette.green['500']
+                  : theme.palette.green['400'],
+              borderBottom:
+                activeWorkflowStatusTab === WorkflowStatusTabs.Checks
+                  ? `2px solid ${theme.palette.green['500']}`
+                  : '', // green500
+              '&:hover': { color: theme.palette.green['500'] },
+              fontSize: '20px',
+            }}
+          >
+            <FontAwesomeIcon icon={faCircleCheck} />
+            <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ cursor: 'pointer', my: 2, mx: 1 }}>
+          {collapsed ? (
+            <FontAwesomeIcon
+              icon={faChevronDown}
+              onClick={expandWorkflowStatusbar}
+            />
+          ) : (
+            <FontAwesomeIcon
+              icon={faChevronUp}
+              onClick={collapseWorkflowStatusBar}
+            />
+          )}
         </Box>
       </Box>
 
