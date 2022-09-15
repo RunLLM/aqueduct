@@ -112,7 +112,7 @@ func (j *lambdaJobManager) DeleteCronJob(ctx context.Context, name string) error
 func mapJobTypeToLambdaFunction(spec Spec) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
-		return lambda_utils.FunctionLambdaFunction, nil
+		return lambda_utils.FunctionLambdaFunction38, nil
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToLambdaFunction(authenticateSpec.ConnectorName)
