@@ -62,35 +62,13 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
     default:
       serviceCard = null;
   }
-
-  if (
-    integration.service === 'Kubernetes' ||
-    integration.service === 'Lambda'
-  ) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '900px',
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-          <img
-            height="45px"
-            src={SupportedIntegrations[integration.service].logo}
-          />
-          <Box sx={{ ml: 3 }}>
-            <Box display="flex" flexDirection="row">
-              <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
-                {integration.name}
-              </Typography>
-            </Box>
-            {serviceCard}
-          </Box>
-        </Box>
-      </Box>
-    );
+  let createdOnText = null;
+  if (integration.service !== 'Kubernetes' && integration.service !== 'Lambda') {
+    createdOnText = 
+      (<Typography variant="body1">
+        <strong>Created On: </strong>
+        {new Date(integration.createdAt * 1000).toLocaleString()}
+      </Typography>)
   }
 
   return (
@@ -113,11 +91,8 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
             </Typography>
           </Box>
 
-          <Typography variant="body1">
-            <strong>Created On: </strong>
-            {new Date(integration.createdAt * 1000).toLocaleString()}
-          </Typography>
-
+          {createdOnText}
+          
           {serviceCard}
         </Box>
       </Box>

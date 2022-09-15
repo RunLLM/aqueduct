@@ -58,7 +58,26 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
     integration.service === 'Kubernetes' ||
     integration.service === 'Lambda'
   ) {
-    return null;
+    return (
+      <Alert severity="warning" sx={{ width: '80%', mt: 4 }}>
+        <>
+          We currently do not support listing data in this integration. But
+          don&apos;t worry&mdash;we&apos;re working on adding this feature! If
+          you have questions, comments or would like to learn more about what
+          we&apos;re building, please{' '}
+        </>
+        <Link href="mailto:hello@aqueducthq.com">reach out</Link>
+        <>, </>
+        <Link href="https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A">
+          join our Slack channel
+        </Link>
+        <>, or </>
+        <Link href="https://github.com/aqueducthq/aqueduct/issues/new">
+          start a conversation on GitHub channel
+        </Link>
+        <>.</>
+      </Alert>
+    );
   }
 
   if (integration.service === 'S3') {
