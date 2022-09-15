@@ -149,7 +149,6 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	BasePythonSpec
-	Val                string           `json:"val"  yaml:"val"`
 	ExpectedType       db_artifact.Type `json:"expected_type" yaml:"expected_type"`
 	SerializationType  string           `json:"serialization_type" yaml:"serialization_type"`
 	OutputContentPath  string           `json:"output_content_path"  yaml:"output_content_path"`

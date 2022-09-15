@@ -1,7 +1,7 @@
 import base64
 import io
 import json
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union, Optional
 
 import cloudpickle as pickle
 import numpy as np
@@ -196,22 +196,15 @@ _serialization_function_mapping = {
 }
 
 
-def base64_string_to_bytes(content: str) -> bytes:
-    """Helper to convert a base64-encoded string into a bytes-type object.
-
-    This is meant to complement `bytes_to_base64_string()` on the SDK.
-    """
-    return base64.b64decode(content.encode(_DEFAULT_ENCODING))
-
-
 def write_artifact(
     storage: Storage,
     artifact_type: ArtifactType,
-    output_path: str,
+    output_path: Optional[str],
     output_metadata_path: str,
     content: Any,
     system_metadata: Dict[str, str],
 ) -> None:
+    """The `output_path` can be empty if the contents were already pre-populated (eg. parameter operators)."""
     output_metadata: Dict[str, Any] = {
         _METADATA_SCHEMA_KEY: [],
         _METADATA_SYSTEM_METADATA_KEY: system_metadata,
@@ -225,11 +218,14 @@ def write_artifact(
         artifact_type, content
     ).value
 
-    _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
-        storage,
-        output_path,
-        content,
-    )
+
+    if output_path is not None:
+        _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
+            storage,
+            output_path,
+            content,
+        )
+
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING))
 
 

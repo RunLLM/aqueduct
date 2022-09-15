@@ -749,8 +749,11 @@ func (eng *aqEngine) execute(
 		for _, op := range inProgressOps {
 			execState, err := op.Poll(ctx)
 			if err != nil {
+				log.Errorf("HELLO: error!!")
 				return err
 			}
+
+			log.Errorf("HELLO: status %s", execState.Status)
 
 			if execState.Status == shared.PendingExecutionStatus {
 				err = op.Launch(ctx)
@@ -773,7 +776,6 @@ func (eng *aqEngine) execute(
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}
 			}
-
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
 			if shouldStopExecution(execState) {
