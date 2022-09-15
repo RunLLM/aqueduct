@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import uuid
 import json
+import uuid
 from typing import Any, Dict, Optional
 
 from aqueduct.artifacts import utils as artifact_utils
