@@ -39,15 +39,34 @@ func newClient(ctx context.Context, authConf auth.Config) (*client, error) {
 
 // getDagRuns returns all of the Airflow DAGRuns for the Airflow DAG specified.
 func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
-	dagRunsResp, resp, err := c.apiClient.DAGRunApi.GetDagRuns(
-		c.ctx,
-		dagId,
-	).OrderBy("start_date").Execute()
-	if err != nil {
-		return nil, wrapApiError(err, "GetDagRuns", resp)
+	limit := 100 // This is the max number of DAG runs that can be returned in each response.
+	offset := 0
+	var dagRuns []airflow.DAGRun
+
+	// Keep paginating through DAG runs until there are none in response
+	for {
+		dagRunsResp, resp, err := c.apiClient.DAGRunApi.GetDagRuns(
+			c.ctx,
+			dagId,
+		).
+			OrderBy("start_date").
+			Limit(int32(limit)).
+			Offset(int32(offset)).
+			Execute()
+		if err != nil {
+			return nil, wrapApiError(err, "GetDagRuns", resp)
+		}
+
+		if len(*dagRunsResp.DagRuns) == 0 {
+			// There are no more DAG Runs
+			break
+		}
+
+		dagRuns = append(dagRuns, *dagRunsResp.DagRuns...)
+		offset += limit
 	}
 
-	return *dagRunsResp.DagRuns, nil
+	return dagRuns, nil
 }
 
 // getTaskStates returns a map of each taskID to its Airflow TaskState for the Airflow
