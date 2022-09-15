@@ -1,6 +1,7 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
 import DataPreviewer from './components/DataPreviewer';
+import MultiFileViewer from './components/MultiFileViewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -61,6 +62,7 @@ import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import WorkflowPage from './components/pages/workflow/id';
+import FunctionDetailsPage from './components/pages/function/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
@@ -406,6 +408,7 @@ export {
   IntegrationCard,
   IntegrationConfig,
   IntegrationDetailsPage,
+  FunctionDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
   integrations,
@@ -462,6 +465,7 @@ export {
   openSideSheet,
   openSideSheetSlice,
   Operator,
+  MultiFileViewer,
   OperatorResult,
   OperatorResultsSideSheet,
   OperatorSpec,

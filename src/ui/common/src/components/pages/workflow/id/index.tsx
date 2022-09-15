@@ -45,6 +45,7 @@ import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
 import WorkflowHeader from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -282,6 +283,21 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           Export CSV
         </Button>
       );
+    } else if (currentNode.type === NodeType.FunctionOp) {
+      return (<Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/function/${currentNode.id}`
+              );
+            }}
+          >
+            View Function Details
+          </Button>
+        </Box>);
     }
 
     return null;
