@@ -4,6 +4,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/enterprise/src/golang/lib/collections/artifact_result"
 	"github.com/google/uuid"
 )
 
@@ -41,6 +42,25 @@ type ResultResponse struct {
 	Result *RawResultResponse `json:"result"`
 }
 
+func NewRawResultResponseFromDbObject(
+	dbArtifactResult *artifact_result.ArtifactResult,
+	content *string
+) *RawResultResponse {
+	resultResp := &RawResultResponse{
+		Id:                dbArtifactResult.Id,
+		ContentPath:       dbArtifactResult.ContentPath,
+		ContentSerialized: content,
+	}
+
+	if !dbArtifactResult.ExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbArtifactResult.ExecState.ExecutionState
+		resultResp.ExecState = &execStateVal
+	}
+
+	return &resultResp
+}
+
 func NewResultResponseFromDbObjects(
 	dbArtifact *artifact.DBArtifact,
 	dbArtifactResult *artifact_result.ArtifactResult,
@@ -61,20 +81,8 @@ func NewResultResponseFromDbObjects(
 		return &ResultResponse{Response: metadata}
 	}
 
-	resultResp := &RawResultResponse{
-		Id:                dbArtifactResult.Id,
-		ContentPath:       dbArtifactResult.ContentPath,
-		ContentSerialized: content,
-	}
-
-	if !dbArtifactResult.ExecState.IsNull {
-		// make a copy of execState's value
-		execStateVal := dbArtifactResult.ExecState.ExecutionState
-		resultResp.ExecState = &execStateVal
-	}
-
 	return &ResultResponse{
 		Response: metadata,
-		Result:   resultResp,
+		Result:   NewRawResultResponseFromDbObject(dbArtifactResult),
 	}
 }
