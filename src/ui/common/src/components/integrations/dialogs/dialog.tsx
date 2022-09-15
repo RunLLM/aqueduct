@@ -249,14 +249,6 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
-    case 'Lambda':
-      serviceDialog = (
-        <LambdaDialog
-          onUpdateField={setConfigField}
-          value={config as LambdaConfig}
-        />
-      );
-      break;
     case 'SQLite':
       serviceDialog = (
         <SQLiteDialog
