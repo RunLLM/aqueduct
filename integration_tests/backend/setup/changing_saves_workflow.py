@@ -21,21 +21,21 @@ def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
         artifacts=[table],
     )
 
-    ###
+    ### update
     table.save(integration.config(table="table_1", update_mode="append"))
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
-    ###
+    ### update
     table.save(integration.config(table="table_1", update_mode="append"))
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
-    ###
+    ### update
     table.save(integration.config(table="table_2", update_mode="replace"))
     flow = client.publish_flow(
         name=name,
