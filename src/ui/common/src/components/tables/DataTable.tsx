@@ -28,57 +28,58 @@ const classes = {
 const columnWidthMultiplier = 13;
 
 const styles = ({ theme }: { theme: Theme }) =>
-  ({
-    // temporary right-to-left patch, waiting for
-    // https://github.com/bvaughn/react-virtualized/issues/454
-    [`& .${classes.headerRow}`]: {
-      ...(theme.direction === 'rtl' && {
-        paddingLeft: '0 !important',
-      }),
-      ...(theme.direction !== 'rtl' && {
-        paddingRight: undefined,
-      }),
+({
+  // temporary right-to-left patch, waiting for
+  // https://github.com/bvaughn/react-virtualized/issues/454
+  [`& .${classes.headerRow}`]: {
+    ...(theme.direction === 'rtl' && {
+      paddingLeft: '0 !important',
+    }),
+    ...(theme.direction !== 'rtl' && {
+      paddingRight: undefined,
+    }),
+  },
+  [`& .${classes.headerColumn}`]: {
+    ...{
+      marginRight: '0px',
+      width: '100%'
     },
-    [`& .${classes.headerColumn}`]: {
-      ...{
-        marginRight: '0px',
-      },
+  },
+  [`& .${classes.rowColumn}`]: {
+    ...{
+      marginRight: '0px',
     },
-    [`& .${classes.rowColumn}`]: {
-      ...{
-        marginRight: '0px',
-      },
+  },
+  [`& .${classes.headerColumnFirstOfType}`]: {
+    ...{
+      marginLeft: '0px',
     },
-    [`& .${classes.headerColumnFirstOfType}`]: {
-      ...{
-        marginLeft: '0px',
-      },
+  },
+  [`& .${classes.rowColumnFirstOfType}`]: {
+    ...{
+      marginLeft: '0px',
     },
-    [`& .${classes.rowColumnFirstOfType}`]: {
-      ...{
-        marginLeft: '0px',
-      },
+  },
+  [`& .${classes.flexContainer}`]: {
+    display: 'flex',
+    alignItems: 'center',
+    boxSizing: 'border-box',
+  },
+  [`& .${classes.tableRow}`]: {
+    cursor: 'pointer',
+  },
+  [`& .${classes.tableRowHover}`]: {
+    '&:hover': {
+      backgroundColor: theme.palette.grey[200],
     },
-    [`& .${classes.flexContainer}`]: {
-      display: 'flex',
-      alignItems: 'center',
-      boxSizing: 'border-box',
-    },
-    [`& .${classes.tableRow}`]: {
-      cursor: 'pointer',
-    },
-    [`& .${classes.tableRowHover}`]: {
-      '&:hover': {
-        backgroundColor: theme.palette.grey[200],
-      },
-    },
-    [`& .${classes.tableCell}`]: {
-      flex: 1,
-    },
-    [`& .${classes.noClick}`]: {
-      cursor: 'initial',
-    },
-  } as const);
+  },
+  [`& .${classes.tableCell}`]: {
+    flex: 1,
+  },
+  [`& .${classes.noClick}`]: {
+    cursor: 'initial',
+  },
+} as const);
 
 interface ColumnData {
   dataKey: string;
@@ -213,8 +214,16 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
       MIN_TABLE_WIDTH += column.columnWidth;
     });
 
+    // if there is only one column, set everything to 800, which is full width of MUI Drawer.
+    if (MIN_TABLE_WIDTH < 800) {
+      MIN_TABLE_WIDTH = 800;
+      columns.forEach((column) => {
+        column.columnWidth = 800;
+      })
+    }
+
     return (
-      <AutoSizer>
+      <AutoSizer style={{ width: '100%', minWidth: '800px' }}>
         {({ height }) => (
           <Table
             height={height}
@@ -231,7 +240,7 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
               return (
                 <Column
                   key={dataKey}
-                  width={columnWidth}
+                  width={Math.max(MIN_TABLE_WIDTH, columnWidth)}
                   columnData={columns[index]}
                   headerRenderer={(headerProps) =>
                     this.headerRenderer({
