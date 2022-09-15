@@ -121,20 +121,13 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       try {
         let val = JSON.parse(strVal)
 
-        // For numbers and booleans, we serialize them to json.
-        if (typeof val === "number" || typeof val === "boolean") {
-          serializedParams[key] = JSON.stringify({
-            val: btoa(JSON.stringify(val)),
-            serialization_type: SerializationType.Json,
-          })
-        }
-        // All other jsonable values are serialized as strings.
+        // All jsonable values are serialized as json.
         serializedParams[key] = JSON.stringify({
-          val: btoa(strVal),
-          serialization_type: SerializationType.String,
+          val: btoa(JSON.stringify(val)),
+          serialization_type: SerializationType.Json,
         })
       } catch(err){
-        // Non-jsonable values (such as plain strings) are also serialized as strings.
+        // Non-jsonable values (such as plain strings) are serialized as strings.
         serializedParams[key] = JSON.stringify({
           val: btoa(strVal),
           serialization_type: SerializationType.String,

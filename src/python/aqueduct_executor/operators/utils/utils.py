@@ -341,10 +341,13 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.BYTES
     elif isinstance(value, str):
         # We first check if the value is a valid JSON string.
+        print("Check if value is value JSON string")
         try:
             json.loads(value)
+            print("Loads successfully!")
             return ArtifactType.JSON
         except:
+            print("Fails to load!")
             return ArtifactType.STRING
     elif isinstance(value, bool) or isinstance(value, np.bool_):
         return ArtifactType.BOOL

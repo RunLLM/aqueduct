@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/dropbox/godropbox/errors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -22,8 +21,6 @@ func ExtractParamsfromRequest(r *http.Request) (map[string]param.Param, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse JSON body.")
 	}
-
-	log.Errorf("HELLO: request body: ", body)
 
 	serializedParams := body.SerializedParams
 

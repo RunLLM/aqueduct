@@ -381,9 +381,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
-        body = {
-            "parameters": serialized_param_specs
-        }
+        body = {"parameters": serialized_param_specs}
 
         response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
