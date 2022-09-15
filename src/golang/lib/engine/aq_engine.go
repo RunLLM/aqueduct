@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
@@ -170,7 +169,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	timeConfig *AqueductTimeConfig,
-	parameters map[string]param.Param,
+	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
 	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
@@ -250,8 +249,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error updating workflowDag to latest.")
 	}
 
-	// Overwrite the parameter specs for all custom parameters defined by the user.
-	for name, param := range parameters {
+	for name, newVal := range parameters {
 		op := dbWorkflowDag.GetOperatorByName(name)
 		if op == nil {
 			continue
@@ -259,8 +257,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		if !op.Spec.IsParam() {
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
-		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = param.Val
-		dbWorkflowDag.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
+		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
 	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
 	if err != nil {
@@ -669,7 +666,7 @@ func (eng *aqEngine) TriggerWorkflow(
 	workflowId uuid.UUID,
 	name string,
 	timeConfig *AqueductTimeConfig,
-	parameters map[string]param.Param,
+	parameters map[string]string,
 ) (shared.ExecutionStatus, error) {
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
@@ -749,11 +746,8 @@ func (eng *aqEngine) execute(
 		for _, op := range inProgressOps {
 			execState, err := op.Poll(ctx)
 			if err != nil {
-				log.Errorf("HELLO: error!!")
 				return err
 			}
-
-			log.Errorf("HELLO: status %s", execState.Status)
 
 			if execState.Status == shared.PendingExecutionStatus {
 				err = op.Launch(ctx)
@@ -776,6 +770,7 @@ func (eng *aqEngine) execute(
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}
 			}
+
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
 			if shouldStopExecution(execState) {

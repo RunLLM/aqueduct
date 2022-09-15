@@ -1,7 +1,7 @@
 import base64
 import io
 import json
-from typing import Any, Callable, Dict, List, Tuple, Union, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cloudpickle as pickle
 import numpy as np
@@ -217,7 +217,6 @@ def write_artifact(
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = artifact_type_to_serialization_type(
         artifact_type, content
     ).value
-
 
     if output_path is not None:
         _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
