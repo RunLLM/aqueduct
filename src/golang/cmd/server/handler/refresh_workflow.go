@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -94,7 +93,6 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The user-defined parameters could not be extracted in current format.")
 	}
-	log.Errorf("Parameters in refresh_workflow: %v", parameters)
 
 	return &RefreshWorkflowArgs{
 		WorkflowId: workflowId,
