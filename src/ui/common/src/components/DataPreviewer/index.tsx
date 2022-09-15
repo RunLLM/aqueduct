@@ -158,7 +158,10 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   return (
-    <Box minHeight={`calc(100vh - ${DrawerHeaderHeightInPx}px)`} height={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}>
+    <Box
+      minHeight={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}
+      height={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}
+    >
       {errorComponent}
       {data}
     </Box>

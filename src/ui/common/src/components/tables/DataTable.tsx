@@ -28,59 +28,59 @@ const classes = {
 const columnWidthMultiplier = 13;
 
 const styles = ({ theme }: { theme: Theme }) =>
-({
-  // temporary right-to-left patch, waiting for
-  // https://github.com/bvaughn/react-virtualized/issues/454
-  [`& .${classes.headerRow}`]: {
-    ...(theme.direction === 'rtl' && {
-      paddingLeft: '0 !important',
-    }),
-    ...(theme.direction !== 'rtl' && {
-      paddingRight: undefined,
-    }),
-  },
-  [`& .${classes.headerColumn}`]: {
-    ...{
-      marginRight: '0px',
-      width: '100%'
+  ({
+    // temporary right-to-left patch, waiting for
+    // https://github.com/bvaughn/react-virtualized/issues/454
+    [`& .${classes.headerRow}`]: {
+      ...(theme.direction === 'rtl' && {
+        paddingLeft: '0 !important',
+      }),
+      ...(theme.direction !== 'rtl' && {
+        paddingRight: undefined,
+      }),
     },
-  },
-  [`& .${classes.rowColumn}`]: {
-    ...{
-      marginRight: '0px',
+    [`& .${classes.headerColumn}`]: {
+      ...{
+        marginRight: '0px',
+        width: '100%',
+      },
     },
-  },
-  [`& .${classes.headerColumnFirstOfType}`]: {
-    ...{
-      marginLeft: '0px',
+    [`& .${classes.rowColumn}`]: {
+      ...{
+        marginRight: '0px',
+      },
     },
-  },
-  [`& .${classes.rowColumnFirstOfType}`]: {
-    ...{
-      marginLeft: '0px',
+    [`& .${classes.headerColumnFirstOfType}`]: {
+      ...{
+        marginLeft: '0px',
+      },
     },
-  },
-  [`& .${classes.flexContainer}`]: {
-    display: 'flex',
-    alignItems: 'center',
-    boxSizing: 'border-box',
-    paddingRight: '0 !important',
-  },
-  [`& .${classes.tableRow}`]: {
-    cursor: 'pointer',
-  },
-  [`& .${classes.tableRowHover}`]: {
-    '&:hover': {
-      backgroundColor: theme.palette.grey[200],
+    [`& .${classes.rowColumnFirstOfType}`]: {
+      ...{
+        marginLeft: '0px',
+      },
     },
-  },
-  [`& .${classes.tableCell}`]: {
-    flex: 1,
-  },
-  [`& .${classes.noClick}`]: {
-    cursor: 'initial',
-  },
-} as const);
+    [`& .${classes.flexContainer}`]: {
+      display: 'flex',
+      alignItems: 'center',
+      boxSizing: 'border-box',
+      paddingRight: '0 !important',
+    },
+    [`& .${classes.tableRow}`]: {
+      cursor: 'pointer',
+    },
+    [`& .${classes.tableRowHover}`]: {
+      '&:hover': {
+        backgroundColor: theme.palette.grey[200],
+      },
+    },
+    [`& .${classes.tableCell}`]: {
+      flex: 1,
+    },
+    [`& .${classes.noClick}`]: {
+      cursor: 'initial',
+    },
+  } as const);
 
 interface ColumnData {
   dataKey: string;
@@ -220,7 +220,7 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
       MIN_TABLE_WIDTH = 800;
       columns.forEach((column) => {
         column.columnWidth = 800;
-      })
+      });
     }
 
     return (

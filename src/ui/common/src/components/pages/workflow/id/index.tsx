@@ -264,7 +264,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -288,7 +289,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={{ marginRight: '16px' }}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -339,7 +341,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       </Box>
 
       {currentNode.type !== NodeType.None && (
-        <Drawer anchor="right" variant="persistent" open={true} sx={{ maxWidth: '800px' }} PaperProps={{ sx: { overflow: 'hidden' } }}>
+        <Drawer
+          anchor="right"
+          variant="persistent"
+          open={true}
+          sx={{ maxWidth: '800px' }}
+          PaperProps={{ sx: { overflow: 'hidden' } }}
+        >
           <Box width="800px" maxWidth="800px" minHeight="80vh">
             <Box
               width="100%"
@@ -359,9 +367,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 {getNodeActionButton()}
               </Box>
             </Box>
-            <Box>
-              {getDataSideSheetContent(user, currentNode)}
-            </Box>
+            <Box>{getDataSideSheetContent(user, currentNode)}</Box>
           </Box>
         </Drawer>
       )}
