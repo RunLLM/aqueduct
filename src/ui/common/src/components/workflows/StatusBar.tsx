@@ -455,9 +455,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
@@ -514,7 +513,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   };
 
   const collapsed = activeWorkflowStatusTab === WorkflowStatusTabs.Collapsed;
-  console.log('collapsed: ', collapsed);
 
   const statusBarIconStyles = {
     mx: 1,
@@ -544,7 +542,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-evenly',
           px: 0,
           ml: 0,
           height: `${StatusBarHeaderHeightInPx}px`,
@@ -568,6 +565,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // red600
             '&:hover': { color: theme.palette.red['600'] },
             fontSize: '20px',
+            marginRight: 4,
+            marginLeft: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleExclamation} />
@@ -588,6 +587,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // orange600
             '&:hover': { color: theme.palette.orange['600'] },
             fontSize: '20px',
+            marginRight: 4,
           }}
         >
           <FontAwesomeIcon icon={faTriangleExclamation} />
@@ -608,6 +608,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // blue500
             '&:hover': { color: theme.palette.blue['500'] },
             fontSize: '20px',
+            marginRight: 4,
           }}
         >
           <FontAwesomeIcon icon={faCircleInfo} />
@@ -629,6 +630,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                   : '', // green500
               '&:hover': { color: theme.palette.green['500'] },
               fontSize: '20px',
+              marginRight: 4,
             }}
           >
             <FontAwesomeIcon icon={faCircleCheck} />
@@ -636,7 +638,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           </Box>
         </Box>
 
-        <Box sx={{ cursor: 'pointer', my: 2, mx: 1 }}>
+        <Box sx={{ cursor: 'pointer', my: 2, marginLeft: 'auto', marginRight: 2 }}>
           {collapsed ? (
             <FontAwesomeIcon
               icon={faChevronDown}
