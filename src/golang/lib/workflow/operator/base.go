@@ -217,7 +217,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 		// 2) it has run already at sometime in the past, but has been garbage collected
 		// 3) it has run already at sometime in the past, but did not go through the job manager.
 		//    (this can happen when the output artifacts have already been cached).
-		if err == job.ErrJobNotExist {
+		if err == job.ErrJobNotExist || err == job.ErrAsyncExecution {
 			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
 				execState := bo.fetchExecState(ctx)
@@ -225,7 +225,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 				return bo.ExecState(), nil
 			}
 
-			// Otherwise, this job has not run yet and is in a pending state.
+			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
 		} else {
 			// This is just an internal polling error state.

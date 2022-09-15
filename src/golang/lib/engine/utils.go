@@ -9,6 +9,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -108,6 +109,36 @@ func generateJobManagerConfig(
 			AwsSecretAccessKey: awsSecretAccessKey,
 			AwsRegion:          DefaultAwsRegion,
 		}, nil
+	case shared.LambdaEngineType:
+		if dbWorkflowDag.StorageConfig.Type != shared.S3StorageType {
+			return nil, errors.New("Must use S3 for Lambda engine.")
+		}
+		lambdaIntegrationId := dbWorkflowDag.EngineConfig.LambdaConfig.IntegrationId
+		config, err := auth.ReadConfigFromSecret(ctx, lambdaIntegrationId, vault)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to read config from vault.")
+		}
+		lambdaConfig, err := ParseLambdaConfig(config)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get integration.")
+		}
+
+		var awsAccessKeyId, awsSecretAccessKey string
+		if dbWorkflowDag.StorageConfig.Type == shared.S3StorageType {
+			keyId, secretKey, err := extractAwsCredentials(dbWorkflowDag.StorageConfig.S3Config)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
+			}
+
+			awsAccessKeyId = keyId
+			awsSecretAccessKey = secretKey
+		}
+
+		return &job.LambdaJobManagerConfig{
+			RoleArn:            lambdaConfig.RoleArn,
+			AwsAccessKeyId:     awsAccessKeyId,
+			AwsSecretAccessKey: awsSecretAccessKey,
+		}, nil
 	default:
 		return nil, errors.New("Unsupported engine type.")
 	}
@@ -115,13 +146,27 @@ func generateJobManagerConfig(
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
 // It also returns an error, if any.
-func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
+func ParseK8sConfig(conf auth.Config) (*integration.K8sIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.K8sIntegrationConfig
+	var c integration.K8sIntegrationConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c integration.LambdaIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -145,12 +190,12 @@ func extractAwsCredentials(config *shared.S3Config) (string, string, error) {
 	for fileScanner.Scan() {
 		if profileString == fileScanner.Text() {
 			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id = %v", &awsAccessKeyId)
+				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id=%v", &awsAccessKeyId)
 			} else {
 				return "", "", errors.New("Unable to extract AWS credentials.")
 			}
 			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key = %v", &awsSecretAccessKey)
+				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key=%v", &awsSecretAccessKey)
 			} else {
 				return "", "", errors.New("Unable to extract AWS credentials.")
 			}

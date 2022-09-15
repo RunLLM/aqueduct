@@ -15,8 +15,8 @@ func TestExtractAwsCredentials(t *testing.T) {
 	require.Nil(t, err)
 	f.WriteString(
 		`[default]
-aws_access_key_id = dummyid
-aws_secret_access_key = dummykey`,
+aws_access_key_id=dummyid
+aws_secret_access_key=dummykey`,
 	)
 	f.Close()
 
