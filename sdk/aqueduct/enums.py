@@ -150,7 +150,6 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
-    PARAM = "param"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):

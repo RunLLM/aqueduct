@@ -88,6 +88,29 @@ def test_get_with_custom_parameter(client):
         param_doubled.get(parameters={"number": "NOT A NUMBER"})
 
 
+def test_implicitly_created_parameter(client):
+    @op
+    def func(foo):
+        return foo
+
+    result = func(2)
+    assert result.get() == 2
+    assert result.get(parameters={"foo": 10}) == 10
+
+    bar_param = client.create_param("bar", default="hello")
+
+    @op
+    def another_func(bar):
+        return bar
+
+    with pytest.raises(InvalidUserArgumentException):
+        # This should error because we try to implicitly create a parameter "bar" but it already exists.
+        result = another_func(2)
+
+    result = another_func(bar_param)
+    assert result.get() == "hello"
+
+
 @op
 def append_row_to_df(df, row):
     """`row` is a list of values to append to the input dataframe."""
