@@ -91,14 +91,14 @@ class BoolArtifact(BaseArtifact):
         """Prints out a human-readable description of the bool artifact."""
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
 
-        general_dict = get_description_for_check(input_operator)
-
-        # Remove because values already in `readable_dict`
-        general_dict.pop("Label")
-        general_dict.pop("Level")
-
         readable_dict = super()._describe()
-        readable_dict.update(general_dict)
+        if get_operator_type(input_operator) is OperatorType.CHECK:
+            general_dict = get_description_for_check(input_operator, self._dag)
+            # Remove because values already in `readable_dict`
+            general_dict.pop("Label")
+            general_dict.pop("Granularity")
+            readable_dict.update(general_dict)
+
         readable_dict["Inputs"] = [
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]
