@@ -106,6 +106,7 @@ class RegisterAirflowWorkflowResponse(BaseModel):
     id: uuid.UUID
     # TODO ENG-1481: Return an actual file instead of a string.
     file: str
+    is_update: bool
 
 
 class ListWorkflowResponseEntry(BaseModel):
