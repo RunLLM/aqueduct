@@ -138,10 +138,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   }
 
   const triggerWorkflowRun = () => {
-    // const parameters = new FormData();
-    // parameters.append('parameters', serializeParameters());
-
     setShowRunWorkflowDialog(false);
+
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
       method: 'POST',
       headers: {

@@ -2,9 +2,9 @@ package executor
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"

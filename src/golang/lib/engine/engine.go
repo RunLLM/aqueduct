@@ -2,9 +2,9 @@ package engine
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"

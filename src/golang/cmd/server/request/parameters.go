@@ -3,9 +3,10 @@ package request
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net/http"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/dropbox/godropbox/errors"
-	"net/http"
 )
 
 // Requests that include overwriting parameters are expected to have this json format in the body.
