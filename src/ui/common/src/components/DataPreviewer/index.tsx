@@ -18,6 +18,8 @@ type Props = {
   error?: Error;
 };
 
+const DrawerHeaderHeightInPx = 64;
+
 const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   if (!previewData) {
     return null;
@@ -95,12 +97,11 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
         data = (
           <Box
             sx={{
-              height: '100%',
+              height: '-webkit-fill-available',
               width: '100%',
-              overflow: 'auto',
+              overflowX: 'scroll !important',
               overflowY: 'hidden',
               minWidth: '400px',
-              position: 'absolute',
             }}
           >
             <DataTable
@@ -157,10 +158,10 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   return (
-    <>
+    <Box minHeight={`calc(100vh - ${DrawerHeaderHeightInPx}px)`} height={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}>
       {errorComponent}
       {data}
-    </>
+    </Box>
   );
 };
 

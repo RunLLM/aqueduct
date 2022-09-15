@@ -64,6 +64,7 @@ const styles = ({ theme }: { theme: Theme }) =>
     display: 'flex',
     alignItems: 'center',
     boxSizing: 'border-box',
+    paddingRight: '0 !important',
   },
   [`& .${classes.tableRow}`]: {
     cursor: 'pointer',
