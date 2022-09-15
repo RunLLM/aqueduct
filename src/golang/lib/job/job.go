@@ -11,7 +11,7 @@ var (
 	ErrInvalidJobManagerConfig = errors.New("Job manager config is not valid.")
 	ErrJobNotExist             = errors.New("Job does not exist.")
 	ErrJobAlreadyExists        = errors.New("Job already exists.")
-	ErrAsyncExecution          = errors.New("Unkown job status due to asynchronous execution.")
+	ErrAsyncExecution          = errors.New("Unknown job status due to asynchronous execution.")
 	ErrPollJobTimeout          = errors.New("Reached timeout waiting for the job to finish.")
 )
 

@@ -1,12 +1,15 @@
 import base64
+import os
 import subprocess
 import sys
-import os
 
+from aqueduct_executor.operators.function_executor import (
+    execute,
+    extract_function,
+    prune_requirements,
+)
 from aqueduct_executor.operators.function_executor.spec import parse_spec
-from aqueduct_executor.operators.function_executor import extract_function
-from aqueduct_executor.operators.function_executor import prune_requirements
-from aqueduct_executor.operators.function_executor import execute
+
 
 def install_packages(requirements_path):
     subprocess.run([sys.executable, "-m", "pip", "install", "-r", requirements_path, "--no-cache-dir"])

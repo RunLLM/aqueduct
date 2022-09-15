@@ -14,7 +14,13 @@ import cloudpickle as pickle
 import multipart
 import numpy as np
 import requests
-from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig, LambdaEngineConfig
+from aqueduct.config import (
+    AirflowEngineConfig,
+    EngineConfig,
+    FlowConfig,
+    K8sEngineConfig,
+    LambdaEngineConfig,
+)
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
 from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *

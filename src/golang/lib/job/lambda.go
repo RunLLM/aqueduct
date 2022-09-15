@@ -23,7 +23,6 @@ type lambdaJobManager struct {
 }
 
 func NewLambdaJobManager(conf *LambdaJobManagerConfig) (*lambdaJobManager, error) {
-
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -40,7 +39,6 @@ func (j *lambdaJobManager) Config() Config {
 }
 
 func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) error {
-
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -85,7 +83,6 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		return errors.Wrap(err, "Unable to invoke lambda function.")
 	}
 	return nil
-
 }
 
 func (j *lambdaJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {

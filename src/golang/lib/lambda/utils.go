@@ -23,7 +23,6 @@ type EcrAuth struct {
 }
 
 func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error {
-
 	// For each lambda function we create, we take the following steps:
 	// 1. Pull the image from the public ECR repository.
 	// 2. Create the private ECR repo if it doesn't exist
@@ -63,7 +62,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		},
 	)
 	if err != nil {
-		//No need to fail here, repository doesn't exist.
+		// No need to fail here, repository doesn't exist.
 		log.Info(err)
 	}
 
@@ -73,7 +72,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() != ecr.ErrCodeRepositoryAlreadyExistsException {
-				log.Info(err)
 				return errors.Wrap(err, "Unable to create ECR repository.")
 			}
 		} else {
@@ -128,7 +126,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	lambdaService := lambda.New(sess)
 	_, err = lambdaService.GetFunction(&lambda.GetFunctionInput{FunctionName: &userRepoName})
 	if err != nil {
-		//Function doesn't exist and needs to be created.
+		// Function doesn't exist and needs to be created.
 		createArgs := &lambda.CreateFunctionInput{
 			Code: &lambda.FunctionCode{
 				ImageUri: &repositoryUri,
@@ -141,25 +139,21 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			Timeout:      aws.Int64(300),
 		}
 
-		createResult, err := lambdaService.CreateFunction(createArgs)
+		_, err := lambdaService.CreateFunction(createArgs)
 		if err != nil {
 			return errors.Wrap(err, "Unable to create lambda function.")
 		}
-
-		log.Info(createResult)
 	} else {
-		//Function does exist and needs to be updated.
+		// Function does exist and needs to be updated.
 		updateArgs := &lambda.UpdateFunctionCodeInput{
 			FunctionName: &userRepoName,
 			ImageUri:     &repositoryUri,
 			Publish:      aws.Bool(true),
 		}
-		updateResult, err := lambdaService.UpdateFunctionCode(updateArgs)
+		_, err := lambdaService.UpdateFunctionCode(updateArgs)
 		if err != nil {
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
-
-		log.Info(updateResult)
 	}
 
 	return nil

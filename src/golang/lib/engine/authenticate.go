@@ -10,9 +10,7 @@ import (
 )
 
 const (
-	TestFilePath    = "src/"
-	testLambdaImage = "hsubbaraj/lambda-test"
-	userRepo        = "aqueduct/lambda-test"
+	TestFilePath = "src/"
 )
 
 // Authenticates kubernetes configuration by trying to connect a client.
