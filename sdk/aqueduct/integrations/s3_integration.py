@@ -8,6 +8,7 @@ from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.artifacts.utils import to_artifact_class
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
@@ -141,14 +142,7 @@ class S3Integration(Integration):
             return artifact_utils.preview_artifact(self._dag, output_artifact_id)
         else:
             # We are in lazy mode.
-            if artifact_type == ArtifactType.TABLE:
-                return TableArtifact(self._dag, output_artifact_id)
-            elif artifact_type == ArtifactType.NUMERIC:
-                return NumericArtifact(self._dag, output_artifact_id)
-            elif artifact_type == ArtifactType.BOOL:
-                return BoolArtifact(self._dag, output_artifact_id)
-            else:
-                return GenericArtifact(self._dag, output_artifact_id, artifact_type)
+            return to_artifact_class(self._dag, output_artifact_id, artifact_type)
 
     def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
         """

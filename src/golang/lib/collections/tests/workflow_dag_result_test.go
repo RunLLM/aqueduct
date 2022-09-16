@@ -16,11 +16,11 @@ import (
 func seedWorkflowDagResultWithDags(
 	t *testing.T,
 	count int,
-	now time.Time,
 	workflowDagIds []uuid.UUID,
 ) []workflow_dag_result.WorkflowDagResult {
 	require.Equal(t, count, len(workflowDagIds))
 
+	now := time.Now()
 	dagResults := make([]workflow_dag_result.WorkflowDagResult, 0, count)
 	for i := 0; i < count; i++ {
 		testDagResult, err := writers.workflowDagResultWriter.CreateWorkflowDagResult(
@@ -88,7 +88,7 @@ func TestGetKOffsetWorkflowDagResultsByWorkflowId(t *testing.T) {
 	testWorkflowDags := seedWorkflowDag(t, numWorkflowDags)
 	testDagIds := randWorkflowDagIdsFromList(numWorkflowDagResults, testWorkflowDags)
 
-	seedWorkflowDagResultWithDags(t, numWorkflowDagResults, time.Now(), testDagIds)
+	seedWorkflowDagResultWithDags(t, numWorkflowDagResults, testDagIds)
 
 	kOffsetWorkflowDagResults, err := readers.workflowDagResultReader.GetKOffsetWorkflowDagResultsByWorkflowId(
 		context.Background(),
