@@ -44,10 +44,54 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
 
+  //console.log('nodes: ', dagPositionState.result.nodes);
+  console.log('dagPositionState: ', dagPositionState);
+
+  const checkOpNodes = [];
+  const boolArtifactNodes = [];
+  // first find all check operators.
+  if (dagPositionState.result) {
+
+
+    const nodes = dagPositionState.result.nodes;
+    nodes.forEach(node => {
+      if (node.type === 'checkOp') {
+        checkOpNodes.push(node);
+      } else if (node.type === 'boolArtifact') {
+        boolArtifactNodes.push(node);
+      }
+    });
+
+    //sort checkOpNodes and boolArtifactNodes by value of label
+    //operator nodes have just a name
+    //artifact nodes have same name + ' artifact' at the end.
+    checkOpNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
+    boolArtifactNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
+
+    console.log('checkOpNodes', checkOpNodes);
+    console.log('boolArtifactNodes: ', boolArtifactNodes);
+  }
+
+  // Remove artifactNodes from the DAG
+  let nodes = dagPositionState.result?.nodes;
+  if (nodes) {
+    nodes = nodes.filter((node) => {
+      for (let i = 0; i < boolArtifactNodes.length; i++) {
+        if (node.id === boolArtifactNodes[i].id) {
+          return false
+        }
+      }
+
+      return true;
+    })
+  }
+
+  // Remove edges that went into each boolArtifactNode
+
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
-      nodes={dagPositionState.result?.nodes}
+      nodes={nodes}
       edges={dagPositionState.result?.edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
