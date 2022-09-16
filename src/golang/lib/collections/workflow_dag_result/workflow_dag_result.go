@@ -16,11 +16,12 @@ import (
 var ErrInvalidPendingTimestamp = errors.New("Execution state doesn't have a valid pending_at timestamp.")
 
 type WorkflowDagResult struct {
-	Id            uuid.UUID                 `db:"id" json:"id"`
-	WorkflowDagId uuid.UUID                 `db:"workflow_dag_id" json:"workflow_dag_id"`
-	Status        shared.ExecutionStatus    `db:"status" json:"status"`
-	CreatedAt     time.Time                 `db:"created_at" json:"created_at"`
-	ExecState     shared.NullExecutionState `db:"execution_state" json:"execution_state"`
+	Id            uuid.UUID              `db:"id" json:"id"`
+	WorkflowDagId uuid.UUID              `db:"workflow_dag_id" json:"workflow_dag_id"`
+	Status        shared.ExecutionStatus `db:"status" json:"status"`
+	// TODO ENG-1701: deprecate `CreatedAt` field.
+	CreatedAt time.Time                 `db:"created_at" json:"created_at"`
+	ExecState shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 
 type Reader interface {
@@ -48,6 +49,8 @@ type Reader interface {
 }
 
 type Writer interface {
+	// TODO (ENG-1701): until 1701 is done, we would require `PendingAt`
+	// field to exist to populate `CreatedAt` field.
 	CreateWorkflowDagResult(
 		ctx context.Context,
 		workflowDagId uuid.UUID,
