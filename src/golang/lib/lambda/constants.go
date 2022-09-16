@@ -1,6 +1,8 @@
 package lambda
 
 const (
+	ImageVersionNumber = "0.0.14"
+
 	FunctionLambdaFunction38   = "aqueduct-function-38"
 	ParameterLambdaFunction    = "aqueduct-parameter"
 	SystemMetricLambdaFunction = "aqueduct-systemmetric"
