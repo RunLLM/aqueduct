@@ -1,13 +1,9 @@
 import aqueduct
 
-###
-# Workflow that loads a table from the `aqueduct_demo` then saves it to `table_1` in append mode.
-# This save operator is then replaced by one that saves to `table_1` in replace mode.
-# In the next deployment of this run, it saves to `table_1` in append mode.
-# In the last deployment, it saves to `table_2` in append mode.
-###
-
-
+"""
+`setup_flow_with_failure` sets up a workflow like the following:
+extract (should succeed) -> bad_op (should fail) -> bad_op_downstream (should cancel)
+"""
 def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Flow with Failure"
     n_runs = 1
