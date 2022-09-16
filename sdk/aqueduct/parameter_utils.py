@@ -8,7 +8,7 @@ from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.operators import Operator, OperatorSpec, ParamSpec
-from aqueduct.utils import generate_uuid, infer_artifact_type, construct_param_spec
+from aqueduct.utils import construct_param_spec, generate_uuid, infer_artifact_type
 
 if TYPE_CHECKING:
     from aqueduct.artifacts.bool_artifact import BoolArtifact

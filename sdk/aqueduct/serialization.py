@@ -83,7 +83,12 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 }
 
 
-def bytes_to_base64_string(content: bytes) -> str:
+def serialize_val(val: Any, serialization_type: SerializationType) -> str:
+    val_bytes = serialization_function_mapping[serialization_type](val)
+    return _bytes_to_base64_string(val_bytes)
+
+
+def _bytes_to_base64_string(content: bytes) -> str:
     """Helper to convert any bytes-type to a string, by first encoding it with base64 it.
 
     For example, image-serialized bytes are not `utf8` encoded, so if we want to convert

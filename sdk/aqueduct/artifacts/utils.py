@@ -65,7 +65,6 @@ def preview_artifact(
         if artifact_id == target_artifact_id:
             continue
 
-        assert artifact_result.artifact_type is not ArtifactType.PARAM
         _update_artifact_type(dag, artifact_id, artifact_result.artifact_type)
 
     return to_artifact_class(dag, target_artifact_id, target_artifact_type, target_artifact_content)

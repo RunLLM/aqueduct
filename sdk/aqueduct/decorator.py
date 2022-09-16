@@ -10,7 +10,7 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import (
     ArtifactType,
     CheckSeverity,
@@ -19,11 +19,7 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.error import (
-    InvalidArtifactTypeException,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
