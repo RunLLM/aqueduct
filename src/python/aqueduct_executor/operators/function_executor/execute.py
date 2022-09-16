@@ -181,6 +181,15 @@ def handle_type_error_and_exit(
     utils.write_exec_state(storage, spec.metadata_path, exec_state)
     sys.exit(1)
 
+def _cleanup(spec: FunctionSpec) -> None:
+    """
+    Cleans up any temporary files created during function execution.
+    """
+    # Delete the extracted fn file if it exists and the file path is not
+    # something dangerous
+    if spec.function_extract_path and spec.function_extract_path[-1] != '*':
+        shutil.rmtree(spec.function_extract_path)
+
 
 def run(spec: FunctionSpec) -> None:
     """
@@ -285,6 +294,10 @@ def run(spec: FunctionSpec) -> None:
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
+
+        # Perform any cleanup
+        _cleanup(spec)
+
         sys.exit(1)
 
 
@@ -293,7 +306,6 @@ def run_with_setup(spec: FunctionSpec) -> None:
     Performs the setup needed for a Function operator and then executes it.
     """
     # Generate a unique function extract path if one does not exist already
-    fn_extract_path = None
     if not spec.function_extract_path:
         fn_extract_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
         spec.function_extract_path = fn_extract_path
@@ -307,7 +319,3 @@ def run_with_setup(spec: FunctionSpec) -> None:
         os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
 
     run(spec)
-
-    if fn_extract_path:
-        # Delete extracted function
-        shutil.rmtree(fn_extract_path)
