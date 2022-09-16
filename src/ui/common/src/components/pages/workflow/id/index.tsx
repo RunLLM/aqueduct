@@ -341,7 +341,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       </Box>
 
       {currentNode.type !== NodeType.None && (
-        <Drawer anchor="right" variant="persistent" open={true}>
+        <Drawer
+          anchor="right"
+          variant="persistent"
+          open={true}
+          sx={{ maxWidth: '800px' }}
+          PaperProps={{ sx: { overflow: 'hidden' } }}
+        >
           <Box width="800px" maxWidth="800px" minHeight="80vh">
             <Box
               width="100%"
@@ -361,9 +367,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 {getNodeActionButton()}
               </Box>
             </Box>
-            <Box marginLeft="16px">
-              {getDataSideSheetContent(user, currentNode)}
-            </Box>
+            <Box>{getDataSideSheetContent(user, currentNode)}</Box>
           </Box>
         </Drawer>
       )}
