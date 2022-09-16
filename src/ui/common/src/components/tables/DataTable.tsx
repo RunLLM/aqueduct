@@ -42,6 +42,7 @@ const styles = ({ theme }: { theme: Theme }) =>
     [`& .${classes.headerColumn}`]: {
       ...{
         marginRight: '0px',
+        width: '100%',
       },
     },
     [`& .${classes.rowColumn}`]: {
@@ -63,6 +64,7 @@ const styles = ({ theme }: { theme: Theme }) =>
       display: 'flex',
       alignItems: 'center',
       boxSizing: 'border-box',
+      paddingRight: '0 !important',
     },
     [`& .${classes.tableRow}`]: {
       cursor: 'pointer',
@@ -213,8 +215,16 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
       MIN_TABLE_WIDTH += column.columnWidth;
     });
 
+    // if there is only one column, set everything to 800, which is full width of MUI Drawer.
+    if (MIN_TABLE_WIDTH < 800) {
+      MIN_TABLE_WIDTH = 800;
+      columns.forEach((column) => {
+        column.columnWidth = 800;
+      });
+    }
+
     return (
-      <AutoSizer>
+      <AutoSizer style={{ width: '100%', minWidth: '800px' }}>
         {({ height }) => (
           <Table
             height={height}
@@ -231,7 +241,7 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
               return (
                 <Column
                   key={dataKey}
-                  width={columnWidth}
+                  width={Math.max(MIN_TABLE_WIDTH, columnWidth)}
                   columnData={columns[index]}
                   headerRenderer={(headerProps) =>
                     this.headerRenderer({

@@ -277,7 +277,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 <FontAwesomeIcon
                   icon={
                     artifactTypeToIconMapping[
-                    artifactResult.result.artifact_type
+                      artifactResult.result.artifact_type
                     ]
                   }
                 />
