@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -30,6 +31,7 @@ func NewNoopWriter(throwError bool) Writer {
 func (w *noopWriterImpl) CreateWorkflowDagResult(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*WorkflowDagResult, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)

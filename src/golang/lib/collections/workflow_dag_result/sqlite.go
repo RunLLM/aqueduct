@@ -3,7 +3,6 @@ package workflow_dag_result
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -51,9 +50,10 @@ func (r *sqliteReaderImpl) GetKOffsetWorkflowDagResultsByWorkflowId(
 func (w *sqliteWriterImpl) CreateWorkflowDagResult(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*WorkflowDagResult, error) {
-	insertColumns := []string{IdColumn, WorkflowDagIdColumn, StatusColumn, CreatedAtColumn}
+	insertColumns := []string{IdColumn, WorkflowDagIdColumn, StatusColumn, CreatedAtColumn, ExecStateColumn}
 	insertWorkflowDagResultStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
@@ -61,7 +61,11 @@ func (w *sqliteWriterImpl) CreateWorkflowDagResult(
 		return nil, err
 	}
 
-	args := []interface{}{id, workflowDagId, shared.PendingExecutionStatus, time.Now()}
+	if execState.Timestamps == nil || execState.Timestamps.PendingAt == nil {
+		return nil, ErrInvalidPendingTimestamp
+	}
+
+	args := []interface{}{id, workflowDagId, execState.Status, *(execState.Timestamps.PendingAt), execState}
 
 	var workflowDagResult WorkflowDagResult
 	err = db.Query(ctx, &workflowDagResult, insertWorkflowDagResultStmt, args...)

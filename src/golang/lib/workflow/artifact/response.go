@@ -23,9 +23,17 @@ type Response struct {
 
 type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
-	Id          uuid.UUID              `json:"id"`
-	ContentPath string                 `json:"content_path"`
-	ExecState   *shared.ExecutionState `json:"exec_state"`
+	Id uuid.UUID `json:"id"`
+
+	// If `ContentSerialized` is set, the content is small and we directly send
+	// it as a part of response. It's consistent with the object stored in `ContentPath`.
+	//
+	// Otherwise, the content is large and
+	// one should send an additional request to fetch the content.
+	ContentPath       string  `json:"content_path"`
+	ContentSerialized *string `json:"content_serialized"`
+
+	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
@@ -36,6 +44,7 @@ type ResultResponse struct {
 func NewResultResponseFromDbObjects(
 	dbArtifact *artifact.DBArtifact,
 	dbArtifactResult *artifact_result.ArtifactResult,
+	content *string,
 	from uuid.UUID,
 	to []uuid.UUID,
 ) *ResultResponse {
@@ -52,19 +61,20 @@ func NewResultResponseFromDbObjects(
 		return &ResultResponse{Response: metadata}
 	}
 
-	var execState *shared.ExecutionState = nil
+	resultResp := &RawResultResponse{
+		Id:                dbArtifactResult.Id,
+		ContentPath:       dbArtifactResult.ContentPath,
+		ContentSerialized: content,
+	}
+
 	if !dbArtifactResult.ExecState.IsNull {
 		// make a copy of execState's value
 		execStateVal := dbArtifactResult.ExecState.ExecutionState
-		execState = &execStateVal
+		resultResp.ExecState = &execStateVal
 	}
 
 	return &ResultResponse{
 		Response: metadata,
-		Result: &RawResultResponse{
-			Id:          dbArtifactResult.Id,
-			ContentPath: dbArtifactResult.ContentPath,
-			ExecState:   execState,
-		},
+		Result:   resultResp,
 	}
 }

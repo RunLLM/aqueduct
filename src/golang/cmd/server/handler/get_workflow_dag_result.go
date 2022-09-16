@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -153,10 +154,43 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact results.")
 	}
 
+	contents, err := getArtifactContents(ctx, constructedDag, artifactResults)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact contents.")
+	}
+
 	return dag.NewResultResponseFromDbObjects(
 		constructedDag,
 		dbWorkflowDagResult,
 		operatorResults,
 		artifactResults,
+		contents,
 	), http.StatusOK, nil
+}
+
+// TODO: We should replace this once we migrate to services based on `artifact` objects
+func getArtifactContents(
+	ctx context.Context,
+	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dbArtifactResults []artifact_result.ArtifactResult,
+) (map[string]string, error) {
+	contents := make(map[string]string, len(dbArtifactResults))
+	storageObj := storage.NewStorage(&dbWorkflowDag.StorageConfig)
+	for _, artfResult := range dbArtifactResults {
+		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+			// These artifacts has small content size and we can safely include them all in response.
+			if artf.Type == artifact.Bool || artf.Type == artifact.Numeric || artf.Type == artifact.String {
+				path := artfResult.ContentPath
+				// Read data from storage and deserialize payload to `container`
+				contentBytes, err := storageObj.Get(ctx, path)
+				if err != nil {
+					return nil, errors.Wrap(err, "Unable to get artifact content from storage")
+				}
+
+				contents[path] = string(contentBytes)
+			}
+		}
+	}
+
+	return contents, nil
 }
