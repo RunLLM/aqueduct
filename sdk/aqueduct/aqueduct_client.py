@@ -378,12 +378,23 @@ class Client:
             file = "{}_airflow.py".format(name)
             with open(file, "w") as f:
                 f.write(airflow_file)
-            print(
-                """The Airflow DAG file has been downloaded to: {}. 
-                Please copy it to your Airflow server to begin execution.""".format(
-                    file
+
+            if resp.is_update:
+                print(
+                    """The updated Airflow DAG file has been downloaded to: {}. 
+                    Please copy it to your Airflow server to begin execution.
+                    New Airflow DAG runs will not be synced properly with Aqueduct
+                    until you have copied the file.""".format(
+                        file
+                    )
                 )
-            )
+            else:
+                print(
+                    """The Airflow DAG file has been downloaded to: {}. 
+                    Please copy it to your Airflow server to begin execution.""".format(
+                        file
+                    )
+                )
         else:
             flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
