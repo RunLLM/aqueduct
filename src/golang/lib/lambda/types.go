@@ -3,9 +3,11 @@ package lambda
 type LambdaFunctionType string
 
 const (
-	FunctionExecutorType LambdaFunctionType = "function"
-	ParamExecutorType    LambdaFunctionType = "param"
-	SystemMetricType     LambdaFunctionType = "system-metric"
+	FunctionExecutor37Type LambdaFunctionType = "function37"
+	FunctionExecutor38Type LambdaFunctionType = "function38"
+	FunctionExecutor39Type LambdaFunctionType = "function39"
+	ParamExecutorType      LambdaFunctionType = "param"
+	SystemMetricType       LambdaFunctionType = "system-metric"
 
 	AthenaConnectorType    LambdaFunctionType = "athena-connector"
 	BigQueryConnectorType  LambdaFunctionType = "bigquery-connector"

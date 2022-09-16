@@ -178,8 +178,12 @@ func extractToken(token string, proxyEndpoint string) (*EcrAuth, error) {
 
 func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 	switch functionType {
-	case FunctionExecutorType:
+	case FunctionExecutor37Type:
+		return FunctionLambdaImage37, FunctionLambdaFunction37, nil
+	case FunctionExecutor38Type:
 		return FunctionLambdaImage38, FunctionLambdaFunction38, nil
+	case FunctionExecutor39Type:
+		return FunctionLambdaImage39, FunctionLambdaFunction39, nil
 	case ParamExecutorType:
 		return ParameterLambdaImage, ParameterLambdaFunction, nil
 	case SystemMetricType:

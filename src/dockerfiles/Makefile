@@ -48,7 +48,9 @@ build-lambda-connectors: build-lambda-snowflake build-lambda-athena build-lambda
 	build-lambda-postgres build-lambda-s3
 
 build-lambda-function:
-	docker build . -t aqueducthq/lambda-function-38:0.0.14 -f lambda/function/function.dockerfile --no-cache
+	docker build . -t aqueducthq/lambda-function-37:0.0.14 -f lambda/function/function37.dockerfile --no-cache
+	docker build . -t aqueducthq/lambda-function-38:0.0.14 -f lambda/function/function38.dockerfile --no-cache
+	docker build . -t aqueducthq/lambda-function-39:0.0.14 -f lambda/function/function39.dockerfile --no-cache
 
 build-lambda-param:
 	docker build . -t aqueducthq/lambda-param:0.0.14 -f lambda/param/param.dockerfile --no-cache
@@ -93,7 +95,9 @@ publish-connectors:
 	docker push aqueducthq/sqlserver-connector:0.0.14
 
 publish-lambda:
+	docker push aqueducthq/lambda-function-37:0.0.14
 	docker push aqueducthq/lambda-function-38:0.0.14
+	docker push aqueducthq/lambda-function-39:0.0.14
 	docker push aqueducthq/lambda-param:0.0.14
 	docker push aqueducthq/lambda-system-metric:0.0.14
 	docker push aqueducthq/lambda-athena-connector:0.0.14

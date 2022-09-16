@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -109,7 +110,26 @@ func (j *lambdaJobManager) DeleteCronJob(ctx context.Context, name string) error
 func mapJobTypeToLambdaFunction(spec Spec) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
-		return lambda_utils.FunctionLambdaFunction38, nil
+		functionSpec, ok := spec.(*FunctionSpec)
+		if !ok {
+			return "", errors.New("Unable to determine Python Version.")
+		}
+		pythonVersion, err := function.GetPythonVersion(context.TODO(), functionSpec.FunctionPath, &functionSpec.StorageConfig)
+		if err != nil {
+			return "", errors.New("Unable to determine Python Version.")
+		}
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return lambda_utils.FunctionLambdaFunction37, nil
+		case function.PythonVersion38:
+			return lambda_utils.FunctionLambdaFunction38, nil
+		case function.PythonVersion39:
+			return lambda_utils.FunctionLambdaFunction39, nil
+		case function.PythonVersion310:
+			return "", errors.New("Lambda does not support Python 3.10")
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToLambdaFunction(authenticateSpec.ConnectorName)

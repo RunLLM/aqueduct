@@ -32,8 +32,10 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	functionsToShip := [8]lambda_utils.LambdaFunctionType{
-		lambda_utils.FunctionExecutorType,
+	functionsToShip := [10]lambda_utils.LambdaFunctionType{
+		lambda_utils.FunctionExecutor37Type,
+		lambda_utils.FunctionExecutor38Type,
+		lambda_utils.FunctionExecutor39Type,
 		lambda_utils.ParamExecutorType,
 		lambda_utils.SystemMetricType,
 		lambda_utils.AthenaConnectorType,
