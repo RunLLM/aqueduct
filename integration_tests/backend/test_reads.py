@@ -10,6 +10,7 @@ from exec_state import assert_exec_state
 from setup.changing_saves_workflow import setup_changing_saves
 from setup.flow_with_failure import setup_flow_with_failure
 from setup.flow_with_metrics_and_checks import setup_flow_with_metrics_and_checks
+from setup.flow_with_sleep import setup_flow_with_sleep
 
 import aqueduct
 from aqueduct import globals
@@ -38,12 +39,20 @@ class TestBackend:
                 pytest.integration,
             ),
         }
+
+        # we do not call `wait_for_flow_runs` on these flows
+        cls.running_flows = {
+            "flow_with_sleep": setup_flow_with_sleep(cls.client, pytest.integration),
+        }
         for flow_id, n_runs in cls.flows.values():
             utils.wait_for_flow_runs(cls.client, flow_id, n_runs)
 
     @classmethod
     def teardown_class(cls):
         for flow_id, _ in cls.flows.values():
+            utils.delete_flow(cls.client, flow_id)
+
+        for flow_id, _ in cls.running_flows.values():
             utils.delete_flow(cls.client, flow_id)
 
     @classmethod
@@ -148,6 +157,7 @@ class TestBackend:
 
         # artifacts
         artifacts = resp["artifacts"]
+        assert len(artifacts) == 3
         for artf in artifacts.values():
             name = artf["name"]
             exec_state = artf["result"]["exec_state"]
@@ -176,7 +186,6 @@ class TestBackend:
         for op in operators.values():
             name = op["name"]
             exec_state = op["result"]["exec_state"]
-
             if "query" in name or name == "size" or name == "check":  # extract
                 assert_exec_state(exec_state, "succeeded")
             else:
@@ -184,6 +193,7 @@ class TestBackend:
 
         # artifacts
         artifacts = resp["artifacts"]
+        assert len(artifacts) == 3
         for artf in artifacts.values():
             name = artf["name"]
             exec_state = artf["result"]["exec_state"]
@@ -197,5 +207,41 @@ class TestBackend:
             elif name == "check artifact":
                 assert_exec_state(exec_state, "succeeded")
                 assert value == "true"
+            else:
+                raise Exception(f"unexpected operator name {name}")
+
+    def test_endpoint_get_workflow_dag_result_on_flow_with_sleep(self):
+        flow_id = self.running_flows["flow_with_sleep"][0]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+        resp = self.get_response(
+            self.GET_WORKFLOW_RESULT_TEMPLATE % (flow_id, runs[0]["run_id"])
+        ).json()
+        assert_exec_state(resp["result"]["exec_state"], "pending")
+
+        # operators
+        operators = resp["operators"]
+        assert len(operators) == 2
+        for op in operators.values():
+            name = op["name"]
+            exec_state = op["result"]["exec_state"]
+            if "query" in name:  # extract
+                assert_exec_state(exec_state, "succeeded")
+            elif name == "sleeping_op":
+                assert_exec_state(exec_state, "pending")
+            else:
+                raise Exception(f"unexpected operator name {name}")
+
+        # artifacts
+        artifacts = resp["artifacts"]
+        assert len(artifacts) == 2
+        for artf in artifacts.values():
+            name = artf["name"]
+            exec_state = artf["result"]["exec_state"]
+
+            if "query" in name:
+                assert_exec_state(exec_state, "succeeded")
+            elif name == "sleeping_op artifact":
+                assert exec_state is None
             else:
                 raise Exception(f"unexpected operator name {name}")

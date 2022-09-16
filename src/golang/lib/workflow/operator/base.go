@@ -79,7 +79,7 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 
 func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	if bo.execState.Status != shared.PendingExecutionStatus {
-		return ErrInvalidStatusToLaunch
+		return errors.Newf("Cannot launch operator with state %s", bo.execState.Status)
 	}
 
 	bo.updateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})

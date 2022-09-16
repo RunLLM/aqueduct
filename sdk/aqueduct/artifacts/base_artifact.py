@@ -112,7 +112,7 @@ class BaseArtifact(ABC):
         # the input artifact. This allows multiple artifacts to write to the same integration,
         # as well as a single artifact to write to multiple integrations, all while keeping
         # the name of the load operator readable.
-        load_op_name = " %s loader" % integration_info.name
+        load_op_name = "save to %s" % integration_info.name
 
         # Add the load operator as a terminal node.
         apply_deltas_to_dag(

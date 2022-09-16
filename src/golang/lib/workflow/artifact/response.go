@@ -81,8 +81,20 @@ func NewResultResponseFromDbObjects(
 		return &ResultResponse{Response: metadata}
 	}
 
+	resultResp := &RawResultResponse{
+		Id:                dbArtifactResult.Id,
+		ContentPath:       dbArtifactResult.ContentPath,
+		ContentSerialized: content,
+	}
+
+	if !dbArtifactResult.ExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbArtifactResult.ExecState.ExecutionState
+		resultResp.ExecState = &execStateVal
+	}
+
 	return &ResultResponse{
 		Response: metadata,
-		Result:   NewRawResultResponseFromDbObject(dbArtifactResult),
+		Result:   resultResp,
 	}
 }
