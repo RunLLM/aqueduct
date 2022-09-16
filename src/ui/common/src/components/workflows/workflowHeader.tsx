@@ -10,8 +10,13 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
+import { handleLoadIntegrations } from '../../reducers/integrations';
+import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
+import { AppDispatch } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
@@ -25,10 +30,13 @@ import Status from './workflowStatus';
 type Props = {
   user: UserProfile;
   workflowDag: WorkflowDag;
+  workflowId: string;
 };
 
-const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
+const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
+  const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
+  const navigate = useNavigate();
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -43,8 +51,20 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleSuccessToastClose = () => {
+  const handleSuccessToastClose = async () => {
     setShowSuccessToast(false);
+
+    try {
+      await dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+      await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+      dispatch(selectResultIdx(0));
+      navigate(`/workflow/${workflowId}`, { replace: true });
+    } catch (error) {
+      setErrorMessage(
+        `We're having trouble getting the latest workflow. Please try refreshing the page.`
+      );
+      setShowErrorToast(true);
+    }
   };
 
   const handleErrorToastClose = () => {
@@ -239,7 +259,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showSuccessToast}
         onClose={handleSuccessToastClose}
         key={'workflowheader-success-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleSuccessToastClose}
@@ -254,7 +274,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showErrorToast}
         onClose={handleErrorToastClose}
         key={'workflowheader-error-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleErrorToastClose}
