@@ -295,11 +295,10 @@ def run(spec: FunctionSpec) -> None:
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
-
+        sys.exit(1)
+    finally:
         # Perform any cleanup
         _cleanup(spec)
-
-        sys.exit(1)
 
 
 def run_with_setup(spec: FunctionSpec) -> None:
