@@ -372,7 +372,7 @@ class Client:
             file = "{}_airflow.py".format(name)
             with open(file, "w") as f:
                 f.write(airflow_file)
-            
+
             if resp.is_update:
                 print(
                     """The updated Airflow DAG file has been downloaded to: {}. 
