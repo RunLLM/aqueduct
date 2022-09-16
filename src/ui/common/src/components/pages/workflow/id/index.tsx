@@ -274,7 +274,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         }}
       >
         {workflow.selectedDag && (
-          <WorkflowHeader user={user} workflowDag={workflow.selectedDag} />
+          <WorkflowHeader
+            user={user}
+            workflowDag={workflow.selectedDag}
+            workflowId={workflowId}
+          />
         )}
 
         <Divider />

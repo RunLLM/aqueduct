@@ -35,6 +35,15 @@ type GCSConfig struct {
 	UseAsStorage ConfigBool `json:"use_as_storage"`
 }
 
+type K8sIntegrationConfig struct {
+	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName    string `json:"cluster_name"  yaml:"clusterName"`
+}
+
+type LambdaIntegrationConfig struct {
+	RoleArn string `json:"role_arn" yaml:"roleArn"`
+}
+
 type ConfigBool bool
 
 func (scb *ConfigBool) UnmarshalJSON(data []byte) error {

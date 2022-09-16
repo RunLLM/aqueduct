@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Any, Dict, Optional
 
@@ -8,6 +9,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import ArtifactNeverComputedException
+from aqueduct.utils import format_header_for_print
 
 
 class GenericArtifact(BaseArtifact):
@@ -82,5 +84,10 @@ class GenericArtifact(BaseArtifact):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the bool artifact."""
-        # TODO: make this more informative.
-        print("This is a %s artifact." % self._get_type())
+        input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        readable_dict = super()._describe()
+        readable_dict["Inputs"] = [
+            self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
+        ]
+        print(format_header_for_print(f"'{input_operator.name}' {self._get_type()} Artifact"))
+        print(json.dumps(readable_dict, sort_keys=False, indent=4))
