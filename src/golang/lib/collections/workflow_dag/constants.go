@@ -43,3 +43,18 @@ func allColumnsWithPrefix() string {
 		",",
 	)
 }
+
+// Returns a joined string of all columns prefixed by table name,
+// but mapped to column name.
+func allColumnsMappedFromPrefix() string {
+	return strings.Join(
+		[]string{
+			fmt.Sprintf("%s.%s AS %s", tableName, IdColumn, IdColumn),
+			fmt.Sprintf("%s.%s AS %s", tableName, WorkflowIdColumn, WorkflowIdColumn),
+			fmt.Sprintf("%s.%s AS %s", tableName, CreatedAtColumn, CreatedAtColumn),
+			fmt.Sprintf("%s.%s AS %s", tableName, StorageConfigColumn, StorageConfigColumn),
+			fmt.Sprintf("%s.%s AS %s", tableName, EngineConfigColumn, EngineConfigColumn),
+		},
+		",",
+	)
+}

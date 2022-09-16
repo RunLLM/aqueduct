@@ -4,7 +4,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/enterprise/src/golang/lib/collections/artifact_result"
 	"github.com/google/uuid"
 )
 
@@ -44,7 +43,7 @@ type ResultResponse struct {
 
 func NewRawResultResponseFromDbObject(
 	dbArtifactResult *artifact_result.ArtifactResult,
-	content *string
+	content *string,
 ) *RawResultResponse {
 	resultResp := &RawResultResponse{
 		Id:                dbArtifactResult.Id,
@@ -58,7 +57,7 @@ func NewRawResultResponseFromDbObject(
 		resultResp.ExecState = &execStateVal
 	}
 
-	return &resultResp
+	return resultResp
 }
 
 func NewResultResponseFromDbObjects(
