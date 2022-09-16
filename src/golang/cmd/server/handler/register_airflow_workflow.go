@@ -164,6 +164,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.ArtifactReader,
 			h.WorkflowDagEdgeReader,
 			h.WorkflowDagResultReader,
+			h.WorkflowDagWriter,
 			h.WorkflowDagResultWriter,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
