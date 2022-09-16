@@ -167,8 +167,6 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.WorkflowDagResultWriter,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
-			h.NotificationWriter,
-			h.UserReader,
 			h.Vault,
 			h.Database,
 		); err != nil {
