@@ -123,7 +123,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           placeholder = atob(operator.spec.param.val)
           helperText = ""
         } else {
-          placeholder = "n/a"
+          placeholder = ""
           helperText = outputArtifact.type[0].toUpperCase() + outputArtifact.type.substr(1) + " type is not yet customizable from the UI."
         }
 
@@ -154,7 +154,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
         // All jsonable values are serialized as json.
         serializedParams[key] = JSON.stringify({
-          val: btoa(JSON.stringify(val)),
+          val: btoa(strVal),
           serialization_type: SerializationType.Json,
         })
       } catch(err){
