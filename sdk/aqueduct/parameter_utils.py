@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING, Any, Union
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
-from aqueduct.utils import generate_uuid, infer_artifact_type
+from aqueduct.operators import Operator, OperatorSpec, ParamSpec
+from aqueduct.utils import generate_uuid, infer_artifact_type, construct_param_spec
 
 if TYPE_CHECKING:
     from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -27,8 +28,7 @@ def create_param(
         raise InvalidUserArgumentException("Parameter default value cannot be None.")
 
     artifact_type = infer_artifact_type(default)
-
-    val = serialize_parameter_value(name, default)
+    param_spec = construct_param_spec(default, artifact_type)
 
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
@@ -40,7 +40,7 @@ def create_param(
                     id=operator_id,
                     name=name,
                     description=description,
-                    spec=OperatorSpec(param=ParamSpec(val=val)),
+                    spec=OperatorSpec(param=param_spec),
                     inputs=[],
                     outputs=[output_artifact_id],
                 ),
