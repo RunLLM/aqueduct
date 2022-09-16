@@ -19,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -106,8 +107,17 @@ func syncWorkflowDag(
 		return err
 	}
 
+	aDag, err := cli.getDag(dbDag.EngineConfig.AirflowConfig.DagId)
+	if err != nil {
+		return err
+	}
+	logrus.Warnf("TAGS: %v", aDag.Tags)
+
+	for _, tag := range aDag.Tags {
+		logrus.Warnf("Tag NAME: %v", tag.GetName())
+	}
+
 	// Get all Airflow DAG runs for `dag`
-	// TODO: ENG-1531 Get around Airflow response limit
 	dagRuns, err := cli.getDagRuns(dbDag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return err
@@ -229,6 +239,29 @@ func syncWorkflowDagResult(
 	}
 
 	return nil
+}
+
+// checkForDAGMatch checks if the Aqueduct workflow DAG `workflowDag`
+// matches the DAG currently registered with Airflow. They may not match if the user
+// updated the workflow and has not yet copied over the updated Airflow DAG file to
+// their Airflow server.
+// It returns a bool whether the DAGs match and an error, if any.
+func checkForDAGMatch(workflowDag *workflow_dag.DBWorkflowDag, cli *client) (bool, error) {
+	if workflowDag.EngineConfig.AirflowConfig.MatchesAirflow {
+		// We previously confirmed that the DAGs match
+		return true, nil
+	}
+
+	_, err := cli.getDag(workflowDag.EngineConfig.AirflowConfig.DagId)
+	if err != nil {
+		return false, err
+	}
+
+	// The way we check if the DAGs match is if `workflowDag.Id` is one of tags
+	// for `airflowDag`, since the workflow dag ID is set as a tag each time
+	// the Airflow DAG file is generated.
+	return true, nil
+
 }
 
 // timeInSlice returns whether `t` is equal to any of the elements in `s`
