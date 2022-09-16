@@ -19,11 +19,15 @@ type Props = {
   dataTableHeight?: string;
 };
 
+const DrawerHeaderHeightInPx = 64;
+
 const DataPreviewer: React.FC<Props> = ({
   previewData,
   error,
   dataTableHeight,
 }) => {
+
+const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   if (!previewData) {
     return null;
   }
@@ -100,8 +104,11 @@ const DataPreviewer: React.FC<Props> = ({
         data = (
           <Box
             sx={{
-              position: 'absolute',
-              height: dataTableHeight ? dataTableHeight : '100%',
+              height: '-webkit-fill-available',
+              width: '100%',
+              overflowX: 'scroll !important',
+              overflowY: 'hidden',
+              minWidth: '400px',
             }}
           >
             <DataTable
