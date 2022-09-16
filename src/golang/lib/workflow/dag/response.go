@@ -56,6 +56,7 @@ func NewResultResponseFromDbObjects(
 	dbWorkflowDagResult *workflow_dag_result.WorkflowDagResult,
 	dbOperatorResults []operator_result.OperatorResult,
 	dbArtifactResults []artifact_result.ArtifactResult,
+	contents map[string]string,
 ) *ResultResponse {
 	metadataResponse := MetadataResponse{
 		DagId:         dbWorkflowDag.Id,
@@ -115,9 +116,16 @@ func NewResultResponseFromDbObjects(
 
 	for _, artfResult := range dbArtifactResults {
 		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+			content, ok := contents[artfResult.ContentPath]
+			var contentPtr *string = nil
+			if ok {
+				contentPtr = &content
+			}
+
 			artfResultResponse := artifact.NewResultResponseFromDbObjects(
 				&artf,
 				&artfResult,
+				contentPtr,
 				artifactToUpstreamOpId[artf.Id],
 				artifactToDownstreamOpIds[artf.Id],
 			)
@@ -130,6 +138,7 @@ func NewResultResponseFromDbObjects(
 		if _, ok := artifactsResponse[id]; !ok {
 			artifactsResponse[id] = *(artifact.NewResultResponseFromDbObjects(
 				&artf,
+				nil,
 				nil,
 				artifactToUpstreamOpId[artf.Id],
 				artifactToDownstreamOpIds[artf.Id],

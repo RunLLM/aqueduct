@@ -4,6 +4,8 @@ import aqueduct
 `setup_flow_with_failure` sets up a workflow like the following:
 extract (should succeed) -> bad_op (should fail) -> bad_op_downstream (should cancel)
 """
+
+
 def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Flow with Failure"
     n_runs = 1
