@@ -60,7 +60,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       dispatch(selectResultIdx(0));
       navigate(`/workflow/${workflowId}`, { replace: true });
     } catch (error) {
-      setErrorMessage(`We're having trouble getting the latest workflow. Please try refreshing the page.`);
+      setErrorMessage(
+        `We're having trouble getting the latest workflow. Please try refreshing the page.`
+      );
       setShowErrorToast(true);
     }
   };
@@ -75,7 +77,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
