@@ -88,7 +88,7 @@ func TestGetKOffsetWorkflowDagResultsByWorkflowId(t *testing.T) {
 	testWorkflowDags := seedWorkflowDag(t, numWorkflowDags)
 	testDagIds := randWorkflowDagIdsFromList(numWorkflowDagResults, testWorkflowDags)
 
-	seedWorkflowDagResultWithDags(t, numWorkflowDagResults, time.Now(), testDagIds)
+	seedWorkflowDagResultWithDags(t, numWorkflowDagResults, testDagIds)
 
 	kOffsetWorkflowDagResults, err := readers.workflowDagResultReader.GetKOffsetWorkflowDagResultsByWorkflowId(
 		context.Background(),
