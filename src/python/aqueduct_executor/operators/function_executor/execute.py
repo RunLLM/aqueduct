@@ -181,13 +181,14 @@ def handle_type_error_and_exit(
     utils.write_exec_state(storage, spec.metadata_path, exec_state)
     sys.exit(1)
 
+
 def _cleanup(spec: FunctionSpec) -> None:
     """
     Cleans up any temporary files created during function execution.
     """
     # Delete the extracted fn file if it exists and the file path is not
     # something dangerous
-    if spec.function_extract_path and spec.function_extract_path[-1] != '*':
+    if spec.function_extract_path and spec.function_extract_path[-1] != "*":
         shutil.rmtree(spec.function_extract_path)
 
 
