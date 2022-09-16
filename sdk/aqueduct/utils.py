@@ -14,12 +14,19 @@ import cloudpickle as pickle
 import multipart
 import numpy as np
 import requests
-from aqueduct.config import AirflowEngineConfig, EngineConfig, FlowConfig, K8sEngineConfig
+from aqueduct.config import (
+    AirflowEngineConfig,
+    EngineConfig,
+    FlowConfig,
+    K8sEngineConfig,
+    LambdaEngineConfig,
+)
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
 from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import *
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
+from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator
 from aqueduct.templates import op_file_content
@@ -553,6 +560,13 @@ def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
         return EngineConfig(
             type=RuntimeType.K8S,
             k8s_config=K8sEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, LambdaIntegration):
+        return EngineConfig(
+            type=RuntimeType.LAMBDA,
+            lambda_config=LambdaEngineConfig(
                 integration_id=config.engine._metadata.id,
             ),
         )
