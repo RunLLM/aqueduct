@@ -39,7 +39,7 @@ func newClient(ctx context.Context, authConf auth.Config) (*client, error) {
 
 // getDagRuns returns all of the Airflow DAGRuns for the Airflow DAG specified.
 func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
-	limit := 100 // This is the max number of DAG runs that can be returned in each response.
+	limitPerFetch := 100 // This is the max number of DAG runs that can be returned in each response.
 	offset := 0
 	var dagRuns []airflow.DAGRun
 
@@ -50,7 +50,7 @@ func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
 			dagId,
 		).
 			OrderBy("start_date").
-			Limit(int32(limit)).
+			Limit(int32(limitPerFetch)).
 			Offset(int32(offset)).
 			Execute()
 		if err != nil {
@@ -63,7 +63,7 @@ func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
 		}
 
 		dagRuns = append(dagRuns, *dagRunsResp.DagRuns...)
-		offset += limit
+		offset += limitPerFetch
 	}
 
 	return dagRuns, nil
