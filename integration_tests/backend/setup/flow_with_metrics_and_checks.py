@@ -10,7 +10,7 @@ import aqueduct
 
 def setup_flow_with_metrics_and_checks(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Flow with Metrics and Bad Checks"
-    n_runs = 1
+    n_runs = 2
     integration = client.integration(name=integration_name)
 
     @aqueduct.metric
@@ -26,4 +26,5 @@ def setup_flow_with_metrics_and_checks(client: aqueduct.Client, integration_name
     check_res = check(rev_size)
 
     flow = client.publish_flow(artifacts=[check_res], name=name)
+    client.trigger(flow.id())
     return flow.id(), n_runs

@@ -27,6 +27,7 @@ type RawResultResponse struct {
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.
+	// The value is the string representation of the file stored in that path.
 	//
 	// Otherwise, the content is large and
 	// one should send an additional request to fetch the content.
