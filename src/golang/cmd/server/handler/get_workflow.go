@@ -5,8 +5,11 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -15,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -57,7 +61,9 @@ type workflowDagResult struct {
 type GetWorkflowHandler struct {
 	GetHandler
 
-	Database                database.Database
+	Database database.Database
+	Vault    vault.Vault
+
 	ArtifactReader          artifact.Reader
 	OperatorReader          operator.Reader
 	UserReader              user.Reader
@@ -65,6 +71,11 @@ type GetWorkflowHandler struct {
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
 	WorkflowDagResultReader workflow_dag_result.Reader
+
+	WorkflowDagWriter       workflow_dag.Writer
+	WorkflowDagResultWriter workflow_dag_result.Writer
+	OperatorResultWriter    operator_result.Writer
+	ArtifactResultWriter    artifact_result.Writer
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -106,6 +117,42 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 	args := interfaceArgs.(*getWorkflowArgs)
 
 	emptyResp := getWorkflowResponse{}
+
+	latestWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		args.workflowId,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
+	}
+
+	if latestWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+		// Airflow workflows need to be synced
+		if err := airflow.SyncWorkflowDags(
+			ctx,
+			[]uuid.UUID{latestWorkflowDag.Id},
+			h.WorkflowReader,
+			h.WorkflowDagReader,
+			h.OperatorReader,
+			h.ArtifactReader,
+			h.WorkflowDagEdgeReader,
+			h.WorkflowDagResultReader,
+			h.WorkflowDagWriter,
+			h.WorkflowDagResultWriter,
+			h.OperatorResultWriter,
+			h.ArtifactResultWriter,
+			h.Vault,
+			h.Database,
+		); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
+		}
+	}
 
 	dbWorkflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByWorkflowId(
 		ctx,
