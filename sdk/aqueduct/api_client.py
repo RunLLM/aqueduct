@@ -381,10 +381,7 @@ class APIClient:
 
         body = {
             "parameters": json.dumps(
-                {
-                    param_name: param_spec.dict()
-                    for param_name, param_spec in param_specs.items()
-                }
+                {param_name: param_spec.dict() for param_name, param_spec in param_specs.items()}
             )
         }
 
