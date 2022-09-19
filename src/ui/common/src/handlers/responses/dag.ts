@@ -1,7 +1,7 @@
 // This file should mirror src/golang/workflow/dag/response.go
 import { EngineConfig } from '../../utils/engine';
 import { OperatorType } from '../../utils/operators';
-import { ExecutionStatus } from '../../utils/shared';
+import { ExecState } from '../../utils/shared';
 import { StorageConfig } from '../../utils/storage';
 import {
   WorkflowRetentionPolicy,
@@ -32,8 +32,7 @@ export type DagResponse = DagMetadataResponse & {
 
 export type DagResultStatusResponse = {
   id: string;
-  status: ExecutionStatus;
-  created_at: number;
+  exec_state?: ExecState;
 };
 
 export type DagResultResponse = DagMetadataResponse & {
