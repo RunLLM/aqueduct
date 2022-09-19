@@ -41,7 +41,6 @@ import {
 import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
-import WorkflowStatusBar from '../../../workflows/StatusBar';
 import WorkflowHeader from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
 
@@ -375,8 +374,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Drawer>
       )}
-
-      <WorkflowStatusBar user={user} />
     </Layout>
   );
 };
