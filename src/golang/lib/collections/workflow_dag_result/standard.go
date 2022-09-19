@@ -3,7 +3,6 @@ package workflow_dag_result
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -24,12 +23,17 @@ type standardWriterImpl struct{}
 func (w *standardWriterImpl) CreateWorkflowDagResult(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*WorkflowDagResult, error) {
-	insertColumns := []string{WorkflowDagIdColumn, StatusColumn, CreatedAtColumn}
+	insertColumns := []string{WorkflowDagIdColumn, StatusColumn, CreatedAtColumn, ExecStateColumn}
 	insertWorkflowDagResultStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{workflowDagId, shared.PendingExecutionStatus, time.Now()}
+	if execState.Timestamps == nil || execState.Timestamps.PendingAt == nil {
+		return nil, ErrInvalidPendingTimestamp
+	}
+
+	args := []interface{}{workflowDagId, shared.PendingExecutionStatus, *(execState.Timestamps.PendingAt), execState}
 
 	var workflowDagResult WorkflowDagResult
 	err := db.Query(ctx, &workflowDagResult, insertWorkflowDagResultStmt, args...)

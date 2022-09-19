@@ -41,10 +41,7 @@ type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'workflow_dag_result' schema.
 	Id uuid.UUID `json:"id"`
 
-	// TODO (ENG-1613, ENG-1614):
-	// These will be replaced with ExecutionState with ExecState
-	Status    shared.ExecutionStatus `json:"status"`
-	CreatedAt time.Time              `json:"created_at"`
+	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
@@ -59,6 +56,7 @@ func NewResultResponseFromDbObjects(
 	dbWorkflowDagResult *workflow_dag_result.WorkflowDagResult,
 	dbOperatorResults []operator_result.OperatorResult,
 	dbArtifactResults []artifact_result.ArtifactResult,
+	contents map[string]string,
 ) *ResultResponse {
 	metadataResponse := MetadataResponse{
 		DagId:         dbWorkflowDag.Id,
@@ -70,9 +68,13 @@ func NewResultResponseFromDbObjects(
 	}
 
 	rawResultResponse := RawResultResponse{
-		Id:        dbWorkflowDagResult.Id,
-		Status:    dbWorkflowDagResult.Status,
-		CreatedAt: dbWorkflowDagResult.CreatedAt,
+		Id: dbWorkflowDagResult.Id,
+	}
+
+	if !dbWorkflowDagResult.ExecState.IsNull {
+		// make a value copy of execState
+		execStateVal := dbWorkflowDagResult.ExecState.ExecutionState
+		rawResultResponse.ExecState = &execStateVal
 	}
 
 	if dbWorkflowDag.Metadata != nil {
@@ -114,9 +116,16 @@ func NewResultResponseFromDbObjects(
 
 	for _, artfResult := range dbArtifactResults {
 		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+			content, ok := contents[artfResult.ContentPath]
+			var contentPtr *string = nil
+			if ok {
+				contentPtr = &content
+			}
+
 			artfResultResponse := artifact.NewResultResponseFromDbObjects(
 				&artf,
 				&artfResult,
+				contentPtr,
 				artifactToUpstreamOpId[artf.Id],
 				artifactToDownstreamOpIds[artf.Id],
 			)
@@ -129,6 +138,7 @@ func NewResultResponseFromDbObjects(
 		if _, ok := artifactsResponse[id]; !ok {
 			artifactsResponse[id] = *(artifact.NewResultResponseFromDbObjects(
 				&artf,
+				nil,
 				nil,
 				artifactToUpstreamOpId[artf.Id],
 				artifactToDownstreamOpIds[artf.Id],

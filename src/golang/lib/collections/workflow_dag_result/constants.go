@@ -13,6 +13,7 @@ const (
 	WorkflowDagIdColumn = "workflow_dag_id"
 	StatusColumn        = "status"
 	CreatedAtColumn     = "created_at"
+	ExecStateColumn     = "execution_state"
 )
 
 // Returns a joined string of all WorkflowDagResult columns.
@@ -23,6 +24,7 @@ func allColumns() string {
 			WorkflowDagIdColumn,
 			StatusColumn,
 			CreatedAtColumn,
+			ExecStateColumn,
 		},
 		",",
 	)

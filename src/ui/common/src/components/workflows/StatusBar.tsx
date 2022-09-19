@@ -124,9 +124,10 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       }}
     >
       {listItems.map((listItem, index) => {
+        const key = listItem.nodeId.length > 0 ? listItem.nodeId : index;
         return (
           <Box
-            key={index}
+            key={key}
             sx={{
               display: 'flex',
               flexDirection: 'row',
@@ -156,7 +157,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
                 }}
                 onClick={() => {
-                  if (listItem.nodeId && listItem.type) {
+                  if (listItem.nodeId.length > 0 && listItem.type.length > 0) {
                     switchSideSheet(listItem.nodeId, listItem.type);
                   }
                 }}

@@ -185,9 +185,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowDag.")
 	}
 
+	pendingAt := time.Now()
+	execState := &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &pendingAt,
+		},
+	}
 	dbWorkflowDagResult, err := workflow_utils.CreateWorkflowDagResult(
 		ctx,
 		dbWorkflowDag.Id,
+		execState,
 		eng.WorkflowDagResultWriter,
 		eng.Database,
 	)
@@ -195,19 +203,19 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error initializing workflowDagResult.")
 	}
 
-	status := shared.PendingExecutionStatus
-
 	// Any errors after this point should be persisted to the WorkflowDagResult created above
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
-			status = shared.FailedExecutionStatus
+			execState.Status = shared.FailedExecutionStatus
+			now := time.Now()
+			execState.Timestamps.FinishedAt = &now
 		}
 
 		workflow_utils.UpdateWorkflowDagResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
-			status,
+			execState,
 			eng.WorkflowDagResultWriter,
 			eng.WorkflowReader,
 			eng.NotificationWriter,
@@ -251,7 +259,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
-
 	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
@@ -303,7 +310,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	status = shared.RunningExecutionStatus
+	execState.Status = shared.RunningExecutionStatus
+	runningAt := time.Now()
+	execState.Timestamps.RunningAt = &runningAt
 	err = eng.execute(
 		ctx,
 		dag,
@@ -312,10 +321,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 		operator.Publish,
 	)
 	if err != nil {
-		status = shared.FailedExecutionStatus
+		execState.Status = shared.FailedExecutionStatus
+		now := time.Now()
+		execState.Timestamps.FinishedAt = &now
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		status = shared.SucceededExecutionStatus
+		execState.Status = shared.SucceededExecutionStatus
+		now := time.Now()
+		execState.Timestamps.FinishedAt = &now
 	}
 
 	return shared.SucceededExecutionStatus, nil

@@ -13,6 +13,7 @@ const (
 	AqueductEngineType EngineType = "aqueduct"
 	AirflowEngineType  EngineType = "airflow"
 	K8sEngineType      EngineType = "k8s"
+	LambdaEngineType   EngineType = "lambda"
 )
 
 type EngineConfig struct {
@@ -20,6 +21,7 @@ type EngineConfig struct {
 	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
 	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
 	K8sConfig      *K8sConfig      `yaml:"k8sConfig" json:"k8s_config,omitempty"`
+	LambdaConfig   *LambdaConfig   `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
 }
 
 type AqueductConfig struct{}
@@ -37,15 +39,14 @@ type K8sConfig struct {
 	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
+type LambdaConfig struct {
+	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+}
+
 func (e *EngineConfig) Scan(value interface{}) error {
 	return utils.ScanJsonB(value, e)
 }
 
 func (e *EngineConfig) Value() (driver.Value, error) {
 	return utils.ValueJsonB(*e)
-}
-
-type K8sIntegrationConfig struct {
-	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName    string `json:"cluster_name"  yaml:"clusterName"`
 }

@@ -32,6 +32,7 @@ from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import Integration, IntegrationInfo
 from .integrations.k8s_integration import K8sIntegration
+from .integrations.lambda_integration import LambdaIntegration
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
@@ -198,6 +199,7 @@ class Client:
         RelationalDBIntegration,
         AirflowIntegration,
         K8sIntegration,
+        LambdaIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -246,6 +248,10 @@ class Client:
             )
         elif integration_info.service == ServiceType.K8S:
             return K8sIntegration(
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.LAMBDA:
+            return LambdaIntegration(
                 metadata=integration_info,
             )
         else:
@@ -372,12 +378,23 @@ class Client:
             file = "{}_airflow.py".format(name)
             with open(file, "w") as f:
                 f.write(airflow_file)
-            print(
-                """The Airflow DAG file has been downloaded to: {}. 
-                Please copy it to your Airflow server to begin execution.""".format(
-                    file
+
+            if resp.is_update:
+                print(
+                    """The updated Airflow DAG file has been downloaded to: {}. 
+                    Please copy it to your Airflow server to begin execution.
+                    New Airflow DAG runs will not be synced properly with Aqueduct
+                    until you have copied the file.""".format(
+                        file
+                    )
                 )
-            )
+            else:
+                print(
+                    """The Airflow DAG file has been downloaded to: {}. 
+                    Please copy it to your Airflow server to begin execution.""".format(
+                        file
+                    )
+                )
         else:
             flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 

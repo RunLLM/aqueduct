@@ -4,6 +4,7 @@ from typing import Optional, Union
 from aqueduct.enums import RuntimeType
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
+from aqueduct.integrations.lambda_integration import LambdaIntegration
 from pydantic import BaseModel
 
 
@@ -19,6 +20,10 @@ class K8sEngineConfig(BaseModel):
     integration_id: uuid.UUID
 
 
+class LambdaEngineConfig(BaseModel):
+    integration_id: uuid.UUID
+
+
 class EngineConfig(BaseModel):
     # The runtime type dictates the engine config that is set.
     # We default to the AqueductEngine.
@@ -26,10 +31,11 @@ class EngineConfig(BaseModel):
     aqueduct_config: Optional[AqueductEngineConfig]
     airflow_config: Optional[AirflowEngineConfig]
     k8s_config: Optional[K8sEngineConfig]
+    lambda_config: Optional[LambdaEngineConfig]
 
 
 class FlowConfig(BaseModel):
-    engine: Optional[Union[AirflowIntegration, K8sIntegration]]
+    engine: Optional[Union[AirflowIntegration, K8sIntegration, LambdaIntegration]]
 
     class Config:
         # Necessary to allow an engine field

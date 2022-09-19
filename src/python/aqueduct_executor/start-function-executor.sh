@@ -23,11 +23,5 @@ fi
 python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC"
 EXIT_CODE=$?
 
-# Double check to make sure the path doesn't contain something dangerous.
-if [ ! -z "$FUNCTION_EXTRACT_PATH" -a "$FUNCTION_EXTRACT_PATH" != *"*"* ]
-then
-      rm -rf $FUNCTION_EXTRACT_PATH
-fi
-
 # Exit after cleanup, regardless of execution success / failure.
 exit $(($EXIT_CODE))

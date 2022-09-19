@@ -21,9 +21,10 @@ from aqueduct.enums import (
     ExecutionMode,
     FunctionGranularity,
     FunctionType,
+    OperatorType,
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
+from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
 from aqueduct.utils import (
     artifact_name_from_op_name,
     format_header_for_print,
@@ -302,15 +303,14 @@ class NumericArtifact(BaseArtifact):
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-
-        general_dict = get_description_for_metric(input_operator, self._dag)
-
-        # Remove because values already in `readable_dict`
-        general_dict.pop("Label")
-        general_dict.pop("Granularity")
-
         readable_dict = super()._describe()
-        readable_dict.update(general_dict)
+        if get_operator_type(input_operator) is OperatorType.METRIC:
+            general_dict = get_description_for_metric(input_operator, self._dag)
+            # Remove because values already in `readable_dict`
+            general_dict.pop("Label")
+            general_dict.pop("Granularity")
+            readable_dict.update(general_dict)
+
         readable_dict["Inputs"] = [
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]
