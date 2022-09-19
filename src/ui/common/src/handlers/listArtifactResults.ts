@@ -3,7 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ListArtifactResultsResponse } from './responses/artifact';
 
 export const handleListArtifactResults = createAsyncThunk<
-ListArtifactResultsResponse,
+  ListArtifactResultsResponse,
   {
     apiAddress: string;
     apiKey: string;
