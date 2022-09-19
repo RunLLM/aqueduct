@@ -29,6 +29,7 @@ import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
+import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
@@ -286,7 +287,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <Status status={workflow.dagResults[0].status} />
         </Box>
 
-        <Box sx={{ ml: 2 }}>
+        <Box sx={{ mr: 4 }}>
           <Button
             variant="outlined"
             color="primary"
@@ -321,10 +322,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
-
-        {/* NOTE: Funnyily enough, `size=large` on a button is what
-                    makes it match the size of the `FormControl` when set to
-                    small. Go figure. */}
         <Button
           color="primary"
           sx={{ height: '100%' }}
@@ -334,6 +331,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <FontAwesomeIcon icon={faPlay} />
           <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
         </Button>
+
+        <WorkflowStatusBar user={user} />
+
         {runWorkflowDialog}
       </Box>
 
