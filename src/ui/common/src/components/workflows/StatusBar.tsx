@@ -62,7 +62,7 @@ interface ActiveWorkflowStatusTabProps {
 export const StatusBarHeaderHeightInPx = 41;
 export const CollapsedStatusBarWidthInPx = 75;
 export const StatusBarWidthInPx = 432;
-export const StatusBarListHeightInPx = 800;
+export const MaxStatusBarListHeightInPx = 800;
 
 const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   activeWorkflowStatusTab,
@@ -120,9 +120,11 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     <Box
       sx={{
         width: `${StatusBarWidthInPx}px`,
-        height: `${StatusBarListHeightInPx - StatusBarHeaderHeightInPx}px`,
-        overflowY: 'scroll',
+        maxHeight: `${MaxStatusBarListHeightInPx}px`,
+        display: 'block',
+        overflow: 'auto',
         backgroundColor: 'white',
+        borderRadius: '8px',
       }}
     >
       {listItems.map((listItem, index) => {
@@ -203,7 +205,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     workflow.selectedDag?.operators ?? {};
 
   const [activeWorkflowStatusTab, setActiveWorkflowStatusTab] = useState(
-    WorkflowStatusTabs.Errors
+    WorkflowStatusTabs.Collapsed
   );
 
   const [numErrors, setNumErrors] = useState(0);
@@ -335,14 +337,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   };
 
   const collapseWorkflowStatusBar = (event: React.MouseEvent) => {
-    event.preventDefault();
+    event.stopPropagation();
     dispatch(setWorkflowStatusBarOpenState(false));
     setActiveWorkflowStatusTab(WorkflowStatusTabs.Collapsed);
   };
 
   // Chevron up is clicked. Errors tab is left most tab, so we select that one.
   const expandWorkflowStatusbar = (event: React.MouseEvent) => {
-    event.preventDefault();
+    event.stopPropagation();
     selectTab(WorkflowStatusTabs.Errors);
   };
 
@@ -527,15 +529,21 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   return (
     <Box
       sx={{
+        cursor: 'pointer',
         position: 'absolute',
         left: '700px',
         top: '123px',
-        height: collapsed
-          ? `${StatusBarHeaderHeightInPx}px`
-          : `${StatusBarListHeightInPx}px`,
         zIndex: 10,
-        border: `1px solid ${theme.palette.gray['500']}`,
+        borderLeft: `1px solid ${theme.palette.gray['500']}`,
+        borderTop: `1px solid ${theme.palette.gray['500']}`,
+        borderRight: `1px solid ${theme.palette.gray['500']}`,
+        borderBottom: collapsed
+          ? `1px solid ${theme.palette.gray['500']}`
+          : null,
         borderRadius: '8px',
+      }}
+      onClick={() => {
+        selectTab(WorkflowStatusTabs.Errors);
       }}
     >
       <Box
@@ -550,10 +558,15 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           borderBottom: collapsed
             ? null
             : `1px solid ${theme.palette.gray['500']}`,
+          overflowY: 'none',
         }}
       >
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Errors)}
+          onClick={(event: React.MouseEvent) => {
+            // handle event here and keep from being handled by root onClick listener of parent div.
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Errors);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -575,7 +588,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </Box>
 
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Warnings)}
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Warnings);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -596,7 +612,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </Box>
 
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Logs)}
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Logs);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -616,27 +635,28 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           <Typography sx={{ ml: 1 }}>{numWorkflowLogs}</Typography>
         </Box>
 
-        <Box>
-          <Box
-            onClick={() => selectTab(WorkflowStatusTabs.Checks)}
-            sx={{
-              ...statusBarIconStyles,
-              color:
-                activeWorkflowStatusTab === WorkflowStatusTabs.Checks
-                  ? theme.palette.green['500']
-                  : theme.palette.green['400'],
-              borderBottom:
-                activeWorkflowStatusTab === WorkflowStatusTabs.Checks
-                  ? `2px solid ${theme.palette.green['500']}`
-                  : '', // green500
-              '&:hover': { color: theme.palette.green['500'] },
-              fontSize: '20px',
-              marginRight: 4,
-            }}
-          >
-            <FontAwesomeIcon icon={faCircleCheck} />
-            <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
-          </Box>
+        <Box
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Checks);
+          }}
+          sx={{
+            ...statusBarIconStyles,
+            color:
+              activeWorkflowStatusTab === WorkflowStatusTabs.Checks
+                ? theme.palette.green['500']
+                : theme.palette.green['400'],
+            borderBottom:
+              activeWorkflowStatusTab === WorkflowStatusTabs.Checks
+                ? `2px solid ${theme.palette.green['500']}`
+                : '', // green500
+            '&:hover': { color: theme.palette.green['500'] },
+            fontSize: '20px',
+            marginRight: 4,
+          }}
+        >
+          <FontAwesomeIcon icon={faCircleCheck} />
+          <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
         </Box>
 
         <Box

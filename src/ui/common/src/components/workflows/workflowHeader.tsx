@@ -184,7 +184,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           <Status status={workflow.dagResults[0].status} />
         </Box>
 
-        <Box sx={{ ml: 2 }}>
+        <Box sx={{ mr: 4 }}>
           <Button
             variant="outlined"
             color="primary"
