@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.0.15
+Released on September 19, 2022.
+
+### Key Features
+* Adds support for running new workflows on AWS Lambda and Apache Airflow.
+    Users can define workflows using the Aqueduct API but delegate the
+    execution of those workflows onto these compute systems.
+
+### Enhancements
+* Updates UI to describe database write operators as `save` operators instead
+    of `load` operators to avoid confusion.
+* Adds `describe` methods to all non-tabular artifact types.
+
+### Bugfixes
+* Fixes bug where stack traces and other messages in workflow status bar would
+    overflow past edge of screen.
+* Fixes bug where some workflows that should have been triggered on server
+    start were being ignored due to inconsistent metadata.
+* Fixes bug where newest workflow run wasn't shown after a run was manually
+    triggered.
+
 ## 0.0.14
 Released on September 12, 2022.
 
