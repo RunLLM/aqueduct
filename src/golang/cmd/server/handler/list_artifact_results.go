@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/{artifactId}/results
+// Route: /artifact/{artifactId}/results
 // Method: GET
 // Params: None
 // Request:
