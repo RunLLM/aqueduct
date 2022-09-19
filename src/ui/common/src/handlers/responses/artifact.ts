@@ -14,9 +14,14 @@ export type ArtifactResponse = {
 export type ArtifactResultStatusResponse = {
   id: string;
   content_path: string;
+  content_serialized?: string;
   exec_state?: ExecState;
 };
 
 export type ArtifactResultResponse = ArtifactResponse & {
   result?: ArtifactResultStatusResponse;
+};
+
+export type ListArtifactResultsResponse = {
+  results: ArtifactResultStatusResponse[];
 };
