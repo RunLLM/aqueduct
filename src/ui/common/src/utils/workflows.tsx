@@ -20,6 +20,10 @@ export type WorkflowSchedule = {
   paused: boolean;
 };
 
+export type WorkflowRetentionPolicy = {
+  k_latest_runs: number;
+};
+
 export type ListWorkflowSummary = {
   id: string;
   name: string;
