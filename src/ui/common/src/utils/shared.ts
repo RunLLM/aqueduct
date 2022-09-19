@@ -35,7 +35,7 @@ export enum ExecutionStatus {
   Pending = 'pending',
   Canceled = 'canceled',
   Registered = 'registered',
-  Rybbubg = 'running',
+  Running = 'running',
 }
 
 export type ExecutionTimestamps = {
