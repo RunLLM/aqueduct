@@ -428,8 +428,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        # Parameter name to serialized parameter spec.
-        serialized_param_specs: Dict[str, str] = {}
+        param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
             runs = flow.list_runs(limit=1)
@@ -444,10 +443,10 @@ class Client:
 
             for name, new_val in parameters.items():
                 artifact_type = infer_artifact_type(new_val)
-                serialized_param_specs[name] = construct_param_spec(new_val, artifact_type).json()
+                param_specs[name] = construct_param_spec(new_val, artifact_type)
 
         flow_id = parse_user_supplied_id(flow_id)
-        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_param_specs)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
 
     def delete_flow(
         self,

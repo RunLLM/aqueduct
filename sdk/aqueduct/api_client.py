@@ -371,19 +371,24 @@ class APIClient:
     def refresh_workflow(
         self,
         flow_id: str,
-        serialized_param_specs: Dict[str, str],
+        param_specs: Dict[str, ParamSpec],
     ) -> None:
         """
-        `serialized_param_specs`: a dictionary from parameter names to serialized
-            parameter specs, which include the base64-encoded parameter value and the
-            parameter serialization type.
+        `param_specs`: a dictionary from parameter names to its corresponding new ParamSpec.
         """
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
-        body = {"parameters": serialized_param_specs}
+        body = {
+            "parameters": json.dumps(
+                {
+                    param_name: param_spec.dict()
+                    for param_name, param_spec in param_specs.items()
+                }
+            )
+        }
 
-        response = requests.post(url, headers=headers, json=body)
+        response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
     def delete_workflow(

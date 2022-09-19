@@ -153,6 +153,7 @@ class CheckSpec(BaseModel):
 
 
 class ParamSpec(BaseModel):
+    # `val` is the base64-encoded version of the serialized param value.
     val: str
     serialization_type: SerializationType
 
