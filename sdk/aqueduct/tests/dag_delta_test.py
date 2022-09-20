@@ -2,13 +2,8 @@ import copy
 import uuid
 from typing import List
 
-from aqueduct.dag import (
-    DAG,
-    AddOrReplaceOperatorDelta,
-    Metadata,
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.dag import DAG, Metadata
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, SubgraphDAGDelta, apply_deltas_to_dag
 from aqueduct.enums import OperatorType
 from aqueduct.tests.utils import (
     _construct_dag,

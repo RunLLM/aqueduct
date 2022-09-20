@@ -27,8 +27,10 @@ type EngineConfig struct {
 type AqueductConfig struct{}
 
 type AirflowConfig struct {
-	IntegrationId              uuid.UUID            `json:"integration_id"  yaml:"integration_id"`
-	DagId                      string               `json:"dag_id"  yaml:"dag_id"`
+	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	DagId         string    `json:"dag_id"  yaml:"dag_id"`
+	// MatchesAirflow indicates whether this DAG matches the current DAG registered with Airflow
+	MatchesAirflow             bool                 `json:"matches_airflow"  yaml:"matches_airflow"`
 	OperatorToTask             map[uuid.UUID]string `json:"operator_to_task"  yaml:"operator_to_task"`
 	OperatorMetadataPathPrefix map[uuid.UUID]string `json:"operator_metadata_path_prefix"  yaml:"operator_metadata_path_prefix"`
 	ArtifactContentPathPrefix  map[uuid.UUID]string `json:"artifact_content_path_prefix"  yaml:"artifact_content_path_prefix"`

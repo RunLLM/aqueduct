@@ -1,4 +1,5 @@
 import { Artifact } from './artifacts';
+import { EngineConfig } from './engine';
 import { normalizeOperator, Operator } from './operators';
 import ExecutionStatus, { ExecState } from './shared';
 
@@ -49,8 +50,9 @@ export type Workflow = {
 export type WorkflowDag = {
   id: string;
   workflow_id: string;
-  s3_config: S3Config;
   created_at: number;
+  s3_config: S3Config;
+  engine_config: EngineConfig;
 
   metadata?: Workflow;
   operators: { [id: string]: Operator };
