@@ -1,5 +1,6 @@
 import json
 from typing import Dict, List, Literal, Union
+import uuid
 
 from aqueduct_executor.operators.connectors.data import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
@@ -18,6 +19,7 @@ class CompileAirflowSpec(BaseModel):
     type: Literal[enums.JobType.COMPILE_AIRFLOW]
     storage_config: config.StorageConfig
     metadata_path: str
+    workflow_dag_id: uuid.UUID
     output_content_path: str
     dag_id: str
     cron_schedule: str

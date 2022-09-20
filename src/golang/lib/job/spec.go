@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 var (
@@ -218,6 +219,7 @@ type DiscoverSpec struct {
 
 type CompileAirflowSpec struct {
 	BasePythonSpec
+	WorkflowDagId     uuid.UUID           `json:"workflow_dag_id"  yaml:"workflow_dag_id"`
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 	DagId             string              `json:"dag_id"  yaml:"dag_id"`
 	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
@@ -486,6 +488,7 @@ func NewDiscoverSpec(
 
 func NewCompileAirflowSpec(
 	name string,
+	workflowDagID uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 	outputContentPath string,
@@ -513,6 +516,7 @@ func NewCompileAirflowSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		WorkflowDagId:     workflowDagID,
 		OutputContentPath: outputContentPath,
 		DagId:             dagId,
 		CronSchedule:      cronSchedule,

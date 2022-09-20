@@ -37,6 +37,15 @@ func newClient(ctx context.Context, authConf auth.Config) (*client, error) {
 	}, nil
 }
 
+func (c *client) getDag(dagId string) (*airflow.DAG, error) {
+	dag, resp, err := c.apiClient.DAGApi.GetDag(c.ctx, dagId).Execute()
+	if err != nil {
+		return nil, wrapApiError(err, "GetDag", resp)
+	}
+
+	return &dag, nil
+}
+
 // getDagRuns returns all of the Airflow DAGRuns for the Airflow DAG specified.
 func (c *client) getDagRuns(dagId string) ([]airflow.DAGRun, error) {
 	limitPerFetch := 100 // This is the max number of DAG runs that can be returned in each response.
