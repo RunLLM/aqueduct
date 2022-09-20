@@ -26,7 +26,7 @@ export const AirflowDialog: React.FC<Props> = ({
 }) => {
   const [host, setHost] = useState<string>(value?.host ?? null);
   const [s3CredsProfile, setS3CredsProfile] = useState<string>(
-    value?.s3_credentials_profile ?? 'default'
+    value?.s3_credentials_profile ?? Placeholders.s3_credentials_profile
   );
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export const AirflowDialog: React.FC<Props> = ({
         description="The profile to use for the AWS credentials above. The default profile will be used if none is provided."
         placeholder={Placeholders.s3_credentials_profile}
         onChange={(event) => setS3CredsProfile(event.target.value)}
-        value={s3CredsProfile}
+        value={s3CredsProfile !== Placeholders.s3_credentials_profile ? s3CredsProfile : null}
       />
     </Box>
   );
