@@ -1,4 +1,4 @@
-from aqueduct_executor.operators.connectors.data import config, relational
+from aqueduct_executor.operators.connectors.data import config, relational, utils
 from sqlalchemy import create_engine, engine
 
 
@@ -14,7 +14,7 @@ def _create_engine(config: config.PostgresConfig) -> engine.Engine:
     if config.password:
         url = "postgresql://{username}:{password}@{host}:{port}/{database}".format(
             username=config.username,
-            password=config.password,
+            password=utils.url_encode(config.password),
             host=config.host,
             port=config.port,
             database=config.database,
