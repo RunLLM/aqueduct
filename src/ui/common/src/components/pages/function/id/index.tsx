@@ -36,6 +36,8 @@ import {
 import { exportFunction } from '../../../../utils/operators';
 import { List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
+import LogViewer from '../../../../components/LogViewer';
+import { handleGetOperatorResults } from '../../../../reducers/workflow';
 
 type FunctionDetailsPageProps = {
   user: UserProfile;
@@ -49,6 +51,7 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   Layout = DefaultLayout,
   maxRenderSize = 100000000,
 }) => {
+  const dispatch: AppDispatch = useDispatch();
   const [files, setFiles] = useState({
     "": {
       path:"",
@@ -57,6 +60,25 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
     }
   });
   const params = useParams();
+
+
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
+  if (!(params.operatorId in workflow.operatorResults)) {
+    dispatch(
+      handleGetOperatorResults({
+        apiKey: user.apiKey,
+        workflowDagResultId: params.workflowDagResultId,
+        operatorId: params.operatorId,
+      })
+    );
+  }
+  if (workflow.operatorResults[params.operatorId]?.result?.user_logs) {
+    workflow.operatorResults[params.operatorId].result.user_logs.stderr = "stderr";
+    workflow.operatorResults[params.operatorId].result.user_logs.stdout = "stdout";
+  }
+  const logs =
+  workflow.operatorResults[params.operatorId]?.result?.user_logs ?? {};
+  const operatorError = workflow.operatorResults[params.operatorId]?.result?.error;
 
   const setFileHelper = (prevState, file, fileContents) => {
     let nextState = {...prevState};
@@ -113,7 +135,14 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   }, []);
   return (
     <Layout user={user} layoutType="workspace">
-      <MultiFileViewer files={files} />
+      <Box>
+        <Typography variant="h4">Logs</Typography>
+        <LogViewer logs={logs} err={operatorError} />
+      </Box>
+      <Box>
+        <Typography variant="h4">Code Preview</Typography>
+        <MultiFileViewer files={files} />
+      </Box>
     </Layout>
   );
 };

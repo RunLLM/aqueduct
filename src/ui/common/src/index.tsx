@@ -1,6 +1,7 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
 import DataPreviewer from './components/DataPreviewer';
+import LogViewer from './components/LogViewer';
 import MultiFileViewer from './components/MultiFileViewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
@@ -75,7 +76,6 @@ import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
-import LogViewer from './components/workflows/log_viewer';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';

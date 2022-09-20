@@ -24,7 +24,7 @@ import DataPreviewer from '../../DataPreviewer';
 import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
-import LogViewer from '../log_viewer';
+import LogViewer from '../../LogViewer';
 import NodeStatus from '../nodes/NodeStatus';
 
 interface Props {
