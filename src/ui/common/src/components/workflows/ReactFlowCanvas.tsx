@@ -4,6 +4,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
+import { produce, current } from 'immer';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
@@ -31,6 +32,9 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
+  const operatorResults = useSelector((state: RootState) => state.workflowReducer.operatorResults);
+  const artifactResults = useSelector((state: RootState) => state.workflowReducer.artifactResults);
+
   const { fitView, viewportInitialized } = useReactFlow();
   useEffect(() => {
     fitView();
@@ -43,9 +47,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     // we're not 100% sure.
     setTimeout(fitView, 200);
   }, [openSideSheetState]);
-
-  //console.log('nodes: ', dagPositionState.result.nodes);
-  console.log('dagPositionState: ', dagPositionState);
 
   const checkOpNodes = [];
   const boolArtifactNodes = [];
@@ -67,31 +68,56 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     //artifact nodes have same name + ' artifact' at the end.
     checkOpNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
     boolArtifactNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
-
-    console.log('checkOpNodes', checkOpNodes);
-    console.log('boolArtifactNodes: ', boolArtifactNodes);
   }
 
   // Remove artifactNodes from the DAG
+  // Take artifact result and set inside operator's data.result field.
   let nodes = dagPositionState.result?.nodes;
-  if (nodes) {
-    nodes = nodes.filter((node) => {
+  const enrichedNodes = produce(nodes, (draftState) => {
+    // NOTE: only mutate the draftState variable here. 
+    // See docs here for more information: https://redux-toolkit.js.org/usage/immer-reducers#immutable-updates-with-immer
+    if (nodes) {
+      // loop through and find checkOpNodes, doing fancy logic stuffs.
+      for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+        // boolArtifactNodes and checkOps are sorted and now have the same index as one another.
+        // Let's take the operators and set their data.result fields accordingly.
+        for (let i = 0; i < checkOpNodes.length; i++) {
+          if (nodes[nodeIndex].id === checkOpNodes[i].id) {
+            // Let's find the artifact result of the corresponding booleanArtifactNode.
+            //const boolArtifactResult = artifactResults[boolArtifactNodes[i].id].result?.data;
+            const boolArtifactResult = artifactResults[boolArtifactNodes[i].id].result?.data;
+            if (boolArtifactResult) {
+              draftState[nodeIndex].data.result = boolArtifactResult;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  //Finally, let's remove any boolean artifacts from the list
+  // This has to be two separate steps or Immer will complain that we are producing a new value and modifying it's draft.
+  // i.e. Error: [Immer] An immer producer returned a new value *and* modified its draft. Either return a new value *or* modify the draft.
+  let filteredNodes = produce(enrichedNodes, (draftState) => {
+    if (!enrichedNodes) {
+      return [];
+    }
+
+    return draftState.filter((node) => {
       for (let i = 0; i < boolArtifactNodes.length; i++) {
         if (node.id === boolArtifactNodes[i].id) {
-          return false
+          return false;
         }
       }
 
       return true;
-    })
-  }
-
-  // Remove edges that went into each boolArtifactNode
+    });
+  });
 
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
-      nodes={nodes}
+      nodes={filteredNodes}
       edges={dagPositionState.result?.edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}

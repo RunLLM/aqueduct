@@ -1,6 +1,5 @@
 import { Edge, Node } from 'react-flow-renderer';
 import { Position } from 'react-flow-renderer';
-
 import AqueductBezier from '../components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from '../components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from '../components/workflows/edges/AqueductStraight';
@@ -29,6 +28,8 @@ export type ReactFlowNodeData = {
   nodeType: ReactflowNodeType;
   nodeId: string;
   label?: string;
+  // Used to metric or check results inside the node
+  result?: string;
 };
 
 export type GetPositionResponse = {
