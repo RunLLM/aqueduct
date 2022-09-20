@@ -20,7 +20,6 @@ class ParamSpec(BaseModel):
     metadata_path: str
     expected_type: ArtifactType
     serialization_type: SerializationType
-    val: str
     output_content_path: str
     output_metadata_path: str
 

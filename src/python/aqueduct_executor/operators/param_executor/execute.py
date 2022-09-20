@@ -11,15 +11,17 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.utils import (
-    base64_string_to_bytes,
     deserialization_function_mapping,
     infer_artifact_type,
 )
 
 
 def run(spec: ParamSpec) -> None:
-    """
-    Executes a parameter operator by storing the parameter value in the output content path.
+    """Parameter operators are unique in that the output content is expected to have already been populated correctly.
+
+    Therefore, this operator is responsible only for:
+    - Checking that the parameter type matches the expected type.
+    - Writing the operator and artifact metadata to storage, so that orchestration can proceed as normal.
     """
     print("Job Spec: \n{}".format(spec.json()))
 
@@ -27,7 +29,7 @@ def run(spec: ParamSpec) -> None:
     exec_state = ExecutionState(user_logs=Logs())
 
     try:
-        val_bytes = base64_string_to_bytes(spec.val)
+        val_bytes = storage.get(spec.output_content_path)
         val = deserialization_function_mapping[spec.serialization_type](val_bytes)
 
         inferred_type = infer_artifact_type(val)
@@ -45,7 +47,7 @@ def run(spec: ParamSpec) -> None:
         utils.write_artifact(
             storage,
             spec.expected_type,
-            spec.output_content_path,
+            None,  # output_content_path: this is a performance optimization only, which avoids an unnecessary write to the output path.
             spec.output_metadata_path,
             val,
             system_metadata={},

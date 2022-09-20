@@ -2,9 +2,11 @@ package operator
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/google/uuid"
 )
 
@@ -30,6 +32,22 @@ func newParamOperator(
 		return nil, errWrongNumOutputs
 	}
 
+	// Write the parameter's value from the spec to the output content path.
+	// This is to avoid passing raw values in the spec, which can be of unbounded
+	// size (eg. images can be too large).
+	paramValBytes, err := base64.StdEncoding.DecodeString(base.dbOperator.Spec.Param().Val)
+	if err != nil {
+		return nil, err
+	}
+	err = storage.NewStorage(base.storageConfig).Put(
+		context.TODO(),
+		base.outputExecPaths[0].ArtifactContentPath,
+		paramValBytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &paramOperatorImpl{
 		base,
 	}, nil
@@ -43,7 +61,6 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			*po.storageConfig,
 			po.metadataPath,
 		),
-		Val:               po.dbOperator.Spec.Param().Val,
 		ExpectedType:      po.outputs[0].Type(),
 		SerializationType: po.dbOperator.Spec.Param().SerializationType,
 
