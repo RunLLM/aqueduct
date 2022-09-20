@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serilization_type_key   = "serialization_type"
+	serialization_type_key  = "serialization_type"
 	value_key               = "val"
 	spec_field              = "spec"
 	pythonExecutorPackage   = "aqueduct_executor"
@@ -52,7 +52,7 @@ func updateParamOperatorWithNewSpec(
 	db database.Database,
 ) error {
 	// If the serialization_type is present we should consider this already migrated
-	if _, exists := operator.OpSpec.Param[serilization_type_key]; exists {
+	if _, exists := operator.OpSpec.Param[serialization_type_key]; exists {
 		return nil
 	}
 
@@ -92,7 +92,7 @@ func updateParamOperatorWithNewSpec(
 	outputs := strings.Split(outb.String(), "\n")
 	param_type := outputs[0]
 	param_val = outputs[1]
-	operator.OpSpec.Param[serilization_type_key] = param_type
+	operator.OpSpec.Param[serialization_type_key] = param_type
 
 	// We also change the param value to be a base64 encoding
 	operator.OpSpec.Param[value_key] = param_val
@@ -115,14 +115,14 @@ func updateParamOperatorWithOldSpec(
 	db database.Database,
 ) error {
 	// If the serialization_type is not present we should not change this
-	if _, exists := operator.OpSpec.Param[serilization_type_key]; !exists {
+	if _, exists := operator.OpSpec.Param[serialization_type_key]; !exists {
 		return nil
 	}
 
 	// If we want to migrate back to old version we delete the serialization type in the spec
-	// And we also decode the encoded vale and store that
+	// And we also decode the encoded value and store that
 	param_val := operator.OpSpec.Param[value_key]
-	serialization_type := operator.OpSpec.Param[serilization_type_key]
+	serialization_type := operator.OpSpec.Param[serialization_type_key]
 
 	migrationSpec := MigrationSpec{
 		ParamType: serialization_type,
@@ -158,7 +158,7 @@ func updateParamOperatorWithOldSpec(
 	outputs := strings.Split(outb.String(), "\n")
 	decoded_val := outputs[0]
 
-	delete(operator.OpSpec.Param, serilization_type_key)
+	delete(operator.OpSpec.Param, serialization_type_key)
 	operator.OpSpec.Param[value_key] = decoded_val
 
 	newParamSpec := &Spec{

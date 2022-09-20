@@ -12,6 +12,6 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
     if spec.op == "encode":
-        execute.run_type_check_and_encode(spec.param_val)
+        execute.run_type_inference_and_encode(spec.param_val)
     else:
         execute.run_decode(spec.param_val, spec.param_type)

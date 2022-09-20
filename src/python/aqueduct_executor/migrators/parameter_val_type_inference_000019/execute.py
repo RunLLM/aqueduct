@@ -1,16 +1,15 @@
 import base64
 import json
-import sys
 
 from aqueduct_executor.migrators.parameter_val_type_inference_000019 import serialize
 from aqueduct_executor.operators.utils.enums import SerializationType
 from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
-def run_type_check_and_encode(json_val: str) -> None:
+def run_type_inference_and_encode(json_val: str) -> None:
     """
-    Infers the type for a given param value and print to std out
-    Encode to base 64 and print out as well
+    Infers the type for a given param value and print to stdout
+    Encode to base64 and print out as well
     """
     val = json.loads(json_val)
     artifact_type = infer_artifact_type(val)
