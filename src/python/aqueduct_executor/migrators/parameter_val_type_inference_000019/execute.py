@@ -26,5 +26,4 @@ def run_decode(val: str, val_type: str) -> None:
     decoded_val = base64.b64decode(val)
     serialization_type = SerializationType(val_type)
     deserialized_val = serialize.deserialization_function_mapping[serialization_type](decoded_val)
-    loaded_val = json.loads(deserialized_val)
     print(json.dumps(loaded_val))

@@ -141,6 +141,6 @@ func init() {
 	registeredMigrations[19] = &migration{
 		upPostgres: _000019.Up, upSqlite: _000019.Up,
 		downPostgres: _000019.Down,
-		name:         "add serialization type value to param op",
+		name:         "add serialization type and value to param op",
 	}
 }
