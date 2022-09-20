@@ -26,7 +26,7 @@ export const AirflowDialog: React.FC<Props> = ({
 }) => {
   const [host, setHost] = useState<string>(value?.host ?? null);
   const [s3CredsProfile, setS3CredsProfile] = useState<string>(
-    value?.s3_credentials_profile ?? null
+    value?.s3_credentials_profile ?? 'default'
   );
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export const AirflowDialog: React.FC<Props> = ({
       }
     }
 
-    if (s3CredsProfile && s3CredsProfile !== 'default') {
+    if (s3CredsProfile) {
       onUpdateField('s3_credentials_profile', s3CredsProfile);
     }
   }, [host, s3CredsProfile]);
