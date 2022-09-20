@@ -99,21 +99,18 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     );
   }
 
-  let airflowUpdateWarning = null;
-  if (
-    workflowDag.engine_config.type == EngineType.Airflow &&
-    !workflowDag.engine_config.airflow_config?.matches_airflow
-  ) {
-    airflowUpdateWarning = (
-      <Box>
-        <Alert severity="warning">
-          Please copy the latest Airflow DAG file to your Airflow server if you
-          have not done so already. New Airflow DAG runs will not be synced
-          properly with Aqueduct until you have copied the file.
-        </Alert>
-      </Box>
-    );
-  }
+  const showAirflowUpdateWarning =
+    workflowDag.engine_config.type === EngineType.Airflow &&
+    !workflowDag.engine_config.airflow_config?.matches_airflow;
+  const airflowUpdateWarning = (
+    <Box maxWidth="800px">
+      <Alert severity="warning">
+        Please copy the latest Airflow DAG file to your Airflow server if you
+        have not done so already. New Airflow DAG runs will not be synced
+        properly with Aqueduct until you have copied the file.
+      </Alert>
+    </Box>
+  );
 
   const paramNameToDisplayProps = Object.assign(
     {},
@@ -340,7 +337,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         {runWorkflowDialog}
       </Box>
 
-      {airflowUpdateWarning}
+      {showAirflowUpdateWarning && airflowUpdateWarning}
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
