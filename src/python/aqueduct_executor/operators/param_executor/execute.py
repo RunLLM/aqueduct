@@ -32,10 +32,15 @@ def run(spec: ParamSpec) -> None:
 
         inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
-            raise Exception(
-                "Supplied parameter expects type `%s`, but got `%s` instead."
-                % (spec.expected_type, inferred_type)
+            exec_state.status = enums.ExecutionStatus.FAILED
+            exec_state.failure_type = enums.FailureType.USER_FATAL
+            exec_state.error = Error(
+                context="",
+                tip="Supplied parameter expects type `%s`, but got `%s` instead."
+                % (spec.expected_type, inferred_type),
             )
+            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+            return
 
         utils.write_artifact(
             storage,

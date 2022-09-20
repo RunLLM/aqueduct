@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -95,10 +96,10 @@ func (wrs *WorkflowRetentionSpec) GetStorageConfig() (*shared.StorageConfig, err
 
 type WorkflowSpec struct {
 	BaseSpec
-	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
-	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
-	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
-	AqPath         string               `json:"aq_path" yaml:"aqPath"`
+	WorkflowId     string                 `json:"workflow_id" yaml:"workflowId"`
+	GithubManager  github.ManagerConfig   `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]param.Param `json:"parameters" yaml:"parameters"`
+	AqPath         string                 `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -301,7 +302,7 @@ func NewWorkflowSpec(
 	jobManager Config,
 	githubManager github.ManagerConfig,
 	aqPath string,
-	parameters map[string]string,
+	parameters map[string]param.Param,
 ) Spec {
 	return &WorkflowSpec{
 		BaseSpec: BaseSpec{

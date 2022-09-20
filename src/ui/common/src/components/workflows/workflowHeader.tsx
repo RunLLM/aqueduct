@@ -26,6 +26,8 @@ import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
+import {Artifact, ArtifactType, SerializationType} from "../../utils/artifacts";
+import {Param} from "../../utils/operators";
 
 type Props = {
   user: UserProfile;
@@ -93,14 +95,45 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     );
   }
 
-  const paramNameToDefault = Object.assign(
+  const paramNameToDisplayProps = Object.assign(
     {},
     ...Object.values(workflowDag.operators)
       .filter((operator) => {
         return operator.spec.param !== undefined;
       })
       .map((operator) => {
-        return { [operator.name]: operator.spec.param.val };
+        // Parameter operators should only have a single output.
+        if (operator.outputs.length > 1) {
+          console.error("Parameter operator should not have multiple outputs.")
+        }
+
+        // Some types of parameters cannot be easily customized from a textfield on the UI.
+        // These types are not json-able and cannot be easily typed as strings.
+        let outputArtifact: Artifact = workflowDag.artifacts[operator.outputs[0]]
+        let isCustomizable: boolean = ![
+            ArtifactType.Table,
+            ArtifactType.Bytes,
+            ArtifactType.Image,
+            ArtifactType.Picklable,
+        ].includes(outputArtifact.type)
+
+        let placeholder: string
+        let helperText: string
+        if (isCustomizable) {
+          placeholder = atob(operator.spec.param.val)
+          helperText = ""
+        } else {
+          placeholder = ""
+          helperText = outputArtifact.type[0].toUpperCase() + outputArtifact.type.substr(1) + " type is not yet customizable from the UI."
+        }
+
+        return {
+          [operator.name]: {
+            placeholder: placeholder,
+            isCustomizable: isCustomizable,
+            helperText: helperText,
+          }
+       };
       })
   );
 
@@ -109,11 +142,38 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     [key: string]: string;
   }>({});
 
+  // Returns the map of parameters, from name to spec (which includes the base64-encoded
+  // value and serialization_type).
+  const serializeParameters = () => {
+    let serializedParams = {}
+    Object.entries(paramNameToValMap).forEach(([key, strVal]) => {
+      // Serialize the user's input string appropriately into base64. The input can either be a
+      // 1) number 2) string 3) json.
+      try {
+        let val = JSON.parse(strVal)
+
+        // All jsonable values are serialized as json.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.Json,
+        }
+      } catch(err){
+        // Non-jsonable values (such as plain strings) are serialized as strings.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.String,
+        }
+      }
+    })
+    return serializedParams
+  }
+
   const triggerWorkflowRun = () => {
     const parameters = new FormData();
-    parameters.append('parameters', JSON.stringify(paramNameToValMap));
+    parameters.append('parameters', JSON.stringify(serializeParameters()));
 
     setShowRunWorkflowDialog(false);
+
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
       method: 'POST',
       headers: {
@@ -150,13 +210,13 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           This will trigger a run of <code>{name}</code> immediately.
         </Box>
 
-        {Object.keys(paramNameToDefault).length > 0 && (
+        {Object.keys(paramNameToDisplayProps).length > 0 && (
           <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
             {' '}
             Parameters{' '}
           </Typography>
         )}
-        {Object.keys(paramNameToDefault).map((paramName) => {
+        {Object.keys(paramNameToDisplayProps).map((paramName) => {
           return (
             <Box key={paramName}>
               <Typography>
@@ -164,7 +224,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
               </Typography>
               <TextField
                 fullWidth
-                placeholder={paramNameToDefault[paramName]}
+                disabled={!paramNameToDisplayProps[paramName].isCustomizable}
+                helperText={paramNameToDisplayProps[paramName].helperText}
+                placeholder={paramNameToDisplayProps[paramName].placeholder}
                 onChange={(e) => {
                   paramNameToValMap[paramName] = e.target.value;
                   setParamNameToValMap(paramNameToValMap);

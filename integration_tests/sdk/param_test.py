@@ -337,10 +337,10 @@ def test_non_jsonable_param_types(client):
         return input
 
     picklable_param = client.create_param("pickleable", default=EmptyClass)
-    output = must_be_picklable(picklable_param)
+    pickle_output = must_be_picklable(picklable_param)
 
-    assert isinstance(output, GenericArtifact)
-    assert output.get() == EmptyClass
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == EmptyClass
 
     @op
     def must_be_bytes(input):
@@ -348,10 +348,22 @@ def test_non_jsonable_param_types(client):
         return input
 
     bytes_param = client.create_param("bytes", default=b"hello world")
-    output = must_be_bytes(bytes_param)
+    bytes_output = must_be_bytes(bytes_param)
 
-    assert isinstance(output, GenericArtifact)
-    assert output.get() == b"hello world"
+    assert isinstance(bytes_output, GenericArtifact)
+    assert bytes_output.get() == b"hello world"
+
+    @op
+    def must_be_string(input):
+        assert isinstance(input, str)
+        return input
+
+    string_param = client.create_param("string", default="I am a string")
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "I am a string"
+
+    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output])
 
 
 def test_parameter_type_changes(client):

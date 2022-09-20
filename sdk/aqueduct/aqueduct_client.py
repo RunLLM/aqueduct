@@ -43,7 +43,7 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import Operator, OperatorSpec
+from .operators import Operator, OperatorSpec, ParamSpec
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
@@ -428,7 +428,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
-        serialized_params_str = None
+        param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
             runs = flow.list_runs(limit=1)
@@ -441,15 +441,12 @@ class Client:
                 )
             validate_overwriting_parameters(flow.latest()._dag, parameters)
 
-            serialized_params: Dict[str, str] = {}
             for name, new_val in parameters.items():
                 artifact_type = infer_artifact_type(new_val)
-                serialized_params[name] = construct_param_spec(new_val, artifact_type).val
-
-            serialized_params_str = json.dumps(serialized_params)
+                param_specs[name] = construct_param_spec(new_val, artifact_type)
 
         flow_id = parse_user_supplied_id(flow_id)
-        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params_str)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
 
     def delete_flow(
         self,

@@ -5,17 +5,27 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/dropbox/godropbox/errors"
 )
 
+// Requests that include overwriting parameters are expected to have this json format in the body.
+//type expectedRequestBody struct {
+//	SerializedParams map[string]string `json:"parameters"`
+//}
+
 const (
-	// The value is a json-stringified dictionary of parameter names to values.
+	// The value is a json'ed dictionary of parameter names to another
+	// dictionary to the parameter's base64 encoded value and serialization type.
 	parametersKey = "parameters"
+
+	paramValKey               = "val"
+	paramSerializationTypeKey = "serialization_type"
 )
 
 // Extracts the parameters dictionary from the request, which maps
-// parameter name to its base64-encoded, bytes-serialized value.
-func ExtractParamsfromRequest(r *http.Request) (map[string]string, error) {
+// parameter name to its base64-encoded value and serialization type.
+func ExtractParamsfromRequest(r *http.Request) (map[string]param.Param, error) {
 	serializedParams := []byte(r.FormValue(parametersKey))
 
 	// No-op if there aren't any parameters set.
@@ -23,18 +33,31 @@ func ExtractParamsfromRequest(r *http.Request) (map[string]string, error) {
 		return nil, nil
 	}
 
-	var params map[string]string
-	err := json.Unmarshal(serializedParams, &params)
+	var paramSpecMapByName map[string]map[string]string
+	err := json.Unmarshal(serializedParams, &paramSpecMapByName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check that the parameter string is base-64 encoded.
-	for param_name, param_val := range params {
-		_, err = base64.StdEncoding.DecodeString(param_val)
+	// Convert each value into a param spec.
+	paramSpecByName := make(map[string]param.Param, len(paramSpecMapByName))
+	for paramName, paramSpecMap := range paramSpecMapByName {
+		encodedParamVal := paramSpecMap[paramValKey]
+		serializationType := paramSpecMap[paramSerializationTypeKey]
+
+		// Check that the parameter value is base64 encoded.
+		_, err = base64.StdEncoding.DecodeString(encodedParamVal)
 		if err != nil {
-			return nil, errors.Newf("Internal error: parameter values must be base64-encoded. The value %s provided for parameter %s was not.", param_val, param_name)
+			return nil, errors.Newf(
+				"Internal error: parameter values must be base64-encoded. "+
+					"The value %s provided for parameter %s was not.", encodedParamVal, paramName)
+		}
+
+		paramSpecByName[paramName] = param.Param{
+			Val:               encodedParamVal,
+			SerializationType: serializationType,
 		}
 	}
-	return params, nil
+
+	return paramSpecByName, nil
 }

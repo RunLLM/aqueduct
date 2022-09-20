@@ -23,7 +23,7 @@ import (
 
 const (
 	pythonExecutorPackage = "aqueduct_executor"
-	migrationPythonPath   = "migrators.artifact_migration.main"
+	migrationPythonPath   = "migrators.artifact_migration_000016.main"
 )
 
 var confPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "config", "config.yml")
