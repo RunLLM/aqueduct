@@ -1,5 +1,6 @@
 import json
 
+from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from pydantic import BaseModel, parse_obj_as
 
 try:
@@ -17,6 +18,8 @@ class ParamSpec(BaseModel):
     type: Literal[enums.JobType.PARAM]
     storage_config: config.StorageConfig
     metadata_path: str
+    expected_type: ArtifactType
+    serialization_type: SerializationType
     val: str
     output_content_path: str
     output_metadata_path: str

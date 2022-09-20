@@ -12,7 +12,13 @@ from aqueduct.error import (
 )
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
-from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
+from utils import (
+    delete_flow,
+    generate_new_flow_name,
+    get_integration_name,
+    run_flow_test,
+    wait_for_flow_runs,
+)
 
 from aqueduct import metric, op
 
@@ -60,16 +66,6 @@ def test_basic_param_creation(client):
     # We don't use df.equals because when comparing floating point values, our internal serialization
     # may have changed the value's accuracy. assert_frame_equal takes this into account.
     assert_frame_equal(kv_df.get(), pd.DataFrame(data=kv))
-
-
-def test_non_jsonable_parameter(client):
-    with pytest.raises(InvalidUserArgumentException):
-        _ = client.create_param(name="bad param", default=b"cant serialize me")
-
-    param = client.create_param(name="number", default=8)
-    param_doubled = double_number_input(param)
-    with pytest.raises(InvalidUserArgumentException):
-        _ = param_doubled.get(parameters={"number": b"cant serialize me"})
 
 
 def test_get_with_custom_parameter(client):
@@ -318,3 +314,81 @@ def test_materializing_failed_artifact(client):
 
     finally:
         client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_non_jsonable_param_types(client):
+    class EmptyClass:
+        """
+        For some reason, this class must be nested inside this test,
+        otherwise we get a pickle error on the backend: 'No module named `param_test`'.
+        """
+
+        def __init__(self):
+            pass
+
+    @op
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is pickleabe, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        assert input == EmptyClass
+        return input
+
+    picklable_param = client.create_param("pickleable", default=EmptyClass)
+    pickle_output = must_be_picklable(picklable_param)
+
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == EmptyClass
+
+    @op
+    def must_be_bytes(input):
+        assert isinstance(input, bytes)
+        return input
+
+    bytes_param = client.create_param("bytes", default=b"hello world")
+    bytes_output = must_be_bytes(bytes_param)
+
+    assert isinstance(bytes_output, GenericArtifact)
+    assert bytes_output.get() == b"hello world"
+
+    @op
+    def must_be_string(input):
+        assert isinstance(input, str)
+        return input
+
+    string_param = client.create_param("string", default="I am a string")
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "I am a string"
+
+    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output])
+
+
+def test_parameter_type_changes(client):
+    @op
+    def noop(input):
+        return input
+
+    param = client.create_param("number", default=1234)
+    output = noop(param)
+
+    # TODO(ENG-1684): This should be a more specific error.
+    with pytest.raises(Exception):
+        output.get(parameters={"number": "This is a string."})
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        # TODO(ENG-1684): we should not allow the user to trigger successfully with the wrong type.
+        client.trigger(flow_id, parameters={"number": "This is a string"})
+        wait_for_flow_runs(
+            client,
+            flow_id,
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+        )
+    finally:
+        delete_flow(client, flow_id)

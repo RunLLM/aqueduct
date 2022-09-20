@@ -3,7 +3,8 @@ from typing import Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, SalesforceExtractType
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
