@@ -336,7 +336,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Lambda']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
-    activated: false,
+    activated: true,
     category: 'compute',
   },
 };

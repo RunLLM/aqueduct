@@ -8,7 +8,7 @@ ifndef VERBOSE
 endif
 
 # Building K8s Images
-build-k8s-system-images: build-function build-param build-system-metric build-base-connector
+build-k8s-system-images: build-function build-param build-system-metric build-base-connector build-connectors
 
 build-function:
 	docker build . -t aqueducthq/function:$(VERSION) -f function/function.dockerfile --no-cache
