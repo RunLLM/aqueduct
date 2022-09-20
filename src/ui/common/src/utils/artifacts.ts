@@ -34,6 +34,7 @@ export type Artifact = {
 export type Schema = { [col_name: string]: string }[];
 
 export type GetArtifactResultResponse = {
+  name: string;
   // `status` is technically redundant due to `execState`. Avoid using `status` in new code.
   status: ExecutionStatus;
   exec_state: ExecState;

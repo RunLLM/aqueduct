@@ -29,31 +29,35 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	DbOperator *operator.DBOperator,
-	DbOperatorResult *operator_result.OperatorResult,
+	dbOperator *operator.DBOperator,
+	dbOperatorResult *operator_result.OperatorResult,
 ) *ResultResponse {
+	// make a value copy of `Spec` field
+	spec := dbOperator.Spec
 	metadata := Response{
-		Id:          DbOperator.Id,
-		Name:        DbOperator.Name,
-		Description: DbOperator.Description,
-		Spec:        &DbOperator.Spec,
-		Inputs:      DbOperator.Inputs,
-		Outputs:     DbOperator.Outputs,
+		Id:          dbOperator.Id,
+		Name:        dbOperator.Name,
+		Description: dbOperator.Description,
+		Spec:        &spec,
+		Inputs:      dbOperator.Inputs,
+		Outputs:     dbOperator.Outputs,
 	}
 
-	if DbOperatorResult == nil {
+	if dbOperatorResult == nil {
 		return &ResultResponse{Response: metadata}
 	}
 
 	var execState *shared.ExecutionState = nil
-	if !DbOperatorResult.ExecState.IsNull {
-		execState = &DbOperatorResult.ExecState.ExecutionState
+	if !dbOperatorResult.ExecState.IsNull {
+		// make a value copy of execState
+		execStateVal := dbOperatorResult.ExecState.ExecutionState
+		execState = &execStateVal
 	}
 
 	return &ResultResponse{
 		Response: metadata,
 		Result: &RawResultResponse{
-			Id:        DbOperatorResult.Id,
+			Id:        dbOperatorResult.Id,
 			ExecState: execState,
 		},
 	}

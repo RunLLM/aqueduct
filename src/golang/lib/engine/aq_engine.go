@@ -185,9 +185,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error reading latest workflowDag.")
 	}
 
+	pendingAt := time.Now()
+	execState := &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &pendingAt,
+		},
+	}
 	dbWorkflowDagResult, err := workflow_utils.CreateWorkflowDagResult(
 		ctx,
 		dbWorkflowDag.Id,
+		execState,
 		eng.WorkflowDagResultWriter,
 		eng.Database,
 	)
@@ -195,19 +203,19 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error initializing workflowDagResult.")
 	}
 
-	status := shared.PendingExecutionStatus
-
 	// Any errors after this point should be persisted to the WorkflowDagResult created above
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
-			status = shared.FailedExecutionStatus
+			execState.Status = shared.FailedExecutionStatus
+			now := time.Now()
+			execState.Timestamps.FinishedAt = &now
 		}
 
 		workflow_utils.UpdateWorkflowDagResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
-			status,
+			execState,
 			eng.WorkflowDagResultWriter,
 			eng.WorkflowReader,
 			eng.NotificationWriter,
@@ -251,7 +259,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		}
 		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = newVal
 	}
-
 	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
@@ -303,7 +310,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	status = shared.RunningExecutionStatus
+	execState.Status = shared.RunningExecutionStatus
+	runningAt := time.Now()
+	execState.Timestamps.RunningAt = &runningAt
 	err = eng.execute(
 		ctx,
 		dag,
@@ -312,10 +321,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 		operator.Publish,
 	)
 	if err != nil {
-		status = shared.FailedExecutionStatus
+		execState.Status = shared.FailedExecutionStatus
+		now := time.Now()
+		execState.Timestamps.FinishedAt = &now
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		status = shared.SucceededExecutionStatus
+		execState.Status = shared.SucceededExecutionStatus
+		now := time.Now()
+		execState.Timestamps.FinishedAt = &now
 	}
 
 	return shared.SucceededExecutionStatus, nil
@@ -393,10 +406,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 	execStateByOp := make(map[uuid.UUID]shared.ExecutionState, len(dag.Operators()))
 	for _, op := range dag.Operators() {
-		execState, err := op.GetExecState(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get operator execution state.")
-		}
+		execState := op.ExecState()
 		execStateByOp[op.ID()] = *execState
 	}
 
@@ -734,7 +744,7 @@ func (eng *aqEngine) execute(
 		}
 
 		for _, op := range inProgressOps {
-			execState, err := op.GetExecState(ctx)
+			execState, err := op.Poll(ctx)
 			if err != nil {
 				return err
 			}
@@ -748,7 +758,8 @@ func (eng *aqEngine) execute(
 			} else if execState.Status == shared.RunningExecutionStatus {
 				continue
 			}
-			if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+
+			if !execState.Terminated() {
 				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
 
@@ -760,8 +771,29 @@ func (eng *aqEngine) execute(
 				}
 			}
 
-			// We can continue orchestration on non-fatal errors.
+			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
+			// and check operators with warning severity.
 			if shouldStopExecution(execState) {
+				log.Infof("Stopping execution of operator %v", op.ID())
+				for id, dagOp := range workflowDag.Operators() {
+					log.Infof("Checking status of operator %v", id)
+					// Skip if this operator has already been completed or is in progress.
+					if _, ok := completedOps[id]; ok {
+						continue
+					}
+					if _, ok := inProgressOps[id]; ok {
+						continue
+					}
+
+					dagOp.Cancel()
+					if opExecMode == operator.Publish {
+						err = dagOp.PersistResult(ctx)
+						if err != nil {
+							return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+						}
+					}
+				}
+
 				return opFailureError(*execState.FailureType, op)
 			}
 

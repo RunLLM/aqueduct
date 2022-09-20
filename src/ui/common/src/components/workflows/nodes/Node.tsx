@@ -36,7 +36,7 @@ export const Node: React.FC<Props> = ({
 
   let execState: ExecState;
   if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result;
+    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
   } else {
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
@@ -67,9 +67,12 @@ export const Node: React.FC<Props> = ({
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
     hoverColor = theme.palette.DarkErrorMain75;
-  } else {
-    backgroundColor = selected ? 'gray.300' : 'gray.100';
-    hoverColor = 'gray.200';
+  } else if (execState?.status === ExecutionStatus.Canceled) {
+    backgroundColor = selected ? 'gray.700' : 'gray.500';
+    hoverColor = 'gray.600';
+  } else if (execState?.status === ExecutionStatus.Pending) {
+    backgroundColor = selected ? 'blue.300' : 'blue.100';
+    hoverColor = 'blue.200';
   }
 
   return (

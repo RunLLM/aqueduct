@@ -18,7 +18,7 @@ type Props = {
 };
 
 const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
-  if (isInitial(object.status)) {
+  if (!object || isInitial(object.status)) {
     return null;
   }
 
@@ -28,7 +28,7 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
       <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
         <CircularProgress size={30} />
         <Typography sx={{ ml: 2 }}>
-          Loading object <b>{objectName}</b>...
+          Loading <b>{objectName}</b>...
         </Typography>
       </Box>
     );

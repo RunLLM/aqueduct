@@ -148,7 +148,7 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 		a.db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to create operator result record.")
+		return errors.Wrap(err, "Failed to create artifact result record.")
 	}
 
 	a.resultID = artifactResult.Id
@@ -237,7 +237,7 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.Exec
 	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
-	if execState.Status != shared.FailedExecutionStatus && execState.Status != shared.SucceededExecutionStatus {
+	if !execState.Terminated() {
 		return errors.Newf("Artifact %s has unexpected execution state: %s", a.Name(), execState.Status)
 	}
 

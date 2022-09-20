@@ -1,6 +1,6 @@
 import textwrap
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.dag import Metadata
@@ -106,6 +106,7 @@ class RegisterAirflowWorkflowResponse(BaseModel):
     id: uuid.UUID
     # TODO ENG-1481: Return an actual file instead of a string.
     file: str
+    is_update: bool
 
 
 class ListWorkflowResponseEntry(BaseModel):
@@ -236,6 +237,7 @@ class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
     operator_name: str
+    modified_at: str
     integration_name: str
     integration_id: uuid.UUID
     service: ServiceType

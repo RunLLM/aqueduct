@@ -10,14 +10,20 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
+import { handleLoadIntegrations } from '../../reducers/integrations';
+import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
+import { AppDispatch } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
+import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
@@ -25,10 +31,13 @@ import Status from './workflowStatus';
 type Props = {
   user: UserProfile;
   workflowDag: WorkflowDag;
+  workflowId: string;
 };
 
-const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
+const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
+  const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
+  const navigate = useNavigate();
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -43,8 +52,20 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleSuccessToastClose = () => {
+  const handleSuccessToastClose = async () => {
     setShowSuccessToast(false);
+
+    try {
+      await dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+      await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+      dispatch(selectResultIdx(0));
+      navigate(`/workflow/${workflowId}`, { replace: true });
+    } catch (error) {
+      setErrorMessage(
+        `We're having trouble getting the latest workflow. Please try refreshing the page.`
+      );
+      setShowErrorToast(true);
+    }
   };
 
   const handleErrorToastClose = () => {
@@ -127,7 +148,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       <DialogTitle>Trigger a Workflow Run?</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
-          This will a run of <code>{name}</code> immediately.
+          This will trigger a run of <code>{name}</code> immediately.
         </Box>
 
         {Object.keys(paramNameToDefault).length > 0 && (
@@ -183,7 +204,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           <Status status={workflow.dagResults[0].status} />
         </Box>
 
-        <Box sx={{ ml: 2 }}>
+        <Box sx={{ mr: 4 }}>
           <Button
             variant="outlined"
             color="primary"
@@ -218,10 +239,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
-
-        {/* NOTE: Funnyily enough, `size=large` on a button is what
-                    makes it match the size of the `FormControl` when set to
-                    small. Go figure. */}
         <Button
           color="primary"
           sx={{ height: '100%' }}
@@ -231,6 +248,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
           <FontAwesomeIcon icon={faPlay} />
           <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
         </Button>
+
+        <WorkflowStatusBar user={user} />
+
         {runWorkflowDialog}
       </Box>
 
@@ -239,7 +259,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showSuccessToast}
         onClose={handleSuccessToastClose}
         key={'workflowheader-success-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleSuccessToastClose}
@@ -254,7 +274,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showErrorToast}
         onClose={handleErrorToastClose}
         key={'workflowheader-error-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleErrorToastClose}

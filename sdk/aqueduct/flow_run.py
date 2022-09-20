@@ -7,11 +7,10 @@ from aqueduct.artifacts import (
     bool_artifact,
     generic_artifact,
     numeric_artifact,
-    param_artifact,
     table_artifact,
 )
 from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, ExecutionStatus
+from aqueduct.enums import ArtifactType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
 from aqueduct.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
@@ -67,12 +66,20 @@ class FlowRun:
             )
         )
 
-        param_artifacts = self._dag.list_artifacts(filter_to=[ArtifactType.PARAM])
+        param_operators = self._dag.list_operators(filter_to=[OperatorType.PARAM])
         print(format_header_for_print("Parameters "))
-        for param_artifact in param_artifacts:
-            param_op = self._dag.must_get_operator(with_output_artifact_id=param_artifact.id)
-            assert param_op.spec.param is not None, "Artifact is not a parameter."
-            print("* " + param_op.name + ": " + param_op.spec.param.val)
+        for param_op in param_operators:
+            (
+                param_content,
+                execution_status,
+            ) = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+                self._id, str(param_op.outputs[0])
+            )
+
+            if execution_status != ExecutionStatus.SUCCEEDED:
+                param_content = "Parameter not successfully initialized."
+
+            print("* " + param_op.name + ": " + str(param_content))
 
     def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.
@@ -91,20 +98,40 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
 
+        content, execution_status = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+            self._id, str(artifact_from_dag.id)
+        )
+
         if not isinstance(artifact_from_dag.type, ArtifactType):
             raise InternalAqueductError("The artifact's type can not be recognized.")
 
         if artifact_from_dag.type is ArtifactType.TABLE:
-            return table_artifact.TableArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return table_artifact.TableArtifact(
+                self._dag,
+                artifact_from_dag.id,
+                content=content,
+                from_flow_run=True,
+            )
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return numeric_artifact.NumericArtifact(
-                self._dag, artifact_from_dag.id, from_flow_run=True
+                self._dag,
+                artifact_from_dag.id,
+                content=content,
+                from_flow_run=True,
             )
         elif artifact_from_dag.type is ArtifactType.BOOL:
-            return bool_artifact.BoolArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
-        elif artifact_from_dag.type is ArtifactType.PARAM:
-            return param_artifact.ParamArtifact(self._dag, artifact_from_dag.id, from_flow_run=True)
+            return bool_artifact.BoolArtifact(
+                self._dag,
+                artifact_from_dag.id,
+                content=content,
+                from_flow_run=True,
+            )
         else:
             return generic_artifact.GenericArtifact(
-                self._dag, artifact_from_dag.id, from_flow_run=True
+                self._dag,
+                artifact_from_dag.id,
+                artifact_from_dag.type,
+                content=content,
+                from_flow_run=True,
+                execution_status=execution_status,
             )

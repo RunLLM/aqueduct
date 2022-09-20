@@ -21,9 +21,10 @@ from aqueduct.enums import (
     ExecutionMode,
     FunctionGranularity,
     FunctionType,
+    OperatorType,
 )
-from aqueduct.error import AqueductError
-from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec
+from aqueduct.error import AqueductError, ArtifactNeverComputedException
+from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
 from aqueduct.utils import (
     artifact_name_from_op_name,
     format_header_for_print,
@@ -69,12 +70,10 @@ class NumericArtifact(BaseArtifact):
     ):
         self._dag = dag
         self._artifact_id = artifact_id
+
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
         self._set_content(content)
-        if self._from_flow_run:
-            # If the artifact is initialized from a flow run, then it should not contain any content.
-            assert self._get_content() is None
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
         """Materializes a NumericArtifact into its immediate float value.
@@ -89,6 +88,16 @@ class NumericArtifact(BaseArtifact):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         self._dag.must_get_artifact(self._artifact_id)
+
+        if self._from_flow_run:
+            if self._get_content() is None:
+                raise ArtifactNeverComputedException(
+                    "This artifact was part of an existing flow run but was never computed successfully!",
+                )
+            elif parameters is not None:
+                raise NotImplementedError(
+                    "Parameterizing historical artifacts is not currently supported."
+                )
 
         if parameters is None and self._get_content() is not None:
             return self._get_content()
@@ -294,15 +303,14 @@ class NumericArtifact(BaseArtifact):
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-
-        general_dict = get_description_for_metric(input_operator, self._dag)
-
-        # Remove because values already in `readable_dict`
-        general_dict.pop("Label")
-        general_dict.pop("Granularity")
-
         readable_dict = super()._describe()
-        readable_dict.update(general_dict)
+        if get_operator_type(input_operator) is OperatorType.METRIC:
+            general_dict = get_description_for_metric(input_operator, self._dag)
+            # Remove because values already in `readable_dict`
+            general_dict.pop("Label")
+            general_dict.pop("Granularity")
+            readable_dict.update(general_dict)
+
         readable_dict["Inputs"] = [
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]

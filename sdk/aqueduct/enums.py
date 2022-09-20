@@ -70,6 +70,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     AIRFLOW = "Airflow"
     K8S = "Kubernetes"
     GCS = "GCS"
+    LAMBDA = "Lambda"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -90,6 +91,8 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     PENDING = "pending"
+    REGISTERED = "registered"
+    CANCELED = "canceled"
 
 
 class FailureType(Enum, metaclass=MetaEnum):
@@ -148,7 +151,6 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
-    PARAM = "param"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
@@ -169,3 +171,4 @@ class RuntimeType(Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
     K8S = "k8s"
+    LAMBDA = "lambda"

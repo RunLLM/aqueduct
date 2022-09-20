@@ -20,6 +20,10 @@ export type WorkflowSchedule = {
   paused: boolean;
 };
 
+export type WorkflowRetentionPolicy = {
+  k_latest_runs: number;
+};
+
 export type ListWorkflowSummary = {
   id: string;
   name: string;
@@ -83,6 +87,7 @@ export type GetWorkflowResponse = {
 
 export type SavedObject = {
   operator_name: string;
+  modified_at: string;
   integration_name: string;
   integration_id: string;
   service: string;

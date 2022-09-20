@@ -6,11 +6,19 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -36,9 +44,15 @@ type RefreshWorkflowArgs struct {
 type RefreshWorkflowHandler struct {
 	PostHandler
 
-	Database       database.Database
-	WorkflowReader workflow.Reader
-	Engine         engine.Engine
+	Database database.Database
+	Engine   engine.Engine
+	Vault    vault.Vault
+
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	OperatorReader        operator.Reader
+	ArtifactReader        artifact.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -88,13 +102,37 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*RefreshWorkflowArgs)
 
+	emptyResp := struct{}{}
+
+	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		args.WorkflowId,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	}
+
+	if dag.EngineConfig.Type == shared.AirflowEngineType {
+		// This is an Airflow workflow
+		if err := airflow.TriggerWorkflow(ctx, dag, h.Vault); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow on Airflow.")
+		}
+		return emptyResp, http.StatusOK, nil
+	}
+
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err := h.Engine.TriggerWorkflow(
+	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		args.WorkflowId,
 		shared_utils.AppendPrefix(args.WorkflowId.String()),
@@ -102,8 +140,8 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		args.Parameters,
 	)
 	if err != nil {
-		return struct{}{}, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
 	}
 
-	return struct{}{}, http.StatusOK, nil
+	return emptyResp, http.StatusOK, nil
 }

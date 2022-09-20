@@ -165,9 +165,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:             s.Vault,
 		},
 		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
-			Database:       s.Database,
-			WorkflowReader: s.WorkflowReader,
-			Engine:         s.AqEngine,
+			Database: s.Database,
+			Engine:   s.AqEngine,
+			Vault:    s.Vault,
+
+			WorkflowReader:        s.WorkflowReader,
+			WorkflowDagReader:     s.WorkflowDagReader,
+			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
+			OperatorReader:        s.OperatorReader,
+			ArtifactReader:        s.ArtifactReader,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,
@@ -207,8 +213,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 				WorkflowWatcherWriter: s.WorkflowWatcherWriter,
 			},
-			WorkflowDagReader:     s.WorkflowDagReader,
-			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
+			WorkflowDagReader:       s.WorkflowDagReader,
+			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
+			WorkflowDagResultReader: s.WorkflowDagResultReader,
+			UserReader:              s.UserReader,
+
+			WorkflowDagResultWriter: s.WorkflowDagResultWriter,
+			OperatorResultWriter:    s.OperatorResultWriter,
+			ArtifactResultWriter:    s.ArtifactResultWriter,
+			NotificationWriter:      s.NotificationWriter,
 		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database:   s.Database,

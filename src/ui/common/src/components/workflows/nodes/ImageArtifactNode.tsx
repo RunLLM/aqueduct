@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const imageArtifactNodeIcon = faImage;
+
 const ImageArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faImage}
+      icon={imageArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Image"

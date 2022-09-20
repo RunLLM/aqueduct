@@ -1,4 +1,3 @@
-import Box from '@mui/material/Box';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -27,12 +26,10 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
   );
 
   return (
-    <Box p={1} sx={{ height: '75%', overflow: 'auto' }}>
-      <DataPreviewer
-        previewData={artifactResult}
-        error={operatorResult?.result?.error}
-      />
-    </Box>
+    <DataPreviewer
+      previewData={artifactResult}
+      error={operatorResult?.result?.exec_state?.error}
+    />
   );
 };
 

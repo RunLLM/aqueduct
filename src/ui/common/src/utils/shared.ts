@@ -33,16 +33,28 @@ export enum ExecutionStatus {
   Succeeded = 'succeeded',
   Failed = 'failed',
   Pending = 'pending',
+  Canceled = 'canceled',
+  Registered = 'registered',
+  Running = 'running',
 }
+
+export type ExecutionTimestamps = {
+  registered_at?: string;
+  pending_at?: string;
+  running_at?: string;
+  finished_at?: string;
+};
 
 export type ExecState = {
   status: ExecutionStatus;
   failure_type?: FailureType;
   error?: Error;
   user_logs?: Logs;
+  timestamps?: ExecutionTimestamps;
 };
 
 export enum FailureType {
+  Succeess = 0,
   System = 1,
   UserFatal = 2,
   UserNonFatal = 3,

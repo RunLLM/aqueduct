@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, FunctionDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage } from '@aqueducthq/common';
+import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage, FunctionDetailsPage, ArtifactDetailsPage, MetricDetailsPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
@@ -31,23 +31,25 @@ const App = () => {
   let routesContent: React.ReactElement;
   routesContent = (
     <Routes>
-      <Route path={`${ pathPrefix ?? "/" }`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
+      <Route path={`${pathPrefix ?? "/"}`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflows`} element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/login`} element={ user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path={`/${pathPrefix}/login`} element={user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/function/:operatorId`} element={<RequireAuth user={user}><FunctionDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
     </Routes>
   );
 
   const muiTheme = createTheme(theme);
   return (
-      <ThemeProvider theme={muiTheme}>
-        <BrowserRouter>{routesContent}</BrowserRouter>
-      </ThemeProvider>
+    <ThemeProvider theme={muiTheme}>
+      <BrowserRouter>{routesContent}</BrowserRouter>
+    </ThemeProvider>
   );
 };
 
@@ -57,9 +59,7 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </React.StrictMode>
+  <Provider store={store}>
+    <App />
+  </Provider>
 )

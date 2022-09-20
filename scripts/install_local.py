@@ -26,7 +26,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "16"
+SCHEMA_VERSION = "18"
 
 
 def execute_command(args, cwd=None):
@@ -109,15 +109,15 @@ if __name__ == "__main__":
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
-        
+
         execute_command([
-            "cp", 
+            "cp",
             "./src/python/aqueduct_executor/start-function-executor.sh",
             join(server_directory, "bin")
         ])
 
         execute_command([
-            "cp", 
+            "cp",
             "./src/python/aqueduct_executor/operators/airflow/dag.template",
             join(server_directory, "bin")
         ])
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         UI_PATH = "src/ui"
         UI_COMMON_PATH = UI_PATH + "/common"
         UI_APP_PATH = UI_PATH + "/app"
-        
+
         print("Updating UI files...")
         execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))

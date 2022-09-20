@@ -120,17 +120,27 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		}
 
 		for _, dbWorkflow := range dbWorkflows {
-			workflows = append(workflows,
-				workflowResponse{
-					Id:              dbWorkflow.Id,
-					Name:            dbWorkflow.Name,
-					Description:     dbWorkflow.Description,
-					CreatedAt:       dbWorkflow.CreatedAt.Unix(),
-					LastRunAt:       dbWorkflow.LastRunAt.Unix(),
-					Status:          dbWorkflow.Status,
-					WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
-				},
-			)
+			response := workflowResponse{
+				Id:              dbWorkflow.Id,
+				Name:            dbWorkflow.Name,
+				Description:     dbWorkflow.Description,
+				CreatedAt:       dbWorkflow.CreatedAt.Unix(),
+				WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
+			}
+
+			if !dbWorkflow.LastRunAt.IsNull {
+				response.LastRunAt = dbWorkflow.LastRunAt.Time.Unix()
+			}
+
+			if !dbWorkflow.Status.IsNull {
+				response.Status = dbWorkflow.Status.ExecutionStatus
+			} else {
+				// There are no workflow runs yet for this workflow, so we simply return
+				// that the workflow has been registered
+				response.Status = shared.RegisteredExecutionStatus
+			}
+
+			workflows = append(workflows, response)
 		}
 	}
 
@@ -168,8 +178,6 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.WorkflowDagResultWriter,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,
-		h.NotificationWriter,
-		h.UserReader,
 		h.Vault,
 		h.Database,
 	); err != nil {

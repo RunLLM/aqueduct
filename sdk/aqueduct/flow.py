@@ -67,42 +67,7 @@ class Flow:
             metadata=dag_resp.metadata,
         )
 
-        # Because parameters are not stored in the db, we cannot trust its value in the operator spec.
-        # Instead, we'll need to fetch the parameter's value from the parameter operator's output.
-        param_artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
-        for param_artifact in param_artifacts:
-            param_val = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
-                str(dag_result.id),
-                str(param_artifact.id),
-            )
-
-            # Skip the parameter update if the parameter was never computed.
-            if len(param_val) == 0:
-                logger().warning(
-                    "The parameter %s was not successfully computed. If you triggered this flow run with custom "
-                    "parameters, those parameter values will not be reflected in `FlowRun.describe()."
-                    % param_artifact.name
-                )
-                continue
-
-            dag.update_operator_spec(
-                # this works because the parameter op and artifact currently share the same name.
-                param_artifact.name,
-                OperatorSpec(
-                    param=ParamSpec(
-                        val=param_val,
-                    ),
-                ),
-            )
-
-        # Because the serialized functions are stored separately from the dag,
-        # We need to fetch them to complete the construction of the dag.
-        for operator in dag.list_operators(
-            filter_to=[OperatorType.CHECK, OperatorType.FUNCTION, OperatorType.METRIC]
-        ):
-            serialized_function = globals.__GLOBAL_API_CLIENT__.export_serialized_function(operator)
-            dag.update_operator_function(operator, serialized_function)
-
+        # The dags for fetched flow runs are missing their serialized functions.
         return FlowRun(
             flow_id=self._id,
             run_id=str(dag_result.id),
