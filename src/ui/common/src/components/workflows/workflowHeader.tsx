@@ -18,6 +18,11 @@ import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
 import { AppDispatch } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
+import {
+  Artifact,
+  ArtifactType,
+  SerializationType,
+} from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
@@ -26,8 +31,6 @@ import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
-import {Artifact, ArtifactType, SerializationType} from "../../utils/artifacts";
-import {Param} from "../../utils/operators";
 
 type Props = {
   user: UserProfile;
@@ -104,27 +107,31 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       .map((operator) => {
         // Parameter operators should only have a single output.
         if (operator.outputs.length > 1) {
-          console.error("Parameter operator should not have multiple outputs.")
+          console.error('Parameter operator should not have multiple outputs.');
         }
 
         // Some types of parameters cannot be easily customized from a textfield on the UI.
         // These types are not json-able and cannot be easily typed as strings.
-        let outputArtifact: Artifact = workflowDag.artifacts[operator.outputs[0]]
-        let isCustomizable: boolean = ![
-            ArtifactType.Table,
-            ArtifactType.Bytes,
-            ArtifactType.Image,
-            ArtifactType.Picklable,
-        ].includes(outputArtifact.type)
+        const outputArtifact: Artifact =
+          workflowDag.artifacts[operator.outputs[0]];
+        const isCustomizable = ![
+          ArtifactType.Table,
+          ArtifactType.Bytes,
+          ArtifactType.Image,
+          ArtifactType.Picklable,
+        ].includes(outputArtifact.type);
 
-        let placeholder: string
-        let helperText: string
+        let placeholder: string;
+        let helperText: string;
         if (isCustomizable) {
-          placeholder = atob(operator.spec.param.val)
-          helperText = ""
+          placeholder = atob(operator.spec.param.val);
+          helperText = '';
         } else {
-          placeholder = ""
-          helperText = outputArtifact.type[0].toUpperCase() + outputArtifact.type.substr(1) + " type is not yet customizable from the UI."
+          placeholder = '';
+          helperText =
+            outputArtifact.type[0].toUpperCase() +
+            outputArtifact.type.substr(1) +
+            ' type is not yet customizable from the UI.';
         }
 
         return {
@@ -132,8 +139,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             placeholder: placeholder,
             isCustomizable: isCustomizable,
             helperText: helperText,
-          }
-       };
+          },
+        };
       })
   );
 
@@ -145,28 +152,28 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   // Returns the map of parameters, from name to spec (which includes the base64-encoded
   // value and serialization_type).
   const serializeParameters = () => {
-    let serializedParams = {}
+    const serializedParams = {};
     Object.entries(paramNameToValMap).forEach(([key, strVal]) => {
       // Serialize the user's input string appropriately into base64. The input can either be a
       // 1) number 2) string 3) json.
       try {
-        let val = JSON.parse(strVal)
+        const val = JSON.parse(strVal);
 
         // All jsonable values are serialized as json.
         serializedParams[key] = {
           val: btoa(strVal),
           serialization_type: SerializationType.Json,
-        }
-      } catch(err){
+        };
+      } catch (err) {
         // Non-jsonable values (such as plain strings) are serialized as strings.
         serializedParams[key] = {
           val: btoa(strVal),
           serialization_type: SerializationType.String,
-        }
+        };
       }
-    })
-    return serializedParams
-  }
+    });
+    return serializedParams;
+  };
 
   const triggerWorkflowRun = () => {
     const parameters = new FormData();
