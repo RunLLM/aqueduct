@@ -180,6 +180,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		}
 
 		if dbWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+			// TODO: ENG-1714
 			// This is a hack for the UI where the `matches_airflow` field
 			// for Airflow workflows is set to the value of the latest DAG
 			constructedDag.EngineConfig.AirflowConfig.MatchesAirflow = latestWorkflowDag.EngineConfig.AirflowConfig.MatchesAirflow
