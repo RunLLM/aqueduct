@@ -8,7 +8,7 @@ ifndef VERBOSE
 endif
 
 # Building K8s Images
-build-k8s-system-images: build-function build-param build-system-metric
+build-k8s-system-images: build-function build-param build-system-metric build-base-connector
 
 build-function:
 	docker build . -t aqueducthq/function:$(VERSION) -f function/function.dockerfile --no-cache
@@ -69,9 +69,6 @@ publish-connectors:
 
 # Building Lambda Images
 build-lambda-images: build-lambda-function build-lambda-param build-lambda-system-metric build-lambda-connectors
-
-build-lambda-connectors: build-lambda-snowflake build-lambda-athena build-lambda-bigquery \
-	build-lambda-postgres build-lambda-s3
 
 build-lambda-function:
 	docker build . -t aqueducthq/lambda-function-37:$(VERSION) -f lambda/function/function37.dockerfile --no-cache
