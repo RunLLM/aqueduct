@@ -12,6 +12,7 @@ import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { EngineType } from '../../utils/engine';
 
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
@@ -96,6 +97,20 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Typography>
       </Box>
     );
+  }
+
+  let airflowUpdateWarning = null;
+  if (workflowDag.engine_config.type == EngineType.Airflow 
+    && !workflowDag.engine_config.airflow_config?.matches_airflow) {
+      airflowUpdateWarning = (
+        <Box>
+          <Alert severity='warning'>
+            Please copy the latest Airflow DAG file to your Airflow server
+            if you have not done so already. New Airflow DAG runs will not be 
+            synced properly with Aqueduct until you have copied the file.
+          </Alert>
+        </Box>
+      );
   }
 
   const paramNameToDisplayProps = Object.assign(
@@ -322,6 +337,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Button>
         {runWorkflowDialog}
       </Box>
+
+      {airflowUpdateWarning}
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

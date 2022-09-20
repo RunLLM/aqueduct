@@ -179,6 +179,12 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 		}
 
+		if dbWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+			// This is a hack for the UI where the `matches_airflow` field
+			// for Airflow workflows is set to the value of the latest DAG
+			constructedDag.EngineConfig.AirflowConfig.MatchesAirflow = latestWorkflowDag.EngineConfig.AirflowConfig.MatchesAirflow
+		}
+
 		workflowDags[dbWorkflowDag.Id] = constructedDag
 	}
 
