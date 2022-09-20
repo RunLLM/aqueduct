@@ -1,5 +1,5 @@
 import pandas as pd
-from aqueduct_executor.operators.connectors.data import config, load, relational
+from aqueduct_executor.operators.connectors.data import config, load, relational, utils
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from sqlalchemy import create_engine, engine
 
@@ -29,7 +29,7 @@ def _create_engine(config: config.SqlServerConfig) -> engine.Engine:
     # https://docs.sqlalchemy.org/en/14/dialects/mssql.html#dialect-mssql-pyodbc-connect
     url = "mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server".format(
         username=config.username,
-        password=config.password,
+        password=utils.url_encode(config.password),
         host=config.host,
         port=config.port,
         database=config.database,
