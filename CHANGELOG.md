@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.0.15
-Released on September 19, 2022.
+Released on September 20, 2022.
 
 ### Key Features
 * Adds support for running new workflows on AWS Lambda and Apache Airflow.
