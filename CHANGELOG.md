@@ -4,13 +4,15 @@
 Released on September 20, 2022.
 
 ### Key Features
-* Adds support for running new workflows on AWS Lambda and Apache Airflow.
-    Users can define workflows using the Aqueduct API but delegate the
-    execution of those workflows onto these compute systems.
+* Adds support for running new workflows on AWS Lambda and Apache Airflow. Users can define
+    workflows using the Aqueduct API but delegate the execution of those workflows onto these
+    compute systems.
 
 ### Enhancements
-* Updates UI to describe database write operators as `save` operators instead
-    of `load` operators to avoid confusion.
+* Allows Aqueduct parameter to hold any Python-serializable object, instead of requiring it to
+    be json-serializable.
+* Updates UI to describe database write operators as `save` operators instead of `load` operators to
+    avoid confusion.
 * Adds `describe` methods to all non-tabular artifact types.
 
 ### Bugfixes
