@@ -22,6 +22,7 @@ from aqueduct.responses import (
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
+    Logs,
     OperatorResult,
     PreviewResponse,
     RegisterAirflowWorkflowResponse,
@@ -29,7 +30,7 @@ from aqueduct.responses import (
     SavedObjectUpdate,
 )
 from aqueduct.serialization import deserialization_function_mapping
-from aqueduct.utils import GITHUB_ISSUE_LINK
+from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
 from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
@@ -49,8 +50,8 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     # There can be multiple operator failures, one for each entry.
     op_err_msgs: List[str] = []
 
-    # Creates the message to show the user in the error.
     def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
+        """This is the message is raised in the Exception message."""
         assert op_result.error is not None
         return (
             f"Operator `{op_name}` failed!\n"
@@ -60,6 +61,36 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
             f"\n"
         )
 
+    def _print_op_user_logs(op_name: str, logs: Logs) -> None:
+        """Prints out the logs for a single operator. The format is:
+
+        stdout:
+            {logs}
+            {logs}
+        ----------------------------------
+        stderr:
+            {logs}
+            {logs}
+
+        If either stdout or stderr is empty, we do not print anything for
+        the empty section, and do not draw the "--" delimiter line.
+        """
+        if logs.is_empty():
+            return
+
+        print(f"Operator {op_name} Logs:")
+        if len(logs.stdout) > 0:
+            print("stdout:")
+            print(indent_multiline_string(logs.stdout).rstrip("\n"))
+
+        if len(logs.stdout) > 0 and len(logs.stderr) > 0:
+            print("----------------------------------")
+
+        if len(logs.stderr) > 0:
+            print("stderr:")
+            print(indent_multiline_string(logs.stderr).rstrip("\n"))
+        print("")
+
     q: List[Operator] = dag.list_root_operators()
     seen_op_ids = set(op.id for op in q)
     while len(q) > 0:
@@ -68,14 +99,11 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         if curr_op.id in preview_resp.operator_results:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
-            if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
-                print(f"Operator {curr_op.name} Logs:")
-                print(curr_op_result.user_logs)
-                print("")
+            if curr_op_result.user_logs is not None:
+                _print_op_user_logs(curr_op.name, curr_op_result.user_logs)
 
             if curr_op_result.error is not None:
                 op_err_msgs.append(_construct_failure_error_msg(curr_op.name, curr_op_result))
-
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
                 for output_artifact_id in curr_op.outputs:
