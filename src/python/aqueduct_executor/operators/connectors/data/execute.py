@@ -178,7 +178,7 @@ def run_load(
 
 
 def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
-    df = utils._read_csv(storage, spec.csv)
+    df = utils._read_csv(storage.get(spec.csv))
     op.load(spec.load_parameters.parameters, df, enums.ArtifactType.TABLE)
 
 

@@ -89,7 +89,7 @@ with DAG(
     schedule_interval={{ schedule }},
     {% endif %}
     catchup=False,
-    tags=['aqueduct'],
+    tags=['aqueduct', '{{ workflow_dag_id }}'],
 ) as dag:
     # Constants to handle JSON serialization
     null = None

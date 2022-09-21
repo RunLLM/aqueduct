@@ -1,7 +1,7 @@
 package lambda
 
 const (
-	ImageVersionNumber = "0.0.14"
+	LambdaImageVersionNumber = "0.0.15"
 
 	FunctionLambdaFunction37   = "aqueduct-function-37"
 	FunctionLambdaFunction38   = "aqueduct-function-38"

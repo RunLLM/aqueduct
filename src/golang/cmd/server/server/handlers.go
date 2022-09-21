@@ -77,7 +77,9 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowReader: s.WorkflowReader,
 		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
-			Database:                s.Database,
+			Database: s.Database,
+			Vault:    s.Vault,
+
 			ArtifactReader:          s.ArtifactReader,
 			OperatorReader:          s.OperatorReader,
 			UserReader:              s.UserReader,
@@ -85,6 +87,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			WorkflowDagResultReader: s.WorkflowDagResultReader,
+
+			WorkflowDagWriter:       s.WorkflowDagWriter,
+			WorkflowDagResultWriter: s.WorkflowDagResultWriter,
+			OperatorResultWriter:    s.OperatorResultWriter,
+			ArtifactResultWriter:    s.ArtifactResultWriter,
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
 			Database:                s.Database,

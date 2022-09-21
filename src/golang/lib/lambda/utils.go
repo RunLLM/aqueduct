@@ -34,7 +34,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
-	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, ImageVersionNumber)
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, LambdaImageVersionNumber)
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -78,7 +78,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		}
 	}
 
-	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, ImageVersionNumber)
+	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, LambdaImageVersionNumber)
 
 	cmd = exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
 	err = cmd.Run()

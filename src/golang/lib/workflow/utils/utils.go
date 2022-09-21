@@ -54,16 +54,6 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 	return nil
 }
 
-// Only to be used when duplicating cached results in the preview artifact cache.
-func CopyPathContentsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, fromPath string, toPath string) error {
-	s := storage.NewStorage(storageConfig)
-	content, err := s.Get(ctx, fromPath)
-	if err != nil {
-		return err
-	}
-	return s.Put(ctx, toPath, content)
-}
-
 func WriteWorkflowDagToDatabase(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,

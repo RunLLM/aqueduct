@@ -33,6 +33,7 @@ func SyncWorkflowDags(
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	workflowDagResultReader workflow_dag_result.Reader,
+	workflowDagWriter workflow_dag.Writer,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -64,6 +65,7 @@ func SyncWorkflowDags(
 			ctx,
 			&dbDag,
 			workflowDagResultReader,
+			workflowDagWriter,
 			workflowDagResultWriter,
 			operatorResultWriter,
 			artifactResultWriter,
@@ -84,6 +86,7 @@ func syncWorkflowDag(
 	ctx context.Context,
 	dbDag *workflow_dag.DBWorkflowDag,
 	workflowDagResultReader workflow_dag_result.Reader,
+	workflowDagWriter workflow_dag.Writer,
 	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -106,8 +109,23 @@ func syncWorkflowDag(
 		return err
 	}
 
+	dagsMatch, err := checkForDAGMatch(
+		ctx,
+		cli,
+		dbDag,
+		workflowDagWriter,
+		db,
+	)
+	if err != nil {
+		return err
+	}
+
+	if !dagsMatch {
+		// Skip syncing if the dags do not match
+		return errors.New("The Airflow DAG does not match the Aqueduct DAG, so the workflow dag cannot be synced.")
+	}
+
 	// Get all Airflow DAG runs for `dag`
-	// TODO: ENG-1531 Get around Airflow response limit
 	dagRuns, err := cli.getDagRuns(dbDag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return err
@@ -229,6 +247,55 @@ func syncWorkflowDagResult(
 	}
 
 	return nil
+}
+
+// checkForDAGMatch checks if the Aqueduct workflow DAG `dbDag`
+// matches the DAG currently registered with Airflow. They may not match if the user
+// updated the workflow and has not yet copied over the updated Airflow DAG file to
+// their Airflow server. If the DAGs match, it also updates `dbDag`'s engine config
+// in the database.
+// It returns a bool whether the DAGs match and an error, if any.
+func checkForDAGMatch(
+	ctx context.Context,
+	cli *client,
+	dbDag *workflow_dag.DBWorkflowDag,
+	workflowDagWriter workflow_dag.Writer,
+	db database.Database,
+) (bool, error) {
+	if dbDag.EngineConfig.AirflowConfig.MatchesAirflow {
+		// We previously confirmed that the DAGs match
+		return true, nil
+	}
+
+	airflowDag, err := cli.getDag(dbDag.EngineConfig.AirflowConfig.DagId)
+	if err != nil {
+		return false, err
+	}
+
+	// The way we check if the DAGs match is if `dbDag.Id` is one of tags
+	// for `airflowDag`, since the workflow dag ID is set as a tag each time
+	// the Airflow DAG file is generated.
+	for _, tag := range airflowDag.Tags {
+		if tag.GetName() == dbDag.Id.String() {
+			// The DAGs match so the engine config needs to be updated
+			dbDag.EngineConfig.AirflowConfig.MatchesAirflow = true
+			_, err = workflowDagWriter.UpdateWorkflowDag(
+				ctx,
+				dbDag.Id,
+				map[string]interface{}{
+					workflow_dag.EngineConfigColumn: &dbDag.EngineConfig,
+				},
+				db,
+			)
+			if err != nil {
+				return true, err
+			}
+
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // timeInSlice returns whether `t` is equal to any of the elements in `s`

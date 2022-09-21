@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -26,7 +27,7 @@ import (
 
 type RefreshWorkflowArgs struct {
 	WorkflowId uuid.UUID
-	Parameters map[string]string
+	Parameters map[string]param.Param
 }
 
 // Route: /workflow/{workflowId}/refresh

@@ -6,7 +6,6 @@ import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
-from aqueduct.deserialize import deserialization_function_mapping
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
@@ -16,7 +15,7 @@ from aqueduct.error import (
 )
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
-from aqueduct.operators import Operator
+from aqueduct.operators import Operator, ParamSpec
 from aqueduct.responses import (
     ArtifactResult,
     DeleteWorkflowResponse,
@@ -29,6 +28,7 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from aqueduct.serialization import deserialization_function_mapping
 from aqueduct.utils import GITHUB_ISSUE_LINK
 from requests_toolbelt.multipart import decoder
 
@@ -371,14 +371,19 @@ class APIClient:
     def refresh_workflow(
         self,
         flow_id: str,
-        serialized_params: Optional[str] = None,
+        param_specs: Dict[str, ParamSpec],
     ) -> None:
+        """
+        `param_specs`: a dictionary from parameter names to its corresponding new ParamSpec.
+        """
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
-        body = {}
-        if serialized_params is not None:
-            body["parameters"] = serialized_params
+        body = {
+            "parameters": json.dumps(
+                {param_name: param_spec.dict() for param_name, param_spec in param_specs.items()}
+            )
+        }
 
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)

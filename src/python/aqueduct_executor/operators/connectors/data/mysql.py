@@ -1,4 +1,4 @@
-from aqueduct_executor.operators.connectors.data import config, relational
+from aqueduct_executor.operators.connectors.data import config, relational, utils
 from sqlalchemy import create_engine, engine
 
 
@@ -13,7 +13,7 @@ def _create_engine(config: config.MySqlConfig) -> engine.Engine:
     # https://docs.sqlalchemy.org/en/14/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqldb
     url = "mysql+mysqldb://{username}:{password}@{host}:{port}/{database}".format(
         username=config.username,
-        password=config.password,
+        password=utils.url_encode(config.password),
         host=config.host,
         port=config.port,
         database=config.database,

@@ -93,7 +93,7 @@ class FlowRun:
             If the artifact does not exist, return None.
         """
         flow_run_dag = self._dag
-        artifact_from_dag = flow_run_dag.get_artifacts_by_name(name)
+        artifact_from_dag = flow_run_dag.get_artifact_by_name(name)
 
         if artifact_from_dag is None:
             return None
