@@ -74,14 +74,14 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	emptyResponse := listArtifactResultsResponse{}
 
-	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactId(ctx, artfId, h.Database)
-	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
-	}
-
 	artf, err := h.ArtifactReader.GetArtifact(ctx, artfId, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact.")
+	}
+
+	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactName(ctx, artf.Name, h.Database)
+	if err != nil {
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
 	}
 
 	if len(results) == 0 {
@@ -99,23 +99,23 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 	}
 
 	// maps from db dag Ids
-	dbDagsMapByDagIds := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagsByResultIds))
-	artfResultsMapByDagIds := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagsByResultIds))
+	dbDagsByDagIds := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagsByResultIds))
+	artfResultsByDagIds := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagsByResultIds))
 	for _, artfResult := range results {
 		if dbDag, ok := dbDagsByResultIds[artfResult.Id]; ok {
-			if _, okDagsMap := dbDagsMapByDagIds[dbDag.Id]; !okDagsMap {
-				dbDagsMapByDagIds[dbDag.Id] = dbDag
+			if _, okDagsMap := dbDagsByDagIds[dbDag.Id]; !okDagsMap {
+				dbDagsByDagIds[dbDag.Id] = dbDag
 			}
 
-			artfResultsMapByDagIds[dbDag.Id] = append(artfResultsMapByDagIds[dbDag.Id], artfResult)
+			artfResultsByDagIds[dbDag.Id] = append(artfResultsByDagIds[dbDag.Id], artfResult)
 		} else {
 			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.Id)
 		}
 	}
 
 	responses := make([]artifact.RawResultResponse, 0, len(results))
-	for dbDagId, artfResults := range artfResultsMapByDagIds {
-		if dag, ok := dbDagsMapByDagIds[dbDagId]; ok {
+	for dbDagId, artfResults := range artfResultsByDagIds {
+		if dag, ok := dbDagsByDagIds[dbDagId]; ok {
 			storageObj := storage.NewStorage(&dag.StorageConfig)
 			if err != nil {
 				return emptyResponse, http.StatusInternalServerError, errors.New("Error retrieving artifact contents.")

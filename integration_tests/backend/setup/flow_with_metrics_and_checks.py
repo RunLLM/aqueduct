@@ -1,10 +1,9 @@
 import aqueduct
 
 ###
-# Workflow that loads a table from the `aqueduct_demo` then saves it to `table_1` in append mode.
-# This save operator is then replaced by one that saves to `table_1` in replace mode.
-# In the next deployment of this run, it saves to `table_1` in append mode.
-# In the last deployment, it saves to `table_2` in append mode.
+# Workflow that extracts a table, and simply apply a row-count metric
+# with a check to enforce the row-count is larger than 0.
+# This workflow is published twice.
 ###
 
 
@@ -26,5 +25,9 @@ def setup_flow_with_metrics_and_checks(client: aqueduct.Client, integration_name
     check_res = check(rev_size)
 
     flow = client.publish_flow(artifacts=[check_res], name=name)
-    client.trigger(flow.id())
+
+    # publish again and triggers and update.
+    rev_size = size(reviews)
+    check_res = check(rev_size)
+    flow = client.publish_flow(artifacts=[check_res], name=name)
     return flow.id(), n_runs

@@ -106,6 +106,23 @@ func (r *standardReaderImpl) GetArtifactResultsByArtifactId(
 	return artifactResults, err
 }
 
+func (r *standardReaderImpl) GetArtifactResultsByArtifactName(
+	ctx context.Context,
+	name string,
+	db database.Database,
+) ([]ArtifactResult, error) {
+	getArtifactResultsQuery := fmt.Sprintf(`
+		SELECT %s FROM artifact_result, artifact
+		WHERE artifact_result.artifact_id = artifact.id
+		AND artifact.name = $1;`,
+		allColumnsWithPrefix(),
+	)
+
+	var artifactResults []ArtifactResult
+	err := db.Query(ctx, &artifactResults, getArtifactResultsQuery, name)
+	return artifactResults, err
+}
+
 func (r *standardReaderImpl) GetArtifactResultByWorkflowDagResultIdAndArtifactId(
 	ctx context.Context,
 	workflowDagResultId, artifactId uuid.UUID,
