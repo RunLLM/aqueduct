@@ -29,6 +29,7 @@ import (
 //		serialized `listArtifactResultsResponse`
 
 type listArtifactResultsResponse struct {
+	// Results are not ordered.
 	Results []artifact.RawResultResponse `json:"results"`
 }
 
@@ -102,29 +103,29 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 		resultIds = append(resultIds, result.Id)
 	}
 
-	dbDagsByResultIds, err := h.WorkflowDagReader.GetWorkflowDagsMapByArtifactResultIds(ctx, resultIds, h.Database)
+	dbDagByResultId, err := h.WorkflowDagReader.GetWorkflowDagsMapByArtifactResultIds(ctx, resultIds, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve workflow dags.")
 	}
 
 	// maps from db dag Ids
-	dbDagsByDagIds := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagsByResultIds))
-	artfResultsByDagIds := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagsByResultIds))
+	dbDagByDagId := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagByResultId))
+	artfResultByDagId := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagByResultId))
 	for _, artfResult := range results {
-		if dbDag, ok := dbDagsByResultIds[artfResult.Id]; ok {
-			if _, okDagsMap := dbDagsByDagIds[dbDag.Id]; !okDagsMap {
-				dbDagsByDagIds[dbDag.Id] = dbDag
+		if dbDag, ok := dbDagByResultId[artfResult.Id]; ok {
+			if _, okDagsMap := dbDagByDagId[dbDag.Id]; !okDagsMap {
+				dbDagByDagId[dbDag.Id] = dbDag
 			}
 
-			artfResultsByDagIds[dbDag.Id] = append(artfResultsByDagIds[dbDag.Id], artfResult)
+			artfResultByDagId[dbDag.Id] = append(artfResultByDagId[dbDag.Id], artfResult)
 		} else {
 			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.Id)
 		}
 	}
 
 	responses := make([]artifact.RawResultResponse, 0, len(results))
-	for dbDagId, artfResults := range artfResultsByDagIds {
-		if dag, ok := dbDagsByDagIds[dbDagId]; ok {
+	for dbDagId, artfResults := range artfResultByDagId {
+		if dag, ok := dbDagByDagId[dbDagId]; ok {
 			storageObj := storage.NewStorage(&dag.StorageConfig)
 			if err != nil {
 				return emptyResponse, http.StatusInternalServerError, errors.New("Error retrieving artifact contents.")
