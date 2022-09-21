@@ -27,6 +27,7 @@ type RawResultResponse struct {
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.
+	// The value is the string representation of the file stored in that path.
 	//
 	// Otherwise, the content is large and
 	// one should send an additional request to fetch the content.
@@ -39,6 +40,25 @@ type RawResultResponse struct {
 type ResultResponse struct {
 	Response
 	Result *RawResultResponse `json:"result"`
+}
+
+func NewRawResultResponseFromDbObject(
+	dbArtifactResult *artifact_result.ArtifactResult,
+	content *string,
+) *RawResultResponse {
+	resultResp := &RawResultResponse{
+		Id:                dbArtifactResult.Id,
+		ContentPath:       dbArtifactResult.ContentPath,
+		ContentSerialized: content,
+	}
+
+	if !dbArtifactResult.ExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbArtifactResult.ExecState.ExecutionState
+		resultResp.ExecState = &execStateVal
+	}
+
+	return resultResp
 }
 
 func NewResultResponseFromDbObjects(
@@ -61,20 +81,8 @@ func NewResultResponseFromDbObjects(
 		return &ResultResponse{Response: metadata}
 	}
 
-	resultResp := &RawResultResponse{
-		Id:                dbArtifactResult.Id,
-		ContentPath:       dbArtifactResult.ContentPath,
-		ContentSerialized: content,
-	}
-
-	if !dbArtifactResult.ExecState.IsNull {
-		// make a copy of execState's value
-		execStateVal := dbArtifactResult.ExecState.ExecutionState
-		resultResp.ExecState = &execStateVal
-	}
-
 	return &ResultResponse{
 		Response: metadata,
-		Result:   resultResp,
+		Result:   NewRawResultResponseFromDbObject(dbArtifactResult, content),
 	}
 }

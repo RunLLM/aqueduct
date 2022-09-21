@@ -24,6 +24,17 @@ type ArtifactResult struct {
 type Reader interface {
 	GetArtifactResult(ctx context.Context, id uuid.UUID, db database.Database) (*ArtifactResult, error)
 	GetArtifactResults(ctx context.Context, ids []uuid.UUID, db database.Database) ([]ArtifactResult, error)
+	GetArtifactResultsByArtifactId(
+		ctx context.Context,
+		artifactId uuid.UUID,
+		db database.Database,
+	) ([]ArtifactResult, error)
+	GetArtifactResultsByArtifactNameAndWorkflowId(
+		ctx context.Context,
+		workflowId uuid.UUID,
+		name string,
+		db database.Database,
+	) ([]ArtifactResult, error)
 	GetArtifactResultByWorkflowDagResultIdAndArtifactId(
 		ctx context.Context,
 		workflowDagResultId, artifactId uuid.UUID,
