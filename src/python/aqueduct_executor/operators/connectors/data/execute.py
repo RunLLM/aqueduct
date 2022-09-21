@@ -74,11 +74,14 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     if isinstance(spec.connector_name, dict):
         run_delete_saved_objects(spec, storage, exec_state)
     else:
-        op = setup_connector(spec.connector_name, spec.connector_config)
-
+        # Because constructing certain connectors (eg. Postgres) can also involve authentication,
+        # we do both in `run_authenticate()`, and give a more helpful error message on failure.
         if spec.type == enums.JobType.AUTHENTICATE:
-            run_authenticate(op, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
-        elif spec.type == enums.JobType.EXTRACT:
+            run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
+            return
+
+        op = setup_connector(spec.connector_name, spec.connector_config)
+        if spec.type == enums.JobType.EXTRACT:
             run_extract(spec, op, storage, exec_state)
         elif spec.type == enums.JobType.LOADTABLE:
             run_load_table(spec, op, storage)
@@ -91,7 +94,7 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    op: connector.DataConnector,
+    spec: Spec,
     exec_state: ExecutionState,
     is_demo: bool,
 ) -> None:
@@ -99,6 +102,7 @@ def run_authenticate(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
     def _authenticate() -> None:
+        op = setup_connector(spec.connector_name, spec.connector_config)
         op.authenticate()
 
     _authenticate()
