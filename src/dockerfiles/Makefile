@@ -11,7 +11,10 @@ endif
 build-k8s-system-images: build-function build-param build-system-metric build-base-connector build-connectors
 
 build-function:
-	docker build . -t aqueducthq/function:$(VERSION) -f function/function.dockerfile --no-cache
+	docker build . -t aqueducthq/function37:$(VERSION) -f function/function37.dockerfile --no-cache
+	docker build . -t aqueducthq/function38:$(VERSION) -f function/function38.dockerfile --no-cache
+	docker build . -t aqueducthq/function39:$(VERSION) -f function/function39.dockerfile --no-cache
+	docker build . -t aqueducthq/function310:$(VERSION) -f function/function310.dockerfile --no-cache
 
 build-param:
 	docker build . -t aqueducthq/param:$(VERSION) -f param/param.dockerfile --no-cache
@@ -50,7 +53,10 @@ build-sqlserver-connector:
 publish-k8s: publish-function publish-param publish-system-metric publish-connectors
 
 publish-function:
-	docker push aqueducthq/function:$(VERSION)
+	docker push aqueducthq/function37:$(VERSION)
+	docker push aqueducthq/function38:$(VERSION)
+	docker push aqueducthq/function39:$(VERSION)
+	docker push aqueducthq/function310:$(VERSION)
 
 publish-param:
 	docker push aqueducthq/param:$(VERSION)
