@@ -19,7 +19,11 @@ type Props = {
   dataTableHeight?: string;
 };
 
-const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight }) => {
+const DataPreviewer: React.FC<Props> = ({
+  previewData,
+  error,
+  dataTableHeight,
+}) => {
   if (!previewData) {
     return null;
   }
@@ -94,7 +98,12 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight })
           };
         });
         data = (
-          <Box sx={{ position: 'absolute', height: dataTableHeight ? dataTableHeight : '100%' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              height: dataTableHeight ? dataTableHeight : '100%',
+            }}
+          >
             <DataTable
               rowCount={parsedData.data.length}
               rowGetter={({ index }) => parsedData.data[index]}

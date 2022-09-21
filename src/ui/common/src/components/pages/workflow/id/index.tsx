@@ -306,7 +306,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       </Box>
 
       {currentNode.type !== NodeType.None && (
-        <Drawer anchor="right" variant="persistent" open={true} PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}>
+        <Drawer
+          anchor="right"
+          variant="persistent"
+          open={true}
+          PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}
+        >
           <Box width="800px" maxWidth="800px" minHeight="100vh">
             <Box
               width="100%"
@@ -334,11 +339,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             </Box>
           </Box>
         </Drawer>
-      )
-      }
+      )}
 
       <WorkflowStatusBar user={user} />
-    </Layout >
+    </Layout>
   );
 };
 
