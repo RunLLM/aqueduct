@@ -23,7 +23,7 @@ class TestBackend:
     CONNECT_INTEGRATION_TEMPLATE = "/api/integration/connect"
     DELETE_INTEGRATION_TEMPLATE = "/api/integration/%s/delete"
     GET_WORKFLOW_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
-    LIST_ARTIFACT_RESULTS_TEMPLATE = "/api/artifact/%s/results"
+    LIST_ARTIFACT_RESULTS_TEMPLATE = "/api/workflow/%s/artifact/%s/results"
 
     WORKFLOW_PATH = Path(__file__).parent / "setup"
     DEMO_DB_PATH = os.path.join(os.environ["HOME"], ".aqueduct/server/db/demo.db")
@@ -38,6 +38,13 @@ class TestBackend:
             "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
                 cls.client,
                 pytest.integration,
+            ),
+            # this flow is intended to provide 'noise' of op / artf with the same name,
+            # but under different flow.
+            "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
+                cls.client,
+                pytest.integration,
+                workflow_name="another_flow_with_metrics_and_checks",
             ),
         }
 
@@ -261,7 +268,7 @@ class TestBackend:
         for artf in artifacts.values():
             name = artf["name"]
             id = artf["id"]
-            resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % id).json()
+            resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, id)).json()
             results = resp["results"]
             assert len(results) == num_runs
 

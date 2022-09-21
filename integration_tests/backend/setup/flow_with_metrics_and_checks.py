@@ -7,8 +7,12 @@ import aqueduct
 ###
 
 
-def setup_flow_with_metrics_and_checks(client: aqueduct.Client, integration_name: str) -> str:
-    name = "Test: Flow with Metrics and Bad Checks"
+def setup_flow_with_metrics_and_checks(
+    client: aqueduct.Client,
+    integration_name: str,
+    workflow_name: str = "",
+) -> str:
+    name = workflow_name if workflow_name else "Test: Flow with Metrics and Checks"
     n_runs = 2
     integration = client.integration(name=integration_name)
 

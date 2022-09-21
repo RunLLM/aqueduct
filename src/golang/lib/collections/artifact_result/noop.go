@@ -71,8 +71,9 @@ func (r *noopReaderImpl) GetArtifactResultsByArtifactId(
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
-func (r *noopReaderImpl) GetArtifactResultsByArtifactName(
+func (r *noopReaderImpl) GetArtifactResultsByArtifactNameAndWorkflowId(
 	ctx context.Context,
+	workflowId uuid.UUID,
 	name string,
 	db database.Database,
 ) ([]ArtifactResult, error) {

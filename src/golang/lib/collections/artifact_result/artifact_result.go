@@ -29,8 +29,9 @@ type Reader interface {
 		artifactId uuid.UUID,
 		db database.Database,
 	) ([]ArtifactResult, error)
-	GetArtifactResultsByArtifactName(
+	GetArtifactResultsByArtifactNameAndWorkflowId(
 		ctx context.Context,
+		workflowId uuid.UUID,
 		name string,
 		db database.Database,
 	) ([]ArtifactResult, error)

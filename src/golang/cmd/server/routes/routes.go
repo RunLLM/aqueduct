@@ -2,7 +2,6 @@ package routes
 
 // Please sort the route by their VALUEs
 const (
-	ListArtifactResultsRoute = "/api/artifact/{artifactId}/results"
 	GetArtifactVersionsRoute = "/api/artifact_versions"
 	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
 
@@ -36,6 +35,7 @@ const (
 	RegisterWorkflowRoute        = "/api/workflow/register"
 	RegisterAirflowWorkflowRoute = "/api/workflow/register_airflow"
 	GetWorkflowRoute             = "/api/workflow/{workflowId}"
+	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"
 	DeleteWorkflowRoute          = "/api/workflow/{workflowId}/delete"
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"

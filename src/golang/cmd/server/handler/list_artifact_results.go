@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /artifact/{artifactId}/results
+// Route: /workflow/{workflowId}/artifact/{artifactId}/results
 // Method: GET
 // Params: None
 // Request:
@@ -34,6 +34,7 @@ type listArtifactResultsResponse struct {
 
 type listArtifactResultsArgs struct {
 	*aq_context.AqContext
+	WorkflowId uuid.UUID
 	ArtifactId uuid.UUID
 }
 
@@ -62,15 +63,23 @@ func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed artifact ID.")
 	}
 
+	wfIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	wfId, err := uuid.Parse(wfIdStr)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow Id.")
+	}
+
 	return &listArtifactResultsArgs{
 		AqContext:  aqContext,
 		ArtifactId: artfId,
+		WorkflowId: wfId,
 	}, http.StatusOK, nil
 }
 
 func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listArtifactResultsArgs)
 	artfId := args.ArtifactId
+	wfId := args.WorkflowId
 
 	emptyResponse := listArtifactResultsResponse{}
 
@@ -79,7 +88,7 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact.")
 	}
 
-	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactName(ctx, artf.Name, h.Database)
+	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactNameAndWorkflowId(ctx, wfId, artf.Name, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
 	}
