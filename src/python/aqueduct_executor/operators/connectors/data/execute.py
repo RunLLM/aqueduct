@@ -1,5 +1,5 @@
 import sys
-from typing import Any, cast
+from typing import Any
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
