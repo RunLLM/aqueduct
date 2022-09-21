@@ -1,5 +1,5 @@
 import sys
-from typing import Any
+from typing import Any, cast
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
@@ -9,6 +9,7 @@ from aqueduct_executor.operators.connectors.data.spec import (
     LoadSpec,
     LoadTableSpec,
     Spec,
+    AuthenticateSpec,
 )
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
@@ -94,7 +95,7 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    spec: Spec,
+    spec: AuthenticateSpec,
     exec_state: ExecutionState,
     is_demo: bool,
 ) -> None:
