@@ -9,8 +9,9 @@ Released on September 20, 2022.
     compute systems.
 
 ### Enhancements
-* Allows Aqueduct parameter to hold any Python-serializable object, instead of requiring it to
-    be json-serializable.
+* Allows Aqueduct parameter to hold any Python-serializable object, instead of requiring it to be
+    json-serializable.
+* Automatically creates Aqueduct parameters when passing non Aqueduct artifacts to decorated functions.
 * Updates UI to describe database write operators as `save` operators instead of `load` operators to
     avoid confusion.
 * Adds `describe` methods to all non-tabular artifact types.
