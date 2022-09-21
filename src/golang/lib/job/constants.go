@@ -1,7 +1,7 @@
 package job
 
 const (
-	K8sImageVersionNumber                = "0.0.14"
+	K8sImageVersionNumber                = "0.0.15"
 	DefaultFunctionDockerImage           = "aqueducthq/function"
 	DefaultParameterDockerImage          = "aqueducthq/param"
 	DefaultSystemMetricDockerImage       = "aqueducthq/system-metric"
