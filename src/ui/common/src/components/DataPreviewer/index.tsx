@@ -16,9 +16,10 @@ import LogBlock, { LogLevel } from '../text/LogBlock';
 type Props = {
   previewData: ArtifactResult;
   error?: Error;
+  dataTableHeight?: string;
 };
 
-const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
+const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight }) => {
   if (!previewData) {
     return null;
   }
@@ -93,16 +94,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
           };
         });
         data = (
-          <Box
-            sx={{
-              height: '100%',
-              width: '100%',
-              overflow: 'auto',
-              overflowY: 'hidden',
-              minWidth: '400px',
-              position: 'absolute',
-            }}
-          >
+          <Box sx={{ position: 'absolute', height: dataTableHeight ? dataTableHeight : '100%' }}>
             <DataTable
               rowCount={parsedData.data.length}
               rowGetter={({ index }) => parsedData.data[index]}
@@ -157,10 +149,10 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   return (
-    <>
+    <Box>
       {errorComponent}
       {data}
-    </>
+    </Box>
   );
 };
 

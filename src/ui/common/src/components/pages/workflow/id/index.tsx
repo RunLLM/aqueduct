@@ -263,6 +263,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   };
 
+  const drawerHeaderHeightInPx = 64;
+
   return (
     <Layout user={user} layoutType="workspace">
       <Box
@@ -304,35 +306,39 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       </Box>
 
       {currentNode.type !== NodeType.None && (
-        <Drawer anchor="right" variant="persistent" open={true}>
-          <Box width="800px" maxWidth="800px" minHeight="80vh">
+        <Drawer anchor="right" variant="persistent" open={true} PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}>
+          <Box width="800px" maxWidth="800px" minHeight="100vh">
             <Box
               width="100%"
               sx={{ backgroundColor: theme.palette.gray['100'] }}
-              display="flex"
+              height={`${drawerHeaderHeightInPx}px`}
+              position="fixed"
             >
-              <Box
-                sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                onClick={onPaneClicked}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </Box>
-              <Typography variant="h5" padding="16px">
-                {getNodeLabel()}
-              </Typography>
-              <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
-                {getNodeActionButton()}
+              <Box display="flex">
+                <Box
+                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                  onClick={onPaneClicked}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </Box>
+                <Typography variant="h5" padding="16px">
+                  {getNodeLabel()}
+                </Typography>
+                <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
+                  {getNodeActionButton()}
+                </Box>
               </Box>
             </Box>
-            <Box marginLeft="16px">
+            <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
               {getDataSideSheetContent(user, currentNode)}
             </Box>
           </Box>
         </Drawer>
-      )}
+      )
+      }
 
       <WorkflowStatusBar user={user} />
-    </Layout>
+    </Layout >
   );
 };
 
