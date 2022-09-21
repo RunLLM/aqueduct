@@ -29,7 +29,7 @@ export type ReactFlowNodeData = {
   nodeType: ReactflowNodeType;
   nodeId: string;
   label?: string;
-  // Used to metric or check results inside the node
+  // Used to present metric or check results inside the node
   result?: string;
 };
 
