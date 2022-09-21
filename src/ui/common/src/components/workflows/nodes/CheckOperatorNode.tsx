@@ -1,10 +1,9 @@
-import { faCheck, faCircleCheck, faCircleExclamation, faExclamation, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleCheck, faExclamation, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import React, { memo } from 'react';
 import { RootState } from '../../../stores/store';
 import { useSelector } from 'react-redux';
 
 import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
-// import Node from './Node';
 import { theme } from '../../../styles/theme/theme';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
@@ -72,7 +71,6 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     hoverColor = 'blue.200';
   }
 
-  //let icon = result === 'true' ? faCircleCheck : faCircleExclamation;
   let icon = result === 'true' ? faCheck : faExclamation;
 
   return (

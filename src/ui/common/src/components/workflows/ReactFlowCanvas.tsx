@@ -4,7 +4,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
-import { produce, current } from 'immer';
+import { produce } from 'immer';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
@@ -50,16 +50,22 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
   const checkOpNodes = [];
   const boolArtifactNodes = [];
+
+  const metricOpNodes = [];
+  const metricArtifactNodes = [];
+
   // first find all check operators.
   if (dagPositionState.result) {
-
-
     const nodes = dagPositionState.result.nodes;
     nodes.forEach(node => {
       if (node.type === 'checkOp') {
         checkOpNodes.push(node);
       } else if (node.type === 'boolArtifact') {
         boolArtifactNodes.push(node);
+      } else if (node.type === 'metricOp') {
+        metricOpNodes.push(node);
+      } else if (node.type === 'numericArtifact') {
+        metricArtifactNodes.push(node);
       }
     });
 
@@ -68,6 +74,10 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     //artifact nodes have same name + ' artifact' at the end.
     checkOpNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
     boolArtifactNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
+
+    // Do the same sorting for metric and metric artifact nodes.
+    metricOpNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
+    metricArtifactNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
   }
 
   // Remove artifactNodes from the DAG
@@ -84,10 +94,19 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
         for (let i = 0; i < checkOpNodes.length; i++) {
           if (nodes[nodeIndex].id === checkOpNodes[i].id) {
             // Let's find the artifact result of the corresponding booleanArtifactNode.
-            //const boolArtifactResult = artifactResults[boolArtifactNodes[i].id].result?.data;
             const boolArtifactResult = artifactResults[boolArtifactNodes[i].id].result?.data;
             if (boolArtifactResult) {
               draftState[nodeIndex].data.result = boolArtifactResult;
+            }
+          }
+        }
+
+        // find metric nodes and put the result into the operator's data field
+        for (let i = 0; i < metricOpNodes.length; i++) {
+          if (nodes[nodeIndex].id === metricOpNodes[i].id) {
+            const metricArtifactResult = artifactResults[metricArtifactNodes[i].id].result?.data;
+            if (metricArtifactResult) {
+              draftState[nodeIndex].data.result = metricArtifactResult;
             }
           }
         }
@@ -110,15 +129,60 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
         }
       }
 
+      for (let i = 0; i < metricArtifactNodes.length; i++) {
+        if (node.id === metricArtifactNodes[i].id) {
+          return false
+        }
+      }
+
       return true;
     });
+  });
+
+  const edges = dagPositionState.result?.edges;
+  let updatedEdges = produce(edges, (edgeDraftState) => {
+    if (!edges) {
+      return [];
+    }
+
+    // we have two sorted arrays of metric and metric artifact nodes.
+    // each array entry corresponds to an entry at the same index in the other array.
+    // metricOpNode                         metricArtifactNode
+    for (let i = 0; i < metricOpNodes.length; i++) {
+      const metricOpNode = metricOpNodes[i];
+      const metricArtifactNode = metricArtifactNodes[i];
+
+      // find all edges with the metricArtifactNode as a source.
+      for (let edgeIndex = 0; edgeIndex < edges.length; edgeIndex++) {
+        if (edges[edgeIndex].source === metricArtifactNode.id) {
+          edgeDraftState[edgeIndex].source = metricOpNode.id;
+        }
+      }
+    }
+  });
+
+  // remove any edge who's target is a metric artifact.
+  let filteredEdges = produce(updatedEdges, (draftState) => {
+    if (!updatedEdges) {
+      return [];
+    }
+
+    return draftState.filter((edge) => {
+      for (let i = 0; i < metricArtifactNodes.length; i++) {
+        if (edge.target === metricArtifactNodes[i].id || edge.source === metricArtifactNodes[i].id) {
+          return false;
+        }
+      }
+
+      return true;
+    })
   });
 
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
       nodes={filteredNodes}
-      edges={dagPositionState.result?.edges}
+      edges={filteredEdges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}
