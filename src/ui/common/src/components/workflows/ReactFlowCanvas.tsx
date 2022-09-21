@@ -1,10 +1,10 @@
+import { produce } from 'immer';
 import React, { useEffect } from 'react';
 import ReactFlow, {
   Node as ReactFlowNode,
   useReactFlow,
 } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
-import { produce } from 'immer';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
@@ -32,8 +32,12 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
-  const operatorResults = useSelector((state: RootState) => state.workflowReducer.operatorResults);
-  const artifactResults = useSelector((state: RootState) => state.workflowReducer.artifactResults);
+  const operatorResults = useSelector(
+    (state: RootState) => state.workflowReducer.operatorResults
+  );
+  const artifactResults = useSelector(
+    (state: RootState) => state.workflowReducer.artifactResults
+  );
 
   const { fitView, viewportInitialized } = useReactFlow();
   useEffect(() => {
@@ -57,7 +61,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   // first find all check operators.
   if (dagPositionState.result) {
     const nodes = dagPositionState.result.nodes;
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.type === 'checkOp') {
         checkOpNodes.push(node);
       } else if (node.type === 'boolArtifact') {
@@ -77,14 +81,16 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
     // Do the same sorting for metric and metric artifact nodes.
     metricOpNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
-    metricArtifactNodes.sort((a, b) => a.data.label.localeCompare(b.data.label));
+    metricArtifactNodes.sort((a, b) =>
+      a.data.label.localeCompare(b.data.label)
+    );
   }
 
   // Remove artifactNodes from the DAG
   // Take artifact result and set inside operator's data.result field.
-  let nodes = dagPositionState.result?.nodes;
+  const nodes = dagPositionState.result?.nodes;
   const enrichedNodes = produce(nodes, (draftState) => {
-    // NOTE: only mutate the draftState variable here. 
+    // NOTE: only mutate the draftState variable here.
     // See docs here for more information: https://redux-toolkit.js.org/usage/immer-reducers#immutable-updates-with-immer
     if (nodes) {
       // loop through and find checkOpNodes, doing fancy logic stuffs.
@@ -94,7 +100,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
         for (let i = 0; i < checkOpNodes.length; i++) {
           if (nodes[nodeIndex].id === checkOpNodes[i].id) {
             // Let's find the artifact result of the corresponding booleanArtifactNode.
-            const boolArtifactResult = artifactResults[boolArtifactNodes[i].id].result?.data;
+            const boolArtifactResult =
+              artifactResults[boolArtifactNodes[i].id].result?.data;
             if (boolArtifactResult) {
               draftState[nodeIndex].data.result = boolArtifactResult;
             }
@@ -104,7 +111,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
         // find metric nodes and put the result into the operator's data field
         for (let i = 0; i < metricOpNodes.length; i++) {
           if (nodes[nodeIndex].id === metricOpNodes[i].id) {
-            const metricArtifactResult = artifactResults[metricArtifactNodes[i].id].result?.data;
+            const metricArtifactResult =
+              artifactResults[metricArtifactNodes[i].id].result?.data;
             if (metricArtifactResult) {
               draftState[nodeIndex].data.result = metricArtifactResult;
             }
@@ -117,7 +125,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   //Finally, let's remove any boolean artifacts from the list
   // This has to be two separate steps or Immer will complain that we are producing a new value and modifying it's draft.
   // i.e. Error: [Immer] An immer producer returned a new value *and* modified its draft. Either return a new value *or* modify the draft.
-  let filteredNodes = produce(enrichedNodes, (draftState) => {
+  const filteredNodes = produce(enrichedNodes, (draftState) => {
     if (!enrichedNodes) {
       return [];
     }
@@ -131,7 +139,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
       for (let i = 0; i < metricArtifactNodes.length; i++) {
         if (node.id === metricArtifactNodes[i].id) {
-          return false
+          return false;
         }
       }
 
@@ -140,7 +148,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   });
 
   const edges = dagPositionState.result?.edges;
-  let updatedEdges = produce(edges, (edgeDraftState) => {
+  const updatedEdges = produce(edges, (edgeDraftState) => {
     if (!edges) {
       return [];
     }
@@ -162,20 +170,23 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   });
 
   // remove any edge who's target is a metric artifact.
-  let filteredEdges = produce(updatedEdges, (draftState) => {
+  const filteredEdges = produce(updatedEdges, (draftState) => {
     if (!updatedEdges) {
       return [];
     }
 
     return draftState.filter((edge) => {
       for (let i = 0; i < metricArtifactNodes.length; i++) {
-        if (edge.target === metricArtifactNodes[i].id || edge.source === metricArtifactNodes[i].id) {
+        if (
+          edge.target === metricArtifactNodes[i].id ||
+          edge.source === metricArtifactNodes[i].id
+        ) {
           return false;
         }
       }
 
       return true;
-    })
+    });
   });
 
   return (

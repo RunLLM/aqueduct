@@ -84,12 +84,11 @@ export const Node: React.FC<Props> = ({
         '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      {
-        icon &&
+      {icon && (
         <Box sx={{ fontSize: '50px', mb: '2px' }}>
           <FontAwesomeIcon icon={icon} />
         </Box>
-      }
+      )}
 
       <Typography
         sx={{

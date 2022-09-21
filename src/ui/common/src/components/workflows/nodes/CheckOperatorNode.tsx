@@ -1,16 +1,21 @@
-import { faCheck, faCircleCheck, faExclamation, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCheck,
+  faCircleCheck,
+  faExclamation,
+  faMagnifyingGlass,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React, { memo } from 'react';
-import { RootState } from '../../../stores/store';
+import { Handle, Position } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
-import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
+import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
+import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
-import Box from '@mui/material/Box';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Typography from '@mui/material/Typography';
-import { Handle, Position } from 'react-flow-renderer';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -20,7 +25,7 @@ type Props = {
 export const checkOperatorNodeIcon = faMagnifyingGlass;
 
 const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
-  const defaultLabel = "Check";
+  const defaultLabel = 'Check';
   const label = data.label ? data.label : defaultLabel;
   const result = data.result;
   const currentNode = useSelector(
@@ -71,7 +76,7 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     hoverColor = 'blue.200';
   }
 
-  let icon = result === 'true' ? faCheck : faExclamation;
+  const icon = result === 'true' ? faCheck : faExclamation;
 
   return (
     <BaseNode
@@ -85,31 +90,44 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         padding: '0px',
       }}
     >
-      <Box sx={{ height: '32px', width: '100%', borderBottom: `1px solid ${borderColor}` }}>
-        <Box width="100%" height="100%" display="flex" justifyContent="center" alignItems="center">
+      <Box
+        sx={{
+          height: '32px',
+          width: '100%',
+          borderBottom: `1px solid ${borderColor}`,
+        }}
+      >
+        <Box
+          width="100%"
+          height="100%"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        >
           <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
             <FontAwesomeIcon icon={faCircleCheck} />
           </Box>
-          <Typography
-            variant="body1"
-          >
-            {label}
-          </Typography>
+          <Typography variant="body1">{label}</Typography>
         </Box>
       </Box>
 
-      {data.result &&
-        <Box width="100%" height="100%" minHeight="80px" display="flex" justifyContent="center" alignItems="center">
+      {data.result && (
+        <Box
+          width="100%"
+          height="100%"
+          minHeight="80px"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        >
           <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
             <FontAwesomeIcon icon={icon} />
           </Box>
-          <Typography
-            variant="body1"
-          >
+          <Typography variant="body1">
             {data.result === 'true' ? 'passed' : 'failed'}
           </Typography>
         </Box>
-      }
+      )}
 
       <Handle
         type="source"
