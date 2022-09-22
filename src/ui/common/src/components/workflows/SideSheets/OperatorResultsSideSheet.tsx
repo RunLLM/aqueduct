@@ -297,6 +297,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
         <DataPreviewer
           previewData={artifactResults[artifactId]}
           error={error}
+          dataTableHeight="calc(100vh - 144px)"
         />
       </Box>
     );
