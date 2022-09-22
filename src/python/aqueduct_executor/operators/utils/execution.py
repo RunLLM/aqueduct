@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import io
 import sys
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TypeVar, Type
+
 
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from pydantic import BaseModel

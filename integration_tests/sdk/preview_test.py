@@ -130,4 +130,5 @@ def test_table_with_non_string_column_name(client):
     def bad_return():
         return pd.DataFrame([0, 1, 2, 3], columns=[123])
 
-    bad_return()
+    with pytest.raises(AqueductError):
+        bad_return()
