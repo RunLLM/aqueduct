@@ -220,27 +220,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  // TODO: remove these after we get the layout working once again
-  const BottomSidebarHeightInPx = 400;
-  const BottomSidebarHeaderHeightInPx = 50;
-  //const BottomSidebarMarginInPx = 64; // The amount of space on the left and the right of the bottom sidebar.
-  const BottomSidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
-
-  // let's break down this insane formula:
-  //output: calc(calc(100% + 250px) - 250px - 128px - 400px)
-  // fullWindowWidth is calc(100% + 250px)
-  // menuSidebarOffset is 250px
-  // BottomSidebarMarginInPx is 64px * 2 = 128px
-  // getBottomSideSHeetOffset is 400px when open, 75 when closed.
+  const SidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
 
   const getSideSheetWidth = (
     workflowStatusBarOpen: boolean,
     baseWidth = '100%'
   ): string | string[] => {
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
-      2 * BottomSidebarMarginInPx
-    }px - ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
-    //return `calc(${baseWidth} - ${MenuSidebarOffset} - ${BottomSidebarMarginInPx} -  ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
+    // let's break down this formula:
+    // fullWindowWidth is calc(100% + 250px)
+    // menuSidebarOffset is 250px
+    // SidebarMarginInPx is 64px * 2 = 128px
+    // getStatusBarWidth is 400px when open, 75 when closed.
+    // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${2 * SidebarMarginInPx
+      }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
   };
 
   const CollapsedStatusBarWidthInPx = 75;
@@ -251,18 +244,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
    * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
    */
-  const getBottomSidesheetOffset = (workflowStatusBarOpen: boolean): string => {
+  const getStatusBarWidth = (workflowStatusBarOpen: boolean): string => {
     if (workflowStatusBarOpen) {
       return `${StatusBarWidthInPx}px`;
     } else {
       return `${CollapsedStatusBarWidthInPx}px`;
     }
   };
-
-  console.log(
-    'getBottomSidesheetOffset: ',
-    getBottomSidesheetOffset(openSideSheetState.workflowStatusBarOpen)
-  );
 
   // NOTE(vikram): This is a compliated bit of nonsense code. Because the
   // percentages are relative, we need to reset the base width to be the full
@@ -278,13 +266,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     openSideSheetState.workflowStatusBarOpen,
     fullWindowWidth
   );
-  let contentBottomOffsetInPx;
 
-  if (openSideSheetState.bottomSideSheetOpen) {
-    contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
-  } else {
-    contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
-  }
+  let contentBottomOffsetInPx = `32px`;
 
   const getNodeLabel = () => {
     if (
@@ -330,8 +313,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const drawerHeaderHeightInPx = 64;
-
-  console.log('contentWidth: ', contentWidth);
 
   return (
     <Layout user={user}>
