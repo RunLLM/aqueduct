@@ -232,8 +232,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     // SidebarMarginInPx is 64px * 2 = 128px
     // getStatusBarWidth is 400px when open, 75 when closed.
     // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${2 * SidebarMarginInPx
-      }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
+      2 * SidebarMarginInPx
+    }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
   };
 
   const CollapsedStatusBarWidthInPx = 75;
@@ -267,7 +268,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     fullWindowWidth
   );
 
-  let contentBottomOffsetInPx = `32px`;
+  const contentBottomOffsetInPx = `32px`;
 
   const getNodeLabel = () => {
     if (
