@@ -186,9 +186,7 @@ def run(spec: FunctionSpec) -> None:
     """
     print("Started %s job: %s" % (spec.type, spec.name))
 
-    # TODO:
     exec_state = ExecutionState(user_logs=Logs())
-
     storage = parse_storage(spec.storage_config)
     try:
         validate_spec(spec)
@@ -279,8 +277,8 @@ def run(spec: FunctionSpec) -> None:
             print(f"Succeeded! Full logs: {exec_state.json()}")
 
     except ExecFailureException as e:
-        from_exception_exec_state = ExecutionState.from_exception(e)
-        from_exception_exec_state.user_logs = exec_state.user_logs
+        # We must reconcile the user logs here, since those logs are not captured on the exception.
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=exec_state.user_logs)
         print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
         sys.exit(1)

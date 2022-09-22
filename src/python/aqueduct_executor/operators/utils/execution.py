@@ -45,19 +45,21 @@ class Logs(BaseModel):
 
 
 class ExecFailureException(Exception):
-    """TODO"""
+    """Can be thrown whenever you want to fail the operator.
+
+    It captures all the information needed to mark an ExecutionState as failed, except for user logs.
+    Can be translated into an ExecutionState with `ExecutionState.from_exception()`.
+    """
 
     def __init__(
         self,
         failure_type: FailureType,
         tip: str,
         context: str = "",
-        user_logs: Optional[Logs] = None,
     ):
         self.failure_type = failure_type
         self.tip = tip
         self.context = context
-        self.user_logs = user_logs
 
 
 class ExecutionState(BaseModel):
@@ -77,9 +79,14 @@ class ExecutionState(BaseModel):
     error: Optional[Error] = None
 
     @classmethod
-    def from_exception(cls, e: ExecFailureException) -> ExecutionState:
+    def from_exception(cls, e: ExecFailureException, user_logs: Logs) -> ExecutionState:
+        """Translates a ExecFailureException into a failed ExecutionState we can persist.
+
+        We explicitly require `user_logs`, because the exception does not contain that context, so
+        this will force us to explicitly think about when we want to persist logs.
+        """
         return cls(
-            user_logs=e.user_logs if e.user_logs is not None else Logs(),
+            user_logs=user_logs,
             status=ExecutionStatus.FAILED,
             failure_type=e.failure_type,
             error=Error(
@@ -89,7 +96,6 @@ class ExecutionState(BaseModel):
         )
 
     def mark_as_failure(self, failure_type: FailureType, tip: str, context: str = "") -> None:
-        """TODO"""
         self.status = ExecutionStatus.FAILED
         self.failure_type = failure_type
         self.error = Error(
