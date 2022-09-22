@@ -1,4 +1,3 @@
-import textwrap
 import uuid
 from typing import Dict, List, Optional
 
@@ -22,15 +21,6 @@ class Logs(BaseModel):
 
     def is_empty(self) -> bool:
         return self.stdout == "" and self.stderr == ""
-
-    def __str__(self) -> str:
-        return textwrap.dedent(
-            f"""stdout:
-            {self.stdout}
-            --------------------------
-            stderr:
-            {self.stderr}""",
-        )
 
 
 class Error(BaseModel):

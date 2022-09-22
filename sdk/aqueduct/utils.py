@@ -488,6 +488,11 @@ def human_readable_timestamp(ts: int) -> str:
     return datetime.utcfromtimestamp(ts).strftime(format)
 
 
+def indent_multiline_string(content: str) -> str:
+    """Indents every line of a multiline string block."""
+    return "\t" + "\t".join(content.splitlines(True))
+
+
 def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     """Verifies that a user-defined id is of the expected types, returning the string version of the id."""
     if not isinstance(id, str) and not isinstance(id, uuid.UUID):
