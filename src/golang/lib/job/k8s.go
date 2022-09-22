@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
@@ -145,10 +146,27 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 // Maps a job Spec to Docker image.
 func mapJobTypeToDockerImage(spec Spec) (string, error) {
 	switch spec.Type() {
-	// case WorkflowJobType:
-	// 	return j.conf.ExecutorDockerImage, nil
 	case FunctionJobType:
-		return DefaultFunctionDockerImage, nil
+		functionSpec, ok := spec.(*FunctionSpec)
+		if !ok {
+			return "", errors.New("Unable to determine Python Version.")
+		}
+		pythonVersion, err := function.GetPythonVersion(context.TODO(), functionSpec.FunctionPath, &functionSpec.StorageConfig)
+		if err != nil {
+			return "", errors.New("Unable to determine Python Version.")
+		}
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return Function37DockerImage, nil
+		case function.PythonVersion38:
+			return Function38DockerImage, nil
+		case function.PythonVersion39:
+			return Function39DockerImage, nil
+		case function.PythonVersion310:
+			return Function310DockerImage, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToDockerImage(authenticateSpec.ConnectorName)
@@ -162,9 +180,9 @@ func mapJobTypeToDockerImage(spec Spec) (string, error) {
 		discoverSpec := spec.(*DiscoverSpec)
 		return mapIntegrationServiceToDockerImage(discoverSpec.ConnectorName)
 	case ParamJobType:
-		return DefaultParameterDockerImage, nil
+		return ParameterDockerImage, nil
 	case SystemMetricJobType:
-		return DefaultSystemMetricDockerImage, nil
+		return SystemMetricDockerImage, nil
 	default:
 		return "", errors.Newf("Unsupported job type %v provided", spec.Type())
 	}
@@ -173,17 +191,17 @@ func mapJobTypeToDockerImage(spec Spec) (string, error) {
 func mapIntegrationServiceToDockerImage(service integration.Service) (string, error) {
 	switch service {
 	case integration.Postgres, integration.Redshift, integration.AqueductDemo:
-		return DefaultPostgresConnectorDockerImage, nil
+		return PostgresConnectorDockerImage, nil
 	case integration.Snowflake:
-		return DefaultSnowflakeConnectorDockerImage, nil
+		return SnowflakeConnectorDockerImage, nil
 	case integration.MySql, integration.MariaDb:
-		return DefaultMySqlConnectorDockerImage, nil
+		return MySqlConnectorDockerImage, nil
 	case integration.SqlServer:
-		return DefaultSqlServerConnectorDockerImage, nil
+		return SqlServerConnectorDockerImage, nil
 	case integration.BigQuery:
-		return DefaultBigQueryConnectorDockerImage, nil
+		return BigQueryConnectorDockerImage, nil
 	case integration.S3:
-		return DefaultS3ConnectorDockerImage, nil
+		return S3ConnectorDockerImage, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)
 	}
