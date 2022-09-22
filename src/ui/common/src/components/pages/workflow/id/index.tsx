@@ -220,13 +220,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-
   // TODO: remove these after we get the layout working once again
   const BottomSidebarHeightInPx = 400;
   const BottomSidebarHeaderHeightInPx = 50;
   //const BottomSidebarMarginInPx = 64; // The amount of space on the left and the right of the bottom sidebar.
   const BottomSidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
-
 
   // let's break down this insane formula:
   //output: calc(calc(100% + 250px) - 250px - 128px - 400px)
@@ -239,7 +237,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     workflowStatusBarOpen: boolean,
     baseWidth = '100%'
   ): string | string[] => {
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${2 * BottomSidebarMarginInPx}px - ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
+      2 * BottomSidebarMarginInPx
+    }px - ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
     //return `calc(${baseWidth} - ${MenuSidebarOffset} - ${BottomSidebarMarginInPx} -  ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
   };
 
@@ -251,9 +251,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
    * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
    */
-  const getBottomSidesheetOffset = (
-    workflowStatusBarOpen: boolean
-  ): string => {
+  const getBottomSidesheetOffset = (workflowStatusBarOpen: boolean): string => {
     if (workflowStatusBarOpen) {
       return `${StatusBarWidthInPx}px`;
     } else {
@@ -261,7 +259,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   };
 
-  console.log('getBottomSidesheetOffset: ', getBottomSidesheetOffset(openSideSheetState.workflowStatusBarOpen));
+  console.log(
+    'getBottomSidesheetOffset: ',
+    getBottomSidesheetOffset(openSideSheetState.workflowStatusBarOpen)
+  );
 
   // NOTE(vikram): This is a compliated bit of nonsense code. Because the
   // percentages are relative, we need to reset the base width to be the full

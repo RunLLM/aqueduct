@@ -11,10 +11,7 @@ type Props = {
   children: React.ReactElement | React.ReactElement[];
 };
 
-export const DefaultLayout: React.FC<Props> = ({
-  user,
-  children,
-}) => {
+export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
   return (
     <Box
       sx={{
