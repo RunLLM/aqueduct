@@ -4,8 +4,7 @@ import io
 import sys
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Any, Callable, Optional, TypeVar, Type
-
+from typing import Any, Callable, Optional, Type, TypeVar
 
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from pydantic import BaseModel
