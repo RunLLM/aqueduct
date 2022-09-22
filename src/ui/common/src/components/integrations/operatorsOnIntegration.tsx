@@ -72,7 +72,7 @@ const OperatorsOnIntegration: React.FC = () => {
 
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
-      <Box>
+      <Box maxWidth="900px">
         {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
           <WorkflowAccordion
             expanded={expandedWf === wfId}
