@@ -32,12 +32,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     (state: RootState) => state.workflowReducer
   );
   const selected = currentNode.id === data.nodeId;
-  let execState: ExecState;
-  if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
-  } else {
-    execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
-  }
+  const execState: ExecState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
 
   const textColor = selected
     ? theme.palette.DarkContrast50
@@ -54,7 +49,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     // Warning color for non-fatal errors.
   } else if (
     execState?.status === ExecutionStatus.Failed &&
-    execState.failure_type == FailureType.UserNonFatal
+    execState.failure_type === FailureType.UserNonFatal
   ) {
     backgroundColor = selected
       ? theme.palette.DarkWarningMain50
@@ -115,7 +110,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
           justifyContent="center"
           alignItems="center"
         >
-          <Typography variant="h5">{data.result}</Typography>
+          <Typography variant="h5">{parseFloat(data.result).toFixed(3)}</Typography>
         </Box>
       )}
 

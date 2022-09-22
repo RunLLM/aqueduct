@@ -35,12 +35,7 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     (state: RootState) => state.workflowReducer
   );
   const selected = currentNode.id === data.nodeId;
-  let execState: ExecState;
-  if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
-  } else {
-    execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
-  }
+  const execState: ExecState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
 
   const textColor = selected
     ? theme.palette.DarkContrast50
@@ -57,7 +52,7 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     // Warning color for non-fatal errors.
   } else if (
     execState?.status === ExecutionStatus.Failed &&
-    execState.failure_type == FailureType.UserNonFatal
+    execState.failure_type === FailureType.UserNonFatal
   ) {
     backgroundColor = selected
       ? theme.palette.DarkWarningMain50
