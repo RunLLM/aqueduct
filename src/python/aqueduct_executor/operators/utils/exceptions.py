@@ -1,3 +1,6 @@
+from aqueduct_executor.operators.utils.enums import FailureType
+
+
 class MissingConnectorDependencyException(Exception):
     """Exception raised due to the connector integration's dependencies aren't installed."""
 

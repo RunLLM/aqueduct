@@ -42,6 +42,22 @@ class Logs(BaseModel):
     stderr: str = ""
 
 
+class ExecFailureException(Exception):
+    """TODO"""
+
+    def __init__(
+        self,
+        failure_type: FailureType,
+        tip: str,
+        context: str = "",
+        user_logs: Optional[Logs] = None,
+    ):
+        self.failure_type = failure_type
+        self.tip = tip
+        self.context = context
+        self.user_logs = user_logs
+
+
 class ExecutionState(BaseModel):
     """
     The state to track operator execution. In the future, we may extend this
@@ -57,6 +73,27 @@ class ExecutionState(BaseModel):
     status: ExecutionStatus = ExecutionStatus.PENDING
     failure_type: Optional[FailureType] = None
     error: Optional[Error] = None
+
+    @classmethod
+    def from_exception(cls, e: ExecFailureException) -> ExecutionState:
+        return cls(
+            user_logs=e.user_logs if e.user_logs is not None else Logs(),
+            status=ExecutionStatus.FAILED,
+            failure_type=e.failure_type,
+            error=Error(
+                tip=e.tip,
+                context=e.context,
+            ),
+        )
+
+    def mark_as_failure(self, failure_type: FailureType, tip: str, context: str = "") -> None:
+        """TODO"""
+        self.status = ExecutionStatus.FAILED
+        self.failure_type = failure_type
+        self.error = Error(
+            tip=tip,
+            context=context,
+        )
 
     def user_fn_redirected(self, failure_tip: str) -> Callable[..., Any]:
         """
@@ -85,13 +122,12 @@ class ExecutionState(BaseModel):
                 except Exception:
                     # Include the stack trace within the user's code.
                     _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
-                    self.status = ExecutionStatus.FAILED
-                    self.failure_type = FailureType.USER_FATAL
-                    self.error = Error(
+                    self.mark_as_failure(
+                        FailureType.USER_FATAL,
+                        failure_tip,
                         context=stack_traceback(
                             offset=1
                         ),  # traceback the first stack frame, which belongs to user
-                        tip=failure_tip,
                     )
                     print(f"User failure. Full log: {self.json()}")
                     return None

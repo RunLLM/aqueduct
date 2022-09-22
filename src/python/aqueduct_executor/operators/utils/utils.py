@@ -17,6 +17,7 @@ from aqueduct_executor.operators.utils.exceptions import MissingInputPathsExcept
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
@@ -140,6 +141,15 @@ def _write_table_output(
     output_path: str,
     output: pd.DataFrame,
 ) -> None:
+    # We cannot serialize integer column names into json.
+    violating_col_names = [col for col in output.columns if not isinstance(col, str)]
+    if len(violating_col_names) > 0:
+        raise ExecFailureException(
+            failure_type=FailureType.USER_FATAL,
+            tip="Non-String column names are not supported. Violating columns: %s"
+            % (", ".join(violating_col_names)),
+        )
+
     output_str = output.to_json(orient="table", date_format="iso", index=False)
     storage.put(output_path, output_str.encode(_DEFAULT_ENCODING))
 

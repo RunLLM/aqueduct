@@ -1,5 +1,6 @@
 import time
 
+import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
 from constants import SENTIMENT_SQL_QUERY
@@ -122,3 +123,11 @@ def test_preview_artifact_caching(client):
     start = time.time()
     _ = noop(slow_output)
     assert time.time() - start < duration
+
+
+def test_table_with_non_string_column_name(client):
+    @op
+    def bad_return():
+        return pd.DataFrame([0, 1, 2, 3], columns=[123])
+
+    bad_return()
