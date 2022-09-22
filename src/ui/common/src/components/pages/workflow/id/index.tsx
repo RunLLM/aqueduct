@@ -37,7 +37,7 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout from '../../../layouts/default';
+import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
@@ -220,6 +220,71 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
+
+  // TODO: remove these after we get the layout working once again
+  const BottomSidebarHeightInPx = 400;
+  const BottomSidebarHeaderHeightInPx = 50;
+  //const BottomSidebarMarginInPx = 64; // The amount of space on the left and the right of the bottom sidebar.
+  const BottomSidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
+
+
+  // let's break down this insane formula:
+  //output: calc(calc(100% + 250px) - 250px - 128px - 400px)
+  // fullWindowWidth is calc(100% + 250px)
+  // menuSidebarOffset is 250px
+  // BottomSidebarMarginInPx is 64px * 2 = 128px
+  // getBottomSideSHeetOffset is 400px when open, 75 when closed.
+
+  const getSideSheetWidth = (
+    workflowStatusBarOpen: boolean,
+    baseWidth = '100%'
+  ): string | string[] => {
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${2 * BottomSidebarMarginInPx}px - ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
+    //return `calc(${baseWidth} - ${MenuSidebarOffset} - ${BottomSidebarMarginInPx} -  ${getBottomSidesheetOffset(workflowStatusBarOpen)})`;
+  };
+
+  const CollapsedStatusBarWidthInPx = 75;
+  const StatusBarWidthInPx = 385;
+
+  /**
+   *
+   * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
+   * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
+   */
+  const getBottomSidesheetOffset = (
+    workflowStatusBarOpen: boolean
+  ): string => {
+    if (workflowStatusBarOpen) {
+      return `${StatusBarWidthInPx}px`;
+    } else {
+      return `${CollapsedStatusBarWidthInPx}px`;
+    }
+  };
+
+  console.log('getBottomSidesheetOffset: ', getBottomSidesheetOffset(openSideSheetState.workflowStatusBarOpen));
+
+  // NOTE(vikram): This is a compliated bit of nonsense code. Because the
+  // percentages are relative, we need to reset the base width to be the full
+  // window width to take advantage of the helper function here. This ensures
+  // that the ReactFlow canvas and the status bars below are the same width.
+  // Here, `fullWindowWidth` refers to the full width of the viewport, which
+  // is the current 100% + the width of the menu sidebar. This is a hack that
+  // breaks the abstraction, but because the WorkflowStatusBar overlay is
+  // absolute-positioned, it's required in order to align the content with
+  // the status bar's width.
+  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
+  const contentWidth = getSideSheetWidth(
+    openSideSheetState.workflowStatusBarOpen,
+    fullWindowWidth
+  );
+  let contentBottomOffsetInPx;
+
+  if (openSideSheetState.bottomSideSheetOpen) {
+    contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
+  } else {
+    contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
+  }
+
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -265,12 +330,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const drawerHeaderHeightInPx = 64;
 
+  console.log('contentWidth: ', contentWidth);
+
   return (
-    <Layout user={user} layoutType="workspace">
+    <Layout user={user}>
       <Box
         sx={{
           display: 'flex',
-          width: '100%',
+          width: contentWidth,
           height: '100%',
           flexDirection: 'column',
         }}
@@ -290,7 +357,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             flex: 1,
             mt: 2,
             p: 3,
-            mb: 0,
+            mb: contentBottomOffsetInPx,
             width: '100%',
             boxSizing: 'border-box',
             backgroundColor: 'gray.50',
