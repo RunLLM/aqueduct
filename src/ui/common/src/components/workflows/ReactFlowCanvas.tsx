@@ -74,7 +74,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       //sort checkOpNodes and boolArtifactNodes by value of label
       //operator nodes have just a name
       //artifact nodes have same name + ' artifact' at the end.
-      const alphabeticallySortNodes = (a, b) => a.data.label.localeCompare(b.data.label);
+      const alphabeticallySortNodes = (a, b) =>
+        a.data.label.localeCompare(b.data.label);
       checkOpNodes.sort(alphabeticallySortNodes);
       boolArtifactNodes.sort(alphabeticallySortNodes);
 
@@ -188,9 +189,9 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
     return {
       edges: filteredEdges,
-      nodes: filteredNodes
-    }
-  }
+      nodes: filteredNodes,
+    };
+  };
 
   const { edges, nodes } = collapseNodes();
 

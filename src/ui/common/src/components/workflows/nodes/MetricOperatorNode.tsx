@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
-import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
+import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
 
@@ -32,7 +32,8 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     (state: RootState) => state.workflowReducer
   );
   const selected = currentNode.id === data.nodeId;
-  const execState: ExecState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
+  const execState: ExecState =
+    workflowState.operatorResults[data.nodeId]?.result?.exec_state;
 
   const textColor = selected
     ? theme.palette.DarkContrast50
@@ -110,7 +111,9 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
           justifyContent="center"
           alignItems="center"
         >
-          <Typography variant="h5">{parseFloat(data.result).toFixed(3)}</Typography>
+          <Typography variant="h5">
+            {parseFloat(data.result).toFixed(3)}
+          </Typography>
         </Box>
       )}
 
