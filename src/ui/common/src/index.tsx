@@ -89,6 +89,11 @@ import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import { Status } from './components/workflows/workflowStatus';
+import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
+import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
+import { handleListArtifactResults } from './handlers/listArtifactResults';
+import artifactResultContents from './reducers/artifactResultContents';
+import artifactResults from './reducers/artifactResults';
 import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
@@ -149,6 +154,7 @@ import workflow, {
   workflowSlice,
   WorkflowState,
 } from './reducers/workflow';
+import workflowDagResults from './reducers/workflowDagResults';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import {
@@ -289,6 +295,8 @@ export {
   Artifact,
   ArtifactDetailsPage,
   ArtifactResult,
+  artifactResultContents,
+  artifactResults,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
   BaseNode,
@@ -374,9 +382,12 @@ export {
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
+  handleGetArtifactResultContent,
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleGetWorkflowDagResult,
+  handleListArtifactResults,
   handleListIntegrationObjects,
   handleListWorkflowSavedObjects,
   handleLoadIntegrationObject,
@@ -517,6 +528,7 @@ export {
   workflow,
   WorkflowCard,
   WorkflowDag,
+  workflowDagResults,
   WorkflowDagResultSummary,
   WorkflowHeader,
   WorkflowPage,

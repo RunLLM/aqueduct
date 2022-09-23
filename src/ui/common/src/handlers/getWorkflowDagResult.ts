@@ -1,11 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
+import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { DagResultResponse } from './responses/dag';
+
+const { apiAddress } = useAqueductConsts();
 
 export const handleGetWorkflowDagResult = createAsyncThunk<
   DagResultResponse,
   {
-    apiAddress: string;
     apiKey: string;
     workflowId: string;
     workflowDagResultId: string;
@@ -14,14 +16,13 @@ export const handleGetWorkflowDagResult = createAsyncThunk<
   'api/get_workflow_dag_result',
   async (
     args: {
-      apiAddress: string;
       apiKey: string;
       workflowId: string;
       workflowDagResultId: string;
     },
     thunkAPI
   ) => {
-    const { apiAddress, apiKey, workflowId, workflowDagResultId } = args;
+    const { apiKey, workflowId, workflowDagResultId } = args;
     const resp = await fetch(
       `${apiAddress}/api/workflow/${workflowId}/result/${workflowDagResultId}`,
       {

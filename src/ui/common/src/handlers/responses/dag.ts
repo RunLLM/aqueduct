@@ -47,7 +47,7 @@ export type DagResultResponse = DagMetadataResponse & {
 export function getMetricsAndChecksOnArtifact(
   dagResult: DagResultResponse,
   artifactId: string
-): { checks: OperatorResultResponse[]; metrics: OperatorResultResponse[] } {
+): { checks: ArtifactResultResponse[]; metrics: ArtifactResultResponse[] } {
   const metricsOp = Object.values(dagResult.operators).filter(
     (opResult) =>
       opResult.inputs.includes(artifactId) &&
@@ -73,5 +73,7 @@ export function getMetricsAndChecksOnArtifact(
       (opResult) => opResult.spec?.type === OperatorType.Check
     )
   );
-  return { checks: checksOp, metrics: metricsOp };
+  const checksArtfIds = checksOp.flatMap((opResult) => opResult.outputs);
+  const checksArtf = checksArtfIds.map((id) => dagResult.artifacts[id]);
+  return { checks: checksArtf, metrics: metricsArtf };
 }
