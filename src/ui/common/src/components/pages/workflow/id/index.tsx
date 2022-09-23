@@ -349,24 +349,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
-    } else if (currentNode.type === NodeType.MetricOp) {
-      // Get the metrics id, and navigate to the metric details page.
-      return (
-        <Box>
-          <Button
-            style={{ marginRight: '16px' }}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/metric/${currentNode.id}`
-              );
-            }}
-          >
-            View Metric Details
-          </Button>
-        </Box>
-      );
     } else if (currentNode.type === NodeType.FunctionOp) {
       return (<Box>
           <Button

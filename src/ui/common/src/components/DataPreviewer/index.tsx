@@ -96,13 +96,23 @@ export const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHe
         });
         data = (
           <Box
-            sx={{
-              height: dataTableHeight ? dataTableHeight : '100%',
-              // height: '-webkit-fill-available',
-              // width: '100%',
-              // overflowX: 'scroll !important',
-              // overflowY: 'hidden',
-        );
+          sx={{
+            position: 'absolute',
+            height: dataTableHeight ? dataTableHeight : '100%',
+            // height: '-webkit-fill-available',
+            // width: '100%',
+            // overflowX: 'scroll !important',
+            // overflowY: 'hidden',
+            // minWidth: '400px',
+          }}
+        >
+          <DataTable
+            rowCount={parsedData.data.length}
+            rowGetter={({ index }) => parsedData.data[index]}
+            columns={columnsContent}
+          />
+        </Box>
+      );
         break;
       case SerializationType.Image:
         const srcFromBase64 =
