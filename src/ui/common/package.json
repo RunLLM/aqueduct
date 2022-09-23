@@ -105,5 +105,9 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^3.9.10"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.4.5",
+    "@zip.js/zip.js": "^2.6.29"
   }
 }
