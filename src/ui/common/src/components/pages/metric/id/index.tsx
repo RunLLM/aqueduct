@@ -237,7 +237,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         } else {
           // Render inline if possible
           return (
-            <Box>
+            <Box key={artifactId}>
               <Typography variant="body1">
                 {artifactResult.result.data}
               </Typography>

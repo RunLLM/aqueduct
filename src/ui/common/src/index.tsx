@@ -1,8 +1,6 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
 import DataPreviewer from './components/DataPreviewer';
-import LogViewer from './components/LogViewer';
-import MultiFileViewer from './components/MultiFileViewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -41,11 +39,14 @@ import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
+import LogViewer from './components/LogViewer';
+import MultiFileViewer from './components/MultiFileViewer';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
 import DataPage from './components/pages/data';
+import FunctionDetailsPage from './components/pages/function/id';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
@@ -53,7 +54,6 @@ import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import WorkflowPage from './components/pages/workflow/id';
-import FunctionDetailsPage from './components/pages/function/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
@@ -350,6 +350,7 @@ export {
   FileEventTarget,
   filteredList,
   formatService,
+  FunctionDetailsPage,
   FunctionGranularity,
   FunctionOp,
   FunctionOperatorNode,
@@ -393,7 +394,6 @@ export {
   IntegrationCard,
   IntegrationConfig,
   IntegrationDetailsPage,
-  FunctionDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
   integrations,
@@ -427,6 +427,7 @@ export {
   Metric,
   MetricDetailsPage,
   MetricOperatorNode,
+  MultiFileViewer,
   MySqlCard,
   MySqlConfig,
   MysqlDialog,
@@ -451,7 +452,6 @@ export {
   openSideSheet,
   openSideSheetSlice,
   Operator,
-  MultiFileViewer,
   OperatorExecStateTableType,
   OperatorResult,
   OperatorResultsSideSheet,

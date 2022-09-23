@@ -20,7 +20,11 @@ type Props = {
   dataTableHeight?: string;
 };
 
-export const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight }) => {
+export const DataPreviewer: React.FC<Props> = ({
+  previewData,
+  error,
+  dataTableHeight,
+}) => {
   if (!previewData) {
     return null;
   }
@@ -96,23 +100,23 @@ export const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHe
         });
         data = (
           <Box
-          sx={{
-            position: 'absolute',
-            height: dataTableHeight ? dataTableHeight : '100%',
-            // height: '-webkit-fill-available',
-            // width: '100%',
-            // overflowX: 'scroll !important',
-            // overflowY: 'hidden',
-            // minWidth: '400px',
-          }}
-        >
-          <DataTable
-            rowCount={parsedData.data.length}
-            rowGetter={({ index }) => parsedData.data[index]}
-            columns={columnsContent}
-          />
-        </Box>
-      );
+            sx={{
+              position: 'absolute',
+              height: dataTableHeight ? dataTableHeight : '100%',
+              // height: '-webkit-fill-available',
+              // width: '100%',
+              // overflowX: 'scroll !important',
+              // overflowY: 'hidden',
+              // minWidth: '400px',
+            }}
+          >
+            <DataTable
+              rowCount={parsedData.data.length}
+              rowGetter={({ index }) => parsedData.data[index]}
+              columns={columnsContent}
+            />
+          </Box>
+        );
         break;
       case SerializationType.Image:
         const srcFromBase64 =

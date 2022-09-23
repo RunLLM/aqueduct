@@ -19,7 +19,6 @@ const AqueductStraight: React.FC<EdgeProps> = ({
       <defs>
         <marker
           id="arrow-closed"
-          viewBox="-10 -10 20 20"
           refX="0"
           refY="0"
           markerWidth="12.5"

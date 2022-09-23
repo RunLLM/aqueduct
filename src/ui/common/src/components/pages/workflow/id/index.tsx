@@ -43,7 +43,6 @@ import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -350,7 +349,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         </Box>
       );
     } else if (currentNode.type === NodeType.FunctionOp) {
-      return (<Box>
+      return (
+        <Box>
           <Button
             style={{ marginRight: '16px' }}
             onClick={() => {
@@ -363,7 +363,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             View Function Details
           </Button>
-        </Box>);
+        </Box>
+      );
     }
 
     return null;

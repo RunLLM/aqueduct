@@ -22,9 +22,9 @@ import {
 } from '../../../utils/operators';
 import { ExecState } from '../../../utils/shared';
 import DataPreviewer from '../../DataPreviewer';
+import LogViewer from '../../LogViewer';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
-import LogViewer from '../../LogViewer';
 import NodeStatus from '../nodes/NodeStatus';
 
 interface Props {

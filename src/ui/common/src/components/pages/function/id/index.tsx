@@ -1,70 +1,45 @@
-import Alert from '@mui/material/Alert';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link, List, ListItem } from '@mui/material';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
-import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
+import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
-import { ArtifactType } from '../../../../utils/artifacts';
+import DefaultLayout from '../../../../components/layouts/default';
+import LogViewer from '../../../../components/LogViewer';
+import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
-import { checkOperatorNodeIcon } from '../../../../components/workflows/nodes/CheckOperatorNode';
-import { databaseNodeIcon } from '../../../../components/workflows/nodes/DatabaseNode';
 import { dictArtifactNodeIcon } from '../../../../components/workflows/nodes/DictArtifactNode';
-import { functionOperatorNodeIcon } from '../../../../components/workflows/nodes/FunctionOperatorNode';
-import { genericArtifactNodeIcon } from '../../../../components/workflows/nodes/GenericArtifactNode';
 import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
 import { jsonArtifactNodeIcon } from '../../../../components/workflows/nodes/JsonArtifactNode';
-import { metricOperatorNodeIcon } from '../../../../components/workflows/nodes/MetricOperatorNode';
 import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/NumericArtifactNode';
 import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
 import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
-
-import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
-import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
-import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
-import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
-import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
-import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
-import DefaultLayout, { MenuSidebarOffset } from '../../../../components/layouts/default';
 import {
-  handleListIntegrationObjects,
-  handleLoadIntegrationOperators,
-  handleTestConnectIntegration,
-  resetEditStatus,
-  resetTestConnectStatus,
-} from '../../../../reducers/integration';
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
-import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
+  handleGetArtifactResults,
+  handleGetOperatorResults,
+  handleGetWorkflow,
+  selectResultIdx,
+} from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
-import { Integration } from '../../../../utils/integrations';
-import { isFailed, isLoading, isSucceeded, LoadingStatusEnum } from '../../../../utils/shared';
-import IntegrationOptions from '../../../integrations/options';
-
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
-import { LayoutProps } from '../../types';
-import {
-  ZipReader,
-  BlobReader,
-  TextWriter
-} from "@zip.js/zip.js";
 import { exportFunction } from '../../../../utils/operators';
-import { Link, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
-import MultiFileViewer from '../../../../components/MultiFileViewer';
-import LogViewer from '../../../../components/LogViewer';
-import { handleGetOperatorResults, handleGetWorkflow, handleGetArtifactResults, selectResultIdx } from '../../../../reducers/workflow';
+import { LoadingStatusEnum } from '../../../../utils/shared';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { LayoutProps } from '../../types';
 
 type FunctionDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
-  maxRenderSize?: number
+  maxRenderSize?: number;
 };
 
 const listStyle = {
@@ -84,11 +59,11 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
   const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
   const [files, setFiles] = useState({
-    "": {
-      path:"",
-      language:"plaintext",
-      content:""
-    }
+    '': {
+      path: '',
+      language: 'plaintext',
+      content: '',
+    },
   });
 
   const artifactTypeToIconMapping = {
@@ -129,7 +104,10 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
-    if (workflow.selectedDag === undefined || (workflow.selectedDag && !(params.workflowId in workflow.selectedDag))) {
+    if (
+      workflow.selectedDag === undefined ||
+      (workflow.selectedDag && !(params.workflowId in workflow.selectedDag))
+    ) {
       dispatch(
         handleGetWorkflow({
           apiKey: user.apiKey,
@@ -140,18 +118,21 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (workflow.loadingStatus.loading ===  LoadingStatusEnum.Succeeded && !(params.operatorId in workflow.operatorResults)) {
-        let idx = 0;
-        workflow.dagResults.forEach((value, index) => {
-          if (value.id === params.workflowDagResultId) {
-            idx = index;
-          }
-        });
-        dispatch(selectResultIdx(idx));
-        // May encounter a race condition where selectResultIdx sets operatorResults to {}
-        // after we populate it because currently cannot check when selectResultIdx is done.
-        // Will fix after ui_redesign first pass is done.
-        dispatch(
+    if (
+      workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
+      !(params.operatorId in workflow.operatorResults)
+    ) {
+      let idx = 0;
+      workflow.dagResults.forEach((value, index) => {
+        if (value.id === params.workflowDagResultId) {
+          idx = index;
+        }
+      });
+      dispatch(selectResultIdx(idx));
+      // May encounter a race condition where selectResultIdx sets operatorResults to {}
+      // after we populate it because currently cannot check when selectResultIdx is done.
+      // Will fix after ui_redesign first pass is done.
+      dispatch(
         handleGetOperatorResults({
           apiKey: user.apiKey,
           workflowDagResultId: params.workflowDagResultId,
@@ -160,7 +141,6 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
       );
     }
   }, [workflow.loadingStatus.loading]);
-
 
   if (operator?.result?.name) {
     document.title = `${operator.result.name} | Aqueduct`;
@@ -173,60 +153,64 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
     return null;
   }
 
-  const logs =
-  operator?.result?.exec_state?.user_logs ?? {};
+  const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;
 
   const setFileHelper = (prevState, file, fileContents) => {
-    let nextState = {...prevState};
-    const pathList = file.filename.split("/");
+    const nextState = { ...prevState };
+    const pathList = file.filename.split('/');
     let base = nextState;
     pathList.forEach((section, i) => {
-        // Create a key for each first-level subfolder
-        if (!Object.keys(base).includes(section)) {
-            base[section] = {}
-        }
-        if (!file.directory && i+1 === pathList.length) {
-          // Include the file metadata
-          base[section] = fileContents
-        } else {
-            // Go into the subfolder
-            base = base[section]
-        }
+      // Create a key for each first-level subfolder
+      if (!Object.keys(base).includes(section)) {
+        base[section] = {};
+      }
+      if (!file.directory && i + 1 === pathList.length) {
+        // Include the file metadata
+        base[section] = fileContents;
+      } else {
+        // Go into the subfolder
+        base = base[section];
+      }
     });
     return nextState;
-  } 
+  };
 
   useEffect(() => {
     async function getFilesBlob() {
-        // This is the function used to retrieve the contents in the function that generates the operator's zip file.
-        const blob = await exportFunction(user, params.operatorId);
-        if (blob) {
-          const reader = new ZipReader(new BlobReader(blob));
-          const entries = await reader.getEntries();
-          entries.forEach((file) => {
-            let language = "plaintext";
-            if (file.filename.endsWith(".py")) {
-              language = "python";
-            }
-            if (file.uncompressedSize < maxRenderSize) {
-              file.getData(new TextWriter()).then((content) => {
-                setFiles((prevState) => setFileHelper(prevState, file, {
-                  path:file.filename,
-                  language:language,
-                  content:content,  
-                }));
-              });
-            } else {
-              setFiles((prevState) => setFileHelper(prevState, file, {
-                path:file.filename,
-                language:"plaintext",
-                content:"We do not support viewing such large files.\nPlease download this file instead.",
-              }));
-            }
-          });
-          await reader.close();
-        }
+      // This is the function used to retrieve the contents in the function that generates the operator's zip file.
+      const blob = await exportFunction(user, params.operatorId);
+      if (blob) {
+        const reader = new ZipReader(new BlobReader(blob));
+        const entries = await reader.getEntries();
+        entries.forEach((file) => {
+          let language = 'plaintext';
+          if (file.filename.endsWith('.py')) {
+            language = 'python';
+          }
+          if (file.uncompressedSize < maxRenderSize) {
+            file.getData(new TextWriter()).then((content) => {
+              setFiles((prevState) =>
+                setFileHelper(prevState, file, {
+                  path: file.filename,
+                  language: language,
+                  content: content,
+                })
+              );
+            });
+          } else {
+            setFiles((prevState) =>
+              setFileHelper(prevState, file, {
+                path: file.filename,
+                language: 'plaintext',
+                content:
+                  'We do not support viewing such large files.\nPlease download this file instead.',
+              })
+            );
+          }
+        });
+        await reader.close();
+      }
     }
     getFilesBlob();
   }, []);
@@ -261,7 +245,9 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
                 />
               </Box>
               <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${params.workflowDagResultId}/artifact/${artifactId}`}
+                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
+                  params.workflowDagResultId
+                }/artifact/${artifactId}`}
                 component={RouterLink as any}
                 sx={{ marginLeft: '16px' }}
                 underline="none"
@@ -306,7 +292,9 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
                 />
               </Box>
               <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${params.workflowDagResultId}/artifact/${artifactId}`}
+                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
+                  params.workflowDagResultId
+                }/artifact/${artifactId}`}
                 component={RouterLink as any}
                 sx={{ marginLeft: '16px' }}
                 underline="none"
@@ -323,8 +311,8 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   };
 
   return (
-    <Layout user={user} layoutType="workspace">
-      <Box width={'800px'}> 
+    <Layout user={user}>
+      <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%">
             <DetailsPageHeader name={operator?.result?.name} />
@@ -333,9 +321,14 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
                 {operator?.result?.description}
               </Typography>
             )}
-          </Box> 
-              
-          <Box display="flex" width="100%" paddingTop="40px" paddingBottom="40px">
+          </Box>
+
+          <Box
+            display="flex"
+            width="100%"
+            paddingTop="40px"
+            paddingBottom="40px"
+          >
             <Box width="100%">
               <Accordion
                 expanded={inputsExpanded}

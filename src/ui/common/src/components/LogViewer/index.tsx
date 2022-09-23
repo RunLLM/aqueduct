@@ -10,31 +10,58 @@ type Props = {
   err?: Error;
   contentHeight?: string;
 };
-const LogViewer: React.FC<Props> = ({ logs, err, contentHeight="10vh" }) => {
-  const [currentTab, setCurrentTab] = useState(err? "3": "1");
-  
-  const tabPanelOptions = {height:contentHeight, overflow:"scroll", fontFamily:'monospace, monospace'};
-  const errorTabPanelOptions = {...tabPanelOptions, color:'red.500'}
-  const empty = {color:"gray.200"};
+const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
+  const [currentTab, setCurrentTab] = useState(err ? '3' : '1');
+
+  const tabPanelOptions = {
+    height: contentHeight,
+    overflow: 'scroll',
+    fontFamily: 'monospace, monospace',
+  };
+  const errorTabPanelOptions = { ...tabPanelOptions, color: 'red.500' };
+  const empty = { color: 'gray.200' };
 
   const hasOutput = (obj) => {
-    return (obj !== undefined && obj.length > 0)
+    return obj !== undefined && obj.length > 0;
   };
-  
+
   return (
-    <Box sx={{mb: 4}} pb={1}>
+    <Box sx={{ mb: 4 }} pb={1}>
       <TabContext value={currentTab}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider'}}>
-          <TabList onChange={(_, tab) => setCurrentTab(tab)} aria-label="log viewer">
-            <Tab sx={hasOutput(logs?.stdout)? {} : empty} label="Stdout" value="1" />
-            <Tab sx={hasOutput(logs?.stderr)? {} : empty} label="Stderr" value="2" />
-            <Tab sx={(err !== undefined && hasOutput(err?.tip))? {} : empty} label="Errors" value="3" />
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <TabList
+            onChange={(_, tab) => setCurrentTab(tab)}
+            aria-label="log viewer"
+          >
+            <Tab
+              sx={hasOutput(logs?.stdout) ? {} : empty}
+              label="Stdout"
+              value="1"
+            />
+            <Tab
+              sx={hasOutput(logs?.stderr) ? {} : empty}
+              label="Stderr"
+              value="2"
+            />
+            <Tab
+              sx={err !== undefined && hasOutput(err?.tip) ? {} : empty}
+              label="Errors"
+              value="3"
+            />
           </TabList>
         </Box>
 
-        <TabPanel sx={tabPanelOptions} value="1">{hasOutput(logs?.stdout)? logs.stdout: "No output to display."}</TabPanel>
-        <TabPanel sx={errorTabPanelOptions} value="2">{hasOutput(logs?.stderr)? logs.stderr: "No error logs to display."}</TabPanel>
-        <TabPanel sx={errorTabPanelOptions} value="3">{err !== undefined && hasOutput(err?.tip)? `${err.tip}:\n${err.context}`: "No errors."}</TabPanel>
+        <TabPanel sx={tabPanelOptions} value="1">
+          {hasOutput(logs?.stdout) ? logs.stdout : 'No output to display.'}
+        </TabPanel>
+        <TabPanel sx={errorTabPanelOptions} value="2">
+          {hasOutput(logs?.stderr) ? logs.stderr : 'No error logs to display.'}
+        </TabPanel>
+        <TabPanel sx={errorTabPanelOptions} value="3">
+          {err !== undefined && hasOutput(err?.tip)
+            ? `${err.tip}:\n${err.context}`
+            : 'No errors.'}
+        </TabPanel>
       </TabContext>
     </Box>
   );
