@@ -1,6 +1,6 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
-import DataPreviewer from './components/DataPreviewer';
+import { DataPreviewer } from './components/DataPreviewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
