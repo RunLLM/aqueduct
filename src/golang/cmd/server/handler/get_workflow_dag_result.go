@@ -179,7 +179,7 @@ func getArtifactContents(
 	for _, artfResult := range dbArtifactResults {
 		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
 			// These artifacts has small content size and we can safely include them all in response.
-			if artf.Type == artifact.Bool || artf.Type == artifact.Numeric || artf.Type == artifact.String {
+			if artf.Type.IsCompact() && !artfResult.ExecState.IsNull && artfResult.ExecState.ExecutionState.Terminated() {
 				path := artfResult.ContentPath
 				// Read data from storage and deserialize payload to `container`
 				contentBytes, err := storageObj.Get(ctx, path)

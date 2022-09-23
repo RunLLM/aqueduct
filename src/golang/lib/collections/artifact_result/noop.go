@@ -63,6 +63,23 @@ func (r *noopReaderImpl) GetArtifactResults(
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
+func (r *noopReaderImpl) GetArtifactResultsByArtifactId(
+	ctx context.Context,
+	artifactId uuid.UUID,
+	db database.Database,
+) ([]ArtifactResult, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}
+
+func (r *noopReaderImpl) GetArtifactResultsByArtifactNameAndWorkflowId(
+	ctx context.Context,
+	workflowId uuid.UUID,
+	name string,
+	db database.Database,
+) ([]ArtifactResult, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}
+
 func (r *noopReaderImpl) GetArtifactResultByWorkflowDagResultIdAndArtifactId(
 	ctx context.Context,
 	workflowDagResultId,

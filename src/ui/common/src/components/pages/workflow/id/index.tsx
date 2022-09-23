@@ -30,6 +30,7 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportCsv } from '../../../../utils/preview';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import { ExecutionStatus } from '../../../../utils/shared';
@@ -37,7 +38,7 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout from '../../../layouts/default';
+import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader from '../../../workflows/workflowHeader';
@@ -227,6 +228,56 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
+  const SidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
+
+  const getSideSheetWidth = (
+    workflowStatusBarOpen: boolean,
+    baseWidth = '100%'
+  ): string | string[] => {
+    // let's break down this formula:
+    // fullWindowWidth is calc(100% + 250px)
+    // menuSidebarOffset is 250px
+    // SidebarMarginInPx is 64px * 2 = 128px
+    // getStatusBarWidth is 400px when open, 75 when closed.
+    // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
+      2 * SidebarMarginInPx
+    }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
+  };
+
+  const CollapsedStatusBarWidthInPx = 75;
+  const StatusBarWidthInPx = 385;
+
+  /**
+   *
+   * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
+   * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
+   */
+  const getStatusBarWidth = (workflowStatusBarOpen: boolean): string => {
+    if (workflowStatusBarOpen) {
+      return `${StatusBarWidthInPx}px`;
+    } else {
+      return `${CollapsedStatusBarWidthInPx}px`;
+    }
+  };
+
+  // NOTE(vikram): This is a compliated bit of nonsense code. Because the
+  // percentages are relative, we need to reset the base width to be the full
+  // window width to take advantage of the helper function here. This ensures
+  // that the ReactFlow canvas and the status bars below are the same width.
+  // Here, `fullWindowWidth` refers to the full width of the viewport, which
+  // is the current 100% + the width of the menu sidebar. This is a hack that
+  // breaks the abstraction, but because the WorkflowStatusBar overlay is
+  // absolute-positioned, it's required in order to align the content with
+  // the status bar's width.
+  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
+  const contentWidth = getSideSheetWidth(
+    openSideSheetState.workflowStatusBarOpen,
+    fullWindowWidth
+  );
+
+  const contentBottomOffsetInPx = `32px`;
+
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -298,6 +349,24 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
+    } else if (currentNode.type === NodeType.MetricOp) {
+      // Get the metrics id, and navigate to the metric details page.
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/metric/${currentNode.id}`
+              );
+            }}
+          >
+            View Metric Details
+          </Button>
+        </Box>
+      );
     } else if (currentNode.type === NodeType.FunctionOp) {
       return (<Box>
           <Button
@@ -318,12 +387,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   };
 
+  const drawerHeaderHeightInPx = 64;
+
   return (
-    <Layout user={user} layoutType="workspace">
+    <Layout user={user}>
       <Box
         sx={{
           display: 'flex',
-          width: '100%',
+          width: contentWidth,
           height: '100%',
           flexDirection: 'column',
         }}
@@ -343,7 +414,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             flex: 1,
             mt: 2,
             p: 3,
-            mb: 0,
+            mb: contentBottomOffsetInPx,
             width: '100%',
             boxSizing: 'border-box',
             backgroundColor: 'gray.50',
@@ -363,29 +434,33 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           anchor="right"
           variant="persistent"
           open={true}
-          sx={{ maxWidth: '800px' }}
-          PaperProps={{ sx: { overflow: 'hidden' } }}
+          PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}
         >
-          <Box width="800px" maxWidth="800px" minHeight="80vh">
+          <Box width="800px" maxWidth="800px" minHeight="100vh">
             <Box
               width="100%"
               sx={{ backgroundColor: theme.palette.gray['100'] }}
-              display="flex"
+              height={`${drawerHeaderHeightInPx}px`}
+              position="fixed"
             >
-              <Box
-                sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                onClick={onPaneClicked}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </Box>
-              <Typography variant="h5" padding="16px">
-                {getNodeLabel()}
-              </Typography>
-              <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
-                {getNodeActionButton()}
+              <Box display="flex">
+                <Box
+                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                  onClick={onPaneClicked}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </Box>
+                <Typography variant="h5" padding="16px">
+                  {getNodeLabel()}
+                </Typography>
+                <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
+                  {getNodeActionButton()}
+                </Box>
               </Box>
             </Box>
-            <Box>{getDataSideSheetContent(user, currentNode)}</Box>
+            <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
+              {getDataSideSheetContent(user, currentNode)}
+            </Box>
           </Box>
         </Drawer>
       )}

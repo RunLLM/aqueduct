@@ -16,11 +16,11 @@ import LogBlock, { LogLevel } from '../text/LogBlock';
 type Props = {
   previewData: ArtifactResult;
   error?: Error;
+  // TODO: remove this if no longer needed.
+  dataTableHeight?: string;
 };
 
-const DrawerHeaderHeightInPx = 64;
-
-const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
+export const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight }) => {
   if (!previewData) {
     return null;
   }
@@ -97,19 +97,11 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
         data = (
           <Box
             sx={{
-              height: '-webkit-fill-available',
-              width: '100%',
-              overflowX: 'scroll !important',
-              overflowY: 'hidden',
-              minWidth: '400px',
-            }}
-          >
-            <DataTable
-              rowCount={parsedData.data.length}
-              rowGetter={({ index }) => parsedData.data[index]}
-              columns={columnsContent}
-            />
-          </Box>
+              height: dataTableHeight ? dataTableHeight : '100%',
+              // height: '-webkit-fill-available',
+              // width: '100%',
+              // overflowX: 'scroll !important',
+              // overflowY: 'hidden',
         );
         break;
       case SerializationType.Image:
@@ -158,10 +150,7 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
   }
 
   return (
-    <Box
-      minHeight={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}
-      height={`calc(100vh - ${DrawerHeaderHeightInPx}px)`}
-    >
+    <Box>
       {errorComponent}
       {data}
     </Box>

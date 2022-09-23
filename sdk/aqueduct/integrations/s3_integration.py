@@ -3,13 +3,10 @@ from typing import List, Optional, Union
 
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (

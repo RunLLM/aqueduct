@@ -4,21 +4,14 @@ import React from 'react';
 import UserProfile from '../../utils/auth';
 import MenuSidebar from './menuSidebar';
 
-export type LayoutType = 'page' | 'workspace';
-
 export const MenuSidebarOffset = '250px';
 
 type Props = {
   user: UserProfile;
   children: React.ReactElement | React.ReactElement[];
-  layoutType?: LayoutType;
 };
 
-export const DefaultLayout: React.FC<Props> = ({
-  user,
-  children,
-  layoutType = 'page',
-}) => {
+export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
   return (
     <Box
       sx={{

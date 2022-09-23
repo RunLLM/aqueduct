@@ -107,6 +107,7 @@ export type Load = {
 
 export type Param = {
   val: string;
+  serialization_type: string;
 };
 
 export type OperatorSpec = {

@@ -18,7 +18,13 @@ from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
-from .dag import Metadata, SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
+from .dag import Metadata
+from .dag_deltas import (
+    AddOrReplaceOperatorDelta,
+    SubgraphDAGDelta,
+    apply_deltas_to_dag,
+    validate_overwriting_parameters,
+)
 from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
@@ -37,10 +43,11 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import serialize_parameter_value
+from .operators import Operator, OperatorSpec, ParamSpec
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
+    construct_param_spec,
     generate_engine_config,
     generate_ui_url,
     generate_uuid,
@@ -311,6 +318,15 @@ class Client:
         If a flow already exists with the same name, the existing flow will be updated
         to this new state.
 
+        The default execution engine of the flow is Aqueduct. In order to specify which
+        execution engine the flow will be running on, use "config" parameter. Eg:
+        >>> k8s_integration = client.integration("k8s_integration")
+        >>> flow = client.publish_flow(
+        >>>     name = "k8s_example",
+        >>>     artifacts = [output],
+        >>>     config = FlowConfig(engine=k8s_integration),
+        >>> )
+
         Args:
             name:
                 The name of the newly created flow.
@@ -432,6 +448,7 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
             runs = flow.list_runs(limit=1)
@@ -444,17 +461,12 @@ class Client:
                 )
             validate_overwriting_parameters(flow.latest()._dag, parameters)
 
-        serialized_params = None
-        if parameters is not None:
-            if any(not isinstance(name, str) for name in parameters):
-                raise InvalidUserArgumentException("Parameters must be keyed by strings.")
-
-            serialized_params = json.dumps(
-                {name: serialize_parameter_value(name, val) for name, val in parameters.items()}
-            )
+            for name, new_val in parameters.items():
+                artifact_type = infer_artifact_type(new_val)
+                param_specs[name] = construct_param_spec(new_val, artifact_type)
 
         flow_id = parse_user_supplied_id(flow_id)
-        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
 
     def delete_flow(
         self,

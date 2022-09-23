@@ -78,6 +78,7 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
 
     template = env.get_template("dag.template")
     r = template.render(
+        workflow_dag_id=spec.workflow_dag_id,
         dag_id=spec.dag_id,
         schedule=schedule,
         tasks=tasks,

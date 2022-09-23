@@ -28,7 +28,12 @@ from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
-from aqueduct.operators import Operator
+from aqueduct.operators import Operator, ParamSpec
+from aqueduct.serialization import (
+    artifact_type_to_serialization_type,
+    serialization_function_mapping,
+    serialize_val,
+)
 from aqueduct.templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
@@ -483,6 +488,11 @@ def human_readable_timestamp(ts: int) -> str:
     return datetime.utcfromtimestamp(ts).strftime(format)
 
 
+def indent_multiline_string(content: str) -> str:
+    """Indents every line of a multiline string block."""
+    return "\t" + "\t".join(content.splitlines(True))
+
+
 def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     """Verifies that a user-defined id is of the expected types, returning the string version of the id."""
     if not isinstance(id, str) and not isinstance(id, uuid.UUID):
@@ -521,6 +531,18 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             return ArtifactType.PICKLABLE
         except:
             raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
+    serialization_type = artifact_type_to_serialization_type(artifact_type, val)
+    assert serialization_type in serialization_function_mapping
+
+    # We must base64 encode the resulting bytes, since we can't be sure
+    # what encoding it was written in (eg. Image types are not encoded as "utf8").
+    return ParamSpec(
+        val=serialize_val(val, serialization_type),
+        serialization_type=serialization_type,
+    )
 
 
 def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:

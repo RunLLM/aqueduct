@@ -18,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -203,6 +202,7 @@ func ScheduleWorkflow(
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())
 	jobSpec, err := job.NewCompileAirflowSpec(
 		jobName,
+		dag.Id,
 		&dag.StorageConfig,
 		operatorMetadataPath,
 		operatorOutputPath,
@@ -250,12 +250,12 @@ func ScheduleWorkflow(
 	// Update the AirflowRuntimeConfig for `dag`
 	newRuntimeConfig := dag.EngineConfig
 	newRuntimeConfig.AirflowConfig.DagId = dagId
+	// The DAGs will not match until the user has copied over the newly generated `airflowDagFile`
+	newRuntimeConfig.AirflowConfig.MatchesAirflow = false
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
 	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix = artifactToMetadataPathPrefix
-
-	logrus.Warnf("Writing op to metadata path prefixes: %v", newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix)
 
 	_, err = workflowDagWriter.UpdateWorkflowDag(
 		ctx,

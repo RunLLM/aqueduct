@@ -1,4 +1,4 @@
-from aqueduct_executor.operators.connectors.data import config, relational
+from aqueduct_executor.operators.connectors.data import config, relational, utils
 from sqlalchemy import create_engine, engine
 
 
@@ -13,7 +13,7 @@ def _create_engine(config: config.SnowflakeConfig) -> engine.Engine:
     # https://github.com/snowflakedb/snowflake-sqlalchemy
     url = "snowflake://{username}:{password}@{account_identifier}/{database}/{schema}?warehouse={warehouse}".format(
         username=config.username,
-        password=config.password,
+        password=utils.url_encode(config.password),
         account_identifier=config.account_identifier,
         database=config.database,
         schema=config.db_schema,

@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -35,37 +36,35 @@ _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
 _METADATA_SERIALIZATION_TYPE_KEY = "serialization_type"
 
 
-def _read_csv(storage: Storage, path: str) -> pd.DataFrame:
-    input_bytes = storage.get(path)
+def _read_csv(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
 
 
-def _read_table_input(storage: Storage, path: str) -> pd.DataFrame:
-    input_bytes = storage.get(path)
+def _read_table_input(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(input_bytes), orient="table")
 
 
-def _read_json_input(storage: Storage, path: str) -> Any:
-    return json.loads(storage.get(path).decode(_DEFAULT_ENCODING))
+def _read_json_input(input_bytes: bytes) -> Any:
+    return json.loads(input_bytes.decode(_DEFAULT_ENCODING))
 
 
-def _read_pickle_input(storage: Storage, path: str) -> Any:
-    return pickle.loads(storage.get(path))
+def _read_pickle_input(input_bytes: bytes) -> Any:
+    return pickle.loads(input_bytes)
 
 
-def _read_image_input(storage: Storage, path: str) -> Image.Image:
-    return Image.open(io.BytesIO(storage.get(path)))
+def _read_image_input(input_bytes: bytes) -> Image.Image:
+    return Image.open(io.BytesIO(input_bytes))
 
 
-def _read_string_input(storage: Storage, path: str) -> str:
-    return storage.get(path).decode(_DEFAULT_ENCODING)
+def _read_string_input(input_bytes: bytes) -> str:
+    return input_bytes.decode(_DEFAULT_ENCODING)
 
 
-def _read_bytes_input(storage: Storage, path: str) -> bytes:
-    return storage.get(path)
+def _read_bytes_input(input_bytes: bytes) -> bytes:
+    return input_bytes
 
 
-_deserialization_function_mapping = {
+deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]] = {
     SerializationType.TABLE: _read_table_input,
     SerializationType.JSON: _read_json_input,
     SerializationType.PICKLE: _read_pickle_input,
@@ -108,10 +107,10 @@ def read_artifacts(
         input_types.append(artifact_type)
 
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
-        if serialization_type not in _deserialization_function_mapping:
+        if serialization_type not in deserialization_function_mapping:
             raise Exception("Unsupported serialization type %s" % serialization_type)
 
-        inputs.append(_deserialization_function_mapping[serialization_type](storage, input_path))
+        inputs.append(deserialization_function_mapping[serialization_type](storage.get(input_path)))
 
     return inputs, input_types
 
@@ -126,7 +125,9 @@ def read_system_metadata(
 def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str
 ) -> List[Dict[str, Any]]:
-    metadata_inputs = [_read_json_input(storage, input_path) for input_path in input_metadata_paths]
+    metadata_inputs = [
+        _read_json_input(storage.get(input_path)) for input_path in input_metadata_paths
+    ]
     print("key name is", key_name)
     print("metadata_inputs is", metadata_inputs)
     if any(key_name not in metadata for metadata in metadata_inputs):
@@ -198,11 +199,12 @@ _serialization_function_mapping = {
 def write_artifact(
     storage: Storage,
     artifact_type: ArtifactType,
-    output_path: str,
+    output_path: Optional[str],
     output_metadata_path: str,
     content: Any,
     system_metadata: Dict[str, str],
 ) -> None:
+    """The `output_path` can be empty if the contents were already pre-populated (eg. parameter operators)."""
     output_metadata: Dict[str, Any] = {
         _METADATA_SCHEMA_KEY: [],
         _METADATA_SYSTEM_METADATA_KEY: system_metadata,
@@ -211,37 +213,49 @@ def write_artifact(
 
     if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.TABLE.value
+
+    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = artifact_type_to_serialization_type(
+        artifact_type, content
+    ).value
+
+    if output_path is not None:
+        _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
+            storage,
+            output_path,
+            content,
+        )
+
+    storage.put(output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING))
+
+
+def artifact_type_to_serialization_type(
+    artifact_type: ArtifactType, content: Any
+) -> SerializationType:
+    if artifact_type == ArtifactType.TABLE:
+        serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.IMAGE.value
+        serialization_type = SerializationType.IMAGE
     elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.STRING.value
+        serialization_type = SerializationType.STRING
     elif artifact_type == ArtifactType.BYTES:
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.BYTES.value
+        serialization_type = SerializationType.BYTES
     elif artifact_type == ArtifactType.BOOL or artifact_type == ArtifactType.NUMERIC:
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.JSON.value
+        serialization_type = SerializationType.JSON
     elif artifact_type == ArtifactType.PICKLABLE:
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.PICKLE.value
+        serialization_type = SerializationType.PICKLE
     elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE:
         try:
             json.dumps(content)
-            output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.JSON.value
+            serialization_type = SerializationType.JSON
         except:
-            output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = SerializationType.PICKLE.value
+            serialization_type = SerializationType.PICKLE
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert (
-        output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
-        in artifact_to_serialization[artifact_type]
+    assert serialization_type is not None and (
+        serialization_type.value in artifact_to_serialization[artifact_type]
     )
-    _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](
-        storage,
-        output_path,
-        content,
-    )
-
-    storage.put(output_metadata_path, json.dumps(output_metadata).encode(_DEFAULT_ENCODING))
+    return serialization_type
 
 
 def write_exec_state(

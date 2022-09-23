@@ -1,8 +1,8 @@
 import argparse
 import base64
 
-from aqueduct_executor.migrators.artifact_migration import execute
-from aqueduct_executor.migrators.artifact_migration.spec import parse_spec
+from aqueduct_executor.migrators.artifact_migration_000016 import execute
+from aqueduct_executor.migrators.artifact_migration_000016.spec import parse_spec
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 import cloudpickle as pickle
-from aqueduct_executor.migrators.artifact_migration.spec import MigrationSpec
+from aqueduct_executor.migrators.artifact_migration_000016.spec import MigrationSpec
 from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage

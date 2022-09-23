@@ -139,6 +139,55 @@ func (r *standardReaderImpl) GetWorkflowDagsByOperatorId(
 	return workflowDags, err
 }
 
+func (r *standardReaderImpl) GetWorkflowDagsMapByArtifactResultIds(
+	ctx context.Context,
+	artifactResultIds []uuid.UUID,
+	db database.Database,
+) (map[uuid.UUID]DBWorkflowDag, error) {
+	type resultRow struct {
+		Id            uuid.UUID            `db:"id"`
+		WorkflowId    uuid.UUID            `db:"workflow_id"`
+		CreatedAt     time.Time            `db:"created_at"`
+		StorageConfig shared.StorageConfig `db:"storage_config"`
+		EngineConfig  shared.EngineConfig  `db:"engine_config"`
+		ArtfResultId  uuid.UUID            `db:"artf_result_id"`
+	}
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT artifact_result.id as artf_result_id, %s
+		FROM workflow_dag, workflow_dag_edge, workflow_dag_result, artifact_result
+		WHERE workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = artifact_result.artifact_id
+		OR 
+			workflow_dag_edge.to_id = artifact_result.artifact_id
+		)
+		AND artifact_result.id IN (%s);`,
+		allColumnsWithPrefix(),
+		stmt_preparers.GenerateArgsList(len(artifactResultIds), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactResultIds)
+	var results []resultRow
+	err := db.Query(ctx, &results, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	resultMap := make(map[uuid.UUID]DBWorkflowDag, len(results))
+	for _, row := range results {
+		resultMap[row.ArtfResultId] = DBWorkflowDag{
+			Id:            row.Id,
+			WorkflowId:    row.WorkflowId,
+			CreatedAt:     row.CreatedAt,
+			StorageConfig: row.StorageConfig,
+			EngineConfig:  row.EngineConfig,
+		}
+	}
+
+	return resultMap, nil
+}
+
 func (w *standardWriterImpl) UpdateWorkflowDag(
 	ctx context.Context,
 	id uuid.UUID,

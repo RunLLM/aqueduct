@@ -26,7 +26,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "18"
+SCHEMA_VERSION = "19"
 
 
 def execute_command(args, cwd=None):
@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "-u",
         "--ui",
         dest="update_ui",
         default=False,
@@ -48,6 +49,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-g",
         "--gobinary",
         dest="update_go_binary",
         default=False,
@@ -56,6 +58,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-s",
         "--sdk",
         dest="update_sdk",
         default=False,
@@ -64,6 +67,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-e",
         "--executor",
         dest="update_executor",
         default=False,

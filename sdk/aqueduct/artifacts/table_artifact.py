@@ -10,8 +10,8 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
-from aqueduct.dag import (
-    DAG,
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import (
     AddOrReplaceOperatorDelta,
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,

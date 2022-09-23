@@ -6,16 +6,19 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 var (
@@ -94,10 +97,10 @@ func (wrs *WorkflowRetentionSpec) GetStorageConfig() (*shared.StorageConfig, err
 
 type WorkflowSpec struct {
 	BaseSpec
-	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
-	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
-	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
-	AqPath         string               `json:"aq_path" yaml:"aqPath"`
+	WorkflowId     string                 `json:"workflow_id" yaml:"workflowId"`
+	GithubManager  github.ManagerConfig   `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]param.Param `json:"parameters" yaml:"parameters"`
+	AqPath         string                 `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -147,9 +150,10 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	BasePythonSpec
-	Val                string `json:"val"  yaml:"val"`
-	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ExpectedType       db_artifact.Type `json:"expected_type" yaml:"expected_type"`
+	SerializationType  string           `json:"serialization_type" yaml:"serialization_type"`
+	OutputContentPath  string           `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string           `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {
@@ -214,6 +218,7 @@ type DiscoverSpec struct {
 
 type CompileAirflowSpec struct {
 	BasePythonSpec
+	WorkflowDagId     uuid.UUID           `json:"workflow_dag_id"  yaml:"workflow_dag_id"`
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 	DagId             string              `json:"dag_id"  yaml:"dag_id"`
 	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
@@ -298,7 +303,7 @@ func NewWorkflowSpec(
 	jobManager Config,
 	githubManager github.ManagerConfig,
 	aqPath string,
-	parameters map[string]string,
+	parameters map[string]param.Param,
 ) Spec {
 	return &WorkflowSpec{
 		BaseSpec: BaseSpec{
@@ -482,6 +487,7 @@ func NewDiscoverSpec(
 
 func NewCompileAirflowSpec(
 	name string,
+	workflowDagID uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 	outputContentPath string,
@@ -509,6 +515,7 @@ func NewCompileAirflowSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		WorkflowDagId:     workflowDagID,
 		OutputContentPath: outputContentPath,
 		DagId:             dagId,
 		CronSchedule:      cronSchedule,
