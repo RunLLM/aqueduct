@@ -294,6 +294,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   };
 
+
   const getNodeActionButton = () => {
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.

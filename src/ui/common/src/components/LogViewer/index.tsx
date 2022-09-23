@@ -11,7 +11,13 @@ type Props = {
   contentHeight?: string;
 };
 const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
-  const [currentTab, setCurrentTab] = useState(err ? '3' : '1');
+  const hasOutput = (obj) => {
+    return obj !== undefined && obj.length > 0;
+  };
+
+  const [currentTab, setCurrentTab] = useState('1');
+
+  console.log(currentTab);
 
   const tabPanelOptions = {
     height: contentHeight,
@@ -21,9 +27,9 @@ const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
   const errorTabPanelOptions = { ...tabPanelOptions, color: 'red.500' };
   const empty = { color: 'gray.200' };
 
-  const hasOutput = (obj) => {
-    return obj !== undefined && obj.length > 0;
-  };
+  const noStdOut = 'No output logs to display.';
+  const noStdErr = 'No error logs to display.';
+  const noErr = 'No errors to display.';
 
   return (
     <Box sx={{ mb: 4 }} pb={1}>
@@ -52,15 +58,15 @@ const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
         </Box>
 
         <TabPanel sx={tabPanelOptions} value="1">
-          {hasOutput(logs?.stdout) ? logs.stdout : 'No output to display.'}
+          {hasOutput(logs?.stdout) ? logs.stdout : noStdOut}
         </TabPanel>
         <TabPanel sx={errorTabPanelOptions} value="2">
-          {hasOutput(logs?.stderr) ? logs.stderr : 'No error logs to display.'}
+          {hasOutput(logs?.stderr) ? logs.stderr : noStdErr}
         </TabPanel>
         <TabPanel sx={errorTabPanelOptions} value="3">
           {err !== undefined && hasOutput(err?.tip)
             ? `${err.tip}:\n${err.context}`
-            : 'No errors.'}
+            : noErr}
         </TabPanel>
       </TabContext>
     </Box>

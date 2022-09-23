@@ -310,6 +310,8 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
     });
   };
 
+  const border = {border: '2px', borderStyle: 'solid', borderRadius: '8px', borderColor: 'gray.400', margin: '16px', padding: '16px'};
+
   return (
     <Layout user={user}>
       <Box width={'800px'}>
@@ -386,12 +388,17 @@ const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
 
           <Box>
             <Typography variant="h4">Logs</Typography>
-            {logs !== {} && <LogViewer logs={logs} err={operatorError} />}
+            {logs !== {} && (
+            <Box sx={border}>
+              <LogViewer logs={logs} err={operatorError} />
+            </Box>)}
           </Box>
 
           <Box>
             <Typography variant="h4">Code Preview</Typography>
-            <MultiFileViewer files={files} />
+            <Box sx={border}>
+              <MultiFileViewer files={files} />
+            </Box>
           </Box>
         </Box>
       </Box>
