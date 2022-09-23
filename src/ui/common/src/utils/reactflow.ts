@@ -29,6 +29,8 @@ export type ReactFlowNodeData = {
   nodeType: ReactflowNodeType;
   nodeId: string;
   label?: string;
+  // Used to present metric or check results inside the node
+  result?: string;
 };
 
 export type GetPositionResponse = {
