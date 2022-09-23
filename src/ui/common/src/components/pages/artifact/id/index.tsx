@@ -5,8 +5,8 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 
+import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -14,7 +14,12 @@ import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
 import { DataSchema } from '../../../../utils/data';
 import { exportCsv } from '../../../../utils/preview';
-import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
+import {
+  isFailed,
+  isInitial,
+  isLoading,
+  isSucceeded,
+} from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import OperatorExecStateTable, {
@@ -48,12 +53,14 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const contentsWithLoadingStatus = artifactResultId
     ? artifactContents[artifactResultId]
     : undefined;
-  const { metrics, checks } = !!workflowDagResultWithLoadingStatus
-    ? getMetricsAndChecksOnArtifact(
-        workflowDagResultWithLoadingStatus?.result,
-        artifactId
-      )
-    : { metrics: [], checks: [] };
+  const { metrics, checks } =
+    !!workflowDagResultWithLoadingStatus &&
+    isSucceeded(workflowDagResultWithLoadingStatus.status)
+      ? getMetricsAndChecksOnArtifact(
+          workflowDagResultWithLoadingStatus?.result,
+          artifactId
+        )
+      : { metrics: [], checks: [] };
 
   useEffect(() => {
     document.title = 'Artifact Details | Aqueduct';
@@ -79,7 +86,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
       if (
         !!artifact.result &&
-        artifact.result.content_serialized === undefined &&
+        // intentional '==' to check undefined or null.
+        artifact.result.content_serialized == null &&
         !contentsWithLoadingStatus
       ) {
         dispatch(
@@ -96,8 +104,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (
     !workflowDagResultWithLoadingStatus ||
-    !isInitial(workflowDagResultWithLoadingStatus.status) ||
-    !isLoading(workflowDagResultWithLoadingStatus.status)
+    isInitial(workflowDagResultWithLoadingStatus.status) ||
+    isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
       <Layout user={user}>
@@ -120,7 +128,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     return (
       <Layout user={user}>
         <Alert title="Failed to load artifact">
-          Artifact {artifactId} doesn't seem to exist on this workflow.
+          Artifact {artifactId} does not exist on this workflow.
         </Alert>
       </Layout>
     );
@@ -140,10 +148,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       .map((metricArtf) => {
         let name = metricArtf.name;
         if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 'artifact'.length);
+          name = name.slice(0, 0 - 'artifact'.length);
         }
         return {
-          name: name,
+          title: name,
           value: metricArtf.result?.content_serialized,
         };
       })
@@ -175,10 +183,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       .map((checkArtf) => {
         let name = checkArtf.name;
         if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 'artifact'.length);
+          name = name.slice(0, 0 - 'artifact'.length);
         }
         return {
-          name: name,
+          title: name,
           value: checkArtf.result?.content_serialized,
         };
       })
@@ -212,7 +220,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         No result to show for this artifact.
       </Typography>
     );
-  } else if (artifact.result.content_serialized !== undefined) {
+  } else if (artifact.result.content_serialized != null) {
     contentSection = (
       <Typography variant="body1" component="div" marginBottom="8px">
         <code>{artifact.result.content_serialized}</code>

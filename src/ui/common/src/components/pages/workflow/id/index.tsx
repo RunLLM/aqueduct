@@ -419,7 +419,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Typography variant="h5" padding="16px">
                   {getNodeLabel()}
                 </Typography>
-                <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
+                <Box sx={{ mx: 2, alignSelf: 'center' }}>
                   {getNodeActionButton()}
                 </Box>
               </Box>

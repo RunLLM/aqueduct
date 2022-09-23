@@ -17,13 +17,14 @@ export interface ArtifactResultContentState {
 const initialState: ArtifactResultContentState = { contents: {} };
 
 export const artifactResultContentsSlice = createSlice({
-  name: 'artifactContentsReducer',
+  name: 'artifactResultContentsReducer',
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(
       handleGetArtifactResultContent.pending,
       (state, { meta }) => {
+        console.log('pending');
         const id = meta.arg.artifactResultId;
         state.contents[id] = {
           status: { loading: LoadingStatusEnum.Loading, err: '' },
@@ -33,6 +34,7 @@ export const artifactResultContentsSlice = createSlice({
     builder.addCase(
       handleGetArtifactResultContent.fulfilled,
       (state, { meta, payload }) => {
+        console.log('fulfilled');
         const id = meta.arg.artifactResultId;
         state.contents[id] = {
           data: payload,
@@ -43,6 +45,7 @@ export const artifactResultContentsSlice = createSlice({
     builder.addCase(
       handleGetArtifactResultContent.rejected,
       (state, { meta, payload }) => {
+        console.log('rejected');
         const id = meta.arg.artifactResultId;
 
         state.contents[id] = {

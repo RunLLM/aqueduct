@@ -129,8 +129,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   if (
     !workflowDagResultWithLoadingStatus ||
-    !isInitial(workflowDagResultWithLoadingStatus.status) ||
-    !isLoading(workflowDagResultWithLoadingStatus.status)
+    isInitial(workflowDagResultWithLoadingStatus.status) ||
+    isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
       <Layout user={user}>

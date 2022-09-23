@@ -18,7 +18,7 @@ export interface WorkflowDagResultsState {
 const initialState: WorkflowDagResultsState = { artifacts: {} };
 
 export const artifactResultsSlice = createSlice({
-  name: 'workflowDagResultsReducer',
+  name: 'artifactResultsReducer',
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {

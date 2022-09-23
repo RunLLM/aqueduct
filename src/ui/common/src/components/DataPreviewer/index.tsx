@@ -20,7 +20,11 @@ type Props = {
   dataTableHeight?: string;
 };
 
-export const DataPreviewer: React.FC<Props> = ({ previewData, error, dataTableHeight }) => {
+export const DataPreviewer: React.FC<Props> = ({
+  previewData,
+  error,
+  dataTableHeight,
+}) => {
   if (!previewData) {
     return null;
   }

@@ -68,11 +68,7 @@ export function getMetricsAndChecksOnArtifact(
   const metricsDownstreamOps = metricsDownstreamIds.map(
     (id) => dagResult.operators[id]
   );
-  checksOp.concat(
-    metricsDownstreamOps.filter(
-      (opResult) => opResult.spec?.type === OperatorType.Check
-    )
-  );
+  checksOp.push(...metricsDownstreamOps);
   const checksArtfIds = checksOp.flatMap((opResult) => opResult.outputs);
   const checksArtf = checksArtfIds.map((id) => dagResult.artifacts[id]);
   return { checks: checksArtf, metrics: metricsArtf };
