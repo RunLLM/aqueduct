@@ -52,7 +52,7 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
   let selected = files;
   if (hasFiles) {
     const pathList = selectedFile.split("/").splice(1);
-    console.log(pathList);
+
     pathList.forEach((section) => {
       if (Object.keys(selected).includes(section)) {
         selected = selected[section];

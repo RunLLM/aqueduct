@@ -127,7 +127,6 @@ export const handleGetOperatorResults = createAsyncThunk<
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
-
     return body as GetOperatorResultResponse;
   }
 );

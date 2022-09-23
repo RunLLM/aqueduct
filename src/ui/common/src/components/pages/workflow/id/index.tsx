@@ -30,7 +30,6 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportCsv } from '../../../../utils/preview';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import { ExecutionStatus } from '../../../../utils/shared';
