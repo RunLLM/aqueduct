@@ -6,7 +6,7 @@ import { handleListArtifactResults } from '../handlers/listArtifactResults';
 import { ListArtifactResultsResponse } from '../handlers/responses/artifact';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
-export interface WorkflowDagResultsState {
+export interface ArtifactResultsState {
   artifacts: {
     [id: string]: {
       status: LoadingStatus;
@@ -15,7 +15,7 @@ export interface WorkflowDagResultsState {
   };
 }
 
-const initialState: WorkflowDagResultsState = { artifacts: {} };
+const initialState: ArtifactResultsState = { artifacts: {} };
 
 export const artifactResultsSlice = createSlice({
   name: 'artifactResultsReducer',

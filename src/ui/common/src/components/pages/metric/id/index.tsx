@@ -13,17 +13,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import PaginatedTable from '../../../../components/tables/PaginatedTable';
-import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
-import { dictArtifactNodeIcon } from '../../../../components/workflows/nodes/DictArtifactNode';
-import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
-import { jsonArtifactNodeIcon } from '../../../../components/workflows/nodes/JsonArtifactNode';
-import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/NumericArtifactNode';
-import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
-import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
+import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
-import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
@@ -54,14 +47,13 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[metricOperatorId];
   const artifactId = operator?.outputs[0];
-  const artifactHistoryWithLoadingStatus = !!artifactId
-    ? useSelector(
-        (state: RootState) => state.artifactResultsReducer.artifacts[artifactId]
-      )
-    : undefined;
+  const artifactHistoryWithLoadingStatus = useSelector((state: RootState) =>
+    !!artifactId
+      ? state.artifactResultsReducer.artifacts[artifactId]
+      : undefined
+  );
 
   useEffect(() => {
-    // TODO: Update this to contain the name of the operator
     document.title = 'Metric Details | Aqueduct';
 
     // Load workflow dag result if it's not cached
@@ -84,7 +76,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     // and the result is not cached
     if (
       !artifactHistoryWithLoadingStatus &&
-      !artifactId &&
+      !!artifactId &&
       !!workflowDagResultWithLoadingStatus &&
       !isInitial(workflowDagResultWithLoadingStatus.status) &&
       !isLoading(workflowDagResultWithLoadingStatus.status)
@@ -104,22 +96,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
-
-  const artifactTypeToIconMapping = {
-    [ArtifactType.String]: stringArtifactNodeIcon,
-    [ArtifactType.Bool]: boolArtifactNodeIcon,
-    [ArtifactType.Numeric]: numericArtifactNodeIcon,
-    [ArtifactType.Dict]: dictArtifactNodeIcon,
-    // TODO: figure out if we should use other icon for tuple
-    [ArtifactType.Tuple]: dictArtifactNodeIcon,
-    [ArtifactType.Table]: tableArtifactNodeIcon,
-    [ArtifactType.Json]: jsonArtifactNodeIcon,
-    // TODO: figure out what to show for bytes.
-    [ArtifactType.Bytes]: dictArtifactNodeIcon,
-    [ArtifactType.Image]: imageArtifactNodeIcon,
-    // TODO: Figure out what to show for Picklable
-    [ArtifactType.Picklable]: dictArtifactNodeIcon,
-  };
 
   const listStyle = {
     width: '100%',
@@ -157,10 +133,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       return null;
     }
 
-    // TODO: Check the serialization_type of the artifacts and show a link
-    // to table vew artifacts when present.
-    // TODO: Do the same thing that we're doing over in inputs :)
-
     if (
       !artifactResult.result ||
       artifactResult.result.content_serialized === undefined
@@ -190,8 +162,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     );
   });
 
-  // TODO: refactor getOperatorInput and getOperatorOutput to just one function.
-  // was playing around with design before i figured they can be the same.
   const operatorInputsList = operator.inputs.map((artifactId, index) => {
     const artifactResult = (workflowDagResultWithLoadingStatus.result
       ?.artifacts ?? {})[artifactId];
@@ -305,6 +275,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               >
                 <AccordionSummary
                   expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+                  sx={{
+                    '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
+                      transform: 'rotate(90deg)',
+                    },
+                  }}
                   aria-controls="input-accordion-content"
                   id="input-accordion-header"
                 >
@@ -332,6 +307,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               >
                 <AccordionSummary
                   expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+                  sx={{
+                    '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
+                      transform: 'rotate(90deg)',
+                    },
+                  }}
                   aria-controls="panel1bh-content"
                   id="panel1bh-header"
                 >
