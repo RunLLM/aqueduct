@@ -36,19 +36,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.workflowReducer.artifactResults
   );
 
-  const { fitView } = useReactFlow();
-  useEffect(() => {
-    fitView();
-  }, [dagPositionState]);
-
-  useEffect(() => {
-    // NOTE(vikram): There's a timeout here because there seems to be a
-    // race condition between calling `fitView` and the viewport
-    // updating. This might be because of the width transition we use, but
-    // we're not 100% sure.
-    setTimeout(fitView, 200);
-  }, [openSideSheetState]);
-
   const collapseNodes = () => {
     const checkOpNodes = [];
     const boolArtifactNodes = [];
