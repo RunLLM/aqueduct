@@ -15,7 +15,6 @@ echo "### package aqueduct
 * [\`bool_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.bool_artifact)
 * [\`generic_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.generic_artifact)
 * [\`numeric_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.numeric_artifact)
-* [\`param_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.param_artifact)
 * [\`table_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.table_artifact)
 ### package aqueduct.constants
 * [\`constants.exports\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.constants/aqueduct.constants.exports)
@@ -42,13 +41,11 @@ echo "### package aqueduct.artifacts
 * [\`bool_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.bool_artifact)
 * [\`generic_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.generic_artifact)
 * [\`numeric_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.numeric_artifact)
-* [\`param_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.param_artifact)
 * [\`table_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.table_artifact)" > docs/package-aqueduct.artifacts/README.md
 
 pydoc-markdown -I . --render-toc -m aqueduct.artifacts.bool_artifact > docs/package-aqueduct.artifacts/aqueduct.artifacts.bool_artifact.md
 pydoc-markdown -I . --render-toc -m aqueduct.artifacts.generic_artifact > docs/package-aqueduct.artifacts/aqueduct.artifacts.generic_artifact.md
 pydoc-markdown -I . --render-toc -m aqueduct.artifacts.numeric_artifact > docs/package-aqueduct.artifacts/aqueduct.artifacts.numeric_artifact.md
-pydoc-markdown -I . --render-toc -m aqueduct.artifacts.param_artifact > docs/package-aqueduct.artifacts/aqueduct.artifacts.param_artifact.md
 pydoc-markdown -I . --render-toc -m aqueduct.artifacts.table_artifact > docs/package-aqueduct.artifacts/aqueduct.artifacts.table_artifact.md
 
 mkdir docs/package-aqueduct.constants
