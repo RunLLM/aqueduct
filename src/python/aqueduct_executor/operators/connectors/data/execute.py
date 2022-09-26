@@ -4,12 +4,12 @@ from typing import Any
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
+    AuthenticateSpec,
     DiscoverSpec,
     ExtractSpec,
     LoadSpec,
     LoadTableSpec,
     Spec,
-    AuthenticateSpec,
 )
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
@@ -19,7 +19,7 @@ from aqueduct_executor.operators.utils.execution import (
     TIP_INTEGRATION_CONNECTION,
     TIP_LOAD,
     TIP_UNKNOWN_ERROR,
-    Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
@@ -52,20 +52,31 @@ def run(spec: Spec) -> None:
         # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
         # certain that the operator succeeded.
         if exec_state.status == enums.ExecutionStatus.FAILED:
+            print(f"Failed with error. Full Logs:\n{exec_state.json()}")
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
-        else:
-            exec_state.status = enums.ExecutionStatus.SUCCEEDED
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
+
+        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    except ExecFailureException as e:
+        # We must reconcile the user logs here, since those logs are not captured on the exception.
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=exec_state.user_logs)
+
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
+        sys.exit(1)
+    except MissingConnectorDependencyException as e:
+        exec_state.mark_as_failure(
+            enums.FailureType.USER_FATAL, tip=str(e), context=exception_traceback(e)
+        )
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+        sys.exit(1)
     except Exception as e:
-        exec_state.status = enums.ExecutionStatus.FAILED
-        if isinstance(e, MissingConnectorDependencyException):
-            exec_state.failure_type = enums.FailureType.USER_FATAL
-            exec_state.error = Error(context=exception_traceback(e), tip=str(e))
-        else:
-            exec_state.failure_type = enums.FailureType.SYSTEM
-            exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
-            print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+        exec_state.mark_as_failure(
+            enums.FailureType.SYSTEM, tip=TIP_UNKNOWN_ERROR, context=exception_traceback(e)
+        )
+        print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
+
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 

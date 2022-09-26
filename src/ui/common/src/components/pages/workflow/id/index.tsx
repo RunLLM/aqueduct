@@ -64,20 +64,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const switchSideSheet = sideSheetSwitcher(dispatch);
 
-  const openSideSheetState = useSelector(
-    (state: RootState) => state.openSideSheetReducer
-  );
-
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
-  );
-
-  const operatorResult = useSelector(
-    (state: RootState) => state.workflowReducer.operatorResults[currentNode.id]
-  );
-
-  const dagPosition = useSelector(
-    (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
   useEffect(() => {
@@ -227,56 +215,27 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  const SidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
-
+  const RightMarginInPx = 24;
   const getSideSheetWidth = (
-    workflowStatusBarOpen: boolean,
     baseWidth = '100%'
   ): string | string[] => {
-    // let's break down this formula:
-    // fullWindowWidth is calc(100% + 250px)
-    // menuSidebarOffset is 250px
-    // SidebarMarginInPx is 64px * 2 = 128px
-    // getStatusBarWidth is 400px when open, 75 when closed.
-    // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
-      2 * SidebarMarginInPx
-    }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
+    // RightMarginInPx: the white space on the right side of the Dag to show when side drawer is not visible.
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${RightMarginInPx}px)`;
   };
 
-  const CollapsedStatusBarWidthInPx = 75;
-  const StatusBarWidthInPx = 385;
-
-  /**
-   *
-   * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
-   * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
-   */
-  const getStatusBarWidth = (workflowStatusBarOpen: boolean): string => {
-    if (workflowStatusBarOpen) {
-      return `${StatusBarWidthInPx}px`;
-    } else {
-      return `${CollapsedStatusBarWidthInPx}px`;
-    }
-  };
-
-  // NOTE(vikram): This is a compliated bit of nonsense code. Because the
-  // percentages are relative, we need to reset the base width to be the full
-  // window width to take advantage of the helper function here. This ensures
-  // that the ReactFlow canvas and the status bars below are the same width.
-  // Here, `fullWindowWidth` refers to the full width of the viewport, which
-  // is the current 100% + the width of the menu sidebar. This is a hack that
-  // breaks the abstraction, but because the WorkflowStatusBar overlay is
-  // absolute-positioned, it's required in order to align the content with
-  // the status bar's width.
   const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
+
+  // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
+  // const sideSheetOpen = currentNode.type !== NodeType.None;
+
   const contentWidth = getSideSheetWidth(
-    openSideSheetState.workflowStatusBarOpen,
+    // in ui-redesign, sidesheet comes in from the right, and the status bar is now a popover, which means status bar no longer has a width to worry about
+    // with regards to expanding and contracting the page contents.
+    // the new sidesheet is shown when the current node is selected. the opensidesheet state reducer isn't being used.
     fullWindowWidth
   );
 
   const contentBottomOffsetInPx = `32px`;
-
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -313,8 +272,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -338,8 +296,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={{ marginRight: '16px' }}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -416,9 +373,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 >
                   <FontAwesomeIcon icon={faChevronRight} />
                 </Box>
-                <Typography variant="h5" padding="16px">
-                  {getNodeLabel()}
-                </Typography>
+                <Box maxWidth="400px">
+                  <Typography variant="h5" padding="16px" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
+                    {getNodeLabel()}
+                  </Typography>
+                </Box>
                 <Box sx={{ mx: 2, alignSelf: 'center' }}>
                   {getNodeActionButton()}
                 </Box>

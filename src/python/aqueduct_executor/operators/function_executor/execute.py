@@ -28,6 +28,7 @@ from aqueduct_executor.operators.utils.execution import (
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
     Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
@@ -110,7 +111,7 @@ def _execute_function(
 ) -> Tuple[Any, ArtifactType, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
-    user function errors. Instead, returns the error message as a string.
+    user function errors, but instead annotates the given exec state with the error.
 
     :param inputs: the input data to feed into the user's function.
     """
@@ -169,19 +170,6 @@ def validate_spec(spec: FunctionSpec) -> None:
         )
 
 
-def handle_type_error_and_exit(
-    spec: FunctionSpec, storage: Storage, exec_state: ExecutionState, err_tip: str
-) -> None:
-    exec_state.status = ExecutionStatus.FAILED
-    exec_state.failure_type = FailureType.USER_FATAL
-    exec_state.error = Error(
-        context="",
-        tip=err_tip,
-    )
-    utils.write_exec_state(storage, spec.metadata_path, exec_state)
-    sys.exit(1)
-
-
 def _cleanup(spec: FunctionSpec) -> None:
     """
     Cleans up any temporary files created during function execution.
@@ -224,7 +212,10 @@ def run(spec: FunctionSpec) -> None:
                 or isinstance(result, float)
                 or isinstance(result, np.number)
             ):
-                handle_type_error_and_exit(spec, storage, exec_state, TIP_NOT_NUMERIC)
+                raise ExecFailureException(
+                    failure_type=FailureType.USER_FATAL,
+                    tip=TIP_NOT_NUMERIC,
+                )
 
         elif spec.operator_type == OperatorType.CHECK:
             if isinstance(result, pd.Series) and result.dtype == "bool":
@@ -237,18 +228,19 @@ def run(spec: FunctionSpec) -> None:
                 # Cast np.bool_ to a bool.
                 result = bool(result)
             else:
-                handle_type_error_and_exit(spec, storage, exec_state, TIP_NOT_BOOL)
+                raise ExecFailureException(
+                    failure_type=FailureType.USER_FATAL,
+                    tip=TIP_NOT_BOOL,
+                )
         else:
             for expected_output_type in spec.expected_output_artifact_types:
                 if (
                     expected_output_type != ArtifactType.UNTYPED
                     and expected_output_type != result_type
                 ):
-                    handle_type_error_and_exit(
-                        spec,
-                        storage,
-                        exec_state,
-                        "Expected %s type %s, but output is of type %s."
+                    raise ExecFailureException(
+                        failure_type=FailureType.USER_FATAL,
+                        tip="Expected %s type %s, but output is of type %s."
                         % (spec.name, expected_output_type, result_type),
                     )
 
@@ -264,6 +256,8 @@ def run(spec: FunctionSpec) -> None:
         # For check operators, we want to fail the operator based on the exact output of the user's function.
         # Assumption: the check operator only has a single output.
         if spec.operator_type == OperatorType.CHECK and not check_passed(result):
+            print(f"Check Operator did not pass.")
+
             check_severity = spec.check_severity
             if spec.check_severity is None:
                 print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
@@ -273,25 +267,25 @@ def run(spec: FunctionSpec) -> None:
             if check_severity == CheckSeverityLevel.WARNING:
                 failure_type = FailureType.USER_NON_FATAL
 
-            exec_state.status = ExecutionStatus.FAILED
-            exec_state.failure_type = failure_type
-            exec_state.error = Error(
-                context="",
+            raise ExecFailureException(
+                failure_type=failure_type,
                 tip=TIP_CHECK_DID_NOT_PASS,
             )
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-            print(f"Check Operator did not pass. Full logs: {exec_state.json()}")
         else:
             exec_state.status = ExecutionStatus.SUCCEEDED
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             print(f"Succeeded! Full logs: {exec_state.json()}")
 
+    except ExecFailureException as e:
+        # We must reconcile the user logs here, since those logs are not captured on the exception.
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=exec_state.user_logs)
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
+        sys.exit(1)
+
     except Exception as e:
-        exec_state.status = ExecutionStatus.FAILED
-        exec_state.failure_type = FailureType.SYSTEM
-        exec_state.error = Error(
-            context=exception_traceback(e),
-            tip=TIP_UNKNOWN_ERROR,
+        exec_state.mark_as_failure(
+            FailureType.SYSTEM, TIP_UNKNOWN_ERROR, context=exception_traceback(e)
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
