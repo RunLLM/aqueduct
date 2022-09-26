@@ -52,15 +52,13 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 def _is_input_artifact(elem: Any) -> bool:
     return isinstance(elem, BaseArtifact)
 
-
 def wrap_spec(
     spec: OperatorSpec,
     *input_artifacts: BaseArtifact,
     op_name: str,
+    output_artifact_type_hints: List[ArtifactType],
     description: str = "",
-    num_outputs: int = 1,
     execution_mode: ExecutionMode = ExecutionMode.EAGER,
-    output_artifact_type_hint: ArtifactType = ArtifactType.UNTYPED,
 ) -> Union[BaseArtifact, List[BaseArtifact]]:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
@@ -79,13 +77,15 @@ def wrap_spec(
             artifacts.
         op_name:
             The name of the operator that generated this artifact.
+        output_artifact_type_hints:
+            The artifact types that the function is expected to output, in the correct order.
         description:
             The description for this operator.
-        TODO: talk about the type_hint
+
     Returns:
         A list of artifacts, representing the outputs of the function.
     """
-    assert num_outputs > 0, "Non-load operators must have at least one output artifact."
+    assert len(output_artifact_type_hints) > 0, "Non-load operators must have at least one output artifact."
 
     for artifact in input_artifacts:
         if artifact._from_flow_run:
@@ -101,27 +101,17 @@ def wrap_spec(
         _ = dag.must_get_artifact(artifact.id())
 
     operator_id = generate_uuid()
-    output_artifact_ids = [generate_uuid() for _ in range(num_outputs)]
+    output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    if len(output_artifact_ids) == 1:
-        output_artifacts_metadata = [
-            ArtifactMetadata(
-                id=output_artifact_ids[0],
-                name=artifact_name_from_op_name(op_name),
-                type=output_artifact_type_hint,
-            )
-        ]
-    else:
-        # Functions with multiple outputs do not have type hints, since we infer them at runtime.
-        # The output artifacts will be named with a suffix index starting at 1.
-        output_artifacts_metadata = [
-            ArtifactMetadata(
-                id=output_artifact_id,
-                name=artifact_name_from_op_name(op_name) + " %d" % (i + 1),
-                type=ArtifactType.UNTYPED,
-            )
-            for i, output_artifact_id in enumerate(output_artifact_ids)
-        ]
+    def _construct_artifact_name(i: int, op_name: str):
+        """The artifact naming policy is "<op_name> artifact <optional counter>".
+
+        The counter starts at 1, and is only present in the multi-output case.
+        """
+        assert i < len(output_artifact_ids)
+        if len(output_artifact_ids) == 1:
+            return artifact_name_from_op_name(op_name)
+        return artifact_name_from_op_name(op_name) + " %d" % (i + 1)
 
     apply_deltas_to_dag(
         dag,
@@ -135,7 +125,14 @@ def wrap_spec(
                     inputs=[artifact.id() for artifact in input_artifacts],
                     outputs=output_artifact_ids,
                 ),
-                output_artifacts=output_artifacts_metadata,
+                output_artifacts=[
+                    ArtifactMetadata(
+                        id=output_artifact_id,
+                        name=_construct_artifact_name(i, op_name),
+                        type=output_artifact_type_hints[i],
+                    )
+                    for i, output_artifact_id in enumerate(output_artifact_ids)
+                ],
             ),
         ],
     )
@@ -146,8 +143,8 @@ def wrap_spec(
     else:
         # We are in lazy mode.
         output_artifacts = [
-            to_artifact_class(dag, output_artifact_id, output_artifact_type_hint)
-            for output_artifact_id in output_artifact_ids
+            to_artifact_class(dag, output_artifact_id, output_artifact_type_hints[i])
+            for i, output_artifact_id in enumerate(output_artifact_ids)
         ]
 
     # Return a singular artifact if `num_outputs` == 1.
@@ -268,7 +265,9 @@ def op(
             look for a `requirements.txt` file in the same directory as the decorated function
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
-        TODO(`num_outputs`: documentation)
+        num_outputs:
+            The number of outputs the decorated function is expected to return.
+            Will fail at runtime if the number of outputs.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -286,6 +285,8 @@ def op(
         >>> recommendations.get()
     """
     _type_check_decorator_arguments(description, file_dependencies, requirements)
+    if num_outputs < 1:
+        raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -325,7 +326,7 @@ def op(
                 OperatorSpec(function=function_spec),
                 *artifacts,
                 op_name=name,
-                num_outputs=num_outputs,
+                output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],
                 description=description,
                 execution_mode=execution_mode,
             )
@@ -449,9 +450,9 @@ def metric(
                 OperatorSpec(metric=metric_spec),
                 *artifacts,
                 op_name=name,
+                output_artifact_type_hints=[ArtifactType.NUMERIC],
                 description=description,
                 execution_mode=execution_mode,
-                output_artifact_type_hint=ArtifactType.NUMERIC,
             )
             assert isinstance(numeric_artifact, NumericArtifact)
 
@@ -588,9 +589,9 @@ def check(
                 OperatorSpec(check=check_spec),
                 *artifacts,
                 op_name=name,
+                output_artifact_type_hints=[ArtifactType.BOOL],
                 description=description,
                 execution_mode=execution_mode,
-                output_artifact_type_hint=ArtifactType.BOOL,
             )
 
             assert isinstance(bool_artifact, BoolArtifact)
