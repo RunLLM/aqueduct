@@ -1,9 +1,6 @@
 import { produce } from 'immer';
-import React, { useEffect } from 'react';
-import ReactFlow, {
-  Node as ReactFlowNode,
-  useReactFlow,
-} from 'react-flow-renderer';
+import React from 'react';
+import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
