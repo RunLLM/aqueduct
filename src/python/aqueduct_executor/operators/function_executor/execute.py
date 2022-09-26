@@ -173,11 +173,12 @@ def validate_spec(spec: FunctionSpec) -> None:
         )
 
     # Check and Metric operators must only have a single output.
-    if (
-        spec.operator_type == OperatorType.CHECK or spec.operator_type == OperatorType.METRIC) and \
-        (spec.expected_output_artifact_types is not None and len(spec.expected_output_artifact_types) != 1
+    if (spec.operator_type == OperatorType.CHECK or spec.operator_type == OperatorType.METRIC) and (
+        spec.expected_output_artifact_types is not None
+        and len(spec.expected_output_artifact_types) != 1
     ):
         raise Exception("%s operators must only have a single output." % spec.operator_type)
+
 
 def _cleanup(spec: FunctionSpec) -> None:
     """
@@ -252,7 +253,8 @@ def run(spec: FunctionSpec) -> None:
             if len(results) != len(spec.expected_output_artifact_types):
                 raise ExecFailureException(
                     failure_type=FailureType.USER_FATAL,
-                    tip="Expected function to return %d outputs, but instead got %d." % (len(spec.expected_output_artifact_types), len(results)),
+                    tip="Expected function to return %d outputs, but instead got %d."
+                    % (len(spec.expected_output_artifact_types), len(results)),
                 )
 
             for i, expected_output_type in enumerate(spec.expected_output_artifact_types):

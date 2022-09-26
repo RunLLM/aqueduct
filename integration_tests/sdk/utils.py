@@ -2,6 +2,7 @@ import time
 import uuid
 from typing import Dict, List, Optional, Union
 
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -91,7 +92,7 @@ def run_sentiment_model_local_multiple_input(
 
 def run_flow_test(
     client: aqueduct.Client,
-    artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact]],
+    artifacts: List[BaseArtifact],
     name: str = "",
     schedule: str = "",
     num_runs: int = 1,

@@ -1,5 +1,6 @@
-from aqueduct import op
 from utils import run_flow_test
+
+from aqueduct import op
 
 
 def test_multiple_outputs(client):

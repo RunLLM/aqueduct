@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Sequence, Union, cast
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -36,8 +36,11 @@ from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
+# For functions that can handle multiple outputs (eg. `op()`)
+OutputArtifactsFunction = Callable[..., Union[BaseArtifact, List[BaseArtifact]]]
+
 # Type declarations for functions
-DecoratedFunction = Callable[[UserFunction], Callable[..., BaseArtifact]]
+DecoratedFunction = Callable[[UserFunction], OutputArtifactsFunction]
 
 # Type declarations for metrics
 DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
@@ -58,7 +61,7 @@ def wrap_spec(
     num_outputs: int = 1,
     execution_mode: ExecutionMode = ExecutionMode.EAGER,
     output_artifact_type_hint: ArtifactType = ArtifactType.UNTYPED,
-) -> List[BaseArtifact]:
+) -> Union[BaseArtifact, List[BaseArtifact]]:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -132,7 +135,7 @@ def wrap_spec(
                     inputs=[artifact.id() for artifact in input_artifacts],
                     outputs=output_artifact_ids,
                 ),
-                output_artifacts=output_artifacts
+                output_artifacts=output_artifacts,
             ),
         ],
     )
@@ -237,7 +240,7 @@ def op(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: int = 1,
-) -> Union[DecoratedFunction, OutputArtifactFunction]:
+) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
     Calling the decorated function returns an Artifact. The decorated function
@@ -281,7 +284,7 @@ def op(
     """
     _type_check_decorator_arguments(description, file_dependencies, requirements)
 
-    def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
+    def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
         nonlocal description
         if name is None or not isinstance(name, str):
@@ -291,7 +294,7 @@ def op(
 
         def _wrapped_util(
             *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
-        ) -> BaseArtifact:
+        ) -> Union[BaseArtifact, List[BaseArtifact]]:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -315,7 +318,7 @@ def op(
                 granularity=FunctionGranularity.TABLE,
                 file=zip_file,
             )
-            new_function_artifact = wrap_spec(
+            return wrap_spec(
                 OperatorSpec(function=function_spec),
                 *artifacts,
                 op_name=name,
@@ -324,9 +327,7 @@ def op(
                 execution_mode=execution_mode,
             )
 
-            return new_function_artifact
-
-        def wrapped(*input_artifacts: BaseArtifact) -> BaseArtifact:
+        def wrapped(*input_artifacts: BaseArtifact) -> Union[BaseArtifact, List[BaseArtifact]]:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
@@ -336,7 +337,7 @@ def op(
 
         setattr(wrapped, "local", local_func)
 
-        def lazy_mode(*input_artifacts: BaseArtifact) -> BaseArtifact:
+        def lazy_mode(*input_artifacts: BaseArtifact) -> Union[BaseArtifact, List[BaseArtifact]]:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
@@ -448,7 +449,6 @@ def metric(
                 execution_mode=execution_mode,
                 output_artifact_type_hint=ArtifactType.NUMERIC,
             )
-
             assert isinstance(numeric_artifact, NumericArtifact)
 
             numeric_artifact.set_operator_type(OperatorType.METRIC)
@@ -628,11 +628,11 @@ def check(
 
 def to_operator(
     func: UserFunction,
-    name: Optional[Union[str, UserFunction]] = None,
+    name: Optional[str] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
-) -> Union[Callable[..., BaseArtifact], BaseArtifact]:
+) -> OutputArtifactsFunction:
     """Convert a function that returns a dataframe into an Aqueduct operator.
 
     Args:
@@ -654,10 +654,19 @@ def to_operator(
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
     """
-    func_op = op(
-        name=name,
-        description=description,
-        file_dependencies=file_dependencies,
-        requirements=requirements,
+    if callable(name):
+        raise InvalidUserArgumentException("Supplied name must be a string.")
+
+    # We are calling a decorator directly here, which is a little weird.
+    # In this case, we know that only one of the return values of `op()` is
+    # possible, since `name` must be a string.
+    func_op = cast(
+        DecoratedFunction,
+        op(
+            name=name,
+            description=description,
+            file_dependencies=file_dependencies,
+            requirements=requirements,
+        ),
     )
     return func_op(func)

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType
@@ -14,16 +15,10 @@ from aqueduct.utils import infer_artifact_type
 
 from aqueduct import globals
 
-if TYPE_CHECKING:
-    from aqueduct.artifacts.bool_artifact import BoolArtifact
-    from aqueduct.artifacts.generic_artifact import GenericArtifact
-    from aqueduct.artifacts.numeric_artifact import NumericArtifact
-    from aqueduct.artifacts.table_artifact import TableArtifact
-
 
 def preview_artifact(
     dag: DAG, target_artifact_id: uuid.UUID, parameters: Optional[Dict[str, Any]] = None
-) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
+) -> BaseArtifact:
     """Previews the given artifact and returns the resulting Artifact class.
 
     Will handle all type inference of the target artifact, as well as any upstream artifacts
@@ -34,7 +29,7 @@ def preview_artifact(
 
 def preview_artifacts(
     dag: DAG, target_artifact_ids: List[uuid.UUID], parameters: Optional[Dict[str, Any]] = None
-) -> List[Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]]:
+) -> List[BaseArtifact]:
     """Batch version of `preview_artifact()`
 
     Returns a list of artifacts, each corresponding to one of the provided `target_artifact_ids`, in
@@ -58,10 +53,11 @@ def preview_artifacts(
 
     # Process all the target artifacts first. Assumption: the preview response contains a result entry
     # for each target artifact.
-    output_artifacts: List[Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]] = []
+    output_artifacts: List[BaseArtifact] = []
     for target_artifact_id in target_artifact_ids:
-        assert target_artifact_id in preview_resp.artifact_results.keys(), \
-            "Preview is expected to return a result for each target artifact."
+        assert (
+            target_artifact_id in preview_resp.artifact_results.keys()
+        ), "Preview is expected to return a result for each target artifact."
         target_artifact_result = preview_resp.artifact_results[target_artifact_id]
 
         # Fetch the inferred type of the target artifact.
@@ -99,7 +95,7 @@ def to_artifact_class(
     artifact_id: uuid.UUID,
     artifact_type: ArtifactType = ArtifactType.UNTYPED,
     content: Optional[Any] = None,
-) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
+) -> BaseArtifact:
     if artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(
             dag,
