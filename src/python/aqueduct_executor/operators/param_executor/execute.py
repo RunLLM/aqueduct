@@ -5,6 +5,7 @@ from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
@@ -26,7 +27,6 @@ def run(spec: ParamSpec) -> None:
     print("Job Spec: \n{}".format(spec.json()))
 
     storage = parse_storage(spec.storage_config)
-    exec_state = ExecutionState(user_logs=Logs())
 
     try:
         val_bytes = storage.get(spec.output_content_path)
@@ -34,15 +34,11 @@ def run(spec: ParamSpec) -> None:
 
         inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
-            exec_state.status = enums.ExecutionStatus.FAILED
-            exec_state.failure_type = enums.FailureType.USER_FATAL
-            exec_state.error = Error(
-                context="",
+            raise ExecFailureException(
+                failure_type=enums.FailureType.USER_FATAL,
                 tip="Supplied parameter expects type `%s`, but got `%s` instead."
                 % (spec.expected_type, inferred_type),
             )
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-            return
 
         utils.write_artifact(
             storage,
@@ -52,12 +48,25 @@ def run(spec: ParamSpec) -> None:
             val,
             system_metadata={},
         )
-        exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+
+        utils.write_exec_state(
+            storage,
+            spec.metadata_path,
+            ExecutionState(status=enums.ExecutionStatus.SUCCEEDED, user_logs=Logs()),
+        )
+
+    except ExecFailureException as e:
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=Logs())
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
+        sys.exit(1)
     except Exception as e:
-        exec_state.status = enums.ExecutionStatus.FAILED
-        exec_state.failure_type = enums.FailureType.SYSTEM
-        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        exec_state = ExecutionState(
+            status=enums.ExecutionStatus.FAILED,
+            failure_type=enums.FailureType.SYSTEM,
+            error=Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR),
+            user_logs=Logs(),
+        )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
