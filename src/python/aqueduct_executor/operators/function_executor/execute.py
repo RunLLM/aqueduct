@@ -7,7 +7,6 @@ import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
-import cloudpickle as pickle
 import numpy as np
 import pandas as pd
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
@@ -27,18 +26,14 @@ from aqueduct_executor.operators.utils.execution import (
     TIP_NOT_NUMERIC,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
-    Error,
     ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
-from pandas import DataFrame
-from PIL import Image
+from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -232,22 +227,53 @@ def run(spec: FunctionSpec) -> None:
 
         elif spec.operator_type == OperatorType.CHECK:
             assert len(results) == 1, "Check operator can only have a single output."
-            result = results[0]
+            check_result = results[0]
 
-            if isinstance(result, pd.Series) and result.dtype == "bool":
+            if isinstance(check_result, pd.Series) and check_result.dtype == "bool":
+                assert result_types[0] == ArtifactType.PICKLABLE
+
                 # Cast pd.Series to a bool.
                 # We only write True if every boolean in the series is True.
-                series = pd.Series(result)
-                result = bool(series.size - series.sum().item() == 0)
-                result_type = ArtifactType.BOOL
-            elif isinstance(result, bool) or isinstance(result, np.bool_):
+                series = pd.Series(check_result)
+                check_passed = bool(series.size - series.sum().item() == 0)
+            elif isinstance(check_result, bool) or isinstance(check_result, np.bool_):
                 # Cast np.bool_ to a bool.
-                result = bool(result)
+                check_passed = bool(check_result)
             else:
                 raise ExecFailureException(
                     failure_type=FailureType.USER_FATAL,
                     tip=TIP_NOT_BOOL,
                 )
+
+            # If the check returned a value we interpret to mean 'false', we exit here, but
+            # not before recording the output artifact value (which will be False).
+            if not check_passed:
+                print(f"Check Operator did not pass.")
+
+                utils.write_artifact(
+                    storage,
+                    ArtifactType.BOOL,
+                    spec.output_content_paths[0],
+                    spec.output_metadata_paths[0],
+                    check_passed,
+                    system_metadata=system_metadata,
+                )
+
+                check_severity = spec.check_severity
+                if spec.check_severity is None:
+                    print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
+                    check_severity = CheckSeverityLevel.ERROR
+
+                failure_type = FailureType.USER_FATAL
+                if check_severity == CheckSeverityLevel.WARNING:
+                    failure_type = FailureType.USER_NON_FATAL
+
+                raise ExecFailureException(failure_type, tip=TIP_CHECK_DID_NOT_PASS)
+
+            # If we get here, we know that the check has passed. The artifact type might need
+            # still be updated. Eg. if the output was a pandas series.
+            result_types[0] = ArtifactType.BOOL
+            results[0] = True
         else:
             # Error if the number of expected outputs is not what was returned by the user's function.
             if len(results) != len(spec.expected_output_artifact_types):
@@ -278,29 +304,10 @@ def run(spec: FunctionSpec) -> None:
                 system_metadata=system_metadata,
             )
 
-        # For check operators, we want to fail the operator based on the exact output of the user's function.
-        # Assumption: the check operator only has a single output.
-        if spec.operator_type == OperatorType.CHECK and not check_passed(result):
-            print(f"Check Operator did not pass.")
-
-            check_severity = spec.check_severity
-            if spec.check_severity is None:
-                print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
-                check_severity = CheckSeverityLevel.ERROR
-
-            failure_type = FailureType.USER_FATAL
-            if check_severity == CheckSeverityLevel.WARNING:
-                failure_type = FailureType.USER_NON_FATAL
-
-            raise ExecFailureException(
-                failure_type=failure_type,
-                tip=TIP_CHECK_DID_NOT_PASS,
-            )
-
-        # Mark the operator as successful.
+        # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
         print(f"Succeeded! Full logs: {exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
 
     except ExecFailureException as e:
         # We must reconcile the user logs here, since those logs are not captured on the exception.

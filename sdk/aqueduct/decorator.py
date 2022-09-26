@@ -104,7 +104,7 @@ def wrap_spec(
     output_artifact_ids = [generate_uuid() for _ in range(num_outputs)]
 
     if len(output_artifact_ids) == 1:
-        output_artifacts = [
+        output_artifacts_metadata = [
             ArtifactMetadata(
                 id=output_artifact_ids[0],
                 name=artifact_name_from_op_name(op_name),
@@ -114,7 +114,7 @@ def wrap_spec(
     else:
         # Functions with multiple outputs do not have type hints, since we infer them at runtime.
         # The output artifacts will be named with a suffix index starting at 1.
-        output_artifacts = [
+        output_artifacts_metadata = [
             ArtifactMetadata(
                 id=output_artifact_id,
                 name=artifact_name_from_op_name(op_name) + " %d" % (i + 1),
@@ -135,20 +135,23 @@ def wrap_spec(
                     inputs=[artifact.id() for artifact in input_artifacts],
                     outputs=output_artifact_ids,
                 ),
-                output_artifacts=output_artifacts,
+                output_artifacts=output_artifacts_metadata,
             ),
         ],
     )
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
-        return artifact_utils.preview_artifacts(dag, output_artifact_ids)
+        output_artifacts = artifact_utils.preview_artifacts(dag, output_artifact_ids)
     else:
         # We are in lazy mode.
-        return [
+        output_artifacts = [
             to_artifact_class(dag, output_artifact_id, output_artifact_type_hint)
             for output_artifact_id in output_artifact_ids
         ]
+
+    # Return a singular artifact if `num_outputs` == 1.
+    return output_artifacts if len(output_artifacts) > 1 else output_artifacts[0]
 
 
 def _type_check_decorator_arguments(
@@ -348,6 +351,7 @@ def op(
         return wrapped
 
     if callable(name):
+        # This only happens when the decorator is used without parenthesis, eg: @op.
         return inner_decorator(name)
     else:
         return inner_decorator
@@ -483,6 +487,7 @@ def metric(
         return wrapped
 
     if callable(name):
+        # This only happens when the decorator is used without parenthesis, eg: @metric.
         return inner_decorator(name)
     else:
         return inner_decorator
@@ -621,6 +626,7 @@ def check(
         return wrapped
 
     if callable(name):
+        # This only happens when the decorator is used without parenthesis, eg: @check.
         return inner_decorator(name)
     else:
         return inner_decorator
@@ -653,13 +659,16 @@ def to_operator(
             look for a `requirements.txt` file in the same directory as the decorated function
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
+    Returns:
+        An Aqueduct operator that can be used just like any decorated operator.
     """
     if callable(name):
+        # This only happens when the decorator is used without parenthesis, eg: @op.
+        # We use `op()` like a normal function, so we can rule out this case.
         raise InvalidUserArgumentException("Supplied name must be a string.")
 
-    # We are calling a decorator directly here, which is a little weird.
-    # In this case, we know that only one of the return values of `op()` is
-    # possible, since `name` must be a string.
+    # Since `name` must be a string, we know that only one of the return values of `op()`
+    # is possible.
     func_op = cast(
         DecoratedFunction,
         op(

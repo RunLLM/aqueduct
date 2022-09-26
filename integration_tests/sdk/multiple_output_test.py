@@ -1,3 +1,6 @@
+import pytest
+
+from aqueduct.error import AqueductError
 from utils import run_flow_test
 
 from aqueduct import op
@@ -33,4 +36,5 @@ def test_multiple_outputs_user_failure(client):
     def generate_two_outputs():
         return "hello", 1234
 
-    generate_two_outputs()
+    with pytest.raises(AqueductError):
+        generate_two_outputs()
