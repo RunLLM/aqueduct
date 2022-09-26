@@ -115,18 +115,16 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        {
-          data.result && (
-            <>
-              <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
-                <FontAwesomeIcon icon={icon} />
-              </Box>
-              <Typography variant="body1">
-                {data.result === 'true' ? 'passed' : 'failed'}
-              </Typography>
-            </>
-          )
-        }
+        {data.result && (
+          <>
+            <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
+              <FontAwesomeIcon icon={icon} />
+            </Box>
+            <Typography variant="body1">
+              {data.result === 'true' ? 'passed' : 'failed'}
+            </Typography>
+          </>
+        )}
       </Box>
 
       <Handle

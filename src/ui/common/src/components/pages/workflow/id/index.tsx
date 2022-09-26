@@ -216,9 +216,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }
 
   const RightMarginInPx = 24;
-  const getSideSheetWidth = (
-    baseWidth = '100%'
-  ): string | string[] => {
+  const getSideSheetWidth = (baseWidth = '100%'): string | string[] => {
     // RightMarginInPx: the white space on the right side of the Dag to show when side drawer is not visible.
     return `calc(${baseWidth} - ${MenuSidebarOffset} - ${RightMarginInPx}px)`;
   };
@@ -272,7 +270,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -296,7 +295,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={{ marginRight: '16px' }}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -374,7 +374,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   <FontAwesomeIcon icon={faChevronRight} />
                 </Box>
                 <Box maxWidth="400px">
-                  <Typography variant="h5" padding="16px" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
+                  <Typography
+                    variant="h5"
+                    padding="16px"
+                    textOverflow="ellipsis"
+                    overflow="hidden"
+                    whiteSpace="nowrap"
+                  >
                     {getNodeLabel()}
                   </Typography>
                 </Box>
