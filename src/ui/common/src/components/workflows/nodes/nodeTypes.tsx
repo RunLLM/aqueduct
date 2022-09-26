@@ -1,15 +1,20 @@
-import BoolArtifactNode from './BoolArtifactNode';
+import { ArtifactType } from '../../../utils/artifacts';
+import BoolArtifactNode, { boolArtifactNodeIcon } from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
 import DatabaseNode from './DatabaseNode';
-import DictArtifactNode from './DictArtifactNode';
+import DictArtifactNode, { dictArtifactNodeIcon } from './DictArtifactNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
 import GenericArtifactNode from './GenericArtifactNode';
-import ImageArtifactNode from './ImageArtifactNode';
-import JsonArtifactNode from './JsonArtifactNode';
+import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
+import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
-import NumericArtifactNode from './NumericArtifactNode';
-import StringArtifactNode from './StringArtifactNode';
-import TableArtifactNode from './TableArtifactNode';
+import NumericArtifactNode, {
+  numericArtifactNodeIcon,
+} from './NumericArtifactNode';
+import StringArtifactNode, {
+  stringArtifactNodeIcon,
+} from './StringArtifactNode';
+import TableArtifactNode, { tableArtifactNodeIcon } from './TableArtifactNode';
 
 export const nodeTypes = {
   database: DatabaseNode,
@@ -29,6 +34,22 @@ export const nodeTypes = {
   loadOp: DatabaseNode,
   metricOp: MetricOperatorNode,
   checkOp: CheckOperatorNode,
+};
+
+export const artifactTypeToIconMapping = {
+  [ArtifactType.String]: stringArtifactNodeIcon,
+  [ArtifactType.Bool]: boolArtifactNodeIcon,
+  [ArtifactType.Numeric]: numericArtifactNodeIcon,
+  [ArtifactType.Dict]: dictArtifactNodeIcon,
+  // TODO: figure out if we should use other icon for tuple
+  [ArtifactType.Tuple]: dictArtifactNodeIcon,
+  [ArtifactType.Table]: tableArtifactNodeIcon,
+  [ArtifactType.Json]: jsonArtifactNodeIcon,
+  // TODO: figure out what to show for bytes.
+  [ArtifactType.Bytes]: dictArtifactNodeIcon,
+  [ArtifactType.Image]: imageArtifactNodeIcon,
+  // TODO: Figure out what to show for Picklable
+  [ArtifactType.Picklable]: dictArtifactNodeIcon,
 };
 
 export default nodeTypes;
