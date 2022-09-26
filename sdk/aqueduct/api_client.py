@@ -145,7 +145,7 @@ class APIClient:
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
-    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"

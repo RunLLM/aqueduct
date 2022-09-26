@@ -2,8 +2,8 @@ package routes
 
 // Please sort the route by their VALUEs
 const (
-	GetArtifactVersionsRoute = "/api/artifact_versions"
-	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
+	GetArtifactVersionsRoute = "/api/artifact/versions"
+	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
 	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
@@ -24,7 +24,7 @@ const (
 	ListNotificationsRoute   = "/api/notifications"
 	ArchiveNotificationRoute = "/api/notifications/{notificationId}/archive"
 
-	GetOperatorResultRoute = "/api/operator_result/{workflowDagResultId}/{operatorId}"
+	GetOperatorResultRoute = "/api/operator/{workflowDagResultId}/{operatorId}/result"
 
 	GetNodePositionsRoute = "/api/positioning"
 	PreviewRoute          = "/api/preview"

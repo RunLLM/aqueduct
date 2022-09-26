@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /artifact_versions
+// Route: /artifact/versions
 // Method: GET
 // Params: None
 // Request:

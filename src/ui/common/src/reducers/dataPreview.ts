@@ -31,7 +31,7 @@ export const getDataArtifactPreview = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey } = args;
-    const response = await fetch(`${apiAddress}/api/artifact_versions`, {
+    const response = await fetch(`${apiAddress}/api/artifact/versions`, {
       method: 'GET',
       headers: {
         'api-key': apiKey,

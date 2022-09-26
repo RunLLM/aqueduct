@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /operator_result/{workflowDagResultId}/{operatorId}
+// Route: /operator/{workflowDagResultId}/{operatorId}/result
 // Method: GET
 // Params:
 //
