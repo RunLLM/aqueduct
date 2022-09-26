@@ -102,20 +102,20 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         </Box>
       </Box>
 
-      {data.result && (
-        <Box
-          width="100%"
-          height="100%"
-          minHeight="80px"
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-        >
+      <Box
+        width="100%"
+        height="100%"
+        minHeight="80px"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+      >
+        {data.result && (
           <Typography variant="h5">
             {parseFloat(data.result).toFixed(3)}
           </Typography>
-        </Box>
-      )}
+        )}
+      </Box>
 
       <Handle
         type="source"
