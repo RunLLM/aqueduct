@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import io
 import sys
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Type, TypeVar
 
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from pydantic import BaseModel
@@ -42,6 +44,24 @@ class Logs(BaseModel):
     stderr: str = ""
 
 
+class ExecFailureException(Exception):
+    """Can be thrown whenever you want to fail the operator.
+
+    It captures all the information needed to mark an ExecutionState as failed, except for user logs.
+    Can be translated into an ExecutionState with `ExecutionState.from_exception()`.
+    """
+
+    def __init__(
+        self,
+        failure_type: FailureType,
+        tip: str,
+        context: str = "",
+    ):
+        self.failure_type = failure_type
+        self.tip = tip
+        self.context = context
+
+
 class ExecutionState(BaseModel):
     """
     The state to track operator execution. In the future, we may extend this
@@ -57,6 +77,31 @@ class ExecutionState(BaseModel):
     status: ExecutionStatus = ExecutionStatus.PENDING
     failure_type: Optional[FailureType] = None
     error: Optional[Error] = None
+
+    @classmethod
+    def from_exception(cls, e: ExecFailureException, user_logs: Logs) -> ExecutionState:
+        """Translates a ExecFailureException into a failed ExecutionState we can persist.
+
+        We explicitly require `user_logs`, because the exception does not contain that context, so
+        this will force us to explicitly think about when we want to persist logs.
+        """
+        return cls(
+            user_logs=user_logs,
+            status=ExecutionStatus.FAILED,
+            failure_type=e.failure_type,
+            error=Error(
+                tip=e.tip,
+                context=e.context,
+            ),
+        )
+
+    def mark_as_failure(self, failure_type: FailureType, tip: str, context: str = "") -> None:
+        self.status = ExecutionStatus.FAILED
+        self.failure_type = failure_type
+        self.error = Error(
+            tip=tip,
+            context=context,
+        )
 
     def user_fn_redirected(self, failure_tip: str) -> Callable[..., Any]:
         """
@@ -85,13 +130,12 @@ class ExecutionState(BaseModel):
                 except Exception:
                     # Include the stack trace within the user's code.
                     _set_redirected_logs(stdout_log, stderr_log, self.user_logs)
-                    self.status = ExecutionStatus.FAILED
-                    self.failure_type = FailureType.USER_FATAL
-                    self.error = Error(
+                    self.mark_as_failure(
+                        FailureType.USER_FATAL,
+                        failure_tip,
                         context=stack_traceback(
                             offset=1
                         ),  # traceback the first stack frame, which belongs to user
-                        tip=failure_tip,
                     )
                     print(f"User failure. Full log: {self.json()}")
                     return None

@@ -5,6 +5,7 @@ from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
@@ -35,6 +36,11 @@ def run(spec: SystemMetricSpec) -> None:
         )
         exec_state.status = enums.ExecutionStatus.SUCCEEDED
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
+    except ExecFailureException as e:
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=Logs())
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
+        sys.exit(1)
     except Exception as e:
         exec_state.status = enums.ExecutionStatus.FAILED
         exec_state.failure_type = enums.FailureType.SYSTEM
