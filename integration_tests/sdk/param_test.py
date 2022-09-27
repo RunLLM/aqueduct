@@ -363,7 +363,17 @@ def test_non_jsonable_param_types(client):
     assert isinstance(string_output, GenericArtifact)
     assert string_output.get() == "I am a string"
 
-    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output])
+    @op
+    def must_be_tuple(input):
+        assert isinstance(input, tuple)
+        return input
+
+    tuple_param = client.create_param("tuple", default=(1, 2, 3))
+    tuple_output = must_be_tuple(tuple_param)
+    assert isinstance(tuple_output, GenericArtifact)
+    assert tuple_output.get() == (1, 2, 3)
+
+    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output])
 
 
 def test_parameter_type_changes(client):

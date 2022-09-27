@@ -9,12 +9,11 @@ from aqueduct.dag_deltas import (
     SubgraphDAGDelta,
     UpdateParametersDelta,
     apply_deltas_to_dag,
-    validate_overwriting_parameters,
 )
 from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.responses import ArtifactResult
-from aqueduct.serialization import deserialization_function_mapping
+from aqueduct.serialization import deserialize
 from aqueduct.utils import infer_artifact_type
 
 from aqueduct import globals
@@ -116,10 +115,10 @@ def _update_artifact_type(
 
 def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> Any:
     """Deserialize and validate the type of the content for a given artifact result."""
-    serialization_type = artifact_result.serialization_type
-    if serialization_type not in deserialization_function_mapping:
-        raise Exception("Unsupported serialization type %s." % serialization_type)
-
-    content = deserialization_function_mapping[serialization_type](artifact_result.content)
+    content = deserialize(
+        artifact_result.serialization_type,
+        artifact_result.artifact_type,
+        artifact_result.content,
+    )
     assert infer_artifact_type(content) == artifact_result.artifact_type
     return content

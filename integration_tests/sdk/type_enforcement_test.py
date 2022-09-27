@@ -73,3 +73,25 @@ def test_preview_artifact_backfilled_with_wrong_type(client):
     # Fails because the upstream operator should have a type mismatch.
     with pytest.raises(AqueductError, match="Operator `output_different_types` failed!"):
         noop_output.get(parameters={"output_type_toggle": False})
+
+
+def test_list_and_tuple_types_are_different(client):
+    """
+    Because we json-serialize both of these into the same bytes representation,
+    make sure type fidelity is actually preserved for each.
+    """
+    @op
+    def return_list():
+        return [1, 2, 3]
+    
+    @op
+    def return_tuple():
+        return (1, 2, 3)
+    
+    list_output = return_list()
+    assert isinstance(list_output.get(), list)
+    assert list_output.get() == [1, 2, 3]
+
+    tuple_output = return_tuple()
+    assert isinstance(tuple_output.get(), tuple)
+    assert tuple_output.get() == (1, 2, 3)

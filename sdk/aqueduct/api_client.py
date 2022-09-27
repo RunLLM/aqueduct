@@ -29,7 +29,7 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from aqueduct.serialization import deserialization_function_mapping
+from aqueduct.serialization import deserialize
 from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
 from requests_toolbelt.multipart import decoder
 
@@ -479,11 +479,9 @@ class APIClient:
             return None, execution_status
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
-        if serialization_type not in deserialization_function_mapping:
-            raise Exception("Unsupported serialization type %s." % serialization_type)
-
+        artifact_type = parsed_response["metadata"]["artifact_type"]
         return (
-            deserialization_function_mapping[serialization_type](parsed_response["data"]),
+            deserialize(serialization_type, artifact_type, parsed_response["data"]),
             execution_status,
         )
 
