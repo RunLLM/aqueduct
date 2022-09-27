@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.16
+Released on September 26, 2022.
+
+### Enhancements
+* Improves the readability of the operator logs printed from the SDK by omitting empty logs and
+    making formatting uniform.
+* Throws a more informative error message when a table artifact's column name is not of type string.
+    Aqueduct currently cannot support DataFrame's with non-string type columns.
+
+### Bugfixes
+* Fixes bug where authentication errors caused by incorrect integration credentials were treated as
+    system errors, which led to a confusing error message.
+* Fixes bug introduced in the previous releases where the settings gear was hidden on the UI.
+* Fixes a number of minor formatting and spacing issues on the UI.
+
 ## 0.0.15
 Released on September 20, 2022.
 
