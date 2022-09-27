@@ -11,7 +11,7 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import (infer_artifact_type, deserialize)
+from aqueduct_executor.operators.utils.utils import deserialize, infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:

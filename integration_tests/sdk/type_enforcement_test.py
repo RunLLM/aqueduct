@@ -80,14 +80,15 @@ def test_list_and_tuple_types_are_different(client):
     Because we json-serialize both of these into the same bytes representation,
     make sure type fidelity is actually preserved for each.
     """
+
     @op
     def return_list():
         return [1, 2, 3]
-    
+
     @op
     def return_tuple():
         return (1, 2, 3)
-    
+
     list_output = return_list()
     assert isinstance(list_output.get(), list)
     assert list_output.get() == [1, 2, 3]

@@ -48,7 +48,9 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 
 
 # WARNING: A copy of this function exists in `aqueduct_executor`. Make sure the two are in sync!
-def deserialize(serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes) -> Any:
+def deserialize(
+    serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
+) -> Any:
     """Deserializes a byte string into the appropriate python object."""
     if serialization_type not in __deserialization_function_mapping:
         raise Exception("Unsupported serialization type %s" % serialization_type)

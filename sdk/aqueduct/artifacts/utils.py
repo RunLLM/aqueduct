@@ -5,11 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
-    SubgraphDAGDelta,
-    UpdateParametersDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType
 from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.responses import ArtifactResult
