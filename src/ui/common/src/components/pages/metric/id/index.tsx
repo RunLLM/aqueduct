@@ -2,7 +2,7 @@ import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -28,9 +28,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
-
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
-  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
@@ -89,12 +86,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     }
   }, [operator]);
 
-  const listStyle = {
-    width: '100%',
-    maxWidth: 360,
-    bgcolor: 'background.paper',
-  };
-
   if (
     !workflowDagResultWithLoadingStatus ||
     isInitial(workflowDagResultWithLoadingStatus.status) ||
@@ -117,18 +108,17 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     );
   }
 
-  const inputs = operator.inputs
-    .map(
-      (artifactId) =>
-        (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[artifactId]
-    )
-    .filter((artf) => !!artf);
-  const outputs = operator.outputs
-    .map(
-      (artifactId) =>
-        (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[artifactId]
-    )
-    .filter((artf) => !!artf);
+  const mapArtifacts = (artfIds: string[]) =>
+    artfIds
+      .map(
+        (artifactId) =>
+          (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
+            artifactId
+          ]
+      )
+      .filter((artf) => !!artf);
+  const inputs = mapArtifacts(operator.inputs);
+  const outputs = mapArtifacts(operator.outputs);
 
   return (
     <Layout user={user}>

@@ -6,11 +6,20 @@ import Plot from 'react-plotly.js';
 
 import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
-import { Data } from '../../../../utils/data';
+import { Data, DataSchema } from '../../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 
 type Props = {
   historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
+};
+
+const metricHistorySchema: DataSchema = {
+  fields: [
+    { name: 'status', type: 'varchar' },
+    { name: 'timestamp', type: 'varchar' },
+    { name: 'value', type: 'float' },
+  ],
+  pandas_version: '',
 };
 
 const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
@@ -30,14 +39,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
   }
 
   const historicalData: Data = {
-    schema: {
-      fields: [
-        { name: 'status', type: 'varchar' },
-        { name: 'timestamp', type: 'varchar' },
-        { name: 'value', type: 'float' },
-      ],
-      pandas_version: '0.0.1',
-    },
+    schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
         return {
@@ -63,7 +65,9 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
             y: values,
             type: 'scatter',
             mode: 'lines+markers',
-            marker: { color: 'red' },
+            // colors are 'blue.900'. Plot doesn't seem to accept color from theme.
+            marker: { color: '#002f5e' },
+            line: { color: '#002f5e' },
           },
         ]}
         layout={{ width: '100%', height: '100%' }}

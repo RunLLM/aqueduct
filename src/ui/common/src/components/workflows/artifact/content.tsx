@@ -27,6 +27,7 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
+  // intentional '!=' check for null or undefined.
   if (artifact.result.content_serialized != null) {
     return (
       <Typography variant="body1" component="div" marginBottom="8px">
