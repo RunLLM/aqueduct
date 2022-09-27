@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.0.16
+Released on September 26, 2022.
+
+### Enhancements
+* Improves the readability of the operator logs printed from the SDK.
+* Throws a more informative error message when a table artifact's column name is not of type string.
+
+### Bugfixes
+* Fixes bug where authentication errors caused by incorrect integration credentials were treated as
+    system errors, which led to unhelpful error messages on the UI.
+* Fixes bug where the settings gear was not showing up properly on the UI.
+* Fixes a number of formatting issues on the UI.
+
 ## 0.0.15
 Released on September 20, 2022.
 
