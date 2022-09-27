@@ -5,7 +5,7 @@ requests
 pandas
 IPython
 croniter
-pydantic
+pydantic>=1.9.0
 plotly
 pyyaml
 great_expectations
