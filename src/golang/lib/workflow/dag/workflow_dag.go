@@ -176,8 +176,7 @@ func NewWorkflowDag(
 		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
 		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
 		if !ok {
-			// TODO: This path is unused! Maybe we don't even need to initialize it at all.
-			opMetadataPath = utils.InitializePath(opExecMode == operator.Preview)
+			return nil, errors.Newf("DAGs cannot currently start with an artifact.")
 		}
 
 		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(

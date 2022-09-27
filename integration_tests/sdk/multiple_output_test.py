@@ -1,5 +1,4 @@
 import pytest
-
 from aqueduct.error import AqueductError
 from utils import run_flow_test
 

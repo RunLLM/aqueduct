@@ -1,7 +1,12 @@
 from typing import List, Optional, Tuple
 
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType, ArtifactType
+from aqueduct.enums import (
+    ArtifactType,
+    FunctionGranularity,
+    FunctionType,
+    GithubRepoConfigContentType,
+)
 from aqueduct.error import InvalidGithubQueryError
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
@@ -165,7 +170,7 @@ class Github:
                 op_name=_get_operator_name(
                     "github_function", self.repo_url, self.branch, path or ""
                 ),
-                output_artifact_type_hints=[ArtifactType.UNTYPED]
+                output_artifact_type_hints=[ArtifactType.UNTYPED],
             )
             assert isinstance(new_function_artifact, TableArtifact)
             return new_function_artifact

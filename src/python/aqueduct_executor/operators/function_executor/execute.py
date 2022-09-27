@@ -128,7 +128,8 @@ def _execute_function(
     if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
         raise ExecFailureException(
             failure_type=FailureType.USER_FATAL,
-            tip="Expected function to have %s outputs, but instead it had %s." % (len(spec.output_content_paths), len(results))
+            tip="Expected function to have %s outputs, but instead it had %s."
+            % (len(spec.output_content_paths), len(results)),
         )
 
     if len(spec.output_content_paths) == 1:
@@ -270,7 +271,9 @@ def run(spec: FunctionSpec) -> None:
 
                 check_severity = spec.check_severity
                 if spec.check_severity is None:
-                    print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
+                    print(
+                        "Check operator has an unspecified severity on spec. Defaulting to ERROR."
+                    )
                     check_severity = CheckSeverityLevel.ERROR
 
                 failure_type = FailureType.USER_FATAL

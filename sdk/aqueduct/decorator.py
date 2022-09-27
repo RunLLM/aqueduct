@@ -52,6 +52,7 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 def _is_input_artifact(elem: Any) -> bool:
     return isinstance(elem, BaseArtifact)
 
+
 def wrap_spec(
     spec: OperatorSpec,
     *input_artifacts: BaseArtifact,
@@ -85,7 +86,9 @@ def wrap_spec(
     Returns:
         A list of artifacts, representing the outputs of the function.
     """
-    assert len(output_artifact_type_hints) > 0, "Non-load operators must have at least one output artifact."
+    assert (
+        len(output_artifact_type_hints) > 0
+    ), "Non-load operators must have at least one output artifact."
 
     for artifact in input_artifacts:
         if artifact._from_flow_run:
@@ -103,7 +106,7 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    def _construct_artifact_name(i: int, op_name: str):
+    def _construct_artifact_name(i: int, op_name: str) -> str:
         """The artifact naming policy is "<op_name> artifact <optional counter>".
 
         The counter starts at 1, and is only present in the multi-output case.
@@ -267,7 +270,7 @@ def op(
             `pip freeze`.
         num_outputs:
             The number of outputs the decorated function is expected to return.
-            Will fail at runtime if the number of outputs.
+            Will fail at runtime if a different number of outputs is returned by the function.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
