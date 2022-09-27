@@ -123,7 +123,7 @@ export const IntegrationFileUploadField: React.FC<
     const overlay = dragging && theme.palette.gray[100];
     const styling = {
       margin: '16px',
-      height: '16ch',
+      padding: '16px',
       width: `max(100%-16px, ${placeholder.length + 8}ch)`,
       display: 'flex',
       justifyContent: 'center',
