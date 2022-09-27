@@ -6,6 +6,7 @@ import Plot from 'react-plotly.js';
 
 import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
+import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 
@@ -65,9 +66,8 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
             y: values,
             type: 'scatter',
             mode: 'lines+markers',
-            // colors are 'blue.900'. Plot doesn't seem to accept color from theme.
-            marker: { color: '#002f5e' },
-            line: { color: '#002f5e' },
+            marker: { color: theme.palette.blue[900] },
+            line: { color: theme.palette.blue[900] },
           },
         ]}
         layout={{ width: '100%', height: '100%' }}
