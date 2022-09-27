@@ -35,6 +35,8 @@ func newParamOperator(
 	// Write the parameter's value from the spec to the output content path.
 	// This is to avoid passing raw values in the spec, which can be of unbounded
 	// size (eg. images can be too large).
+	// This also means that parameter artifacts are automatically considered `Computed`,
+	// as soon they are constructed.
 	paramValBytes, err := base64.StdEncoding.DecodeString(base.dbOperator.Spec.Param().Val)
 	if err != nil {
 		return nil, err

@@ -20,6 +20,10 @@ def run(spec: ParamSpec) -> None:
     Therefore, this operator is responsible only for:
     - Checking that the parameter type matches the expected type.
     - Writing the operator and artifact metadata to storage, so that orchestration can proceed as normal.
+
+    The artifact output paths are written to before any type checking occurs, so all artifact-related paths are
+    expected to have been populated, even if the operator itself fails. However, this is not guaranteed to be the case,
+    since system errors are still possible.
     """
     print("Job Spec: \n{}".format(spec.json()))
 
@@ -29,6 +33,17 @@ def run(spec: ParamSpec) -> None:
         val_bytes = storage.get(spec.output_content_path)
         val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
 
+        # This does not write to the output artifact's content path as a performance optimization.
+        # That has already been written by the Golang Orchestrator.
+        utils.write_artifact(
+            storage,
+            spec.expected_type,
+            None,  # output_content_path
+            spec.output_metadata_path,
+            val,
+            system_metadata={},
+        )
+
         inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
             raise ExecFailureException(
@@ -36,15 +51,6 @@ def run(spec: ParamSpec) -> None:
                 tip="Supplied parameter expects type `%s`, but got `%s` instead."
                 % (spec.expected_type, inferred_type),
             )
-
-        utils.write_artifact(
-            storage,
-            spec.expected_type,
-            None,  # output_content_path: this is a performance optimization only, which avoids an unnecessary write to the output path.
-            spec.output_metadata_path,
-            val,
-            system_metadata={},
-        )
 
         utils.write_exec_state(
             storage,

@@ -279,10 +279,12 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	)
 
 	for _, outputArtifact := range bo.outputs {
-		// If the operator failed, for now, we assume the downstream artifact is never generated.
-		// In this case, we will mark these artifacts as cancelled.
+		// If the downstream artifact was never generated, we mark it as "cancelled", since the
+		// operator either never ran or did run but hit a user-generated exception.
+		// System-generated errors from things like the type checking of parameters will
+		// still generate downstream artifacts, so those will continue to be marked as "failed".
 		artifactExecState := *execState
-		if execState.Status == shared.FailedExecutionStatus {
+		if !outputArtifact.Computed(ctx) {
 			artifactExecState.Status = shared.CanceledExecutionStatus
 		}
 
