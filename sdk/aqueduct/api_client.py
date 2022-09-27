@@ -140,7 +140,7 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
-    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register_airflow"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
