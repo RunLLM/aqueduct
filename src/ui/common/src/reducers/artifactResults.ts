@@ -6,12 +6,14 @@ import { handleListArtifactResults } from '../handlers/listArtifactResults';
 import { ListArtifactResultsResponse } from '../handlers/responses/artifact';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
+export type ArtifactResultsWithLoadingStatus = {
+  status: LoadingStatus;
+  results?: ListArtifactResultsResponse;
+};
+
 export interface ArtifactResultsState {
   artifacts: {
-    [id: string]: {
-      status: LoadingStatus;
-      results?: ListArtifactResultsResponse;
-    };
+    [id: string]: ArtifactResultsWithLoadingStatus;
   };
 }
 

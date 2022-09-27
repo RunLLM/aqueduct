@@ -5,12 +5,13 @@ import { createSlice } from '@reduxjs/toolkit';
 import { handleGetArtifactResultContent } from '../handlers/getArtifactResultContent';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
+export type ContentWithLoadingStatus = {
+  status: LoadingStatus;
+  data?: string;
+};
 export interface ArtifactResultContentState {
   contents: {
-    [artifactResultId: string]: {
-      status: LoadingStatus;
-      data?: string;
-    };
+    [artifactResultId: string]: ContentWithLoadingStatus;
   };
 }
 

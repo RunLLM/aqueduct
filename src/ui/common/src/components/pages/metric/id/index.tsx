@@ -1,27 +1,19 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress, Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
-import Plot from 'react-plotly.js';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
-import PaginatedTable from '../../../../components/tables/PaginatedTable';
-import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
-import { Data } from '../../../../utils/data';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
+import MetricsHistory from '../../../workflows/artifact/metric/history';
+import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 
@@ -36,9 +28,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
-
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
-  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
@@ -97,12 +86,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     }
   }, [operator]);
 
-  const listStyle = {
-    width: '100%',
-    maxWidth: 360,
-    bgcolor: 'background.paper',
-  };
-
   if (
     !workflowDagResultWithLoadingStatus ||
     isInitial(workflowDagResultWithLoadingStatus.status) ||
@@ -125,134 +108,17 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     );
   }
 
-  // Function to get the numerical value of the metric output
-  const operatorOutputsList = operator.outputs.map((artifactId) => {
-    const artifactResult = (workflowDagResultWithLoadingStatus.result
-      ?.artifacts ?? {})[artifactId];
-    if (!artifactResult) {
-      return null;
-    }
-
-    if (
-      !artifactResult.result ||
-      artifactResult.result.content_serialized === undefined
-    ) {
-      // Link to appropriate artifact details page
-      // Show tableIcon here as part of the link.
-      return (
-        <Box key={artifactId}>
-          <Link
-            to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
-            component={RouterLink as any}
-            sx={{ marginLeft: '16px' }}
-            underline="none"
-          >
-            {artifactResult.name}
-          </Link>
-        </Box>
-      );
-    }
-
-    return (
-      <Box key={artifactId}>
-        <Typography variant="body1">
-          {artifactResult.result.content_serialized}
-        </Typography>
-      </Box>
-    );
-  });
-
-  const operatorInputsList = operator.inputs.map((artifactId, index) => {
-    const artifactResult = (workflowDagResultWithLoadingStatus.result
-      ?.artifacts ?? {})[artifactId];
-    if (!artifactResult) {
-      return null;
-    }
-
-    return (
-      <ListItem divider key={`metric-input-${index}`}>
-        <Box display="flex">
-          <Box
-            sx={{
-              width: '16px',
-              height: '16px',
-              color: 'rgba(0,0,0,0.54)',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={artifactTypeToIconMapping[artifactResult.type]}
-            />
-          </Box>
-          <Link
-            to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
-            component={RouterLink as any}
-            sx={{ marginLeft: '16px' }}
-            underline="none"
-          >
-            {artifactResult.name}
-          </Link>
-        </Box>
-      </ListItem>
-    );
-  });
-
-  let historicalOutputsSection = null;
-  if (
-    !artifactHistoryWithLoadingStatus ||
-    isInitial(artifactHistoryWithLoadingStatus.status) ||
-    isLoading(artifactHistoryWithLoadingStatus.status)
-  ) {
-    historicalOutputsSection = <CircularProgress />;
-  } else if (isFailed(artifactHistoryWithLoadingStatus.status)) {
-    historicalOutputsSection = (
-      <Alert title="Failed to load historical data.">
-        {artifactHistoryWithLoadingStatus.status.err}
-      </Alert>
-    );
-  } else {
-    const historicalData: Data = {
-      schema: {
-        fields: [
-          { name: 'status', type: 'varchar' },
-          { name: 'timestamp', type: 'varchar' },
-          { name: 'value', type: 'float' },
-        ],
-        pandas_version: '0.0.1',
-      },
-      data: (artifactHistoryWithLoadingStatus.results?.results ?? []).map(
-        (artifactStatusResult) => {
-          return {
-            status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-            timestamp: artifactStatusResult.exec_state?.timestamps?.finished_at,
-            value: artifactStatusResult.content_serialized,
-          };
-        }
-      ),
-    };
-
-    const dataToPlot = historicalData.data.filter(
-      (x) => !!x['timestamp'] && !!x['value']
-    );
-    const timestamps = dataToPlot.map((x) => x['timestamp']);
-    const values = dataToPlot.map((x) => x['value']);
-    historicalOutputsSection = (
-      <Box display="flex" justifyContent="center" flexDirection="column">
-        <Plot
-          data={[
-            {
-              x: timestamps,
-              y: values,
-              type: 'scatter',
-              mode: 'lines+markers',
-              marker: { color: 'red' },
-            },
-          ]}
-          layout={{ width: '100%', height: '100%' }}
-        />
-        <PaginatedTable data={historicalData} />
-      </Box>
-    );
-  }
+  const mapArtifacts = (artfIds: string[]) =>
+    artfIds
+      .map(
+        (artifactId) =>
+          (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
+            artifactId
+          ]
+      )
+      .filter((artf) => !!artf);
+  const inputs = mapArtifacts(operator.inputs);
+  const outputs = mapArtifacts(operator.outputs);
 
   return (
     <Layout user={user}>
@@ -267,67 +133,23 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
           <Box display="flex" width="100%" paddingTop="40px">
             <Box width="100%">
-              <Accordion
-                expanded={inputsExpanded}
-                onChange={() => {
-                  setInputsExpanded(!inputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  sx={{
-                    '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-                      transform: 'rotate(90deg)',
-                    },
-                  }}
-                  aria-controls="input-accordion-content"
-                  id="input-accordion-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Inputs:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List sx={listStyle}>{operatorInputsList}</List>
-                </AccordionDetails>
-              </Accordion>
+              <ArtifactSummaryList
+                title={'Inputs:'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={inputs}
+                initiallyExpanded={true}
+              />
             </Box>
             <Box width="32px" />
             <Box width="100%">
-              <Accordion
-                expanded={outputsExpanded}
-                onChange={() => {
-                  setOutputsExpanded(!outputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  sx={{
-                    '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-                      transform: 'rotate(90deg)',
-                    },
-                  }}
-                  aria-controls="panel1bh-content"
-                  id="panel1bh-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Output:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <React.Fragment>{operatorOutputsList}</React.Fragment>
-                </AccordionDetails>
-              </Accordion>
+              <ArtifactSummaryList
+                title={'Outputs:'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={outputs}
+                initiallyExpanded={true}
+              />
             </Box>
           </Box>
 
@@ -335,7 +157,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             <Typography variant="h5" component="div" marginBottom="8px">
               Historical Outputs:
             </Typography>
-            {historicalOutputsSection}
+            <MetricsHistory
+              historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
+            />
           </Box>
         </Box>
       </Box>
