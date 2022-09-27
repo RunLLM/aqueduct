@@ -18,6 +18,7 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
+  initiallyExpanded: boolean;
 };
 
 const listStyle = {
@@ -31,8 +32,9 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   artifactResults,
+  initiallyExpanded,
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const items = artifactResults.map((artifactResult) => {
     let content = null;
     if (artifactResult.result?.content_serialized) {
