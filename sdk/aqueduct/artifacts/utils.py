@@ -65,7 +65,8 @@ def preview_artifacts(
         _update_artifact_type(dag, target_artifact_id, target_artifact_type)
 
         # Fetch the content of the target artifact.
-        target_artifact_content = _get_content_from_artifact_result_resp(target_artifact_result)
+        artifact_name = dag.must_get_artifact(target_artifact_id).name
+        target_artifact_content = _get_content_from_artifact_result_resp(target_artifact_result, artifact_name)
 
         # Create the target artifact.
         output_artifacts.append(
@@ -134,12 +135,18 @@ def _update_artifact_type(
         dag.update_artifact_type(artifact_id, new_artifact_type)
 
 
-def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult) -> Any:
+def _get_content_from_artifact_result_resp(artifact_result: ArtifactResult, artifact_name: str) -> Any:
     """Deserialize and validate the type of the content for a given artifact result."""
     content = deserialize(
         artifact_result.serialization_type,
         artifact_result.artifact_type,
         artifact_result.content,
     )
-    assert infer_artifact_type(content) == artifact_result.artifact_type
+    assert infer_artifact_type(content) == artifact_result.artifact_type, (
+            "Artifact `%s` has deserialized content with type %s, but preview request returned type %s" % (
+        artifact_name,
+        infer_artifact_type(content),
+        artifact_result.artifact_type,
+    )
+    )
     return content

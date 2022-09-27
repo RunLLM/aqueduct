@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, Sequence, Union, cast
+from typing import Any, Callable, List, Optional, Union, cast
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils

@@ -63,30 +63,20 @@ type workflowDagImpl struct {
 // by the artifact's original ID.
 func computeArtifactSignatures(
 	dbOperators map[uuid.UUID]db_operator.DBOperator,
-	dbArtifacts map[uuid.UUID]db_artifact.DBArtifact,
+	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
+	numArtifacts int,
 ) (map[uuid.UUID]uuid.UUID, error) {
-	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, numArtifacts)
 
 	// Queue that stores the frontier of operators as we perform a BFS over the dag.
 	q := make([]uuid.UUID, 0, 1)
-	// TODO: pass this in
-	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
-
 	for _, dbOperator := range dbOperators {
 		if len(dbOperator.Inputs) == 0 {
 			q = append(q, dbOperator.Id)
 		}
-		for _, inputArtifactID := range dbOperator.Inputs {
-			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
-			if !ok {
-				opIDs = make([]uuid.UUID, 0, 1)
-			}
-			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
-		}
 	}
 
-	processedArtifactIds := make(map[uuid.UUID]bool, len(dbArtifacts))
-
+	processedArtifactIds := make(map[uuid.UUID]bool, numArtifacts)
 	for len(q) > 0 {
 		// Pop the first operator off of the queue.
 		currOp := dbOperators[q[0]]
@@ -164,11 +154,20 @@ func NewWorkflowDag(
 
 	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
 	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
+	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbOperator := range dbOperators {
 		for _, outputArtifactID := range dbOperator.Outputs {
 			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
 		}
 		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+
+		for _, inputArtifactID := range dbOperator.Inputs {
+			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
+			if !ok {
+				opIDs = make([]uuid.UUID, 0, 1)
+			}
+			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
+		}
 	}
 
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
@@ -188,7 +187,7 @@ func NewWorkflowDag(
 	}
 
 	// Compute signatures for each artifact.
-	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, dbArtifacts)
+	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, opIDsByInputArtifact, len(dbArtifacts))
 	if err != nil {
 		return nil, errors.Wrap(err, "Internal error: unable to set up workflow execution.")
 	}

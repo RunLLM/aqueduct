@@ -122,6 +122,15 @@ def _execute_function(
         return invoke(*inputs)
 
     results = _invoke()
+
+    # We only validate the number of results if multiple outputs are expected.
+    # Otherwise, we treat the results as a single object.
+    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
+        raise ExecFailureException(
+            failure_type=FailureType.USER_FATAL,
+            tip="Expected function to have %s outputs, but instead it had %s." % (len(spec.output_content_paths), len(results))
+        )
+
     if len(spec.output_content_paths) == 1:
         results = [results]
 
