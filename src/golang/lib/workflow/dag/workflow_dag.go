@@ -62,6 +62,7 @@ type workflowDagImpl struct {
 // computeArtifactSignatures traverses over the entire dag structure from beginning to end,
 // computing the signatures for each artifact. These signatures are returned in a map keyed
 // by the artifact's original ID.
+// `opIDsByInputArtifact` does not contain entries for terminal artifacts.
 func computeArtifactSignatures(
 	dbOperators map[uuid.UUID]db_operator.DBOperator,
 	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
@@ -88,27 +89,34 @@ func computeArtifactSignatures(
 			continue
 		}
 
-		bytesToHash := []byte{}
+		// Represents the bytes prefix that we want to hash for each output artifact.
+		// Is computed to be the concatenation of the operator's input signatures, along with
+		// the parameter value of the operator (if the operator is a parameter).
+		// These bytes are meant to be concatenated with each output artifact's id and the result
+		// hashed in order to obtain the signature for each output artifact.
+		inputBytesToHash := []byte{}
 		for _, inputArtifactID := range currOp.Inputs {
 			inputArtifactSignature, ok := artifactIDToSignature[inputArtifactID]
 			if !ok {
 				return nil, errors.Newf("Unable to find signature for input artifact %s", inputArtifactID)
 			}
-			bytesToHash = append(bytesToHash, []byte(inputArtifactSignature.String())...)
+			inputBytesToHash = append(inputBytesToHash, []byte(inputArtifactSignature.String())...)
 		}
 
 		// If the operator produces a parameter artifact, we also need to hash against the parameterized value.
 		if currOp.Spec.Type() == db_operator.ParamType {
-			bytesToHash = append(bytesToHash, []byte(currOp.Spec.Param().Val)...)
+			inputBytesToHash = append(inputBytesToHash, []byte(currOp.Spec.Param().Val)...)
 		}
 
 		// Compute that signature for each output artifact.
-		// The assumption is that there is only one output.
 		for _, outputArtifactID := range currOp.Outputs {
-			bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
+			// NOTE: is it important for correctness that we do not pre-allocate capacity for `inputBytesToHash`,
+			// so that append() will always assign a new slice to each `outputBytesToHash`. This allows us to use
+			// `inputBytesToHash` multiple times within this loop without worrying about it changing.
+			outputBytesToHash := append(inputBytesToHash, []byte(outputArtifactID.String())...)
 
 			// Compute that final hash and add it to the map, then continue traversing.
-			artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
+			artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, outputBytesToHash)
 			processedArtifactIds[outputArtifactID] = true
 
 			// Find the next downstream operators that consume this output artifact.
