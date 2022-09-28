@@ -18,6 +18,7 @@ VENV_REQUIREMENTS=[
     "pydantic",
     "pyodbc",
     "pyyaml",
+    "scikit-learn",
     "snowflake-sqlalchemy",
     "SQLAlchemy",
     "typing_extensions",
