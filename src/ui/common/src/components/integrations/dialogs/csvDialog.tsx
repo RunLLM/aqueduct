@@ -59,14 +59,14 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     });
 
     return (
-        <DataGrid
-          autoHeight
-          rows={parsedRows}
-          columns={parsedColumns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-        />
+      <DataGrid
+        autoHeight
+        rows={parsedRows}
+        columns={parsedColumns}
+        pageSize={5}
+        rowsPerPageOptions={[5]}
+        disableSelectionOnClick
+      />
     );
   };
   return (
