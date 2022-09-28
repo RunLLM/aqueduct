@@ -251,6 +251,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   };
 
+
   const getNodeActionButton = () => {
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
@@ -302,6 +303,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             }}
           >
             View Metric Details
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.FunctionOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/function/${currentNode.id}`
+              );
+            }}
+          >
+            View Function Details
           </Button>
         </Box>
       );
