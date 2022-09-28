@@ -2,8 +2,8 @@ package routes
 
 // Please sort the route by their VALUEs
 const (
-	GetArtifactVersionsRoute = "/api/artifact_versions"
-	GetArtifactResultRoute   = "/api/artifact_result/{workflowDagResultId}/{artifactId}"
+	GetArtifactVersionsRoute = "/api/artifact/versions"
+	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
 	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
@@ -15,7 +15,7 @@ const (
 	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
 	EditIntegrationRoute             = "/api/integration/{integrationId}/edit"
 	ListIntegrationObjectsRoute      = "/api/integration/{integrationId}/objects"
-	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
+	PreviewTableRoute                = "/api/integration/{integrationId}/preview"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
 
@@ -24,7 +24,7 @@ const (
 	ListNotificationsRoute   = "/api/notifications"
 	ArchiveNotificationRoute = "/api/notifications/{notificationId}/archive"
 
-	GetOperatorResultRoute = "/api/operator_result/{workflowDagResultId}/{operatorId}"
+	GetOperatorResultRoute = "/api/operator/{workflowDagResultId}/{operatorId}/result"
 
 	GetNodePositionsRoute = "/api/positioning"
 	PreviewRoute          = "/api/preview"
@@ -33,7 +33,7 @@ const (
 
 	ListWorkflowsRoute           = "/api/workflows"
 	RegisterWorkflowRoute        = "/api/workflow/register"
-	RegisterAirflowWorkflowRoute = "/api/workflow/register_airflow"
+	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
 	GetWorkflowRoute             = "/api/workflow/{workflowId}"
 	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"

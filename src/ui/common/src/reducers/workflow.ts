@@ -114,7 +114,7 @@ export const handleGetOperatorResults = createAsyncThunk<
   ) => {
     const { apiKey, workflowDagResultId, operatorId } = args;
     const res = await fetch(
-      `${apiAddress}/api/operator_result/${workflowDagResultId}/${operatorId}`,
+      `${apiAddress}/api/operator/${workflowDagResultId}/${operatorId}/result`,
       {
         method: 'GET',
         headers: {
@@ -147,7 +147,7 @@ export const handleGetArtifactResults = createAsyncThunk<
   ) => {
     const { apiKey, workflowDagResultId, artifactId } = args;
     const res = await fetch(
-      `${apiAddress}/api/artifact_result/${workflowDagResultId}/${artifactId}`,
+      `${apiAddress}/api/artifact/${workflowDagResultId}/${artifactId}/result`,
       {
         method: 'GET',
         headers: {

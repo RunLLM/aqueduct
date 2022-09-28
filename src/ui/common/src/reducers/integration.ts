@@ -136,7 +136,7 @@ export const handleLoadIntegrationObject = createAsyncThunk<
     }
 
     const objectResponse = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/preview_table`,
+      `${apiAddress}/api/integration/${integrationId}/preview`,
       {
         method: 'GET',
         headers: {
