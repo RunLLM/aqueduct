@@ -1,9 +1,6 @@
 import { produce } from 'immer';
-import React, { useEffect } from 'react';
-import ReactFlow, {
-  Node as ReactFlowNode,
-  useReactFlow,
-} from 'react-flow-renderer';
+import React from 'react';
+import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
@@ -35,19 +32,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   const artifactResults = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults
   );
-
-  const { fitView } = useReactFlow();
-  useEffect(() => {
-    fitView();
-  }, [dagPositionState]);
-
-  useEffect(() => {
-    // NOTE(vikram): There's a timeout here because there seems to be a
-    // race condition between calling `fitView` and the viewport
-    // updating. This might be because of the width transition we use, but
-    // we're not 100% sure.
-    setTimeout(fitView, 200);
-  }, [openSideSheetState]);
 
   const collapseNodes = () => {
     const checkOpNodes = [];

@@ -1,3 +1,5 @@
+// This is being deprecated. Please use `workflowDagResults` combining with
+// `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'react-flow-renderer';
 
