@@ -16,4 +16,4 @@ RUN apt-get update && \
   pydantic==1.9.0 \
   pyyaml \
   SQLAlchemy==1.4.30 \
-  typing_extensions
+  typing_extensions==4.3.0
