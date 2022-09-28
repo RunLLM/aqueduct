@@ -39,11 +39,14 @@ import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
+import LogViewer from './components/LogViewer';
+import MultiFileViewer from './components/MultiFileViewer';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
 import DataPage from './components/pages/data';
+import FunctionDetailsPage from './components/pages/function/id';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
@@ -65,7 +68,6 @@ import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
-import LogViewer from './components/workflows/log_viewer';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
@@ -356,6 +358,7 @@ export {
   FileEventTarget,
   filteredList,
   formatService,
+  FunctionDetailsPage,
   FunctionGranularity,
   FunctionOp,
   FunctionOperatorNode,
@@ -435,6 +438,7 @@ export {
   Metric,
   MetricDetailsPage,
   MetricOperatorNode,
+  MultiFileViewer,
   MySqlCard,
   MySqlConfig,
   MysqlDialog,

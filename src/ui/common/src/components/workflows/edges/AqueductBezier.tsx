@@ -28,7 +28,7 @@ export const AqueductBezier: React.FC<EdgeProps> = ({
       <defs>
         <marker
           id="arrow-closed"
-          viewBox="-10 -10 20 20"
+          // viewBox="-10 -10 20 20" TODO: investigate linter complaint: Invalid property 'viewBox' found on tag 'marker', but it is only allowed on: svg
           refX="0"
           refY="0"
           markerWidth="12.5"
