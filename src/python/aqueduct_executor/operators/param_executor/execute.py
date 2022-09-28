@@ -11,10 +11,7 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import (
-    deserialization_function_mapping,
-    infer_artifact_type,
-)
+from aqueduct_executor.operators.utils.utils import deserialize, infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:
@@ -30,7 +27,7 @@ def run(spec: ParamSpec) -> None:
 
     try:
         val_bytes = storage.get(spec.output_content_path)
-        val = deserialization_function_mapping[spec.serialization_type](val_bytes)
+        val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
 
         inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
