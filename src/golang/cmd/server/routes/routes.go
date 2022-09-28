@@ -15,7 +15,7 @@ const (
 	DiscoverRoute                    = "/api/integration/{integrationId}/discover"
 	EditIntegrationRoute             = "/api/integration/{integrationId}/edit"
 	ListIntegrationObjectsRoute      = "/api/integration/{integrationId}/objects"
-	PreviewTableRoute                = "/api/integration/{integrationId}/preview_table"
+	PreviewTableRoute                = "/api/integration/{integrationId}/preview"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
 
