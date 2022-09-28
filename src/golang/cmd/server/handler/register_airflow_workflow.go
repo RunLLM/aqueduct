@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/register_airflow
+// Route: /workflow/register/airflow
 // Method: POST
 // Params: none
 // Request
