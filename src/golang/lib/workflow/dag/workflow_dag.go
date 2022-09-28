@@ -110,9 +110,11 @@ func computeArtifactSignatures(
 
 		// Compute that signature for each output artifact.
 		for _, outputArtifactID := range currOp.Outputs {
-			// NOTE: is it important for correctness that we do not pre-allocate capacity for `inputBytesToHash`,
-			// so that append() will always assign a new slice to each `outputBytesToHash`. This allows us to use
+			// NOTE: is it important for correctness that we do not allocate additional capacity for `inputBytesToHash`.
+			// We need append() to always create a new slice for each `outputBytesToHash`. This allows us to use
 			// `inputBytesToHash` multiple times within this loop without worrying about it changing.
+			// From a performance standpoint, it can be suboptimal, since `inputBytesToHash` will be copied
+			// to a new location on each append() call.
 			outputBytesToHash := append(inputBytesToHash, []byte(outputArtifactID.String())...)
 
 			// Compute that final hash and add it to the map, then continue traversing.
