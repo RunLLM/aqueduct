@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.utils import to_artifact_class
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.operators import Operator, OperatorSpec, ParamSpec
+from aqueduct.operators import Operator, OperatorSpec
 from aqueduct.utils import construct_param_spec, generate_uuid, infer_artifact_type
-
-if TYPE_CHECKING:
-    from aqueduct.artifacts.bool_artifact import BoolArtifact
-    from aqueduct.artifacts.generic_artifact import GenericArtifact
-    from aqueduct.artifacts.numeric_artifact import NumericArtifact
-    from aqueduct.artifacts.table_artifact import TableArtifact
 
 
 def create_param(
@@ -22,7 +17,7 @@ def create_param(
     name: str,
     default: Any,
     description: str = "",
-) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
+) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators."""
     if default is None:
         raise InvalidUserArgumentException("Parameter default value cannot be None.")

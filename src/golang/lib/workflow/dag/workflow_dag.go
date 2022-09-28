@@ -62,31 +62,23 @@ type workflowDagImpl struct {
 // computeArtifactSignatures traverses over the entire dag structure from beginning to end,
 // computing the signatures for each artifact. These signatures are returned in a map keyed
 // by the artifact's original ID.
+// `opIDsByInputArtifact` does not contain entries for terminal artifacts.
 func computeArtifactSignatures(
 	dbOperators map[uuid.UUID]db_operator.DBOperator,
-	dbArtifacts map[uuid.UUID]db_artifact.DBArtifact,
+	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
+	numArtifacts int,
 ) (map[uuid.UUID]uuid.UUID, error) {
-	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, numArtifacts)
 
 	// Queue that stores the frontier of operators as we perform a BFS over the dag.
 	q := make([]uuid.UUID, 0, 1)
-	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
-
 	for _, dbOperator := range dbOperators {
 		if len(dbOperator.Inputs) == 0 {
 			q = append(q, dbOperator.Id)
 		}
-		for _, inputArtifactID := range dbOperator.Inputs {
-			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
-			if !ok {
-				opIDs = make([]uuid.UUID, 0, 1)
-			}
-			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
-		}
 	}
 
-	processedArtifactIds := make(map[uuid.UUID]bool, len(dbArtifacts))
-
+	processedArtifactIds := make(map[uuid.UUID]bool, numArtifacts)
 	for len(q) > 0 {
 		// Pop the first operator off of the queue.
 		currOp := dbOperators[q[0]]
@@ -97,47 +89,54 @@ func computeArtifactSignatures(
 			continue
 		}
 
-		bytesToHash := []byte{}
+		// Represents the bytes prefix that we want to hash for each output artifact.
+		// Is computed to be the concatenation of the operator's input signatures, along with
+		// the parameter value of the operator (if the operator is a parameter).
+		// These bytes are meant to be concatenated with each output artifact's id and the result
+		// hashed in order to obtain the signature for each output artifact.
+		inputBytesToHash := []byte{}
 		for _, inputArtifactID := range currOp.Inputs {
 			inputArtifactSignature, ok := artifactIDToSignature[inputArtifactID]
 			if !ok {
 				return nil, errors.Newf("Unable to find signature for input artifact %s", inputArtifactID)
 			}
-			bytesToHash = append(bytesToHash, []byte(inputArtifactSignature.String())...)
+			inputBytesToHash = append(inputBytesToHash, []byte(inputArtifactSignature.String())...)
 		}
 
 		// If the operator produces a parameter artifact, we also need to hash against the parameterized value.
 		if currOp.Spec.Type() == db_operator.ParamType {
-			bytesToHash = append(bytesToHash, []byte(currOp.Spec.Param().Val)...)
-		}
-
-		if len(currOp.Outputs) > 1 {
-			return nil, errors.Newf("Multiple output artifacts is currently unsupported.")
+			inputBytesToHash = append(inputBytesToHash, []byte(currOp.Spec.Param().Val)...)
 		}
 
 		// Compute that signature for each output artifact.
-		// The assumption is that there is only one output.
-		outputArtifactID := currOp.Outputs[0]
-		bytesToHash = append(bytesToHash, []byte(outputArtifactID.String())...)
+		for _, outputArtifactID := range currOp.Outputs {
+			// NOTE: is it important for correctness that we do not allocate additional capacity for `inputBytesToHash`.
+			// We need append() to always create a new slice for each `outputBytesToHash`. This allows us to use
+			// `inputBytesToHash` multiple times within this loop without worrying about it changing.
+			// From a performance standpoint, it can be suboptimal, since `inputBytesToHash` will be copied
+			// to a new location on each append() call.
+			outputBytesToHash := append(inputBytesToHash, []byte(outputArtifactID.String())...)
 
-		// Compute that final hash and add it to the map, then continue traversing.
-		artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, bytesToHash)
-		processedArtifactIds[outputArtifactID] = true
+			// Compute that final hash and add it to the map, then continue traversing.
+			artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, outputBytesToHash)
+			processedArtifactIds[outputArtifactID] = true
 
-		// Find the next downstream operators. We must have already visited all the operator's inputs.
-		for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
-			nextOp := dbOperators[nextOpID]
+			// Find the next downstream operators that consume this output artifact.
+			// In order to process it next, we must have already visited all the operator's inputs.
+			for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
+				nextOp := dbOperators[nextOpID]
 
-			depsComputed := true
-			for _, inputArtifactID := range nextOp.Inputs {
-				if _, ok := processedArtifactIds[inputArtifactID]; !ok {
-					depsComputed = false
-					break
+				depsComputed := true
+				for _, inputArtifactID := range nextOp.Inputs {
+					if _, ok := processedArtifactIds[inputArtifactID]; !ok {
+						depsComputed = false
+						break
+					}
 				}
-			}
 
-			if depsComputed {
-				q = append(q, nextOpID)
+				if depsComputed {
+					q = append(q, nextOpID)
+				}
 			}
 		}
 	}
@@ -164,14 +163,41 @@ func NewWorkflowDag(
 	dbArtifacts := dbWorkflowDag.Artifacts
 	dbOperators := dbWorkflowDag.Operators
 
+	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
+	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
+	for _, dbOperator := range dbOperators {
+		for _, outputArtifactID := range dbOperator.Outputs {
+			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
+		}
+		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+
+		for _, inputArtifactID := range dbOperator.Inputs {
+			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
+			if !ok {
+				opIDs = make([]uuid.UUID, 0, 1)
+			}
+			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
+		}
+	}
+
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
 	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(opExecMode == operator.Preview)
+		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
+		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
+		if !ok {
+			return nil, errors.Newf("DAGs cannot currently start with an artifact.")
+		}
+
+		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(
+			opExecMode == operator.Preview,
+			opMetadataPath,
+		)
 	}
 
 	// Compute signatures for each artifact.
-	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, dbArtifacts)
+	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, opIDsByInputArtifact, len(dbArtifacts))
 	if err != nil {
 		return nil, errors.Wrap(err, "Internal error: unable to set up workflow execution.")
 	}
