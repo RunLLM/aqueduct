@@ -8,9 +8,9 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import Plot from 'react-plotly.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useParams } from 'react-router-dom';
+import CheckTableItem from '../../../tables/CheckTableItem';
 
 import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
@@ -37,8 +37,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     const dispatch: AppDispatch = useDispatch();
     const { workflowId, workflowDagResultId, checkOperatorId } = useParams();
 
-    const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
-    const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
+    const [metricsExpanded, setMetricsExpanded] = useState<boolean>(true);
+    const [artifactsExpanded, setArtifactsExpanded] = useState<boolean>(true);
 
     const workflowDagResultWithLoadingStatus = useSelector(
         (state: RootState) =>
@@ -166,6 +166,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             return null;
         }
 
+        console.log('operator output artifactResult: ', artifactResult);
+
         if (
             !artifactResult.result ||
             artifactResult.result.content_serialized === undefined
@@ -187,10 +189,19 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         }
 
         return (
-            <Box key={artifactId}>
-                <Typography variant="body1">
+            <Box key={artifactId} display="flex">
+                {/* <Typography variant="body1" marginRight="24px">
                     {artifactResult.result.content_serialized}
-                </Typography>
+                </Typography> */}
+                <CheckTableItem checkValue={artifactResult.result.content_serialized} />
+                <Link
+                    to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
+                    component={RouterLink as any}
+                    sx={{ marginLeft: '16px' }}
+                    underline="none"
+                >
+                    {artifactResult.name}
+                </Link>
             </Box>
         );
     });
@@ -211,9 +222,70 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
                     <Typography variant="h5" marginBottom="8px">Recent Results</Typography>
                     <PaginatedTable data={historicalCheckData} />
                 </Box>
+                {/* commenting out metrics for now as we figure out what to do with them */}
+                {/* <Box width="100%" marginTop="32px">
+                    <Typography variant="h5">Related Outputs</Typography>
+                    <Accordion
+                        expanded={metricsExpanded}
+                        onChange={() => {
+                            setMetricsExpanded(!metricsExpanded);
+                        }}
+                    >
+                        <AccordionSummary
+                            expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+                            sx={{
+                                '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
+                                    transform: 'rotate(90deg)',
+                                },
+                            }}
+                            aria-controls="input-accordion-content"
+                            id="input-accordion-header"
+                        >
+                            <Typography
+                                sx={{ width: '33%', flexShrink: 0 }}
+                                variant="h5"
+                                component="div"
+                                marginBottom="8px"
+                            >
+                                Metrics:
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <React.Fragment>{operatorOutputsList}</React.Fragment>
+                        </AccordionDetails>
+                    </Accordion>
+                </Box> */}
 
                 <Box width="100%" marginTop="32px">
-                    <Typography variant="h5">Related Outputs</Typography>
+                    <Accordion
+                        expanded={artifactsExpanded}
+                        onChange={() => {
+                            setArtifactsExpanded(!artifactsExpanded);
+                        }}
+                    >
+                        <AccordionSummary
+                            expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+                            sx={{
+                                '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
+                                    transform: 'rotate(90deg)',
+                                },
+                            }}
+                            aria-controls="artifacts-accordion-content"
+                            id="artifacts-accordion-header"
+                        >
+                            <Typography
+                                sx={{ width: '33%', flexShrink: 0 }}
+                                variant="h5"
+                                component="div"
+                                marginBottom="8px"
+                            >
+                                Artifacts:
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <React.Fragment>{operatorOutputsList}</React.Fragment>
+                        </AccordionDetails>
+                    </Accordion>
                 </Box>
 
             </Box>
