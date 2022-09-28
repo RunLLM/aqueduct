@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import CheckTableItem from '../../../tables/CheckTableItem';
 
-import PaginatedTable from '../../../../components/tables/PaginatedTable';
+//import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
@@ -24,6 +24,7 @@ import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import CheckHistory from '../../../workflows/artifact/check/history';
 
 type CheckDetailsPageProps = {
     user: UserProfile;
@@ -62,6 +63,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     console.log('workflowDagResultId: ', workflowDagResultId);
     console.log('checkOperatorId: ', checkOperatorId);
 
+    console.log('level: ', operator?.spec?.check?.level)
+
     useEffect(() => {
         document.title = 'Check Details | Aqueduct';
 
@@ -91,6 +94,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             !isInitial(workflowDagResultWithLoadingStatus.status) &&
             !isLoading(workflowDagResultWithLoadingStatus.status)
         ) {
+            console.log('dispatching handleListArtifactResults');
+            // Queue up the artifacts historical results for loading.
             dispatch(
                 handleListArtifactResults({
                     apiKey: user.apiKey,
@@ -220,7 +225,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
                 <Box width="100%" marginTop="32px">
                     <Typography variant="h5" marginBottom="8px">Recent Results</Typography>
-                    <PaginatedTable data={historicalCheckData} />
+                    <CheckHistory historyWithLoadingStatus={artifactHistoryWithLoadingStatus} checkLevel={operator?.spec?.check?.level} />
                 </Box>
                 {/* commenting out metrics for now as we figure out what to do with them */}
                 {/* <Box width="100%" marginTop="32px">
