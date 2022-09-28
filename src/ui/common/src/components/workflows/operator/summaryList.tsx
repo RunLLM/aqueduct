@@ -11,6 +11,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { OperatorResultResponse } from '../../../handlers/responses/operator';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
+import { OperatorType } from '../../../utils/operators';
 import { operatorTypeToIconMapping } from '../nodes/nodeTypes';
 
 type Props = {
@@ -36,6 +37,22 @@ const SummaryList: React.FC<Props> = ({
 }) => {
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const items = operatorResults.map((opResult) => {
+    let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
+      opResult.id
+    }`;
+    const opType = opResult.spec?.type;
+    if (opType === OperatorType.SystemMetric || opType == OperatorType.Metric) {
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/metric/${
+        opResult.id
+      }`;
+    }
+
+    if (opType === OperatorType.Check) {
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/check/${
+        opResult.id
+      }`;
+    }
+
     return (
       <ListItem divider key={opResult.id}>
         <Box display="flex">
@@ -53,9 +70,7 @@ const SummaryList: React.FC<Props> = ({
             </Box>
           )}
           <Link
-            to={`${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
-              opResult.id
-            }`}
+            to={link}
             component={RouterLink as any}
             sx={{ marginLeft: '16px' }}
             underline="none"
