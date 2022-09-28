@@ -82,7 +82,7 @@ jobs:
       - name: Run Parameterization Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "parameterization/Using Workflow Parameters.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "parameterization/Using Parameters.ipynb" --server_address localhost:8080
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10
