@@ -383,10 +383,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
-      } else if (artifactStatus === ExecutionStatus.Failed) {
-        newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
-        newWorkflowStatusItem.title = `Error creating ${artifactName}.`;
-        newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
