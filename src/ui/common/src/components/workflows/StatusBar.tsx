@@ -32,7 +32,7 @@ import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
-import { Operator } from '../../utils/operators';
+import { Operator, OperatorType } from '../../utils/operators';
 import ExecutionStatus, { FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
@@ -447,7 +447,12 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
-          newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
+          // The message for a failed parameter is slightly different.
+          if (operators[operatorId].spec.type == OperatorType.Param) {
+            newWorkflowStatusItem.title = `Error with ${operatorName}`;
+          } else {
+            newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
+          }
           const err = opExecState.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''

@@ -506,6 +506,7 @@ def check(
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
+perator_
     Calling the decorated function returns a BoolArtifact. The decorated python function
     can have any number of artifact inputs.
 
