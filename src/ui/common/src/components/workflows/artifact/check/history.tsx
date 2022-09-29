@@ -46,7 +46,6 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({ historyWithLoadingStatus, c
         schema: checkHistorySchema,
         data: (historyWithLoadingStatus.results?.results ?? []).map(
             (artifactStatusResult) => {
-                console.log('artifactStatusResult', artifactStatusResult);
                 return {
                     status: artifactStatusResult.exec_state?.status ?? 'Unknown',
                     level: checkLevel ? checkLevel : 'undefined',

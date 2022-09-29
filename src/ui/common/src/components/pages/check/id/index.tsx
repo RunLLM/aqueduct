@@ -57,14 +57,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             : undefined
     );
 
-    console.log('workflowDagResultWithLoadingStatus: ', workflowDagResultWithLoadingStatus);
-
-    console.log('workflowId: ', workflowId);
-    console.log('workflowDagResultId: ', workflowDagResultId);
-    console.log('checkOperatorId: ', checkOperatorId);
-
-    console.log('level: ', operator?.spec?.check?.level)
-
     useEffect(() => {
         document.title = 'Check Details | Aqueduct';
 
@@ -73,7 +65,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             !workflowDagResultWithLoadingStatus ||
             isInitial(workflowDagResultWithLoadingStatus.status)
         ) {
-            console.log('Loading workflowDagResult');
             dispatch(
                 handleGetWorkflowDagResult({
                     apiKey: user.apiKey,
@@ -94,7 +85,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             !isInitial(workflowDagResultWithLoadingStatus.status) &&
             !isLoading(workflowDagResultWithLoadingStatus.status)
         ) {
-            console.log('dispatching handleListArtifactResults');
             // Queue up the artifacts historical results for loading.
             dispatch(
                 handleListArtifactResults({
@@ -106,19 +96,11 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         }
     }, [workflowDagResultWithLoadingStatus, artifactId]);
 
-    console.log('operator: ', operator);
-
     useEffect(() => {
         if (!!operator) {
             document.title = `${operator.name} | Aqueduct`;
         }
     }, [operator]);
-
-    const listStyle = {
-        width: '100%',
-        maxWidth: 360,
-        bgcolor: 'background.paper',
-    };
 
     if (
         !workflowDagResultWithLoadingStatus ||
@@ -170,8 +152,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         if (!artifactResult) {
             return null;
         }
-
-        console.log('operator output artifactResult: ', artifactResult);
 
         if (
             !artifactResult.result ||
