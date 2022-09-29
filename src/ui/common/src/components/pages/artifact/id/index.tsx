@@ -24,6 +24,7 @@ import {
   ChecksOverview,
   MetricsOverview,
 } from '../../../workflows/artifact/metricsAndChecksOverview';
+import OperatorSummaryList from '../../../workflows/operator/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 
@@ -132,6 +133,16 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     );
   }
 
+  const mapOperators = (opIds: string[]) =>
+    opIds
+      .map(
+        (opId) =>
+          (workflowDagResultWithLoadingStatus.result?.operators ?? {})[opId]
+      )
+      .filter((op) => !!op);
+  const inputs = mapOperators([artifact.from]);
+  const outputs = mapOperators(artifact.to);
+
   return (
     <Layout user={user}>
       <Box width={'800px'}>
@@ -142,6 +153,27 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
               artifact={artifact}
               contentWithLoadingStatus={contentWithLoadingStatus}
             />
+          </Box>
+          <Box display="flex" width="100%" paddingTop="40px">
+            <Box width="100%">
+              <OperatorSummaryList
+                title={'Inputs:'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                operatorResults={inputs}
+                initiallyExpanded={true}
+              />
+            </Box>
+            <Box width="32px" />
+            <Box width="100%">
+              <OperatorSummaryList
+                title={'Outputs:'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                operatorResults={outputs}
+                initiallyExpanded={true}
+              />
+            </Box>
           </Box>
           <Box width="100%" marginTop="12px">
             <Typography variant="h5" component="div" marginBottom="8px">
