@@ -283,6 +283,8 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 		// operator either never ran or did run but hit a user-generated exception.
 		// System-generated errors from things like the type checking of parameters will
 		// still generate downstream artifacts, so those will continue to be marked as "failed".
+		// Invariant: if an artifact is marked as failed, it's operator must also be marked failed,
+		// with the same error message and context.
 		artifactExecState := *execState
 		if !outputArtifact.Computed(ctx) {
 			artifactExecState.Status = shared.CanceledExecutionStatus

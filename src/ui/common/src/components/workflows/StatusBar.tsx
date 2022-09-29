@@ -388,7 +388,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
         newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
       } else {
-        // artifact is still pending, skip adding to list of workflow status items.
+        // artifact is either:
+        // 1) cancelled (the operator failed to run and did not write artifact content) .
+        // 2) failed (the operator failed to run but wrote artifact content).
+        // 3) pending.
+        // We do not display any sidebar message for any of these cases. The reason we do not display
+        // any error message on artifact failure status is because we expect the appropriate error message
+        // to be displayed by the operator. That is to say, if the artifact has failed, then the operator
+        // must have also failed.
         return;
       }
 
