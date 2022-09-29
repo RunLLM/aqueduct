@@ -43,4 +43,6 @@ const (
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
 	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
 	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
+
+	GetServerVersionRoute = "/api/version"
 )
