@@ -1,13 +1,18 @@
 import { ArtifactType } from '../../../utils/artifacts';
+import { OperatorType } from '../../../utils/operators';
 import BoolArtifactNode, { boolArtifactNodeIcon } from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
+import { checkOperatorNodeIcon } from './CheckOperatorNode';
 import DatabaseNode from './DatabaseNode';
+import { databaseNodeIcon } from './DatabaseNode';
 import DictArtifactNode, { dictArtifactNodeIcon } from './DictArtifactNode';
 import FunctionOperatorNode from './FunctionOperatorNode';
+import { functionOperatorNodeIcon } from './FunctionOperatorNode';
 import GenericArtifactNode from './GenericArtifactNode';
 import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
 import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
+import { metricOperatorNodeIcon } from './MetricOperatorNode';
 import NumericArtifactNode, {
   numericArtifactNodeIcon,
 } from './NumericArtifactNode';
@@ -50,6 +55,15 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Image]: imageArtifactNodeIcon,
   // TODO: Figure out what to show for Picklable
   [ArtifactType.Picklable]: dictArtifactNodeIcon,
+};
+
+export const operatorTypeToIconMapping = {
+  [OperatorType.Function]: functionOperatorNodeIcon,
+  [OperatorType.Extract]: databaseNodeIcon,
+  [OperatorType.Load]: databaseNodeIcon,
+  [OperatorType.Metric]: metricOperatorNodeIcon,
+  [OperatorType.Check]: checkOperatorNodeIcon,
+  [OperatorType.SystemMetric]: metricOperatorNodeIcon,
 };
 
 export default nodeTypes;
