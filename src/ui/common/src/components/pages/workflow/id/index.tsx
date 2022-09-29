@@ -320,7 +320,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         </Box>
       );
     } else if (currentNode.type === NodeType.CheckOp) {
-      // TODO: Show View Check Details
       // Get the check's id, and navigate to the check details page.
       return (
         <Box>

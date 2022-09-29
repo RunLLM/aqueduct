@@ -12,7 +12,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import CheckTableItem from '../../../tables/CheckTableItem';
 
-//import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
@@ -175,9 +174,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
         return (
             <Box key={artifactId} display="flex">
-                {/* <Typography variant="body1" marginRight="24px">
-                    {artifactResult.result.content_serialized}
-                </Typography> */}
                 <CheckTableItem checkValue={artifactResult.result.content_serialized} />
                 <Link
                     to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}

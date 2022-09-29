@@ -2,11 +2,9 @@ import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import React from 'react';
-import Plot from 'react-plotly.js';
 
 import PaginatedTable from '../../../../components/tables/PaginatedTable';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
-import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 
@@ -15,7 +13,6 @@ type CheckHistoryProps = {
     checkLevel?: string;
 }
 
-// TODO: Bring over data schema from check details page
 const checkHistorySchema: DataSchema = {
     fields: [
         { name: 'status', type: 'varchar' },
@@ -23,7 +20,7 @@ const checkHistorySchema: DataSchema = {
         { name: 'value', type: 'varchar' },
         { name: 'timestamp', type: 'varchar' }
     ],
-    pandas_version: '0.0.1', // Not sure what actual value to put here, just filling in for now :)
+    pandas_version: '', // Not sure what actual value to put here, just filling in for now :)
 };
 
 const CheckHistory: React.FC<CheckHistoryProps> = ({ historyWithLoadingStatus, checkLevel }) => {
