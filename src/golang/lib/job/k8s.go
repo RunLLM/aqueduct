@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -96,7 +97,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	if err != nil {
 		return err
 	}
-	containerImage := fmt.Sprintf("%s:%s", containerRepo, K8sImageVersionNumber)
+	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
 
 	return k8s.LaunchJob(
 		name,
