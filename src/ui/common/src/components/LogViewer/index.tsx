@@ -17,8 +17,6 @@ const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
 
   const [currentTab, setCurrentTab] = useState('1');
 
-  console.log(currentTab);
-
   const tabPanelOptions = {
     height: contentHeight,
     overflow: 'scroll',

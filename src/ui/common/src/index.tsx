@@ -45,6 +45,7 @@ import { NotificationListItem } from './components/notifications/NotificationLis
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
+import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import FunctionDetailsPage from './components/pages/function/id';
 import { getServerSideProps } from './components/pages/getServerSideProps';
@@ -309,6 +310,7 @@ export {
   Button,
   Card,
   Check,
+  CheckDetailsPage,
   CheckLevel,
   CheckOperatorNode,
   CheckStatus,
