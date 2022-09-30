@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/constants"
+	"github.com/aqueducthq/aqueduct/lib"
 )
 
 type getServerVersionResponse struct {
@@ -33,6 +33,6 @@ func (*GetServerVersionHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 func (h *GetServerVersionHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	return getServerVersionResponse{
-		Version: constants.ServerVersionNumber,
+		Version: lib.ServerVersionNumber,
 	}, http.StatusOK, nil
 }

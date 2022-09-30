@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/constants"
+	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -35,7 +35,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
-	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, constants.ServerVersionNumber)
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -79,7 +79,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		}
 	}
 
-	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, constants.ServerVersionNumber)
+	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, lib.ServerVersionNumber)
 
 	cmd = exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
 	err = cmd.Run()
