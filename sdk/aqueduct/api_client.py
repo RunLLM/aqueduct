@@ -223,7 +223,7 @@ class APIClient:
                 return True
             except Exception as e:
                 logger().info(
-                    "Testing if connection is HTTPS fails with:\n{}: {}".format(type(e).__name__, e)
+                    "Testing if connection is HTTPS fails with:\n\t{}: {}".format(type(e).__name__, e)
                 )
 
         if try_http:
@@ -233,7 +233,7 @@ class APIClient:
                 return False
             except Exception as e:
                 logger().info(
-                    "Testing if connection is HTTP fails with:\n{}: {}".format(type(e).__name__, e)
+                    "Testing if connection is HTTP fails with:\n\t{}: {}".format(type(e).__name__, e)
                 )
 
         raise ClientValidationError(

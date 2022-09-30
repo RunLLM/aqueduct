@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import uuid
@@ -9,10 +8,6 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.generic_artifact import GenericArtifact
-from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.config import FlowConfig
 from aqueduct.parameter_utils import create_param
 
@@ -20,12 +15,11 @@ from aqueduct import dag, globals
 
 from .dag import Metadata
 from .dag_deltas import (
-    AddOrReplaceOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
+from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -43,14 +37,13 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import Operator, OperatorSpec, ParamSpec
+from .operators import ParamSpec
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     construct_param_spec,
     generate_engine_config,
     generate_ui_url,
-    generate_uuid,
     infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
@@ -121,7 +114,12 @@ class Client:
         Returns:
             A Client instance.
         """
-        logger().setLevel(level=logging_level)
+        import pkg_resources
+        print("HELLO:", pkg_resources.require("aqueduct-sdk")[0].version)
+        print("HELLO ML:", pkg_resources.require("aqueduct-ml")[0].version)
+
+        # We must call basicConfig() here so messages show up in Jupyter notebooks.
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging_level)
 
         if api_key == "":
             api_key = get_apikey()
