@@ -11,17 +11,6 @@ import notificationsReducer from '../reducers/notifications';
 import openSideSheetReducer from '../reducers/openSideSheet';
 import workflowReducer from '../reducers/workflow';
 import workflowDagResultsReducer from '../reducers/workflowDagResults';
-//import {AnyAction, CombinedState, configureStore, Reducer} from '@reduxjs/toolkit';
-
-/*
-const rootReducer: Reducer<CombinedState<{
-    nodeSelectionReducer
-    issuesDisplay: CurrentDisplayState;
-    repoDetails: RepoDetailsState;
-    issues: IssuesState;
-    comments: CommentsState;
-}>, AnyAction>
-*/
 
 export const store = configureStore({
   reducer: {
