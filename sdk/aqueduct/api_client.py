@@ -4,7 +4,8 @@ from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import multipart
 import requests
-from aqueduct._version import __version__
+from pkg_resources import require, parse_version
+
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
@@ -138,6 +139,7 @@ class APIClient:
     HTTP_PREFIX = "http://"
     HTTPS_PREFIX = "https://"
 
+    GET_VERSION_ROUTE = "/api/version"
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
     REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
@@ -146,6 +148,7 @@ class APIClient:
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
+
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
@@ -156,8 +159,6 @@ class APIClient:
 
     # Auth header
     API_KEY_HEADER = "api-key"
-    # Client version header
-    CLIENT_VERSION_HEADER = "sdk-client-version"
 
     configured = False
 
@@ -175,15 +176,29 @@ class APIClient:
         try:
             if self.aqueduct_address.startswith(self.HTTP_PREFIX):
                 self.aqueduct_address = self.aqueduct_address[len(self.HTTP_PREFIX) :]
-                self.use_https = self._test_connection_protocol(try_http=True, try_https=False)
+                self.use_https = False
+                success = self._check_for_server(use_https=False)
             elif self.aqueduct_address.startswith(self.HTTPS_PREFIX):
                 self.aqueduct_address = self.aqueduct_address[len(self.HTTPS_PREFIX) :]
-                self.use_https = self._test_connection_protocol(try_http=False, try_https=True)
+                self.use_https = True
+                success = self._check_for_server(use_https=True)
             else:
-                self.use_https = self._test_connection_protocol(try_http=True, try_https=True)
+                # If no http(s) prefix is provided, we'll try both.
+                self.use_https = True
+                success = self._check_for_server(use_https=True)
+                if not success:
+                    self.use_https = False
+                    success = self._check_for_server(use_https=False)
+
         except Exception as e:
             self.configured = False
             raise e
+
+        if not success:
+            raise ClientValidationError(
+                "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
+                % (self.api_key, self.aqueduct_address),
+                )
 
     def _check_config(self) -> None:
         if not self.configured:
@@ -194,7 +209,7 @@ class APIClient:
 
     def _generate_auth_headers(self) -> Dict[str, str]:
         self._check_config()
-        return {self.API_KEY_HEADER: self.api_key, self.CLIENT_VERSION_HEADER: str(__version__)}
+        return {self.API_KEY_HEADER: self.api_key}
 
     def construct_base_url(self, use_https: Optional[bool] = None) -> str:
         self._check_config()
@@ -209,46 +224,54 @@ class APIClient:
             use_https = self.use_https
         return "%s%s" % (self.construct_base_url(use_https), route_suffix)
 
-    def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
-        """Returns whether the connection uses https. Raises an exception if unable to connect at all.
+    def _validate_server_version(self, server_version: str) -> None:
+        """Checks that the SDK and the server versions match."""
+        sdk_version = require("aqueduct-sdk")[0].version
+        if parse_version(server_version) > parse_version(sdk_version):
+            raise ClientValidationError(
+                "The SDK is outdated, it is using version %s, while the server is of version %s."
+                "Please update your `aqueduct-sdk` package to the appropriate version. If running"
+                "within a Jupyter notebook, remember to restart the kernel." % (sdk_version, server_version)
+            )
+        elif parse_version(server_version) < parse_version(sdk_version):
+            raise ClientValidationError(
+                "The server is outdated, it is using version %s, while the sdk is of version %s."
+                "Please update your server, or downgrade your SDK so that the versions match."
+                % (server_version, sdk_version)
+            )
 
-        First tries https, then falls back to http.
+    def _check_for_server(self, use_https: bool) -> bool:
+        """Check's if the server exists and can be connected to.
+
+        Raises:
+             ClientValidationError:
+                If the server cannot be found, or if there is a versioning mismatch between server and sdk.
+
         """
-        assert try_http or try_https, "Must test at least one of http or https protocols."
-
-        if try_https:
-            try:
-                url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=True)
-                self._test_url(url)
-                return True
-            except Exception as e:
-                logger().info(
-                    "Testing if connection is HTTPS fails with:\n\t{}: {}".format(type(e).__name__, e)
+        try:
+            v = self._get_version(use_https=use_https)
+        except Exception as e:
+            logger().info(
+                "Testing connection with {} fails with:\n\t{}: {}".format(
+                    "HTTPS" if use_https else "HTTP" ,
+                    type(e).__name__,
+                    e,
                 )
+            )
+            print("HERE: ", e)
+            return False
+        else:
+            self._validate_server_version(v)
+            print("RETURNING TRUE")
+            return True
 
-        if try_http:
-            try:
-                url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE, use_https=False)
-                self._test_url(url)
-                return False
-            except Exception as e:
-                logger().info(
-                    "Testing if connection is HTTP fails with:\n\t{}: {}".format(type(e).__name__, e)
-                )
-
-        raise ClientValidationError(
-            "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
-            % (self.api_key, self.aqueduct_address),
-        )
-
-    def _test_url(self, url: str) -> None:
-        """Perform a get on the url with default headers, raising an error if anything goes wrong.
-
-        We don't are about the value of the response, as long as the request succeeds.
-        """
+    def _get_version(self, use_https: bool) -> str:
+        """Fetches the server's version number as a string."""
         headers = self._generate_auth_headers()
+        url = self.construct_full_url(self.GET_VERSION_ROUTE, use_https=use_https)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
+        return resp.json()["version"]
 
     def url_prefix(self) -> str:
         self._check_config()

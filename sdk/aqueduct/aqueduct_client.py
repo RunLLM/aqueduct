@@ -94,7 +94,7 @@ class Client:
         self,
         api_key: str = "",
         aqueduct_address: str = "http://localhost:8080",
-        logging_level: int = logging.WARNING,
+        logging_level: int = logging.ERROR,
     ):
         """Creates an instance of Client.
 
@@ -114,10 +114,6 @@ class Client:
         Returns:
             A Client instance.
         """
-        import pkg_resources
-        print("HELLO:", pkg_resources.require("aqueduct-sdk")[0].version)
-        print("HELLO ML:", pkg_resources.require("aqueduct-ml")[0].version)
-
         # We must call basicConfig() here so messages show up in Jupyter notebooks.
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging_level)
 
