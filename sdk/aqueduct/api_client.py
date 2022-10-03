@@ -229,13 +229,13 @@ class APIClient:
         sdk_version = require("aqueduct-sdk")[0].version
         if parse_version(server_version) > parse_version(sdk_version):
             raise ClientValidationError(
-                "The SDK is outdated, it is using version %s, while the server is of version %s."
-                "Please update your `aqueduct-sdk` package to the appropriate version. If running"
+                "The SDK is outdated, it is using version %s, while the server is of version %s. "
+                "Please update your `aqueduct-sdk` package to the appropriate version. If running "
                 "within a Jupyter notebook, remember to restart the kernel." % (sdk_version, server_version)
             )
         elif parse_version(server_version) < parse_version(sdk_version):
             raise ClientValidationError(
-                "The server is outdated, it is using version %s, while the sdk is of version %s."
+                "The server is outdated, it is using version %s, while the sdk is of version %s. "
                 "Please update your server, or downgrade your SDK so that the versions match."
                 % (server_version, sdk_version)
             )
@@ -258,11 +258,9 @@ class APIClient:
                     e,
                 )
             )
-            print("HERE: ", e)
             return False
         else:
             self._validate_server_version(v)
-            print("RETURNING TRUE")
             return True
 
     def _get_version(self, use_https: bool) -> str:
