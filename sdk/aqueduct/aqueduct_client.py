@@ -371,6 +371,10 @@ class Client:
                 "Must supply at least one artifact to compute when creating a flow."
             )
 
+        if artifact is not None:
+            artifacts = [artifact]
+        assert artifacts is not None
+
         cron_schedule = schedule_from_cron_string(schedule)
         retention_policy = retention_policy_from_latest_runs(k_latest_runs)
 
@@ -378,7 +382,7 @@ class Client:
             self._dag,
             deltas=[
                 SubgraphDAGDelta(
-                    artifact_ids=[artifact.id() for artifact in artifacts],
+                    artifact_ids=[elem.id() for elem in artifacts],
                     include_load_operators=True,
                     include_check_artifacts=True,
                 ),

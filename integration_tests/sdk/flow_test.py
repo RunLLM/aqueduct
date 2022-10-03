@@ -111,6 +111,7 @@ def test_invalid_flow(client):
     @op
     def foo():
         return 123
+
     output = foo()
 
     with pytest.raises(InvalidUserArgumentException):
