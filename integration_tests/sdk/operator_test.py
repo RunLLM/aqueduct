@@ -1,7 +1,7 @@
 from aqueduct.decorator import to_operator
 from constants import SENTIMENT_SQL_QUERY
 from test_function import dummy_sentiment_model_function
-from utils import get_integration_name, run_sentiment_model
+from utils import get_integration_name
 
 from aqueduct import op
 

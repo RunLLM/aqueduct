@@ -65,7 +65,8 @@ def _read_bytes_input(input_bytes: bytes) -> bytes:
     return input_bytes
 
 
-deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]] = {
+# Not intended for use outside of `deserialize()`.
+__deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]] = {
     SerializationType.TABLE: _read_table_input,
     SerializationType.JSON: _read_json_input,
     SerializationType.PICKLE: _read_pickle_input,
@@ -73,6 +74,23 @@ deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]
     SerializationType.STRING: _read_string_input,
     SerializationType.BYTES: _read_bytes_input,
 }
+
+
+def deserialize(
+    serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
+) -> Any:
+    """Deserializes a byte string into the appropriate python object."""
+    if serialization_type not in __deserialization_function_mapping:
+        raise Exception("Unsupported serialization type %s" % serialization_type)
+
+    deserialized_val = __deserialization_function_mapping[serialization_type](content)
+
+    # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
+    # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
+    # between the two here using the expected artifact type, at deserialization time.
+    if artifact_type == ArtifactType.TUPLE:
+        return tuple(deserialized_val)
+    return deserialized_val
 
 
 def read_artifacts(
@@ -108,10 +126,7 @@ def read_artifacts(
         input_types.append(artifact_type)
 
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
-        if serialization_type not in deserialization_function_mapping:
-            raise Exception("Unsupported serialization type %s" % serialization_type)
-
-        inputs.append(deserialization_function_mapping[serialization_type](storage.get(input_path)))
+        inputs.append(deserialize(serialization_type, artifact_type, storage.get(input_path)))
 
     return inputs, input_types
 
@@ -317,17 +332,6 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]) -> No
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
-
-
-def check_passed(content: Union[bool, np.bool_]) -> bool:
-    """Given the output of a check operator, return whether the check passed or not."""
-    if isinstance(content, bool) or isinstance(content, np.bool_):
-        return bool(content)
-    else:
-        raise Exception(
-            "Expected output type of check to be either a bool or a series of booleans, "
-            "instead got %s" % type(content).__name__
-        )
 
 
 def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:

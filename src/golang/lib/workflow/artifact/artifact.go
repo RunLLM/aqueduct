@@ -33,11 +33,11 @@ type Artifact interface {
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
 
-	// Computed indicates whether this artifact has been computed or not.
-	// An artifact is only considered "computed" if its results have been written to storage.
+	// Computed indicates whether this artifact's contents have been computed or not.
+	// An artifact is only considered "computed" if its content has been written to storage.
 	// This is *NOT* the same as having the operator's execution state == SUCCEEDED. For example,
-	// for check operators, the artifact could have been computed even if the check operator did not
-	// pass (returned false).
+	// for check operators, the artifact is computed even if the check operator does not pass
+	// (returned false).
 	Computed(ctx context.Context) bool
 
 	// GetMetadata fetches the metadata for this artifact.
@@ -126,11 +126,11 @@ func (a *ArtifactImpl) Name() string {
 }
 
 func (a *ArtifactImpl) Computed(ctx context.Context) bool {
-	// An artifact is only considered computed if its results have been written.
+	// An artifact is only considered computed if its contents have been written.
 	res := utils.ObjectExistsInStorage(
 		ctx,
 		a.storageConfig,
-		a.execPaths.ArtifactMetadataPath,
+		a.execPaths.ArtifactContentPath,
 	)
 	return res
 }

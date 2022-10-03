@@ -27,7 +27,7 @@ const (
 	PollPreviewTableTimeout  = 60 * time.Second
 )
 
-// Route: /integration/{integrationId}/preview_table
+// Route: /integration/{integrationId}/preview
 // Method: GET
 // Params:
 //	`integrationId`: ID of the relational database integration

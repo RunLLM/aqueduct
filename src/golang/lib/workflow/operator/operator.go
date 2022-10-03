@@ -99,10 +99,6 @@ func NewOperator(
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
 	}
 
-	if len(outputs) > 1 || len(outputExecPaths) > 1 {
-		return nil, errors.New("Operator cannot have multiple artifact outputs.")
-	}
-
 	// If this operator has no outputs, we will need to allocate a new metadata path.
 	// This is because the operator's metadata path is defined on the operator's outputs.
 	metadataPath := uuid.New().String()

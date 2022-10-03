@@ -1,7 +1,6 @@
 package job
 
 const (
-	K8sImageVersionNumber         = "0.0.15"
 	Function37DockerImage         = "aqueducthq/function37"
 	Function38DockerImage         = "aqueducthq/function38"
 	Function39DockerImage         = "aqueducthq/function39"

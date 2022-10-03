@@ -7,7 +7,6 @@ import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
-import cloudpickle as pickle
 import numpy as np
 import pandas as pd
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
@@ -27,18 +26,14 @@ from aqueduct_executor.operators.utils.execution import (
     TIP_NOT_NUMERIC,
     TIP_OP_EXECUTION,
     TIP_UNKNOWN_ERROR,
-    Error,
     ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import check_passed, infer_artifact_type
-from pandas import DataFrame
-from PIL import Image
+from aqueduct_executor.operators.utils.utils import infer_artifact_type
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -108,7 +103,7 @@ def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
-) -> Tuple[Any, ArtifactType, Dict[str, str]]:
+) -> Tuple[List[Any], List[ArtifactType], Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors, but instead annotates the given exec state with the error.
@@ -126,8 +121,21 @@ def _execute_function(
     def _invoke() -> Any:
         return invoke(*inputs)
 
-    result = _invoke()
-    inferred_result_type = infer_artifact_type(result)
+    results = _invoke()
+
+    # We only validate the number of results if multiple outputs are expected.
+    # Otherwise, we treat the results as a single object.
+    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
+        raise ExecFailureException(
+            failure_type=FailureType.USER_FATAL,
+            tip="Expected function to have %s outputs, but instead it had %s."
+            % (len(spec.output_content_paths), len(results)),
+        )
+
+    if len(spec.output_content_paths) == 1:
+        results = [results]
+
+    inferred_result_types = [infer_artifact_type(res) for res in results]
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -137,7 +145,7 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return result, inferred_result_type, system_metadata
+    return results, inferred_result_types, system_metadata
 
 
 def validate_spec(spec: FunctionSpec) -> None:
@@ -169,6 +177,13 @@ def validate_spec(spec: FunctionSpec) -> None:
             )
         )
 
+    # Check and Metric operators must only have a single output.
+    if (spec.operator_type == OperatorType.CHECK or spec.operator_type == OperatorType.METRIC) and (
+        spec.expected_output_artifact_types is not None
+        and len(spec.expected_output_artifact_types) != 1
+    ):
+        raise Exception("%s operators must only have a single output." % spec.operator_type)
+
 
 def _cleanup(spec: FunctionSpec) -> None:
     """
@@ -197,7 +212,7 @@ def run(spec: FunctionSpec) -> None:
         )
 
         print("Invoking the function...")
-        result, result_type, system_metadata = _execute_function(spec, inputs, exec_state)
+        results, result_types, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
@@ -207,6 +222,9 @@ def run(spec: FunctionSpec) -> None:
 
         # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
+            assert len(results) == 1, "Metric operator can only have a single output."
+            result = results[0]
+
             if not (
                 isinstance(result, int)
                 or isinstance(result, float)
@@ -218,63 +236,90 @@ def run(spec: FunctionSpec) -> None:
                 )
 
         elif spec.operator_type == OperatorType.CHECK:
-            if isinstance(result, pd.Series) and result.dtype == "bool":
+            assert len(results) == 1, "Check operator can only have a single output."
+            check_result = results[0]
+
+            if isinstance(check_result, pd.Series) and check_result.dtype == "bool":
+                assert result_types[0] == ArtifactType.PICKLABLE
+
                 # Cast pd.Series to a bool.
                 # We only write True if every boolean in the series is True.
-                series = pd.Series(result)
-                result = bool(series.size - series.sum().item() == 0)
-                result_type = ArtifactType.BOOL
-            elif isinstance(result, bool) or isinstance(result, np.bool_):
+                series = pd.Series(check_result)
+                check_passed = bool(series.size - series.sum().item() == 0)
+            elif isinstance(check_result, bool) or isinstance(check_result, np.bool_):
                 # Cast np.bool_ to a bool.
-                result = bool(result)
+                check_passed = bool(check_result)
             else:
                 raise ExecFailureException(
                     failure_type=FailureType.USER_FATAL,
                     tip=TIP_NOT_BOOL,
                 )
+
+            # If the check returned a value we interpret to mean 'false', we exit here, but
+            # not before recording the output artifact value (which will be False).
+            if not check_passed:
+                print(f"Check Operator did not pass.")
+
+                utils.write_artifact(
+                    storage,
+                    ArtifactType.BOOL,
+                    spec.output_content_paths[0],
+                    spec.output_metadata_paths[0],
+                    check_passed,
+                    system_metadata=system_metadata,
+                )
+
+                check_severity = spec.check_severity
+                if spec.check_severity is None:
+                    print(
+                        "Check operator has an unspecified severity on spec. Defaulting to ERROR."
+                    )
+                    check_severity = CheckSeverityLevel.ERROR
+
+                failure_type = FailureType.USER_FATAL
+                if check_severity == CheckSeverityLevel.WARNING:
+                    failure_type = FailureType.USER_NON_FATAL
+
+                raise ExecFailureException(failure_type, tip=TIP_CHECK_DID_NOT_PASS)
+
+            # If we get here, we know that the check has passed. The artifact type might need
+            # still be updated. Eg. if the output was a pandas series.
+            result_types[0] = ArtifactType.BOOL
+            results[0] = True
         else:
-            for expected_output_type in spec.expected_output_artifact_types:
+            # Error if the number of expected outputs is not what was returned by the user's function.
+            if len(results) != len(spec.expected_output_artifact_types):
+                raise ExecFailureException(
+                    failure_type=FailureType.USER_FATAL,
+                    tip="Expected function to return %d outputs, but instead got %d."
+                    % (len(spec.expected_output_artifact_types), len(results)),
+                )
+
+            for i, expected_output_type in enumerate(spec.expected_output_artifact_types):
                 if (
                     expected_output_type != ArtifactType.UNTYPED
-                    and expected_output_type != result_type
+                    and expected_output_type != result_types[i]
                 ):
                     raise ExecFailureException(
                         failure_type=FailureType.USER_FATAL,
-                        tip="Expected %s type %s, but output is of type %s."
-                        % (spec.name, expected_output_type, result_type),
+                        tip="Expected type %s for the %d-th output of function, but it is of type %s."
+                        % (expected_output_type, i, result_types[i]),
                     )
 
-        utils.write_artifact(
-            storage,
-            result_type,
-            spec.output_content_paths[0],
-            spec.output_metadata_paths[0],
-            result,
-            system_metadata=system_metadata,
-        )
-
-        # For check operators, we want to fail the operator based on the exact output of the user's function.
-        # Assumption: the check operator only has a single output.
-        if spec.operator_type == OperatorType.CHECK and not check_passed(result):
-            print(f"Check Operator did not pass.")
-
-            check_severity = spec.check_severity
-            if spec.check_severity is None:
-                print("Check operator has an unspecified severity on spec. Defaulting to ERROR.")
-                check_severity = CheckSeverityLevel.ERROR
-
-            failure_type = FailureType.USER_FATAL
-            if check_severity == CheckSeverityLevel.WARNING:
-                failure_type = FailureType.USER_NON_FATAL
-
-            raise ExecFailureException(
-                failure_type=failure_type,
-                tip=TIP_CHECK_DID_NOT_PASS,
+        for i, result in enumerate(results):
+            utils.write_artifact(
+                storage,
+                result_types[i],
+                spec.output_content_paths[i],
+                spec.output_metadata_paths[i],
+                result,
+                system_metadata=system_metadata,
             )
-        else:
-            exec_state.status = ExecutionStatus.SUCCEEDED
-            utils.write_exec_state(storage, spec.metadata_path, exec_state)
-            print(f"Succeeded! Full logs: {exec_state.json()}")
+
+        # If we made it here, then the operator has succeeded.
+        exec_state.status = ExecutionStatus.SUCCEEDED
+        print(f"Succeeded! Full logs: {exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
 
     except ExecFailureException as e:
         # We must reconcile the user logs here, since those logs are not captured on the exception.

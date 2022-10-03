@@ -167,9 +167,7 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(
-        self, name: str, default: Any, description: str = ""
-    ) -> Union[TableArtifact, NumericArtifact, BoolArtifact, GenericArtifact]:
+    def create_param(self, name: str, default: Any, description: str = "") -> BaseArtifact:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.

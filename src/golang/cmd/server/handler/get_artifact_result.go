@@ -25,7 +25,7 @@ const (
 	dataFormFieldName     = "data"
 )
 
-// Route: /artifact_result/{workflowDagResultId}/{artifactId}
+// Route: /artifact/{workflowDagResultId}/{artifactId}/result
 // Method: GET
 // Params:
 //

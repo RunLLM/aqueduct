@@ -315,11 +315,29 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               navigate(
                 `${getPathPrefix()}/workflow/${workflowId}/result/${
                   workflow.selectedResult.id
-                }/function/${currentNode.id}`
+                }/operator/${currentNode.id}`
               );
             }}
           >
-            View Function Details
+            View Operator Details
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.CheckOp) {
+      // Get the check's id, and navigate to the check details page.
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/check/${currentNode.id}`
+              );
+            }}
+          >
+            View Check Details
           </Button>
         </Box>
       );

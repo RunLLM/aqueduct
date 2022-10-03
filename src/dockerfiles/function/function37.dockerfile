@@ -15,8 +15,8 @@ pyarrow==7.0.0 \
 boto3==1.18.0 \
 pydantic==1.9.0 \
 scikit_learn==1.0.2 \
-typing_extensions==4.2.0 \
-aqueduct-ml==0.0.15
+typing_extensions==4.3.0 \
+aqueduct-ml==0.0.16
 
 
 ENV PYTHONUNBUFFERED 1

@@ -45,6 +45,7 @@ import { NotificationListItem } from './components/notifications/NotificationLis
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
+import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import FunctionDetailsPage from './components/pages/function/id';
 import { getServerSideProps } from './components/pages/getServerSideProps';
@@ -54,6 +55,7 @@ import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import ErrorPage from './components/pages/ErrorPage';
 import MetricDetailsPage from './components/pages/metric/id';
+import OperatorDetailsPage from './components/pages/operator/id';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -310,6 +312,7 @@ export {
   Button,
   Card,
   Check,
+  CheckDetailsPage,
   CheckLevel,
   CheckOperatorNode,
   CheckStatus,
@@ -465,6 +468,7 @@ export {
   openSideSheet,
   openSideSheetSlice,
   Operator,
+  OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorResult,
   OperatorResultsSideSheet,

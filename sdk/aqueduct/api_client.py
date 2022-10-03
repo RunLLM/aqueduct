@@ -29,7 +29,7 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from aqueduct.serialization import deserialization_function_mapping
+from aqueduct.serialization import deserialize
 from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
 from requests_toolbelt.multipart import decoder
 
@@ -140,12 +140,12 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
-    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register_airflow"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
-    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
@@ -479,11 +479,9 @@ class APIClient:
             return None, execution_status
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
-        if serialization_type not in deserialization_function_mapping:
-            raise Exception("Unsupported serialization type %s." % serialization_type)
-
+        artifact_type = parsed_response["metadata"]["artifact_type"]
         return (
-            deserialization_function_mapping[serialization_type](parsed_response["data"]),
+            deserialize(serialization_type, artifact_type, parsed_response["data"]),
             execution_status,
         )
 
