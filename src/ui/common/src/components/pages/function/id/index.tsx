@@ -36,7 +36,7 @@ import { LoadingStatusEnum } from '../../../../utils/shared';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 
-type OperatorDetailsPageProps = {
+type FunctionDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   maxRenderSize?: number;
@@ -49,7 +49,7 @@ const listStyle = {
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
-const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
+const FunctionDetailsPage: React.FC<FunctionDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
   maxRenderSize = 100000000,
@@ -414,4 +414,4 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   );
 };
 
-export default OperatorDetailsPage;
+export default FunctionDetailsPage;
