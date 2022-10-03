@@ -52,6 +52,7 @@ import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
+import ErrorPage from './components/pages/ErrorPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
@@ -426,6 +427,7 @@ export {
   LoadSpecsCard,
   LogBlock,
   LoginPage,
+  ErrorPage,
   LogLevel,
   LogViewer,
   MariaDbCard,
