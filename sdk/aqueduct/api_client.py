@@ -4,8 +4,6 @@ from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import multipart
 import requests
-from pkg_resources import require, parse_version
-
 from aqueduct.dag import DAG
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import (
@@ -20,6 +18,7 @@ from aqueduct.operators import Operator, ParamSpec
 from aqueduct.responses import (
     ArtifactResult,
     DeleteWorkflowResponse,
+    GetVersionResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
@@ -32,6 +31,7 @@ from aqueduct.responses import (
 )
 from aqueduct.serialization import deserialize
 from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
+from pkg_resources import parse_version, require
 from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
@@ -198,7 +198,7 @@ class APIClient:
             raise ClientValidationError(
                 "Unable to connect to server. Double check that both your API key `%s` and your specified address `%s` are correct. "
                 % (self.api_key, self.aqueduct_address),
-                )
+            )
 
     def _check_config(self) -> None:
         if not self.configured:
@@ -231,7 +231,8 @@ class APIClient:
             raise ClientValidationError(
                 "The SDK is outdated, it is using version %s, while the server is of version %s. "
                 "Please update your `aqueduct-sdk` package to the appropriate version. If running "
-                "within a Jupyter notebook, remember to restart the kernel." % (sdk_version, server_version)
+                "within a Jupyter notebook, remember to restart the kernel."
+                % (sdk_version, server_version)
             )
         elif parse_version(server_version) < parse_version(sdk_version):
             raise ClientValidationError(
@@ -253,7 +254,7 @@ class APIClient:
         except Exception as e:
             logger().info(
                 "Testing connection with {} fails with:\n\t{}: {}".format(
-                    "HTTPS" if use_https else "HTTP" ,
+                    "HTTPS" if use_https else "HTTP",
                     type(e).__name__,
                     e,
                 )
@@ -269,7 +270,7 @@ class APIClient:
         url = self.construct_full_url(self.GET_VERSION_ROUTE, use_https=use_https)
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
-        return resp.json()["version"]
+        return GetVersionResponse(**resp.json()).version
 
     def url_prefix(self) -> str:
         self._check_config()

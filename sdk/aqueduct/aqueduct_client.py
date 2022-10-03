@@ -14,11 +14,7 @@ from aqueduct.parameter_utils import create_param
 from aqueduct import dag, globals
 
 from .dag import Metadata
-from .dag_deltas import (
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-    validate_overwriting_parameters,
-)
+from .dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
 from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
@@ -94,7 +90,7 @@ class Client:
         self,
         api_key: str = "",
         aqueduct_address: str = "http://localhost:8080",
-        logging_level: int = logging.ERROR,
+        logging_level: int = logging.WARNING,
     ):
         """Creates an instance of Client.
 
@@ -115,7 +111,7 @@ class Client:
             A Client instance.
         """
         # We must call basicConfig() here so messages show up in Jupyter notebooks.
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging_level)
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging_level)
 
         if api_key == "":
             api_key = get_apikey()

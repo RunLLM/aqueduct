@@ -128,6 +128,6 @@ class InvalidGithubQueryError(Error):
     pass
 
 
-# Exception raised when client cannot fails to validate the server.
+# Exception raised when client fails to validate the server.
 class ClientValidationError(Error):
     pass
