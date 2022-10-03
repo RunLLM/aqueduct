@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 from aqueduct.enums import ExecutionStatus
-from aqueduct.error import IncompleteFlowException
+from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from test_metrics.constant.model import constant_metric
@@ -102,10 +102,22 @@ def test_publish_with_schedule(client):
 
 
 def test_invalid_flow(client):
-    with pytest.raises(IncompleteFlowException):
+    with pytest.raises(InvalidUserArgumentException):
         client.publish_flow(
             name=generate_new_flow_name(),
             artifacts=[],
+        )
+
+    @op
+    def foo():
+        return 123
+    output = foo()
+
+    with pytest.raises(InvalidUserArgumentException):
+        client.publish_flow(
+            name=generate_new_flow_name(),
+            artifact=output,
+            artifacts=[output],
         )
 
     with pytest.raises(Exception):
@@ -161,7 +173,7 @@ def test_refresh_flow(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifact=output_artifact,
         schedule=aqueduct.hourly(),
     )
 
@@ -189,7 +201,7 @@ def test_get_artifact_from_flow(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifact=output_artifact,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -210,7 +222,7 @@ def test_get_artifact_reuse_for_computation(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifact=output_artifact,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -231,13 +243,13 @@ def test_multiple_flows_with_same_schedule(client):
 
         flow_1 = client.publish_flow(
             name=generate_new_flow_name(),
-            artifacts=[output_artifact],
+            artifact=output_artifact,
             schedule="* * * * *",
         )
 
         flow_2 = client.publish_flow(
             name=generate_new_flow_name(),
-            artifacts=[output_artifact_2],
+            artifact=output_artifact_2,
             schedule="* * * * *",
         )
 
