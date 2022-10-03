@@ -88,12 +88,6 @@ class InvalidCronStringException(Error):
     pass
 
 
-# Exception raised when the flow's graph is incomplete and not yet ready to be
-# published.
-class IncompleteFlowException(Error):
-    pass
-
-
 # Exception raised when an inappropriate user action is attempted.
 class InvalidUserActionException(Error):
     pass

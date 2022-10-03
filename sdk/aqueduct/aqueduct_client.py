@@ -27,7 +27,6 @@ from .dag_deltas import (
 )
 from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
-    IncompleteFlowException,
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
@@ -308,6 +307,7 @@ class Client:
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
+        artifact: Optional[BaseArtifact] = None,
         artifacts: Optional[List[BaseArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
@@ -339,6 +339,8 @@ class Client:
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should store.
                 Runs outside of this bound are deleted. Defaults to persisting all runs.
+            artifact:
+                Singular version of `artifacts` below.
             artifacts:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
@@ -349,6 +351,8 @@ class Client:
                 We currently support Airflow.
 
         Raises:
+            InvalidUserArgumentException:
+                An invalid combination of parameters was provided.
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
             IncompleteFlowException:
@@ -357,9 +361,14 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
-        if artifacts is None or len(artifacts) == 0:
-            raise IncompleteFlowException(
-                "Must supply at least one output artifact when creating a flow."
+        if artifact is not None and artifacts is not None:
+            raise InvalidUserArgumentException(
+                "Can only set one of `artifact` or `artifacts` parameter in publish_flow()."
+            )
+
+        if artifact is None and (artifacts is None or len(artifacts) == 0):
+            raise InvalidUserArgumentException(
+                "Must supply at least one artifact to compute when creating a flow."
             )
 
         cron_schedule = schedule_from_cron_string(schedule)
