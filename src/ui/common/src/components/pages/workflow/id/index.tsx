@@ -318,7 +318,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               );
             }}
           >
-            View Function Details
+            View Operator Details
           </Button>
         </Box>
       );
