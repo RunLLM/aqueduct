@@ -35,9 +35,10 @@ type EditWorkflowHandler struct {
 }
 
 type editWorkflowInput struct {
-	WorkflowName        string             `json:"name"`
-	WorkflowDescription string             `json:"description"`
-	Schedule            *workflow.Schedule `json:"schedule"`
+	WorkflowName        string                    `json:"name"`
+	WorkflowDescription string                    `json:"description"`
+	Schedule            *workflow.Schedule        `json:"schedule"`
+	RetentionPolicy     *workflow.RetentionPolicy `json:"retention_policy"`
 }
 
 type editWorkflowArgs struct {
@@ -45,6 +46,7 @@ type editWorkflowArgs struct {
 	workflowName        string
 	workflowDescription string
 	schedule            *workflow.Schedule
+	retentionPolicy     *workflow.RetentionPolicy
 }
 
 func (*EditWorkflowHandler) Name() string {
@@ -110,6 +112,7 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 		workflowName:        input.WorkflowName,
 		workflowDescription: input.WorkflowDescription,
 		schedule:            input.Schedule,
+		retentionPolicy:     input.RetentionPolicy,
 	}, http.StatusOK, nil
 }
 
@@ -128,6 +131,7 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 		args.workflowName,
 		args.workflowDescription,
 		args.schedule,
+		args.retentionPolicy,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
