@@ -314,11 +314,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               navigate(
                 `${getPathPrefix()}/workflow/${workflowId}/result/${
                   workflow.selectedResult.id
-                }/function/${currentNode.id}`
+                }/operator/${currentNode.id}`
               );
             }}
           >
-            View Function Details
+            View Operator Details
           </Button>
         </Box>
       );
