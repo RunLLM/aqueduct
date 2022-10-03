@@ -127,8 +127,8 @@ def _check_subgraph_test_case(
         deltas=[
             SubgraphDAGDelta(
                 artifact_ids=artifact_ids,
-                include_load_operators=include_load_operators,
-                include_check_artifacts=include_check_artifacts,
+                include_saves=include_load_operators,
+                include_checks_and_metrics=include_check_artifacts,
             ),
         ],
         make_copy=True,
@@ -446,7 +446,7 @@ def test_apply_deltas_make_copy():
         deltas=[
             SubgraphDAGDelta(
                 artifact_ids=[fn_artifact_id],
-                include_load_operators=False,
+                include_saves=False,
             ),
         ],
         make_copy=True,
@@ -459,7 +459,7 @@ def test_apply_deltas_make_copy():
         deltas=[
             SubgraphDAGDelta(
                 artifact_ids=[fn_artifact_id],
-                include_load_operators=False,
+                include_saves=False,
             ),
         ],
         make_copy=False,

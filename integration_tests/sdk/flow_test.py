@@ -19,7 +19,7 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct import LoadUpdateMode, check, op
+from aqueduct import LoadUpdateMode, check, op, metric, Flow
 
 
 def test_basic_flow(client):
@@ -33,6 +33,7 @@ def test_basic_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
+@pytest.mark.publish
 def test_complex_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
@@ -52,14 +53,52 @@ def test_complex_flow(client):
     def failing_check(df):
         return False
 
-    run_flow_test(
-        client,
-        artifacts=[
-            output_artifact,
-            successful_check(output_artifact),
-            failing_check(output_artifact),
-        ],
-    )
+    @metric
+    def dummy_metric(df):
+        return 123
+
+    success_check = successful_check(output_artifact)
+    _ = failing_check(output_artifact)
+    dummy_metric = dummy_metric(output_artifact)
+
+    # Test that publish_flow can implicitly and explicitly include metrics and checks.
+    flow_name = generate_new_flow_name()
+
+    flow_id = None
+    try:
+        # Test that metrics and checks can be implicitly included, and that a non-error check
+        # failing does not fail the flow.
+        flow = run_flow_test(
+            client,
+            name=flow_name,
+            artifacts=[output_artifact],
+            delete_flow_after=False,
+        )
+        flow_id = flow.id()
+
+        # Metrics and checks should have been computed.
+        flow_run = flow.latest()
+        assert flow_run.artifact("dummy_metric artifact") is not None
+        assert flow_run.artifact("successful_check artifact") is not None
+        assert flow_run.artifact("failing_check artifact") is not None
+
+        flow = run_flow_test(
+            client,
+            name=flow_name,
+            artifacts=[output_artifact],
+            metrics=[dummy_metric],
+            checks=[success_check],
+            num_runs=2,
+            delete_flow_after=False,
+        )
+
+        # Only the explicitly defined metrics and checks should have been included in this second run.
+        flow_run = flow.latest()
+        assert flow_run.artifact("dummy_metric artifact") is not None
+        assert flow_run.artifact("successful_check artifact") is not None
+        assert flow_run.artifact("failing_check artifact") is None
+    finally:
+        delete_flow(client, flow_id)
 
 
 def test_multiple_output_artifacts(client):

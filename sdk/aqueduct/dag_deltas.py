@@ -136,10 +136,10 @@ class SubgraphDAGDelta(DAGDelta):
         artifact_ids:
             These artifacts describe what our returned subgraph will look like:
             only these artifacts can be terminal nodes.
-        include_load_operators:
-            Whether to include all load operators on all artifacts in the subgraph.
-        include_check_artifacts:
-            Whether to include all check operators on all artifacts in the subgraph.
+        include_saves:
+            Whether to implicitly include all saves on all artifacts in the subgraph.
+        include_checks_and_metrics:
+            Whether to implicitly include all check and metrics on all artifacts in the subgraph.
             This means all dependencies of such checks will be included, even if they
             were not part of the original subgraph. If false, all check operators not
             explicitly defined in `artifact_ids` will be excluded.
@@ -148,15 +148,15 @@ class SubgraphDAGDelta(DAGDelta):
     def __init__(
         self,
         artifact_ids: Optional[List[uuid.UUID]] = None,
-        include_load_operators: bool = False,
-        include_check_artifacts: bool = False,
+        include_saves: bool = False,
+        include_checks_and_metrics: bool = False,
     ):
         if artifact_ids is None or len(artifact_ids) == 0:
             raise InternalAqueductError("Must set artifact ids when pruning dag.")
 
         self.artifact_ids: List[uuid.UUID] = [] if artifact_ids is None else artifact_ids
-        self.include_load_operators = include_load_operators
-        self.include_check_artifacts = include_check_artifacts
+        self.include_saves = include_saves
+        self.include_checks_and_metrics = include_checks_and_metrics
 
     def apply(self, dag: DAG) -> None:
         # Check that all the artifact ids exist in the dag.
@@ -177,7 +177,7 @@ class SubgraphDAGDelta(DAGDelta):
             upstream_artifact_ids.add(curr_artifact_id)
 
             # If requested, keep load operators on all artifacts along the way.
-            if self.include_load_operators:
+            if self.include_saves:
                 load_ops = dag.list_operators(
                     filter_to=[OperatorType.LOAD], on_artifact_id=curr_artifact_id
                 )
@@ -189,12 +189,12 @@ class SubgraphDAGDelta(DAGDelta):
 
             # If we need to include checks, also include those in future searches
             # (since they may have their own dependencies)
-            if self.include_check_artifacts:
-                check_ops = dag.list_operators(
-                    on_artifact_id=curr_artifact_id, filter_to=[OperatorType.CHECK]
+            if self.include_checks_and_metrics:
+                check_or_metric_ops = dag.list_operators(
+                    on_artifact_id=curr_artifact_id, filter_to=[OperatorType.CHECK, OperatorType.METRIC]
                 )
-                check_artifacts = dag.list_artifacts(on_op_ids=[op.id for op in check_ops])
-                candidate_next_artifact_ids.extend([artifact.id for artifact in check_artifacts])
+                check_or_metric_artifacts = dag.list_artifacts(on_op_ids=[op.id for op in check_or_metric_ops])
+                candidate_next_artifact_ids.extend([artifact.id for artifact in check_or_metric_artifacts])
 
             # Prune the upstream candidates against our "already seen" group.
             next_artifact_ids = set(candidate_next_artifact_ids).difference(seen_artifact_ids)
