@@ -307,7 +307,6 @@ class Client:
         name: str,
         description: str = "",
         schedule: str = "",
-        k_latest_runs: int = -1,
         artifacts: Optional[List[BaseArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
@@ -336,9 +335,6 @@ class Client:
 
                 >> schedule = aqueduct.hourly(minute: 0)
 
-            k_latest_runs:
-                Number of most-recent runs of this flow that Aqueduct should store.
-                Runs outside of this bound are deleted. Defaults to persisting all runs.
             artifacts:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
@@ -346,6 +342,8 @@ class Client:
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
+                - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
+                    Runs outside of this bound are deleted. Defaults to persisting all runs.
                 We currently support Airflow.
 
         Raises:
@@ -363,7 +361,7 @@ class Client:
             )
 
         cron_schedule = schedule_from_cron_string(schedule)
-        retention_policy = retention_policy_from_latest_runs(k_latest_runs)
+        retention_policy = retention_policy_from_latest_runs(config.k_latest_run)
 
         dag = apply_deltas_to_dag(
             self._dag,
