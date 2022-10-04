@@ -88,9 +88,9 @@ export const VersionSelector: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+      <FormControl sx={{ minWidth: 120 }} size="small">
         <Select
-          sx={{ maxHeight: 50 }}
+          sx={{ maxHeight: 40 }}
           id="grouped-select"
           autoWidth
           value={selectedResultIdx}
