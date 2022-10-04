@@ -119,7 +119,7 @@ def _check_subgraph_test_case(
     expected_dag: DAG,
     artifact_ids: List[uuid.UUID],
     include_load_operators: bool = False,
-    include_check_artifacts: bool = False,
+    include_checks: bool = False,
 ):
     """Apply the subgraph delta onto `dag` and expect `expected_dag`."""
     computed_dag = apply_deltas_to_dag(
@@ -128,7 +128,7 @@ def _check_subgraph_test_case(
             SubgraphDAGDelta(
                 artifact_ids=artifact_ids,
                 include_saves=include_load_operators,
-                include_checks_and_metrics=include_check_artifacts,
+                include_checks=include_checks,
             ),
         ],
         make_copy=True,
@@ -375,7 +375,7 @@ def test_subgraph_delta_with_checks():
         dag,
         expected_dag,
         artifact_ids=[fn_artifact_ids[0]],
-        include_check_artifacts=True,
+        include_checks=True,
     )
 
     # If the multiple dependency check is requested explicitly, there is one upstream function operator
@@ -386,7 +386,7 @@ def test_subgraph_delta_with_checks():
         dag,
         expected_dag,
         artifact_ids=[check_artifact_ids[2]],
-        include_check_artifacts=True,
+        include_checks=True,
     )
 
     # None of the copies are included if include_check_artifact=False.
@@ -399,7 +399,7 @@ def test_subgraph_delta_with_checks():
         dag,
         expected_dag,
         artifact_ids=[fn_artifact_ids[0]],
-        include_check_artifacts=False,
+        include_checks=False,
     )
 
 
