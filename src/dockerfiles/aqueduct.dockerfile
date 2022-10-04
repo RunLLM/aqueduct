@@ -6,7 +6,7 @@ USER root
 
 ENV PYTHONUNBUFFERED 1
 
-RUN pip install aqueduct-ml
+RUN pip install aqueduct-ml==0.0.16
 
 CMD aqueduct start --expose
 
