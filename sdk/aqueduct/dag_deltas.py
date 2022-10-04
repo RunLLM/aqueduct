@@ -145,6 +145,8 @@ class SubgraphDAGDelta(DAGDelta):
             explicitly defined in `artifact_ids` will be excluded.
     """
 
+    """TODO: split checks and metrics into separate arguments."""
+
     def __init__(
         self,
         artifact_ids: Optional[List[uuid.UUID]] = None,
