@@ -58,7 +58,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     const metricArtifactNodes = [];
 
     // first find all check operators.
-    console.log('checking dagPositionState.result');
     if (dagPositionState.result) {
       const nodes = dagPositionState.result.nodes;
       nodes.forEach((node) => {
@@ -88,12 +87,10 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
     // Remove artifactNodes from the DAG
     // Take artifact result and set inside operator's data.result field.
-    console.log('checking dagPositionState.result two: ', dagPositionState);
     const nodes = dagPositionState.result?.nodes;
     let enrichedNodes = [];
 
     if (nodes) {
-      console.log('nodes: ', nodes);
       enrichedNodes = produce(nodes, (draftState) => {
         // NOTE: only mutate the draftState variable here.
         // See docs here for more information: https://redux-toolkit.js.org/usage/immer-reducers#immutable-updates-with-immer
@@ -124,16 +121,9 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
               }
             }
           }
-        } else {
-          console.log('in else statement');
-          return [];
         }
       });
-    } else {
-      console.log('nodes else: ', nodes);
     }
-
-    console.log('enrichedNodes: ', enrichedNodes);
 
     //Finally, let's remove any boolean artifacts from the list
     // This has to be two separate steps or Immer will complain that we are producing a new value and modifying it's draft.
@@ -160,12 +150,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       });
     });
 
-    console.log('filtered nodes: ', filteredNodes);
-
-    console.log('checking result three');
-    console.log('dagPositionState', dagPositionState);
     const edges = dagPositionState.result?.edges;
-    console.log('edges: ', edges);
     const updatedEdges = produce(edges, (edgeDraftState) => {
       if (!edges) {
         return [];
