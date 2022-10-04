@@ -304,11 +304,10 @@ class Client:
     def publish_flow(
         self,
         name: str,
+        artifacts: Union[BaseArtifact, List[BaseArtifact]],
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
-        artifact: Optional[BaseArtifact] = None,
-        artifacts: Optional[List[BaseArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -328,6 +327,10 @@ class Client:
         Args:
             name:
                 The name of the newly created flow.
+            artifacts:
+                All the artifacts that you care about computing. These artifacts are guaranteed
+                to be computed. Additional artifacts may also be computed if they are upstream
+                dependencies.
             description:
                 A description for the new flow.
             schedule: A cron expression specifying the cadence that this flow
@@ -339,12 +342,6 @@ class Client:
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should store.
                 Runs outside of this bound are deleted. Defaults to persisting all runs.
-            artifact:
-                Singular version of `artifacts` below.
-            artifacts:
-                All the artifacts that you care about computing. These artifacts are guaranteed
-                to be computed. Additional artifacts may also be included as intermediate
-                computation steps. All checks are on the resulting flow are also included.
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
@@ -361,19 +358,18 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
-        if artifact is not None and artifacts is not None:
-            raise InvalidUserArgumentException(
-                "Can only set one of `artifact` or `artifacts` parameter in publish_flow()."
-            )
-
-        if artifact is None and (artifacts is None or len(artifacts) == 0):
+        if artifacts is None or artifacts == []:
             raise InvalidUserArgumentException(
                 "Must supply at least one artifact to compute when creating a flow."
             )
 
-        if artifact is not None:
-            artifacts = [artifact]
-        assert artifacts is not None
+        if isinstance(artifacts, BaseArtifact):
+            artifacts = [artifacts]
+
+        if not isinstance(artifacts, list) or any(not isinstance(artifact, BaseArtifact) for artifact in artifacts):
+            raise InvalidUserArgumentException(
+                "`artifacts` argument must either be an artifact or a list of artifacts."
+            )
 
         cron_schedule = schedule_from_cron_string(schedule)
         retention_policy = retention_policy_from_latest_runs(k_latest_runs)
@@ -382,7 +378,7 @@ class Client:
             self._dag,
             deltas=[
                 SubgraphDAGDelta(
-                    artifact_ids=[elem.id() for elem in artifacts],
+                    artifact_ids=[artifact.id() for artifact in artifacts],
                     include_load_operators=True,
                     include_check_artifacts=True,
                 ),
