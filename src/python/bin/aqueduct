@@ -42,7 +42,7 @@ welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI and the backend server are accessible at: http://%s:%d/login?apiKey=%s
+The Web UI and the backend server (v%s) are accessible at: http://%s:%d/login?apiKey=%s
 ***************************************************
 """
 
@@ -296,7 +296,7 @@ def generate_welcome_message(expose, port):
 
     apikey = get_apikey()
     return (
-        welcome_message % (apikey, expose_ip, port, apikey),
+        welcome_message % (apikey, package_version, expose_ip, port, apikey),
         login_url % (expose_ip, port, apikey),
     )
 
