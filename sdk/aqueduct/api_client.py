@@ -250,7 +250,7 @@ class APIClient:
 
         """
         try:
-            v = self._get_version(use_https=use_https)
+            server_version = self._get_server_version(use_https=use_https)
         except Exception as e:
             logger().info(
                 "Testing connection with {} fails with:\n\t{}: {}".format(
@@ -261,10 +261,10 @@ class APIClient:
             )
             return False
         else:
-            self._validate_server_version(v)
+            self._validate_server_version(server_version)
             return True
 
-    def _get_version(self, use_https: bool) -> str:
+    def _get_server_version(self, use_https: bool) -> str:
         """Fetches the server's version number as a string."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.GET_VERSION_ROUTE, use_https=use_https)
