@@ -380,18 +380,21 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
-        implicitly_include_all_metrics_and_checks = True
+        # If metrics and/or checks are explicitly included, add them to the artifacts list,
+        # but don't include them implicitly.
+        implicitly_include_metrics = True
         if metrics is not None:
             if not isinstance(metrics, list):
                 raise InvalidUserArgumentException("`metrics` argument must be a list.")
             artifacts += metrics
-            implicitly_include_all_metrics_and_checks = False
+            implicitly_include_metrics = False
 
+        implicitly_include_checks = True
         if checks is not None:
             if not isinstance(checks, list):
                 raise InvalidUserArgumentException("`checks` argument must be a list.")
             artifacts += checks
-            implicitly_include_all_metrics_and_checks = False
+            implicitly_include_checks = False
 
         cron_schedule = schedule_from_cron_string(schedule)
         retention_policy = retention_policy_from_latest_runs(k_latest_runs)
@@ -402,7 +405,8 @@ class Client:
                 SubgraphDAGDelta(
                     artifact_ids=[artifact.id() for artifact in artifacts],
                     include_saves=True,
-                    include_checks_and_metrics=implicitly_include_all_metrics_and_checks,
+                    include_metrics=implicitly_include_metrics,
+                    include_checks=implicitly_include_checks,
                 ),
             ],
             make_copy=True,
