@@ -1,4 +1,4 @@
-import { CircularProgress } from '@mui/material';
+import { AlertTitle, CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -47,8 +47,12 @@ const ArtifactContent: React.FC<Props> = ({
   }
 
   if (isFailed(contentWithLoadingStatus.status)) {
+    console.log(contentWithLoadingStatus);
     return (
-      <Alert title="Failed to load artifact contents.">
+      <Alert severity="error">
+        <AlertTitle>
+          Failed to load artifact contents.
+        </AlertTitle>
         {contentWithLoadingStatus.status.err}
       </Alert>
     );
