@@ -25,7 +25,7 @@ export const handleGetArtifactResultContent = createAsyncThunk<
   ) => {
     const { apiKey, workflowDagResultId, artifactId } = args;
     const res = await fetch(
-      `${apiAddress}/api/artifact_result/${workflowDagResultId}/${artifactId}`,
+      `${apiAddress}/api/artifact/${workflowDagResultId}/${artifactId}/result`,
       {
         method: 'GET',
         headers: {

@@ -332,7 +332,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
         <Button
           color="primary"
-          sx={{ height: '100%' }}
+          sx={{ height: '100%', mx: 2 }}
           onClick={() => setShowRunWorkflowDialog(true)}
           size="large"
         >
@@ -341,9 +341,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Button>
 
         <WorkflowStatusBar user={user} />
-
-        {runWorkflowDialog}
       </Box>
+
+      {runWorkflowDialog}
 
       {showAirflowUpdateWarning && airflowUpdateWarning}
 

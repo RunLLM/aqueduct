@@ -32,7 +32,7 @@ import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
-import { Operator, OperatorType } from '../../utils/operators';
+import { Operator } from '../../utils/operators';
 import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
@@ -121,10 +121,13 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       sx={{
         width: `${StatusBarWidthInPx}px`,
         maxHeight: `${MaxStatusBarListHeightInPx}px`,
-        display: 'block',
+        position: 'absolute',
         overflow: 'auto',
         backgroundColor: 'white',
         borderRadius: '8px',
+        zIndex: 10,
+        border: `1px solid`,
+        borderColor: 'gray.500',
       }}
     >
       {listItems.map((listItem, index) => {
@@ -137,7 +140,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               flexDirection: 'row',
               width: '100%',
               backgroundColor: 'white',
-              borderBottom: `1px solid`,
+              borderBottom: index === listItems.length - 1 ? null : `1px solid`,
               borderColor: 'gray.500',
               alignItems: 'start',
             }}
@@ -391,19 +394,16 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
+      } else if (artifactStatus === ExecutionStatus.Failed) {
+        newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
+        newWorkflowStatusItem.title = `Error creating ${artifactName}.`;
+        newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
         newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
       } else {
-        // artifact is either:
-        // 1) cancelled (the operator failed to run and did not write artifact content) .
-        // 2) failed (the operator failed to run but wrote artifact content).
-        // 3) pending.
-        // We do not display any sidebar message for any of these cases. The reason we do not display
-        // any error message on artifact failure status is because we expect the appropriate error message
-        // to be displayed by the operator. That is to say, if the artifact has failed, then the operator
-        // must have also failed.
+        // artifact is still pending, skip adding to list of workflow status items.
         return;
       }
 
@@ -459,12 +459,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
-          // The message for a failed parameter is slightly different.
-          if (operators[operatorId].spec.type == OperatorType.Param) {
-            newWorkflowStatusItem.title = `Error with ${operatorName}`;
-          } else {
-            newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
-          }
+          newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''
@@ -539,16 +534,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     <Box
       sx={{
         cursor: 'pointer',
-        position: 'absolute',
-        left: '700px',
-        top: '160px', // to keep the status bar in place when the dropdown is shown/hidden.
         zIndex: 10,
-        borderLeft: `1px solid ${theme.palette.gray['500']}`,
-        borderTop: `1px solid ${theme.palette.gray['500']}`,
-        borderRight: `1px solid ${theme.palette.gray['500']}`,
-        borderBottom: collapsed
-          ? `1px solid ${theme.palette.gray['500']}`
-          : null,
+        border: `1px solid ${theme.palette.gray['500']}`,
         borderRadius: '8px',
       }}
       onClick={() => {
@@ -563,10 +550,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           px: 0,
           ml: 0,
           height: `${StatusBarHeaderHeightInPx}px`,
-          width: StatusBarWidthInPx,
-          borderBottom: collapsed
-            ? null
-            : `1px solid ${theme.palette.gray['500']}`,
+          borderBottom: null,
           overflowY: 'none',
         }}
       >
@@ -588,7 +572,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // red600
             '&:hover': { color: theme.palette.red['600'] },
             fontSize: '20px',
-            marginRight: 4,
+            marginRight: 2,
             marginLeft: 2,
           }}
         >
@@ -613,7 +597,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // orange600
             '&:hover': { color: theme.palette.orange['600'] },
             fontSize: '20px',
-            marginRight: 4,
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faTriangleExclamation} />
@@ -637,7 +621,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // blue500
             '&:hover': { color: theme.palette.blue['500'] },
             fontSize: '20px',
-            marginRight: 4,
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleInfo} />
@@ -661,7 +645,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // green500
             '&:hover': { color: theme.palette.green['500'] },
             fontSize: '20px',
-            marginRight: 4,
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleCheck} />
