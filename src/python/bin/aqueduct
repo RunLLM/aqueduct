@@ -229,7 +229,7 @@ def update_server_version():
             f.write(requests.get(s3_path).content)
         os.chmod(data_script_path, 0o755)
         subprocess.check_call([sys.executable, data_script_path])
-        print("Successfully added new tables to the demo db.")
+        print("Successfully added new tables to the demo db as part of release v0.1.")
 
 
 def update():
