@@ -31,6 +31,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
+import StorageSelector from './storageSelector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
 
@@ -320,7 +321,10 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
       <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
         {workflow.dagResults && workflow.dagResults.length > 0 && (
-          <VersionSelector />
+          <>
+            <VersionSelector />
+            <StorageSelector />
+          </>
         )}
         <Button
           color="primary"
