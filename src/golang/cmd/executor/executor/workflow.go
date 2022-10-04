@@ -70,7 +70,12 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	if err := lock.RLock(); err != nil {
 		return err
 	}
-	defer lock.RUnlock()
+	defer func() {
+		unlockErr := lock.RUnlock()
+		if unlockErr != nil {
+			log.Errorf("Unexpected error when unlocking execution lock: %v", unlockErr)
+		}
+	}()
 
 	status, err := ex.Engine.ExecuteWorkflow(
 		ctx,
