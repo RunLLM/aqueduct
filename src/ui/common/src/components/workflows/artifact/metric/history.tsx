@@ -1,15 +1,23 @@
+import {
+  faCheckCircle,
+  faQuestionCircle,
+  faXmarkCircle,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { faCheckCircle, faQuestionCircle, faXmarkCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
-import ExecutionStatus, { isFailed, isInitial, isLoading } from '../../../../utils/shared';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ExecutionStatus, {
+  isFailed,
+  isInitial,
+  isLoading,
+} from '../../../../utils/shared';
 
 type Props = {
   historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
@@ -46,7 +54,9 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       (artifactStatusResult) => {
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp: new Date(artifactStatusResult.exec_state?.timestamps?.finished_at),
+          timestamp: new Date(
+            artifactStatusResult.exec_state?.timestamps?.finished_at
+          ),
           value: artifactStatusResult.content_serialized,
         };
       }
@@ -62,7 +72,12 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
   return (
     <Box display="flex" justifyContent="center" flexDirection="column">
       <Box mb={2}>
-        <Typography variant="h6" component="div" marginBottom="8px" fontWeight="normal">
+        <Typography
+          variant="h6"
+          component="div"
+          marginBottom="8px"
+          fontWeight="normal"
+        >
           History
         </Typography>
 
@@ -77,7 +92,13 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
               line: { color: theme.palette.blue[900] },
             },
           ]}
-          layout={{ width: '100%', height: '100%', plot_bgcolor: theme.palette.gray[100], margin: { b: 30, l: 30, t: 0, r: 0 }, yaxis: { ticksuffix: ' ' } }}
+          layout={{
+            width: '100%',
+            height: '100%',
+            plot_bgcolor: theme.palette.gray[100],
+            margin: { b: 30, l: 30, t: 0, r: 0 },
+            yaxis: { ticksuffix: ' ' },
+          }}
         />
       </Box>
 
@@ -85,34 +106,62 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         <Typography variant="h6" fontWeight="normal">
           Historical Values
         </Typography>
-        {
-          historicalData.data.map((entry, index) => {
-            let backgroundColor, hoverColor, icon;
-            if (entry.status === ExecutionStatus.Succeeded) {
-              backgroundColor = theme.palette.green[100];
-              hoverColor = theme.palette.green[200];
-              icon = <FontAwesomeIcon icon={faCheckCircle} color={theme.palette.green[600]} />;
-            } else if (entry.status === ExecutionStatus.Failed) {
-              backgroundColor = theme.palette.red[25];
-              hoverColor = theme.palette.red[100];
-              icon = <FontAwesomeIcon icon={faXmarkCircle} color={theme.palette.red[600]} />;
-            } else {
-              backgroundColor = theme.palette.gray[100];
-              hoverColor = theme.palette.gray[200];
-              icon = <FontAwesomeIcon icon={faQuestionCircle} color={theme.palette.gray[600]} />;
-            }
-
-            return (
-              <Box p={2} sx={{ display: 'flex', alignItems: 'center', borderBottom: index === historicalData.data.length - 1 ? '' : `1px solid ${theme.palette.gray[400]}`, backgroundColor: backgroundColor, '&:hover': { backgroundColor: hoverColor }  }}>
-                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                  <Typography sx={{ mr: 1 }} variant="body2">{entry.timestamp.toLocaleString()}</Typography>
-                  {icon}
-                </Box>
-                <Typography variant="body1">{entry.value.toString()}</Typography>
-              </Box>
+        {historicalData.data.map((entry, index) => {
+          let backgroundColor, hoverColor, icon;
+          if (entry.status === ExecutionStatus.Succeeded) {
+            backgroundColor = theme.palette.green[100];
+            hoverColor = theme.palette.green[200];
+            icon = (
+              <FontAwesomeIcon
+                icon={faCheckCircle}
+                color={theme.palette.green[600]}
+              />
             );
-          })
-        }
+          } else if (entry.status === ExecutionStatus.Failed) {
+            backgroundColor = theme.palette.red[25];
+            hoverColor = theme.palette.red[100];
+            icon = (
+              <FontAwesomeIcon
+                icon={faXmarkCircle}
+                color={theme.palette.red[600]}
+              />
+            );
+          } else {
+            backgroundColor = theme.palette.gray[100];
+            hoverColor = theme.palette.gray[200];
+            icon = (
+              <FontAwesomeIcon
+                icon={faQuestionCircle}
+                color={theme.palette.gray[600]}
+              />
+            );
+          }
+
+          return (
+            <Box
+              key={entry.timestamp.toString()}
+              p={2}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                borderBottom:
+                  index === historicalData.data.length - 1
+                    ? ''
+                    : `1px solid ${theme.palette.gray[400]}`,
+                backgroundColor: backgroundColor,
+                '&:hover': { backgroundColor: hoverColor },
+              }}
+            >
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <Typography sx={{ mr: 1 }} variant="body2">
+                  {entry.timestamp.toLocaleString()}
+                </Typography>
+                {icon}
+              </Box>
+              <Typography variant="body1">{entry.value.toString()}</Typography>
+            </Box>
+          );
+        })}
       </Box>
     </Box>
   );

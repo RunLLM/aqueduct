@@ -1,16 +1,12 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { theme } from '../../../styles/theme/theme';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
 
@@ -36,16 +32,31 @@ const SummaryList: React.FC<Props> = ({
   initiallyExpanded,
 }) => {
   const items = artifactResults.map((artifactResult, index) => {
-    let content = null, link = null;
+    let content = null,
+      link = null;
     if (artifactResult.result?.content_serialized) {
       content = artifactResult.result.content_serialized;
     } else {
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${artifactResult.id}}`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
+        artifactResult.id
+      }}`;
       content = artifactResult.name;
     }
-    
-    let element =  (
-      <Box display="flex" p={1} sx={{ alignItems: 'center', '&:hover': { backgroundColor: 'gray.100' }, borderBottom: index === artifactResults.length  - 1 ? '' : `1px solid ${theme.palette.gray[400]}` }}>
+
+    const element = (
+      <Box
+        key={artifactResult.id}
+        display="flex"
+        p={1}
+        sx={{
+          alignItems: 'center',
+          '&:hover': { backgroundColor: 'gray.100' },
+          borderBottom:
+            index === artifactResults.length - 1
+              ? ''
+              : `1px solid ${theme.palette.gray[400]}`,
+        }}
+      >
         <Box display="flex" sx={{ alignItems: 'center' }}>
           <Box
             sx={{
@@ -66,10 +77,15 @@ const SummaryList: React.FC<Props> = ({
 
     if (link) {
       return (
-        <Link to={link} component={RouterLink as any} sx={{ textDecoration: 'none' }}>
+        <Link
+          to={link}
+          component={RouterLink as any}
+          sx={{ textDecoration: 'none' }}
+          key={artifactResult.id}
+        >
           {element}
         </Link>
-      )
+      );
     }
 
     return element;

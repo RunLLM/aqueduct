@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { OperatorResultResponse } from '../../../handlers/responses/operator';
@@ -44,7 +44,12 @@ const SummaryList: React.FC<Props> = ({
     }
 
     return (
-      <Link to={link} component={RouterLink as any} underline="none">
+      <Link
+        to={link}
+        component={RouterLink as any}
+        underline="none"
+        key={opResult.id}
+      >
         <Box
           display="flex"
           p={1}
