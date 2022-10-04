@@ -44,7 +44,12 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
 
   return (
     <Box width="100%">
-      <Typography variant="h5" component="div" marginBottom="8px">
+      <Typography
+        variant="h6"
+        component="div"
+        marginBottom="8px"
+        fontWeight="normal"
+      >
         Metrics
       </Typography>
       {metricTableEntries.data.length > 0 ? (
@@ -54,8 +59,8 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
           tableType={OperatorExecStateTableType.Metric}
         />
       ) : (
-        <Typography variant="body2">
-          This artifact has no associated downstream Metrics.
+        <Typography variant="body2" color="gray.700">
+          This artifact has no Metrics.
         </Typography>
       )}
     </Box>
@@ -85,7 +90,12 @@ export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
 
   return (
     <Box width="100%">
-      <Typography variant="h5" component="div" marginBottom="8px">
+      <Typography
+        variant="h6"
+        component="div"
+        marginBottom="8px"
+        fontWeight="normal"
+      >
         Checks
       </Typography>
       {checkTableEntries.data.length > 0 ? (
@@ -95,8 +105,8 @@ export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
           tableType={OperatorExecStateTableType.Check}
         />
       ) : (
-        <Typography variant="body2">
-          This artifact has no associated downstream Checks.
+        <Typography variant="body2" color="gray.700">
+          This artifact has no Checks.
         </Typography>
       )}
     </Box>

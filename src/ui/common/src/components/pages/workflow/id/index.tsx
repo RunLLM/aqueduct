@@ -32,7 +32,7 @@ import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportCsv } from '../../../../utils/preview';
-import { LoadingStatusEnum } from '../../../../utils/shared';
+import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import { ExecutionStatus } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
@@ -48,6 +48,9 @@ type WorkflowPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
+
+const DrawerWidth = '800px';
+const RightMargin = '24px';
 
 const WorkflowPage: React.FC<WorkflowPageProps> = ({
   user,
@@ -322,24 +325,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
-    } else if (currentNode.type === NodeType.CheckOp) {
-      // Get the check's id, and navigate to the check details page.
-      return (
-        <Box>
-          <Button
-            style={{ marginRight: '16px' }}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/check/${currentNode.id}`
-              );
-            }}
-          >
-            View Check Details
-          </Button>
-        </Box>
-      );
     }
 
     return null;
@@ -352,9 +337,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       <Box
         sx={{
           display: 'flex',
-          width: contentWidth,
+          // TODO: just create a state variable to reflect the open state of the drawer.
+          width:
+            currentNode.type === NodeType.None
+              ? `calc(100% - ${RightMargin});`
+              : `calc(100% - ${DrawerWidth} - ${RightMargin});`,
           height: '100%',
           flexDirection: 'column',
+          transition: WidthTransition,
+          transitionDelay: '-150ms',
         }}
       >
         {workflow.selectedDag && (
@@ -392,7 +383,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           anchor="right"
           variant="persistent"
           open={true}
-          PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}
+          PaperProps={{
+            sx: {
+              overflowX: 'scroll',
+              overflowY: 'hidden',
+              transition: 'width 200ms ease-in-out',
+              transitionDelay: '1000ms',
+            },
+          }}
         >
           <Box width="800px" maxWidth="800px" minHeight="100vh">
             <Box
