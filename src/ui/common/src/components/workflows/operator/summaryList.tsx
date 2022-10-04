@@ -51,7 +51,12 @@ const SummaryList: React.FC<Props> = ({
     }
 
     return (
-      <Link to={link} component={RouterLink as any} underline="none">
+      <Link
+        to={link}
+        key={opResult.name}
+        component={RouterLink as any}
+        underline="none"
+      >
         <Box
           display="flex"
           p={1}
