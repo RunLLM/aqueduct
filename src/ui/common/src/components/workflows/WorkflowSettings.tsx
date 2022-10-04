@@ -195,7 +195,7 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
   return (
     <TextField
       size="small"
-      label="The number of latest versions to keep. Older versions will be garbage collected."
+      label="The number of latest versions to keep. Older versions will be removed."
       fullWidth
       type="number"
       value={value}
