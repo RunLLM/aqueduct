@@ -86,7 +86,7 @@ def test_complex_flow(client):
             client,
             name=flow_name,
             artifacts=[output_artifact],
-            checks=[success_check], # failing_check will no longer be included.
+            checks=[success_check],  # failing_check will no longer be included.
             num_runs=2,
             delete_flow_after=False,
         )

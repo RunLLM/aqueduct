@@ -146,6 +146,7 @@ class SubgraphDAGDelta(DAGDelta):
         include_checks:
             The checks version of `include_metrics`.
     """
+
     def __init__(
         self,
         artifact_ids: Optional[List[uuid.UUID]] = None,
