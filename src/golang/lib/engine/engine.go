@@ -48,6 +48,7 @@ type Engine interface {
 		workflowName string,
 		workflowDescription string,
 		schedule *workflow.Schedule,
+		retentionPolicy *workflow.RetentionPolicy,
 	) error
 
 	// TODO ENG-1444: Used as a wrapper to trigger a workflow via executor binary.
