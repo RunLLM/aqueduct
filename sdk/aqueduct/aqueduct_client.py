@@ -8,15 +8,14 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.artifacts.numeric_artifact import NumericArtifact
-
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.config import FlowConfig
 from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
-from .artifacts.bool_artifact import BoolArtifact
 
+from .artifacts.bool_artifact import BoolArtifact
 from .dag import Metadata
 from .dag_deltas import (
     AddOrReplaceOperatorDelta,
@@ -384,17 +383,13 @@ class Client:
         implicitly_include_all_metrics_and_checks = True
         if metrics is not None:
             if not isinstance(metrics, list):
-                raise InvalidUserArgumentException(
-                    "`metrics` argument must be a list."
-                )
+                raise InvalidUserArgumentException("`metrics` argument must be a list.")
             artifacts += metrics
             implicitly_include_all_metrics_and_checks = False
 
         if checks is not None:
             if not isinstance(checks, list):
-                raise InvalidUserArgumentException(
-                    "`checks` argument must be a list."
-                )
+                raise InvalidUserArgumentException("`checks` argument must be a list.")
             artifacts += checks
             implicitly_include_all_metrics_and_checks = False
 

@@ -19,7 +19,7 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct import LoadUpdateMode, check, op, metric, Flow
+from aqueduct import Flow, LoadUpdateMode, check, metric, op
 
 
 def test_basic_flow(client):

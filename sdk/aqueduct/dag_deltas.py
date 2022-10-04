@@ -191,10 +191,15 @@ class SubgraphDAGDelta(DAGDelta):
             # (since they may have their own dependencies)
             if self.include_checks_and_metrics:
                 check_or_metric_ops = dag.list_operators(
-                    on_artifact_id=curr_artifact_id, filter_to=[OperatorType.CHECK, OperatorType.METRIC]
+                    on_artifact_id=curr_artifact_id,
+                    filter_to=[OperatorType.CHECK, OperatorType.METRIC],
                 )
-                check_or_metric_artifacts = dag.list_artifacts(on_op_ids=[op.id for op in check_or_metric_ops])
-                candidate_next_artifact_ids.extend([artifact.id for artifact in check_or_metric_artifacts])
+                check_or_metric_artifacts = dag.list_artifacts(
+                    on_op_ids=[op.id for op in check_or_metric_ops]
+                )
+                candidate_next_artifact_ids.extend(
+                    [artifact.id for artifact in check_or_metric_artifacts]
+                )
 
             # Prune the upstream candidates against our "already seen" group.
             next_artifact_ids = set(candidate_next_artifact_ids).difference(seen_artifact_ids)
