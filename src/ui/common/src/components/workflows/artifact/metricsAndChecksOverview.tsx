@@ -55,7 +55,7 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
         />
       ) : (
         <Typography variant="body2">
-          This artifact has no associated downstream Metrics.
+          This artifact has no associated metrics.
         </Typography>
       )}
     </Box>
@@ -96,7 +96,7 @@ export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
         />
       ) : (
         <Typography variant="body2">
-          This artifact has no associated downstream Checks.
+          This artifact has no associated checks.
         </Typography>
       )}
     </Box>
