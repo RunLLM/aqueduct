@@ -88,38 +88,42 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     // Remove artifactNodes from the DAG
     // Take artifact result and set inside operator's data.result field.
     const nodes = dagPositionState.result?.nodes;
-    const enrichedNodes = produce(nodes, (draftState) => {
-      // NOTE: only mutate the draftState variable here.
-      // See docs here for more information: https://redux-toolkit.js.org/usage/immer-reducers#immutable-updates-with-immer
-      if (nodes) {
-        // loop through and find checkOpNodes, doing fancy logic stuffs.
-        for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
-          // boolArtifactNodes and checkOps are sorted and now have the same index as one another.
-          // Let's take the operators and set their data.result fields accordingly.
-          for (let i = 0; i < checkOpNodes.length; i++) {
-            if (nodes[nodeIndex].id === checkOpNodes[i].id) {
-              // Let's find the artifact result of the corresponding booleanArtifactNode.
-              const boolArtifactResult =
-                artifactResults[boolArtifactNodes[i].id].result?.data;
-              if (boolArtifactResult) {
-                draftState[nodeIndex].data.result = boolArtifactResult;
+    let enrichedNodes = [];
+
+    if (nodes) {
+      enrichedNodes = produce(nodes, (draftState) => {
+        // NOTE: only mutate the draftState variable here.
+        // See docs here for more information: https://redux-toolkit.js.org/usage/immer-reducers#immutable-updates-with-immer
+        if (nodes) {
+          // loop through and find checkOpNodes, doing fancy logic stuffs.
+          for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+            // boolArtifactNodes and checkOps are sorted and now have the same index as one another.
+            // Let's take the operators and set their data.result fields accordingly.
+            for (let i = 0; i < checkOpNodes.length; i++) {
+              if (nodes[nodeIndex].id === checkOpNodes[i].id) {
+                // Let's find the artifact result of the corresponding booleanArtifactNode.
+                const boolArtifactResult =
+                  artifactResults[boolArtifactNodes[i].id]?.result?.data;
+                if (boolArtifactResult) {
+                  draftState[nodeIndex].data.result = boolArtifactResult;
+                }
               }
             }
-          }
 
-          // find metric nodes and put the result into the operator's data field
-          for (let i = 0; i < metricOpNodes.length; i++) {
-            if (nodes[nodeIndex].id === metricOpNodes[i].id) {
-              const metricArtifactResult =
-                artifactResults[metricArtifactNodes[i].id].result?.data;
-              if (metricArtifactResult) {
-                draftState[nodeIndex].data.result = metricArtifactResult;
+            // find metric nodes and put the result into the operator's data field
+            for (let i = 0; i < metricOpNodes.length; i++) {
+              if (nodes[nodeIndex].id === metricOpNodes[i].id) {
+                const metricArtifactResult =
+                  artifactResults[metricArtifactNodes[i].id]?.result?.data;
+                if (metricArtifactResult) {
+                  draftState[nodeIndex].data.result = metricArtifactResult;
+                }
               }
             }
           }
         }
-      }
-    });
+      });
+    }
 
     //Finally, let's remove any boolean artifacts from the list
     // This has to be two separate steps or Immer will complain that we are producing a new value and modifying it's draft.
