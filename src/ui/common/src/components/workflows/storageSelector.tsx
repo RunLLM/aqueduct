@@ -15,9 +15,7 @@ export const StorageSelector: React.FC = () => {
   let selected = 'file';
   if (dag) {
     selected = dag.storage_config.type;
-    console.log('selected dag', dag.storage_config.type);
   }
-  console.log(dag);
 
   const getMenuItems = () => {
     return (
