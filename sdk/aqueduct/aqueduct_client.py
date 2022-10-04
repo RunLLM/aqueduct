@@ -356,7 +356,9 @@ class Client:
         if isinstance(artifacts, BaseArtifact):
             artifacts = [artifacts]
 
-        if not isinstance(artifacts, list) or any(not isinstance(artifact, BaseArtifact) for artifact in artifacts):
+        if not isinstance(artifacts, list) or any(
+            not isinstance(artifact, BaseArtifact) for artifact in artifacts
+        ):
             raise InvalidUserArgumentException(
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
