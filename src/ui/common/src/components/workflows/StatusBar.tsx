@@ -415,6 +415,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const operatorName = operators[operatorId].name
         ? operators[operatorId].name
         : 'Operator';
+
       const operatorResult: OperatorResult =
         workflow.operatorResults[operatorId];
 

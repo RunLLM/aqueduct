@@ -47,6 +47,7 @@ import AccountPage from './components/pages/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
+import ErrorPage from './components/pages/ErrorPage';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
@@ -347,6 +348,7 @@ export {
   DeleteIntegrationDialog,
   DeleteWorkflowResponse,
   EdgeTypes,
+  ErrorPage,
   ExecutionStatus,
   exportCsv,
   exportFunction,
