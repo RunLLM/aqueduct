@@ -187,7 +187,7 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
   let value = '';
   let helperText: string = undefined;
   if (!retentionPolicy || retentionPolicy.k_latest_runs <= 0) {
-    helperText = 'We keep all versions of this workflow.';
+    helperText = 'Aqueduct will store all versions of this workflow.';
   } else {
     value = retentionPolicy.k_latest_runs.toString();
   }
@@ -195,8 +195,8 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
   return (
     <TextField
       size="small"
-      label="Number of latest versions to keep."
-      sx={{ width: '400px' }}
+      label="The number of latest versions to keep. Older versions will be garbage collected."
+      fullWidth
       type="number"
       value={value}
       onChange={(e) => {
