@@ -19,12 +19,6 @@ type Props = {
   initiallyExpanded: boolean;
 };
 
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
-};
-
 const SummaryList: React.FC<Props> = ({
   title,
   workflowId,
@@ -32,7 +26,6 @@ const SummaryList: React.FC<Props> = ({
   operatorResults,
   initiallyExpanded,
 }) => {
-  const [expanded, setExpanded] = useState(initiallyExpanded);
   const items = operatorResults.map((opResult, index) => {
     let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
       opResult.id
