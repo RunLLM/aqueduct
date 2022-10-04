@@ -1,15 +1,12 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { OperatorResultResponse } from '../../../handlers/responses/operator';
+import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { OperatorType } from '../../../utils/operators';
 import { operatorTypeToIconMapping } from '../nodes/nodeTypes';
@@ -36,7 +33,7 @@ const SummaryList: React.FC<Props> = ({
   initiallyExpanded,
 }) => {
   const [expanded, setExpanded] = useState(initiallyExpanded);
-  const items = operatorResults.map((opResult) => {
+  const items = operatorResults.map((opResult, index) => {
     let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
       opResult.id
     }`;
@@ -54,64 +51,48 @@ const SummaryList: React.FC<Props> = ({
     }
 
     return (
-      <ListItem divider key={opResult.id}>
-        <Box display="flex">
+      <Link to={link} component={RouterLink as any} underline="none">
+        <Box
+          display="flex"
+          p={1}
+          sx={{
+            alignItems: 'center',
+            '&:hover': { backgroundColor: 'gray.100' },
+            borderBottom:
+              index === operatorResults.length - 1
+                ? ''
+                : `1px solid ${theme.palette.gray[400]}`,
+          }}
+        >
           {!!opResult.spec?.type && (
             <Box
-              sx={{
-                width: '16px',
-                height: '16px',
-                color: 'rgba(0,0,0,0.54)',
-              }}
+              width="16px"
+              height="16px"
+              alignItems="center"
+              display="flex"
+              flexDirection="column"
             >
               <FontAwesomeIcon
+                fontSize="16px"
+                color={`${theme.palette.gray[700]}`}
                 icon={operatorTypeToIconMapping[opResult.spec.type]}
               />
             </Box>
           )}
-          <Link
-            to={link}
-            component={RouterLink as any}
-            sx={{ marginLeft: '16px' }}
-            underline="none"
-          >
-            {opResult.name}
-          </Link>
+
+          <Typography ml="16px">{opResult.name}</Typography>
         </Box>
-      </ListItem>
+      </Link>
     );
   });
 
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={() => {
-        setExpanded(!expanded);
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-        sx={{
-          '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-            transform: 'rotate(90deg)',
-          },
-        }}
-        aria-controls="input-accordion-content"
-        id="input-accordion-header"
-      >
-        <Typography
-          sx={{ width: '33%', flexShrink: 0 }}
-          variant="h5"
-          component="div"
-          marginBottom="8px"
-        >
-          {title}
-        </Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <List sx={listStyle}>{items}</List>
-      </AccordionDetails>
-    </Accordion>
+    <Box>
+      <Typography variant="h6" mb="8px" fontWeight="normal">
+        {title}
+      </Typography>
+      {items}
+    </Box>
   );
 };
 
