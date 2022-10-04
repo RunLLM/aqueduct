@@ -540,7 +540,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         cursor: 'pointer',
         position: 'absolute',
         left: '700px',
-        top: '123px',
+        top: '160px', // to keep the status bar in place when the dropdown is shown/hidden.
         zIndex: 10,
         borderLeft: `1px solid ${theme.palette.gray['500']}`,
         borderTop: `1px solid ${theme.palette.gray['500']}`,

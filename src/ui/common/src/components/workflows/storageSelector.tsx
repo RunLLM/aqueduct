@@ -10,7 +10,7 @@ import { StorageType, StorageTypeNames } from '../../utils/storage';
 
 import { RootState } from '../../stores/store';
 
-export const VersionSelector: React.FC = () => {
+export const StorageSelector: React.FC = () => {
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const dag = workflow.selectedDag;
   let selected = "file";
@@ -29,7 +29,7 @@ export const VersionSelector: React.FC = () => {
           sx={{ backgroundColor: selected ? 'blueTint' : null }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography sx={{ ml: 1 }}>Storage Type: {StorageTypeNames[r]}</Typography>
+            <Typography sx={{ ml: 1 }}>{StorageTypeNames[r]}</Typography>
           </Box>
         </MenuItem>
       );
@@ -40,6 +40,7 @@ export const VersionSelector: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      Storage Type:{' '}
       <FormControl disabled sx={{ m: 1, minWidth: 120 }} size="small">
         <Select
           sx={{ maxHeight: 50 }}
@@ -54,4 +55,4 @@ export const VersionSelector: React.FC = () => {
   );
 };
 
-export default VersionSelector;
+export default StorageSelector;

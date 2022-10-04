@@ -319,13 +319,17 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
       {nextUpdateComponent}
 
+      <Box sx={{mx: 1}}>
+      {workflow.dagResults && workflow.dagResults.length > 0 && (
+            <StorageSelector />
+        )}
+      </Box>
+
       <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
         {workflow.dagResults && workflow.dagResults.length > 0 && (
-          <>
             <VersionSelector />
-            <StorageSelector />
-          </>
         )}
+
         <Button
           color="primary"
           sx={{ height: '100%' }}
