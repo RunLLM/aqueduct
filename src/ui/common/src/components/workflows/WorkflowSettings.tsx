@@ -52,6 +52,7 @@ import {
 } from '../../utils/cron';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
+  RetentionPolicy,
   SavedObject,
   WorkflowDag,
   WorkflowUpdateTrigger,
@@ -174,6 +175,45 @@ const PeriodicScheduleSelector: React.FC<PeriodicScheduleSelectorProps> = ({
   );
 };
 
+type RetentionPolicyProps = {
+  retentionPolicy?: RetentionPolicy;
+  setRetentionPolicy: (p?: RetentionPolicy) => void;
+};
+
+const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
+  retentionPolicy,
+  setRetentionPolicy,
+}) => {
+  let value = '';
+  let helperText: string = undefined;
+  if (!retentionPolicy || retentionPolicy.k_latest_runs <= 0) {
+    helperText = 'Aqueduct will store all versions of this workflow.';
+  } else {
+    value = retentionPolicy.k_latest_runs.toString();
+  }
+
+  return (
+    <TextField
+      size="small"
+      label="The number of latest versions to keep. Older versions will be removed."
+      fullWidth
+      type="number"
+      value={value}
+      onChange={(e) => {
+        const kLatestRuns = parseInt(e.target.value);
+        if (kLatestRuns <= 0 || isNaN(kLatestRuns)) {
+          // Internal representation of no retention.
+          setRetentionPolicy({ k_latest_runs: -1 });
+          return;
+        }
+
+        setRetentionPolicy({ k_latest_runs: kLatestRuns });
+      }}
+      helperText={helperText}
+    />
+  );
+};
+
 type WorkflowSettingsProps = {
   user: UserProfile;
   workflowDag: WorkflowDag;
@@ -223,6 +263,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     workflowDag.metadata.schedule.cron_schedule
   );
   const [paused, setPaused] = useState(workflowDag.metadata.schedule.paused);
+  const [retentionPolicy, setRetentionPolicy] = useState(
+    workflowDag.metadata?.retention_policy
+  );
+  const retentionPolicyUpdated =
+    retentionPolicy.k_latest_runs !==
+    workflowDag.metadata?.retention_policy?.k_latest_runs;
 
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
@@ -230,7 +276,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     triggerType !== workflowDag.metadata.schedule.trigger || // The type of the trigger has changed.
     (triggerType === WorkflowUpdateTrigger.Periodic &&
       schedule !== workflowDag.metadata.schedule.cron_schedule) || // The schedule type is still periodic but the schedule itself has changed.
-    paused !== workflowDag.metadata.schedule.paused; // The schedule type is periodic and we've changed the pausedness of the workflow.
+    paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
+    retentionPolicyUpdated; // retention policy has changed.
 
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
@@ -238,7 +285,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   ];
 
   const scheduleSelector = (
-    <Box sx={{ my: 2 }}>
+    <Box sx={{ my: 1 }}>
       <RadioGroup
         onChange={(e) =>
           setTriggerType(e.target.value as WorkflowUpdateTrigger)
@@ -378,6 +425,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
       },
+      retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
@@ -742,12 +790,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <Box sx={{ my: 2 }}>
             <Typography style={{ fontWeight: 'bold' }}> Name </Typography>
 
-            <TextField
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              size="small"
-            />
+            <Box sx={{ my: 1 }}>
+              <TextField
+                fullWidth
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                size="small"
+              />
+            </Box>
           </Box>
 
           <Box sx={{ my: 2 }}>
@@ -756,33 +806,48 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               Description{' '}
             </Typography>
 
-            <TextField
-              fullWidth
-              placeholder="Your description goes here."
-              value={description}
-              multiline
-              rows={4}
-              size="small"
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <Box sx={{ my: 1 }}>
+              <TextField
+                fullWidth
+                placeholder="Your description goes here."
+                value={description}
+                multiline
+                rows={4}
+                size="small"
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Box>
           </Box>
 
           <Box sx={{ my: 2 }}>
             <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>
             {scheduleSelector}
             {nextUpdateComponent}
-
-            <LoadingButton
-              loading={isUpdating}
-              onClick={updateSettings}
-              sx={{ mt: 1 }}
-              color="primary"
-              variant="contained"
-              disabled={!settingsChanged}
-            >
-              Save
-            </LoadingButton>
           </Box>
+
+          <Box sx={{ my: 2 }}>
+            <Typography style={{ fontWeight: 'bold' }}>
+              Retention Policy
+            </Typography>
+
+            <Box sx={{ my: 1 }}>
+              <RetentionPolicySelector
+                retentionPolicy={retentionPolicy}
+                setRetentionPolicy={setRetentionPolicy}
+              />
+            </Box>
+          </Box>
+
+          <LoadingButton
+            loading={isUpdating}
+            onClick={updateSettings}
+            sx={{ my: 1 }}
+            color="primary"
+            variant="contained"
+            disabled={!settingsChanged}
+          >
+            Save
+          </LoadingButton>
 
           <Divider />
 

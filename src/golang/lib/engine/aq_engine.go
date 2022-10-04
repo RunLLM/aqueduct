@@ -635,6 +635,7 @@ func (eng *aqEngine) EditWorkflow(
 	workflowName string,
 	workflowDescription string,
 	schedule *workflow.Schedule,
+	retentionPolicy *workflow.RetentionPolicy,
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
@@ -643,6 +644,10 @@ func (eng *aqEngine) EditWorkflow(
 
 	if workflowDescription != "" {
 		changes["description"] = workflowDescription
+	}
+
+	if retentionPolicy != nil {
+		changes["retention_policy"] = retentionPolicy
 	}
 
 	if schedule.Trigger != "" {
