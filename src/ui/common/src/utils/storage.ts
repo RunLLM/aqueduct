@@ -5,10 +5,10 @@ export enum StorageType {
 }
 
 export const StorageTypeNames = {
-  s3: "S3",
-  file: "File",
-  gcs: "Google Cloud Storage",
-}
+  s3: 'S3',
+  file: 'File',
+  gcs: 'Google Cloud Storage',
+};
 
 export type S3Config = {
   region: string;

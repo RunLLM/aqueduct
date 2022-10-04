@@ -224,7 +224,7 @@ export const handleGetWorkflow = createAsyncThunk<
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
-    
+
     return normalizeGetWorkflowResponse(body);
   }
 );
