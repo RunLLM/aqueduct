@@ -361,7 +361,7 @@ class Client:
             )
 
         cron_schedule = schedule_from_cron_string(schedule)
-        retention_policy = retention_policy_from_latest_runs(config.k_latest_run)
+        retention_policy = retention_policy_from_latest_runs(config)
 
         dag = apply_deltas_to_dag(
             self._dag,
