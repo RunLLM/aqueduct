@@ -7,6 +7,10 @@ ifndef VERBOSE
 .SILENT:
 endif
 
+# Building Aqueduct Dockerfile
+build-aqueduct-image:
+	docker build . -t aqueducthq/aqueduct:$(VERSION) -f aqueduct.dockerfile --no-cache --build-arg version=$(VERSION)
+
 # Building K8s Images
 build-k8s-system-images: build-function build-param build-system-metric build-base-connector build-connectors
 
