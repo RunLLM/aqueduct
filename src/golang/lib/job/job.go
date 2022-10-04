@@ -11,6 +11,7 @@ var (
 	ErrInvalidJobManagerConfig = errors.New("Job manager config is not valid.")
 	ErrJobNotExist             = errors.New("Job does not exist.")
 	ErrJobAlreadyExists        = errors.New("Job already exists.")
+	ErrAsyncExecution          = errors.New("Unknown job status due to asynchronous execution.")
 	ErrPollJobTimeout          = errors.New("Reached timeout waiting for the job to finish.")
 )
 
@@ -31,6 +32,20 @@ func NewJobManager(conf Config) (JobManager, error) {
 			return nil, ErrInvalidJobManagerConfig
 		}
 		return NewProcessJobManager(processConfig)
+	}
+	if conf.Type() == K8sType {
+		k8sConfig, ok := conf.(*K8sJobManagerConfig)
+		if !ok {
+			return nil, ErrInvalidJobManagerConfig
+		}
+		return NewK8sJobManager(k8sConfig)
+	}
+	if conf.Type() == LambdaType {
+		lambdaConfig, ok := conf.(*LambdaJobManagerConfig)
+		if !ok {
+			return nil, ErrInvalidJobManagerConfig
+		}
+		return NewLambdaJobManager(lambdaConfig)
 	}
 
 	return nil, ErrInvalidJobManagerConfig

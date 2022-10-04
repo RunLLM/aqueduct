@@ -33,6 +33,25 @@ func (w *standardWriterImpl) CreateArtifactResult(
 	return &artifactResult, err
 }
 
+func (w *standardWriterImpl) InsertArtifactResult(
+	ctx context.Context,
+	workflowDagResultId uuid.UUID,
+	artifactId uuid.UUID,
+	contentPath string,
+	execState *shared.ExecutionState,
+	metadata *Metadata,
+	db database.Database,
+) (*ArtifactResult, error) {
+	insertColumns := []string{WorkflowDagResultIdColumn, ArtifactIdColumn, ContentPathColumn, StatusColumn, ExecStateColumn, MetadataColumn}
+	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
+
+	args := []interface{}{workflowDagResultId, artifactId, contentPath, execState.Status, execState, metadata}
+
+	var artifactResult ArtifactResult
+	err := db.Query(ctx, &artifactResult, insertArtifactStmt, args...)
+	return &artifactResult, err
+}
+
 func (r *standardReaderImpl) GetArtifactResult(
 	ctx context.Context,
 	id uuid.UUID,
@@ -69,6 +88,46 @@ func (r *standardReaderImpl) GetArtifactResults(
 
 	var artifactResults []ArtifactResult
 	err := db.Query(ctx, &artifactResults, getArtifactResultsQuery, args...)
+	return artifactResults, err
+}
+
+func (r *standardReaderImpl) GetArtifactResultsByArtifactId(
+	ctx context.Context,
+	artifactId uuid.UUID,
+	db database.Database,
+) ([]ArtifactResult, error) {
+	getArtifactResultsQuery := fmt.Sprintf(
+		"SELECT %s FROM artifact_result WHERE artifact_id = $1;",
+		allColumns(),
+	)
+
+	var artifactResults []ArtifactResult
+	err := db.Query(ctx, &artifactResults, getArtifactResultsQuery, artifactId)
+	return artifactResults, err
+}
+
+func (r *standardReaderImpl) GetArtifactResultsByArtifactNameAndWorkflowId(
+	ctx context.Context,
+	workflowId uuid.UUID,
+	name string,
+	db database.Database,
+) ([]ArtifactResult, error) {
+	getArtifactResultsQuery := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM artifact_result, artifact, workflow_dag, workflow_dag_edge
+		WHERE workflow_dag.workflow_id = $1
+		AND artifact.name = $2
+		AND (
+			workflow_dag_edge.from_id = artifact.id
+			OR
+			workflow_dag_edge.to_id = artifact.id
+		)
+		AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND artifact_result.artifact_id = artifact.id;`,
+		allColumnsWithPrefix(),
+	)
+
+	var artifactResults []ArtifactResult
+	err := db.Query(ctx, &artifactResults, getArtifactResultsQuery, workflowId, name)
 	return artifactResults, err
 }
 

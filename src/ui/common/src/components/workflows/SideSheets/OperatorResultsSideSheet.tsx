@@ -20,8 +20,7 @@ import {
   RelationalDBExtractParams,
   RelationalDBLoadParams,
 } from '../../../utils/operators';
-import DataPreviewer from '../../layouts/data_previewer';
-import { BottomSidebarHeaderHeightInPx } from '../../layouts/sidebar/AqueductSidebar';
+import DataPreviewer from '../../DataPreviewer';
 import { Button } from '../../primitives/Button.styles';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import LogViewer from '../log_viewer';
@@ -298,6 +297,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
         <DataPreviewer
           previewData={artifactResults[artifactId]}
           error={error}
+          dataTableHeight="calc(100vh - 144px)"
         />
       </Box>
     );
@@ -307,7 +307,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
     <Box
       p={1}
       sx={{
-        height: `calc(100% - ${BottomSidebarHeaderHeightInPx}px)`,
+        height: '100%',
       }}
     >
       <Tabs

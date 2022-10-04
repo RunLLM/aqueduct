@@ -37,7 +37,7 @@ jobs:
           go-version: 1.16.3
       
       - name: Install aqueduct-ml
-        run: pip3 install aqueduct-ml
+        run: python3 -m pip install aqueduct-ml
 
       - name: Start the server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
@@ -58,7 +58,7 @@ jobs:
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install packages needed for testing
-        run: pip3 install nltk matplotlib pytest-xdist
+        run: python3 -m pip install nltk matplotlib pytest-xdist
 
       - name: Wait for server again
         timeout-minutes: 5
@@ -73,7 +73,7 @@ jobs:
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish -n 1
+        run: pytest . -rP --publish -n 5
 
       # These must be run with concurrency=1
       - name: Run the SDK Requirements Tests
@@ -89,6 +89,7 @@ jobs:
         working-directory: integration_tests/backend
         env:
           SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
         run: pytest . -rP -n 1
 
       - uses: actions/upload-artifact@v3

@@ -12,7 +12,6 @@ var ErrObjectDoesNotExist = errors.New("Object does not exist in storage.")
 
 type Storage interface {
 	// Throws `ErrObjectDoesNotExist` if the path does not exist.
-	// TODO(ENG-1368): this is not the case for S3.
 	Get(ctx context.Context, key string) ([]byte, error)
 	Put(ctx context.Context, key string, value []byte) error
 	Delete(ctx context.Context, key string) error
@@ -28,6 +27,8 @@ func NewStorage(config *shared.StorageConfig) Storage {
 		return newS3Storage(config.S3Config)
 	case shared.FileStorageType:
 		return newFileStorage(config.FileConfig)
+	case shared.GCSStorageType:
+		return newGCSStorage(config.GCSConfig)
 	default:
 		log.Fatalf("Unsupported storage type: %s", config.Type)
 		return nil

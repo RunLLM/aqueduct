@@ -20,6 +20,15 @@ type watchWorkflowArgs struct {
 	workflowId uuid.UUID
 }
 
+// Route: /workflow/{workflowId}/watch
+// Method: POST
+// Params: workflowId
+// Request
+//
+//	Headers:
+//		`api-key`: user's API Key
+//
+// Response: None
 type WatchWorkflowHandler struct {
 	PostHandler
 

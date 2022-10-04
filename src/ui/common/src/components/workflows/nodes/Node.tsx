@@ -67,9 +67,12 @@ export const Node: React.FC<Props> = ({
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
     hoverColor = theme.palette.DarkErrorMain75;
-  } else {
-    backgroundColor = selected ? 'gray.300' : 'gray.100';
-    hoverColor = 'gray.200';
+  } else if (execState?.status === ExecutionStatus.Canceled) {
+    backgroundColor = selected ? 'gray.700' : 'gray.500';
+    hoverColor = 'gray.600';
+  } else if (execState?.status === ExecutionStatus.Pending) {
+    backgroundColor = selected ? 'blue.300' : 'blue.100';
+    hoverColor = 'blue.200';
   }
 
   return (
@@ -88,9 +91,9 @@ export const Node: React.FC<Props> = ({
         sx={{
           fontSize: '18px',
           maxWidth: '200px',
+          minWidth: '140px',
           overflow: 'clip',
-          textOverflow: 'wrap',
-          overflowWrap: 'normal',
+          overflowWrap: 'break-word',
           textAlign: 'center',
         }}
       >

@@ -1,9 +1,9 @@
 import { Box, Button, Input, Typography } from '@mui/material';
 import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
-import CodeBlock from '../../../components/layouts/codeblock';
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
+import { CodeBlock } from '../../CodeBlock';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
@@ -90,7 +90,7 @@ export const IntegrationFileUploadField: React.FC<
     header = (
       <Box>
         <Typography variant="body1" component="span" sx={{ mr: 4 }}>
-          <strong>{label}</strong>: {file.name}
+          <strong>{label}</strong>
         </Typography>
         <Button
           size="small"
@@ -106,7 +106,7 @@ export const IntegrationFileUploadField: React.FC<
 
     const styling = {
       margin: '16px',
-      height: '25vh',
+      maxHeight: '25vh',
       width: `max(100%-16px,${placeholder.length + 8}ch)`,
     };
 
@@ -123,7 +123,7 @@ export const IntegrationFileUploadField: React.FC<
     const overlay = dragging && theme.palette.gray[100];
     const styling = {
       margin: '16px',
-      height: '16ch',
+      padding: '16px',
       width: `max(100%-16px, ${placeholder.length + 8}ch)`,
       display: 'flex',
       justifyContent: 'center',

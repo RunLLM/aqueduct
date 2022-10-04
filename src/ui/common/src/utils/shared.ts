@@ -12,11 +12,12 @@ export type LoadingStatus = {
   err: string;
 };
 
+export function isInitial(status: LoadingStatus) {
+  return status.loading === LoadingStatusEnum.Initial;
+}
+
 export function isLoading(status: LoadingStatus) {
-  return (
-    status.loading === LoadingStatusEnum.Initial ||
-    status.loading === LoadingStatusEnum.Loading
-  );
+  return status.loading === LoadingStatusEnum.Loading;
 }
 
 export function isSucceeded(status: LoadingStatus) {
@@ -32,6 +33,8 @@ export enum ExecutionStatus {
   Succeeded = 'succeeded',
   Failed = 'failed',
   Pending = 'pending',
+  Canceled = 'canceled',
+  Registered = 'registered',
 }
 
 export type ExecState = {
@@ -68,3 +71,5 @@ export type Error = {
   context?: string;
   tip?: string;
 };
+
+export const GithubIssueLink = `https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D`;

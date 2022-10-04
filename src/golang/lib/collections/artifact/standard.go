@@ -20,13 +20,13 @@ func (w *standardWriterImpl) CreateArtifact(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *Spec,
+	artifactType Type,
 	db database.Database,
 ) (*DBArtifact, error) {
-	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn}
+	insertColumns := []string{NameColumn, DescriptionColumn, TypeColumn}
 	insertArtifactStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{name, description, spec}
+	args := []interface{}{name, description, artifactType}
 
 	var artifact DBArtifact
 	err := db.Query(ctx, &artifact, insertArtifactStmt, args...)
@@ -81,6 +81,8 @@ func (r *standardReaderImpl) GetArtifactsByWorkflowDagId(
 	workflowDagId uuid.UUID,
 	db database.Database,
 ) ([]DBArtifact, error) {
+	// Gets all artifacts that are a node with an incoming (id in `to_id`) or outgoing edge
+	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
 	getArtifactsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM artifact WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 

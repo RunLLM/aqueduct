@@ -16,9 +16,12 @@ import (
 // Method: GET
 // Params: None
 // Request:
+//
 //	Headers:
 //		`api-key`: user's API Key
+//
 // Response:
+//
 //	Body:
 //		serialized `listNotificationsResponse`, a list of notifications for the user
 type ListNotificationsHandler struct {

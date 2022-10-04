@@ -1,7 +1,8 @@
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 
-import { AirflowConfig, IntegrationConfig } from '../../../utils/integrations';
+import { AirflowConfig } from '../../../utils/integrations';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AirflowConfig = {
@@ -13,41 +14,38 @@ const Placeholders: AirflowConfig = {
 };
 
 type Props = {
-  setDialogConfig: (config: IntegrationConfig) => void;
+  onUpdateField: (field: keyof AirflowConfig, value: string) => void;
+  value?: AirflowConfig;
+  editMode: boolean;
 };
 
-export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
-  const [address, setAddress] = useState<string>(null);
-  const [username, setUsername] = useState<string>(null);
-  const [password, setPassword] = useState<string>(null);
-  const [s3CredsPath, setS3CredsPath] = useState<string>(null);
-  const [s3CredsProfile, setS3CredsProfile] = useState<string>(null);
+export const AirflowDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
+  const [host, setHost] = useState<string>(value?.host ?? null);
+  const [s3CredsProfile, setS3CredsProfile] = useState<string>(
+    value?.s3_credentials_profile ?? Placeholders.s3_credentials_profile
+  );
 
   useEffect(() => {
-    const config: AirflowConfig = {
-      host: address,
-      username: username,
-      password: password,
-      s3_credentials_path: s3CredsPath,
-      s3_credentials_profile: 'default',
-    };
-
-    if (address && address.startsWith('http://')) {
-      // Backend requires the protocol to be stripped
-      config.host = address.substring(7);
+    if (host) {
+      if (host.startsWith('http://')) {
+        // Backend requires the protocol to be stripped
+        onUpdateField('host', host.substring(7));
+      } else if (host.startsWith('https://')) {
+        // Backend requires the protocol to be stripped
+        onUpdateField('host', host.substring(8));
+      } else {
+        onUpdateField('host', host);
+      }
     }
 
-    if (address && address.startsWith('https://')) {
-      // Backend requires the protocol to be stripped
-      config.host = address.substring(8);
+    if (s3CredsProfile) {
+      onUpdateField('s3_credentials_profile', s3CredsProfile);
     }
-
-    if (s3CredsProfile && s3CredsProfile !== 'default') {
-      config.s3_credentials_profile = s3CredsProfile;
-    }
-
-    setDialogConfig(config);
-  }, [address, username, password, s3CredsPath, s3CredsProfile]);
+  }, [host, s3CredsProfile]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -57,8 +55,11 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Host *"
         description="The hostname of the Airflow server."
         placeholder={Placeholders.host}
-        onChange={(event) => setAddress(event.target.value)}
-        value={address}
+        onChange={(event) => setHost(event.target.value)}
+        value={host}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
@@ -67,8 +68,8 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="Username *"
         description="The username of a user with access to the above server."
         placeholder={Placeholders.username}
-        onChange={(event) => setUsername(event.target.value)}
-        value={username}
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username ?? null}
       />
 
       <IntegrationTextInputField
@@ -78,8 +79,8 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setPassword(event.target.value)}
-        value={password}
+        onChange={(event) => onUpdateField('password', event.target.value)}
+        value={value?.password ?? null}
       />
 
       <IntegrationTextInputField
@@ -88,8 +89,10 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         label="S3 Credentials Path *"
         description="The path on the Airflow server to the AWS credentials that have access to the same S3 bucket configured for Aqueduct storage."
         placeholder={Placeholders.s3_credentials_path}
-        onChange={(event) => setS3CredsPath(event.target.value)}
-        value={s3CredsPath}
+        onChange={(event) =>
+          onUpdateField('s3_credentials_path', event.target.value)
+        }
+        value={value?.s3_credentials_path ?? null}
       />
 
       <IntegrationTextInputField
@@ -99,7 +102,11 @@ export const AirflowDialog: React.FC<Props> = ({ setDialogConfig }) => {
         description="The profile to use for the AWS credentials above. The default profile will be used if none is provided."
         placeholder={Placeholders.s3_credentials_profile}
         onChange={(event) => setS3CredsProfile(event.target.value)}
-        value={s3CredsProfile}
+        value={
+          s3CredsProfile !== Placeholders.s3_credentials_profile
+            ? s3CredsProfile
+            : null
+        }
       />
     </Box>
   );

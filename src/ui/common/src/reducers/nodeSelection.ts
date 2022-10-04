@@ -5,9 +5,14 @@ import { OperatorType } from '../utils/operators';
 
 export enum NodeType {
   TableArtifact = 'tableArtifact',
-  FloatArtifact = 'floatArtifact',
+  NumericArtifact = 'numericArtifact',
   BoolArtifact = 'boolArtifact',
   JsonArtifact = 'jsonArtifact',
+  StringArtifact = 'stringArtifact',
+  ImageArtifact = 'imageArtifact',
+  DictArtifact = 'dictArtifact',
+  GenericArtifact = 'genericArtifact',
+  UntypedArtifact = 'untypedArtifact',
   ExtractOp = 'extractOp',
   LoadOp = 'loadOp',
   FunctionOp = 'functionOp',
@@ -24,13 +29,21 @@ export const OperatorTypeToNodeTypeMap: { [key in OperatorType]: NodeType } = {
   [OperatorType.Function]: NodeType.FunctionOp,
   [OperatorType.Check]: NodeType.CheckOp,
   [OperatorType.Param]: NodeType.ParamOp,
+  [OperatorType.SystemMetric]: NodeType.MetricOp,
 } as const;
 
 export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {
   [ArtifactType.Table]: NodeType.TableArtifact,
-  [ArtifactType.Float]: NodeType.FloatArtifact,
+  [ArtifactType.Numeric]: NodeType.NumericArtifact,
   [ArtifactType.Bool]: NodeType.BoolArtifact,
   [ArtifactType.Json]: NodeType.JsonArtifact,
+  [ArtifactType.String]: NodeType.StringArtifact,
+  [ArtifactType.Dict]: NodeType.DictArtifact,
+  [ArtifactType.Tuple]: NodeType.DictArtifact,
+  [ArtifactType.Image]: NodeType.ImageArtifact,
+  [ArtifactType.Bytes]: NodeType.GenericArtifact,
+  [ArtifactType.Picklable]: NodeType.GenericArtifact,
+  [ArtifactType.Untyped]: NodeType.GenericArtifact,
 } as const;
 
 export type SelectedNode = {

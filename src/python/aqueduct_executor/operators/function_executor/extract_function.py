@@ -52,7 +52,7 @@ def extract_function(storage: Storage, spec: FunctionSpec) -> None:
     """
     fn_path = spec.function_extract_path
     if not os.path.exists(fn_path):
-        os.mkdir(fn_path)
+        os.makedirs(fn_path)
 
     function_byte = storage.get(spec.function_path)
     _unzip_function_contents(

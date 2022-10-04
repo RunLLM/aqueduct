@@ -1,7 +1,8 @@
 import io
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
+import multipart
 import requests
 from aqueduct._version import __version__
 from aqueduct.dag import DAG
@@ -12,16 +13,25 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import logger
-from aqueduct.operators import Operator
+from aqueduct.operators import Operator, ParamSpec
 from aqueduct.responses import (
+    ArtifactResult,
+    DeleteWorkflowResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
+    ListWorkflowSavedObjectsResponse,
+    Logs,
     OperatorResult,
     PreviewResponse,
+    RegisterAirflowWorkflowResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
+from aqueduct.serialization import deserialize
+from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
+from requests_toolbelt.multipart import decoder
 
 from aqueduct import utils
 
@@ -40,16 +50,46 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     # There can be multiple operator failures, one for each entry.
     op_err_msgs: List[str] = []
 
-    # Creates the message to show the user in the error.
     def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
+        """This is the message is raised in the Exception message."""
         assert op_result.error is not None
         return (
-            f"Operator {op_name} failed!\n"
+            f"Operator `{op_name}` failed!\n"
             f"{op_result.error.context}\n"
             f"\n"
             f"{op_result.error.tip}\n"
             f"\n"
         )
+
+    def _print_op_user_logs(op_name: str, logs: Logs) -> None:
+        """Prints out the logs for a single operator. The format is:
+
+        stdout:
+            {logs}
+            {logs}
+        ----------------------------------
+        stderr:
+            {logs}
+            {logs}
+
+        If either stdout or stderr is empty, we do not print anything for
+        the empty section, and do not draw the "--" delimiter line.
+        """
+        if logs.is_empty():
+            return
+
+        print(f"Operator {op_name} Logs:")
+        if len(logs.stdout) > 0:
+            print("stdout:")
+            print(indent_multiline_string(logs.stdout).rstrip("\n"))
+
+        if len(logs.stdout) > 0 and len(logs.stderr) > 0:
+            print("----------------------------------")
+
+        if len(logs.stderr) > 0:
+            print("stderr:")
+            print(indent_multiline_string(logs.stderr).rstrip("\n"))
+        print("")
 
     q: List[Operator] = dag.list_root_operators()
     seen_op_ids = set(op.id for op in q)
@@ -59,14 +99,11 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         if curr_op.id in preview_resp.operator_results:
             curr_op_result = preview_resp.operator_results[curr_op.id]
 
-            if curr_op_result.user_logs is not None and not curr_op_result.user_logs.is_empty():
-                print(f"Operator {curr_op.name} Logs:")
-                print(curr_op_result.user_logs)
-                print("")
+            if curr_op_result.user_logs is not None:
+                _print_op_user_logs(curr_op.name, curr_op_result.user_logs)
 
             if curr_op_result.error is not None:
                 op_err_msgs.append(_construct_failure_error_msg(curr_op.name, curr_op_result))
-
             else:
                 # Continue traversing, marking operators added to the queue as "seen"
                 for output_artifact_id in curr_op.outputs:
@@ -82,6 +119,13 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
+        # If non of the operators failed, this must be an issue with our
+        if len(op_err_msgs) == 0:
+            raise InternalAqueductError(
+                f"Unexpected Server Error! If this issue persists, please file a bug report in github: "
+                f"{GITHUB_ISSUE_LINK} . We will get back to you as soon as we can.",
+            )
+
         failure_err_msg = "\n".join(op_err_msgs)
         raise AqueductError(f"Preview Execution Failed:\n\n{failure_err_msg}\n")
 
@@ -96,10 +140,12 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
-    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
+    LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
@@ -161,9 +207,7 @@ class APIClient:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
-        url = "%s%s" % (self.construct_base_url(use_https), route_suffix)
-        logger().debug("Constructed full URL %s", url)
-        return url
+        return "%s%s" % (self.construct_base_url(use_https), route_suffix)
 
     def _test_connection_protocol(self, try_http: bool, try_https: bool) -> bool:
         """Returns whether the connection uses https. Raises an exception if unable to connect at all.
@@ -249,6 +293,37 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
+    def _construct_preview_response(self, response: requests.Response) -> PreviewResponse:
+        artifact_results = {}
+        artifact_result_constructor = {}
+        preview_response = {}
+        is_metadata_received = False
+        multipart_data = decoder.MultipartDecoder.from_response(response)
+        parse = multipart.parse_options_header
+
+        for part in multipart_data.parts:
+            field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+            field_name = parse(field_name)[1]["name"]
+
+            if field_name == "metadata":
+                is_metadata_received = True
+                metadata = json.loads(part.content.decode(multipart_data.encoding))
+            elif utils.is_string_valid_uuid(field_name):
+                if is_metadata_received:
+                    artifact_result_constructor = metadata["artifact_types_metadata"][field_name]
+                    artifact_result_constructor["content"] = part.content
+                    artifact_results[field_name] = ArtifactResult(**artifact_result_constructor)
+                else:
+                    raise AqueductError("Unable to retrieve artifacts metadata")
+            else:
+                raise AqueductError("Unable to get correct preview response")
+
+        preview_response["status"] = metadata["status"]
+        preview_response["operator_results"] = metadata["operator_results"]
+        preview_response["artifact_results"] = artifact_results
+
+        return PreviewResponse(**preview_response)
+
     def preview(
         self,
         dag: DAG,
@@ -278,7 +353,7 @@ class APIClient:
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
-        preview_resp = PreviewResponse(**resp.json())
+        preview_resp = self._construct_preview_response(resp)
         _handle_preview_resp(preview_resp, dag)
         return preview_resp
 
@@ -286,6 +361,28 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterWorkflowResponse(**resp.json())
+
+    def register_airflow_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterAirflowWorkflowResponse:
+        headers, body, files = self._construct_register_workflow_request(dag)
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterAirflowWorkflowResponse(**resp.json())
+
+    def _construct_register_workflow_request(
+        self,
+        dag: DAG,
+    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
         body = {
             "dag": dag.json(exclude_none=True),
@@ -297,32 +394,47 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
-        resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
-
-        return RegisterWorkflowResponse(**resp.json())
+        return headers, body, files
 
     def refresh_workflow(
         self,
         flow_id: str,
-        serialized_params: Optional[str] = None,
+        param_specs: Dict[str, ParamSpec],
     ) -> None:
+        """
+        `param_specs`: a dictionary from parameter names to its corresponding new ParamSpec.
+        """
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.REFRESH_WORKFLOW_ROUTE_TEMPLATE % flow_id)
 
-        body = {}
-        if serialized_params is not None:
-            body["parameters"] = serialized_params
+        body = {
+            "parameters": json.dumps(
+                {param_name: param_spec.dict() for param_name, param_spec in param_specs.items()}
+            )
+        }
 
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(
+        self,
+        flow_id: str,
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        force: bool,
+    ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        body = {
+            "external_delete": {
+                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                for integration in saved_objects_to_delete
+            },
+            "force": force,
+        }
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
+        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        return deleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = self._generate_auth_headers()
@@ -332,6 +444,14 @@ class APIClient:
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
+    def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
+        headers = self._generate_auth_headers()
+        url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
+        return workflow_writes_response
+
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.LIST_WORKFLOWS_ROUTE)
@@ -340,7 +460,9 @@ class APIClient:
 
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
-    def get_artifact_result_data(self, dag_result_id: str, artifact_id: str) -> str:
+    def get_artifact_result_data(
+        self, dag_result_id: str, artifact_id: str
+    ) -> Tuple[Optional[Any], ExecutionStatus]:
         """Returns an empty string if the operator was not successfully executed."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
@@ -349,9 +471,19 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         utils.raise_errors(resp)
 
-        if resp.json()["exec_state"]["status"] != ExecutionStatus.SUCCEEDED:
-            return ""
-        return str(resp.json()["data"])
+        parsed_response = utils.parse_artifact_result_response(resp)
+        execution_status = parsed_response["metadata"]["exec_state"]["status"]
+
+        if execution_status != ExecutionStatus.SUCCEEDED:
+            print("Artifact result unavailable due to unsuccessful execution.")
+            return None, execution_status
+
+        serialization_type = parsed_response["metadata"]["serialization_type"]
+        artifact_type = parsed_response["metadata"]["artifact_type"]
+        return (
+            deserialize(serialization_type, artifact_type, parsed_response["data"]),
+            execution_status,
+        )
 
     def get_node_positions(
         self, operator_mapping: Dict[str, Dict[str, Any]]
@@ -379,13 +511,3 @@ class APIClient:
         resp_json = resp.json()
 
         return resp_json["operator_positions"], resp_json["artifact_positions"]
-
-    def export_serialized_function(self, operator: Operator) -> bytes:
-        headers = self._generate_auth_headers()
-        operator_url = self.construct_full_url(self.EXPORT_FUNCTION_ROUTE % str(operator.id))
-        operator_resp = requests.get(operator_url, headers=headers)
-        return operator_resp.content
-
-
-# Initialize a unconfigured api client. It will be configured when the user construct an Aqueduct client.
-__GLOBAL_API_CLIENT__ = APIClient()

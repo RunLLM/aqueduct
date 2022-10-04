@@ -1,4 +1,6 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
+import { CodeBlock } from './components/CodeBlock';
+import DataPreviewer from './components/DataPreviewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -15,12 +17,11 @@ import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
+import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
-import {
-  AddTableDialog,
-  IntegrationDialog,
-} from './components/integrations/dialogs/dialog';
+import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
+import IntegrationDialog from './components/integrations/dialogs/dialog';
 import {
   FileEventTarget,
   IntegrationFileUploadField,
@@ -33,25 +34,11 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import CodeBlock from './components/layouts/codeblock';
-import DataPreviewer from './components/layouts/data_previewer';
 import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
 import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
-import AqueductSidebar, {
-  BottomSidebarHeaderHeightInPx,
-  BottomSidebarHeightInPx,
-  BottomSidebarMarginInPx,
-  CollapsedSidebarHeightInPx,
-  CollapsedSidebarWidthInPx,
-  getBottomSidesheetOffset,
-  getBottomSideSheetWidth,
-  SidebarPosition,
-  VerticalSidebarWidths,
-  VerticalSidebarWidthsFloats,
-} from './components/layouts/sidebar/AqueductSidebar';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
@@ -67,7 +54,8 @@ import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
-import DataTable from './components/tables/data_table';
+import { filteredList, SearchBar } from './components/Search';
+import DataTable from './components/tables/DataTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -78,11 +66,11 @@ import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
 import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import FloatArtifactNode from './components/workflows/nodes/FloatArtifactNode';
 import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
 import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
+import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
@@ -101,25 +89,23 @@ import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
 } from './reducers/dataPreview';
-import integrationOperators, {
+import integration, {
+  handleConnectToNewIntegration,
+  handleEditIntegration,
+  handleListIntegrationObjects,
+  handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
-} from './reducers/integrationOperators';
+  handleTestConnectIntegration,
+  integrationSlice,
+  IntegrationState,
+  objectKeyFn,
+  resetConnectNewStatus,
+  resetTestConnectStatus,
+} from './reducers/integration';
 import integrations, {
   handleLoadIntegrations,
   integrationsSlice,
 } from './reducers/integrations';
-import integrationTableData, {
-  handleLoadIntegrationTable,
-  integrationTableDataSlice,
-  tableKeyFn,
-} from './reducers/integrationTableData';
-import integrationTables, {
-  handleLoadIntegrationTables,
-  integrationTablesSlice,
-  IntegrationTablesState,
-} from './reducers/integrationTables';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -151,7 +137,10 @@ import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleListWorkflowSavedObjects,
   OperatorResult,
+  SavedObjectDeletionResult,
+  SavedObjectResult,
   selectResultIdx,
   workflowSlice,
   WorkflowState,
@@ -164,7 +153,6 @@ import {
   GetArtifactResultResponse,
   getUpstreamOperator,
   Schema,
-  Spec,
 } from './utils/artifacts';
 import UserProfile from './utils/auth';
 import {
@@ -190,7 +178,6 @@ import {
   addTable,
   AqueductDemoConfig,
   BigQueryConfig,
-  connectIntegration,
   CSVConfig,
   fetchBranches,
   fetchRepos,
@@ -267,11 +254,15 @@ import ExecutionStatus, {
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
   computeTopologicalOrder,
+  DeleteWorkflowResponse,
   GetWorkflowResponse,
   ListWorkflowResponse,
+  ListWorkflowSavedObjectsResponse,
   ListWorkflowSummary,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
+  SavedObject,
+  SavedObjectDeletion,
   Workflow,
   WorkflowDag,
   WorkflowDagResultSummary,
@@ -289,7 +280,6 @@ export {
   AqueductDemoCard,
   AqueductDemoConfig,
   AqueductQuadratic,
-  AqueductSidebar,
   AqueductStraight,
   archiveNotification,
   Artifact,
@@ -301,9 +291,6 @@ export {
   BigQueryConfig,
   BigQueryDialog,
   BoolArtifactNode,
-  BottomSidebarHeaderHeightInPx,
-  BottomSidebarHeightInPx,
-  BottomSidebarMarginInPx,
   Button,
   Card,
   Check,
@@ -311,12 +298,9 @@ export {
   CheckOperatorNode,
   CheckStatus,
   CodeBlock,
-  CollapsedSidebarHeightInPx,
-  CollapsedSidebarWidthInPx,
   CollapsedStatusBarWidthInPx,
   computeTopologicalOrder,
   ConnectedIntegrations,
-  connectIntegration,
   ContentSidebarOffsetInPx,
   createCronString,
   CSVConfig,
@@ -343,6 +327,8 @@ export {
   DayOfWeek,
   deconstructCronString,
   DefaultLayout,
+  DeleteIntegrationDialog,
+  DeleteWorkflowResponse,
   EdgeTypes,
   ExecutionStatus,
   exportCsv,
@@ -355,15 +341,13 @@ export {
   fetchUser,
   FileData,
   FileEventTarget,
-  FloatArtifactNode,
+  filteredList,
   formatService,
   FunctionGranularity,
   FunctionOp,
   FunctionOperatorNode,
   FunctionType,
   GetArtifactResultResponse,
-  getBottomSidesheetOffset,
-  getBottomSideSheetWidth,
   getDataArtifactPreview,
   getDataSideSheetContent,
   getNextUpdateTime,
@@ -380,39 +364,39 @@ export {
   GoogleSheetsLoadParams,
   handleArchiveAllNotifications,
   handleArchiveNotification,
+  handleConnectToNewIntegration,
+  handleEditIntegration,
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleListIntegrationObjects,
+  handleListWorkflowSavedObjects,
+  handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
   handleLoadIntegrations,
-  handleLoadIntegrationTable,
-  handleLoadIntegrationTables,
+  handleTestConnectIntegration,
   HeightTransition,
   HomePage,
   IconButton,
   Integration,
+  integration,
   IntegrationCard,
   IntegrationConfig,
   IntegrationDetailsPage,
   IntegrationDialog,
   IntegrationFileUploadField,
-  integrationOperators,
-  integrationOperatorsSlice,
-  IntegrationOperatorsState,
   integrations,
+  integrationSlice,
   IntegrationsPage,
   integrationsSlice,
-  integrationTableData,
-  integrationTableDataSlice,
-  integrationTables,
-  integrationTablesSlice,
-  IntegrationTablesState,
+  IntegrationState,
   IntegrationTextInputField,
   listNotifications,
   ListWorkflowResponse,
+  ListWorkflowSavedObjectsResponse,
   listWorkflowSlice,
   ListWorkflowSummary,
   Load,
@@ -453,6 +437,8 @@ export {
   notificationsSlice,
   NotificationStatus,
   NotificationWorkflowMetadata,
+  NumericArtifactNode,
+  objectKeyFn,
   openSideSheet,
   openSideSheetSlice,
   Operator,
@@ -473,12 +459,19 @@ export {
   RedshiftDialog,
   RelationalDBExtractParams,
   RelationalDBLoadParams,
+  resetConnectNewStatus,
   resetSelectedNode,
+  resetTestConnectStatus,
   S3Card,
   S3Config,
   S3Dialog,
   SalesforceConfig,
+  SavedObject,
+  SavedObjectDeletion,
+  SavedObjectDeletionResult,
+  SavedObjectResult,
   Schema,
+  SearchBar,
   SelectedNode,
   selectNode,
   selectResultIdx,
@@ -491,12 +484,10 @@ export {
   setRightSideSheetOpenState,
   setWorkflowStatusBarOpenState,
   SidebarButtonProps,
-  SidebarPosition,
   sideSheetSwitcher,
   SnowflakeCard,
   SnowflakeConfig,
   SnowflakeDialog,
-  Spec,
   SqlServerCard,
   SqlServerConfig,
   Status,
@@ -506,7 +497,6 @@ export {
   SupportedIntegrations,
   Tab,
   TableArtifactNode,
-  tableKeyFn,
   Tabs,
   theme,
   TransitionLengthInMs,
@@ -514,8 +504,6 @@ export {
   UserProfile,
   useUser,
   VersionSelector,
-  VerticalSidebarWidths,
-  VerticalSidebarWidthsFloats,
   WidthTransition,
   Workflow,
   workflow,

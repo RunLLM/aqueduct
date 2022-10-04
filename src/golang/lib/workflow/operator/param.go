@@ -1,11 +1,12 @@
 package operator
 
 import (
+	"context"
+	"encoding/base64"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/google/uuid"
 )
 
@@ -24,15 +25,29 @@ func newParamOperator(
 
 	inputs := base.inputs
 	outputs := base.outputs
-
 	if len(inputs) != 0 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 1 {
 		return nil, errWrongNumOutputs
 	}
-	if outputs[0].Type() != db_artifact.JsonType {
-		return nil, errors.Newf("Internal Error: parameter must output a JSON artifact.")
+
+	// Write the parameter's value from the spec to the output content path.
+	// This is to avoid passing raw values in the spec, which can be of unbounded
+	// size (eg. images can be too large).
+	// This also means that parameter artifacts are automatically considered `Computed`,
+	// as soon they are constructed.
+	paramValBytes, err := base64.StdEncoding.DecodeString(base.dbOperator.Spec.Param().Val)
+	if err != nil {
+		return nil, err
+	}
+	err = storage.NewStorage(base.storageConfig).Put(
+		context.TODO(),
+		base.outputExecPaths[0].ArtifactContentPath,
+		paramValBytes,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &paramOperatorImpl{
@@ -48,8 +63,16 @@ func (po *paramOperatorImpl) JobSpec() job.Spec {
 			*po.storageConfig,
 			po.metadataPath,
 		),
-		Val:                po.dbOperator.Spec.Param().Val,
-		OutputMetadataPath: po.outputMetadataPaths[0],
-		OutputContentPath:  po.outputContentPaths[0],
+		ExpectedType:      po.outputs[0].Type(),
+		SerializationType: po.dbOperator.Spec.Param().SerializationType,
+
+		OutputMetadataPath: po.outputExecPaths[0].ArtifactMetadataPath,
+		OutputContentPath:  po.outputExecPaths[0].ArtifactContentPath,
 	}
+}
+
+// All the parameter operator does is write the parameter value to storage,
+// to be consuemd by downstream operators.
+func (po *paramOperatorImpl) Launch(ctx context.Context) error {
+	return po.launch(ctx, po.JobSpec())
 }

@@ -65,7 +65,12 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SALESFORCE = "Salesforce"
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
+    ATHENA = "Athena"
     SQLITE = "SQLite"
+    AIRFLOW = "Airflow"
+    K8S = "Kubernetes"
+    GCS = "GCS"
+    LAMBDA = "Lambda"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -78,6 +83,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     BIGQUERY = "BigQuery"
     AQUEDUCTDEMO = "Aqueduct Demo"
     SQLITE = "SQLite"
+    ATHENA = "Athena"
 
 
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
@@ -85,6 +91,8 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     PENDING = "pending"
+    REGISTERED = "registered"
+    CANCELED = "canceled"
 
 
 class FailureType(Enum, metaclass=MetaEnum):
@@ -100,7 +108,7 @@ class SalesforceExtractType(str, Enum, metaclass=MetaEnum):
     QUERY = "query"
 
 
-class S3FileFormat(str, Enum, metaclass=MetaEnum):
+class S3TableFormat(str, Enum, metaclass=MetaEnum):
     CSV = "CSV"
     JSON = "JSON"
     PARQUET = "Parquet"
@@ -131,8 +139,36 @@ class DisplayNodeType(str, Enum, metaclass=MetaEnum):
     ARTIFACT = "ARTIFACT"
 
 
-class ArtifactType(Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    NUMBER = "number"
+class ArtifactType(str, Enum, metaclass=MetaEnum):
+    UNTYPED = "untyped"
+    STRING = "string"
     BOOL = "boolean"
-    PARAM = "param"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABLE = "table"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"  # corresponds to PIL.Image.Image type
+    PICKLABLE = "picklable"
+
+
+class SerializationType(str, Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STRING = "string"
+    BYTES = "bytes"
+
+
+class ExecutionMode(str, Enum, metaclass=MetaEnum):
+    EAGER = "eager"
+    LAZY = "lazy"
+
+
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"
+    K8S = "k8s"
+    LAMBDA = "lambda"

@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com>",
-  "version": "0.0.12",
+  "version": "0.0.19",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "alias": {
@@ -52,7 +52,8 @@
     "react-markdown": "^6.0.3",
     "react-redux": "^8.0.0",
     "react-router-dom": "^6.3.0",
-    "react-syntax-highlighter": "^15.5.0"
+    "react-syntax-highlighter": "^15.5.0",
+    "react-virtualized": "^9.22.3"
   },
   "husky": {
     "hooks": {
@@ -92,6 +93,7 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
+    "mui-image": "^1.0.7",
     "parcel": "2.6.0",
     "prettier": "^2.2.1",
     "react": "^18.1.0",

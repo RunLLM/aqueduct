@@ -6,17 +6,19 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 var (
@@ -38,17 +40,18 @@ const (
 )
 
 const (
-	WorkflowJobType       JobType = "workflow"
-	FunctionJobType       JobType = "function"
-	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "system_metric"
-	AuthenticateJobType   JobType = "authenticate"
-	ExtractJobType        JobType = "extract"
-	LoadJobType           JobType = "load"
-	LoadTableJobType      JobType = "load-table"
-	DiscoverJobType       JobType = "discover"
-	WorkflowRetentionType JobType = "workflow_retention"
-	CompileAirflowJobType JobType = "compile_airflow"
+	WorkflowJobType           JobType = "workflow"
+	FunctionJobType           JobType = "function"
+	ParamJobType              JobType = "param"
+	SystemMetricJobType       JobType = "system_metric"
+	AuthenticateJobType       JobType = "authenticate"
+	ExtractJobType            JobType = "extract"
+	LoadJobType               JobType = "load"
+	LoadTableJobType          JobType = "load-table"
+	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
+	DiscoverJobType           JobType = "discover"
+	WorkflowRetentionType     JobType = "workflow_retention"
+	CompileAirflowJobType     JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -63,6 +66,10 @@ type ExecutorConfiguration struct {
 type Spec interface {
 	Type() JobType
 	JobName() string
+	// HasStorageConfig returns whether this job spec has a storage config.
+	HasStorageConfig() bool
+	// GetStorageConfig returns the storage config if the job spec has one, otherwise it returns an error.
+	GetStorageConfig() (*shared.StorageConfig, error)
 }
 
 // BaseSpec defines fields shared by all job specs.
@@ -80,12 +87,29 @@ type WorkflowRetentionSpec struct {
 	ExecutorConfig *ExecutorConfiguration
 }
 
+func (wrs *WorkflowRetentionSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (wrs *WorkflowRetentionSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("WorkflowRetention job specs don't have a storage config.")
+}
+
 type WorkflowSpec struct {
 	BaseSpec
-	WorkflowId     string               `json:"workflow_id" yaml:"workflowId"`
-	GithubManager  github.ManagerConfig `json:"github_manager" yaml:"github_manager"`
-	Parameters     map[string]string    `json:"parameters" yaml:"parameters"`
+	WorkflowId     string                 `json:"workflow_id" yaml:"workflowId"`
+	GithubManager  github.ManagerConfig   `json:"github_manager" yaml:"github_manager"`
+	Parameters     map[string]param.Param `json:"parameters" yaml:"parameters"`
+	AqPath         string                 `json:"aq_path" yaml:"aqPath"`
 	ExecutorConfig *ExecutorConfiguration
+}
+
+func (ws *WorkflowSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (ws *WorkflowSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("Workflow job specs don't have a storage config.")
 }
 
 // BasePythonSpec defines fields shared by all Python job specs.
@@ -97,21 +121,28 @@ type BasePythonSpec struct {
 	MetadataPath  string               `json:"metadata_path"  yaml:"metadata_path"`
 }
 
+func (bs *BasePythonSpec) HasStorageConfig() bool {
+	return true
+}
+
+func (bs *BasePythonSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return &bs.StorageConfig, nil
+}
+
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath        string          `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath string          `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile      string          `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass     string          `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod    string          `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs          string          `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths   []string        `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths  []string        `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths  []string        `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
-	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
-	OperatorType        operator.Type   `json:"operator_type" yaml:"operator_type"`
+	FunctionPath                string        `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath         string        `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile              string        `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass             string        `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod            string        `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs                  string        `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths           []string      `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths          []string      `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths          []string      `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths         []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	ExpectedOutputArtifactTypes []string      `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
+	OperatorType                operator.Type `json:"operator_type" yaml:"operator_type"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
@@ -119,9 +150,10 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	BasePythonSpec
-	Val                string `json:"val"  yaml:"val"`
-	OutputContentPath  string `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ExpectedType       db_artifact.Type `json:"expected_type" yaml:"expected_type"`
+	SerializationType  string           `json:"serialization_type" yaml:"serialization_type"`
+	OutputContentPath  string           `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string           `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {
@@ -144,6 +176,14 @@ type ExtractSpec struct {
 	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
+}
+
+type DeleteSavedObjectsSpec struct {
+	BasePythonSpec
+	ConnectorName       map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig     map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	IntegrationToObject map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
+	OutputContentPath   string                         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -178,6 +218,7 @@ type DiscoverSpec struct {
 
 type CompileAirflowSpec struct {
 	BasePythonSpec
+	WorkflowDagId     uuid.UUID           `json:"workflow_dag_id"  yaml:"workflow_dag_id"`
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 	DagId             string              `json:"dag_id"  yaml:"dag_id"`
 	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
@@ -221,6 +262,10 @@ func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
 }
 
+func (*DeleteSavedObjectsSpec) Type() JobType {
+	return DeleteSavedObjectsJobType
+}
+
 func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
 }
@@ -257,7 +302,8 @@ func NewWorkflowSpec(
 	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
-	parameters map[string]string,
+	aqPath string,
+	parameters map[string]param.Param,
 ) Spec {
 	return &WorkflowSpec{
 		BaseSpec: BaseSpec{
@@ -266,6 +312,7 @@ func NewWorkflowSpec(
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
+		AqPath:        aqPath,
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
@@ -346,6 +393,32 @@ func NewExtractSpec(
 	}
 }
 
+// NewDeleteSavedObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
+func NewDeleteSavedObjectsSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	connectorName map[string]integration.Service,
+	connectorConfig map[string]auth.Config,
+	integrationToObject map[string][]string,
+	outputContentPath string,
+) Spec {
+	return &DeleteSavedObjectsSpec{
+		BasePythonSpec: BasePythonSpec{
+			BaseSpec: BaseSpec{
+				Type: DeleteSavedObjectsJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		ConnectorName:       connectorName,
+		ConnectorConfig:     connectorConfig,
+		IntegrationToObject: integrationToObject,
+		OutputContentPath:   outputContentPath,
+	}
+}
+
 // NewLoadTableSpec constructs a Spec for a LoadTableJob.
 func NewLoadTableSpec(
 	name string,
@@ -414,6 +487,7 @@ func NewDiscoverSpec(
 
 func NewCompileAirflowSpec(
 	name string,
+	workflowDagID uuid.UUID,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
 	outputContentPath string,
@@ -441,6 +515,7 @@ func NewCompileAirflowSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		WorkflowDagId:     workflowDagID,
 		OutputContentPath: outputContentPath,
 		DagId:             dagId,
 		CronSchedule:      cronSchedule,

@@ -154,6 +154,7 @@ func (r *standardReaderImpl) ValidateWorkflowOwnership(
 	organizationId string,
 	db database.Database,
 ) (bool, error) {
+	// Get the count of all workflows with the given id and user whose organization_id=organizationId.
 	validateWorkflowOwnershipQuery := `SELECT COUNT(*) AS count
 		FROM workflow INNER JOIN app_user ON workflow.user_id = app_user.id
 		WHERE workflow.id = $1 AND app_user.organization_id = $2;`
@@ -201,6 +202,7 @@ func (r *standardReaderImpl) GetNotificationWorkflowMetadata(
 		return nil, errors.New("Provided empty IDs list.")
 	}
 
+	// Get all workflow ids, workflow names, and workflow DAG ids that has a workflow DAG result id in the ids list.
 	workflowsMetadataQuery := fmt.Sprintf(`
 		SELECT workflow.id, workflow.name, workflow_dag_result.id AS dag_result_id
 		FROM workflow, workflow_dag, workflow_dag_result 
@@ -231,6 +233,7 @@ func (r *standardReaderImpl) GetWatchersInBatch(
 		return nil, errors.New("Provided empty workflow IDs list.")
 	}
 
+	// Get all user `auth0_id`s that are watching workflows whose `workflow_id` is in `workflowIds``
 	workflowWatchersQuery := fmt.Sprintf(`
 		SELECT workflow_watcher.workflow_id AS workflow_id, app_user.auth0_id
 		FROM workflow_watcher, app_user 

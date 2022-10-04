@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
-	connectorPythonPath          = "operators.connectors.tabular.main"
+	connectorPythonPath          = "operators.connectors.data.main"
 	paramPythonPath              = "operators.param_executor.main"
 	systemMetricPythonPath       = "operators.system_metric_executor.main"
 	compileAirflowPythonPath     = "operators.airflow.main"
@@ -210,6 +210,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		spec.Type() == LoadJobType ||
 		spec.Type() == ExtractJobType ||
 		spec.Type() == LoadTableJobType ||
+		spec.Type() == DeleteSavedObjectsJobType ||
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
@@ -223,6 +224,10 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		)
+
+		// This is required for credential related temp file creation.
+		// See S3 python executor for more details.
+		cmd.Dir = j.conf.OperatorStorageDir
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
@@ -321,9 +326,6 @@ func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.Execu
 		return shared.RunningExecutionStatus, nil
 	}
 
-	// TODO(ENG-1195): function operators that fail have their exceptions caught, and so return success
-	//  execution status when it should be failure.
-	// TODO(ENG-1196): workflows that do not completely succeed still return a success execution status here.
 	err = command.cmd.Wait()
 	// After wait, we are done with this job and already consumed all of its output, so we garbage
 	// collect the entry in j.cmds.

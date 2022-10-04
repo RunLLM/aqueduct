@@ -1,8 +1,8 @@
-import json
 import uuid
 from typing import Any, List, Optional, Union
 
 from aqueduct.enums import (
+    ArtifactType,
     CheckSeverity,
     FunctionGranularity,
     FunctionType,
@@ -10,13 +10,14 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    S3FileFormat,
+    S3TableFormat,
     SalesforceExtractType,
+    SerializationType,
     ServiceType,
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):
@@ -57,7 +58,9 @@ class S3ExtractParams(BaseModel):
     # Note that since we expect the path to be either a string or a list of strings, we need to json
     # serialize the path before we pass it to initialize this field.
     filepath: str
-    format: S3FileFormat
+    artifact_type: ArtifactType
+    format: Optional[S3TableFormat]
+    merge: Optional[bool]
 
 
 UnionExtractParams = Union[
@@ -90,7 +93,11 @@ class GoogleSheetsLoadParams(BaseModel):
 
 class S3LoadParams(BaseModel):
     filepath: str
-    format: S3FileFormat
+    format: Optional[S3TableFormat]
+
+    # Must do this to prevent confusion with GoogleSheetsLoadParams.
+    class Config:
+        extra = Extra.forbid
 
 
 UnionLoadParams = Union[
@@ -146,7 +153,9 @@ class CheckSpec(BaseModel):
 
 
 class ParamSpec(BaseModel):
+    # `val` is the base64-encoded version of the serialized param value.
     val: str
+    serialization_type: SerializationType
 
 
 class OperatorSpec(BaseModel):
@@ -207,14 +216,3 @@ def get_operator_type_from_spec(spec: OperatorSpec) -> OperatorType:
         return OperatorType.SYSTEM_METRIC
     else:
         raise AqueductError("Invalid operator type")
-
-
-def serialize_parameter_value(name: str, val: Any) -> str:
-    """A parameter must be JSON serializable."""
-    try:
-        return str(json.dumps(val))
-    except Exception as e:
-        raise InvalidUserArgumentException(
-            "Provided parameter %s must be able to be converted into a JSON object: %s"
-            % (name, str(e))
-        )

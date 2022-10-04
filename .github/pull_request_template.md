@@ -2,6 +2,8 @@
 
 ## Related issue number (if any)
 
+## Loom demo (if any)
+
 ## Checklist before requesting a review
 - [ ] I have created a descriptive PR title. The PR title should complete the sentence "This PR...".
 - [ ] I have performed a self-review of my code.

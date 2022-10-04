@@ -15,6 +15,8 @@ type RelationalDBExtractParams struct {
 
 type PostgresExtractParams struct{ RelationalDBExtractParams }
 
+type AthenaExtractParams struct{ RelationalDBExtractParams }
+
 type SnowflakeExtractParams struct{ RelationalDBExtractParams }
 
 type MySqlExtractParams struct{ RelationalDBExtractParams }
@@ -39,8 +41,10 @@ type SalesforceExtractParams struct {
 }
 
 type S3ExtractParams struct {
-	Filepath string `json:"filepath"`
-	Format   string `json:"format"`
+	Filepath     string `json:"filepath"`
+	ArtifactType string `json:"artifact_type"`
+	Format       string `json:"format,omitempty"`
+	Merge        bool   `json:"merge,omitempty"`
 }
 
 func (*PostgresExtractParams) isExtractParams() {}

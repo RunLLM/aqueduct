@@ -14,6 +14,7 @@ type Component string
 
 const (
 	ServerComponent Component = "Server"
+	errorStatus     string    = "ERROR"
 )
 
 // We register an obfuscation function to alter the header value before logging it
@@ -36,12 +37,13 @@ func LogRoute(
 	for k, v := range r.Header {
 		if _, ok := excludedHeaderFields[k]; !ok {
 			if obfuscateFunction, obfuscate := HeaderObfuscationFunctionMap[k]; obfuscate {
-				headers[k], err = obfuscateFunction(v)
-				if err != nil {
+				result, obfuscateError := obfuscateFunction(v)
+				if obfuscateError != nil {
 					log.Errorf("Unable to obfuscate header for: "+k+"%v", err)
 					// Since this is a logging route, we drop headers we cant obfuscate
 					continue
 				}
+				headers[k] = result
 			} else {
 				headers[k] = v
 			}
@@ -51,11 +53,11 @@ func LogRoute(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
+	logFields := log.Fields{
 		"ServiceName":   serviceName,
 		"URL":           r.URL,
 		"Headers":       headers,
@@ -66,7 +68,13 @@ func LogRoute(
 		"UserId":        ctx.Value(aq_context.UserIdKey),
 		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
-	}).Info()
+	}
+
+	if status == errorStatus {
+		log.WithFields(logFields).Error()
+	} else {
+		log.WithFields(logFields).Info()
+	}
 }
 
 func LogAsyncEvent(
@@ -78,18 +86,24 @@ func LogAsyncEvent(
 	status := "SUCCEEDED"
 	var errMsg string
 	if err != nil {
-		status = "ERROR"
+		status = errorStatus
 		errMsg = err.Error()
 	}
 
-	log.WithFields(log.Fields{
+	logFields := log.Fields{
 		"ServiceName":   serviceName,
 		"Status":        status,
 		"Component":     component,
 		"UserId":        ctx.Value(aq_context.UserIdKey),
 		"UserRequestId": ctx.Value(aq_context.UserRequestIdKey),
 		"Error":         errMsg,
-	}).Info()
+	}
+
+	if status == errorStatus {
+		log.WithFields(logFields).Error()
+	} else {
+		log.WithFields(logFields).Info()
+	}
 }
 
 // Replaces the password in an integration config string into the equivalent * string.

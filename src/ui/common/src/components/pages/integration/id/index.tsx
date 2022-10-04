@@ -1,36 +1,33 @@
-import { faRefresh, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  Alert,
-  Autocomplete,
-  Link,
-  TextField,
-  Typography,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import { DataGrid } from '@mui/x-data-grid';
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import Link from '@mui/material/Link';
+import Snackbar from '@mui/material/Snackbar';
+import Typography from '@mui/material/Typography';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
-import { AddTableDialog } from '../../../../components/integrations/dialogs/dialog';
+import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
+import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
+import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
+import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
-import { handleLoadIntegrationOperators } from '../../../../reducers/integrationOperators';
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
-  handleLoadIntegrationTable,
-  tableKeyFn,
-} from '../../../../reducers/integrationTableData';
-import { handleLoadIntegrationTables } from '../../../../reducers/integrationTables';
+  handleListIntegrationObjects,
+  handleLoadIntegrationOperators,
+  handleTestConnectIntegration,
+  resetEditStatus,
+  resetTestConnectStatus,
+} from '../../../../reducers/integration';
+import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { Integration } from '../../../../utils/integrations';
-import ExecutionStatus from '../../../../utils/shared';
-import { Button } from '../../../primitives/Button.styles';
+import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
+import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -43,16 +40,46 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+
   const integrationId: string = useParams().id;
-  const [table, setTable] = useState<string>('');
-  const [showDialog, setShowDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddTableDialog, setShowAddTableDialog] = useState(false);
+  const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
+
+  const [showTestConnectToast, setShowTestConnectToast] = useState(false);
+  const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
+  const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
+
+  const handleCloseConnectSuccessToast = () => {
+    setShowConnectSuccessToast(false);
+  };
+
+  const handleCloseTestConnectToast = () => {
+    setShowTestConnectToast(false);
+  };
+
+  const handleCloseEditSuccessToast = () => {
+    setShowEditSuccessToast(false);
+  };
+
+  const testConnectStatus = useSelector(
+    (state: RootState) => state.integrationReducer.testConnectStatus
+  );
+
+  const integrations = useSelector(
+    (state: RootState) => state.integrationsReducer.integrations
+  );
+
+  const isListObjectsLoading = useSelector((state: RootState) =>
+    isLoading(state.integrationReducer.objectNames.status)
+  );
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
     dispatch(
-      handleLoadIntegrationTables({
+      handleListIntegrationObjects({
         apiKey: user.apiKey,
         integrationId: integrationId,
       })
@@ -66,87 +93,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, []);
 
-  const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
-  );
-  const integrationTables = useSelector(
-    (state: RootState) => state.integrationTablesReducer.integrationTables
-  );
-  const tableListStatus = useSelector(
-    (state: RootState) => state.integrationTablesReducer.thunkState
-  );
-
   useEffect(() => {
-    dispatch(
-      handleLoadIntegrationTable({
-        apiKey: user.apiKey,
-        integrationId: integrationId,
-        table: table,
-      })
-    );
-  }, [table]);
-
-  const tableKey = tableKeyFn(table);
-  const [tableDataStatus, retrievedTableData] = useSelector(
-    (state: RootState) => {
-      let status = ExecutionStatus.Pending;
-      if (state.integrationTableDataReducer.hasOwnProperty(tableKey)) {
-        status = state.integrationTableDataReducer[tableKey].status;
-      }
-      let returnedData = null;
-      if (table !== '' && status === ExecutionStatus.Succeeded) {
-        const data = state.integrationTableDataReducer[tableKey].data;
-        if (data !== undefined && data !== '') {
-          returnedData = JSON.parse(data);
-        }
-      } else if (table !== '' && status === ExecutionStatus.Failed) {
-        returnedData = state.integrationTableDataReducer[tableKey].err;
-      }
-      return [status, returnedData];
+    if (!isLoading(testConnectStatus)) {
+      setShowTestConnectToast(false);
     }
-  );
 
-  const loading = tableListStatus === ExecutionStatus.Pending;
-
-  const forceLoadTableList = async () => {
-    if (!loading) {
-      dispatch(
-        handleLoadIntegrationTables({
-          apiKey: user.apiKey,
-          integrationId: integrationId,
-          forceLoad: true,
-        })
-      );
+    if (isSucceeded(testConnectStatus)) {
+      setShowConnectSuccessToast(true);
+      dispatch(resetTestConnectStatus());
     }
-  };
+  }, [testConnectStatus]);
 
-  // ENG-1052: We should update the route handler to give us the data in the format we want rather than needing to do post-processing in the FE side.
-  const dataTable = {
-    cols: [],
-    rows: [],
-  };
-  if (
-    table !== '' &&
-    retrievedTableData &&
-    tableDataStatus === ExecutionStatus.Succeeded
-  ) {
-    dataTable.cols.push({ field: '_id', hide: true });
-    retrievedTableData.schema.fields.forEach((col, _) => {
-      const header = `${col.name} (${col.type})`;
-      dataTable.cols.push({
-        field: col.name,
-        headerName: header,
-        minWidth: `${10 * header.length}px`,
-        flex: 1,
-      });
-    });
-    retrievedTableData.data.forEach((data, idx) => {
-      data['_id'] = idx;
-      dataTable.rows.push(data);
-    });
-  }
-
-  let selectedIntegration = null;
+  let selectedIntegration: Integration = undefined;
 
   if (integrations) {
     (integrations as Integration[]).forEach((integration) => {
@@ -155,15 +113,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       }
     });
   }
-
-  const handleChange = (
-    event: SyntheticEvent<Element, Event>,
-    newValue: string
-  ) => {
-    setTable(newValue);
-  };
-
-  const hasTable = table != null && table !== '';
 
   useEffect(() => {
     if (selectedIntegration && selectedIntegration.name) {
@@ -177,143 +126,157 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
-  let preview = (
-    <Alert severity="warning" sx={{ width: '80%' }}>
-      <>
-        We currently do not support listing data in an S3 bucket. But don&apos;t
-        worry&mdash;we&apos;re working on adding this feature! If you have
-        questions, comments or would like to learn more about what we&apos;re
-        building, please{' '}
-      </>
-      <Link href="mailto:hello@aqueducthq.com">reach out</Link>
-      <>, </>
-      <Link href="https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A">
-        join our Slack channel
-      </Link>
-      <>, or </>
-      <Link href="https://github.com/aqueducthq/aqueduct/issues/new">
-        start a conversation on GitHub channel
-      </Link>
-      <>.</>
-    </Alert>
-  );
-
-  if (selectedIntegration.service !== 'S3') {
-    preview = (
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h4" gutterBottom component="div">
-          Preview
-        </Typography>
-        <Box>
-          <Autocomplete
-            disablePortal
-            value={table}
-            sx={{
-              verticalAlign: 'middle',
-              display: 'inline-block',
-              width: '35ch',
-            }}
-            onChange={handleChange}
-            options={integrationTables}
-            loading={loading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Base Table"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <React.Fragment>
-                      {params.InputProps.endAdornment}
-                    </React.Fragment>
-                  ),
-                }}
-              />
-            )}
-          />
-          <FontAwesomeIcon
-            className={loading ? 'fa-spin' : ''}
-            style={{
-              marginLeft: '15px',
-              fontSize: '2em',
-              verticalAlign: 'middle',
-              display: 'inline-block',
-              color: loading ? 'grey' : 'black',
-              cursor: loading ? 'default' : 'pointer',
-            }}
-            icon={faRefresh}
-            onClick={forceLoadTableList}
-          />
-        </Box>
-
-        <Box sx={{ mt: 3 }}>
-          {hasTable && tableDataStatus === ExecutionStatus.Pending && (
-            <Box sx={{ display: 'flex', flexDirection: 'row', mt: 3 }}>
-              <CircularProgress size={30} />
-              <Typography sx={{ ml: 2 }}>
-                Loading table <b>{table}</b>...
-              </Typography>
-            </Box>
-          )}
-          {hasTable && tableDataStatus === ExecutionStatus.Failed && (
-            <Alert style={{ marginTop: '10px' }} severity="error">
-              Table <b>{table}</b> failed to load. Try refreshing the page.{' '}
-              <br />
-              Error: {retrievedTableData}
-            </Alert>
-          )}
-          {hasTable &&
-            tableDataStatus === ExecutionStatus.Succeeded &&
-            retrievedTableData !== '' && (
-              <div style={{ height: '50vh', width: 'calc(100% - 25px)' }}>
-                <DataGrid
-                  getRowId={(row) => row._id}
-                  rows={dataTable.rows}
-                  columns={dataTable.cols}
-                  pageSize={50}
-                  rowsPerPageOptions={[50]}
-                  disableSelectionOnClick
-                />
-              </div>
-            )}
-        </Box>
-      </Box>
-    );
-  }
-
   return (
     <Layout user={user}>
-      <Box>
+      <Box sx={{ paddingBottom: '4px' }}>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details
         </Typography>
-
-        <DetailIntegrationCard integration={selectedIntegration} />
-
-        {selectedIntegration.name === 'aqueduct_demo' && (
-          <Button variant="contained" onClick={() => setShowDialog(true)}>
-            <FontAwesomeIcon icon={faUpload} />
-            <Typography sx={{ ml: 1 }}>Add CSV</Typography>
-          </Button>
-        )}
-
-        {showDialog && (
-          <AddTableDialog
-            user={user}
-            integrationId={selectedIntegration.id}
-            onCloseDialog={() => setShowDialog(false)}
-            onConnect={() => {
-              forceLoadTableList();
-              setShowDialog(false);
+        <Box display="flex" flexDirection="row" alignContent="top">
+          <DetailIntegrationCard
+            integration={selectedIntegration}
+            connectStatus={testConnectStatus}
+          />
+          <IntegrationOptions
+            integration={selectedIntegration}
+            onUploadCsv={() => setShowAddTableDialog(true)}
+            onTestConnection={() => {
+              dispatch(
+                handleTestConnectIntegration({
+                  apiKey: user.apiKey,
+                  integrationId: selectedIntegration.id,
+                })
+              );
+              setShowTestConnectToast(true);
+            }}
+            onEdit={() => setShowEditDialog(true)}
+            onDeleteIntegration={() => {
+              setShowDeleteTableDialog(true);
             }}
           />
+        </Box>
+
+        {showDeleteTableDialog && (
+          <DeleteIntegrationDialog
+            user={user}
+            integrationId={selectedIntegration.id}
+            integrationName={selectedIntegration.name}
+            onCloseDialog={() => setShowDeleteTableDialog(false)}
+          />
         )}
+
+        {testConnectStatus && isFailed(testConnectStatus) && (
+          <Alert severity="error" sx={{ marginTop: 2 }}>
+            Test-connect failed with error:
+            <br></br>
+            <pre>{testConnectStatus.err}</pre>
+          </Alert>
+        )}
+
+        {selectedIntegration.name === 'aqueduct_demo' && (
+          <Typography variant="body1" sx={{ my: 1 }}>
+            You can see the documentation for the Aqueduct Demo database{' '}
+            <Link href="https://docs.aqueducthq.com/integrations/aqueduct-demo-integration">
+              here
+            </Link>
+            .
+          </Typography>
+        )}
+
+        <IntegrationObjectList user={user} integration={selectedIntegration} />
+
+        <Typography
+          variant="h5"
+          gutterBottom
+          component="div"
+          sx={{ marginY: 4, mt: 4 }}
+        >
+          Workflows
+        </Typography>
+        <OperatorsOnIntegration />
       </Box>
-      {preview}
-      <Typography variant="h4" gutterBottom component="div">
-        Workflows
-      </Typography>
-      <OperatorsOnIntegration />
+
+      {showAddTableDialog && (
+        <AddTableDialog
+          user={user}
+          integrationId={selectedIntegration.id}
+          onCloseDialog={() => setShowAddTableDialog(false)}
+          onConnect={() => {
+            if (!isListObjectsLoading) {
+              dispatch(
+                handleListIntegrationObjects({
+                  apiKey: user.apiKey,
+                  integrationId: integrationId,
+                  forceLoad: true,
+                })
+              );
+            }
+
+            setShowAddTableDialog(false);
+          }}
+        />
+      )}
+
+      {showEditDialog && (
+        <IntegrationDialog
+          user={user}
+          service={selectedIntegration.service}
+          onSuccess={() => setShowEditSuccessToast(true)}
+          onCloseDialog={() => {
+            setShowEditDialog(false);
+            dispatch(resetEditStatus());
+          }}
+          integrationToEdit={selectedIntegration}
+        />
+      )}
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showTestConnectToast}
+        onClose={handleCloseTestConnectToast}
+        key={'integration-test-connect-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseTestConnectToast}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          {`Attempting to connect to ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showConnectSuccessToast}
+        onClose={handleCloseConnectSuccessToast}
+        key={'integration-connect-success-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseConnectSuccessToast}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {`Successfully connected to ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showEditSuccessToast}
+        onClose={handleCloseEditSuccessToast}
+        key={'integration-edit-success-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleCloseEditSuccessToast}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {`Successfully updated ${selectedIntegration.name}`}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

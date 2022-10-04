@@ -27,7 +27,7 @@ const (
 	PollPreviewTableTimeout  = 60 * time.Second
 )
 
-// Route: /integration/{integrationId}/preview_table
+// Route: /integration/{integrationId}/preview
 // Method: GET
 // Params:
 //	`integrationId`: ID of the relational database integration
@@ -54,7 +54,6 @@ type PreviewTableHandler struct {
 
 	Database          database.Database
 	IntegrationReader integration.Reader
-	StorageConfig     *shared.StorageConfig
 	JobManager        job.JobManager
 	Vault             vault.Vault
 }
@@ -88,6 +87,7 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		r.Context(),
 		integrationId,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.Database,
 	)
 	if err != nil {
@@ -126,7 +126,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 
 	defer func() {
 		// Delete storage files created for preview table data
-		go workflow_utils.CleanupStorageFiles(ctx, h.StorageConfig, []string{operatorMetadataPath, artifactMetadataPath, artifactContentPath})
+		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{operatorMetadataPath, artifactMetadataPath, artifactContentPath})
 	}()
 
 	query := fmt.Sprintf("SELECT * FROM %s;", args.tableName)
@@ -146,7 +146,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		[]string{}, /* inputMetadataPaths */
 		artifactContentPath,
 		artifactMetadataPath,
-		h.StorageConfig,
+		args.StorageConfig,
 		h.JobManager,
 		h.Vault,
 	)
@@ -166,7 +166,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
-		h.StorageConfig,
+		args.StorageConfig,
 		operatorMetadataPath,
 		&metadata,
 	); err != nil {
@@ -177,7 +177,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Newf("Unable to preview table: %v", metadata.Error.Context)
 	}
 
-	data, err := storage.NewStorage(h.StorageConfig).Get(
+	data, err := storage.NewStorage(args.StorageConfig).Get(
 		ctx,
 		artifactContentPath,
 	)

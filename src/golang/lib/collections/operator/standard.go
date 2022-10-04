@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -19,8 +20,9 @@ type standardWriterImpl struct{}
 
 type GetDistinctLoadOperatorsByWorkflowIdResponse struct {
 	OperatorName    string              `db:"operator_name" json:"operator_name"`
+	ModifiedAt      time.Time           `db:"modified_at" json:"modified_at"`
 	IntegrationName string              `db:"integration_name" json:"integration_name"`
-	Integration_id  uuid.UUID           `db:"integration_id" json:"integration_id"`
+	IntegrationId   uuid.UUID           `db:"integration_id" json:"integration_id"`
 	Service         integration.Service `db:"service" json:"service"`
 	TableName       string              `db:"table_name" json:"object_name"`
 	UpdateMode      string              `db:"update_mode" json:"update_mode"`
@@ -95,6 +97,8 @@ func (r *standardReaderImpl) GetOperatorsByWorkflowDagId(
 	workflowDagId uuid.UUID,
 	db database.Database,
 ) ([]DBOperator, error) {
+	// Gets all operators that are a node with an incoming (id in `to_id`) or outgoing edge
+	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
 	getOperatorsByWorkflowDagIdQuery := fmt.Sprintf(
 		`SELECT %s FROM operator WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 

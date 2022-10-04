@@ -3,10 +3,19 @@ import re
 from typing import Optional, Union
 
 import pandas as pd
-from aqueduct.artifact import Artifact, ArtifactSpec
-from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import LoadUpdateMode, ServiceType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.dag import DAG
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.enums import (
+    ArtifactType,
+    ExecutionMode,
+    LoadUpdateMode,
+    SerializationType,
+    ServiceType,
+)
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -16,8 +25,9 @@ from aqueduct.operators import (
     RelationalDBLoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
+
+from aqueduct import globals
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -28,18 +38,19 @@ LIST_TABLES_QUERY_SQLSERVER = (
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
 # Potential Matches: "{{today}}", "{{ today  }}""
 #
-# Duplicated in the Python operators at `src/python/aqueduct_executor/operators/connectors/tabular/extract.py`
+# Duplicated in the Python operators at `src/python/aqueduct_executor/operators/connectors/data/extract.py`
 # Make sure the two are in sync.
 TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 # A dictionary of built-in tags to their replacement0 string functions.
 #
-# Duplicated in spirit by the Python operators at `src/python/aqueduct_executor/operators/connectors/tabular/extract.py`
+# Duplicated in spirit by the Python operators at `src/python/aqueduct_executor/operators/connectors/data/extract.py`
 # Make sure the two are in sync.
 BUILT_IN_EXPANSIONS = {"today"}
 
@@ -76,6 +87,8 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self._metadata.service == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
+        elif self._metadata.service == ServiceType.ATHENA:
+            list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
         return sql_artifact.get()
@@ -99,6 +112,7 @@ class RelationalDBIntegration(Integration):
         query: Union[str, RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
+        lazy: bool = False,
     ) -> TableArtifact:
         """
         Runs a SQL query against the RelationalDB integration.
@@ -114,6 +128,10 @@ class RelationalDBIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
+        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
         integration_info = self._metadata
 
         # The sql operator name defaults to "[integration name] query 1". If another
@@ -121,17 +139,8 @@ class RelationalDBIntegration(Integration):
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
         sql_op_name = name
-
-        default_sql_op_prefix = "%s query" % integration_info.name
-        default_sql_op_index = 1
-        while sql_op_name is None:
-            candidate_op_name = default_sql_op_prefix + " %d" % default_sql_op_index
-            colliding_op = self._dag.get_operator(with_name=candidate_op_name)
-            if colliding_op is None:
-                sql_op_name = candidate_op_name  # break out of the loop!
-            default_sql_op_index += 1
-
-        assert sql_op_name is not None
+        if sql_op_name is None:
+            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % integration_info.name)
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -146,8 +155,8 @@ class RelationalDBIntegration(Integration):
             matches = re.findall(TAG_PATTERN, extract_params.query)
             for match in matches:
                 param_name = match.strip(" {}")
-                param_op = self._dag.get_operator(with_name=param_name)
-                if param_op is None:
+                param_artifact = self._dag.get_artifact_by_name(param_name)
+                if param_artifact is None:
                     # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
                     if param_name in BUILT_IN_EXPANSIONS:
                         continue
@@ -157,15 +166,13 @@ class RelationalDBIntegration(Integration):
                     )
 
                 # Check that the parameter corresponds to a string value.
-                assert param_op.spec.param is not None
-                param_val = json.loads(param_op.spec.param.val)
-                if not isinstance(param_val, str):
+                if param_artifact.type != ArtifactType.STRING:
                     raise InvalidUserArgumentException(
                         "The parameter `%s` must be defined as a string. Instead, got type %s"
-                        % (param_name, type(param_val).__name__)
+                        % (param_name, param_artifact.type)
                     )
-                assert len(param_op.outputs) == 1
-                sql_input_artifact_ids.append(param_op.outputs[0])
+
+                sql_input_artifact_ids.append(param_artifact.id)
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()
@@ -188,20 +195,24 @@ class RelationalDBIntegration(Integration):
                         outputs=[sql_output_artifact_id],
                     ),
                     output_artifacts=[
-                        Artifact(
+                        ArtifactMetadata(
                             id=sql_output_artifact_id,
                             name=artifact_name_from_op_name(sql_op_name),
-                            spec=ArtifactSpec(table={}),
+                            type=ArtifactType.TABLE,
                         ),
                     ],
                 ),
             ],
         )
 
-        return TableArtifact(
-            dag=self._dag,
-            artifact_id=sql_output_artifact_id,
-        )
+        if execution_mode == ExecutionMode.EAGER:
+            # Issue preview request since this is an eager execution.
+            artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
+            assert isinstance(artifact, TableArtifact)
+            return artifact
+        else:
+            # We are in lazy mode.
+            return TableArtifact(self._dag, sql_output_artifact_id)
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
         """
@@ -216,6 +227,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        if self._metadata.service == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation is not supported for integration type %s."
+                % self._metadata.service.value
+            )
+
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),

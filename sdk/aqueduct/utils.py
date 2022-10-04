@@ -10,18 +10,37 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
-import cloudpickle as cp
-import pandas as pd
+import cloudpickle as pickle
+import multipart
+import numpy as np
 import requests
-from aqueduct.enums import OperatorType
-from aqueduct.operators import Operator
+from aqueduct.config import (
+    AirflowEngineConfig,
+    EngineConfig,
+    FlowConfig,
+    K8sEngineConfig,
+    LambdaEngineConfig,
+)
+from aqueduct.dag import DAG, RetentionPolicy, Schedule
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.error import *
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.k8s_integration import K8sIntegration
+from aqueduct.integrations.lambda_integration import LambdaIntegration
+from aqueduct.logger import logger
+from aqueduct.operators import Operator, ParamSpec
+from aqueduct.serialization import (
+    artifact_type_to_serialization_type,
+    serialization_function_mapping,
+    serialize_val,
+)
+from aqueduct.templates import op_file_content
 from croniter import croniter
+from pandas import DataFrame
+from PIL import Image
+from requests_toolbelt.multipart import decoder
 
-from .dag import DAG, RetentionPolicy, Schedule
-from .enums import TriggerType
-from .error import *
-from .logger import logger
-from .templates import op_file_content
+GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
 
 def format_header_for_print(header: str) -> str:
@@ -63,6 +82,14 @@ def generate_ui_url(
     return url
 
 
+def is_string_valid_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except ValueError:
+        return False
+
+
 def raise_errors(response: requests.Response) -> None:
     def _extract_err_msg() -> str:
         resp_json = response.json()
@@ -102,22 +129,20 @@ def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
 
 MODEL_FILE_NAME = "model.py"
 MODEL_PICKLE_FILE_NAME = "model.pkl"
-AQUEDUCT_UTILS_FILE_NAME = "aqueduct_utils.py"
 PYTHON_VERSION_FILE_NAME = "python_version.txt"
 CONDA_VERSION_FILE_NAME = "conda_version.txt"
 RESERVED_FILE_NAMES = [
     MODEL_FILE_NAME,
     MODEL_PICKLE_FILE_NAME,
-    AQUEDUCT_UTILS_FILE_NAME,
     PYTHON_VERSION_FILE_NAME,
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = "aqueduct"
+BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
 
-UserFunction = Callable[..., pd.DataFrame]
-MetricFunction = Callable[..., float]
-CheckFunction = Callable[..., bool]
+UserFunction = Callable[..., Any]
+MetricFunction = Callable[..., Union[int, float, np.number]]
+CheckFunction = Callable[..., Union[bool, np.bool_]]
 
 
 def get_zip_file_path(dir_name: str) -> str:
@@ -152,6 +177,7 @@ def make_zip_dir() -> str:
 
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
+    op_name: str,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
 ) -> bytes:
@@ -161,6 +187,8 @@ def serialize_function(
     Arguments:
         func:
             The function to package
+        op_name:
+            The name of the function operator to package.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
         requirements:
@@ -189,7 +217,13 @@ def serialize_function(
         with open(os.path.join(dir_path, MODEL_FILE_NAME), "w") as model_file:
             model_file.write(op_file_content())
         with open(os.path.join(dir_path, MODEL_PICKLE_FILE_NAME), "wb") as f:
-            cp.dump(func, f)
+            pickle.dump(func, f)
+
+        # Write function source code to file
+        source_file = "{}.py".format(op_name)
+        with open(os.path.join(dir_path, source_file), "w") as f:
+            source = inspect.getsource(func)
+            f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
         _make_archive(dir_path, zip_file_path)
@@ -297,7 +331,22 @@ def _package_files_and_requirements(
         with open(packaged_requirements_path, "x") as f:
             f.write("\n".join(_infer_requirements()))
 
+    # Prune out any blacklisted requirements.
+    _filter_out_blacklisted_requirements(packaged_requirements_path)
+
     os.chdir(current_directory_path)
+
+
+def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> None:
+    """Opens the requirements.txt file and removes any packages that we don't support."""
+    with open(packaged_requirements_path, "r") as f:
+        req_lines = f.readlines()
+
+    with open(packaged_requirements_path, "w") as f:
+        for line in req_lines:
+            if any(blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS):
+                continue
+            f.write(line)
 
 
 def _infer_requirements() -> List[str]:
@@ -308,7 +357,7 @@ def _infer_requirements() -> List[str]:
     """
     try:
         process = subprocess.Popen(
-            "pip freeze",
+            f"{sys.executable} -m pip freeze",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -439,6 +488,11 @@ def human_readable_timestamp(ts: int) -> str:
     return datetime.utcfromtimestamp(ts).strftime(format)
 
 
+def indent_multiline_string(content: str) -> str:
+    """Indents every line of a multiline string block."""
+    return "\t" + "\t".join(content.splitlines(True))
+
+
 def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     """Verifies that a user-defined id is of the expected types, returning the string version of the id."""
     if not isinstance(id, str) and not isinstance(id, uuid.UUID):
@@ -447,3 +501,96 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     if isinstance(id, uuid.UUID):
         return str(id)
     return id
+
+
+def infer_artifact_type(value: Any) -> ArtifactType:
+    if isinstance(value, DataFrame):
+        return ArtifactType.TABLE
+    elif isinstance(value, Image.Image):
+        return ArtifactType.IMAGE
+    elif isinstance(value, bytes):
+        return ArtifactType.BYTES
+    elif isinstance(value, str):
+        # We first check if the value is a valid JSON string.
+        try:
+            json.loads(value)
+            return ArtifactType.JSON
+        except:
+            return ArtifactType.STRING
+    elif isinstance(value, bool) or isinstance(value, np.bool_):
+        return ArtifactType.BOOL
+    elif isinstance(value, int) or isinstance(value, float) or isinstance(value, np.number):
+        return ArtifactType.NUMERIC
+    elif isinstance(value, dict):
+        return ArtifactType.DICT
+    elif isinstance(value, tuple):
+        return ArtifactType.TUPLE
+    else:
+        try:
+            pickle.dumps(value)
+            return ArtifactType.PICKLABLE
+        except:
+            raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
+    serialization_type = artifact_type_to_serialization_type(artifact_type, val)
+    assert serialization_type in serialization_function_mapping
+
+    # We must base64 encode the resulting bytes, since we can't be sure
+    # what encoding it was written in (eg. Image types are not encoded as "utf8").
+    return ParamSpec(
+        val=serialize_val(val, serialization_type),
+        serialization_type=serialization_type,
+    )
+
+
+def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
+    multipart_data = decoder.MultipartDecoder.from_response(response)
+    parse = multipart.parse_options_header
+
+    result = {}
+
+    for part in multipart_data.parts:
+        field_name = part.headers[b"Content-Disposition"].decode(multipart_data.encoding)
+        field_name = parse(field_name)[1]["name"]
+
+        if field_name == "metadata":
+            result[field_name] = json.loads(part.content.decode(multipart_data.encoding))
+        elif field_name == "data":
+            result[field_name] = part.content
+        else:
+            raise AqueductError(
+                "Unexpected form field %s for artifact result response" % field_name
+            )
+
+    return result
+
+
+def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
+    """Generates an EngineConfig from the user provided configuration."""
+    if not (config and config.engine):
+        return EngineConfig()
+    elif isinstance(config.engine, AirflowIntegration):
+        return EngineConfig(
+            type=RuntimeType.AIRFLOW,
+            airflow_config=AirflowEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, K8sIntegration):
+        return EngineConfig(
+            type=RuntimeType.K8S,
+            k8s_config=K8sEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    elif isinstance(config.engine, LambdaIntegration):
+        return EngineConfig(
+            type=RuntimeType.LAMBDA,
+            lambda_config=LambdaEngineConfig(
+                integration_id=config.engine._metadata.id,
+            ),
+        )
+    else:
+        raise AqueductError("Unsupported engine configuration.")

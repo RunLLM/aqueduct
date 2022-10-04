@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
@@ -13,6 +14,9 @@ import WorkflowStatus from '../../workflows/workflowStatus';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { GCSCard } from './gcsCard';
+import { KubernetesCard } from './kubernetesCard';
+import { LambdaCard } from './lambdaCard';
 import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
 import { MySqlCard } from './mysqlCard';
@@ -44,7 +48,8 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
       <Link
         underline="none"
         color="inherit"
-        href={`/${getPathPrefix()}/workflow/${workflowId}`}
+        to={`${getPathPrefix()}/workflow/${workflowId}`}
+        component={RouterLink as any}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
           <Box
@@ -123,8 +128,17 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     case 'S3':
       serviceCard = <S3Card integration={integration} />;
       break;
+    case 'GCS':
+      serviceCard = <GCSCard integration={integration} />;
+      break;
     case 'Airflow':
       serviceCard = <AirflowCard integration={integration} />;
+      break;
+    case 'Kubernetes':
+      serviceCard = <KubernetesCard integration={integration} />;
+      break;
+    case 'Lambda':
+      serviceCard = <LambdaCard integration={integration} />;
       break;
     default:
       serviceCard = null;

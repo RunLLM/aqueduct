@@ -1,5 +1,9 @@
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Drawer } from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
@@ -23,22 +27,17 @@ import {
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
 import { exportCsv } from '../../../../utils/preview';
 import { LoadingStatusEnum } from '../../../../utils/shared';
+import { ExecutionStatus } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
 import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
-import {
-  AqueductSidebar,
-  BottomSidebarHeaderHeightInPx,
-  BottomSidebarHeightInPx,
-  getBottomSideSheetWidth,
-  SidebarPosition,
-} from '../../../layouts/sidebar/AqueductSidebar';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowStatusBar from '../../../workflows/StatusBar';
@@ -221,6 +220,39 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
+  const SidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
+
+  const getSideSheetWidth = (
+    workflowStatusBarOpen: boolean,
+    baseWidth = '100%'
+  ): string | string[] => {
+    // let's break down this formula:
+    // fullWindowWidth is calc(100% + 250px)
+    // menuSidebarOffset is 250px
+    // SidebarMarginInPx is 64px * 2 = 128px
+    // getStatusBarWidth is 400px when open, 75 when closed.
+    // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
+    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
+      2 * SidebarMarginInPx
+    }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
+  };
+
+  const CollapsedStatusBarWidthInPx = 75;
+  const StatusBarWidthInPx = 385;
+
+  /**
+   *
+   * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
+   * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
+   */
+  const getStatusBarWidth = (workflowStatusBarOpen: boolean): string => {
+    if (workflowStatusBarOpen) {
+      return `${StatusBarWidthInPx}px`;
+    } else {
+      return `${CollapsedStatusBarWidthInPx}px`;
+    }
+  };
+
   // NOTE(vikram): This is a compliated bit of nonsense code. Because the
   // percentages are relative, we need to reset the base width to be the full
   // window width to take advantage of the helper function here. This ensures
@@ -231,24 +263,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   // absolute-positioned, it's required in order to align the content with
   // the status bar's width.
   const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
-  const contentWidth = getBottomSideSheetWidth(
+  const contentWidth = getSideSheetWidth(
     openSideSheetState.workflowStatusBarOpen,
     fullWindowWidth
   );
-  let contentBottomOffsetInPx;
 
-  if (openSideSheetState.bottomSideSheetOpen) {
-    contentBottomOffsetInPx = `${BottomSidebarHeightInPx + 20}px`;
-  } else {
-    contentBottomOffsetInPx = `${BottomSidebarHeaderHeightInPx + 20}px`;
-  }
+  const contentBottomOffsetInPx = `32px`;
 
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
-      currentNode.type === NodeType.FloatArtifact ||
+      currentNode.type === NodeType.NumericArtifact ||
       currentNode.type === NodeType.BoolArtifact ||
-      currentNode.type === NodeType.JsonArtifact
+      currentNode.type === NodeType.JsonArtifact ||
+      currentNode.type === NodeType.StringArtifact ||
+      currentNode.type === NodeType.ImageArtifact ||
+      currentNode.type === NodeType.DictArtifact ||
+      currentNode.type === NodeType.GenericArtifact
     ) {
       return selectedDag.artifacts[currentNode.id].name;
     } else {
@@ -260,14 +291,18 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
-      if (artifactResult?.result && artifactResult.result.data.length > 0) {
+      if (
+        artifactResult?.result &&
+        artifactResult.result.exec_state.status === ExecutionStatus.Succeeded &&
+        artifactResult.result.data.length > 0
+      ) {
         artifactResultData = JSON.parse(artifactResult.result.data);
       }
 
       return (
         <Button
           onClick={() =>
-            exportCsv(artifactResultData, getNodeLabel().replace(' ', '_'))
+            exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
           }
         >
           Export CSV
@@ -278,8 +313,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   };
 
+  const drawerHeaderHeightInPx = 64;
+
   return (
-    <Layout user={user} layoutType="workspace">
+    <Layout user={user}>
       <Box
         sx={{
           display: 'flex',
@@ -289,7 +326,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         }}
       >
         {workflow.selectedDag && (
-          <WorkflowHeader user={user} workflowDag={workflow.selectedDag} />
+          <WorkflowHeader
+            user={user}
+            workflowDag={workflow.selectedDag}
+            workflowId={workflowId}
+          />
         )}
 
         <Divider />
@@ -315,14 +356,39 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       </Box>
 
       {currentNode.type !== NodeType.None && (
-        <AqueductSidebar
-          zIndex={10}
-          position={SidebarPosition.bottom}
-          getSideSheetTitle={getNodeLabel}
-          getSideSheetHeadingContent={getNodeActionButton}
+        <Drawer
+          anchor="right"
+          variant="persistent"
+          open={true}
+          PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}
         >
-          {getDataSideSheetContent(user, currentNode)}
-        </AqueductSidebar>
+          <Box width="800px" maxWidth="800px" minHeight="100vh">
+            <Box
+              width="100%"
+              sx={{ backgroundColor: theme.palette.gray['100'] }}
+              height={`${drawerHeaderHeightInPx}px`}
+              position="fixed"
+            >
+              <Box display="flex">
+                <Box
+                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                  onClick={onPaneClicked}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </Box>
+                <Typography variant="h5" padding="16px">
+                  {getNodeLabel()}
+                </Typography>
+                <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
+                  {getNodeActionButton()}
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
+              {getDataSideSheetContent(user, currentNode)}
+            </Box>
+          </Box>
+        </Drawer>
       )}
 
       <WorkflowStatusBar user={user} />

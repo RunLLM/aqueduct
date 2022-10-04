@@ -5,36 +5,71 @@ from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
+    ExecFailureException,
     ExecutionState,
     Logs,
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.utils import deserialize, infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:
-    """
-    Executes a parameter operator by storing the parameter value in the output content path.
+    """Parameter operators are unique in that the output content is expected to have already been populated correctly.
+
+    Therefore, this operator is responsible only for:
+    - Checking that the parameter type matches the expected type.
+    - Writing the operator and artifact metadata to storage, so that orchestration can proceed as normal.
+
+    The artifact output paths are written to before any type checking occurs, so all artifact-related paths are
+    expected to have been populated, even if the operator itself fails. However, this is not guaranteed to be the case,
+    since system errors are still possible.
     """
     print("Job Spec: \n{}".format(spec.json()))
 
     storage = parse_storage(spec.storage_config)
-    exec_state = ExecutionState(user_logs=Logs())
+
     try:
+        val_bytes = storage.get(spec.output_content_path)
+        val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
+
+        # This does not write to the output artifact's content path as a performance optimization.
+        # That has already been written by the Golang Orchestrator.
         utils.write_artifact(
             storage,
-            enums.OutputArtifactType.JSON,
-            spec.output_content_path,
+            spec.expected_type,
+            None,  # output_content_path
             spec.output_metadata_path,
-            spec.val,
+            val,
             system_metadata={},
         )
-        exec_state.status = enums.ExecutionStatus.SUCCEEDED
-        utils.write_exec_state(storage, spec.metadata_path, exec_state)
+
+        inferred_type = infer_artifact_type(val)
+        if inferred_type != spec.expected_type:
+            raise ExecFailureException(
+                failure_type=enums.FailureType.USER_FATAL,
+                tip="Supplied parameter expects type `%s`, but got `%s` instead."
+                % (spec.expected_type, inferred_type),
+            )
+
+        utils.write_exec_state(
+            storage,
+            spec.metadata_path,
+            ExecutionState(status=enums.ExecutionStatus.SUCCEEDED, user_logs=Logs()),
+        )
+
+    except ExecFailureException as e:
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=Logs())
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
+        sys.exit(1)
     except Exception as e:
-        exec_state.status = enums.ExecutionStatus.FAILED
-        exec_state.failure_type = enums.FailureType.SYSTEM
-        exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
+        exec_state = ExecutionState(
+            status=enums.ExecutionStatus.FAILED,
+            failure_type=enums.FailureType.SYSTEM,
+            error=Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR),
+            user_logs=Logs(),
+        )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)

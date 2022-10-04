@@ -32,7 +32,7 @@ import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
-import { Operator } from '../../utils/operators';
+import { Operator, OperatorType } from '../../utils/operators';
 import ExecutionStatus, { FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
 
@@ -124,9 +124,10 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       }}
     >
       {listItems.map((listItem, index) => {
+        const key = listItem.nodeId.length > 0 ? listItem.nodeId : index;
         return (
           <Box
-            key={index}
+            key={key}
             sx={{
               display: 'flex',
               flexDirection: 'row',
@@ -141,7 +142,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
             {listItem ? workflowStatusIcons[listItem.level] : null}
             <Box
               sx={{
-                marginLeft: 2,
+                mx: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 verticalAlign: 'middle',
@@ -151,10 +152,12 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 sx={{
                   fontFamily: 'Monospace',
                   fontWeight: 'bold',
+                  marginRight: 2,
+                  whiteSpace: 'normal',
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
                 }}
                 onClick={() => {
-                  if (listItem.nodeId && listItem.type) {
+                  if (listItem.nodeId.length > 0 && listItem.type.length > 0) {
                     switchSideSheet(listItem.nodeId, listItem.type);
                   }
                 }}
@@ -380,16 +383,19 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
-      } else if (artifactStatus === ExecutionStatus.Failed) {
-        newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
-        newWorkflowStatusItem.title = `Error creating ${artifactName}.`;
-        newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
         newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
         newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
       } else {
-        // artifact is still pending, skip adding to list of workflow status items.
+        // artifact is either:
+        // 1) cancelled (the operator failed to run and did not write artifact content) .
+        // 2) failed (the operator failed to run but wrote artifact content).
+        // 3) pending.
+        // We do not display any sidebar message for any of these cases. The reason we do not display
+        // any error message on artifact failure status is because we expect the appropriate error message
+        // to be displayed by the operator. That is to say, if the artifact has failed, then the operator
+        // must have also failed.
         return;
       }
 
@@ -441,7 +447,12 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
-          newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
+          // The message for a failed parameter is slightly different.
+          if (operators[operatorId].spec.type == OperatorType.Param) {
+            newWorkflowStatusItem.title = `Error with ${operatorName}`;
+          } else {
+            newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
+          }
           const err = opExecState.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''

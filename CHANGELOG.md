@@ -1,7 +1,229 @@
 # Changelog
 
+## 0.0.16
+Released on September 26, 2022.
+
+### Enhancements
+* Improves the readability of the operator logs printed from the SDK by omitting empty logs and
+    making formatting uniform.
+* Throws a more informative error message when a table artifact's column name is not of type string.
+    Aqueduct currently cannot support DataFrame's with non-string type columns.
+
+### Bugfixes
+* Fixes bug where authentication errors caused by incorrect integration credentials were treated as
+    system errors, which led to a confusing error message.
+* Fixes bug introduced in the previous releases where the settings gear was hidden on the UI.
+* Fixes a number of minor formatting and spacing issues on the UI.
+
+## 0.0.15
+Released on September 20, 2022.
+
+### Key Features
+* Adds support for running new workflows on AWS Lambda and Apache Airflow. Users can define
+    workflows using the Aqueduct API but delegate the execution of those workflows onto these
+    compute systems.
+* Allows Aqueduct parameters to hold any Python object; parameters are also now implicitly 
+    created when a Python object is passed into a decorated function.
+
+
+### Enhancements
+* Updates UI to describe database write operators as `save` operators instead of `load` operators to
+    avoid confusion.
+* Adds `describe` methods to all non-tabular artifact types.
+
+### Bugfixes
+* Fixes bug where stack traces and other messages in workflow status bar would
+    overflow past edge of screen.
+* Fixes bug where some workflows that should have been triggered on server
+    start were being ignored due to inconsistent metadata.
+* Fixes bug where newest workflow run wasn't shown after a run was manually
+    triggered.
+
+## 0.0.14
+Released on September 12, 2022.
+
+### Enhancements
+* Enables searching through workflows list.
+* Workflows are now displayed on the workflows page even before any runs have been created.
+* Adds canceled state to operator lifecycle; when upstream operators fail, downstream operators and
+    artifact are now marked as canceled rather than being marked as permanently in progress.
+* Adds ability to connect new SQLite DB from UI.
+* Redesigns integration viewing page to explicitly show DB tables rather than the previous select menu.
+
+### Bugfixes
+* Fixes bug where browser console throws error when there is no write operator in workflow DAG.
+* Fixes bug where operators previously could not return `None`.
+
+## 0.0.13
+Released on September 6, 2022.
+
+### Key Features
+* Adds AWS Athena integration. You can now execute SQL queries against AWS Athena using the Aqueduct
+    integration API. (Since Athena is a query service, we do not support saving data to Athena.)
+
+### Enhancements
+* Removes team and workflow notification categories and simplifies the presentation of the
+    notifications pane to be a single box containing all notifications.
+* Improves workflow metadata persistence: A newly created workflow will now show on the UI even
+    before any runs are finished and persisted.
+* Adds support for optionally lazily executing functions during workflow definition. You can also set
+    the global configuration for all functions to be lazy by using `aqueduct.global_config({"lazy": True})`.
+```python
+@op
+def my_op(input):
+  # ... modify your data...
+  return output
+
+result = my_op.lazy(input) # This will not execute immediately.
+result.get() # This will force execution of `my_op`.
+```
+* Enforces typing for saved data; only tabular data is now saveable to relational DBs.
+* Makes exported function code human-readable. When you download the code for a function, it will
+    include a file with the name of the operator, which will have the function's Python code.
+
+### Bugfixes
+
+None! :tada:
+
+## 0.0.12
+Released on August 25, 2022.
+
+### Key Features
+* Adds support for running workflows on Kubernetes. You can now register a Kubernetes integration
+    from the UI by providing the cluster's kubeconfig file and publish workflows
+    to run on Kubernetes by modifying the `config` argument in the SDK's `publish_flow` API. 
+* Enables using Google Cloud Storage (GCS) as Aqueduct's metadata store. You can register GCS as a storage
+    integration from the UI and store Aqueduct metadata in GCS.
+
+### Enhancements
+* Adds support for editing the authentication credentials of existing integrations from the UI.
+* Adds support for deleting integrations from the UI.
+* Adds support for deleting data created by Aqueduct when deleting a workflow; when deleting a workflow, 
+    you will now see an option to select the objects created by this workflow. 
+ 
+### Bugfixes
+
+None! :tada:
+
+## 0.0.11
+Released on August 23, 2022.
+
+### Important Note
+* If you did a fresh installation of Aqueduct v0.0.10, you may have run into a bug that says our
+    schema migrator did not run successfully. To fix this, run `aqueduct clear` and `pip3 install --upgrade aqueduct-ml`.
+    You can then start the server via `aqueduct start` and everything should work again.
+
+### Bugfixes
+* Fixes a bug where a fresh installation of Aqueduct fails due to a bug in the schema migration process.
+
+## 0.0.10
+Released on August 22, 2022.
+
+### Key Features
+* Adds support for non-tabular data types; operators can now return any
+    Python-serializable object. Under the hood, Aqueduct has special
+    optimization for JSON blobs, images, and tables, in addition to supporting
+    regular Python objects.
+* Enables eager execution when defining workflow artifacts; artifacts are now
+    immediately computed at definition time, before calling the `get` API, which
+    surfaces potential errors earlier during workflow construction.
+
+### Enhancements
+* Caches previously computed function results to avoid repetitive
+    recomputation. 
+* Enables using AWS S3 as Aqueduct's metadata store; when connecting an S3
+    integration, you can now optionally choose to store all Aqueduct metadata
+    in AWS S3.
+
+### Bugfixes
+* Fixes a bug where the DAG view would ignore the selected version when
+    refreshing the page.
+
+## 0.0.9
+Released on August 15, 2022.
+
+### Enhancements
+* Removes the system name prefix from integration connection form; users found
+    this confusing because it was unclear you had to provide a name in addition
+    to the prefix.
+* Removes deprecated CLI commands, `aqueduct server` and `aqueduct ui`.
+* Adds `__str__` method to SDK `TableArtifact` class to support
+    pretty-printing.
+* Adds support for authenticating with AWS S3 via pre-defined credentials
+    files, including when authentication was done via AWS SSO.
+    <img width="1683" alt="image" src="https://user-images.githubusercontent.com/867892/184670267-9666b842-7663-406e-adf0-65c2c5c90fc4.png">
+
+### Bugfixes
+* Fixes bug where Python requirements weren't properly installed when the client
+    and the server ran on different machines.
+* Fixes bug where Python stack traces were truncated when running imported
+    Python functions.
+* Fixes bug where errors generated when uploading a CSV to the Aqueduct demo
+    database were formatted poorly and unreadable.
+* Fixes bug where SDK client would indefinitely cache the list of connected
+    integrations; if a user connected an integration after creating an SDK
+    client, that integration would not have been accessible from the SDK
+    client.
+
+## 0.0.8
+Released on August 8, 2022.
+
+### Enhancements
+
+* Uses `pip freeze` to detect and capture local Python requirements when an
+    explicit set of requirements is not specified during function creation.
+* Adds download bars to CLI to demonstrate progress when downloading files from
+    S3. 
+    <img 
+         alt="Aqueduct now has progress bars when downloading compiled binaries from S3."
+         src="https://user-images.githubusercontent.com/867892/182453985-d0f5408b-8858-46c5-a8bc-e4e198e092ee.png" 
+         height="400px"
+     />
+* When running the Aqueduct server locally, the CLI now automatically opens a
+    browser tab with the Aqueduct UI on `aqueduct start` and passes the local
+    API key as a query parameter to automatically log in.
+* When running on EC2 with `--expose`, detects and populates the public IP 
+    address of the current machine in CLI output on `aqueduct start`.
+* Makes the file format parameter in the S3 integration a string, so users can
+    specify file format by passing in `"csv"`, `"json"`, etc.
+* Improves the layout and readability of the integrations UI page by adding
+    explicit cards for each integration and also labeling each one with its
+    name. <br />
+    <img 
+         alt="The integrations page has been reorganized to have a border around each image and a corresponding label." 
+         src="https://user-images.githubusercontent.com/867892/183465351-fe7724a3-049a-428c-acea-00413a5eea4e.png" 
+         height="400px"
+    />
+* Allows users to create operators from existing functions without redefining
+    the operator with a decorator -- using `aqueduct.to_operator`, an existing
+    function can be converted into an Aqueduct operator.
+* Reduces CLI log output by redirecting info and debug logs to a log file; adds
+    a corresponding `--verbose` flag to the CLI so users can see log output in
+    terminal if desired.
+* Reorganizes integration management behind a dropdown menu, adding option to
+    test whether the integration connection still works or not. <br />
+    <img
+         src="https://user-images.githubusercontent.com/867892/183466408-ffb9f69b-8080-4ce5-ae7e-884f11aae39b.png"
+         height="200px"
+         alt="A new organization for the integration details page adds an options dropdown next to the upload CSV button."
+     />
+* Adds "Workflows" section in the integration management page to show all workflows and operators associated with the integration.
+
+### Bugfixes
+* Fixes bug where interacting with the UI when the Aqueduct server was
+    off resulted in an unhelpful error message ("Failed to fetch."). The fix explicitly
+    detects whether the server is unreachable.
+* Fixes bug where missing dependencies for integrations (e.g., requiring a
+    Python package to access Postgres) were not explicitly surfaced to the user
+    -- a cryptic import error message has been replaced with an explicit
+    notification that a dependency needs to be installed.
+* Fixes bug where metric nodes were misformatted.
+* Fixes bug where loading large tables caused UI to significantly slow down
+    because React was blindly rendering all cells -- using virtualized tables,
+    the UI now only renders the data that is being shown on screen.
+
 ## 0.0.7
-Released on 8/1/2022
+Released on August 1, 2022.
 
 ### Enhancements
 * Upgrades to go-chi v5.
@@ -15,7 +237,7 @@ Released on 8/1/2022
 * Fixes bug where bottom sidesheet and DAG viewer were misaligned and improperly sized.
 
 ## 0.0.6
-Released on 7/25/2022
+Released on July 25, 2022.
 
 ### Enhancements
 * Prints error message as part of preview execution stack trace, not above it.
@@ -28,7 +250,7 @@ Released on 7/25/2022
 * Fixes bug where error and warning checks aren't properly distinguished.
 
 ## 0.0.5
-Released on 7/14/2022
+Released on July 14, 2022.
 
 ### Enhancements
 * Makes password optional when creating a Postgres connection.
@@ -44,9 +266,8 @@ Released on 7/14/2022
 
 None! :tada:
 
-
 ## 0.0.4
-Released on 7/7/2022
+Released on July 7, 2022.
 
 ### Key Features
 * Workflows can now have custom parameters! A workflow can have any numbers of parameters which can be used in Python operators or
@@ -71,7 +292,7 @@ Released on 7/7/2022
 * Deprecates use of ipynbname in the SDK, which prevented the SDK from running in some notebook environments.
 
 ## 0.0.3
-Released on 6/21/2022
+Released on June 21, 2022.
 
 ### Key Features
 * View what tables are present in an integration by clicking on the integration in the UI.
@@ -105,7 +326,7 @@ Released on 6/21/2022
 * [Boyuan Deng](https://github.com/Boyuan-Deng)
 
 ## 0.0.2
-Released on 6/9/2022
+Released on June 9, 2022.
 
 ### Enhancements
 * Allows users to start both the backend server and UI with `aqueduct start`
@@ -136,6 +357,6 @@ Released on 6/9/2022
 * [Wei Chen](https://github.com/likawind)
 
 ## 0.0.1
-Released on 5/26/2022
+Released on May 26, 2022.
 
 Initial release of the Aqueduct open-source project.

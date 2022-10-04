@@ -1,6 +1,7 @@
 import { Artifact } from './artifacts';
+import { EngineConfig } from './engine';
 import { normalizeOperator, Operator } from './operators';
-import ExecutionStatus from './shared';
+import ExecutionStatus, { ExecState } from './shared';
 
 export type S3Config = {
   region: string;
@@ -49,8 +50,9 @@ export type Workflow = {
 export type WorkflowDag = {
   id: string;
   workflow_id: string;
-  s3_config: S3Config;
   created_at: number;
+  s3_config: S3Config;
+  engine_config: EngineConfig;
 
   metadata?: Workflow;
   operators: { [id: string]: Operator };
@@ -79,6 +81,29 @@ export type GetWorkflowResponse = {
   workflow_dags: { [id: string]: WorkflowDag };
   workflow_dag_results: WorkflowDagResultSummary[];
   watcherAuthIds: string[];
+};
+
+export type SavedObject = {
+  operator_name: string;
+  modified_at: string;
+  integration_name: string;
+  integration_id: string;
+  service: string;
+  object_name: string;
+  update_mode: string;
+};
+
+export type ListWorkflowSavedObjectsResponse = {
+  object_details: SavedObject[];
+};
+
+export type SavedObjectDeletion = {
+  name: string;
+  exec_state: ExecState;
+};
+
+export type DeleteWorkflowResponse = {
+  saved_object_deletion_results: { [id: string]: SavedObjectDeletion[] };
 };
 
 export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {

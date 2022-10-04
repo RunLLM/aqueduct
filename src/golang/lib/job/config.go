@@ -8,6 +8,8 @@ type ManagerType string
 
 const (
 	ProcessType ManagerType = "process"
+	K8sType     ManagerType = "k8s"
+	LambdaType  ManagerType = "lambda"
 )
 
 type Config interface {
@@ -21,12 +23,37 @@ type ProcessConfig struct {
 	OperatorStorageDir    string `yaml:"operatorStorageDir" json:"operator_storage_dir"`
 }
 
+type K8sJobManagerConfig struct {
+	KubeconfigPath     string `yaml:"kubeconfigPath" json:"kubeconfig_path"`
+	ClusterName        string `yaml:"clusterName" json:"cluster_name"`
+	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+
+	// System config, will have defaults
+	AwsRegion string `yaml:"awsRegion" json:"aws_region"`
+}
+
+type LambdaJobManagerConfig struct {
+	RoleArn            string `yaml:"roleArn" json:"role_arn"`
+	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+}
+
 func (*ProcessConfig) Type() ManagerType {
 	return ProcessType
 }
 
+func (*K8sJobManagerConfig) Type() ManagerType {
+	return K8sType
+}
+
+func (*LambdaJobManagerConfig) Type() ManagerType {
+	return LambdaType
+}
+
 func RegisterGobTypes() {
 	gob.Register(&ProcessConfig{})
+	gob.Register(&K8sJobManagerConfig{})
 	gob.Register(&WorkflowSpec{})
 	gob.Register(&WorkflowRetentionSpec{})
 }

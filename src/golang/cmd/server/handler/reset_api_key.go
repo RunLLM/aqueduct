@@ -18,6 +18,14 @@ type resetApiKeyResponse struct {
 	ApiKey string `json:"apiKey"`
 }
 
+// Route: /api/keys/reset
+// Method: POST
+// Request:
+//
+//	Headers:
+//		`api-key`: user's current API Key
+//
+// Response: serialized `resetApiKeyResponse` object containing the new key.
 type ResetApiKeyHandler struct {
 	PostHandler
 

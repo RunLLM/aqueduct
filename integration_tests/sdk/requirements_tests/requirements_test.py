@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
@@ -37,12 +39,12 @@ def _run_shell_command(cmd: str):
 
 def _uninstall_transformers_package():
     print("Uninstalling `transformers` package.")
-    _run_shell_command("pip3 uninstall -y transformers")
+    _run_shell_command(f"{sys.executable} -m pip uninstall -y transformers")
 
 
 def _install_transformers_package():
     print("Installing `transformers` package.")
-    _run_shell_command("pip3 install transformers")
+    _run_shell_command(f"{sys.executable} -m pip install transformers")
 
 
 def _check_infer_requirements(transformers_exists: bool):
@@ -70,9 +72,8 @@ def test_infer_requirements(client):
     # If no requirements are supplied, our inference will not pick up the transformers package.
     db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
-    without_requirements_table = sentiment_prediction_without_reqs_path(table)
     with pytest.raises(AqueductError):
-        without_requirements_table.get()
+        without_requirements_table = sentiment_prediction_without_reqs_path(table)
 
     _check_infer_requirements(transformers_exists=False)
     _install_transformers_package()

@@ -18,6 +18,10 @@ import (
 	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_workflow_dag_engine_config"
 	_000014 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000014_add_exec_state_column_to_artifact_result"
 	_000015 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000015_artifact_result_exec_state_column_backfill"
+	_000016 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000016_add_artifact_type_column_to_artifact"
+	_000017 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000017_update_to_canceled_status"
+	_000018 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000018_add_dag_result_exec_state_column"
+	_000019 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000019_add_serialization_type_value_to_param_op"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -114,5 +118,29 @@ func init() {
 		upPostgres: _000015.Up, upSqlite: _000015.Up,
 		downPostgres: _000015.Down,
 		name:         "backfill exec state column in artifact result",
+	}
+
+	registeredMigrations[16] = &migration{
+		upPostgres: _000016.UpPostgres, upSqlite: _000016.UpSqlite,
+		downPostgres: _000016.DownPostgres,
+		name:         "add type column to artifact",
+	}
+
+	registeredMigrations[17] = &migration{
+		upPostgres: _000017.Up, upSqlite: _000017.Up,
+		downPostgres: _000017.Down,
+		name:         "add canceled status to results",
+	}
+
+	registeredMigrations[18] = &migration{
+		upPostgres: _000018.UpPostgres, upSqlite: _000018.UpSqlite,
+		downPostgres: _000018.DownPostgres,
+		name:         "add exec state to workflow_dag_result",
+	}
+
+	registeredMigrations[19] = &migration{
+		upPostgres: _000019.Up, upSqlite: _000019.Up,
+		downPostgres: _000019.Down,
+		name:         "add serialization type and value to param op",
 	}
 }

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../../../stores/store';
 import { getUpstreamOperator } from '../../../utils/artifacts';
-import DataPreviewer from '../../layouts/data_previewer';
+import DataPreviewer from '../../DataPreviewer';
 
 type Props = {
   artifactId: string;
@@ -27,7 +27,10 @@ const DataPreviewSideSheet: React.FC<Props> = ({ artifactId }) => {
   );
 
   return (
-    <Box p={1} sx={{ height: '75%', overflow: 'auto' }}>
+    <Box
+      p={1}
+      sx={{ height: '100%', width: '100%', overflow: 'auto', minWidth: '100%' }}
+    >
       <DataPreviewer
         previewData={artifactResult}
         error={operatorResult?.result?.error}

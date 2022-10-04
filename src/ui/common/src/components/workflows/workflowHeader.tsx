@@ -10,24 +10,39 @@ import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
+import { handleLoadIntegrations } from '../../reducers/integrations';
+import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
+import { AppDispatch } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
+import {
+  Artifact,
+  ArtifactType,
+  SerializationType,
+} from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
+import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
+import Status from './workflowStatus';
 
 type Props = {
   user: UserProfile;
   workflowDag: WorkflowDag;
+  workflowId: string;
 };
 
-const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
+const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
+  const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
+  const navigate = useNavigate();
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -42,8 +57,20 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleSuccessToastClose = () => {
+  const handleSuccessToastClose = async () => {
     setShowSuccessToast(false);
+
+    try {
+      await dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
+      await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+      dispatch(selectResultIdx(0));
+      navigate(`/workflow/${workflowId}`, { replace: true });
+    } catch (error) {
+      setErrorMessage(
+        `We're having trouble getting the latest workflow. Please try refreshing the page.`
+      );
+      setShowErrorToast(true);
+    }
   };
 
   const handleErrorToastClose = () => {
@@ -72,14 +99,62 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     );
   }
 
-  const paramNameToDefault = Object.assign(
+  const showAirflowUpdateWarning =
+    workflowDag.engine_config.type === EngineType.Airflow &&
+    !workflowDag.engine_config.airflow_config?.matches_airflow;
+  const airflowUpdateWarning = (
+    <Box maxWidth="800px">
+      <Alert severity="warning">
+        Please copy the latest Airflow DAG file to your Airflow server if you
+        have not done so already. New Airflow DAG runs will not be synced
+        properly with Aqueduct until you have copied the file.
+      </Alert>
+    </Box>
+  );
+
+  const paramNameToDisplayProps = Object.assign(
     {},
     ...Object.values(workflowDag.operators)
       .filter((operator) => {
         return operator.spec.param !== undefined;
       })
       .map((operator) => {
-        return { [operator.name]: operator.spec.param.val };
+        // Parameter operators should only have a single output.
+        if (operator.outputs.length > 1) {
+          console.error('Parameter operator should not have multiple outputs.');
+        }
+
+        // Some types of parameters cannot be easily customized from a textfield on the UI.
+        // These types are not json-able and cannot be easily typed as strings.
+        const outputArtifact: Artifact =
+          workflowDag.artifacts[operator.outputs[0]];
+        const isCustomizable = ![
+          ArtifactType.Table,
+          ArtifactType.Bytes,
+          ArtifactType.Image,
+          ArtifactType.Picklable,
+        ].includes(outputArtifact.type);
+
+        let placeholder: string;
+        let helperText: string;
+        if (isCustomizable) {
+          placeholder = atob(operator.spec.param.val);
+          helperText = '';
+        } else {
+          placeholder = '';
+          helperText =
+            outputArtifact.type[0].toUpperCase() +
+            outputArtifact.type.substr(1) +
+            ' type is not yet customizable from the UI.';
+        }
+
+        return {
+          [operator.name]: {
+            placeholder: placeholder,
+            isCustomizable: isCustomizable,
+            helperText: helperText,
+          },
+        };
       })
   );
 
@@ -88,11 +163,38 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
     [key: string]: string;
   }>({});
 
+  // Returns the map of parameters, from name to spec (which includes the base64-encoded
+  // value and serialization_type).
+  const serializeParameters = () => {
+    const serializedParams = {};
+    Object.entries(paramNameToValMap).forEach(([key, strVal]) => {
+      // Serialize the user's input string appropriately into base64. The input can either be a
+      // 1) number 2) string 3) json.
+      try {
+        const val = JSON.parse(strVal);
+
+        // All jsonable values are serialized as json.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.Json,
+        };
+      } catch (err) {
+        // Non-jsonable values (such as plain strings) are serialized as strings.
+        serializedParams[key] = {
+          val: btoa(strVal),
+          serialization_type: SerializationType.String,
+        };
+      }
+    });
+    return serializedParams;
+  };
+
   const triggerWorkflowRun = () => {
     const parameters = new FormData();
-    parameters.append('parameters', JSON.stringify(paramNameToValMap));
+    parameters.append('parameters', JSON.stringify(serializeParameters()));
 
     setShowRunWorkflowDialog(false);
+
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/refresh`, {
       method: 'POST',
       headers: {
@@ -126,16 +228,16 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
       <DialogTitle>Trigger a Workflow Run?</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
-          This will a run of <code>{name}</code> immediately.
+          This will trigger a run of <code>{name}</code> immediately.
         </Box>
 
-        {Object.keys(paramNameToDefault).length > 0 && (
+        {Object.keys(paramNameToDisplayProps).length > 0 && (
           <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
             {' '}
             Parameters{' '}
           </Typography>
         )}
-        {Object.keys(paramNameToDefault).map((paramName) => {
+        {Object.keys(paramNameToDisplayProps).map((paramName) => {
           return (
             <Box key={paramName}>
               <Typography>
@@ -143,7 +245,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
               </Typography>
               <TextField
                 fullWidth
-                placeholder={paramNameToDefault[paramName]}
+                disabled={!paramNameToDisplayProps[paramName].isCustomizable}
+                helperText={paramNameToDisplayProps[paramName].helperText}
+                placeholder={paramNameToDisplayProps[paramName].placeholder}
                 onChange={(e) => {
                   paramNameToValMap[paramName] = e.target.value;
                   setParamNameToValMap(paramNameToValMap);
@@ -170,11 +274,16 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h3" sx={{ fontFamily: 'Monospace' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <Typography
+            variant="h3"
+            sx={{ fontFamily: 'Monospace', mr: 2, lineHeight: 1 }}
+          >
             {name}
           </Typography>
+
+          <Status status={workflow.dagResults[0].status} />
         </Box>
 
         <Box sx={{ ml: 2 }}>
@@ -188,6 +297,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
               <FontAwesomeIcon icon={faGear} />
             </Box>
           </Button>
+
           <WorkflowSettings
             user={user}
             open={showSettings}
@@ -227,12 +337,14 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         {runWorkflowDialog}
       </Box>
 
+      {showAirflowUpdateWarning && airflowUpdateWarning}
+
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showSuccessToast}
         onClose={handleSuccessToastClose}
         key={'workflowheader-success-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleSuccessToastClose}
@@ -247,7 +359,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag }) => {
         open={showErrorToast}
         onClose={handleErrorToastClose}
         key={'workflowheader-error-snackbar'}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
       >
         <Alert
           onClose={handleErrorToastClose}

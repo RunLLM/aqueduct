@@ -6,6 +6,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -15,7 +23,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/register_airflow
+// Route: /workflow/register/airflow
 // Method: POST
 // Params: none
 // Request
@@ -30,6 +38,16 @@ import (
 
 type RegisterAirflowWorkflowHandler struct {
 	RegisterWorkflowHandler
+
+	WorkflowDagReader       workflow_dag.Reader
+	WorkflowDagEdgeReader   workflow_dag_edge.Reader
+	WorkflowDagResultReader workflow_dag_result.Reader
+	UserReader              user.Reader
+
+	WorkflowDagResultWriter workflow_dag_result.Writer
+	OperatorResultWriter    operator_result.Writer
+	ArtifactResultWriter    artifact_result.Writer
+	NotificationWriter      notification.Writer
 }
 
 type registerAirflowWorkflowArgs struct {
@@ -38,8 +56,9 @@ type registerAirflowWorkflowArgs struct {
 
 type registerAirflowWorkflowResponse struct {
 	// The newly registered workflow's id.
-	Id   uuid.UUID `json:"id"`
-	File string    `json:"file"`
+	Id       uuid.UUID `json:"id"`
+	File     string    `json:"file"`
+	IsUpdate bool      `json:"is_update"`
 }
 
 func (*RegisterAirflowWorkflowHandler) Name() string {
@@ -56,7 +75,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		r,
 		aqContext.Id,
 		h.GithubManager,
-		h.StorageConfig,
+		aqContext.StorageConfig,
 	)
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to register workflow.")
@@ -66,6 +85,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrganizationId,
+		aqContext.Id,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -86,8 +106,10 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
 	}
 
-	if collidingWorkflow != nil {
-		return nil, http.StatusBadRequest, errors.New("Updates are not currently supported for Workflows running on Airflow")
+	isUpdate := collidingWorkflow != nil
+	if isUpdate {
+		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
+		dagSummary.Dag.WorkflowId = collidingWorkflow.Id
 	}
 
 	if err := dag_utils.Validate(
@@ -103,8 +125,9 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 	return &registerAirflowWorkflowArgs{
 		registerWorkflowArgs: registerWorkflowArgs{
 			AqContext:                aqContext,
-			workflowDag:              dagSummary.Dag,
+			dbWorkflowDag:            dagSummary.Dag,
 			operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
+			isUpdate:                 isUpdate,
 		},
 	}, http.StatusOK, nil
 }
@@ -114,7 +137,45 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	emptyResp := registerAirflowWorkflowResponse{}
 
-	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
+	if args.isUpdate {
+		// Sync existing Airflow DAGRuns before DAG is updated
+		workflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
+			ctx,
+			args.dbWorkflowDag.WorkflowId,
+			h.WorkflowReader,
+			h.WorkflowDagReader,
+			h.OperatorReader,
+			h.ArtifactReader,
+			h.WorkflowDagEdgeReader,
+			h.Database,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
+		}
+
+		// NOTE (saurav): This is not perfect because if there are any in progress Airflow DAGRuns, those will
+		// not get synced, and may fail to sync later on if the DAG structure has changed.
+		if err := airflow.SyncWorkflowDags(
+			ctx,
+			[]uuid.UUID{workflowDag.Id},
+			h.WorkflowReader,
+			h.WorkflowDagReader,
+			h.OperatorReader,
+			h.ArtifactReader,
+			h.WorkflowDagEdgeReader,
+			h.WorkflowDagResultReader,
+			h.WorkflowDagWriter,
+			h.WorkflowDagResultWriter,
+			h.OperatorResultWriter,
+			h.ArtifactResultWriter,
+			h.Vault,
+			h.Database,
+		); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
+		}
+	}
+
+	if _, err := operator_utils.UploadOperatorFiles(ctx, args.dbWorkflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -126,7 +187,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.workflowDag,
+		args.dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -141,12 +202,46 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.workflowDag.Metadata.Id = workflowId
+	if args.isUpdate {
+		// Update workflow metadata and schedule if necessary
+		changes := map[string]interface{}{}
+		if args.dbWorkflowDag.Metadata.Name != "" {
+			changes[workflow.NameColumn] = args.dbWorkflowDag.Metadata.Name
+		}
+
+		if args.dbWorkflowDag.Metadata.Description != "" {
+			changes[workflow.DescriptionColumn] = args.dbWorkflowDag.Metadata.Description
+		}
+
+		if args.dbWorkflowDag.Metadata.Schedule.Trigger != "" {
+			changes[workflow.ScheduleColumn] = &args.dbWorkflowDag.Metadata.Schedule
+		}
+
+		_, err := h.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, txn)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
+		}
+	}
+
+	// This is a hack to read the actual operator and artifact IDs generated by the database, since
+	// WriteWorkflowDagToDatabase does not update these values.
+	workflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
+		ctx,
+		workflowId,
+		h.WorkflowReader,
+		h.WorkflowDagReader,
+		h.OperatorReader,
+		h.ArtifactReader,
+		h.WorkflowDagEdgeReader,
+		txn,
+	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
 
 	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
-		args.workflowDag,
-		h.StorageConfig,
+		workflowDag,
 		h.JobManager,
 		h.Vault,
 		txn,
@@ -160,22 +255,26 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	watchWorkflowArgs := &watchWorkflowArgs{
-		AqContext:  args.AqContext,
-		workflowId: workflowId,
-	}
+	if !args.isUpdate {
+		// Add watcher since this is a new workflow
+		watchWorkflowArgs := &watchWorkflowArgs{
+			AqContext:  args.AqContext,
+			workflowId: workflowId,
+		}
 
-	_, _, err = (&WatchWorkflowHandler{
-		Database:              h.Database,
-		WorkflowReader:        h.WorkflowReader,
-		WorkflowWatcherWriter: h.WorkflowWatcherWriter,
-	}).Perform(ctx, watchWorkflowArgs)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
+		_, _, err = (&WatchWorkflowHandler{
+			Database:              h.Database,
+			WorkflowReader:        h.WorkflowReader,
+			WorkflowWatcherWriter: h.WorkflowWatcherWriter,
+		}).Perform(ctx, watchWorkflowArgs)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
+		}
 	}
 
 	return &registerAirflowWorkflowResponse{
-		Id:   workflowId,
-		File: string(airflowFile),
+		Id:       workflowId,
+		File:     string(airflowFile),
+		IsUpdate: args.isUpdate,
 	}, http.StatusOK, nil
 }

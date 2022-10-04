@@ -1,12 +1,24 @@
-import json
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import pandas as pd
 import pytest
-from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
+from aqueduct.enums import ExecutionStatus
+from aqueduct.error import (
+    AqueductError,
+    ArtifactNeverComputedException,
+    InvalidUserArgumentException,
+)
 from constants import SENTIMENT_SQL_QUERY
-from utils import generate_new_flow_name, get_integration_name, run_flow_test, wait_for_flow_runs
+from pandas._testing import assert_frame_equal
+from utils import (
+    delete_flow,
+    generate_new_flow_name,
+    get_integration_name,
+    run_flow_test,
+    wait_for_flow_runs,
+)
 
 from aqueduct import metric, op
 
@@ -51,17 +63,9 @@ def test_basic_param_creation(client):
     assert param.get() == kv
 
     kv_df = convert_dict_to_df(param)
-    assert kv_df.get().equals(pd.DataFrame(data=kv))
-
-
-def test_non_jsonable_parameter(client):
-    with pytest.raises(InvalidUserArgumentException):
-        _ = client.create_param(name="bad param", default=b"cant serialize me")
-
-    param = client.create_param(name="number", default=8)
-    param_doubled = double_number_input(param)
-    with pytest.raises(InvalidUserArgumentException):
-        _ = param_doubled.get(parameters={"number": b"cant serialize me"})
+    # We don't use df.equals because when comparing floating point values, our internal serialization
+    # may have changed the value's accuracy. assert_frame_equal takes this into account.
+    assert_frame_equal(kv_df.get(), pd.DataFrame(data=kv))
 
 
 def test_get_with_custom_parameter(client):
@@ -74,6 +78,33 @@ def test_get_with_custom_parameter(client):
 
     with pytest.raises(InvalidUserArgumentException):
         param_doubled.get(parameters={"non-existant param": 10})
+
+    # Check that changing the type of the parameter will error.
+    with pytest.raises(AqueductError):
+        param_doubled.get(parameters={"number": "NOT A NUMBER"})
+
+
+def test_implicitly_created_parameter(client):
+    @op
+    def func(foo):
+        return foo
+
+    result = func(2)
+    assert result.get() == 2
+    assert result.get(parameters={"foo": 10}) == 10
+
+    bar_param = client.create_param("bar", default="hello")
+
+    @op
+    def another_func(bar):
+        return bar
+
+    with pytest.raises(InvalidUserArgumentException):
+        # This should error because we try to implicitly create a parameter "bar" but it already exists.
+        result = another_func(2)
+
+    result = another_func(bar_param)
+    assert result.get() == "hello"
 
 
 @op
@@ -97,16 +128,6 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-def _check_param_vals(dag, expected_vals: List[Any]):
-    """Check that all parameter artifacts have a one-to-one correspondence with `expected_vals`."""
-    artifacts = dag.list_artifacts(filter_to=[ArtifactType.PARAM])
-    for artifact in artifacts:
-        op = dag.must_get_operator(with_output_artifact_id=artifact.id)
-        param_val = json.loads(op.spec.param.val)
-        assert param_val in expected_vals
-        expected_vals.remove(param_val)
-
-
 @pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
@@ -115,11 +136,13 @@ def test_edit_param_for_flow(client):
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
 
-    flow_name = "Edit Parameter Test Flow"
-    flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
-    flow_id = flow.id()
+    flow_name = generate_new_flow_name()
 
+    flow_id = None
     try:
+        flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+        flow_id = flow.id()
+
         # Edit the flow with a different row to append and re-publish
         new_row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
         new_row_param = client.create_param(name="new row", default=new_row_to_add)
@@ -134,11 +157,19 @@ def test_edit_param_for_flow(client):
         # Verify that the parameters were edited as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [row_to_add])
-        _check_param_vals(flow.latest()._dag, [new_row_to_add])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="new row")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == row_to_add
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="new row")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == new_row_to_add
 
     finally:
-        client.delete_flow(flow.id())
+        client.delete_flow(flow_id)
 
     assert flow_id == flow.id()
 
@@ -168,13 +199,32 @@ def test_trigger_flow_with_different_param(client):
 
     try:
         client.trigger(flow.id(), parameters={"num1": 10})
-        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
 
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, [5, 5])
-        _check_param_vals(flow.latest()._dag, [5, 10])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        num1_artifact = historical_run.artifact(name="num1")
+        num2_artifact = historical_run.artifact(name="num2")
+        assert isinstance(num1_artifact, NumericArtifact)
+        assert isinstance(num2_artifact, NumericArtifact)
+        assert num1_artifact.get() == 5
+        assert num2_artifact.get() == 5
+
+        latest_run = flow.latest()
+        num1_artifact = latest_run.artifact(name="num1")
+        num2_artifact = latest_run.artifact(name="num2")
+        assert isinstance(num1_artifact, NumericArtifact)
+        assert isinstance(num2_artifact, NumericArtifact)
+        assert num1_artifact.get() == 10
+        assert num2_artifact.get() == 5
+
     finally:
         client.delete_flow(flow.id())
 
@@ -187,16 +237,168 @@ def test_trigger_flow_with_different_sql_param(client):
     sql_artifact = db.sql(query="select * from {{ table_name}}")
 
     flow_name = generate_new_flow_name()
-    flow = run_flow_test(client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False)
 
+    flow_id = None
     try:
+        flow = run_flow_test(
+            client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False
+        )
+        flow_id = flow.id()
+
         client.trigger(flow.id(), parameters={"table_name": "customer_activity"})
-        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        )
 
         # Verify the parameters were configured as expected.
         flow_runs = flow.list_runs()
         assert len(flow_runs) == 2
-        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, expected_vals=["hotel_reviews"])
-        _check_param_vals(flow.latest()._dag, expected_vals=["customer_activity"])
+
+        historical_run = flow.fetch(flow_runs[1]["run_id"])
+        param_artifact = historical_run.artifact(name="table_name")
+        assert isinstance(param_artifact, GenericArtifact)
+        assert param_artifact.get() == "hotel_reviews"
+
+        latest_run = flow.latest()
+        param_artifact = latest_run.artifact(name="table_name")
+        assert param_artifact.get() == "customer_activity"
+        assert isinstance(param_artifact, GenericArtifact)
     finally:
-        client.delete_flow(flow.id())
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_parameterizing_published_artifact(client):
+    @op
+    def generate_num():
+        return 1234
+
+    output = generate_num()
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="generate_num artifact")
+
+        assert artifact.get() == 1234
+        assert isinstance(artifact, NumericArtifact)
+        with pytest.raises(NotImplementedError):
+            artifact.get(parameters={"name": "val"})
+
+    finally:
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_materializing_failed_artifact(client):
+    @op
+    def fail_fn():
+        5 / 0
+
+    output = fail_fn.lazy()
+    flow_id = None
+    try:
+        flow = run_flow_test(
+            client, artifacts=[output], expect_success=False, delete_flow_after=False
+        )
+        flow_id = flow.id()
+
+        artifact = flow.latest().artifact(name="fail_fn artifact")
+        assert isinstance(artifact, GenericArtifact)
+        with pytest.raises(ArtifactNeverComputedException):
+            artifact.get()
+
+    finally:
+        client.delete_flow(flow_id)
+
+
+@pytest.mark.publish
+def test_non_jsonable_param_types(client):
+    class EmptyClass:
+        """
+        For some reason, this class must be nested inside this test,
+        otherwise we get a pickle error on the backend: 'No module named `param_test`'.
+        """
+
+        def __init__(self):
+            pass
+
+    @op
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is pickleabe, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        assert input == EmptyClass
+        return input
+
+    picklable_param = client.create_param("pickleable", default=EmptyClass)
+    pickle_output = must_be_picklable(picklable_param)
+
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == EmptyClass
+
+    @op
+    def must_be_bytes(input):
+        assert isinstance(input, bytes)
+        return input
+
+    bytes_param = client.create_param("bytes", default=b"hello world")
+    bytes_output = must_be_bytes(bytes_param)
+
+    assert isinstance(bytes_output, GenericArtifact)
+    assert bytes_output.get() == b"hello world"
+
+    @op
+    def must_be_string(input):
+        assert isinstance(input, str)
+        return input
+
+    string_param = client.create_param("string", default="I am a string")
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "I am a string"
+
+    @op
+    def must_be_tuple(input):
+        assert isinstance(input, tuple)
+        return input
+
+    tuple_param = client.create_param("tuple", default=(1, 2, 3))
+    tuple_output = must_be_tuple(tuple_param)
+    assert isinstance(tuple_output, GenericArtifact)
+    assert tuple_output.get() == (1, 2, 3)
+
+    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output])
+
+
+def test_parameter_type_changes(client):
+    @op
+    def noop(input):
+        return input
+
+    param = client.create_param("number", default=1234)
+    output = noop(param)
+
+    # TODO(ENG-1684): This should be a more specific error.
+    with pytest.raises(Exception):
+        output.get(parameters={"number": "This is a string."})
+
+    flow_id = None
+    try:
+        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow_id = flow.id()
+
+        # TODO(ENG-1684): we should not allow the user to trigger successfully with the wrong type.
+        client.trigger(flow_id, parameters={"number": "This is a string"})
+        wait_for_flow_runs(
+            client,
+            flow_id,
+            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+        )
+    finally:
+        delete_flow(client, flow_id)

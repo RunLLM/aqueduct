@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
@@ -12,15 +13,25 @@ import (
 
 // seedWorkflowDagResultWithDags populates the workflow_dag_result table with count
 // workflow dag results where workflow_dag_id is set to the values provided in workflowDagIds.
-func seedWorkflowDagResultWithDags(t *testing.T, count int, workflowDagIds []uuid.UUID) []workflow_dag_result.WorkflowDagResult {
+func seedWorkflowDagResultWithDags(
+	t *testing.T,
+	count int,
+	workflowDagIds []uuid.UUID,
+) []workflow_dag_result.WorkflowDagResult {
 	require.Equal(t, count, len(workflowDagIds))
 
+	now := time.Now()
 	dagResults := make([]workflow_dag_result.WorkflowDagResult, 0, count)
-
 	for i := 0; i < count; i++ {
 		testDagResult, err := writers.workflowDagResultWriter.CreateWorkflowDagResult(
 			context.Background(),
 			workflowDagIds[i],
+			&shared.ExecutionState{
+				Status: shared.PendingExecutionStatus,
+				Timestamps: &shared.ExecutionTimestamps{
+					PendingAt: &now,
+				},
+			},
 			db,
 		)
 		require.Nil(t, err)
@@ -37,15 +48,26 @@ func TestCreateWorkflowDagResult(t *testing.T) {
 	defer resetDatabase(t)
 
 	dags := seedWorkflowDag(t, 1)
+	now := time.Now()
+	execState := &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &now,
+		},
+	}
 
 	expectedDagResult := &workflow_dag_result.WorkflowDagResult{
 		WorkflowDagId: dags[0].Id,
 		Status:        shared.PendingExecutionStatus,
+		ExecState: shared.NullExecutionState{
+			ExecutionState: *execState,
+		},
 	}
 
 	actualDagResult, err := writers.workflowDagResultWriter.CreateWorkflowDagResult(
 		context.Background(),
 		expectedDagResult.WorkflowDagId,
+		execState,
 		db,
 	)
 	require.Nil(t, err)

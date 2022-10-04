@@ -1,10 +1,13 @@
 boto3
 cloudpickle
+google-cloud-storage
 numpy
 pandas
 pydantic
 SQLAlchemy
 distro
 pyyaml
-typing_extensions
-aqueduct-sdk==0.0.7
+typing_extensions>=4.3.0
+Pillow
+packaging
+aqueduct-sdk==0.0.16

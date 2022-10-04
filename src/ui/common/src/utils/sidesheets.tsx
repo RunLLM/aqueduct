@@ -4,10 +4,6 @@ import { Node } from 'react-flow-renderer';
 import DataPreviewSideSheet from '../components/workflows/SideSheets/DataPreviewSideSheet';
 import OperatorResultsSideSheet from '../components/workflows/SideSheets/OperatorResultsSideSheet';
 import { NodeType, SelectedNode, selectNode } from '../reducers/nodeSelection';
-import {
-  setBottomSideSheetOpenState,
-  setRightSideSheetOpenState,
-} from '../reducers/openSideSheet';
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
 import { ReactFlowNodeData } from './reactflow';
@@ -21,8 +17,6 @@ import { ReactFlowNodeData } from './reactflow';
 export const sideSheetSwitcher = (dispatch: AppDispatch) => {
   return (event: React.MouseEvent, element: Node<ReactFlowNodeData>): void => {
     dispatch(selectNode({ id: element.id, type: element.type as NodeType }));
-    dispatch(setRightSideSheetOpenState(true));
-    dispatch(setBottomSideSheetOpenState(true));
   };
 };
 
@@ -32,9 +26,13 @@ export function getDataSideSheetContent(
 ): React.ReactElement {
   switch (currentNode.type) {
     case NodeType.BoolArtifact:
-    case NodeType.FloatArtifact:
+    case NodeType.NumericArtifact:
     case NodeType.TableArtifact:
     case NodeType.JsonArtifact:
+    case NodeType.StringArtifact:
+    case NodeType.ImageArtifact:
+    case NodeType.DictArtifact:
+    case NodeType.GenericArtifact:
       return <DataPreviewSideSheet artifactId={currentNode.id} />;
     case NodeType.CheckOp:
     case NodeType.MetricOp:

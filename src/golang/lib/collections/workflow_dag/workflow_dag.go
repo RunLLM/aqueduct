@@ -53,6 +53,11 @@ type Reader interface {
 		operatorId uuid.UUID,
 		db database.Database,
 	) ([]DBWorkflowDag, error)
+	GetWorkflowDagsMapByArtifactResultIds(
+		ctx context.Context,
+		artifactResultIds []uuid.UUID,
+		db database.Database,
+	) (map[uuid.UUID]DBWorkflowDag, error)
 }
 
 type Writer interface {

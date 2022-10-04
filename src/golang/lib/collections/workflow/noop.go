@@ -126,7 +126,7 @@ func (r *noopReaderImpl) GetWorkflowsWithLatestRunResult(
 	ctx context.Context,
 	organizationId string,
 	db database.Database,
-) ([]latestWorkflowResponse, error) {
+) ([]LatestWorkflowResponse, error) {
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 

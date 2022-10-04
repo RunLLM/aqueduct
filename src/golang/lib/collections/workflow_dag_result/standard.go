@@ -3,7 +3,6 @@ package workflow_dag_result
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -24,12 +23,17 @@ type standardWriterImpl struct{}
 func (w *standardWriterImpl) CreateWorkflowDagResult(
 	ctx context.Context,
 	workflowDagId uuid.UUID,
+	execState *shared.ExecutionState,
 	db database.Database,
 ) (*WorkflowDagResult, error) {
-	insertColumns := []string{WorkflowDagIdColumn, StatusColumn, CreatedAtColumn}
+	insertColumns := []string{WorkflowDagIdColumn, StatusColumn, CreatedAtColumn, ExecStateColumn}
 	insertWorkflowDagResultStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{workflowDagId, shared.PendingExecutionStatus, time.Now()}
+	if execState.Timestamps == nil || execState.Timestamps.PendingAt == nil {
+		return nil, ErrInvalidPendingTimestamp
+	}
+
+	args := []interface{}{workflowDagId, shared.PendingExecutionStatus, *(execState.Timestamps.PendingAt), execState}
 
 	var workflowDagResult WorkflowDagResult
 	err := db.Query(ctx, &workflowDagResult, insertWorkflowDagResultStmt, args...)
@@ -83,6 +87,7 @@ func (r *standardReaderImpl) GetWorkflowDagResultsByWorkflowId(
 	workflowId uuid.UUID,
 	db database.Database,
 ) ([]WorkflowDagResult, error) {
+	// Get all workflow DAGs for the workflow specified by `workflowId`
 	query := fmt.Sprintf(`
 		SELECT %s FROM workflow_dag_result, workflow_dag 
 		WHERE workflow_dag_result.workflow_dag_id = workflow_dag.id AND workflow_dag.workflow_id = $1;`,
@@ -99,6 +104,7 @@ func (r *standardReaderImpl) GetKOffsetWorkflowDagResultsByWorkflowId(
 	k int,
 	db database.Database,
 ) ([]WorkflowDagResult, error) {
+	// Get all workflow DAGs for the workflow specified by `workflowId` except for the k latest.
 	query := fmt.Sprintf(`
 		SELECT %s FROM workflow_dag_result, workflow_dag 
 		WHERE workflow_dag_result.workflow_dag_id = workflow_dag.id AND workflow_dag.workflow_id = $1

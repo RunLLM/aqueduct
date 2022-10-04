@@ -3,10 +3,11 @@ package dag
 import (
 	"context"
 
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
+	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -16,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -34,18 +36,14 @@ type WorkflowDag interface {
 	// OperatorInputs returns all the artifacts that are fed as input to the given operator.
 	OperatorInputs(operator.Operator) ([]artifact.Artifact, error)
 
-	// InitializeResult initializes the dag result in the database.
-	// Also initializes the operators and artifacts contained in this dag.
-	InitializeResults(ctx context.Context) error
-
-	// PersistResult updates the dag result in the database after execution.
-	// InitializeResult() must have already been called.
-	// *Does not* persist the operators or artifacts contained in this dag.
-	PersistResult(ctx context.Context, status shared.ExecutionStatus) error
+	// InitOpAndArtifactResults initializes the operators and artifact results for this dag.
+	InitOpAndArtifactResults(ctx context.Context) error
 }
 
 type workflowDagImpl struct {
 	dbWorkflowDag *workflow_dag.DBWorkflowDag
+	// resultID corresponds to the WorkflowDagResult created for the current run of this dag
+	resultID uuid.UUID
 
 	operators           map[uuid.UUID]operator.Operator
 	artifacts           map[uuid.UUID]artifact.Artifact
@@ -58,121 +56,238 @@ type workflowDagImpl struct {
 	notificationWriter notification.Writer
 	userReader         user.Reader
 	db                 database.Database
+}
 
-	// Corresponds to the workflow dag result entry in the database.
-	// This is empty if InitializeResultsj() has not been called.
-	resultID uuid.UUID
+// Assumption: all dag's start with operators.
+// computeArtifactSignatures traverses over the entire dag structure from beginning to end,
+// computing the signatures for each artifact. These signatures are returned in a map keyed
+// by the artifact's original ID.
+// `opIDsByInputArtifact` does not contain entries for terminal artifacts.
+func computeArtifactSignatures(
+	dbOperators map[uuid.UUID]db_operator.DBOperator,
+	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
+	numArtifacts int,
+) (map[uuid.UUID]uuid.UUID, error) {
+	artifactIDToSignature := make(map[uuid.UUID]uuid.UUID, numArtifacts)
+
+	// Queue that stores the frontier of operators as we perform a BFS over the dag.
+	q := make([]uuid.UUID, 0, 1)
+	for _, dbOperator := range dbOperators {
+		if len(dbOperator.Inputs) == 0 {
+			q = append(q, dbOperator.Id)
+		}
+	}
+
+	processedArtifactIds := make(map[uuid.UUID]bool, numArtifacts)
+	for len(q) > 0 {
+		// Pop the first operator off of the queue.
+		currOp := dbOperators[q[0]]
+		q = q[1:]
+
+		// Skip operators with no output artifacts.
+		if len(currOp.Outputs) == 0 {
+			continue
+		}
+
+		// Represents the bytes prefix that we want to hash for each output artifact.
+		// Is computed to be the concatenation of the operator's input signatures, along with
+		// the parameter value of the operator (if the operator is a parameter).
+		// These bytes are meant to be concatenated with each output artifact's id and the result
+		// hashed in order to obtain the signature for each output artifact.
+		inputBytesToHash := []byte{}
+		for _, inputArtifactID := range currOp.Inputs {
+			inputArtifactSignature, ok := artifactIDToSignature[inputArtifactID]
+			if !ok {
+				return nil, errors.Newf("Unable to find signature for input artifact %s", inputArtifactID)
+			}
+			inputBytesToHash = append(inputBytesToHash, []byte(inputArtifactSignature.String())...)
+		}
+
+		// If the operator produces a parameter artifact, we also need to hash against the parameterized value.
+		if currOp.Spec.Type() == db_operator.ParamType {
+			inputBytesToHash = append(inputBytesToHash, []byte(currOp.Spec.Param().Val)...)
+		}
+
+		// Compute that signature for each output artifact.
+		for _, outputArtifactID := range currOp.Outputs {
+			// NOTE: is it important for correctness that we do not allocate additional capacity for `inputBytesToHash`.
+			// We need append() to always create a new slice for each `outputBytesToHash`. This allows us to use
+			// `inputBytesToHash` multiple times within this loop without worrying about it changing.
+			// From a performance standpoint, it can be suboptimal, since `inputBytesToHash` will be copied
+			// to a new location on each append() call.
+			outputBytesToHash := append(inputBytesToHash, []byte(outputArtifactID.String())...)
+
+			// Compute that final hash and add it to the map, then continue traversing.
+			artifactIDToSignature[outputArtifactID] = uuid.NewSHA1(uuid.NameSpaceOID, outputBytesToHash)
+			processedArtifactIds[outputArtifactID] = true
+
+			// Find the next downstream operators that consume this output artifact.
+			// In order to process it next, we must have already visited all the operator's inputs.
+			for _, nextOpID := range opIDsByInputArtifact[outputArtifactID] {
+				nextOp := dbOperators[nextOpID]
+
+				depsComputed := true
+				for _, inputArtifactID := range nextOp.Inputs {
+					if _, ok := processedArtifactIds[inputArtifactID]; !ok {
+						depsComputed = false
+						break
+					}
+				}
+
+				if depsComputed {
+					q = append(q, nextOpID)
+				}
+			}
+		}
+	}
+	return artifactIDToSignature, nil
 }
 
 func NewWorkflowDag(
 	ctx context.Context,
+	workflowDagResultID uuid.UUID,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
 	dagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
+	artifactWriter db_artifact.Writer,
 	artifactResultWriter artifact_result.Writer,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
 	userReader user.Reader,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
-	storageConfig *shared.StorageConfig,
+	artifactCacheManager preview_cache.CacheManager,
+	opExecMode operator.ExecutionMode,
 	db database.Database,
 ) (WorkflowDag, error) {
-	// First, allocate a content and metadata path for each artifact.
-	artifactIDToContentPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
-	artifactIDToMetadataPath := make(map[uuid.UUID]string, len(dbWorkflowDag.Artifacts))
-	for _, dbArtifact := range dbWorkflowDag.Artifacts {
-		artifactIDToContentPath[dbArtifact.Id] = uuid.New().String()
-		artifactIDToMetadataPath[dbArtifact.Id] = uuid.New().String()
+	dbArtifacts := dbWorkflowDag.Artifacts
+	dbOperators := dbWorkflowDag.Operators
+
+	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
+	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
+	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
+	for _, dbOperator := range dbOperators {
+		for _, outputArtifactID := range dbOperator.Outputs {
+			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
+		}
+		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+
+		for _, inputArtifactID := range dbOperator.Inputs {
+			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
+			if !ok {
+				opIDs = make([]uuid.UUID, 0, 1)
+			}
+			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
+		}
 	}
 
-	var err error
+	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
+	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
+	for _, dbArtifact := range dbArtifacts {
+		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
+		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
+		if !ok {
+			return nil, errors.Newf("DAGs cannot currently start with an artifact.")
+		}
+
+		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(
+			opExecMode == operator.Preview,
+			opMetadataPath,
+		)
+	}
+
+	// Compute signatures for each artifact.
+	artifactIDToSignatures, err := computeArtifactSignatures(dbOperators, opIDsByInputArtifact, len(dbArtifacts))
+	if err != nil {
+		return nil, errors.Wrap(err, "Internal error: unable to set up workflow execution.")
+	}
 
 	// With all the initial database writes completed (if at all), we can now initialize
 	// the operator and artifact classes. As well as the connections between them.
 	operators := make(map[uuid.UUID]operator.Operator, len(dbWorkflowDag.Operators))
 	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dbWorkflowDag.Artifacts))
 	for artifactID, dbArtifact := range dbWorkflowDag.Artifacts {
-		artifacts[artifactID], err = artifact.NewArtifact(
+		newArtifact, err := artifact.NewArtifact(
+			artifactIDToSignatures[dbArtifact.Id],
 			dbArtifact,
-			artifactIDToContentPath[artifactID],
-			artifactIDToMetadataPath[artifactID],
+			artifactIDToExecPaths[artifactID],
+			artifactWriter,
 			artifactResultWriter,
-			storageConfig,
+			&dbWorkflowDag.StorageConfig,
+			artifactCacheManager,
 			db,
 		)
 		if err != nil {
 			return nil, err
 		}
+		artifacts[artifactID] = newArtifact
 	}
 
 	// These artifact <-> operator maps help us remember all dag connections.
-	artifactToOps := make(map[uuid.UUID][]uuid.UUID, len(artifacts))
-	for artifactID := range artifacts {
-		artifactToOps[artifactID] = make([]uuid.UUID, 0, 1)
+	artifactIDToOpIDs := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
+	for _, dbArtifact := range dbArtifacts {
+		artifactIDToOpIDs[dbArtifact.Id] = make([]uuid.UUID, 0, 1)
 	}
-	opToOutputArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
-	opToInputArtifacts := make(map[uuid.UUID][]uuid.UUID, len(operators))
-	for opID, dbOperator := range dbWorkflowDag.Operators {
-		opToOutputArtifacts[opID] = make([]uuid.UUID, 0, 1)
-		opToInputArtifacts[opID] = make([]uuid.UUID, 0, 1)
+	opToInputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
+	opToOutputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
+	for opID, dbOperator := range dbOperators {
+		opToOutputArtifactIDs[opID] = make([]uuid.UUID, 0, 1)
+		opToInputArtifactIDs[opID] = make([]uuid.UUID, 0, 1)
 
-		inputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
-		inputContentPaths := make([]string, 0, len(dbOperator.Inputs))
-		inputMetadataPaths := make([]string, 0, len(dbOperator.Inputs))
+		inputArtifacts := make([]artifact.Artifact, 0, len(dbOperator.Inputs))
+		inputExecPaths := make([]*utils.ExecPaths, 0, len(dbOperator.Inputs))
 		for _, artifactID := range dbOperator.Inputs {
 			inputArtifacts = append(inputArtifacts, artifacts[artifactID])
-			inputContentPaths = append(inputContentPaths, artifactIDToContentPath[artifactID])
-			inputMetadataPaths = append(inputMetadataPaths, artifactIDToMetadataPath[artifactID])
+			inputExecPaths = append(inputExecPaths, artifactIDToExecPaths[artifactID])
 
-			artifactToOps[artifactID] = append(artifactToOps[artifactID], opID)
-			opToInputArtifacts[opID] = append(opToInputArtifacts[opID], artifactID)
+			artifactIDToOpIDs[artifactID] = append(artifactIDToOpIDs[artifactID], opID)
+			opToInputArtifactIDs[opID] = append(opToInputArtifactIDs[opID], artifactID)
 		}
-		outputArtifacts := make([]artifact.Artifact, 0, len(artifacts))
-		outputContentPaths := make([]string, 0, len(dbOperator.Outputs))
-		outputMetadataPaths := make([]string, 0, len(dbOperator.Outputs))
+
+		outputArtifacts := make([]artifact.Artifact, 0, len(dbOperator.Outputs))
+		outputExecPaths := make([]*utils.ExecPaths, 0, len(dbOperator.Outputs))
 		for _, artifactID := range dbOperator.Outputs {
 			outputArtifacts = append(outputArtifacts, artifacts[artifactID])
-			outputContentPaths = append(outputContentPaths, artifactIDToContentPath[artifactID])
-			outputMetadataPaths = append(outputMetadataPaths, artifactIDToMetadataPath[artifactID])
+			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactID])
 
-			opToOutputArtifacts[opID] = append(opToOutputArtifacts[opID], artifactID)
+			opToOutputArtifactIDs[opID] = append(opToOutputArtifactIDs[opID], artifactID)
 		}
 
-		operators[opID], err = operator.NewOperator(
+		newOp, err := operator.NewOperator(
 			ctx,
 			dbOperator,
 			inputArtifacts,
-			inputContentPaths,
-			inputMetadataPaths,
 			outputArtifacts,
-			outputContentPaths,
-			outputMetadataPaths,
+			inputExecPaths,
+			outputExecPaths,
 			opResultWriter,
 			jobManager,
 			vaultObject,
-			storageConfig,
+			&dbWorkflowDag.StorageConfig,
+			artifactCacheManager,
+			opExecMode,
 			db,
 		)
 		if err != nil {
 			return nil, err
 		}
+		operators[opID] = newOp
 	}
 
 	return &workflowDagImpl{
 		dbWorkflowDag:       dbWorkflowDag,
+		resultID:            workflowDagResultID,
 		operators:           operators,
 		artifacts:           artifacts,
-		opToOutputArtifacts: opToOutputArtifacts,
-		opToInputArtifacts:  opToInputArtifacts,
-		artifactToOps:       artifactToOps,
+		opToOutputArtifacts: opToOutputArtifactIDs,
+		opToInputArtifacts:  opToInputArtifactIDs,
+		artifactToOps:       artifactIDToOpIDs,
 
 		resultWriter:       dagResultWriter,
 		workflowReader:     workflowReader,
 		notificationWriter: notificationWriter,
 		userReader:         userReader,
 		db:                 db,
-		resultID:           uuid.Nil,
 	}, nil
 }
 
@@ -223,20 +338,8 @@ func (w *workflowDagImpl) OperatorInputs(op operator.Operator) ([]artifact.Artif
 	return artifacts, nil
 }
 
-func (w *workflowDagImpl) InitializeResults(ctx context.Context) error {
-	if w.resultWriter == nil {
-		return errors.New("Workflow dag's result writer cannot be nil.")
-	}
-
-	// Create a database record of workflow dag result and set its status to `pending`.
-	// TODO(ENG-599): wrap these writes into a transaction.
-	dagResult, err := w.resultWriter.CreateWorkflowDagResult(ctx, w.dbWorkflowDag.Id, w.db)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create workflow dag result record.")
-	}
-	w.resultID = dagResult.Id
-
-	// Also initialize the operators and artifact results.
+func (w *workflowDagImpl) InitOpAndArtifactResults(ctx context.Context) error {
+	// Initialize the operators and artifact results.
 	for _, op := range w.Operators() {
 		err := op.InitializeResult(ctx, w.resultID)
 		if err != nil {
@@ -249,26 +352,6 @@ func (w *workflowDagImpl) InitializeResults(ctx context.Context) error {
 			return err
 		}
 	}
-
-	return nil
-}
-
-func (w *workflowDagImpl) PersistResult(ctx context.Context, status shared.ExecutionStatus) error {
-	if w.resultID == uuid.Nil {
-		return errors.New("Workflow's dag result was not initialized before calling PersistResult.")
-	}
-
-	// We `defer` this call to ensure that the WorkflowDagResult metadata is always updated.
-	utils.UpdateWorkflowDagResultMetadata(
-		ctx,
-		w.resultID,
-		status,
-		w.resultWriter,
-		w.workflowReader,
-		w.notificationWriter,
-		w.userReader,
-		w.db,
-	)
 
 	return nil
 }

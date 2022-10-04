@@ -9,7 +9,7 @@ except ImportError:
 
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
-from pydantic import BaseModel, Extra, parse_obj_as, validator
+from pydantic import BaseModel, Extra, parse_obj_as
 
 
 class FunctionSpec(BaseModel):
@@ -27,8 +27,7 @@ class FunctionSpec(BaseModel):
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    input_artifact_types: List[enums.InputArtifactType]
-    output_artifact_types: List[enums.OutputArtifactType]
+    expected_output_artifact_types: List[enums.ArtifactType]
     operator_type: enums.OperatorType
 
     # This is specific to the check operator. This is left unset by any other function type.
@@ -36,17 +35,6 @@ class FunctionSpec(BaseModel):
 
     class Config:
         extra = Extra.forbid
-
-    @validator("output_artifact_types")
-    def check_metric_outputs(
-        cls, output_artifact_types: List[enums.OutputArtifactType]
-    ) -> List[enums.OutputArtifactType]:
-        if (
-            len(output_artifact_types) > 1
-            and enums.OutputArtifactType.FLOAT in output_artifact_types
-        ):
-            raise ValueError("A metric operator cannot have multiple outputs.")
-        return output_artifact_types
 
 
 def parse_spec(spec_json: bytes) -> FunctionSpec:
