@@ -5,6 +5,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
@@ -115,7 +116,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
       <Layout user={user}>
-        <Alert title="Failed to load workflow">
+        <Alert severity="error">
+          <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
         </Alert>
       </Layout>
