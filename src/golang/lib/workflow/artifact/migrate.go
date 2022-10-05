@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/sys/filelock"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,7 +25,7 @@ func Migrate(
 	db database.Database,
 ) error {
 	// Wait until there are no more workflow runs in progress
-	lock := filelock.New(utils.ExecutionLock)
+	lock := utils.NewExecutionLock()
 	if err := lock.Lock(); err != nil {
 		return err
 	}
