@@ -22,7 +22,6 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
     dispatch(selectNode({ id: element.id, type: element.type as NodeType }));
   };
 };
-//  let { workflowId, workflowDagResultId, operatorId } = useParams();
 
 export function getDataSideSheetContent(
   user: UserProfile,

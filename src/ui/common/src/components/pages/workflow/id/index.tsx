@@ -428,5 +428,3 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 };
 
 export default WorkflowPage;
-
-//  let { workflowId, workflowDagResultId, operatorId } = useParams();
