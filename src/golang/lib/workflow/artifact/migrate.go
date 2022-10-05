@@ -9,6 +9,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/dropbox/godropbox/sys/filelock"
+	"github.com/sirupsen/logrus"
 )
 
 // Migrate moves from workflow artifact result content from `oldConf` to `newConf`.
@@ -23,6 +26,16 @@ func Migrate(
 	db database.Database,
 ) error {
 	// Wait until there are no more workflow runs in progress
+	lock := filelock.New(utils.ExecutionLock)
+	if err := lock.Lock(); err != nil {
+		return err
+	}
+	defer func() {
+		unlockErr := lock.Unlock()
+		if unlockErr != nil {
+			logrus.Errorf("Unexpected error when unlocking workflow execution lock: %v", unlockErr)
+		}
+	}()
 
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
