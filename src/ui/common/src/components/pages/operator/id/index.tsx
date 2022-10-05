@@ -35,6 +35,7 @@ import { exportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
@@ -82,36 +83,38 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     [ArtifactType.Picklable]: dictArtifactNodeIcon,
   };
 
-  const params = useParams();
+  const { workflowId, workflowDagResultId, operatorId } = useParams();
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const operator = workflow.operatorResults[params.operatorId];
-  const inputs = workflow.selectedDag?.operators[params.operatorId]?.inputs;
-  const outputs = workflow.selectedDag?.operators[params.operatorId]?.outputs;
-  if (inputs && outputs) {
-    const operatorArtifacts = [...inputs, ...outputs];
-    // fetch output artifacts.
+  const operator = workflow.operatorResults[operatorId];
+
+  const inputIds = workflow.selectedDag?.operators[operatorId]?.inputs;
+  const outputIds = workflow.selectedDag?.operators[operatorId]?.outputs;
+
+  if (inputIds && outputIds) {
+    const operatorArtifacts = [...inputIds, ...outputIds];
+    
     operatorArtifacts.map((artifactId) => {
       if (!workflow.artifactResults[artifactId])
         dispatch(
           handleGetArtifactResults({
             apiKey: user.apiKey,
-            workflowDagResultId: params.workflowDagResultId,
+            workflowDagResultId: workflowDagResultId,
             artifactId: artifactId,
           })
         );
     });
   }
-
+  
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
     if (
       workflow.selectedDag === undefined ||
-      (workflow.selectedDag && !(params.workflowId in workflow.selectedDag))
+      (workflow.selectedDag && !(workflowId in workflow.selectedDag))
     ) {
       dispatch(
         handleGetWorkflow({
           apiKey: user.apiKey,
-          workflowId: params.workflowId,
+          workflowId: workflowId,
         })
       );
     }
@@ -120,14 +123,15 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   useEffect(() => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      !(params.operatorId in workflow.operatorResults)
+      !(operatorId in workflow.operatorResults)
     ) {
       let idx = 0;
       workflow.dagResults.forEach((value, index) => {
-        if (value.id === params.workflowDagResultId) {
+        if (value.id === workflowDagResultId) {
           idx = index;
         }
       });
+
       dispatch(selectResultIdx(idx));
       // May encounter a race condition where selectResultIdx sets operatorResults to {}
       // after we populate it because currently cannot check when selectResultIdx is done.
@@ -135,8 +139,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       dispatch(
         handleGetOperatorResults({
           apiKey: user.apiKey,
-          workflowDagResultId: params.workflowDagResultId,
-          operatorId: params.operatorId,
+          workflowDagResultId: workflowDagResultId,
+          operatorId: operatorId,
         })
       );
     }
@@ -179,7 +183,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   useEffect(() => {
     async function getFilesBlob() {
       // This is the function used to retrieve the contents in the function that generates the operator's zip file.
-      const blob = await exportFunction(user, params.operatorId);
+      const blob = await exportFunction(user, operatorId);
       if (blob) {
         const reader = new ZipReader(new BlobReader(blob));
         const entries = await reader.getEntries();
@@ -215,101 +219,13 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     getFilesBlob();
   }, []);
 
-  const getOperatorInput = () => {
-    if (!inputs) {
-      return null;
-    }
-    return inputs.map((artifactId, index) => {
-      const artifactResult = workflow.artifactResults[artifactId];
-      if (!artifactResult) {
-        return null;
-      }
-
-      if (artifactResult.result) {
-        return (
-          <ListItem divider key={`fn-input-${index}`}>
-            <Box display="flex">
-              <Box
-                sx={{
-                  width: '16px',
-                  height: '16px',
-                  color: 'rgba(0,0,0,0.54)',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    artifactTypeToIconMapping[
-                      artifactResult.result.artifact_type
-                    ]
-                  }
-                />
-              </Box>
-              <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
-                  params.workflowDagResultId
-                }/artifact/${artifactId}`}
-                component={RouterLink as any}
-                sx={{ marginLeft: '16px' }}
-                underline="none"
-              >
-                {artifactResult.result.name}
-              </Link>
-            </Box>
-          </ListItem>
-        );
-      }
-
-      return null;
-    });
-  };
-  const getOperatorOutput = () => {
-    if (!outputs) {
-      return null;
-    }
-    return outputs.map((artifactId, index) => {
-      const artifactResult = workflow.artifactResults[artifactId];
-      if (!artifactResult) {
-        return null;
-      }
-
-      if (artifactResult.result) {
-        return (
-          <ListItem divider key={`fn-output-${index}`}>
-            <Box display="flex">
-              <Box
-                sx={{
-                  width: '16px',
-                  height: '16px',
-                  color: 'rgba(0,0,0,0.54)',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    artifactTypeToIconMapping[
-                      artifactResult.result.artifact_type
-                    ]
-                  }
-                />
-              </Box>
-              <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
-                  params.workflowDagResultId
-                }/artifact/${artifactId}`}
-                component={RouterLink as any}
-                sx={{ marginLeft: '16px' }}
-                underline="none"
-              >
-                {artifactResult.result.name}
-              </Link>
-            </Box>
-          </ListItem>
-        );
-      }
-
-      return null;
-    });
-  };
-
+  const mapArtifacts = (artfIds: string[]) =>
+    artfIds
+      .map((artifactId) => workflow.artifactResults[artifactId])
+      .filter((artf) => !!artf);
+  const inputs = mapArtifacts(inputIds);
+  const outputs = mapArtifacts(outputIds);
+  
   const border = {
     border: '2px',
     borderStyle: 'solid',
@@ -338,59 +254,21 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             paddingTop="40px"
             paddingBottom="40px"
           >
-            <Box width="100%">
-              <Accordion
-                expanded={inputsExpanded}
-                onChange={() => {
-                  setInputsExpanded(!inputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  aria-controls="input-accordion-content"
-                  id="input-accordion-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Inputs:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List sx={listStyle}>{getOperatorInput()}</List>
-                </AccordionDetails>
-              </Accordion>
-            </Box>
-            <Box width="32px" />
-            <Box width="100%">
-              <Accordion
-                expanded={outputsExpanded}
-                onChange={() => {
-                  setOutputsExpanded(!outputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  aria-controls="panel1bh-content"
-                  id="panel1bh-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Output:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <React.Fragment>{getOperatorOutput()}</React.Fragment>
-                </AccordionDetails>
-              </Accordion>
-            </Box>
+            <ArtifactSummaryList 
+              title="Inputs"
+              workflowId={workflowId}
+              dagResultId={workflowDagResultId}
+              artifactResults={inputs}
+              initiallyExpanded={true}
+            />
+            
+            <ArtifactSummaryList 
+              title="Outputs"
+              workflowId={workflowId}
+              dagResultId={workflowDagResultId}
+              artifactResults={outputs}
+              initiallyExpanded={true}
+            />
           </Box>
 
           <Box>
