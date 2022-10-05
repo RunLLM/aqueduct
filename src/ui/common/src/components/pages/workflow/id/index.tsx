@@ -413,7 +413,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             </Box>
             <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
-              {getDataSideSheetContent(user, currentNode)}
+              {getDataSideSheetContent(
+                user,
+                currentNode,
+                workflowId,
+                workflow.selectedResult.id
+              )}
             </Box>
           </Box>
         </Drawer>
@@ -423,3 +428,5 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 };
 
 export default WorkflowPage;
+
+//  let { workflowId, workflowDagResultId, operatorId } = useParams();

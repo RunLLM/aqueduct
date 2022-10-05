@@ -28,14 +28,32 @@ import { LayoutProps } from '../../types';
 type CheckDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
 };
 
 const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowId, workflowDagResultId, checkOperatorId } = useParams();
+  let { workflowId, workflowDagResultId, checkOperatorId } = useParams();
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    checkOperatorId = operatorIdProp;
+  }
 
   const [metricsExpanded, setMetricsExpanded] = useState<boolean>(true);
   const [artifactsExpanded, setArtifactsExpanded] = useState<boolean>(true);

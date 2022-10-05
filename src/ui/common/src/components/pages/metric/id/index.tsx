@@ -21,14 +21,40 @@ import { LayoutProps } from '../../types';
 type MetricDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
 };
 
 const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+  let { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+
+  console.log('workflowIdProp: ', workflowIdProp);
+  console.log('workflowDagResultIdProp: ', workflowDagResultIdProp);
+  console.log('operatorIdProp: ', operatorIdProp);
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    metricOperatorId = operatorIdProp;
+  }
+
+  console.log('workflowId: ', workflowId);
+  console.log('workflowDagResultId: ', workflowDagResultId);
+  console.log('operatorId: ', metricOperatorId);
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>

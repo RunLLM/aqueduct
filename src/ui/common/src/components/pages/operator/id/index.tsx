@@ -23,6 +23,9 @@ type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   maxRenderSize?: number;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
@@ -30,10 +33,33 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
   maxRenderSize = 100000000,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { workflowId, workflowDagResultId, operatorId } = useParams();
+  let { workflowId, workflowDagResultId, operatorId } = useParams();
+
+  console.log('workflowIdProp: ', workflowIdProp);
+  console.log('workflowDagResultIdProp: ', workflowDagResultIdProp);
+  console.log('operatorIdProp: ', operatorIdProp);
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    operatorId = operatorIdProp;
+  }
+
+  console.log('workflowId: ', workflowId);
+  console.log('workflowDagResultId: ', workflowDagResultId);
+  console.log('operatorId: ', operatorId);
 
   const [files, setFiles] = useState({
     '': {

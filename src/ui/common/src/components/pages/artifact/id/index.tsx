@@ -32,14 +32,36 @@ import { LayoutProps } from '../../types';
 type ArtifactDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
 };
 
 const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowId, workflowDagResultId, artifactId } = useParams();
+  let { workflowId, workflowDagResultId, artifactId } = useParams();
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    artifactId = operatorIdProp;
+  }
+
+  console.log('workflowId: ', workflowId);
+  console.log('workflowDagResultId: ', workflowDagResultId);
+  console.log('operatorId: ', artifactId);
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
