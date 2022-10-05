@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -24,6 +25,7 @@ func MigrateStorage(
 	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
+	operatorReader operator.Reader,
 	db database.Database,
 ) error {
 	// Wait until there are no more workflow runs in progress
@@ -58,6 +60,7 @@ func MigrateStorage(
 			continue
 		}
 
+		// Migrate all of the artifact result content for this DAG
 		artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.Id, txn)
 		if err != nil {
 			return err
@@ -79,6 +82,36 @@ func MigrateStorage(
 				if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
 					return err
 				}
+			}
+		}
+
+		// Migrate all operator code for this DAG
+		operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.Id, txn)
+		if err != nil {
+			return err
+		}
+
+		for _, operator := range operators {
+			var operatorCodePath string
+			switch {
+			case operator.Spec.IsFunction():
+				operatorCodePath = operator.Spec.Function().StoragePath
+			case operator.Spec.IsCheck():
+				operatorCodePath = operator.Spec.Check().Function.StoragePath
+			case operator.Spec.IsMetric():
+				operatorCodePath = operator.Spec.Metric().Function.StoragePath
+			default:
+				// There is no operator code to migrate for this operator
+				continue
+			}
+
+			val, err := oldStore.Get(ctx, operatorCodePath)
+			if err != nil {
+				return err
+			}
+
+			if err := newStore.Put(ctx, operatorCodePath, val); err != nil {
+				return err
 			}
 		}
 

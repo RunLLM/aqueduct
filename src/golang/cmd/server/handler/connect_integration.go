@@ -402,7 +402,7 @@ func setIntegrationAsStorage(
 
 	currentStorageConfig := config.Storage()
 
-	// Migrate all artifact results to the new storage config
+	// Migrate all storage content to the new storage config
 	if err := utils.MigrateStorage(
 		ctx,
 		&currentStorageConfig,
