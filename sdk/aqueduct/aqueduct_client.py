@@ -8,11 +8,13 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.config import FlowConfig
 from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
+from .artifacts.bool_artifact import BoolArtifact
 from .dag import Metadata
 from .dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
 from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
@@ -295,6 +297,8 @@ class Client:
         self,
         name: str,
         artifacts: Union[BaseArtifact, List[BaseArtifact]],
+        metrics: Optional[List[NumericArtifact]] = None,
+        checks: Optional[List[BoolArtifact]] = None,
         description: str = "",
         schedule: str = "",
         k_latest_runs: int = -1,
@@ -321,6 +325,12 @@ class Client:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be computed if they are upstream
                 dependencies.
+            metrics:
+                All the metrics that you would like to compute. If not supplied, we will implicitly
+                include all metrics computed on artifacts in the flow.
+            checks:
+                All the checks that you would like to compute. If not supplied, we will implicitly
+                include all checks computed on artifacts in the flow.
             description:
                 A description for the new flow.
             schedule: A cron expression specifying the cadence that this flow
@@ -332,6 +342,7 @@ class Client:
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should store.
                 Runs outside of this bound are deleted. Defaults to persisting all runs.
+
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
@@ -363,6 +374,22 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
+        # If metrics and/or checks are explicitly included, add them to the artifacts list,
+        # but don't include them implicitly.
+        implicitly_include_metrics = True
+        if metrics is not None:
+            if not isinstance(metrics, list):
+                raise InvalidUserArgumentException("`metrics` argument must be a list.")
+            artifacts += metrics
+            implicitly_include_metrics = False
+
+        implicitly_include_checks = True
+        if checks is not None:
+            if not isinstance(checks, list):
+                raise InvalidUserArgumentException("`checks` argument must be a list.")
+            artifacts += checks
+            implicitly_include_checks = False
+
         cron_schedule = schedule_from_cron_string(schedule)
         retention_policy = retention_policy_from_latest_runs(k_latest_runs)
 
@@ -371,8 +398,9 @@ class Client:
             deltas=[
                 SubgraphDAGDelta(
                     artifact_ids=[artifact.id() for artifact in artifacts],
-                    include_load_operators=True,
-                    include_check_artifacts=True,
+                    include_saves=True,
+                    include_metrics=implicitly_include_metrics,
+                    include_checks=implicitly_include_checks,
                 ),
             ],
             make_copy=True,
