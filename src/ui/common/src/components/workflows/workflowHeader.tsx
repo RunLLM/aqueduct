@@ -30,6 +30,7 @@ import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
+import StorageSelector from './storageSelector';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
@@ -317,6 +318,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       )}
 
       {nextUpdateComponent}
+
+      <Box sx={{ mx: 1 }}>
+        {workflow.dagResults && workflow.dagResults.length > 0 && (
+          <StorageSelector />
+        )}
+      </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
         {workflow.dagResults && workflow.dagResults.length > 0 && (

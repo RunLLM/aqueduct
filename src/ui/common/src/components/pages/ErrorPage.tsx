@@ -45,8 +45,8 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
             height="150px"
           />
           <Typography variant="body1" sx={{ fontSize: '20px' }}>
-            Something went wrong &mdash; we can't find the page you're looking
-            for.
+            Something went wrong &mdash; we can&apos;t find the page you&apos;re
+            looking for.
           </Typography>
           <Typography variant="body1" sx={{ fontSize: '15px', mt: '16px' }}>
             If this problem continues to persist, you can make a post in our{' '}
