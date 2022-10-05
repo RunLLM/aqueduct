@@ -55,20 +55,17 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     workflow.selectedDag?.operators[params.operatorId]?.inputs ?? [];
   const outputs =
     workflow.selectedDag?.operators[params.operatorId]?.outputs ?? [];
-  if (inputs || outputs) {
-    const operatorArtifacts = [...inputs, ...outputs];
-    // fetch output artifacts.
-    operatorArtifacts.map((artifactId) => {
-      if (!workflow.artifactResults[artifactId])
-        dispatch(
-          handleGetArtifactResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: params.workflowDagResultId,
-            artifactId: artifactId,
-          })
-        );
-    });
-  }
+
+  [...inputs, ...outputs].map((artifactId) => {
+    if (!workflow.artifactResults[artifactId])
+      dispatch(
+        handleGetArtifactResults({
+          apiKey: user.apiKey,
+          workflowDagResultId: params.workflowDagResultId,
+          artifactId: artifactId,
+        })
+      );
+  });
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
@@ -233,16 +230,23 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     });
   };
 
-  const inputItems = !!inputs ? (
-    mapArtfIds(inputs)
-  ) : (
-    <Typography ml="16px"> This operator has no inputs </Typography>
-  );
-  const outputItems = !!outputs ? (
-    mapArtfIds(outputs)
-  ) : (
-    <Typography ml="16px"> This operator has no outputs </Typography>
-  );
+  const inputItems =
+    inputs.length > 0 ? (
+      mapArtfIds(inputs)
+    ) : (
+      <Typography ml="16px"> This operator has no inputs </Typography>
+    );
+
+  const outputItems =
+    outputs.length > 0 ? (
+      mapArtfIds(outputs)
+    ) : (
+      <Box display="flex" p={1} alignItems="center">
+        <Typography height="16px" ml="16px" color="gray.700">
+          This operator has no outputs
+        </Typography>
+      </Box>
+    );
 
   const border = {
     border: '2px',
