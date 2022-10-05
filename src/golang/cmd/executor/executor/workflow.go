@@ -8,7 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/dropbox/godropbox/sys/filelock"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -65,7 +65,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 
 func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	// First, ensure that workflow execution is not paused
-	lock := filelock.New(engine.ExecutionLock)
+	lock := utils.NewExecutionLock()
 	// The following will block until the RLock can be acquired
 	if err := lock.RLock(); err != nil {
 		return err
