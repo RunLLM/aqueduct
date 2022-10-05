@@ -1,4 +1,4 @@
-package artifact
+package utils
 
 import (
 	"context"
@@ -9,12 +9,14 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/sirupsen/logrus"
 )
 
-// Migrate moves from workflow artifact result content from `oldConf` to `newConf`.
-func Migrate(
+// MigrateStorage moves all storage content from `oldConf` to `newConf`.
+// This includes:
+//   - artifact result content
+//   - operator (function, check) code
+func MigrateStorage(
 	ctx context.Context,
 	oldConf *shared.StorageConfig,
 	newConf *shared.StorageConfig,
@@ -25,7 +27,7 @@ func Migrate(
 	db database.Database,
 ) error {
 	// Wait until there are no more workflow runs in progress
-	lock := utils.NewExecutionLock()
+	lock := NewExecutionLock()
 	if err := lock.Lock(); err != nil {
 		return err
 	}

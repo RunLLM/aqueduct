@@ -25,7 +25,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -404,7 +403,7 @@ func setIntegrationAsStorage(
 	currentStorageConfig := config.Storage()
 
 	// Migrate all artifact results to the new storage config
-	if err := artifact.Migrate(
+	if err := utils.MigrateStorage(
 		ctx,
 		&currentStorageConfig,
 		storageConfig,
