@@ -234,7 +234,11 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     inputs.length > 0 ? (
       mapArtfIds(inputs)
     ) : (
-      <Typography ml="16px"> This operator has no inputs </Typography>
+      <Box display="flex" p={1} alignItems="center">
+        <Typography height="16px" ml="16px" color="gray.700">
+          This operator has no input.
+        </Typography>
+      </Box>
     );
 
   const outputItems =
@@ -243,7 +247,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     ) : (
       <Box display="flex" p={1} alignItems="center">
         <Typography height="16px" ml="16px" color="gray.700">
-          This operator has no outputs
+          This operator has no output.
         </Typography>
       </Box>
     );
