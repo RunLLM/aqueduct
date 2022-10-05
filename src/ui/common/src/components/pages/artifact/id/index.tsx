@@ -39,19 +39,24 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const { workflowId, workflowDagResultId, artifactId } = useParams();
+
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
+
   const artifactContents = useSelector(
     (state: RootState) => state.artifactResultContentsReducer.contents
   );
+
   const artifact = (workflowDagResultWithLoadingStatus?.result?.artifacts ??
     {})[artifactId];
+
   const artifactResultId = artifact?.result?.id;
   const contentWithLoadingStatus = artifactResultId
     ? artifactContents[artifactResultId]
     : undefined;
+
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
     isSucceeded(workflowDagResultWithLoadingStatus.status)
