@@ -162,7 +162,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 operatorResults={inputs}
-                initiallyExpanded={true}
               />
             </Box>
 
@@ -172,7 +171,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 operatorResults={outputs}
-                initiallyExpanded={true}
               />
             </Box>
           </Box>

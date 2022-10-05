@@ -138,7 +138,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={inputs}
-                initiallyExpanded={true}
               />
             </Box>
             <Box width="32px" />
@@ -148,7 +147,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={outputs}
-                initiallyExpanded={true}
               />
             </Box>
           </Box>

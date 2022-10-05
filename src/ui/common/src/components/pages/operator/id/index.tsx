@@ -1,9 +1,5 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { Divider, Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
@@ -14,13 +10,7 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
-import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
-import { dictArtifactNodeIcon } from '../../../../components/workflows/nodes/DictArtifactNode';
-import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
-import { jsonArtifactNodeIcon } from '../../../../components/workflows/nodes/JsonArtifactNode';
-import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/NumericArtifactNode';
-import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
-import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
+import { artifactTypeToIconMapping } from '../../../../components/workflows/nodes/nodeTypes';
 import {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -28,7 +18,7 @@ import {
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
-import { ArtifactType } from '../../../../utils/artifacts';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportFunction } from '../../../../utils/operators';
@@ -42,12 +32,6 @@ type OperatorDetailsPageProps = {
   maxRenderSize?: number;
 };
 
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
-};
-
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
 const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
@@ -56,8 +40,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
-  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
   const [files, setFiles] = useState({
     '': {
       path: '',
@@ -66,28 +48,14 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     },
   });
 
-  const artifactTypeToIconMapping = {
-    [ArtifactType.String]: stringArtifactNodeIcon,
-    [ArtifactType.Bool]: boolArtifactNodeIcon,
-    [ArtifactType.Numeric]: numericArtifactNodeIcon,
-    [ArtifactType.Dict]: dictArtifactNodeIcon,
-    // TODO: figure out if we should use other icon for tuple
-    [ArtifactType.Tuple]: dictArtifactNodeIcon,
-    [ArtifactType.Table]: tableArtifactNodeIcon,
-    [ArtifactType.Json]: jsonArtifactNodeIcon,
-    // TODO: figure out what to show for bytes.
-    [ArtifactType.Bytes]: dictArtifactNodeIcon,
-    [ArtifactType.Image]: imageArtifactNodeIcon,
-    // TODO: Figure out what to show for Picklable
-    [ArtifactType.Picklable]: dictArtifactNodeIcon,
-  };
-
   const params = useParams();
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const operator = workflow.operatorResults[params.operatorId];
-  const inputs = workflow.selectedDag?.operators[params.operatorId]?.inputs;
-  const outputs = workflow.selectedDag?.operators[params.operatorId]?.outputs;
-  if (inputs && outputs) {
+  const inputs =
+    workflow.selectedDag?.operators[params.operatorId]?.inputs ?? [];
+  const outputs =
+    workflow.selectedDag?.operators[params.operatorId]?.outputs ?? [];
+  if (inputs || outputs) {
     const operatorArtifacts = [...inputs, ...outputs];
     // fetch output artifacts.
     operatorArtifacts.map((artifactId) => {
@@ -215,100 +183,66 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     getFilesBlob();
   }, []);
 
-  const getOperatorInput = () => {
-    if (!inputs) {
-      return null;
-    }
-    return inputs.map((artifactId, index) => {
-      const artifactResult = workflow.artifactResults[artifactId];
-      if (!artifactResult) {
+  const mapArtfIds = (artfIds: string[]) => {
+    return artfIds.map((artfId, index) => {
+      const artifactResult = workflow.artifactResults[artfId];
+      if (!artifactResult || !artifactResult.result) {
         return null;
       }
 
-      if (artifactResult.result) {
-        return (
-          <ListItem divider key={`fn-input-${index}`}>
-            <Box display="flex">
-              <Box
-                sx={{
-                  width: '16px',
-                  height: '16px',
-                  color: 'rgba(0,0,0,0.54)',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    artifactTypeToIconMapping[
-                      artifactResult.result.artifact_type
-                    ]
-                  }
-                />
-              </Box>
-              <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
-                  params.workflowDagResultId
-                }/artifact/${artifactId}`}
-                component={RouterLink as any}
-                sx={{ marginLeft: '16px' }}
-                underline="none"
-              >
-                {artifactResult.result.name}
-              </Link>
+      return (
+        <Link
+          key={artfId}
+          to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
+            params.workflowDagResultId
+          }/artifact/${artfId}`}
+          component={RouterLink as any}
+          underline="none"
+        >
+          <Box
+            display="flex"
+            p={1}
+            sx={{
+              alignItems: 'center',
+              '&:hover': { backgroundColor: 'gray.100' },
+              borderBottom:
+                index === artfIds.length - 1
+                  ? ''
+                  : `1px solid ${theme.palette.gray[400]}`,
+            }}
+          >
+            <Box
+              width="16px"
+              height="16px"
+              alignItems="center"
+              display="flex"
+              flexDirection="column"
+            >
+              <FontAwesomeIcon
+                fontSize="16px"
+                color={`${theme.palette.gray[700]}`}
+                icon={
+                  artifactTypeToIconMapping[artifactResult.result.artifact_type]
+                }
+              />
             </Box>
-          </ListItem>
-        );
-      }
-
-      return null;
+            <Typography ml="16px">{artifactResult.result.name}</Typography>
+          </Box>
+        </Link>
+      );
     });
   };
-  const getOperatorOutput = () => {
-    if (!outputs) {
-      return null;
-    }
-    return outputs.map((artifactId, index) => {
-      const artifactResult = workflow.artifactResults[artifactId];
-      if (!artifactResult) {
-        return null;
-      }
 
-      if (artifactResult.result) {
-        return (
-          <ListItem divider key={`fn-output-${index}`}>
-            <Box display="flex">
-              <Box
-                sx={{
-                  width: '16px',
-                  height: '16px',
-                  color: 'rgba(0,0,0,0.54)',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    artifactTypeToIconMapping[
-                      artifactResult.result.artifact_type
-                    ]
-                  }
-                />
-              </Box>
-              <Link
-                to={`${getPathPrefix()}/workflow/${params.workflowId}/result/${
-                  params.workflowDagResultId
-                }/artifact/${artifactId}`}
-                component={RouterLink as any}
-                sx={{ marginLeft: '16px' }}
-                underline="none"
-              >
-                {artifactResult.result.name}
-              </Link>
-            </Box>
-          </ListItem>
-        );
-      }
-
-      return null;
-    });
-  };
+  const inputItems = !!inputs ? (
+    mapArtfIds(inputs)
+  ) : (
+    <Typography ml="16px"> This operator has no inputs </Typography>
+  );
+  const outputItems = !!outputs ? (
+    mapArtfIds(outputs)
+  ) : (
+    <Typography ml="16px"> This operator has no outputs </Typography>
+  );
 
   const border = {
     border: '2px',
@@ -332,66 +266,22 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             )}
           </Box>
 
-          <Box
-            display="flex"
-            width="100%"
-            paddingTop="40px"
-            paddingBottom="40px"
-          >
-            <Box width="100%">
-              <Accordion
-                expanded={inputsExpanded}
-                onChange={() => {
-                  setInputsExpanded(!inputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  aria-controls="input-accordion-content"
-                  id="input-accordion-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Inputs:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List sx={listStyle}>{getOperatorInput()}</List>
-                </AccordionDetails>
-              </Accordion>
+          <Box display="flex" width="100%" marginTop="64px">
+            <Box width="100%" mr="32px">
+              <Typography variant="h6" mb="8px" fontWeight="normal">
+                Inputs
+              </Typography>
+              {inputItems}
             </Box>
-            <Box width="32px" />
             <Box width="100%">
-              <Accordion
-                expanded={outputsExpanded}
-                onChange={() => {
-                  setOutputsExpanded(!outputsExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                  aria-controls="panel1bh-content"
-                  id="panel1bh-header"
-                >
-                  <Typography
-                    sx={{ width: '33%', flexShrink: 0 }}
-                    variant="h5"
-                    component="div"
-                    marginBottom="8px"
-                  >
-                    Output:
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <React.Fragment>{getOperatorOutput()}</React.Fragment>
-                </AccordionDetails>
-              </Accordion>
+              <Typography variant="h6" mb="8px" fontWeight="normal">
+                Outputs
+              </Typography>
+              {outputItems}
             </Box>
           </Box>
+
+          <Divider sx={{ marginY: '32px' }} />
 
           <Box>
             <Typography variant="h4">Logs</Typography>

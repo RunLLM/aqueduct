@@ -1,15 +1,12 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
 
@@ -18,13 +15,6 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
-  initiallyExpanded: boolean;
-};
-
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -32,81 +22,55 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   artifactResults,
-  initiallyExpanded,
 }) => {
-  const [expanded, setExpanded] = useState(initiallyExpanded);
-  const items = artifactResults.map((artifactResult) => {
-    let content = null;
-    if (artifactResult.result?.content_serialized) {
-      content = (
-        <Typography variant="body1">
-          {artifactResult.result.content_serialized}
-        </Typography>
-      );
-    } else {
-      content = (
-        <Box display="flex">
+  const items = artifactResults.map((artifactResult, idx) => {
+    return (
+      <Link
+        key={artifactResult.id}
+        to={`${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
+          artifactResult.id
+        }`}
+        component={RouterLink as any}
+        underline="none"
+      >
+        <Box
+          display="flex"
+          p={1}
+          sx={{
+            alignItems: 'center',
+            '&:hover': { backgroundColor: 'gray.100' },
+            borderBottom:
+              idx === artifactResults.length - 1
+                ? ''
+                : `1px solid ${theme.palette.gray[400]}`,
+          }}
+        >
           <Box
-            sx={{
-              width: '16px',
-              height: '16px',
-              color: 'rgba(0,0,0,0.54)',
-            }}
+            width="16px"
+            height="16px"
+            alignItems="center"
+            display="flex"
+            flexDirection="column"
           >
             <FontAwesomeIcon
+              fontSize="16px"
+              color={`${theme.palette.gray[700]}`}
               icon={artifactTypeToIconMapping[artifactResult.type]}
             />
           </Box>
-          <Link
-            to={`${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
-              artifactResult.id
-            }`}
-            component={RouterLink as any}
-            sx={{ marginLeft: '16px' }}
-            underline="none"
-          >
-            {artifactResult.name}
-          </Link>
+          <Typography ml="16px">{artifactResult.name}</Typography>
         </Box>
-      );
-    }
-    return (
-      <ListItem divider key={artifactResult.id}>
-        {content}
-      </ListItem>
+      </Link>
     );
   });
 
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={() => {
-        setExpanded(!expanded);
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-        sx={{
-          '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-            transform: 'rotate(90deg)',
-          },
-        }}
-        aria-controls="input-accordion-content"
-        id="input-accordion-header"
-      >
-        <Typography
-          sx={{ width: '33%', flexShrink: 0 }}
-          variant="h5"
-          component="div"
-          marginBottom="8px"
-        >
-          {title}
-        </Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <List sx={listStyle}>{items}</List>
-      </AccordionDetails>
-    </Accordion>
+    <Box>
+      <Typography variant="h6" mb="8px" fontWeight="normal">
+        {title}
+      </Typography>
+      {items}
+    </Box>
   );
 };
 

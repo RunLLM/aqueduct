@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { OperatorResultResponse } from '../../../handlers/responses/operator';
@@ -16,13 +16,6 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   operatorResults: OperatorResultResponse[];
-  initiallyExpanded: boolean;
-};
-
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -30,9 +23,7 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   operatorResults,
-  initiallyExpanded,
 }) => {
-  const [expanded, setExpanded] = useState(initiallyExpanded);
   const items = operatorResults.map((opResult, index) => {
     let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
       opResult.id
@@ -51,7 +42,12 @@ const SummaryList: React.FC<Props> = ({
     }
 
     return (
-      <Link to={link} component={RouterLink as any} underline="none">
+      <Link
+        key={opResult.id}
+        to={link}
+        component={RouterLink as any}
+        underline="none"
+      >
         <Box
           display="flex"
           p={1}
