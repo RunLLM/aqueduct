@@ -185,7 +185,26 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               >
                 {listItem.message}
               </Typography>
+
+              <Box width="100%">
+                <Typography
+                  sx={{
+                    fontFamily: 'Monospace',
+                    fontWeight: 'medium',
+                    marginTop: '4px',
+                    fontSize: '12px',
+                    whiteSpace: 'pre-wrap',
+                    marginLeft: 'auto'
+                  }}
+                >
+                  {listItem.type}
+                </Typography>
+              </Box>
+
             </Box>
+
+
+
           </Box>
         );
       })}
@@ -226,7 +245,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
   useEffect(() => {
-    setWorkflowStatusItems(normalizeWorkflowStatusItems());
+    const workflowStatusItems = normalizeWorkflowStatusItems();
+    console.log('workflowStatusItems: ', workflowStatusItems);
+    setWorkflowStatusItems(workflowStatusItems);
   }, [workflow, selectedDag, artifacts, operators]); // recompute state when all derived values change.
 
   useEffect(() => {
@@ -461,9 +482,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
