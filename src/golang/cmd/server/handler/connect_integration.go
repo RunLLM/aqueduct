@@ -14,9 +14,11 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -59,6 +61,7 @@ type ConnectIntegrationHandler struct {
 	WorkflowDagReader    workflow_dag.Reader
 	ArtifactReader       db_artifact.Reader
 	ArtifactResultReader artifact_result.Reader
+	OperatorReader       operator.Reader
 	WorkflowDagWriter    workflow_dag.Writer
 	IntegrationWriter    integration.Writer
 }
@@ -166,6 +169,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			h.WorkflowDagWriter,
 			h.ArtifactReader,
 			h.ArtifactResultReader,
+			h.OperatorReader,
 			h.Database,
 		); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
@@ -367,8 +371,9 @@ func setIntegrationAsStorage(
 	conf auth.Config,
 	dagReader workflow_dag.Reader,
 	dagWriter workflow_dag.Writer,
-	artifactReader db_artifact.Reader,
+	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
+	operatorReader operator.Reader,
 	db database.Database,
 ) error {
 	data, err := conf.Marshal()
@@ -411,6 +416,7 @@ func setIntegrationAsStorage(
 		dagWriter,
 		artifactReader,
 		artifactResultReader,
+		operatorReader,
 		db,
 	); err != nil {
 		return err
