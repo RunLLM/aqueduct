@@ -59,15 +59,17 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       sx={{
         my: 1,
         ...BUTTON_STYLE_OVERRIDE,
-        bg: selected ? 'blue.800' : 'blue.900',
+        bg: 'blue.800',
         fontSize: '20px',
-        color: 'white',
+        color: selected ? 'LogoLight' : 'white',
         '&:hover': {
-          backgroundColor: 'blue.800',
+          color: 'NavMenuHover',
+        },
+        '&:active': {
+          color: 'NavMenuActive',
         },
         '&:disabled': {
-          backgroundColor: 'blue.800',
-          color: 'white',
+          color: 'LogoLight',
         },
       }}
       disabled={selected}
