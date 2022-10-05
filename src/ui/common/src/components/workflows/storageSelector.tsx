@@ -22,15 +22,15 @@ export const StorageSelector: React.FC = () => {
       Object.values(StorageType) as Array<
         typeof StorageType[keyof typeof StorageType]
       >
-    ).map((r, _) => {
+    ).map((storageType) => {
       return (
         <MenuItem
-          value={r}
-          key={r}
+          value={storageType}
+          key={storageType}
           sx={{ backgroundColor: selected ? 'blueTint' : null }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography sx={{ ml: 1 }}>{StorageTypeNames[r]}</Typography>
+            <Typography sx={{ ml: 1 }}>{StorageTypeNames[storageType]}</Typography>
           </Box>
         </MenuItem>
       );
@@ -44,7 +44,7 @@ export const StorageSelector: React.FC = () => {
       Storage Type:{' '}
       <FormControl disabled sx={{ m: 1, minWidth: 120 }} size="small">
         <Select
-          sx={{ maxHeight: 50 }}
+          sx={{ maxHeight: 48 }}
           id="grouped-select"
           autoWidth
           value={selected}
