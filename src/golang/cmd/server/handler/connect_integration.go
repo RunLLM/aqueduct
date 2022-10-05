@@ -374,6 +374,8 @@ func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
 
+	// Migrate all artifact results to the new storage config
+
 	// Change global storage config
 	return config.UpdateStorage(storageConfig)
 }
