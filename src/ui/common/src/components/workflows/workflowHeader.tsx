@@ -47,12 +47,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
-  
+
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
   );
 
-  // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place, 
+  // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place,
   // it will be overridden.
   const [containerWidth, setContainerWidth] = useState(1000);
   const narrowView = containerWidth < ContainerWidthBreakpoint;
@@ -295,7 +295,14 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: narrowView ? 'start' : 'center', my: 1, flexDirection: narrowView ? 'column' : 'row' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          my: 1,
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
         <Box sx={{ flex: 1 }}>
           <Status status={workflow.dagResults[0].status} />
 
@@ -349,7 +356,14 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
       {nextUpdateComponent}
 
-      <Box sx={{ display: 'flex', alignItems: narrowView ? 'start' : 'center', my: 1, flexDirection: narrowView ? 'column' : 'row' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          my: 1,
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
