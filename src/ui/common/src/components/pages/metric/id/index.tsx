@@ -1,5 +1,6 @@
 import { CircularProgress, Divider } from '@mui/material';
 import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
@@ -101,7 +102,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
       <Layout user={user}>
-        <Alert title="Failed to load workflow">
+        <Alert severity="error">
+          <AlertTitle>Failed to load workflow</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
         </Alert>
       </Layout>
