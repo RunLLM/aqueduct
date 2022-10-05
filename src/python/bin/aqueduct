@@ -196,9 +196,13 @@ def update_ui_version():
 def update_server_version():
     print("Updating server version to %s..." % package_version)
 
+    current_version = "0.0.0"
     version_file = os.path.join(server_directory, "__version__")
     if os.path.isfile(version_file):
+        with open(version_file, "r") as f:
+            current_version = f.read()
         os.remove(version_file)
+
     generate_version_file(version_file)
 
     setup_server_binaries()
@@ -213,6 +217,21 @@ def update_server_version():
             SCHEMA_VERSION,
         ]
     )
+
+    if parse_version(current_version) < parse_version("0.1") and parse_version(package_version) >= parse_version("0.1"):
+        # We add a couple new tables to the demo db for the v0.1 release.
+        # If we want to add tables in other releases in the future, we should refactor each of them
+        # into a helper function.
+        data_script_path = os.path.join(server_directory, "db", "0.1", "create_tables.py")
+        data_script_dir = os.path.dirname(data_script_path)
+        if not os.path.isdir(data_script_dir):
+            os.mkdir(data_script_dir)
+        s3_path = ("https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/demo/0.1/create_tables.py")
+        with open(data_script_path, "wb") as f:
+            f.write(requests.get(s3_path).content)
+        os.chmod(data_script_path, 0o755)
+        subprocess.check_call([sys.executable, data_script_path])
+        print("Successfully added new tables to the demo db as part of release v0.1.")
 
 
 def update():
@@ -246,8 +265,6 @@ def update():
             with open(os.path.join(server_directory, "db/demo.db"), "wb") as f:
                 f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).content)
 
-            update_server_version()
-
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
             print(e)
@@ -261,14 +278,14 @@ def update():
         shutil.rmtree(preview_outputs_directory)
     os.mkdir(preview_outputs_directory)
 
-    version_file = os.path.join(server_directory, "__version__")
-    if require_update(version_file):
+    server_version_file = os.path.join(server_directory, "__version__")
+    if require_update(server_version_file):
         try:
             update_server_version()
         except Exception as e:
             print(e)
-            if os.path.isfile(version_file):
-                os.remove(version_file)
+            if os.path.isfile(server_version_file):
+                os.remove(server_version_file)
             exit(1)
 
 
