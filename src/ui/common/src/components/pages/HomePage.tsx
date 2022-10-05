@@ -21,7 +21,6 @@ const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <Layout user={user}>
-      <div />
       <GettingStartedTutorial user={user} />
     </Layout>
   );
