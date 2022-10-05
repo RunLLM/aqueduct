@@ -96,7 +96,7 @@ const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
                           key={`table-col-${columnIndex}`}
                           align={'left'}
                         >
-                          {value}
+                          {value.toString()}
                         </TableCell>
                       );
                     })}
