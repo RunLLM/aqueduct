@@ -1,45 +1,23 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress, Link, List, ListItem } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { CircularProgress, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
-import { boolArtifactNodeIcon } from '../../../../components/workflows/nodes/BoolArtifactNode';
-import { dictArtifactNodeIcon } from '../../../../components/workflows/nodes/DictArtifactNode';
-import { imageArtifactNodeIcon } from '../../../../components/workflows/nodes/ImageArtifactNode';
-import { jsonArtifactNodeIcon } from '../../../../components/workflows/nodes/JsonArtifactNode';
-import { numericArtifactNodeIcon } from '../../../../components/workflows/nodes/NumericArtifactNode';
-import { stringArtifactNodeIcon } from '../../../../components/workflows/nodes/StringArtifactNode';
-import { tableArtifactNodeIcon } from '../../../../components/workflows/nodes/TableArtifactNode';
-import {
-  handleGetArtifactResults,
-  handleGetOperatorResults,
-  handleGetWorkflow,
-  selectResultIdx,
-} from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
-import { ArtifactType } from '../../../../utils/artifacts';
 import UserProfile from '../../../../utils/auth';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
-import { ArtifactResultResponse } from 'src/handlers/responses/artifact';
-import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
+import { isInitial, isLoading } from '../../../../utils/shared';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
-import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
@@ -214,40 +192,43 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           <Box
             display="flex"
             width="100%"
-            paddingTop="40px"
-            paddingBottom="40px"
+            pt="40px"
           >
-            <ArtifactSummaryList 
-              title="Inputs"
-              workflowId={workflowId}
-              dagResultId={workflowDagResultId}
-              artifactResults={inputs}
-              initiallyExpanded={true}
-            />
-            
-            <ArtifactSummaryList 
-              title="Outputs"
-              workflowId={workflowId}
-              dagResultId={workflowDagResultId}
-              artifactResults={outputs}
-              initiallyExpanded={true}
-            />
+            <Box width="100%" mr="32px">
+              <ArtifactSummaryList 
+                title="Inputs"
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={inputs}
+                initiallyExpanded={true}
+              />
+            </Box>
+
+            <Box width="100%">
+              <ArtifactSummaryList
+                title="Outputs"
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={outputs}
+                initiallyExpanded={true}
+              />
+            </Box>
           </Box>
 
+          <Divider sx={{ my: '32px' }} />
+
           <Box>
-            <Typography variant="h4">Logs</Typography>
+            <Typography variant="h6" fontWeight="normal">Logs</Typography>
             {logs !== {} && (
-              <Box sx={border}>
-                <LogViewer logs={logs} err={operatorError} />
-              </Box>
+              <LogViewer logs={logs} err={operatorError} />
             )}
           </Box>
+          
+          <Divider sx={{ my: '32px' }} />
 
           <Box>
-            <Typography variant="h4">Code Preview</Typography>
-            <Box sx={border}>
-              <MultiFileViewer files={files} />
-            </Box>
+            <Typography variant="h6" fontWeight="normal" mb={1}>Code Preview</Typography>
+            <MultiFileViewer files={files} defaultFile={operator.name} />
           </Box>
         </Box>
       </Box>
