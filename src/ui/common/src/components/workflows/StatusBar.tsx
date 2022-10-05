@@ -116,6 +116,16 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     dispatch(setBottomSideSheetOpenState(true));
   };
 
+  const getTypeLabel = (nodeType: string) => {
+    if (nodeType.includes('Op')) {
+      return 'Operator';
+    }
+
+    // otherwise, it's an Artifact
+    // nodeType will be "tableArtifact", etc.
+    return 'Artifact';
+  };
+
   return (
     <Box
       sx={{
@@ -190,21 +200,17 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 <Typography
                   sx={{
                     fontFamily: 'Monospace',
-                    fontWeight: 'medium',
+                    fontWeight: 'bold',
                     marginTop: '4px',
                     fontSize: '12px',
                     whiteSpace: 'pre-wrap',
-                    marginLeft: 'auto'
+                    marginLeft: 'auto',
                   }}
                 >
-                  {listItem.type}
+                  {getTypeLabel(listItem.type)}
                 </Typography>
               </Box>
-
             </Box>
-
-
-
           </Box>
         );
       })}
@@ -421,7 +427,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
-        newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
+        newWorkflowStatusItem.title = `${artifactName} created.`;
         newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
       } else {
         // artifact is still pending, skip adding to list of workflow status items.
@@ -482,8 +488,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
-            }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
+            err.context ?? ''
+          }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
