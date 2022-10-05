@@ -14,14 +14,18 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -49,10 +53,15 @@ var ErrNoIntegrationName = errors.New("Integration name is not provided")
 type ConnectIntegrationHandler struct {
 	PostHandler
 
-	Database          database.Database
-	IntegrationWriter integration.Writer
-	Vault             vault.Vault
-	JobManager        job.JobManager
+	Database   database.Database
+	Vault      vault.Vault
+	JobManager job.JobManager
+
+	WorkflowDagReader    workflow_dag.Reader
+	ArtifactReader       db_artifact.Reader
+	ArtifactResultReader artifact_result.Reader
+	WorkflowDagWriter    workflow_dag.Writer
+	IntegrationWriter    integration.Writer
 }
 
 func (*ConnectIntegrationHandler) Headers() []string {
@@ -150,7 +159,16 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	if args.SetAsStorage {
 		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(args.Service, args.Config); err != nil {
+		if err := setIntegrationAsStorage(
+			ctx,
+			args.Service,
+			args.Config,
+			h.WorkflowDagReader,
+			h.WorkflowDagWriter,
+			h.ArtifactReader,
+			h.ArtifactResultReader,
+			h.Database,
+		); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
 		}
 	}
@@ -344,7 +362,16 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 
 // setIntegrationAsStorage use the integration config `conf` and updates the global
 // storage config with it.
-func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
+func setIntegrationAsStorage(
+	ctx context.Context,
+	svc integration.Service,
+	conf auth.Config,
+	dagReader workflow_dag.Reader,
+	dagWriter workflow_dag.Writer,
+	artifactReader db_artifact.Reader,
+	artifactResultReader artifact_result.Reader,
+	db database.Database,
+) error {
 	data, err := conf.Marshal()
 	if err != nil {
 		return err
@@ -374,7 +401,21 @@ func setIntegrationAsStorage(svc integration.Service, conf auth.Config) error {
 		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
 
+	currentStorageConfig := config.Storage()
+
 	// Migrate all artifact results to the new storage config
+	if err := artifact.Migrate(
+		ctx,
+		&currentStorageConfig,
+		storageConfig,
+		dagReader,
+		dagWriter,
+		artifactReader,
+		artifactResultReader,
+		db,
+	); err != nil {
+		return err
+	}
 
 	// Change global storage config
 	return config.UpdateStorage(storageConfig)
