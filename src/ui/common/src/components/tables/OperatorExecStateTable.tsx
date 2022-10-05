@@ -82,7 +82,7 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                     >
                       {tableType === OperatorExecStateTableType.Metric ||
                       column.name === 'title' ? (
-                        value
+                        value.toString()
                       ) : (
                         <CheckTableItem checkValue={value as string} />
                       )}
