@@ -41,10 +41,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const navigate = useNavigate();
   let { workflowId, workflowDagResultId, operatorId } = useParams();
 
-  console.log('workflowIdProp: ', workflowIdProp);
-  console.log('workflowDagResultIdProp: ', workflowDagResultIdProp);
-  console.log('operatorIdProp: ', operatorIdProp);
-
   if (workflowIdProp) {
     workflowId = workflowIdProp;
   }
@@ -56,10 +52,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   if (operatorIdProp) {
     operatorId = operatorIdProp;
   }
-
-  console.log('workflowId: ', workflowId);
-  console.log('workflowDagResultId: ', workflowDagResultId);
-  console.log('operatorId: ', operatorId);
 
   const [files, setFiles] = useState({
     '': {

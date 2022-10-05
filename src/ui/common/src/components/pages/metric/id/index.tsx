@@ -36,10 +36,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, metricOperatorId } = useParams();
 
-  console.log('workflowIdProp: ', workflowIdProp);
-  console.log('workflowDagResultIdProp: ', workflowDagResultIdProp);
-  console.log('operatorIdProp: ', operatorIdProp);
-
   if (workflowIdProp) {
     workflowId = workflowIdProp;
   }
@@ -51,10 +47,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   if (operatorIdProp) {
     metricOperatorId = operatorIdProp;
   }
-
-  console.log('workflowId: ', workflowId);
-  console.log('workflowDagResultId: ', workflowDagResultId);
-  console.log('operatorId: ', metricOperatorId);
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>

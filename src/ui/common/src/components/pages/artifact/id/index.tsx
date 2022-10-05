@@ -59,10 +59,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     artifactId = operatorIdProp;
   }
 
-  console.log('workflowId: ', workflowId);
-  console.log('workflowDagResultId: ', workflowDagResultId);
-  console.log('operatorId: ', artifactId);
-
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
