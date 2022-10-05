@@ -79,7 +79,6 @@ export function getDataSideSheetContent(
     case NodeType.ExtractOp:
     case NodeType.LoadOp:
     case NodeType.FunctionOp: {
-      //return <OperatorResultsSideSheet user={user} currentNode={currentNode} />;
       return (
         <OperatorDetailsPage
           user={user}
