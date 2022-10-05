@@ -191,9 +191,6 @@ class SubgraphDAGDelta(DAGDelta):
             curr_op = dag.must_get_operator(with_output_artifact_id=curr_artifact_id)
             candidate_next_artifact_ids = copy.copy(curr_op.inputs)
 
-            # If intended, include any checks and metrics on the subgraph, as well as
-            # any of their downstream checks/metrics.
-            # their own dependencies.
             implicit_types_to_include = []
             if self.include_checks:
                 implicit_types_to_include.append(OperatorType.CHECK)
