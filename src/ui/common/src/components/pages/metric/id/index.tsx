@@ -34,8 +34,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
+
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[metricOperatorId];
+
   const artifactId = operator?.outputs[0];
   const artifactHistoryWithLoadingStatus = useSelector((state: RootState) =>
     !!artifactId
