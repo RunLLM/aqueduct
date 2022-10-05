@@ -16,7 +16,7 @@ type Props = {
 
 const LogBlock: React.FC<Props> = ({ logText, level, title }) => {
   return (
-    <Alert sx={{ overflowY: 'scroll' }} severity={level}>
+    <Alert sx={{ overflowY: 'scroll', maxHeight: '79vh' }} severity={level}>
       {title && <AlertTitle>{title}</AlertTitle>}
       <pre>{logText}</pre>
     </Alert>
