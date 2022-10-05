@@ -27,6 +27,7 @@ import FormControlLabel, {
 import MenuItem from '@mui/material/MenuItem';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
+import StorageSelector from './storageSelector';
 import Select from '@mui/material/Select';
 import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
@@ -211,6 +212,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
   );
+
+  const dagResults = useSelector((state: RootState) => state.workflowReducer.dagResults);
 
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
@@ -735,7 +738,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               <Typography sx={{ fontWeight: 'bold' }} component="span">
                 ID:
               </Typography>
-              <Typography> {workflowDag.workflow_id}</Typography>
+              <Typography component="span"> {workflowDag.workflow_id}</Typography>
             </Box>
           </Box>
 
@@ -766,6 +769,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               onChange={(e) => setDescription(e.target.value)}
             />
           </Box>
+          
+          {dagResults && dagResults.length > 0 && (
+            <StorageSelector />
+          )}
 
           <Box sx={{ my: 2 }}>
             <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>

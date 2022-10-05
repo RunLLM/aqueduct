@@ -44,6 +44,8 @@ import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
 
+export const WorkflowPageContentId = 'workflow-page-main';
+
 type WorkflowPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
@@ -347,6 +349,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           transition: WidthTransition,
           transitionDelay: '-150ms',
         }}
+        id={WorkflowPageContentId}
       >
         {workflow.selectedDag && (
           <WorkflowHeader

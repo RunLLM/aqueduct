@@ -3,6 +3,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
+import { Link } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -30,9 +31,7 @@ export const StorageSelector: React.FC = () => {
           sx={{ backgroundColor: selected ? 'blueTint' : null }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography sx={{ ml: 1 }}>
-              {StorageTypeNames[storageType]}
-            </Typography>
+            <Typography>{StorageTypeNames[storageType]}</Typography>
           </Box>
         </MenuItem>
       );
@@ -42,9 +41,13 @@ export const StorageSelector: React.FC = () => {
   const menuItems = getMenuItems();
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      Storage Type:{' '}
-      <FormControl disabled sx={{ m: 1, minWidth: 120 }} size="small">
+    <Box>
+      <Typography style={{ fontWeight: 'bold' }}> Metadata Storage Location </Typography>
+      <Typography variant="body2"> 
+        For more details on modifying the Aqueduct metadata store, please see{' '}
+        <Link href="https://docs.aqueducthq.com/guides/changing-metadata-store">our documentation</Link>.
+      </Typography>
+      <FormControl disabled sx={{ minWidth: 120 }} size="small">
         <Select
           sx={{ maxHeight: 48 }}
           id="grouped-select"
