@@ -1,6 +1,6 @@
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, List, ListItem } from '@mui/material';
+import { CircularProgress, Link, List, ListItem } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -36,19 +36,17 @@ import { LoadingStatusEnum } from '../../../../utils/shared';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
+import { ArtifactResultResponse } from 'src/handlers/responses/artifact';
+import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
+import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
+import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   maxRenderSize?: number;
 };
-
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
-};
-
+  
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
 const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
@@ -57,8 +55,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const [inputsExpanded, setInputsExpanded] = useState<boolean>(true);
-  const [outputsExpanded, setOutputsExpanded] = useState<boolean>(true);
+  const { workflowId, workflowDagResultId, operatorId } = useParams();
+
   const [files, setFiles] = useState({
     '': {
       path: '',
@@ -67,96 +65,37 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     },
   });
 
-  const artifactTypeToIconMapping = {
-    [ArtifactType.String]: stringArtifactNodeIcon,
-    [ArtifactType.Bool]: boolArtifactNodeIcon,
-    [ArtifactType.Numeric]: numericArtifactNodeIcon,
-    [ArtifactType.Dict]: dictArtifactNodeIcon,
-    // TODO: figure out if we should use other icon for tuple
-    [ArtifactType.Tuple]: dictArtifactNodeIcon,
-    [ArtifactType.Table]: tableArtifactNodeIcon,
-    [ArtifactType.Json]: jsonArtifactNodeIcon,
-    // TODO: figure out what to show for bytes.
-    [ArtifactType.Bytes]: dictArtifactNodeIcon,
-    [ArtifactType.Image]: imageArtifactNodeIcon,
-    // TODO: Figure out what to show for Picklable
-    [ArtifactType.Picklable]: dictArtifactNodeIcon,
-  };
+  const workflowDagResultWithLoadingStatus = useSelector(
+    (state: RootState) =>
+      state.workflowDagResultsReducer.results[workflowDagResultId]
+  );
 
-  const { workflowId, workflowDagResultId, operatorId } = useParams();
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const operator = workflow.operatorResults[operatorId];
+  const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
+    {})[operatorId];
 
-  const inputIds = workflow.selectedDag?.operators[operatorId]?.inputs;
-  const outputIds = workflow.selectedDag?.operators[operatorId]?.outputs;
-
-  if (inputIds && outputIds) {
-    const operatorArtifacts = [...inputIds, ...outputIds];
-    
-    operatorArtifacts.map((artifactId) => {
-      if (!workflow.artifactResults[artifactId])
-        dispatch(
-          handleGetArtifactResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: workflowDagResultId,
-            artifactId: artifactId,
-          })
-        );
-    });
-  }
-  
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
-    if (
-      workflow.selectedDag === undefined ||
-      (workflow.selectedDag && !(workflowId in workflow.selectedDag))
+    
+    if ( // Load workflow dag result if it's not cached
+      !workflowDagResultWithLoadingStatus ||
+      isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
       dispatch(
-        handleGetWorkflow({
+        handleGetWorkflowDagResult({
           apiKey: user.apiKey,
-          workflowId: workflowId,
+          workflowId,
+          workflowDagResultId,
         })
       );
     }
   }, []);
-
+  
   useEffect(() => {
-    if (
-      workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-      !(operatorId in workflow.operatorResults)
-    ) {
-      let idx = 0;
-      workflow.dagResults.forEach((value, index) => {
-        if (value.id === workflowDagResultId) {
-          idx = index;
-        }
-      });
-
-      dispatch(selectResultIdx(idx));
-      // May encounter a race condition where selectResultIdx sets operatorResults to {}
-      // after we populate it because currently cannot check when selectResultIdx is done.
-      // Will fix after ui_redesign first pass is done.
-      dispatch(
-        handleGetOperatorResults({
-          apiKey: user.apiKey,
-          workflowDagResultId: workflowDagResultId,
-          operatorId: operatorId,
-        })
-      );
+    if (!!operator) {
+      document.title = `${operator.name} | Aqueduct`;
     }
-  }, [workflow.loadingStatus.loading]);
-
-  if (operator?.result?.name) {
-    document.title = `${operator.result.name} | Aqueduct`;
-  }
-
-  // return null if we don't have the workflow loaded.
-  // This workflow doesn't exist.
-  if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
-    navigate('/404');
-    return null;
-  }
-
+  }, [operator]);
+  
   const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;
 
@@ -219,13 +158,37 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     getFilesBlob();
   }, []);
 
+  if (
+    !workflowDagResultWithLoadingStatus ||
+    isInitial(workflowDagResultWithLoadingStatus.status) ||
+    isLoading(workflowDagResultWithLoadingStatus.status)
+  ) {
+    return (
+      <Layout user={user}>
+        <CircularProgress />
+      </Layout>
+    );
+  }
+
+  // This workflow doesn't exist.
+  if (workflowDagResultWithLoadingStatus.status.loading === LoadingStatusEnum.Failed) {
+    navigate('/404');
+    return null;
+  } 
+
+  
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map((artifactId) => workflow.artifactResults[artifactId])
+      .map(
+        (artifactId) =>
+          (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
+            artifactId
+          ]
+      )
       .filter((artf) => !!artf);
-  const inputs = mapArtifacts(inputIds);
-  const outputs = mapArtifacts(outputIds);
-  
+  const inputs = mapArtifacts(operator.inputs);
+  const outputs = mapArtifacts(operator.outputs);
+
   const border = {
     border: '2px',
     borderStyle: 'solid',
@@ -240,10 +203,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       <Box width={'800px'}>
         <Box width="100%">
           <Box width="100%">
-            <DetailsPageHeader name={operator?.result?.name} />
-            {operator?.result?.description && (
+            <DetailsPageHeader name={operator?.name} />
+            {operator?.description && (
               <Typography variant="body1">
-                {operator?.result?.description}
+                {operator?.description}
               </Typography>
             )}
           </Box>
