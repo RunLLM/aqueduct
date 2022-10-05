@@ -47,7 +47,6 @@ const ArtifactContent: React.FC<Props> = ({
   }
 
   if (isFailed(contentWithLoadingStatus.status)) {
-    console.log(contentWithLoadingStatus);
     return (
       <Alert severity="error">
         <AlertTitle>Failed to load artifact contents.</AlertTitle>
