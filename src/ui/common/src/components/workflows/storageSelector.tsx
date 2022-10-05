@@ -30,7 +30,9 @@ export const StorageSelector: React.FC = () => {
           sx={{ backgroundColor: selected ? 'blueTint' : null }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography sx={{ ml: 1 }}>{StorageTypeNames[storageType]}</Typography>
+            <Typography sx={{ ml: 1 }}>
+              {StorageTypeNames[storageType]}
+            </Typography>
           </Box>
         </MenuItem>
       );
