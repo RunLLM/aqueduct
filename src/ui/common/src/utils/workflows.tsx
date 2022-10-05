@@ -2,6 +2,7 @@ import { Artifact } from './artifacts';
 import { EngineConfig } from './engine';
 import { normalizeOperator, Operator } from './operators';
 import ExecutionStatus, { ExecState } from './shared';
+import { StorageConfig } from './storage';
 
 export type S3Config = {
   region: string;
@@ -58,6 +59,7 @@ export type WorkflowDag = {
   created_at: number;
   s3_config: S3Config;
   engine_config: EngineConfig;
+  storage_config: StorageConfig;
 
   metadata?: Workflow;
   operators: { [id: string]: Operator };

@@ -90,7 +90,7 @@ export const VersionSelector: React.FC = () => {
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <FormControl sx={{ minWidth: 120 }} size="small">
         <Select
-          sx={{ maxHeight: 40 }}
+          sx={{ maxHeight: 48 }}
           id="grouped-select"
           autoWidth
           value={selectedResultIdx}
