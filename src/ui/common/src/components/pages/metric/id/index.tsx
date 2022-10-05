@@ -1,4 +1,4 @@
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Divider } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -123,7 +123,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   return (
     <Layout user={user}>
       <Box width={'800px'}>
-        <Box width="100%">
+        <Box width="100%" mb={3}>
           <Box width="100%">
             <DetailsPageHeader name={operator.name} />
             {operator.description && (
@@ -134,7 +134,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
           <Box display="flex" width="100%" paddingTop="40px">
             <Box width="100%">
               <ArtifactSummaryList
-                title={'Inputs:'}
+                title={'Inputs'}
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={inputs}
@@ -144,7 +144,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             <Box width="32px" />
             <Box width="100%">
               <ArtifactSummaryList
-                title={'Outputs:'}
+                title={'Outputs'}
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={outputs}
@@ -153,10 +153,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             </Box>
           </Box>
 
-          <Box width="100%" marginTop="12px">
-            <Typography variant="h5" component="div" marginBottom="8px">
-              Historical Outputs:
-            </Typography>
+          <Divider sx={{ my: '32px' }} />
+
+          <Box width="100%">
             <MetricsHistory
               historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             />
