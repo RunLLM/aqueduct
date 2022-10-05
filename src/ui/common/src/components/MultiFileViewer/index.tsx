@@ -8,7 +8,6 @@ import { TreeItem, TreeView } from '@mui/lab';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import { makeStyles } from '@mui/material';
 
 type Props = {
   files: Record<string, any>;
@@ -16,11 +15,16 @@ type Props = {
   defaultFile?: string;
 };
 
-
-const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh', defaultFile = '' }) => {
+const MultiFileViewer: React.FC<Props> = ({
+  files,
+  codeHeight = '30vh',
+  defaultFile = '',
+}) => {
   // NOTE: We're making a strong-ish assumption here that we're going to have files in a format
   // where the root dir is the name of the operator and the main function is {operator_name}.py.
-  const [selectedFile, setSelectedFile] = useState(defaultFile ? `/${defaultFile}/${defaultFile}.py` : '');
+  const [selectedFile, setSelectedFile] = useState(
+    defaultFile ? `/${defaultFile}/${defaultFile}.py` : ''
+  );
   const [matches, setMatches] = useState(false);
 
   useEffect(() => {
@@ -91,11 +95,7 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh', defaultF
       const folderItems = folders.map((section) => {
         const fullPrefix = `${prefix}/${section}`;
         return (
-          <TreeItem 
-            key={fullPrefix} 
-            nodeId={fullPrefix} 
-            label={section}
-          >
+          <TreeItem key={fullPrefix} nodeId={fullPrefix} label={section}>
             {buildTree(currentDirectory[section], fullPrefix)}
           </TreeItem>
         );
@@ -105,7 +105,11 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh', defaultF
     }
   };
 
-  const options = { readOnly: true, minimap: { enabled: false }, wordWrap: 'on' as 'on' | 'off' | 'wordWrapColumn' | 'bounded' };
+  const options = {
+    readOnly: true,
+    minimap: { enabled: false },
+    wordWrap: 'on' as 'on' | 'off' | 'wordWrapColumn' | 'bounded',
+  };
   return (
     <Box style={{ height: codeHeight, display: 'flex' }}>
       <Box style={{ width: '200px', height: '100%' }}>

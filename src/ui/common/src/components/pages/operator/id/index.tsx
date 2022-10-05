@@ -9,22 +9,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
+import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { exportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum } from '../../../../utils/shared';
+import { isInitial, isLoading } from '../../../../utils/shared';
+import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
-import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
-import { isInitial, isLoading } from '../../../../utils/shared';
-import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   maxRenderSize?: number;
 };
-  
+
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
 const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
@@ -53,8 +53,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
-    
-    if ( // Load workflow dag result if it's not cached
+
+    if (
+      // Load workflow dag result if it's not cached
       !workflowDagResultWithLoadingStatus ||
       isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
@@ -67,13 +68,13 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       );
     }
   }, []);
-  
+
   useEffect(() => {
     if (!!operator) {
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
-  
+
   const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;
 
@@ -149,12 +150,14 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   }
 
   // This workflow doesn't exist.
-  if (workflowDagResultWithLoadingStatus.status.loading === LoadingStatusEnum.Failed) {
+  if (
+    workflowDagResultWithLoadingStatus.status.loading ===
+    LoadingStatusEnum.Failed
+  ) {
     navigate('/404');
     return null;
-  } 
+  }
 
-  
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
       .map(
@@ -183,19 +186,13 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           <Box width="100%">
             <DetailsPageHeader name={operator?.name} />
             {operator?.description && (
-              <Typography variant="body1">
-                {operator?.description}
-              </Typography>
+              <Typography variant="body1">{operator?.description}</Typography>
             )}
           </Box>
 
-          <Box
-            display="flex"
-            width="100%"
-            pt="40px"
-          >
+          <Box display="flex" width="100%" pt="40px">
             <Box width="100%" mr="32px">
-              <ArtifactSummaryList 
+              <ArtifactSummaryList
                 title="Inputs"
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
@@ -218,16 +215,18 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           <Divider sx={{ my: '32px' }} />
 
           <Box>
-            <Typography variant="h6" fontWeight="normal">Logs</Typography>
-            {logs !== {} && (
-              <LogViewer logs={logs} err={operatorError} />
-            )}
+            <Typography variant="h6" fontWeight="normal">
+              Logs
+            </Typography>
+            {logs !== {} && <LogViewer logs={logs} err={operatorError} />}
           </Box>
-          
+
           <Divider sx={{ my: '32px' }} />
 
           <Box>
-            <Typography variant="h6" fontWeight="normal" mb={1}>Code Preview</Typography>
+            <Typography variant="h6" fontWeight="normal" mb={1}>
+              Code Preview
+            </Typography>
             <MultiFileViewer files={files} defaultFile={operator.name} />
           </Box>
         </Box>
