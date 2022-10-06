@@ -151,7 +151,7 @@ def wait_for_flow_runs(
         The number of runs this flow has performed.
     """
     timeout = 500
-    poll_threshold = 5
+    poll_threshold = 1
     begin = time.time()
 
     while True:
