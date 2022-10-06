@@ -5,7 +5,7 @@ import { KubernetesConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
-  kubeconfig_path: 'home/ubuntu/.kube/config',
+  kubeconfig_path: '/home/ubuntu/.kube/config',
   cluster_name: 'aqueduct',
 };
 
