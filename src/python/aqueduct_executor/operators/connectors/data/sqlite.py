@@ -1,14 +1,23 @@
+import sqlite3
+
 import pandas as pd
 from aqueduct_executor.operators.connectors.data import config, load, relational
 from aqueduct_executor.operators.utils.enums import ArtifactType
+from packaging.version import parse as parse_version
 from sqlalchemy import create_engine, engine
 
 # https://www.sqlite.org/limits.html#max_variable_number
 SQLITE_MAX_VARIABLE_NUMBER = 32766
+SQLITE_MAX_VARIABLE_NUMBER_EARLIER_VERSION = 999
 
 
 class SqliteConnector(relational.RelationalConnector):
     def __init__(self, config: config.SqliteConfig):
+        if parse_version(sqlite3.sqlite_version) >= parse_version("3.32.0"):
+            self.variable_number_limit = SQLITE_MAX_VARIABLE_NUMBER
+        else:
+            self.variable_number_limit = SQLITE_MAX_VARIABLE_NUMBER_EARLIER_VERSION
+
         conn_engine = _create_engine(config)
         super().__init__(conn_engine)
 
@@ -31,7 +40,7 @@ class SqliteConnector(relational.RelationalConnector):
             # chunksize corresponds to the max number of rows in each batch to be written at a time.
             # Variable number is the multiplication of the row count and the column count, so we can
             # calculate chunksize by dividing the max variable number with the number of columns.
-            chunksize=int(SQLITE_MAX_VARIABLE_NUMBER / len(df.columns)),
+            chunksize=int(self.variable_number_limit / len(df.columns)),
         )
 
 
