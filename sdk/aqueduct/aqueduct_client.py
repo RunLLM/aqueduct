@@ -361,7 +361,7 @@ class Client:
             )
 
         cron_schedule = schedule_from_cron_string(schedule)
-        if not (config and config.k_latest_run):
+        if not (config and config.k_latest_runs):
             retention_policy = retention_policy_from_latest_runs(-1)
         else:
             retention_policy = retention_policy_from_latest_runs(config.k_latest_runs)
