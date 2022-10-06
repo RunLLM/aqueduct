@@ -26,6 +26,7 @@ class SqliteConnector(relational.RelationalConnector):
             if_exists=params.update_mode.value,
             index=False,
             method="multi",
+            # We need to specify chunksize due to sqlite3's variable number limit.
             chunksize=int(SQLITE_MAX_VARIABLE_NUMBER / len(df.columns)),
         )
 
