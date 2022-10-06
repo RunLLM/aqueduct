@@ -41,10 +41,10 @@ import {
 import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
-import WorkflowHeader from '../../../workflows/workflowHeader';
+import WorkflowHeader, {
+  WorkflowPageContentId,
+} from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
-
-export const WorkflowPageContentId = 'workflow-page-main';
 
 type WorkflowPageProps = {
   user: UserProfile;

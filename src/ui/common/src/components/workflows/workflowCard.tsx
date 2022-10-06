@@ -47,7 +47,9 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
             {workflow.name}
           </Typography>
         </Box>
-        <WorkflowStatus status={workflow.status} />
+        <Box marginLeft={1}>
+          <WorkflowStatus status={workflow.status} />
+        </Box>
       </Box>
 
       <Box sx={{ flex: '1' }}>
