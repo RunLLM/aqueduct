@@ -28,8 +28,8 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
     );
   }, []);
 
-  const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
+  const integrations = useSelector((state: RootState) =>
+    Object.values(state.integrationsReducer.integrations)
   );
   if (!integrations) {
     return null;
@@ -48,7 +48,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
         .map((integration, idx) => {
           return (
-            <Box key={idx}>
+            <Box key={idx} sx={{ width: '90%', maxWidth: '1000px' }}>
               <Link
                 underline="none"
                 color="inherit"

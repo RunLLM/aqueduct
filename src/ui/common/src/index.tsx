@@ -6,7 +6,7 @@ import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
-import { DataCard, dataCardName } from './components/integrations/cards/card';
+import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
@@ -326,7 +326,6 @@ export {
   Data,
   DatabaseNode,
   DataCard,
-  dataCardName,
   DataColumn,
   DataColumnType,
   DataColumnTypeNames,

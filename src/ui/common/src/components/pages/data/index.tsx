@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
+import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { DataCard, dataCardName } from '../../integrations/cards/card';
+import { DataCard } from '../../integrations/cards/card';
 import { Card } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { filteredList, SearchBar } from '../../Search';
@@ -23,6 +24,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   useEffect(() => {
     dispatch(getDataArtifactPreview({ apiKey }));
+    dispatch(handleLoadIntegrations({ apiKey }));
   }, []);
 
   const dataCardsInfo = useSelector(
@@ -48,7 +50,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dataCards = filteredList(
     filterText,
     Object.values(dataCardsInfo.data.latest_versions),
-    (dataCardInfo) => dataCardName(dataCardInfo),
+    (dataCardInfo) => dataCardInfo.artifact_name,
     displayFilteredCards,
     noItemsMessage
   );
@@ -64,7 +66,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     if (typeof option === 'string') {
       return option;
     }
-    return dataCardName(option);
+    return option.artifact_name;
   };
 
   return (
