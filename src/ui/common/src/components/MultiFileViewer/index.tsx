@@ -9,15 +9,22 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
-import { MenuSidebarOffset } from '../layouts/default';
-
 type Props = {
   files: Record<string, any>;
   codeHeight?: string;
+  defaultFile?: string;
 };
 
-const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
-  const [selectedFile, setSelectedFile] = useState('');
+const MultiFileViewer: React.FC<Props> = ({
+  files,
+  codeHeight = '30vh',
+  defaultFile = '',
+}) => {
+  // NOTE: We're making a strong-ish assumption here that we're going to have files in a format
+  // where the root dir is the name of the operator and the main function is {operator_name}.py.
+  const [selectedFile, setSelectedFile] = useState(
+    defaultFile ? `/${defaultFile}/${defaultFile}.py` : ''
+  );
   const [matches, setMatches] = useState(false);
 
   useEffect(() => {
@@ -69,8 +76,10 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
           folders.push(section);
         }
       });
+
       files.sort();
       folders.sort();
+
       const fileItems = files.map((section) => {
         const fullPrefix = `${prefix}/${section}`;
         return (
@@ -79,9 +88,10 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
             nodeId={fullPrefix}
             label={section}
             onClick={() => setSelectedFile(fullPrefix)}
-          ></TreeItem>
+          />
         );
       });
+
       const folderItems = folders.map((section) => {
         const fullPrefix = `${prefix}/${section}`;
         return (
@@ -90,22 +100,25 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
           </TreeItem>
         );
       });
+
       return [...folderItems, ...fileItems];
     }
   };
 
-  const options = { readOnly: true, minimap: { enabled: false } };
-  if (matches) {
-    options.minimap.enabled = true;
-  }
-
+  const options = {
+    readOnly: true,
+    minimap: { enabled: false },
+    wordWrap: 'on' as 'on' | 'off' | 'wordWrapColumn' | 'bounded',
+  };
   return (
-    <Box style={{ height: codeHeight }}>
-      <Box style={{ width: MenuSidebarOffset, float: 'left', height: '100%' }}>
+    <Box style={{ height: codeHeight, display: 'flex' }}>
+      <Box style={{ width: '200px', height: '100%' }}>
         <TreeView
           aria-label="file system navigator"
           defaultCollapseIcon={<FontAwesomeIcon icon={faChevronDown} />}
           defaultExpandIcon={<FontAwesomeIcon icon={faChevronRight} />}
+          defaultExpanded={[`/${defaultFile}`]}
+          defaultSelected={[`/${defaultFile}/${defaultFile}.py`]}
         >
           {hasFiles ? (
             buildTree(files, '')
@@ -114,10 +127,10 @@ const MultiFileViewer: React.FC<Props> = ({ files, codeHeight = '30vh' }) => {
           )}
         </TreeView>
       </Box>
+
       <Box
         style={{
-          width: `calc(100% - ${MenuSidebarOffset})`,
-          float: 'right',
+          width: `calc(100% - 200px)`,
           height: '100%',
         }}
       >
