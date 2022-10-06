@@ -7,7 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -28,9 +28,9 @@ import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
+import { WorkflowPageContentId } from '../pages/workflow/id';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
-import StorageSelector from './storageSelector';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
@@ -41,10 +41,29 @@ type Props = {
   workflowId: string;
 };
 
+const ContainerWidthBreakpoint = 700;
+
 const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
+
+  const currentNode = useSelector(
+    (state: RootState) => state.nodeSelectionReducer.selected
+  );
+
+  // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place,
+  // it will be overridden.
+  const [containerWidth, setContainerWidth] = useState(1000);
+  const narrowView = containerWidth < ContainerWidthBreakpoint;
+
+  const getContainerSize = () => {
+    const container = document.getElementById(WorkflowPageContentId);
+    setContainerWidth(container.clientWidth);
+  };
+
+  useEffect(getContainerSize, [currentNode]);
+  window.addEventListener('resize', getContainerSize);
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -276,19 +295,37 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          my: 1,
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <Status status={workflow.dagResults[0].status} />
+
           <Typography
             variant="h3"
-            sx={{ fontFamily: 'Monospace', mr: 2, lineHeight: 1 }}
+            sx={{ my: 1, lineHeight: 1 }}
+            fontWeight="normal"
           >
             {name}
           </Typography>
-
-          <Status status={workflow.dagResults[0].status} />
         </Box>
 
         <Box sx={{ mr: 4 }}>
+          <Button
+            color="primary"
+            sx={{ height: '100%', mr: 2, fontSize: '20px' }}
+            onClick={() => setShowRunWorkflowDialog(true)}
+            size="large"
+          >
+            <FontAwesomeIcon icon={faPlay} />
+            <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
+          </Button>
+
           <Button
             variant="outlined"
             color="primary"
@@ -319,28 +356,21 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
       {nextUpdateComponent}
 
-      <Box sx={{ mx: 1 }}>
-        {workflow.dagResults && workflow.dagResults.length > 0 && (
-          <StorageSelector />
-        )}
-      </Box>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          my: 1,
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
 
-        <Button
-          color="primary"
-          sx={{ height: '100%', mx: 2 }}
-          onClick={() => setShowRunWorkflowDialog(true)}
-          size="large"
-        >
-          <FontAwesomeIcon icon={faPlay} />
-          <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
-        </Button>
-
-        <WorkflowStatusBar user={user} />
+        <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
+          <WorkflowStatusBar user={user} />
+        </Box>
       </Box>
 
       {runWorkflowDialog}
