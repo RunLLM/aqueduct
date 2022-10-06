@@ -1,10 +1,12 @@
+import { AppBar, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
+import { theme } from '../../styles/theme/theme';
 
 import UserProfile from '../../utils/auth';
-import MenuSidebar from './menuSidebar';
+import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
 
-export const MenuSidebarOffset = '250px';
+export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
 
 type Props = {
   user: UserProfile;
@@ -33,6 +35,20 @@ export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
             marginTop: 3,
           }}
         >
+          {/* Header. +26 for the padding */}
+          <AppBar sx={{
+            width: `calc(100% - ${MenuSidebarWidthNumber + 26}px)`,
+            boxShadow: 'none',
+            borderBottom: `2px solid ${theme.palette.gray[300]}`,
+            backgroundColor: 'white',
+            color: 'black'
+            }}>
+            <Toolbar>
+              <Typography variant="h6" component="div">
+                Scroll to elevate App bar
+              </Typography>
+            </Toolbar>
+          </AppBar>
           {children}
         </Box>
       </Box>

@@ -26,7 +26,8 @@ import {
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 
-export const MenuSidebarWidth = '200px';
+export const MenuSidebarWidthNumber = 200;
+export const MenuSidebarWidth = `${MenuSidebarWidthNumber}px`;
 
 export type SidebarButtonProps = {
   icon: React.ReactElement;
