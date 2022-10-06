@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,7 +38,7 @@ func MigrateStorage(
 	defer func() {
 		unlockErr := lock.Unlock()
 		if unlockErr != nil {
-			logrus.Errorf("Unexpected error when unlocking workflow execution lock: %v", unlockErr)
+			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", unlockErr)
 		}
 	}()
 
