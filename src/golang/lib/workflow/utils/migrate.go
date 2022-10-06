@@ -18,6 +18,8 @@ import (
 // This includes:
 //   - artifact result content
 //   - operator (function, check) code
+//
+// If the migration is successful, the above content is deleted from `oldConf`.
 func MigrateStorage(
 	ctx context.Context,
 	oldConf *shared.StorageConfig,
