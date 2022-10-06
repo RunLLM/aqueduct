@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // MigrateStorage moves all storage content from `oldConf` to `newConf`.
@@ -54,6 +55,8 @@ func MigrateStorage(
 		return err
 	}
 
+	toDelete := []string{}
+
 	for _, dag := range dags {
 		if dag.EngineConfig.Type == shared.AirflowEngineType {
 			// We cannot migrate content for Airflow workflows
@@ -82,6 +85,8 @@ func MigrateStorage(
 				if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
 					return err
 				}
+
+				toDelete = append(toDelete, artifactResult.ContentPath)
 			}
 		}
 
@@ -113,6 +118,8 @@ func MigrateStorage(
 			if err := newStore.Put(ctx, operatorCodePath, val); err != nil {
 				return err
 			}
+
+			toDelete = append(toDelete, operatorCodePath)
 		}
 
 		// Update the storage config for the DAG
@@ -130,6 +137,13 @@ func MigrateStorage(
 
 	if err := txn.Commit(ctx); err != nil {
 		return err
+	}
+
+	// Delete keys from `oldStore` now that everything is fully migrated to `newStore`
+	for _, key := range toDelete {
+		if err := oldStore.Delete(ctx, key); err != nil {
+			log.Errorf("Unexpected error when deleting %v after storage migration: %v", key, err)
+		}
 	}
 
 	return nil
