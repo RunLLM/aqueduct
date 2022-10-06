@@ -131,13 +131,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of the artifact for which we're retrieving
    * details.
    */
-  const updateArtifactDetails = (nodeId: string) => {
+  const getArtifactResultDetails = (nodeId: string) => {
     const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
     if (!artf || !workflow.selectedResult) {
       return;
     }
 
     if (!(nodeId in workflow.artifactResults)) {
+      console.log('index ' + workflow.selectedResult.id);
       dispatch(
         handleGetArtifactResults({
           apiKey: user.apiKey,
@@ -159,7 +160,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of an artifact for which we're retrieving
    * results.
    */
-  const updateOperatorDetails = (nodeId: string) => {
+  const getOperatorResultDetails = (nodeId: string) => {
     // Verify the node is indeed an operator, and a result is selected
     const op = (workflow.selectedDag?.operators ?? {})[nodeId];
     if (!op || !workflow.selectedResult) {
@@ -177,13 +178,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
 
     for (const artfId of [...op.inputs, ...op.outputs]) {
-      updateArtifactDetails(artfId);
+      getArtifactResultDetails(artfId);
     }
   };
 
   useEffect(() => {
-    updateOperatorDetails(currentNode.id);
-    updateArtifactDetails(currentNode.id);
+    getOperatorResultDetails(currentNode.id);
+    getArtifactResultDetails(currentNode.id);
   }, [currentNode.id, workflow.selectedResult?.id]);
 
   const onPaneClicked = (event: React.MouseEvent) => {
@@ -195,20 +196,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const selectedDag = workflow.selectedDag;
-  const getDagDetails = () => {
+  const getDagResultDetails = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
       !!selectedDag
     ) {
       for (const op of Object.values(selectedDag.operators)) {
-        // We don't need to call updateArtifactDetails because
-        // updateOperatorDetails automatically does that for us.
-        updateOperatorDetails(op.id);
+        // We don't need to call getArtifactResultDetails because
+        // getOperatorResultDetails automatically does that for us.
+        getOperatorResultDetails(op.id);
       }
     }
   };
 
-  useEffect(getDagDetails, [workflow.selectedDag]);
+  useEffect(getDagResultDetails, [workflow.selectedResult?.id]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
@@ -230,13 +231,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   // const sideSheetOpen = currentNode.type !== NodeType.None;
-
-  const contentWidth = getSideSheetWidth(
-    // in ui-redesign, sidesheet comes in from the right, and the status bar is now a popover, which means status bar no longer has a width to worry about
-    // with regards to expanding and contracting the page contents.
-    // the new sidesheet is shown when the current node is selected. the opensidesheet state reducer isn't being used.
-    fullWindowWidth
-  );
 
   const contentBottomOffsetInPx = `32px`;
   const getNodeLabel = () => {
