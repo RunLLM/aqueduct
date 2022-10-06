@@ -260,7 +260,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
 
   useEffect(() => {
     const workflowStatusItems = normalizeWorkflowStatusItems();
-    console.log('workflowStatusItems: ', workflowStatusItems);
     setWorkflowStatusItems(workflowStatusItems);
   }, [workflow, selectedDag, artifacts, operators]); // recompute state when all derived values change.
 
