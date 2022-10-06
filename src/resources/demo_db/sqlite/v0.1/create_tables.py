@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine, engine
 
+
 def create_diabetes_table(engine):
     df = pd.read_csv(
         "https://raw.githubusercontent.com/aqueducthq/aqueduct/main/src/resources/demo_db/sqlite/v0.1/diabetes.csv",
