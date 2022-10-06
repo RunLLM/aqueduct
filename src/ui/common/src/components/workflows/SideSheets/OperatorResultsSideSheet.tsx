@@ -138,13 +138,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
     operatorSpec.type === OperatorType.Extract ||
     operatorSpec.type === OperatorType.Load
   ) {
-    const filteredIntegrations = integrations.integrations.filter(
-      (integration) => {
-        return integration.id === spec.integration_id;
-      }
-    );
-
-    integration = filteredIntegrations[0]; // There can only be one result.
+    const integration = integrations.integrations[spec.integration_id]; // There can only be one result.
     operatorParams.push(['Integration', integration.name]);
 
     switch (integration.service) {
