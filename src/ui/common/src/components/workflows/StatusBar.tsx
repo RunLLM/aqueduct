@@ -9,7 +9,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -35,6 +35,7 @@ import UserProfile from '../../utils/auth';
 import { Operator } from '../../utils/operators';
 import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
+import { nodeTypeToStringLabel } from './nodes/nodeTypes';
 
 enum WorkflowStatusTabs {
   Errors = 'ERRORS',
@@ -47,7 +48,7 @@ enum WorkflowStatusTabs {
 type WorkflowStatusItem = {
   id: string;
   level: WorkflowStatusTabs;
-  title: string;
+  title: ReactElement;
   message: string;
   nodeId: string;
   type: string;
@@ -117,13 +118,20 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   };
 
   const getTypeLabel = (nodeType: string) => {
-    if (nodeType.includes('Op')) {
-      return 'Operator';
+    const label = nodeTypeToStringLabel[nodeType];
+
+    // Return catch all operator / artifact label if not found in lookup table.
+    if (!label) {
+      if (nodeType.includes('Op')) {
+        return 'Operator';
+      }
+
+      // otherwise, it's an Artifact
+      // nodeType will be "tableArtifact", etc.
+      return 'Artifact';
     }
 
-    // otherwise, it's an Artifact
-    // nodeType will be "tableArtifact", etc.
-    return 'Artifact';
+    return label;
   };
 
   return (
@@ -169,7 +177,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               <Typography
                 sx={{
                   fontFamily: 'Monospace',
-                  fontWeight: 'bold',
+                  fontWeight: 'light',
                   marginRight: 2,
                   whiteSpace: 'normal',
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
@@ -288,7 +296,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Errors,
-              title: 'No errors.',
+              title: <>No errors.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -305,7 +313,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Warnings,
-              title: 'No warnings.',
+              title: <>No warnings.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -322,7 +330,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Logs,
-              title: 'No logs.',
+              title: <>No logs.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -339,7 +347,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Checks,
-              title: 'No successful results.',
+              title: <>No successful results.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -405,7 +413,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const newWorkflowStatusItem: WorkflowStatusItem = {
         id: `id-artifactResult-${artifactId}`,
         level: WorkflowStatusTabs.Checks,
-        title: `${artifactName} Failed`,
+        title: (
+          <>
+            <b>{artifactName}</b> Failed
+          </>
+        ),
         message: '',
         nodeId: artifactId,
         type: 'tableArtifact',
@@ -419,16 +431,28 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         artifactExecState.failure_type == FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
-        newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
+        newWorkflowStatusItem.title = (
+          <>
+            `Non-fatal error occurred for `<b>${artifactName}</b>
+          </>
+        );
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
       } else if (artifactStatus === ExecutionStatus.Failed) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
-        newWorkflowStatusItem.title = `Error creating ${artifactName}.`;
+        newWorkflowStatusItem.title = (
+          <>
+            Error creating <b>${artifactName}.</b>
+          </>
+        );
         newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
-        newWorkflowStatusItem.title = `${artifactName} created.`;
-        newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
+        newWorkflowStatusItem.title = (
+          <>
+            <b>{artifactName}</b> created
+          </>
+        );
+        newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId}).`;
       } else {
         // artifact is still pending, skip adding to list of workflow status items.
         return;
@@ -462,7 +486,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const newWorkflowStatusItem: WorkflowStatusItem = {
         id: `id-operatorResult-${operatorId}`,
         level: WorkflowStatusTabs.Checks,
-        title: `${operatorName} Failed`,
+        title: (
+          <>
+            <b>{operatorName}</b> Failed
+          </>
+        ),
         message: '',
         nodeId: operatorId,
         type: OperatorTypeToNodeTypeMap[
@@ -480,13 +508,21 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         opExecState.failure_type === FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
-        newWorkflowStatusItem.title = `Warning for ${operatorName}`;
+        newWorkflowStatusItem.title = (
+          <>
+            `Warning for `<b>{operatorName}</b>
+          </>
+        );
         newWorkflowStatusItem.message = opExecState.error?.tip;
       } else if (operatorExecutionStatus === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
-          newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
+          newWorkflowStatusItem.title = (
+            <>
+              Error executing <b>${operatorName}</b> ({operatorId})
+            </>
+          );
           const err = opExecState.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''
@@ -497,8 +533,12 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         }
       } else if (operatorExecutionStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
-        newWorkflowStatusItem.title = `${operatorName} succeeded`;
-        newWorkflowStatusItem.message = `Operator successfully executed`;
+        newWorkflowStatusItem.title = (
+          <>
+            <b>{operatorName}</b> succeeded
+          </>
+        );
+        newWorkflowStatusItem.message = `Operator successfully executed.`;
       } else {
         // operator result is still pending, so skip current item since we do not know if successful or failed.
         return;
@@ -515,7 +555,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           normalizedWorkflowStatusItems.push({
             id: `${operatorId}-stdout-${i}`,
             level: WorkflowStatusTabs.Logs,
-            title: `${operatorName} stdout`,
+            title: (
+              <>
+                <b>{operatorName}</b> stdout
+              </>
+            ),
             message: stdoutLines[i],
             nodeId: operatorId,
             type: OperatorTypeToNodeTypeMap[
@@ -529,7 +573,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           normalizedWorkflowStatusItems.push({
             id: `${operatorId}-stderr-${i}`,
             level: WorkflowStatusTabs.Logs,
-            title: `${operatorName} stderr`,
+            title: (
+              <>
+                <b>{operatorName}</b> stderr
+              </>
+            ),
             message: stderrLines[i],
             nodeId: operatorId,
             type: OperatorTypeToNodeTypeMap[
