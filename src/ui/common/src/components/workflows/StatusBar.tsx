@@ -398,7 +398,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
 
       // Check if artifactResult is in the map, if not fetch it.
       if (!artifactResult) {
-        console.log('status bar ' + workflow.selectedResult.id);
         dispatch(
           handleGetArtifactResults({
             apiKey: user.apiKey,

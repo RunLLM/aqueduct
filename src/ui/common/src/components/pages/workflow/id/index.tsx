@@ -38,7 +38,7 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
+import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
@@ -138,7 +138,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
 
     if (!(nodeId in workflow.artifactResults)) {
-      console.log('index ' + workflow.selectedResult.id);
       dispatch(
         handleGetArtifactResults({
           apiKey: user.apiKey,
@@ -222,12 +221,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }
 
   const RightMarginInPx = 24;
-  const getSideSheetWidth = (baseWidth = '100%'): string | string[] => {
-    // RightMarginInPx: the white space on the right side of the Dag to show when side drawer is not visible.
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${RightMarginInPx}px)`;
-  };
-
-  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
 
   // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   // const sideSheetOpen = currentNode.type !== NodeType.None;
