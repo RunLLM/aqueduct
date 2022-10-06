@@ -121,11 +121,8 @@ def schedule_from_cron_string(schedule_str: str) -> Schedule:
     return Schedule(trigger=TriggerType.PERIODIC, cron_schedule=schedule_str)
 
 
-def retention_policy_from_latest_runs(config: Optional[FlowConfig]) -> RetentionPolicy:
-    if not (config and config.k_latest_run):
-        return RetentionPolicy(k_latest_runs=-1)
-    else:
-        return RetentionPolicy(k_latest_runs=config.k_latest_run)
+def retention_policy_from_latest_runs(k_latest_runs: int) -> RetentionPolicy:
+    return RetentionPolicy(k_latest_runs=k_latest_runs)
 
 
 # Helpers for creating model zip file
