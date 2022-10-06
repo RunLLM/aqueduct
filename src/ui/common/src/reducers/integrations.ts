@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
@@ -6,17 +6,17 @@ import { Integration } from '../utils/integrations';
 
 export interface IntegrationState {
   thunkState: string;
-  integrations: Integration[];
+  integrations: { [id: string]: Integration };
 }
 
 const initialState: IntegrationState = {
-  integrations: [],
+  integrations: {},
   thunkState: 'IDLE',
 };
 
 const { apiAddress } = useAqueductConsts();
 export const handleLoadIntegrations = createAsyncThunk<
-  Integration[],
+  { [id: string]: Integration },
   { apiKey: string; forceLoad?: boolean },
   { state: RootState }
 >(
@@ -31,7 +31,11 @@ export const handleLoadIntegrations = createAsyncThunk<
     // The integrations are already defined, so just ignore this call if not force load.
     const state = thunkAPI.getState();
     const integrations = state.integrationsReducer.integrations;
-    if (integrations && integrations.length > 0 && !args.forceLoad) {
+    if (
+      integrations &&
+      Object.values(integrations).length > 0 &&
+      !args.forceLoad
+    ) {
       return integrations;
     }
 
@@ -48,28 +52,23 @@ export const handleLoadIntegrations = createAsyncThunk<
       return thunkAPI.rejectWithValue(responseBody.error);
     }
 
-    return responseBody;
+    const integrationList = responseBody as Integration[];
+    const result: { [id: string]: Integration } = {};
+    integrationList.forEach(
+      (integration) => (result[integration.id] = integration)
+    );
+    return result;
   }
 );
-
-const handleSetIntegrationsReducer = (
-  state: IntegrationState,
-  payload: Integration[]
-) => {
-  state.integrations = payload;
-};
 
 export const integrationsSlice = createSlice({
   name: 'integrationsReducer',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(
-      handleLoadIntegrations.fulfilled,
-      (state, { payload }: PayloadAction<Integration[]>) => {
-        handleSetIntegrationsReducer(state, payload);
-      }
-    );
+    builder.addCase(handleLoadIntegrations.fulfilled, (state, { payload }) => {
+      state.integrations = payload;
+    });
   },
 });
 

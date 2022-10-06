@@ -28,12 +28,13 @@ import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
-import { WorkflowPageContentId } from '../pages/workflow/id';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
+
+export const WorkflowPageContentId = 'workflow-page-main';
 
 type Props = {
   user: UserProfile;

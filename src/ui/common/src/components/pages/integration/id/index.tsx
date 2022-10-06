@@ -25,7 +25,6 @@ import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
-import { Integration } from '../../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
@@ -104,15 +103,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [testConnectStatus]);
 
-  let selectedIntegration: Integration = undefined;
-
-  if (integrations) {
-    (integrations as Integration[]).forEach((integration) => {
-      if (integration.id === integrationId) {
-        selectedIntegration = integration;
-      }
-    });
-  }
+  const selectedIntegration = integrations[integrationId];
 
   useEffect(() => {
     if (selectedIntegration && selectedIntegration.name) {

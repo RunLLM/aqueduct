@@ -178,7 +178,8 @@ export type Service =
   | 'Airflow'
   | 'Kubernetes'
   | 'SQLite'
-  | 'Lambda';
+  | 'Lambda'
+  | 'Google Sheets';
 
 type Info = {
   logo: string;

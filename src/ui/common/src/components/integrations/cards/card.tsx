@@ -6,11 +6,9 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
-import {
-  Integration,
-  SupportedIntegrations,
-} from '../../../utils/integrations';
+import { Integration } from '../../../utils/integrations';
 import WorkflowStatus from '../../workflows/workflowStatus';
+import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
@@ -29,18 +27,14 @@ type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
 };
 
-export const dataCardName = (dataPreviewInfo: DataPreviewInfo): string =>
-  `${dataPreviewInfo.workflow_name}: ${dataPreviewInfo.artifact_name}`;
-
 export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
-  const dataPreviewInfoVersions = Object.keys(dataPreviewInfo.versions);
+  const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
   if (dataPreviewInfoVersions.length > 0) {
-    let latestTimestamp = 0;
-    let latestVersionUUID = null;
-    dataPreviewInfoVersions.forEach((uuid) => {
-      if (latestTimestamp < dataPreviewInfo.versions[uuid].timestamp) {
-        latestTimestamp = dataPreviewInfo.versions[uuid].timestamp;
-        latestVersionUUID = uuid;
+    let [latestDagResultId, latestVersion] = dataPreviewInfoVersions[0];
+    dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
+      if (latestVersion.timestamp < version.timestamp) {
+        latestDagResultId = dagResultId;
+        latestVersion = version;
       }
     });
     const workflowId = dataPreviewInfo.workflow_id;
@@ -48,45 +42,39 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
       <Link
         underline="none"
         color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}`}
+        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
+          dataPreviewInfo.artifact_id
+        }`}
         component={RouterLink as any}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
-              variant="h4"
-              gutterBottom
-              component="div"
-              sx={{
-                fontFamily: 'Monospace',
-                '&:hover': { textDecoration: 'underline' },
-              }}
-            >
-              {dataCardName(dataPreviewInfo)}
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="h4"
+                gutterBottom
+                component="div"
+                sx={{
+                  fontFamily: 'Monospace',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                {dataPreviewInfo.artifact_name}
+              </Typography>
+            </Box>
+            <Box marginLeft={1}>
+              <WorkflowStatus status={latestVersion.status} />
+            </Box>
+          </Box>
+          <Box sx={{ fontSize: 1, my: 1 }}>
+            <Typography variant="subtitle1">
+              <strong>Workflow:</strong> {dataPreviewInfo.workflow_name}
+            </Typography>
+            <Typography variant="subtitle1">
+              <strong>Last Updated:</strong>{' '}
+              {new Date(latestVersion.timestamp * 1000).toLocaleString()}
             </Typography>
           </Box>
-
-          <Typography variant="body1">
-            <strong>Status: </strong>
-          </Typography>
-
-          <WorkflowStatus
-            status={dataPreviewInfo.versions[latestVersionUUID].status}
-          />
-
-          <Typography variant="body1">
-            <strong>Saved at: </strong>
-            {new Date(
-              dataPreviewInfo.versions[latestVersionUUID].timestamp * 1000
-            ).toLocaleString()}
-          </Typography>
-
           <LoadSpecsCard loadSpecs={dataPreviewInfo.load_specs} />
         </Box>
       </Link>
@@ -145,21 +133,14 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', width: '900px' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
-          {integration.name}
-        </Typography>
-        <img
-          height="45px"
-          src={SupportedIntegrations[integration.service].logo}
-        />
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
+            {integration.name}
+          </Typography>
+        </Box>
+        <IntegrationLogo service={integration.service} size="small" activated />
       </Box>
 
       {serviceCard}
