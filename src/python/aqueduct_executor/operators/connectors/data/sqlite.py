@@ -3,6 +3,7 @@ from aqueduct_executor.operators.connectors.data import config, load, relational
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from sqlalchemy import create_engine, engine
 
+# https://www.sqlite.org/limits.html#max_variable_number
 SQLITE_MAX_VARIABLE_NUMBER = 32766
 
 
@@ -27,6 +28,9 @@ class SqliteConnector(relational.RelationalConnector):
             index=False,
             method="multi",
             # We need to specify chunksize due to sqlite3's variable number limit.
+            # chunksize corresponds to the max number of rows in each batch to be written at a time.
+            # Variable number is the multiplication of the row count and the column count, so we can
+            # calculate chunksize by dividing the max variable number with the number of columns.
             chunksize=int(SQLITE_MAX_VARIABLE_NUMBER / len(df.columns)),
         )
 
