@@ -314,6 +314,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
+    } else if (currentNode.type === NodeType.CheckOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/check/${currentNode.id}`
+              );
+            }}
+          >
+            View Check Details
+          </Button>
+        </Box>
+      );
     }
 
     return null;
@@ -413,7 +430,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             </Box>
             <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
-              {getDataSideSheetContent(user, currentNode)}
+              {getDataSideSheetContent(
+                user,
+                currentNode,
+                workflowId,
+                workflow.selectedResult.id
+              )}
             </Box>
           </Box>
         </Drawer>
