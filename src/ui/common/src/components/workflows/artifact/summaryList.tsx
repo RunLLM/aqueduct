@@ -37,9 +37,7 @@ const SummaryList: React.FC<Props> = ({
     if (artifactResult.result?.content_serialized) {
       content = artifactResult.result.content_serialized;
     } else {
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
-        artifactResult.id
-      }}`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${artifactResult.id}`;
       content = artifactResult.name;
     }
 
