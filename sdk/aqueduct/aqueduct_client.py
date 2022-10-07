@@ -301,7 +301,6 @@ class Client:
         checks: Optional[List[BoolArtifact]] = None,
         description: str = "",
         schedule: str = "",
-        k_latest_runs: int = -1,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -339,13 +338,11 @@ class Client:
 
                 >> schedule = aqueduct.hourly(minute: 0)
 
-            k_latest_runs:
-                Number of most-recent runs of this flow that Aqueduct should store.
-                Runs outside of this bound are deleted. Defaults to persisting all runs.
-
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
+                - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
+                    Runs outside of this bound are deleted. Defaults to persisting all runs.
                 We currently support Airflow.
 
         Raises:
@@ -391,7 +388,10 @@ class Client:
             implicitly_include_checks = False
 
         cron_schedule = schedule_from_cron_string(schedule)
-        retention_policy = retention_policy_from_latest_runs(k_latest_runs)
+        if not (config and config.k_latest_runs):
+            retention_policy = retention_policy_from_latest_runs(-1)
+        else:
+            retention_policy = retention_policy_from_latest_runs(config.k_latest_runs)
 
         dag = apply_deltas_to_dag(
             self._dag,
