@@ -226,17 +226,14 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   return (
     <Layout user={user}>
       <Box width={'800px'}>
-
-        {
-          !sideSheetMode && (
-            <Box width="100%">
-              <DetailsPageHeader name={operator?.name} />
-              {operator?.description && (
-                <Typography variant="body1">{operator.description}</Typography>
-              )}
-            </Box>
-          )
-        }
+        {!sideSheetMode && (
+          <Box width="100%">
+            <DetailsPageHeader name={operator?.name} />
+            {operator?.description && (
+              <Typography variant="body1">{operator.description}</Typography>
+            )}
+          </Box>
+        )}
 
         <Box width="100%" marginTop="32px">
           <Typography variant="h5" marginBottom="8px">

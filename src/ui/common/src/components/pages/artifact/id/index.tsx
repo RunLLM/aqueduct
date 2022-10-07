@@ -80,11 +80,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-      isSucceeded(workflowDagResultWithLoadingStatus.status)
+    isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-        workflowDagResultWithLoadingStatus?.result,
-        artifactId
-      )
+          workflowDagResultWithLoadingStatus?.result,
+          artifactId
+        )
       : { metrics: [], checks: [] };
 
   useEffect(() => {
@@ -175,17 +175,15 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          {
-            !sideSheetMode && (
-              <Box width="100%" display="flex" alignItems="center">
-                <DetailsPageHeader name={artifact.name} />
-                <CsvExporter
-                  artifact={artifact}
-                  contentWithLoadingStatus={contentWithLoadingStatus}
-                />
-              </Box>
-            )
-          }
+          {!sideSheetMode && (
+            <Box width="100%" display="flex" alignItems="center">
+              <DetailsPageHeader name={artifact.name} />
+              <CsvExporter
+                artifact={artifact}
+                contentWithLoadingStatus={contentWithLoadingStatus}
+              />
+            </Box>
+          )}
 
           <Box display="flex" width="100%" mt="64px">
             <Box width="100%" mr="32px">

@@ -138,7 +138,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-          artifactId
+            artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -149,16 +149,14 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%" mb={3}>
-          {
-            !sideSheetMode && (
-              <Box width="100%">
-                <DetailsPageHeader name={operator.name} />
-                {operator.description && (
-                  <Typography variant="body1">{operator.description}</Typography>
-                )}
-              </Box>
-            )
-          }
+          {!sideSheetMode && (
+            <Box width="100%">
+              <DetailsPageHeader name={operator.name} />
+              {operator.description && (
+                <Typography variant="body1">{operator.description}</Typography>
+              )}
+            </Box>
+          )}
           <Box display="flex" width="100%" paddingTop="40px">
             <Box width="100%">
               <ArtifactSummaryList
