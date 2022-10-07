@@ -26,6 +26,7 @@ type OperatorDetailsPageProps = {
   workflowIdProp?: string;
   workflowDagResultIdProp?: string;
   operatorIdProp?: string;
+  sideSheetMode?: boolean;
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
@@ -36,6 +37,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   workflowIdProp,
   workflowDagResultIdProp,
   operatorIdProp,
+  sideSheetMode = false,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -201,13 +203,16 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          <Box width="100%">
-            <DetailsPageHeader name={operator?.name} />
-            {operator?.description && (
-              <Typography variant="body1">{operator?.description}</Typography>
-            )}
-          </Box>
-
+          {
+            !sideSheetMode && (
+              <Box width="100%">
+                <DetailsPageHeader name={operator?.name} />
+                {operator?.description && (
+                  <Typography variant="body1">{operator?.description}</Typography>
+                )}
+              </Box>
+            )
+          }
           <Box display="flex" width="100%" pt="40px">
             <Box width="100%" mr="32px">
               <ArtifactSummaryList

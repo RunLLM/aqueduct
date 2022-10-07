@@ -31,7 +31,7 @@ export function getDataSideSheetContent(
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
-      <Box px={'32px'} maxWidth="800px">
+      <Box px={'32px'} maxWidth="800px" maxHeight="80vh" sx={{ overflowY: "scroll" }}>
         {children}
       </Box>
     );
@@ -46,7 +46,6 @@ export function getDataSideSheetContent(
     case NodeType.ImageArtifact:
     case NodeType.DictArtifact:
     case NodeType.GenericArtifact:
-      //return <DataPreviewSideSheet artifactId={currentNode.id} />;
       return (
         <ArtifactDetailsPage
           user={user}
@@ -54,6 +53,7 @@ export function getDataSideSheetContent(
           operatorIdProp={currentNode.id}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
         />
       );
     case NodeType.CheckOp:
@@ -64,6 +64,7 @@ export function getDataSideSheetContent(
           operatorIdProp={currentNode.id}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
         />
       );
     case NodeType.MetricOp:
@@ -74,6 +75,7 @@ export function getDataSideSheetContent(
           operatorIdProp={currentNode.id}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
         />
       );
     case NodeType.ExtractOp:
@@ -86,6 +88,7 @@ export function getDataSideSheetContent(
           operatorIdProp={currentNode.id}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
         />
       );
     }

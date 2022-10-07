@@ -31,6 +31,7 @@ type CheckDetailsPageProps = {
   workflowIdProp?: string;
   workflowDagResultIdProp?: string;
   operatorIdProp?: string;
+  sideSheetMode?: boolean;
 };
 
 const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
@@ -39,6 +40,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   workflowIdProp,
   workflowDagResultIdProp,
   operatorIdProp,
+  sideSheetMode = false,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, checkOperatorId } = useParams();
@@ -224,14 +226,17 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   return (
     <Layout user={user}>
       <Box width={'800px'}>
-        <Box width="100%">
-          <Box width="100%">
-            <DetailsPageHeader name={operator?.name} />
-            {operator?.description && (
-              <Typography variant="body1">{operator.description}</Typography>
-            )}
-          </Box>
-        </Box>
+
+        {
+          !sideSheetMode && (
+            <Box width="100%">
+              <DetailsPageHeader name={operator?.name} />
+              {operator?.description && (
+                <Typography variant="body1">{operator.description}</Typography>
+              )}
+            </Box>
+          )
+        }
 
         <Box width="100%" marginTop="32px">
           <Typography variant="h5" marginBottom="8px">
