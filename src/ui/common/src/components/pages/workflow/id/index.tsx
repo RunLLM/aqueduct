@@ -262,8 +262,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -287,8 +286,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={{ marginRight: '16px' }}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -304,13 +302,28 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={{ marginRight: '16px' }}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
           >
             View Operator Details
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.CheckOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                }/check/${currentNode.id}`
+              );
+            }}
+          >
+            View Check Details
           </Button>
         </Box>
       );
