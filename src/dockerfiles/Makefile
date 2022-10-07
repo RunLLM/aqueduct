@@ -7,9 +7,12 @@ ifndef VERBOSE
 .SILENT:
 endif
 
-# Building Aqueduct Dockerfile
-build-aqueduct-image:
-	docker build . -t aqueducthq/aqueduct:$(VERSION) -f aqueduct.dockerfile --no-cache --build-arg version=$(VERSION)
+# Building Aqueduct Images
+build-aqueduct-images:
+	docker build . -t aqueducthq/aqueduct-py37:$(VERSION) -f aqueduct/aqueduct-py37.dockerfile --no-cache --build-arg version=$(VERSION)
+	docker build . -t aqueducthq/aqueduct-py38:$(VERSION) -f aqueduct/aqueduct-py38.dockerfile --no-cache --build-arg version=$(VERSION)
+	docker build . -t aqueducthq/aqueduct-py39:$(VERSION) -f aqueduct/aqueduct-py39.dockerfile --no-cache --build-arg version=$(VERSION)
+	docker build . -t aqueducthq/aqueduct-py310:$(VERSION) -f aqueduct/aqueduct-py310.dockerfile --no-cache --build-arg version=$(VERSION)
 
 # Building K8s Images
 build-k8s-system-images: build-function build-param build-system-metric build-base-connector build-connectors
@@ -54,6 +57,12 @@ build-sqlserver-connector:
 	docker build . -t aqueducthq/sqlserver-connector:$(VERSION) -f connectors/sqlserver.dockerfile --no-cache
 
 # Publishing K8s Images
+publish-aqueduct:
+	docker push aqueducthq/aqueduct-py37:$(VERSION)
+	docker push aqueducthq/aqueduct-py38:$(VERSION)
+	docker push aqueducthq/aqueduct-py39:$(VERSION)
+	docker push aqueducthq/aqueduct-py310:$(VERSION)
+
 publish-k8s: publish-function publish-param publish-system-metric publish-connectors
 
 publish-function:
