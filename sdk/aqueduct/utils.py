@@ -222,7 +222,10 @@ def serialize_function(
         # Write function source code to file
         source_file = "{}.py".format(op_name)
         with open(os.path.join(dir_path, source_file), "w") as f:
-            source = inspect.getsource(func)
+            try:
+                source = inspect.getsource(func)
+            except Exception as e:
+                source = f"We cannot get source file due to:\n{str(e)}"
             f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
