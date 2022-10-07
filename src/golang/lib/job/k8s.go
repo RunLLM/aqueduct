@@ -25,7 +25,7 @@ type k8sJobManager struct {
 }
 
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateClientOutsideCluster(conf.KubeconfigPath)
+	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
 	}
