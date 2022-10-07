@@ -169,9 +169,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       )
       .filter((op) => !!op);
 
-  console.log('[artifact.from]: ', [artifact.from]);
-  console.log('artifact.to', artifact.to);
-
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
