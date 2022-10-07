@@ -224,8 +224,8 @@ def serialize_function(
         with open(os.path.join(dir_path, source_file), "w") as f:
             try:
                 source = inspect.getsource(func)
-            except Exception as e:
-                source = f"We cannot get source file due to:\n{str(e)}"
+            except Exception:
+                source = "unknown"
             f.write(source)
 
         zip_file_path = get_zip_file_path(dir_path)
