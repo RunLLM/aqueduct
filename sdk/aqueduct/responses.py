@@ -244,3 +244,9 @@ class ListWorkflowSavedObjectsResponse(BaseModel):
     """
 
     object_details: List[SavedObjectUpdate]
+
+
+class GetVersionResponse(BaseModel):
+    """This is the response object returned by /api/version."""
+
+    version: str

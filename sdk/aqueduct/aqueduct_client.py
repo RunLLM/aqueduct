@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import uuid
@@ -9,25 +8,17 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.config import FlowConfig
 from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
 
+from .artifacts.bool_artifact import BoolArtifact
 from .dag import Metadata
-from .dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-    validate_overwriting_parameters,
-)
-from .enums import ExecutionStatus, OperatorType, RelationalDBServices, RuntimeType, ServiceType
+from .dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
+from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
-    IncompleteFlowException,
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
@@ -43,14 +34,13 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import Operator, OperatorSpec, ParamSpec
+from .operators import ParamSpec
 from .responses import SavedObjectUpdate
 from .utils import (
     _infer_requirements,
     construct_param_spec,
     generate_engine_config,
     generate_ui_url,
-    generate_uuid,
     infer_artifact_type,
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
@@ -121,7 +111,8 @@ class Client:
         Returns:
             A Client instance.
         """
-        logger().setLevel(level=logging_level)
+        # We must call basicConfig() here so messages show up in Jupyter notebooks.
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging_level)
 
         if api_key == "":
             api_key = get_apikey()
@@ -305,9 +296,11 @@ class Client:
     def publish_flow(
         self,
         name: str,
+        artifacts: Union[BaseArtifact, List[BaseArtifact]],
+        metrics: Optional[List[NumericArtifact]] = None,
+        checks: Optional[List[BoolArtifact]] = None,
         description: str = "",
         schedule: str = "",
-        artifacts: Optional[List[BaseArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -327,6 +320,16 @@ class Client:
         Args:
             name:
                 The name of the newly created flow.
+            artifacts:
+                All the artifacts that you care about computing. These artifacts are guaranteed
+                to be computed. Additional artifacts may also be computed if they are upstream
+                dependencies.
+            metrics:
+                All the metrics that you would like to compute. If not supplied, we will implicitly
+                include all metrics computed on artifacts in the flow.
+            checks:
+                All the checks that you would like to compute. If not supplied, we will implicitly
+                include all checks computed on artifacts in the flow.
             description:
                 A description for the new flow.
             schedule: A cron expression specifying the cadence that this flow
@@ -334,11 +337,7 @@ class Client:
                 For example, to run at the top of every hour:
 
                 >> schedule = aqueduct.hourly(minute: 0)
-
-            artifacts:
-                All the artifacts that you care about computing. These artifacts are guaranteed
-                to be computed. Additional artifacts may also be included as intermediate
-                computation steps. All checks are on the resulting flow are also included.
+                
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
@@ -347,6 +346,8 @@ class Client:
                 We currently support Airflow.
 
         Raises:
+            InvalidUserArgumentException:
+                An invalid combination of parameters was provided.
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
             IncompleteFlowException:
@@ -355,10 +356,36 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
-        if artifacts is None or len(artifacts) == 0:
-            raise IncompleteFlowException(
-                "Must supply at least one output artifact when creating a flow."
+        if artifacts is None or artifacts == []:
+            raise InvalidUserArgumentException(
+                "Must supply at least one artifact to compute when creating a flow."
             )
+
+        if isinstance(artifacts, BaseArtifact):
+            artifacts = [artifacts]
+
+        if not isinstance(artifacts, list) or any(
+            not isinstance(artifact, BaseArtifact) for artifact in artifacts
+        ):
+            raise InvalidUserArgumentException(
+                "`artifacts` argument must either be an artifact or a list of artifacts."
+            )
+
+        # If metrics and/or checks are explicitly included, add them to the artifacts list,
+        # but don't include them implicitly.
+        implicitly_include_metrics = True
+        if metrics is not None:
+            if not isinstance(metrics, list):
+                raise InvalidUserArgumentException("`metrics` argument must be a list.")
+            artifacts += metrics
+            implicitly_include_metrics = False
+
+        implicitly_include_checks = True
+        if checks is not None:
+            if not isinstance(checks, list):
+                raise InvalidUserArgumentException("`checks` argument must be a list.")
+            artifacts += checks
+            implicitly_include_checks = False
 
         cron_schedule = schedule_from_cron_string(schedule)
         if not (config and config.k_latest_runs):
@@ -371,8 +398,9 @@ class Client:
             deltas=[
                 SubgraphDAGDelta(
                     artifact_ids=[artifact.id() for artifact in artifacts],
-                    include_load_operators=True,
-                    include_check_artifacts=True,
+                    include_saves=True,
+                    include_metrics=implicitly_include_metrics,
+                    include_checks=implicitly_include_checks,
                 ),
             ],
             make_copy=True,

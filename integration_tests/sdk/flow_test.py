@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 from aqueduct.enums import ExecutionStatus
-from aqueduct.error import IncompleteFlowException
+from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_model
 from test_metrics.constant.model import constant_metric
@@ -19,7 +19,7 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct import LoadUpdateMode, check, op
+from aqueduct import Flow, LoadUpdateMode, check, metric, op
 
 
 def test_basic_flow(client):
@@ -33,6 +33,7 @@ def test_basic_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
+@pytest.mark.publish
 def test_complex_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
@@ -52,14 +53,51 @@ def test_complex_flow(client):
     def failing_check(df):
         return False
 
-    run_flow_test(
-        client,
-        artifacts=[
-            output_artifact,
-            successful_check(output_artifact),
-            failing_check(output_artifact),
-        ],
-    )
+    @metric
+    def dummy_metric(df):
+        return 123
+
+    success_check = successful_check(output_artifact)
+    _ = failing_check(output_artifact)
+    dummy_metric = dummy_metric(output_artifact)
+
+    # Test that publish_flow can implicitly and explicitly include metrics and checks.
+    flow_name = generate_new_flow_name()
+
+    flow_id = None
+    try:
+        # Test that metrics and checks can be implicitly included, and that a non-error check
+        # failing does not fail the flow.
+        flow = run_flow_test(
+            client,
+            name=flow_name,
+            artifacts=[output_artifact],
+            delete_flow_after=False,
+        )
+        flow_id = flow.id()
+
+        # Metrics and checks should have been computed.
+        flow_run = flow.latest()
+        assert flow_run.artifact("dummy_metric artifact") is not None
+        assert flow_run.artifact("successful_check artifact") is not None
+        assert flow_run.artifact("failing_check artifact") is not None
+
+        flow = run_flow_test(
+            client,
+            name=flow_name,
+            artifacts=[output_artifact],
+            checks=[success_check],  # failing_check will no longer be included.
+            num_runs=2,
+            delete_flow_after=False,
+        )
+
+        # Only the explicitly defined metrics and checks should have been included in this second run.
+        flow_run = flow.latest()
+        assert flow_run.artifact("dummy_metric artifact") is not None
+        assert flow_run.artifact("successful_check artifact") is not None
+        assert flow_run.artifact("failing_check artifact") is None
+    finally:
+        delete_flow(client, flow_id)
 
 
 def test_multiple_output_artifacts(client):
@@ -102,7 +140,7 @@ def test_publish_with_schedule(client):
 
 
 def test_invalid_flow(client):
-    with pytest.raises(IncompleteFlowException):
+    with pytest.raises(InvalidUserArgumentException):
         client.publish_flow(
             name=generate_new_flow_name(),
             artifacts=[],
@@ -161,7 +199,7 @@ def test_refresh_flow(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifacts=output_artifact,
         schedule=aqueduct.hourly(),
     )
 
@@ -189,7 +227,7 @@ def test_get_artifact_from_flow(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifacts=output_artifact,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -210,7 +248,7 @@ def test_get_artifact_reuse_for_computation(client):
     )
     flow = client.publish_flow(
         name=generate_new_flow_name(),
-        artifacts=[output_artifact],
+        artifacts=output_artifact,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -231,13 +269,13 @@ def test_multiple_flows_with_same_schedule(client):
 
         flow_1 = client.publish_flow(
             name=generate_new_flow_name(),
-            artifacts=[output_artifact],
+            artifacts=output_artifact,
             schedule="* * * * *",
         )
 
         flow_2 = client.publish_flow(
             name=generate_new_flow_name(),
-            artifacts=[output_artifact_2],
+            artifacts=output_artifact_2,
             schedule="* * * * *",
         )
 
