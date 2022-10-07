@@ -32,7 +32,7 @@ export function getDataSideSheetContent(
   const SideSheetLayout = ({ children }) => {
     return (
       <Box
-        px={'8px'}
+        px={'16px'}
         maxWidth="800px"
         maxHeight="calc(100vh - 128px)"
         sx={{ overflowY: 'scroll' }}

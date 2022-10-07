@@ -235,7 +235,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
           </Box>
         )}
 
-        <Box width="100%" marginTop="32px">
+        <Box width="100%" marginTop={sideSheetMode ? '16px' : '40px'}>
           <Typography variant="h5" marginBottom="8px">
             Recent Results
           </Typography>

@@ -211,7 +211,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
               )}
             </Box>
           )}
-          <Box display="flex" width="100%" pt="40px">
+          <Box display="flex" width="100%" pt={sideSheetMode ? '16px' : '40px'}>
             <Box width="100%" mr="32px">
               <ArtifactSummaryList
                 title="Inputs"

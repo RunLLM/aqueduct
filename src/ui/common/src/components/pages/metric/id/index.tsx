@@ -157,7 +157,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
               )}
             </Box>
           )}
-          <Box display="flex" width="100%" paddingTop="40px">
+          <Box
+            display="flex"
+            width="100%"
+            paddingTop={sideSheetMode ? '16px' : '40px'}
+          >
             <Box width="100%">
               <ArtifactSummaryList
                 title={'Inputs'}
