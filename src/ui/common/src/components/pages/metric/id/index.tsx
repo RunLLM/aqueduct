@@ -21,14 +21,35 @@ import { LayoutProps } from '../../types';
 type MetricDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
+  // true if shown as a sidesheet instead of a page.
+  sideSheetMode?: boolean;
 };
 
 const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
+  sideSheetMode = false,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+  let { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    metricOperatorId = operatorIdProp;
+  }
 
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
@@ -128,14 +149,19 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%" mb={3}>
-          <Box width="100%">
-            <DetailsPageHeader name={operator.name} />
-            {operator.description && (
-              <Typography variant="body1">{operator.description}</Typography>
-            )}
-          </Box>
-
-          <Box display="flex" width="100%" paddingTop="40px">
+          {!sideSheetMode && (
+            <Box width="100%">
+              <DetailsPageHeader name={operator.name} />
+              {operator.description && (
+                <Typography variant="body1">{operator.description}</Typography>
+              )}
+            </Box>
+          )}
+          <Box
+            display="flex"
+            width="100%"
+            paddingTop={sideSheetMode ? '16px' : '40px'}
+          >
             <Box width="100%">
               <ArtifactSummaryList
                 title={'Inputs'}

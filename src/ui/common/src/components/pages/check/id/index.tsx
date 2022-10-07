@@ -28,14 +28,34 @@ import { LayoutProps } from '../../types';
 type CheckDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
+  sideSheetMode?: boolean;
 };
 
 const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
+  sideSheetMode = false,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { workflowId, workflowDagResultId, checkOperatorId } = useParams();
+  let { workflowId, workflowDagResultId, checkOperatorId } = useParams();
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    checkOperatorId = operatorIdProp;
+  }
 
   const [metricsExpanded, setMetricsExpanded] = useState<boolean>(true);
   const [artifactsExpanded, setArtifactsExpanded] = useState<boolean>(true);
@@ -206,16 +226,16 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   return (
     <Layout user={user}>
       <Box width={'800px'}>
-        <Box width="100%">
+        {!sideSheetMode && (
           <Box width="100%">
             <DetailsPageHeader name={operator?.name} />
             {operator?.description && (
               <Typography variant="body1">{operator.description}</Typography>
             )}
           </Box>
-        </Box>
+        )}
 
-        <Box width="100%" marginTop="32px">
+        <Box width="100%" marginTop={sideSheetMode ? '16px' : '40px'}>
           <Typography variant="h5" marginBottom="8px">
             Recent Results
           </Typography>
