@@ -337,7 +337,7 @@ class Client:
                 For example, to run at the top of every hour:
 
                 >> schedule = aqueduct.hourly(minute: 0)
-                
+
             config:
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
