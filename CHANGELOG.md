@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.1
+Released on October 12, 2022.
+
+### Key Features
+* Updates the UI to provide a simplified, more responsive layout and surface
+    more information about workflow execution. 
+    * Adds details pages for operators, artifacts, checks, and metrics which
+        show the history and metadata (e.g., code preview, historical values)
+        for the relevant object.
+    * Replaces old sidesheets with preview of the details pages when clicking
+        on a node in the workflow DAG.
+    * Adds narrower, simplified navigation sidebar as well as breadcrumbs to
+        simplify navigation.
+    * Makes page layout more responsive to narrow screens.
+* Adds Helm chart to deploy Aqueduct on Kubernetes servers; when running in
+    Kubernetes, there's a new integration mechanism to connect Aqueduct to the
+    current Kubernetes server that uses an in-cluster client rather than
+    `kubeconfig` file.
+* When switching Aqueduct metadata stores from local to cloud-hosted,
+    automigrates all data to cloud storage.
+
+### Enhancements
+* Allows operators to have multiple output artifacts. You can specify the
+    number of by using the `num_outputs` argument to the `@op` decorator.
+```python
+import aqueduct as aq
+
+@aq.op(num_outputs=3)
+def multi_output:
+  return 1, 2, 3
+
+a, b, c = multi_output()
+```
+* Enables modifying version history retention policy from the settings pane of
+    the workflow page.
+* Adds documentation link to menu sidebar.
+* Detects when SDK and server version are mismatched and surfaces an error when
+    creating SDK client.
+* Allows `publish_flow` to accept both a single artifact or a list of multiple
+    artifacts in the `artifacts` parameter.
+* Moves retention policy parameter from `publish_flow` to `FlowConfig` object.
+
+### Bugfixes
+* Fixes bug where tuple return types in operators were not returned correctly.
+* Sets minimum version requirements on `pydantic` and `typing-extensions`;
+    older versions caused inexplicable and confusing bugs.
+* Fixes bug where CSV upload dialog didn't show all rows in data upload
+    preview.
+* Fixes bug where parameters and checks were marked as canceled when there were
+    invalid inputs.
+* Fixes bug where Aqueduct logo was cut off on the welcome page on small
+    screens.
+* Fixes bug where long `stdout` or `stderr` logs were truncated on the UI.
+* Fixes bug where SQLite inserts would fail because of an argument limit for
+    older versions of SQLite.
+* Fixes bug where running Aqueduct operators in temporary environments (e.g.,
+    IPython interpreter, VSCode notebooks) would fail because the operator 
+    source file would not be detectable.
+
 ## 0.0.16
 Released on September 26, 2022.
 
