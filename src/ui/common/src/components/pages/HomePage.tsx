@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 
+import { BreadcrumbLinks } from '../../components/layouts/NavBar';
 import UserProfile from '../../utils/auth';
 import GettingStartedTutorial from '../cards/GettingStartedTutorial';
-import { BreadcrumbLinks } from '../../components/layouts/NavBar';
 import DefaultLayout from '../layouts/default';
 import { LayoutProps } from './types';
 

@@ -1,16 +1,22 @@
-import {
-  faBell,
-  faCircleUser,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCircleUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { AppBar, Avatar, Breadcrumbs, Link, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
+import {
+  AppBar,
+  Avatar,
+  Breadcrumbs,
+  Link,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Typography,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
-import { theme } from '../../styles/theme/theme';
 
 import { RootState } from '../../stores/store';
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
@@ -26,13 +32,24 @@ const pathPrefix = getPathPrefix();
 export class BreadcrumbLinks {
   static readonly HOME = new BreadcrumbLinks(`${pathPrefix}/`, 'Home');
   static readonly DATA = new BreadcrumbLinks(`${pathPrefix}/data`, 'Data');
-  static readonly INTEGRATIONS = new BreadcrumbLinks(`${pathPrefix}/integrations`, 'Integrations');
-  static readonly WORKFLOWS = new BreadcrumbLinks(`${pathPrefix}/workflows`, 'Workflows');
-  static readonly ACCOUNT = new BreadcrumbLinks(`${pathPrefix}/account`, 'Account');
-  static readonly ERROR = new BreadcrumbLinks(`${pathPrefix}/404`, 'Page Not Found');
+  static readonly INTEGRATIONS = new BreadcrumbLinks(
+    `${pathPrefix}/integrations`,
+    'Integrations'
+  );
+  static readonly WORKFLOWS = new BreadcrumbLinks(
+    `${pathPrefix}/workflows`,
+    'Workflows'
+  );
+  static readonly ACCOUNT = new BreadcrumbLinks(
+    `${pathPrefix}/account`,
+    'Account'
+  );
+  static readonly ERROR = new BreadcrumbLinks(
+    `${pathPrefix}/404`,
+    'Page Not Found'
+  );
 
-  constructor(public readonly address: string, public readonly name: any) {
-  }
+  constructor(public readonly address: string, public readonly name: any) {}
 
   toString() {
     return this.name;
@@ -44,12 +61,15 @@ export class BreadcrumbLinks {
  * is pinned to the top of every page in our UI, and it includes
  * information about the site hierarchy, notifications, and settings/accounts page.
  */
-const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = ({ user, breadcrumbs }) => {
+const NavBar: React.FC<{
+  user: UserProfile;
+  breadcrumbs: BreadcrumbLinks[];
+}> = ({ user, breadcrumbs }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
   console.log(breadcrumbs);
-  
+
   const userPopoverOpen = Boolean(userPopoverAnchorEl);
   const open = Boolean(anchorEl);
 
@@ -77,11 +97,11 @@ const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = 
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
+
   const notificationsPopoverId = open ? 'simple-popover' : undefined;
   const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
 
-  const avatarStyling = { width: '24px', height: '24px', marginLeft: "16px" };
+  const avatarStyling = { width: '24px', height: '24px', marginLeft: '16px' };
 
   const avatar = user.picture ? (
     <Avatar
@@ -102,64 +122,68 @@ const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = 
 
   /* Header */
   return (
-    <AppBar sx={{
-      width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
-      boxShadow: 'none',
-      borderBottom: `2px solid ${theme.palette.gray[300]}`,
-      backgroundColor: 'white',
-      color: 'black'
-      }}>
+    <AppBar
+      sx={{
+        width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
+        boxShadow: 'none',
+        borderBottom: `2px solid ${theme.palette.gray[300]}`,
+        backgroundColor: 'white',
+        color: 'black',
+      }}
+    >
       <Toolbar>
-      <Breadcrumbs>
-        {breadcrumbs.map((link, index) => {
-          console.log(link, index);
-          if (index+1 === breadcrumbs.length) {
-            console.log("LAST");
+        <Breadcrumbs>
+          {breadcrumbs.map((link, index) => {
+            if (index + 1 === breadcrumbs.length) {
+              return (
+                <Typography key={link.name} color="text.primary">
+                  {link.name}
+                </Typography>
+              );
+            }
             return (
-              <Typography color="text.primary">{link.name}</Typography>
+              <Link
+                key={link.name}
+                underline="hover"
+                color="inherit"
+                to={link.address}
+                component={RouterLink as any}
+              >
+                {link.name}
+              </Link>
             );
-          } 
-          console.log("INTERMEDIARY");
-          return (
-            <Link
-            underline="hover"
-            color="inherit"
-            to={link.address}
-            component={RouterLink as any}
-            >
-            {link.name}
-            </Link>
-          );
-        })}
-      </Breadcrumbs>
+          })}
+        </Breadcrumbs>
 
-      <Box sx={{marginLeft: 'auto'}}>
-        <Box onClick={handleClick} sx={{display: 'flex'}}>
-          <Box className={styles['notification-alert']}>
-                { !!numUnreadNotifications && <Typography
+        <Box sx={{ marginLeft: 'auto' }}>
+          <Box onClick={handleClick} sx={{ display: 'flex' }}>
+            <Box className={styles['notification-alert']}>
+              {!!numUnreadNotifications && (
+                <Typography
                   variant="body2"
                   sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
                 >
                   {numUnreadNotifications}
-                </Typography>}
+                </Typography>
+              )}
+            </Box>
+
+            <FontAwesomeIcon
+              className={styles['menu-sidebar-icon']}
+              icon={faBell}
+            />
           </Box>
 
-          <FontAwesomeIcon
-            className={styles['menu-sidebar-icon']}
-            icon={faBell}
+          <NotificationsPopover
+            user={user}
+            id={notificationsPopoverId}
+            anchorEl={anchorEl}
+            handleClose={handleClose}
+            open={open}
           />
         </Box>
 
-        <NotificationsPopover
-          user={user}
-          id={notificationsPopoverId}
-          anchorEl={anchorEl}
-          handleClose={handleClose}
-          open={open}
-        />
-      </Box>
-
-      <Box>
+        <Box>
           {avatar}
           <Menu
             id={userPopoverId}
@@ -169,7 +193,7 @@ const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = 
             PaperProps={{
               sx: {
                 mt: 1.5,
-              }
+              },
             }}
           >
             <Link
@@ -186,7 +210,7 @@ const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = 
               </MenuItem>
             </Link>
           </Menu>
-      </Box>
+        </Box>
       </Toolbar>
     </AppBar>
   );

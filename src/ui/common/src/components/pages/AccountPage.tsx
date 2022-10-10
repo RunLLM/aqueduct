@@ -33,7 +33,10 @@ client = aqueduct.Client(
   const maxContentWidth = '600px';
 
   return (
-    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.ACCOUNT]} user={user}>
+    <Layout
+      breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.ACCOUNT]}
+      user={user}
+    >
       <Typography variant="h2" gutterBottom component="div">
         Account Overview
       </Typography>

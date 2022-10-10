@@ -5,9 +5,9 @@ import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
 
 import DefaultLayout from '../../../../components/layouts/default';
+import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
@@ -45,7 +45,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   let { workflowId, workflowDagResultId, operatorId } = useParams();
   const path = useLocation().pathname;
 
-
   if (workflowIdProp) {
     workflowId = workflowIdProp;
   }
@@ -70,7 +69,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
-  
+
   const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
@@ -168,7 +167,18 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/operator/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, operator.name)]} user={user}>
+      <Layout
+        breadcrumbs={[
+          BreadcrumbLinks.HOME,
+          BreadcrumbLinks.WORKFLOWS,
+          new BreadcrumbLinks(
+            path.split('/operator/')[0],
+            workflow.selectedDag.metadata.name
+          ),
+          new BreadcrumbLinks(path, operator.name),
+        ]}
+        user={user}
+      >
         <CircularProgress />
       </Layout>
     );
@@ -205,7 +215,18 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   };
 
   return (
-    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/operator/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, operator.name)]} user={user}>
+    <Layout
+      breadcrumbs={[
+        BreadcrumbLinks.HOME,
+        BreadcrumbLinks.WORKFLOWS,
+        new BreadcrumbLinks(
+          path.split('/operator/')[0],
+          workflow.selectedDag.metadata.name
+        ),
+        new BreadcrumbLinks(path, operator.name),
+      ]}
+      user={user}
+    >
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (

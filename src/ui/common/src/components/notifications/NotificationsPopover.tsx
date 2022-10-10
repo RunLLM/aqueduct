@@ -59,11 +59,11 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         vertical: 'top',
         horizontal: 'right',
       }}
-      sx={{maxHeight: `calc(100% - ${breadcrumbsSize})`}}
+      sx={{ maxHeight: `calc(100% - ${breadcrumbsSize})` }}
       PaperProps={{
         sx: {
           mt: 4.5,
-        }
+        },
       }}
     >
       <Box role="tabpanel" sx={{ minHeight: '400px' }}>

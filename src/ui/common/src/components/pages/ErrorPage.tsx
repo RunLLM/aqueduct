@@ -66,7 +66,11 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   );
 
   if (user) {
-    return <Layout breadcrumbs={[BreadcrumbLinks.ERROR]} user={user}>{contents}</Layout>;
+    return (
+      <Layout breadcrumbs={[BreadcrumbLinks.ERROR]} user={user}>
+        {contents}
+      </Layout>
+    );
   }
   return contents;
 };

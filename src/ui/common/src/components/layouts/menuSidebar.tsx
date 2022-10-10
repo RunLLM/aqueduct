@@ -1,29 +1,22 @@
 import {
-  faBell,
-  faCircleUser,
   faDatabase,
   faMessage,
   faPlug,
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Avatar, Link, Menu, MenuItem, Typography } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { handleFetchNotifications } from '../../reducers/notifications';
-import { AppDispatch, RootState } from '../../stores/store';
+import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  NotificationLogLevel,
-  NotificationStatus,
-} from '../../utils/notifications';
-import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 
 // Left padding = 8px
@@ -80,13 +73,10 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       disabled={selected}
       disableRipple
     >
-      <Box
-      >
-        {icon}
-      </Box>
+      <Box>{icon}</Box>
       <Box
         sx={{
-          marginTop: '8px'
+          marginTop: '8px',
         }}
       >
         {text}
@@ -116,7 +106,6 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
 
-
   useEffect(() => {
     setCurrentPage(location.pathname);
 
@@ -145,77 +134,76 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       </Box>
 
       <Box sx={{ my: 2 }} className={styles['menu-sidebar-links']}>
+        <Link
+          to={`${getPathPrefix()}/workflows`}
+          className={styles['menu-sidebar-link']}
+          underline="none"
+          component={RouterLink as any}
+        >
+          <SidebarButton
+            icon={
+              <FontAwesomeIcon
+                className={styles['menu-sidebar-icon']}
+                icon={faShareNodes}
+              />
+            }
+            text="Workflows"
+            selected={currentPage === '/workflows'}
+          />
+        </Link>
 
-          <Link
-            to={`${getPathPrefix()}/workflows`}
-            className={styles['menu-sidebar-link']}
-            underline="none"
-            component={RouterLink as any}
-          >
+        <Link
+          to={`${getPathPrefix()}/integrations`}
+          className={styles['menu-sidebar-link']}
+          underline="none"
+          component={RouterLink as any}
+        >
+          <SidebarButton
+            icon={
+              <FontAwesomeIcon
+                className={styles['menu-sidebar-icon']}
+                icon={faPlug}
+              />
+            }
+            text="Integrations"
+            selected={currentPage === '/integrations'}
+          />
+        </Link>
+
+        <Link
+          to={`${getPathPrefix()}/data`}
+          className={styles['menu-sidebar-link']}
+          underline="none"
+          component={RouterLink as any}
+        >
+          <SidebarButton
+            icon={
+              <FontAwesomeIcon
+                className={styles['menu-sidebar-icon']}
+                icon={faDatabase}
+              />
+            }
+            text="Data"
+            selected={currentPage === '/data'}
+          />
+        </Link>
+      </Box>
+
+      <Box sx={{ width: '100%' }}>
+        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Box sx={{ marginTop: 2 }}>
+          <Link href="mailto:support@aqueducthq.com" underline="none">
             <SidebarButton
               icon={
                 <FontAwesomeIcon
                   className={styles['menu-sidebar-icon']}
-                  icon={faShareNodes}
+                  icon={faMessage}
                 />
               }
-              text="Workflows"
-              selected={currentPage === '/workflows'}
-            />
-          </Link>
-
-          <Link
-            to={`${getPathPrefix()}/integrations`}
-            className={styles['menu-sidebar-link']}
-            underline="none"
-            component={RouterLink as any}
-          >
-            <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faPlug}
-                />
-              }
-              text="Integrations"
-              selected={currentPage === '/integrations'}
-            />
-          </Link>
-
-          <Link
-            to={`${getPathPrefix()}/data`}
-            className={styles['menu-sidebar-link']}
-            underline="none"
-            component={RouterLink as any}
-          >
-            <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faDatabase}
-                />
-              }
-              text="Data"
-              selected={currentPage === '/data'}
+              text="Report Issue"
             />
           </Link>
         </Box>
-
-        <Box sx={{ width: '100%' }}>
-          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ marginTop: 2 }}>
-            <Link href="mailto:support@aqueducthq.com" underline="none">
-              <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faMessage}
-                  />
-                }
-                text="Report Issue"
-              />
-            </Link>
-          </Box>
       </Box>
     </>
   );
