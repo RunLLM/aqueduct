@@ -93,6 +93,8 @@ def run_sentiment_model_local_multiple_input(
 def run_flow_test(
     client: aqueduct.Client,
     artifacts: List[BaseArtifact],
+    metrics: Optional[List[BaseArtifact]] = None,
+    checks: Optional[List[BaseArtifact]] = None,
     name: str = "",
     schedule: str = "",
     num_runs: int = 1,
@@ -117,6 +119,8 @@ def run_flow_test(
     flow = client.publish_flow(
         name=name,
         artifacts=artifacts,
+        metrics=metrics,
+        checks=checks,
         schedule=schedule,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
@@ -147,7 +151,7 @@ def wait_for_flow_runs(
         The number of runs this flow has performed.
     """
     timeout = 500
-    poll_threshold = 5
+    poll_threshold = 1
     begin = time.time()
 
     while True:

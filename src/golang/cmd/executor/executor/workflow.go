@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -63,6 +64,19 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 }
 
 func (ex *WorkflowExecutor) Run(ctx context.Context) error {
+	// First, ensure that workflow execution is not paused
+	lock := utils.NewExecutionLock()
+	// The following will block until the RLock can be acquired
+	if err := lock.RLock(); err != nil {
+		return err
+	}
+	defer func() {
+		unlockErr := lock.RUnlock()
+		if unlockErr != nil {
+			log.Errorf("Unexpected error when unlocking execution lock: %v", unlockErr)
+		}
+	}()
+
 	status, err := ex.Engine.ExecuteWorkflow(
 		ctx,
 		ex.WorkflowId,
