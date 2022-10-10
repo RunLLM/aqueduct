@@ -24,18 +24,12 @@ import { MenuSidebarWidthNumber } from './menuSidebar';
 const pathPrefix = getPathPrefix();
 
 export class BreadcrumbLinks {
-  static readonly HOME = new BreadcrumbLinks(`${pathPrefix ?? "/"}`, 'Home');
+  static readonly HOME = new BreadcrumbLinks(`${pathPrefix}/`, 'Home');
   static readonly DATA = new BreadcrumbLinks(`${pathPrefix}/data`, 'Data');
-  static readonly INTEGRATIONS = new BreadcrumbLinks(`/${pathPrefix}/integrations`, 'Integrations');
-  static readonly WORKFLOWS = new BreadcrumbLinks(`/${pathPrefix}/workflows`, 'Workflows');
-  static readonly ACCOUNT = new BreadcrumbLinks(`/${pathPrefix}/account`, 'Account');
-  static readonly ERROR = new BreadcrumbLinks(`/${pathPrefix}/404`, 'Page Not Found');
-  //     <Route path={`/${pathPrefix}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
-  //     <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
-  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
-  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
-  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
-  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />      <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
+  static readonly INTEGRATIONS = new BreadcrumbLinks(`${pathPrefix}/integrations`, 'Integrations');
+  static readonly WORKFLOWS = new BreadcrumbLinks(`${pathPrefix}/workflows`, 'Workflows');
+  static readonly ACCOUNT = new BreadcrumbLinks(`${pathPrefix}/account`, 'Account');
+  static readonly ERROR = new BreadcrumbLinks(`${pathPrefix}/404`, 'Page Not Found');
 
   constructor(public readonly address: string, public readonly name: any) {
   }
@@ -118,11 +112,14 @@ const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = 
       <Toolbar>
       <Breadcrumbs>
         {breadcrumbs.map((link, index) => {
+          console.log(link, index);
           if (index+1 === breadcrumbs.length) {
+            console.log("LAST");
             return (
               <Typography color="text.primary">{link.name}</Typography>
             );
           } 
+          console.log("INTERMEDIARY");
           return (
             <Link
             underline="hover"

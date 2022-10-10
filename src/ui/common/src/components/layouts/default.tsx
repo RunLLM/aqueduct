@@ -1,8 +1,5 @@
-import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
-import { theme } from '../../styles/theme/theme';
-import { Link as RouterLink } from 'react-router-dom';
 
 import UserProfile from '../../utils/auth';
 import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
