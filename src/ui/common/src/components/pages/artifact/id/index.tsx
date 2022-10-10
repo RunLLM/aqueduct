@@ -5,7 +5,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
 
 import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
@@ -48,6 +49,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, artifactId } = useParams();
+  const path = useLocation().pathname;
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -65,6 +67,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
+
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const artifactContents = useSelector(
     (state: RootState) => state.artifactResultContentsReducer.contents
@@ -133,7 +137,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/artifact/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, artifact.name)]} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -141,7 +145,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout user={user}>
+      <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/artifact/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, artifact.name)]} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -152,7 +156,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (!artifact) {
     return (
-      <Layout user={user}>
+      <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/artifact/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, artifact.name)]} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load artifact.</AlertTitle>
           Artifact {artifactId} does not exist on this workflow.
@@ -173,7 +177,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/artifact/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, artifact.name)]} user={user}>
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (

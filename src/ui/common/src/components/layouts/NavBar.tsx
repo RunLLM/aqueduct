@@ -21,14 +21,40 @@ import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 import { MenuSidebarWidthNumber } from './menuSidebar';
 
+const pathPrefix = getPathPrefix();
+
+export class BreadcrumbLinks {
+  static readonly HOME = new BreadcrumbLinks(`${pathPrefix ?? "/"}`, 'Home');
+  static readonly DATA = new BreadcrumbLinks(`${pathPrefix}/data`, 'Data');
+  static readonly INTEGRATIONS = new BreadcrumbLinks(`/${pathPrefix}/integrations`, 'Integrations');
+  static readonly WORKFLOWS = new BreadcrumbLinks(`/${pathPrefix}/workflows`, 'Workflows');
+  static readonly ACCOUNT = new BreadcrumbLinks(`/${pathPrefix}/account`, 'Account');
+  static readonly ERROR = new BreadcrumbLinks(`/${pathPrefix}/404`, 'Page Not Found');
+  //     <Route path={`/${pathPrefix}/integration/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
+  //     <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
+  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
+  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+  //     <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />      <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
+
+  constructor(public readonly address: string, public readonly name: any) {
+  }
+
+  toString() {
+    return this.name;
+  }
+}
+
 /**
  * The `NavBar` is the core sidebar that we include throughout our UI. It
  * is pinned to the top of every page in our UI, and it includes
  * information about the site hierarchy, notifications, and settings/accounts page.
  */
-const NavBar: React.FC<{ user: UserProfile }> = ({ user }) => {
+const NavBar: React.FC<{ user: UserProfile, breadcrumbs: BreadcrumbLinks[] }> = ({ user, breadcrumbs }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  console.log(breadcrumbs);
   
   const userPopoverOpen = Boolean(userPopoverAnchorEl);
   const open = Boolean(anchorEl);
@@ -91,15 +117,23 @@ const NavBar: React.FC<{ user: UserProfile }> = ({ user }) => {
       }}>
       <Toolbar>
       <Breadcrumbs>
-        <Link
-          underline="hover"
-          color="inherit"
-          to="/"
-          component={RouterLink as any}
-        >
-          Home
-        </Link>
-        <Typography color="text.primary">Integrations</Typography>
+        {breadcrumbs.map((link, index) => {
+          if (index+1 === breadcrumbs.length) {
+            return (
+              <Typography color="text.primary">{link.name}</Typography>
+            );
+          } 
+          return (
+            <Link
+            underline="hover"
+            color="inherit"
+            to={link.address}
+            component={RouterLink as any}
+            >
+            {link.name}
+            </Link>
+          );
+        })}
       </Breadcrumbs>
 
       <Box sx={{marginLeft: 'auto'}}>
@@ -142,7 +176,7 @@ const NavBar: React.FC<{ user: UserProfile }> = ({ user }) => {
             }}
           >
             <Link
-              to={`${getPathPrefix()}/account`}
+              to={`${pathPrefix}/account`}
               underline="none"
               sx={{ color: 'blue.800' }}
               component={RouterLink as any}

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 
 import UserProfile from '../../utils/auth';
 import GettingStartedTutorial from '../cards/GettingStartedTutorial';
+import { BreadcrumbLinks } from '../../components/layouts/NavBar';
 import DefaultLayout from '../layouts/default';
 import { LayoutProps } from './types';
 
@@ -20,7 +21,7 @@ const HomePage: React.FC<HomePageProps> = ({
   }, []);
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME]} user={user}>
       <div />
       <GettingStartedTutorial user={user} />
     </Layout>

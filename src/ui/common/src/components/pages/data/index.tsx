@@ -2,6 +2,7 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { BreadcrumbLinks } from '../../../components/layouts/NavBar';
 
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
@@ -70,7 +71,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   };
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.DATA]} user={user}>
       <div />
       <Box>
         <Typography variant="h2" gutterBottom component="div">

@@ -5,6 +5,7 @@ import React from 'react';
 
 import UserProfile from '../../utils/auth';
 import DefaultLayout from '../layouts/default';
+import { BreadcrumbLinks } from '../layouts/NavBar';
 import { LayoutProps } from './types';
 
 type ErrorPageProps = {
@@ -65,7 +66,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   );
 
   if (user) {
-    return <Layout user={user}>{contents}</Layout>;
+    return <Layout breadcrumbs={[BreadcrumbLinks.ERROR]} user={user}>{contents}</Layout>;
   }
   return contents;
 };

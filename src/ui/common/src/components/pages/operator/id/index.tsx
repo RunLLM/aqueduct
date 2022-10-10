@@ -4,7 +4,8 @@ import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
 
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
@@ -42,6 +43,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   let { workflowId, workflowDagResultId, operatorId } = useParams();
+  const path = useLocation().pathname;
+
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -67,6 +70,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
+  
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[operatorId];
@@ -163,7 +168,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/operator/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, operator.name)]} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -200,7 +205,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   };
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path.split("/operator/")[0], workflow.selectedDag.metadata.name), new BreadcrumbLinks(path, operator.name)]} user={user}>
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (

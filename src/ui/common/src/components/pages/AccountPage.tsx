@@ -6,6 +6,7 @@ import { CopyBlock, github } from 'react-code-blocks';
 import UserProfile from '../../utils/auth';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import DefaultLayout from '../layouts/default';
+import { BreadcrumbLinks } from '../layouts/NavBar';
 import { LayoutProps } from './types';
 
 type AccountPageProps = {
@@ -32,7 +33,7 @@ client = aqueduct.Client(
   const maxContentWidth = '600px';
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.ACCOUNT]} user={user}>
       <Typography variant="h2" gutterBottom component="div">
         Account Overview
       </Typography>

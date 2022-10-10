@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { BreadcrumbLinks } from '../../../components/layouts/NavBar';
 
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
@@ -54,7 +55,7 @@ const IntegrationsPage: React.FC<Props> = ({
   }
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.INTEGRATIONS]} user={user}>
       <Box>
         {/*<Breadcrumbs>
           <Link

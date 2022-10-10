@@ -8,7 +8,8 @@ import { parse } from 'query-string';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
 
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
@@ -61,6 +62,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
+  const path = useLocation().pathname;
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -339,7 +341,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const drawerHeaderHeightInPx = 64;
 
   return (
-    <Layout user={user}>
+    <Layout breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS, new BreadcrumbLinks(path, workflow.selectedDag.metadata.name)]} user={user}>
       <Box
         sx={{
           display: 'flex',
