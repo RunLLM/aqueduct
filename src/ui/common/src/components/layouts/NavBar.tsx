@@ -119,20 +119,22 @@ const NavBar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Typography color="text.primary">Integrations</Typography>
       </Breadcrumbs>
 
-      <Box onClick={handleClick} sx={{display: 'flex', marginLeft: 'auto'}}>
-        <Box className={styles['notification-alert']}>
-              { !!numUnreadNotifications && <Typography
-                variant="body2"
-                sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
-              >
-                {numUnreadNotifications}
-              </Typography>}
-        </Box>
+      <Box sx={{marginLeft: 'auto'}}>
+        <Box onClick={handleClick} sx={{display: 'flex'}}>
+          <Box className={styles['notification-alert']}>
+                { !!numUnreadNotifications && <Typography
+                  variant="body2"
+                  sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
+                >
+                  {numUnreadNotifications}
+                </Typography>}
+          </Box>
 
-        <FontAwesomeIcon
-          className={styles['menu-sidebar-icon']}
-          icon={faBell}
-        />
+          <FontAwesomeIcon
+            className={styles['menu-sidebar-icon']}
+            icon={faBell}
+          />
+        </Box>
 
         <NotificationsPopover
           user={user}

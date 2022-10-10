@@ -12,6 +12,8 @@ import { NotificationLogLevel } from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
 import NotificationListItem from './NotificationListItem';
 
+export const breadcrumbsSize = '64px';
+
 interface NotificationsPopoverProps {
   user: UserProfile;
   id: string;
@@ -57,9 +59,10 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         vertical: 'top',
         horizontal: 'right',
       }}
+      sx={{maxHeight: `calc(100% - ${breadcrumbsSize})`}}
       PaperProps={{
         sx: {
-          mt: 1.5,
+          mt: 4.5,
         }
       }}
     >

@@ -7,6 +7,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import UserProfile from '../../utils/auth';
 import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
 import NavBar from './NavBar';
+import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 
 export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
 
@@ -34,7 +35,7 @@ export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
         <Box
           sx={{
-            paddingTop: '64px',
+            paddingTop: breadcrumbsSize,
             marginLeft: MenuSidebarOffset,
             marginRight: 0,
             width: '100%',
