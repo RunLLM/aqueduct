@@ -39,7 +39,7 @@ const SummaryList: React.FC<Props> = ({
     } else {
       link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
         artifactResult.id
-      }}`;
+      }`;
       content = artifactResult.name;
     }
 

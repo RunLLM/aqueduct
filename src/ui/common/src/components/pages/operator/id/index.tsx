@@ -23,6 +23,10 @@ type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   maxRenderSize?: number;
+  workflowIdProp?: string;
+  workflowDagResultIdProp?: string;
+  operatorIdProp?: string;
+  sideSheetMode?: boolean;
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
@@ -30,10 +34,26 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
   maxRenderSize = 100000000,
+  workflowIdProp,
+  workflowDagResultIdProp,
+  operatorIdProp,
+  sideSheetMode = false,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { workflowId, workflowDagResultId, operatorId } = useParams();
+  let { workflowId, workflowDagResultId, operatorId } = useParams();
+
+  if (workflowIdProp) {
+    workflowId = workflowIdProp;
+  }
+
+  if (workflowDagResultIdProp) {
+    workflowDagResultId = workflowDagResultIdProp;
+  }
+
+  if (operatorIdProp) {
+    operatorId = operatorIdProp;
+  }
 
   const [files, setFiles] = useState({
     '': {
@@ -183,14 +203,15 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     <Layout user={user}>
       <Box width={'800px'}>
         <Box width="100%">
-          <Box width="100%">
-            <DetailsPageHeader name={operator?.name} />
-            {operator?.description && (
-              <Typography variant="body1">{operator?.description}</Typography>
-            )}
-          </Box>
-
-          <Box display="flex" width="100%" pt="40px">
+          {!sideSheetMode && (
+            <Box width="100%">
+              <DetailsPageHeader name={operator?.name} />
+              {operator?.description && (
+                <Typography variant="body1">{operator?.description}</Typography>
+              )}
+            </Box>
+          )}
+          <Box display="flex" width="100%" pt={sideSheetMode ? '16px' : '40px'}>
             <Box width="100%" mr="32px">
               <ArtifactSummaryList
                 title="Inputs"

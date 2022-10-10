@@ -41,6 +41,24 @@ export const nodeTypes = {
   checkOp: CheckOperatorNode,
 };
 
+export const nodeTypeToStringLabel = {
+  tableArtifact: 'Table Artifact',
+  numericArtifact: 'Numeric Artifact',
+  boolArtifact: 'Boolean Artifact',
+  jsonArtifact: 'JSON Artifact',
+  stringArtifact: 'String Artifact',
+  imageArtifact: 'Image Artifact',
+  dictArtifact: 'Dictionary Artifact',
+  genericArtifact: 'Generic Artifact',
+  // NOTE function and functionOp are the same. Should remove one in the future?
+  function: 'Function Operator',
+  functionOp: 'Function Operator',
+  extractOp: 'Extract Operator',
+  loadOp: 'Load Operator',
+  metricOp: 'Metric Operator',
+  checkOp: 'Check Operator',
+};
+
 export const artifactTypeToIconMapping = {
   [ArtifactType.String]: stringArtifactNodeIcon,
   [ArtifactType.Bool]: boolArtifactNodeIcon,

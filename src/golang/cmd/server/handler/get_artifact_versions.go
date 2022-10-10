@@ -29,11 +29,13 @@ type getArtifactVersionsResponse struct {
 }
 
 type artifactVersions struct {
-	WorkflowName string                        `json:"workflow_name"`
-	ArtifactName string                        `json:"artifact_name"`
-	WorkflowId   uuid.UUID                     `json:"workflow_id"`
-	LoadSpecs    []connector.Load              `json:"load_specs"`
-	Versions     map[uuid.UUID]artifactVersion `json:"versions"`
+	WorkflowName        string                        `json:"workflow_name"`
+	ArtifactName        string                        `json:"artifact_name"`
+	WorkflowId          uuid.UUID                     `json:"workflow_id"`
+	WorkflowDagResultId uuid.UUID                     `json:"workflow_dag_result_id"`
+	ArtifactId          uuid.UUID                     `json:"artifact_id"`
+	LoadSpecs           []connector.Load              `json:"load_specs"`
+	Versions            map[uuid.UUID]artifactVersion `json:"versions"`
 }
 
 type artifactVersion struct {
@@ -145,6 +147,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 					WorkflowName: loadOperator.WorkflowName,
 					WorkflowId:   loadOperator.WorkflowId,
 					ArtifactName: loadOperator.ArtifactName,
+					ArtifactId:   loadOperator.ArtifactId,
 					Versions:     make(map[uuid.UUID]artifactVersion),
 				}
 			}

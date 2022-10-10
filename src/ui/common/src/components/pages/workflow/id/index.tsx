@@ -38,10 +38,12 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
+import DefaultLayout from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
-import WorkflowHeader from '../../../workflows/workflowHeader';
+import WorkflowHeader, {
+  WorkflowPageContentId,
+} from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
@@ -129,7 +131,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of the artifact for which we're retrieving
    * details.
    */
-  const updateArtifactDetails = (nodeId: string) => {
+  const getArtifactResultDetails = (nodeId: string) => {
     const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
     if (!artf || !workflow.selectedResult) {
       return;
@@ -157,7 +159,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of an artifact for which we're retrieving
    * results.
    */
-  const updateOperatorDetails = (nodeId: string) => {
+  const getOperatorResultDetails = (nodeId: string) => {
     // Verify the node is indeed an operator, and a result is selected
     const op = (workflow.selectedDag?.operators ?? {})[nodeId];
     if (!op || !workflow.selectedResult) {
@@ -175,13 +177,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
 
     for (const artfId of [...op.inputs, ...op.outputs]) {
-      updateArtifactDetails(artfId);
+      getArtifactResultDetails(artfId);
     }
   };
 
   useEffect(() => {
-    updateOperatorDetails(currentNode.id);
-    updateArtifactDetails(currentNode.id);
+    getOperatorResultDetails(currentNode.id);
+    getArtifactResultDetails(currentNode.id);
   }, [currentNode.id, workflow.selectedResult?.id]);
 
   const onPaneClicked = (event: React.MouseEvent) => {
@@ -193,20 +195,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const selectedDag = workflow.selectedDag;
-  const getDagDetails = () => {
+  const getDagResultDetails = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
       !!selectedDag
     ) {
       for (const op of Object.values(selectedDag.operators)) {
-        // We don't need to call updateArtifactDetails because
-        // updateOperatorDetails automatically does that for us.
-        updateOperatorDetails(op.id);
+        // We don't need to call getArtifactResultDetails because
+        // getOperatorResultDetails automatically does that for us.
+        getOperatorResultDetails(op.id);
       }
     }
   };
 
-  useEffect(getDagDetails, [workflow.selectedDag]);
+  useEffect(getDagResultDetails, [workflow.selectedResult?.id]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
@@ -219,22 +221,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }
 
   const RightMarginInPx = 24;
-  const getSideSheetWidth = (baseWidth = '100%'): string | string[] => {
-    // RightMarginInPx: the white space on the right side of the Dag to show when side drawer is not visible.
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${RightMarginInPx}px)`;
-  };
-
-  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
 
   // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   // const sideSheetOpen = currentNode.type !== NodeType.None;
-
-  const contentWidth = getSideSheetWidth(
-    // in ui-redesign, sidesheet comes in from the right, and the status bar is now a popover, which means status bar no longer has a width to worry about
-    // with regards to expanding and contracting the page contents.
-    // the new sidesheet is shown when the current node is selected. the opensidesheet state reducer isn't being used.
-    fullWindowWidth
-  );
 
   const contentBottomOffsetInPx = `32px`;
   const getNodeLabel = () => {
@@ -325,6 +314,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
+    } else if (currentNode.type === NodeType.CheckOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/check/${currentNode.id}`
+              );
+            }}
+          >
+            View Check Details
+          </Button>
+        </Box>
+      );
     }
 
     return null;
@@ -347,6 +353,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           transition: WidthTransition,
           transitionDelay: '-150ms',
         }}
+        id={WorkflowPageContentId}
       >
         {workflow.selectedDag && (
           <WorkflowHeader
@@ -423,7 +430,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             </Box>
             <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
-              {getDataSideSheetContent(user, currentNode)}
+              {getDataSideSheetContent(
+                user,
+                currentNode,
+                workflowId,
+                workflow.selectedResult.id
+              )}
             </Box>
           </Box>
         </Drawer>
