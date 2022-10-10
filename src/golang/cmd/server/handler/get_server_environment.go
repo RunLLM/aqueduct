@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const inK8sClusterEnvVarName = "AQUEDUCT_IN_K8S_CLUSTER"
@@ -40,8 +38,6 @@ func (h *GetServerEnvironmentHandler) Perform(ctx context.Context, interfaceArgs
 	if os.Getenv(inK8sClusterEnvVarName) == "1" {
 		inCluster = true
 	}
-
-	log.Info("Incluster is %s", inCluster)
 
 	return getServerEnvironmentResponse{
 		InK8sCluster: inCluster,
