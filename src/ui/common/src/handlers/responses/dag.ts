@@ -4,7 +4,7 @@ import { OperatorType } from '../../utils/operators';
 import { ExecState } from '../../utils/shared';
 import { StorageConfig } from '../../utils/storage';
 import {
-  WorkflowRetentionPolicy,
+  RetentionPolicy,
   WorkflowSchedule,
 } from '../../utils/workflows';
 import { ArtifactResponse, ArtifactResultResponse } from './artifact';
@@ -22,7 +22,7 @@ export type DagMetadataResponse = {
   name: string;
   description: string;
   schedule?: WorkflowSchedule;
-  retention_policy?: WorkflowRetentionPolicy;
+  retention_policy?: RetentionPolicy;
 };
 
 export type DagResponse = DagMetadataResponse & {
