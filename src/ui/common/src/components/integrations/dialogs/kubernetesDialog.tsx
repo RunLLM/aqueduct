@@ -98,5 +98,6 @@ export function isK8sConfigComplete(config: KubernetesConfig): boolean {
     return !!config.kubeconfig_path && !!config.cluster_name;
   }
 
+  // If the user configures to run compute from within the same k8s cluster, we don't need parameters above.
   return true;
 }
