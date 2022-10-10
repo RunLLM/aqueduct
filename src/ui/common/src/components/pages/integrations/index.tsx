@@ -76,15 +76,17 @@ const IntegrationsPage: React.FC<Props> = ({
           Integrations
         </Typography>
 
+        <Divider sx={{ width: '950px' }} />
+
         <Box sx={{ my: 3, ml: 1 }}>
-          <Typography variant="h4">Add an Integration</Typography>
-          <Typography variant="h6">Data</Typography>
+          <Typography variant="h4" marginBottom={3}>Add an Integration</Typography>
+          <Typography variant="h6" marginBottom={2}>Data</Typography>
           <AddIntegrations
             user={user}
             category="data"
             supportedIntegrations={SupportedIntegrations}
           />
-          <Typography variant="h6">Compute</Typography>
+          <Typography variant="h6" marginTop={4} marginBottom={3}>Compute</Typography>
           <AddIntegrations
             user={user}
             category="compute"
@@ -92,10 +94,12 @@ const IntegrationsPage: React.FC<Props> = ({
           />
         </Box>
 
-        <Divider sx={{ width: '950px' }} />
+        <Box marginTop="40px">
+          <Divider sx={{ width: '950px' }} />
+        </Box>
 
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Typography variant="h4">Connected Integrations</Typography>
+        <Box sx={{ marginTop: 3, marginBottom: 3, ml: 1 }}>
+          <Typography variant="h4" marginBottom={3}>Connected Integrations</Typography>
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />
         </Box>
       </Box>
