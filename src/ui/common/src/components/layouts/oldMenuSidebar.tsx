@@ -26,11 +26,7 @@ import {
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 
-// Left padding = 8px
-// Right padding = 8px
-// Content size = 64px
-export const MenuSidebarWidthNumber = 80;
-export const MenuSidebarWidth = `${MenuSidebarWidthNumber}px`;
+export const MenuSidebarWidth = '200px';
 
 export type SidebarButtonProps = {
   icon: React.ReactElement;
@@ -45,6 +41,7 @@ const BUTTON_STYLE_OVERRIDE = {
   alignItems: 'center',
   cursor: 'pointer',
   justifyContent: 'left',
+  paddingX: 1,
   width: '100%',
   maxWidth: '100%',
   textTransform: 'none',
@@ -59,13 +56,10 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
   return (
     <Button
       sx={{
+        my: 1,
         ...BUTTON_STYLE_OVERRIDE,
         bg: 'blue.800',
-        fontSize: '10px',
-        width: '64px',
-        display: 'block',
-        py: 1,
-        px: 0,
+        fontSize: '20px',
         color: selected ? 'LogoLight' : 'white',
         '&:hover': {
           color: 'NavMenuHover',
@@ -81,12 +75,17 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       disableRipple
     >
       <Box
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         {icon}
       </Box>
       <Box
         sx={{
-          marginTop: '8px'
+          display: 'flex',
+          flexDirection: 'row',
+          width: '100%',
+          alignItems: 'center',
+          justifyContent: 'start',
         }}
       >
         {text}
@@ -109,13 +108,24 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 /**
  * The `MenuSidebar` is the core sidebar that we include throughout our UI. It
  * is pinned on the left-hand side of every page in our UI, and it includes
- * quick links to core abstractions in our system (workflows, integrations, etc).
+ * information about the user that logged in and quick links to core
+ * abstractions in our system (workflows, integrations, etc).
  */
 const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
-  const dispatch: AppDispatch = useDispatch();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [currentPage, setCurrentPage] = useState(undefined);
+  const dispatch: AppDispatch = useDispatch();
   const location = useLocation();
 
+  const numUnreadNotifications = useSelector(
+    (state: RootState) =>
+      state.notificationsReducer.notifications.filter(
+        (notification) =>
+          notification.level !== NotificationLogLevel.Success &&
+          notification.status === NotificationStatus.Unread
+      ).length
+  );
 
   useEffect(() => {
     setCurrentPage(location.pathname);
@@ -124,6 +134,43 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       dispatch(handleFetchNotifications({ user }));
     }
   }, []);
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserPopoverClick = (event: React.MouseEvent) => {
+    setUserPopoverAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleCloseUserPopover = () => {
+    setUserPopoverAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const notificationsPopoverId = open ? 'simple-popover' : undefined;
+
+  const userPopoverOpen = Boolean(userPopoverAnchorEl);
+  const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
+
+  const avatar = user.picture ? (
+    <Avatar
+      className={styles['user-avatar']}
+      sx={{ width: '24px', height: '24px' }}
+      src={user.picture}
+    />
+  ) : (
+    <Avatar
+      className={styles['user-avatar']}
+      sx={{ width: '24px', height: '24px' }}
+    >
+      {user.name !== 'aqueduct user' ? user.name : null}
+    </Avatar>
+  );
 
   const pathPrefix = getPathPrefix();
   const sidebarContent = (
@@ -135,16 +182,90 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           component={RouterLink as any}
         >
           <img
-            src={
-              'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_color_on_white.png'
-            }
-            width="64px"
-            height="64px"
+            style={{ maxWidth: '250px', width: '100%', marginLeft: '4px' }}
+            src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-horizontal-light-transparent-resized.png"
           />
         </Link>
+
+        {/* popover target */}
+        <Button
+          sx={{
+            ...BUTTON_STYLE_OVERRIDE,
+            mt: 2,
+            mb: 1,
+            height: '40px',
+            backgroundColor: 'gray.100',
+            color: 'darkGray',
+            '&:hover': {
+              backgroundColor: 'gray.300',
+            },
+            alignItems: 'center',
+          }}
+          onClick={handleUserPopoverClick}
+          disableRipple
+        >
+          {avatar}
+          <Box
+            sx={{
+              textOverflow: 'clip',
+              whiteSpace: 'nowrap',
+              display: 'block',
+              overflow: 'hidden',
+              width: '130px',
+              maxWidth: '130px',
+              fontSize: '16px',
+              ml: 1,
+            }}
+          >
+            {user.name === 'aqueduct user' ? 'Aqueduct' : user.name}
+          </Box>
+        </Button>
+        {/* end popover target */}
+
+        <Menu
+          id={userPopoverId}
+          anchorEl={userPopoverAnchorEl}
+          onClose={handleCloseUserPopover}
+          open={userPopoverOpen}
+        >
+          <Link
+            to={`${getPathPrefix()}/account`}
+            underline="none"
+            sx={{ color: 'blue.800' }}
+            component={RouterLink as any}
+          >
+            <MenuItem sx={{ width: '190px' }} disableRipple>
+              <Box sx={{ fontSize: '20px', mr: 1 }}>
+                <FontAwesomeIcon icon={faCircleUser} />
+              </Box>
+              Account
+            </MenuItem>
+          </Link>
+        </Menu>
       </Box>
 
-      <Box sx={{ my: 2 }} className={styles['menu-sidebar-links']}>
+      <Box className={styles['menu-sidebar-links']}>
+        <Box className={styles['menu-sidebar-links-wrapper']}>
+          <Box className={styles['menu-sidebar-link']} onClick={handleClick}>
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faBell}
+                />
+              }
+              text="Notifications"
+              numUpdates={numUnreadNotifications}
+            />
+          </Box>
+
+          <NotificationsPopover
+            user={user}
+            id={notificationsPopoverId}
+            anchorEl={anchorEl}
+            handleClose={handleClose}
+            open={open}
+          />
 
           <Link
             to={`${getPathPrefix()}/workflows`}
@@ -203,7 +324,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
 
         <Box sx={{ width: '100%' }}>
           <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ marginTop: 2 }}>
+          <Box sx={{ my: 2 }}>
             <Link href="mailto:support@aqueducthq.com" underline="none">
               <SidebarButton
                 icon={
@@ -216,6 +337,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               />
             </Link>
           </Box>
+        </Box>
       </Box>
     </>
   );

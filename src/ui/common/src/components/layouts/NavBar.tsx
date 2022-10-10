@@ -1,23 +1,16 @@
 import {
   faBell,
   faCircleUser,
-  faDatabase,
-  faMessage,
-  faPlug,
-  faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AppBar, Avatar, Breadcrumbs, Link, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Link as RouterLink } from 'react-router-dom';
 import { theme } from '../../styles/theme/theme';
 
-import { handleFetchNotifications } from '../../reducers/notifications';
-import { AppDispatch, RootState } from '../../stores/store';
+import { RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
@@ -27,18 +20,6 @@ import {
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 import { MenuSidebarWidthNumber } from './menuSidebar';
-
-const BUTTON_STYLE_OVERRIDE = {
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  cursor: 'pointer',
-  justifyContent: 'left',
-  paddingX: 1,
-  width: '100%',
-  maxWidth: '100%',
-  textTransform: 'none',
-} as const;
 
 /**
  * The `NavBar` is the core sidebar that we include throughout our UI. It
@@ -80,17 +61,19 @@ const NavBar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const notificationsPopoverId = open ? 'simple-popover' : undefined;
   const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
 
+  const avatarStyling = { width: '24px', height: '24px', marginLeft: "16px" };
+
   const avatar = user.picture ? (
     <Avatar
       className={styles['user-avatar']}
-      sx={{ width: '24px', height: '24px' }}
+      sx={avatarStyling}
       src={user.picture}
       onClick={handleUserPopoverClick}
     />
   ) : (
     <Avatar
       className={styles['user-avatar']}
-      sx={{ width: '24px', height: '24px' }}
+      sx={avatarStyling}
       onClick={handleUserPopoverClick}
     >
       {user.name !== 'aqueduct user' ? user.name : null}
