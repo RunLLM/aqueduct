@@ -57,6 +57,11 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         vertical: 'top',
         horizontal: 'right',
       }}
+      PaperProps={{
+        sx: {
+          mt: 1.5,
+        }
+      }}
     >
       <Box role="tabpanel" sx={{ minHeight: '400px' }}>
         {filteredNotifications.length > 0 ? (

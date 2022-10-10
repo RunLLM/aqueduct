@@ -1,9 +1,9 @@
 .menu-sidebar {
-  max-width: 200px;
-  width: 200px;
+  max-width: 50px;
+  width: 50px;
   height: 97%;
   max-height: 100vh;
-  padding-top: 24px;
+  padding-top: 8px;
   padding-bottom: 24px;
   padding-left: 13px;
   padding-right: 13px;
@@ -12,11 +12,6 @@
   background-color: #002f5e; /* theme.colors.blue900 */
   position: fixed;
   z-index: 1;
-}
-
-.menu-sidebar-popover-container {
-  width: 100%;
-  margin-bottom: 4px;
 }
 
 .menu-sidebar-links {

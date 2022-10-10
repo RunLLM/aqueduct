@@ -1,10 +1,12 @@
-import { AppBar, Toolbar, Typography } from '@mui/material';
+import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 import { theme } from '../../styles/theme/theme';
+import { Link as RouterLink } from 'react-router-dom';
 
 import UserProfile from '../../utils/auth';
 import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
+import NavBar from './NavBar';
 
 export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
 
@@ -23,32 +25,22 @@ export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
         overflow: 'auto',
       }}
     >
-      <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
+      <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1}}>
+
         <MenuSidebar user={user} />
 
+        <NavBar user={user} />
+        {/* Pad top for breadcrumbs (64px). */}
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
         <Box
           sx={{
+            paddingTop: '64px',
             marginLeft: MenuSidebarOffset,
             marginRight: 0,
             width: '100%',
             marginTop: 3,
           }}
         >
-          {/* Header. +26 for the padding */}
-          <AppBar sx={{
-            width: `calc(100% - ${MenuSidebarWidthNumber + 26}px)`,
-            boxShadow: 'none',
-            borderBottom: `2px solid ${theme.palette.gray[300]}`,
-            backgroundColor: 'white',
-            color: 'black'
-            }}>
-            <Toolbar>
-              <Typography variant="h6" component="div">
-                Scroll to elevate App bar
-              </Typography>
-            </Toolbar>
-          </AppBar>
           {children}
         </Box>
       </Box>
