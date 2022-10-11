@@ -4,9 +4,11 @@ import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import DefaultLayout from '../../../../components/layouts/default';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
@@ -42,6 +44,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   let { workflowId, workflowDagResultId, operatorId } = useParams();
+  const path = useLocation().pathname;
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -68,8 +71,23 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
+
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[operatorId];
+
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Operator'),
+  ];
+
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
@@ -90,7 +108,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!!operator) {
+    if (!!operator && !sideSheetMode) {
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
@@ -163,7 +181,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <CircularProgress />
       </Layout>
     );
@@ -197,15 +218,18 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     borderColor: 'gray.400',
     margin: '16px',
     padding: '16px',
-  };
+  };  
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={breadcrumbs}
+      user={user}
+    >
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator?.name} />
+              <DetailsPageHeader name={operator ? operator.name : 'Operator'} />
               {operator?.description && (
                 <Typography variant="body1">{operator?.description}</Typography>
               )}
@@ -248,7 +272,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             <Typography variant="h6" fontWeight="normal" mb={1}>
               Code Preview
             </Typography>
-            <MultiFileViewer files={files} defaultFile={operator.name} />
+            <MultiFileViewer
+              files={files}
+              defaultFile={operator ? operator.name : ''}
+            />
           </Box>
         </Box>
       </Box>

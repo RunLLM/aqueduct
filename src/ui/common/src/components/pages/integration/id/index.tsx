@@ -5,7 +5,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
@@ -14,6 +14,7 @@ import IntegrationDialog from '../../../../components/integrations/dialogs/dialo
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
@@ -39,6 +40,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   Layout = DefaultLayout,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  const path = useLocation().pathname;
 
   const integrationId: string = useParams().id;
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -118,7 +120,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={[
+        BreadcrumbLink.HOME,
+        BreadcrumbLink.INTEGRATIONS,
+        new BreadcrumbLink(path, selectedIntegration.name),
+      ]}
+      user={user}
+    >
       <Box sx={{ paddingBottom: '4px' }}>
         <Typography variant="h2" gutterBottom component="div">
           Integration Details

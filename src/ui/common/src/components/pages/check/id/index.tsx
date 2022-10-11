@@ -10,8 +10,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -44,6 +45,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, checkOperatorId } = useParams();
+  const path = useLocation().pathname;
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -65,8 +67,24 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
+
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
+
+
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Check'),
+  ];
+
 
   const artifactId = operator?.outputs[0];
 
@@ -77,8 +95,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   );
 
   useEffect(() => {
-    document.title = 'Check Details | Aqueduct';
-
     // Load workflow dag result if it's not cached
     if (
       !workflowDagResultWithLoadingStatus ||
@@ -116,7 +132,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   }, [workflowDagResultWithLoadingStatus, artifactId]);
 
   useEffect(() => {
-    if (!!operator) {
+    if (!!operator && !sideSheetMode) {
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
@@ -127,7 +143,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <CircularProgress />
       </Layout>
     );
@@ -135,7 +154,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <Alert severity="error">
           <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -224,11 +246,16 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   });
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={breadcrumbs}
+      user={user}
+    >
       <Box width={'800px'}>
         {!sideSheetMode && (
           <Box width="100%">
-            <DetailsPageHeader name={operator?.name} />
+            <DetailsPageHeader
+              name={operator ? operator.name : 'Check Details'}
+            />
             {operator?.description && (
               <Typography variant="body1">{operator.description}</Typography>
             )}
