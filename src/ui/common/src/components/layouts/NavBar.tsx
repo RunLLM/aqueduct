@@ -1,4 +1,4 @@
-import { faBell, faCircleUser } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCircleUser, faGear } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
@@ -49,7 +49,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) {}
+  constructor(public readonly address: string, public readonly name: any) { }
 
   toString() {
     return this.name;
@@ -180,8 +180,11 @@ const NavBar: React.FC<{
           />
         </Box>
 
-        <Box>
-          {avatar}
+        <Box sx={{ marginLeft: '8px' }}>
+          <FontAwesomeIcon
+            className={styles['menu-sidebar-icon']}
+            icon={faGear}
+          />
           <Menu
             id={userPopoverId}
             anchorEl={userPopoverAnchorEl}
