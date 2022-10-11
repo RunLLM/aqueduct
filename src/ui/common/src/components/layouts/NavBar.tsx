@@ -1,4 +1,8 @@
-import { faBell, faCircleUser, faGear } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBell,
+  faCircleUser,
+  faGear,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
@@ -49,7 +53,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) { }
+  constructor(public readonly address: string, public readonly name: any) {}
 
   toString() {
     return this.name;
