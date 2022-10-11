@@ -202,7 +202,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
                     icon={faBook}
                   />
                 }
-                text="Documentation"
+                text="Docs"
               />
             </Link>
           </Box>
