@@ -84,11 +84,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-      isSucceeded(workflowDagResultWithLoadingStatus.status)
+    isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-        workflowDagResultWithLoadingStatus?.result,
-        artifactId
-      )
+          workflowDagResultWithLoadingStatus?.result,
+          artifactId
+        )
       : { metrics: [], checks: [] };
 
   useEffect(() => {
@@ -111,7 +111,9 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   useEffect(() => {
     if (!!artifact) {
-      document.title = `${artifact ? artifact.name : 'Artifact Details'} | Aqueduct`;
+      document.title = `${
+        artifact ? artifact.name : 'Artifact Details'
+      } | Aqueduct`;
 
       if (
         !!artifact.result &&

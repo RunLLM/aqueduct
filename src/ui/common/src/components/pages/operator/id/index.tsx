@@ -198,7 +198,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-          artifactId
+            artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -274,7 +274,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             <Typography variant="h6" fontWeight="normal" mb={1}>
               Code Preview
             </Typography>
-            <MultiFileViewer files={files} defaultFile={operator ? operator.name : ''} />
+            <MultiFileViewer
+              files={files}
+              defaultFile={operator ? operator.name : ''}
+            />
           </Box>
         </Box>
       </Box>
