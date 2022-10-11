@@ -72,30 +72,30 @@ jobs:
       - name: Run Quickstart Tutorial Notebook
         working-directory: examples
         timeout-minutes: 5
-        run: python3 run_notebook.py --path "tutorials/Quickstart Tutorial.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "tutorials/Quickstart Tutorial.ipynb"
 
       - name: Run Parameter Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "tutorials/Parameters Tutorial.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "tutorials/Parameters Tutorial.ipynb"
 
       - name: Run Sentiment Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
 
       - name: Run Churn Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Tutorial.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Tutorial.ipynb"
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10
-        run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb" --server_address localhost:8080
+        run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb"
       
       - name: Run Util File Dependency Notebook
         timeout-minutes: 10
-        run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb" --server_address localhost:8080
+        run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb"
 
       - uses: actions/upload-artifact@v3
         if: always()
