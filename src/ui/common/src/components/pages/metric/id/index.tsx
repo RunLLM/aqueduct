@@ -5,8 +5,10 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -38,6 +40,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, metricOperatorId } = useParams();
+  const path = useLocation().pathname;
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -56,6 +59,8 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
+
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[metricOperatorId];
 
@@ -65,6 +70,18 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       ? state.artifactResultsReducer.artifacts[artifactId]
       : undefined
   );
+
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
+  ];
 
   useEffect(() => {
     document.title = 'Metric Details | Aqueduct';
@@ -105,8 +122,11 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   }, [workflowDagResultWithLoadingStatus, artifactId]);
 
   useEffect(() => {
-    if (!!operator) {
-      document.title = `${operator.name} | Aqueduct`;
+    if (!!operator && !sideSheetMode) {
+      // this should only be set when the user is viewing this as a full page, not side sheet.
+      document.title = `${
+        operator ? operator.name : 'Operator Details'
+      } | Aqueduct`;
     }
   }, [operator]);
 
@@ -116,7 +136,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <CircularProgress />
       </Layout>
     );
@@ -124,7 +147,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <Alert severity="error">
           <AlertTitle>Failed to load workflow</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -146,12 +172,15 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const outputs = mapArtifacts(operator.outputs);
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={breadcrumbs}
+      user={user}
+    >
       <Box width={'800px'}>
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator.name} />
+              <DetailsPageHeader name={operator ? operator.name : 'Operator'} />
               {operator.description && (
                 <Typography variant="body1">{operator.description}</Typography>
               )}

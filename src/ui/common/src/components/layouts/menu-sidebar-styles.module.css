@@ -1,22 +1,17 @@
 .menu-sidebar {
-  max-width: 200px;
-  width: 200px;
-  height: 97%;
+  max-width: 64px;
+  width: 64px;
+  height: 99%;
   max-height: 100vh;
-  padding-top: 24px;
-  padding-bottom: 24px;
-  padding-left: 13px;
-  padding-right: 13px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
   display: flex;
   flex-direction: column;
   background-color: #002f5e; /* theme.colors.blue900 */
   position: fixed;
   z-index: 1;
-}
-
-.menu-sidebar-popover-container {
-  width: 100%;
-  margin-bottom: 4px;
 }
 
 .menu-sidebar-links {
@@ -33,9 +28,9 @@
 
 .menu-sidebar-link {
   /* this is fixed to 225 - 13 - 13, the sidebar width with padding-X removed */
-  min-width: 199px;
-  width: 199px;
-  max-width: 199px;
+  min-width: 64px;
+  width: 64px;
+  max-width: 64px;
 }
 
 .menu-sidebar-icon {
@@ -44,8 +39,6 @@
   min-height: 24px;
   max-width: 24px;
   max-height: 24px;
-  /* Margin between icon and text */
-  margin-right: 14px;
 }
 
 .user-avatar img {

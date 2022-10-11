@@ -5,8 +5,10 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
@@ -48,6 +50,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   let { workflowId, workflowDagResultId, artifactId } = useParams();
+  const path = useLocation().pathname;
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -65,6 +68,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
+
+  const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const artifactContents = useSelector(
     (state: RootState) => state.artifactResultContentsReducer.contents
@@ -87,6 +92,18 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         )
       : { metrics: [], checks: [] };
 
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, artifact ? artifact.name : 'Artifact'),
+  ];
+
   useEffect(() => {
     document.title = 'Artifact Details | Aqueduct';
 
@@ -106,8 +123,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!!artifact) {
-      document.title = `${artifact.name} | Aqueduct`;
+    if (!!artifact && !sideSheetMode) {
+      document.title = `${
+        artifact ? artifact.name : 'Artifact Details'
+      } | Aqueduct`;
 
       if (
         !!artifact.result &&
@@ -133,7 +152,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <CircularProgress />
       </Layout>
     );
@@ -141,7 +163,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <Alert severity="error">
           <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -152,7 +177,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (!artifact) {
     return (
-      <Layout user={user}>
+      <Layout
+        breadcrumbs={breadcrumbs}
+        user={user}
+      >
         <Alert severity="error">
           <AlertTitle>Failed to load artifact.</AlertTitle>
           Artifact {artifactId} does not exist on this workflow.
@@ -173,12 +201,15 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={breadcrumbs}
+      user={user}
+    >
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
-              <DetailsPageHeader name={artifact.name} />
+              <DetailsPageHeader name={artifact ? artifact.name : 'Artifact'} />
               <CsvExporter
                 artifact={artifact}
                 contentWithLoadingStatus={contentWithLoadingStatus}
