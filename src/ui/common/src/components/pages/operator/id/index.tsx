@@ -94,7 +94,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!!operator) {
+    if (!!operator && !sideSheetMode) {
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
