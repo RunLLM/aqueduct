@@ -89,6 +89,11 @@ jobs:
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
 
+      # TODO(ENG-1821): Remove this once version 0.1 is released.
+      - name: Populate Housing and Diabetes Data
+        timeout-minutes: 1
+        run: python3 src/resources/demo_db/sqlite/v0.1/create_tables.py
+
       - name: Run Classifying Diabetes Risk Notebook
         working-directory: examples
         timeout-minutes: 10
