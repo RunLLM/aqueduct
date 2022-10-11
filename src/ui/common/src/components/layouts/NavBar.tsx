@@ -6,7 +6,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
-  Avatar,
   Breadcrumbs,
   Link,
   Menu,
@@ -102,25 +101,6 @@ const NavBar: React.FC<{
 
   const notificationsPopoverId = open ? 'simple-popover' : undefined;
   const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
-
-  const avatarStyling = { width: '24px', height: '24px', marginLeft: '16px' };
-
-  const avatar = user.picture ? (
-    <Avatar
-      className={styles['user-avatar']}
-      sx={avatarStyling}
-      src={user.picture}
-      onClick={handleUserPopoverClick}
-    />
-  ) : (
-    <Avatar
-      className={styles['user-avatar']}
-      sx={avatarStyling}
-      onClick={handleUserPopoverClick}
-    >
-      {user.name !== 'aqueduct user' ? user.name : null}
-    </Avatar>
-  );
 
   return (
     <AppBar
