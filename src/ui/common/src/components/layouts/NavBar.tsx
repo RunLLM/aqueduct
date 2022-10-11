@@ -118,7 +118,6 @@ const NavBar: React.FC<{
     </Avatar>
   );
 
-  /* Header */
   return (
     <AppBar
       sx={{
