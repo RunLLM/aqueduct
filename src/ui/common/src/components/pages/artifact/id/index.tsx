@@ -84,11 +84,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-    isSucceeded(workflowDagResultWithLoadingStatus.status)
+      isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-          workflowDagResultWithLoadingStatus?.result,
-          artifactId
-        )
+        workflowDagResultWithLoadingStatus?.result,
+        artifactId
+      )
       : { metrics: [], checks: [] };
 
   useEffect(() => {
@@ -111,7 +111,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   useEffect(() => {
     if (!!artifact) {
-      document.title = `${artifact.name} | Aqueduct`;
+      document.title = `${artifact ? artifact.name : 'Artifact Details'} | Aqueduct`;
 
       if (
         !!artifact.result &&
@@ -145,7 +145,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             path.split('/artifact/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, artifact.name),
+          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
         ]}
         user={user}
       >
@@ -164,7 +164,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             path.split('/artifact/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, artifact.name),
+          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
         ]}
         user={user}
       >
@@ -186,7 +186,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             path.split('/artifact/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, artifact.name),
+          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
         ]}
         user={user}
       >
@@ -218,7 +218,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
           path.split('/artifact/')[0],
           workflow.selectedDag.metadata.name
         ),
-        new BreadcrumbLinks(path, artifact.name),
+        new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
       ]}
       user={user}
     >
@@ -226,7 +226,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
-              <DetailsPageHeader name={artifact.name} />
+              <DetailsPageHeader name={artifact ? artifact.name : 'Artifact'} />
               <CsvExporter
                 artifact={artifact}
                 contentWithLoadingStatus={contentWithLoadingStatus}

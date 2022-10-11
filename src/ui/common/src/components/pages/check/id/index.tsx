@@ -81,8 +81,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   );
 
   useEffect(() => {
-    document.title = 'Check Details | Aqueduct';
-
     // Load workflow dag result if it's not cached
     if (
       !workflowDagResultWithLoadingStatus ||
@@ -120,7 +118,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   }, [workflowDagResultWithLoadingStatus, artifactId]);
 
   useEffect(() => {
-    if (!!operator) {
+    if (!!operator && !sideSheetMode) {
       document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
@@ -139,7 +137,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             path.split('/check/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, operator.name),
+          new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
         ]}
         user={user}
       >
@@ -158,7 +156,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             path.split('/check/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, operator.name),
+          new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
         ]}
         user={user}
       >
@@ -258,14 +256,14 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
           path.split('/check/')[0],
           workflow.selectedDag.metadata.name
         ),
-        new BreadcrumbLinks(path, operator.name),
+        new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
       ]}
       user={user}
     >
       <Box width={'800px'}>
         {!sideSheetMode && (
           <Box width="100%">
-            <DetailsPageHeader name={operator?.name} />
+            <DetailsPageHeader name={operator ? operator.name : 'Check Details'} />
             {operator?.description && (
               <Typography variant="body1">{operator.description}</Typography>
             )}

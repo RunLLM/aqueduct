@@ -175,7 +175,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             path.split('/operator/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, operator.name),
+          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
         ]}
         user={user}
       >
@@ -198,7 +198,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -223,7 +223,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           path.split('/operator/')[0],
           workflow.selectedDag.metadata.name
         ),
-        new BreadcrumbLinks(path, operator.name),
+        new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
       ]}
       user={user}
     >
@@ -231,7 +231,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator?.name} />
+              <DetailsPageHeader name={operator ? operator.name : 'Operator'} />
               {operator?.description && (
                 <Typography variant="body1">{operator?.description}</Typography>
               )}
@@ -274,7 +274,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             <Typography variant="h6" fontWeight="normal" mb={1}>
               Code Preview
             </Typography>
-            <MultiFileViewer files={files} defaultFile={operator.name} />
+            <MultiFileViewer files={files} defaultFile={operator ? operator.name : ''} />
           </Box>
         </Box>
       </Box>

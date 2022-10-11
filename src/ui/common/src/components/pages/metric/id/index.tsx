@@ -109,8 +109,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   }, [workflowDagResultWithLoadingStatus, artifactId]);
 
   useEffect(() => {
-    if (!!operator) {
-      document.title = `${operator.name} | Aqueduct`;
+    if (!!operator && !sideSheetMode) {
+      // this should only be set when the user is viewing this as a full page, not side sheet.
+      document.title = `${operator ? operator.name : "Operator Details"} | Aqueduct`;
     }
   }, [operator]);
 
@@ -128,7 +129,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             path.split('/metric/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, operator.name),
+          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
         ]}
         user={user}
       >
@@ -147,7 +148,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             path.split('/metric/')[0],
             workflow.selectedDag.metadata.name
           ),
-          new BreadcrumbLinks(path, operator.name),
+          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
         ]}
         user={user}
       >
@@ -164,7 +165,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -180,7 +181,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
           path.split('/metric/')[0],
           workflow.selectedDag.metadata.name
         ),
-        new BreadcrumbLinks(path, operator.name),
+        new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
       ]}
       user={user}
     >
@@ -188,7 +189,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator.name} />
+              <DetailsPageHeader name={operator ? operator.name : 'Operator'} />
               {operator.description && (
                 <Typography variant="body1">{operator.description}</Typography>
               )}

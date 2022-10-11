@@ -49,7 +49,7 @@ export class BreadcrumbLinks {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) {}
+  constructor(public readonly address: string, public readonly name: any) { }
 
   toString() {
     return this.name;
@@ -67,8 +67,6 @@ const NavBar: React.FC<{
 }> = ({ user, breadcrumbs }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-
-  console.log(breadcrumbs);
 
   const userPopoverOpen = Boolean(userPopoverAnchorEl);
   const open = Boolean(anchorEl);
@@ -157,16 +155,16 @@ const NavBar: React.FC<{
 
         <Box sx={{ marginLeft: 'auto' }}>
           <Box onClick={handleClick} sx={{ display: 'flex' }}>
-            <Box className={styles['notification-alert']}>
-              {!!numUnreadNotifications && (
+            {!!numUnreadNotifications && (
+              <Box className={styles['notification-alert']}>
                 <Typography
                   variant="body2"
                   sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
                 >
                   {numUnreadNotifications}
                 </Typography>
-              )}
-            </Box>
+              </Box>
+            )}
 
             <FontAwesomeIcon
               className={styles['menu-sidebar-icon']}
