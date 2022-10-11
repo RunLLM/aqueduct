@@ -87,7 +87,7 @@ jobs:
       - name: Run Churn Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Tutorial.ipynb"
+        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Prediction.ipynb"
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10
