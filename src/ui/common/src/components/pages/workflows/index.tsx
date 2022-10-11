@@ -89,11 +89,15 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     >
       <Box p={2}>
         {heading}
-        <SearchBar
-          options={allWorkflows.workflows}
-          getOptionLabel={getOptionLabel}
-          setSearchTerm={setFilterText}
-        />
+        {
+          allWorkflows.workflows.length >= 1 && (
+            <SearchBar
+              options={allWorkflows.workflows}
+              getOptionLabel={(option) => option.name || ""}
+              setSearchTerm={setFilterText}
+            />
+          )
+        }
         {workflowList}
       </Box>
     </Layout>
