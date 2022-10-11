@@ -11,14 +11,14 @@ on:
   pull_request:
     paths:
       - '.github/workflows/run-notebooks.yml'
-      - "examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+      - "examples/churn_prediction/Customer Churn Tutorial.ipynb"
       - "examples/sentiment_analysis/Sentiment Model.ipynb"
       - "integration_tests/notebook/imported_function.ipynb"
 
 jobs:
   run-notebooks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
 
@@ -69,20 +69,25 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
+      - name: Run Quickstart Tutorial Notebook
+        working-directory: examples
+        timeout-minutes: 5
+        run: python3 run_notebook.py --path "tutorials/Quickstart Tutorial.ipynb" --server_address localhost:8080
+
+      - name: Run Parameter Tutorial Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "tutorials/Parameters Tutorial.ipynb" --server_address localhost:8080
+
       - name: Run Sentiment Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb" --server_address localhost:8080
 
-      - name: Run Churn Notebook
+      - name: Run Churn Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --server_address localhost:8080
-
-      - name: Run Parameterization Notebook
-        working-directory: examples
-        timeout-minutes: 10
-        run: python3 run_notebook.py --path "parameterization/Using Parameters.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Tutorial.ipynb" --server_address localhost:8080
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10
