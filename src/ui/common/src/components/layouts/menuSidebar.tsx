@@ -1,7 +1,5 @@
 import {
-  faBell,
   faBook,
-  faCircleUser,
   faDatabase,
   faMessage,
   faPlug,
