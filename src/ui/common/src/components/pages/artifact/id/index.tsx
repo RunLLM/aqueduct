@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
@@ -14,6 +13,7 @@ import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagR
 import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import {
   isFailed,
   isInitial,
@@ -97,10 +97,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflow.selectedDag.metadata.name
-    ),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
     new BreadcrumbLink(path, artifact ? artifact.name : 'Artifact'),
   ];
 
@@ -152,10 +149,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -163,10 +157,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -177,10 +168,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   if (!artifact) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load artifact.</AlertTitle>
           Artifact {artifactId} does not exist on this workflow.
@@ -201,10 +189,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
   return (
-    <Layout
-      breadcrumbs={breadcrumbs}
-      user={user}
-    >
+    <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (
