@@ -85,6 +85,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
       <img
         src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-two-tone/1x/aqueduct-logo-two-tone-1x.png"
         width="300px"
+        style={{ marginTop: '64px' }}
       />
 
       <Box

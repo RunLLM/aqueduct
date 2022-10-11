@@ -1,4 +1,7 @@
 import {
+  faBell,
+  faBook,
+  faCircleUser,
   faDatabase,
   faMessage,
   faPlug,
@@ -203,6 +206,37 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               text="Report Issue"
             />
           </Link>
+        </Box>
+
+        <Box sx={{ width: '100%' }}>
+          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+          <Box sx={{ my: 2 }}>
+            <Link href="https://docs.aqueducthq.com" underline="none">
+              <SidebarButton
+                icon={
+                  <FontAwesomeIcon
+                    className={styles['menu-sidebar-icon']}
+                    icon={faBook}
+                  />
+                }
+                text="Documentation"
+              />
+            </Link>
+          </Box>
+          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+          <Box sx={{ my: 2 }}>
+            <Link href="mailto:support@aqueducthq.com" underline="none">
+              <SidebarButton
+                icon={
+                  <FontAwesomeIcon
+                    className={styles['menu-sidebar-icon']}
+                    icon={faMessage}
+                  />
+                }
+                text="Report Issue"
+              />
+            </Link>
+          </Box>
         </Box>
       </Box>
     </>

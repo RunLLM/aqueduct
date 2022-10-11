@@ -36,6 +36,7 @@ class EngineConfig(BaseModel):
 
 class FlowConfig(BaseModel):
     engine: Optional[Union[AirflowIntegration, K8sIntegration, LambdaIntegration]]
+    k_latest_runs: int = -1
 
     class Config:
         # Necessary to allow an engine field
