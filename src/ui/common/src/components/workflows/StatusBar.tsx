@@ -124,11 +124,11 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     if (!label) {
       if (nodeType.includes('Op')) {
         return 'Operator';
+      } else if (nodeType.includes('Artifact')) {
+        return 'Artifact';
       }
 
-      // otherwise, it's an Artifact
-      // nodeType will be "tableArtifact", etc.
-      return 'Artifact';
+      return '';
     }
 
     return label;
