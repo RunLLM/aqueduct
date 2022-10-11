@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
-	"github.com/aqueducthq/aqueduct/cmd/server/middleware/verification"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -228,7 +227,6 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 		middleware = alice.New(
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
-			verification.VerifyRequest(),
 		)
 	} else {
 		panic(handler.ErrUnsupportedAuthMethod)

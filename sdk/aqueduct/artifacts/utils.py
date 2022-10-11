@@ -40,7 +40,7 @@ def preview_artifacts(
         deltas=[
             SubgraphDAGDelta(
                 artifact_ids=target_artifact_ids,
-                include_load_operators=False,
+                include_saves=False,
             ),
             UpdateParametersDelta(
                 parameters=parameters,
