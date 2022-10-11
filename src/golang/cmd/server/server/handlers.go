@@ -246,6 +246,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager:        s.JobManager,
 			Vault:             s.Vault,
 		},
-		routes.GetServerVersionRoute: &handler.GetServerVersionHandler{},
+		routes.GetServerVersionRoute:     &handler.GetServerVersionHandler{},
+		routes.GetServerEnvironmentRoute: &handler.GetServerEnvironmentHandler{},
 	}
 }

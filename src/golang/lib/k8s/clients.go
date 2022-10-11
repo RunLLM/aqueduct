@@ -12,9 +12,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func CreateK8sClient(kubeconfigPath string) (*kubernetes.Clientset, error) {
-	// TODO(ENG-1792) Change this check to use param from UI.
-	if kubeconfigPath == "incluster" {
+func CreateK8sClient(kubeconfigPath string, inCluster bool) (*kubernetes.Clientset, error) {
+	if inCluster {
 		return CreateClientInCluster()
 	} else {
 		return CreateClientOutsideCluster(kubeconfigPath)

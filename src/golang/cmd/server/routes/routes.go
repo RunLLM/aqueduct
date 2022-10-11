@@ -44,5 +44,6 @@ const (
 	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
 	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
 
-	GetServerVersionRoute = "/api/version"
+	GetServerVersionRoute     = "/api/version"
+	GetServerEnvironmentRoute = "/api/environment"
 )

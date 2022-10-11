@@ -105,6 +105,7 @@ func generateJobManagerConfig(
 		return &job.K8sJobManagerConfig{
 			KubeconfigPath:     k8sConfig.KubeconfigPath,
 			ClusterName:        k8sConfig.ClusterName,
+			UseSameCluster:     bool(k8sConfig.UseSameCluster),
 			AwsAccessKeyId:     awsAccessKeyId,
 			AwsSecretAccessKey: awsSecretAccessKey,
 			AwsRegion:          DefaultAwsRegion,

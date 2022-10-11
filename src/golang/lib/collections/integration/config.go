@@ -36,8 +36,9 @@ type GCSConfig struct {
 }
 
 type K8sIntegrationConfig struct {
-	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName    string `json:"cluster_name"  yaml:"clusterName"`
+	KubeconfigPath string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName    string     `json:"cluster_name"  yaml:"clusterName"`
+	UseSameCluster ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
 }
 
 type LambdaIntegrationConfig struct {

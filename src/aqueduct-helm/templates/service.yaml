@@ -11,9 +11,5 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-    - port: 8081
-      targetPort: http2
-      protocol: TCP
-      name: http2
   selector:
     {{- include "aqueduct-helm.selectorLabels" . | nindent 4 }}

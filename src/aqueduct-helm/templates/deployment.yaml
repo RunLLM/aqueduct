@@ -33,12 +33,12 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:          
+            - name: "AQUEDUCT_IN_K8S_CLUSTER"
+              value: "1"
           ports:
             - name: http
               containerPort: 8080
-              protocol: TCP
-            - name: http2
-              containerPort: 8081
               protocol: TCP
           livenessProbe:
             httpGet:
