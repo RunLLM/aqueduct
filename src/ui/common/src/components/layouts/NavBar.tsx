@@ -1,4 +1,8 @@
-import { faBell, faCircleUser } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBell,
+  faCircleUser,
+  faGear,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
@@ -180,8 +184,11 @@ const NavBar: React.FC<{
           />
         </Box>
 
-        <Box sx={{ cursor: 'pointer' }}>
-          {avatar}
+        <Box sx={{ cursor: 'pointer', marginLeft: '8px' }}>
+          <FontAwesomeIcon
+            className={styles['menu-sidebar-icon']}
+            icon={faGear}
+          />
           <Menu
             id={userPopoverId}
             anchorEl={userPopoverAnchorEl}

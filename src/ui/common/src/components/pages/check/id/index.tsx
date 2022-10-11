@@ -72,19 +72,14 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
 
-
   const pathPrefix = getPathPrefix();
   const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflow.selectedDag.metadata.name
-    ),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Check'),
   ];
-
 
   const artifactId = operator?.outputs[0];
 
@@ -143,10 +138,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -154,10 +146,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load workflow.</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -246,10 +235,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   });
 
   return (
-    <Layout
-      breadcrumbs={breadcrumbs}
-      user={user}
-    >
+    <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={'800px'}>
         {!sideSheetMode && (
           <Box width="100%">
