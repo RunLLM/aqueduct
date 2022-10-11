@@ -4,13 +4,16 @@ import (
 	"context"
 	"net/http"
 	"os"
+
+	"github.com/aqueducthq/aqueduct/lib"
 )
 
 const inK8sClusterEnvVarName = "AQUEDUCT_IN_K8S_CLUSTER"
 
 type getServerEnvironmentResponse struct {
 	// Whether the server is running within a k8s cluster.
-	InK8sCluster bool `json:"inK8sCluster"`
+	InK8sCluster bool   `json:"inK8sCluster"`
+	Version      string `json:"version"`
 }
 
 // Route: /api/environment
@@ -41,5 +44,6 @@ func (h *GetServerEnvironmentHandler) Perform(ctx context.Context, interfaceArgs
 
 	return getServerEnvironmentResponse{
 		InK8sCluster: inCluster,
+		Version:      lib.ServerVersionNumber,
 	}, http.StatusOK, nil
 }
