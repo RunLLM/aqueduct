@@ -19,7 +19,7 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
-	_, err = k8s.CreateK8sClient(conf.KubeconfigPath)
+	_, err = k8s.CreateK8sClient(conf.KubeconfigPath, bool(conf.UseSameCluster))
 	if err != nil {
 		return errors.Wrap(err, "Unable to create kubernetes client.")
 	}
