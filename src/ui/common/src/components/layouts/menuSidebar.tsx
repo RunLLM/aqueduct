@@ -125,7 +125,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         >
           <img
             src={
-              'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct_logo_color_on_white.png'
+              'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-light/1x/logo_light_blue.png'
             }
             width="64px"
             height="64px"
