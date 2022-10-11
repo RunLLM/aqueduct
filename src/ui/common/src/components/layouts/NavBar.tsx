@@ -68,8 +68,6 @@ const NavBar: React.FC<{
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  console.log(breadcrumbs);
-
   const userPopoverOpen = Boolean(userPopoverAnchorEl);
   const open = Boolean(anchorEl);
 
@@ -157,16 +155,16 @@ const NavBar: React.FC<{
 
         <Box sx={{ marginLeft: 'auto' }}>
           <Box onClick={handleClick} sx={{ display: 'flex' }}>
-            <Box className={styles['notification-alert']}>
-              {!!numUnreadNotifications && (
+            {!!numUnreadNotifications && (
+              <Box className={styles['notification-alert']}>
                 <Typography
                   variant="body2"
                   sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
                 >
                   {numUnreadNotifications}
                 </Typography>
-              )}
-            </Box>
+              </Box>
+            )}
 
             <FontAwesomeIcon
               className={styles['menu-sidebar-icon']}
