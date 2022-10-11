@@ -36,7 +36,7 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => option.name || ""}
+      getOptionLabel={(option) => option.name || ''}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">
@@ -53,7 +53,7 @@ export const SearchBar: React.FC<Props> = ({
         );
       }}
       renderOption={(props, option, { inputValue }) => {
-        const label = option.name || "";
+        const label = option.name || '';
 
         // Matches only matches if the inputValue matches the start of any word (separated by space.)
         // We may want to modify the functionality in the future because many workflow and artifact names
@@ -101,7 +101,11 @@ export const filteredList = (
     })
     .map(listItems);
 
-  const noMatchesText = <Typography variant="h5" marginTop='16px'>No matches found.</Typography>;
+  const noMatchesText = (
+    <Typography variant="h5" marginTop="16px">
+      No matches found.
+    </Typography>
+  );
 
   return matches.length === 0 ? (
     noMatchesText
