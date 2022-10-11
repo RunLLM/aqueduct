@@ -5,7 +5,6 @@ import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
@@ -14,6 +13,7 @@ import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import { isInitial, isLoading } from '../../../../utils/shared';
@@ -81,13 +81,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflow.selectedDag.metadata.name
-    ),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Operator'),
   ];
-
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
@@ -181,10 +177,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -218,13 +211,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     borderColor: 'gray.400',
     margin: '16px',
     padding: '16px',
-  };  
+  };
 
   return (
-    <Layout
-      breadcrumbs={breadcrumbs}
-      user={user}
-    >
+    <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (

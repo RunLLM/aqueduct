@@ -6,13 +6,13 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
 import MetricsHistory from '../../../workflows/artifact/metric/history';
@@ -76,10 +76,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflow.selectedDag.metadata.name
-    ),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 
@@ -136,10 +133,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     isLoading(workflowDagResultWithLoadingStatus.status)
   ) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <CircularProgress />
       </Layout>
     );
@@ -147,10 +141,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
-      <Layout
-        breadcrumbs={breadcrumbs}
-        user={user}
-      >
+      <Layout breadcrumbs={breadcrumbs} user={user}>
         <Alert severity="error">
           <AlertTitle>Failed to load workflow</AlertTitle>
           {workflowDagResultWithLoadingStatus.status.err}
@@ -172,10 +163,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const outputs = mapArtifacts(operator.outputs);
 
   return (
-    <Layout
-      breadcrumbs={breadcrumbs}
-      user={user}
-    >
+    <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={'800px'}>
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
