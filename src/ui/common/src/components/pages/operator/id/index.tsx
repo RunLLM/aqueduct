@@ -5,9 +5,10 @@ import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
 import DefaultLayout from '../../../../components/layouts/default';
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
@@ -74,6 +75,19 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[operatorId];
+
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Operator'),
+  ];
+
 
   useEffect(() => {
     document.title = 'Operator Details | Aqueduct';
@@ -168,15 +182,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   ) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/operator/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <CircularProgress />
@@ -212,19 +218,11 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     borderColor: 'gray.400',
     margin: '16px',
     padding: '16px',
-  };
+  };  
 
   return (
     <Layout
-      breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.WORKFLOWS,
-        new BreadcrumbLinks(
-          path.split('/operator/')[0],
-          workflow.selectedDag.metadata.name
-        ),
-        new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
-      ]}
+      breadcrumbs={breadcrumbs}
       user={user}
     >
       <Box width={'800px'}>

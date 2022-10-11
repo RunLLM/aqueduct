@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { BreadcrumbLinks } from '../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -72,7 +72,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   return (
     <Layout
-      breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.DATA]}
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
       user={user}
     >
       <div />

@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -72,6 +72,20 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
 
+
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Check'),
+  ];
+
+
   const artifactId = operator?.outputs[0];
 
   const artifactHistoryWithLoadingStatus = useSelector((state: RootState) =>
@@ -130,15 +144,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   ) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/check/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <CircularProgress />
@@ -149,15 +155,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/check/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <Alert severity="error">
@@ -249,15 +247,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   return (
     <Layout
-      breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.WORKFLOWS,
-        new BreadcrumbLinks(
-          path.split('/check/')[0],
-          workflow.selectedDag.metadata.name
-        ),
-        new BreadcrumbLinks(path, operator ? operator.name : 'Check'),
-      ]}
+      breadcrumbs={breadcrumbs}
       user={user}
     >
       <Box width={'800px'}>

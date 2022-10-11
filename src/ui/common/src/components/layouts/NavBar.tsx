@@ -29,22 +29,22 @@ import { MenuSidebarWidthNumber } from './menuSidebar';
 
 const pathPrefix = getPathPrefix();
 
-export class BreadcrumbLinks {
-  static readonly HOME = new BreadcrumbLinks(`${pathPrefix}/`, 'Home');
-  static readonly DATA = new BreadcrumbLinks(`${pathPrefix}/data`, 'Data');
-  static readonly INTEGRATIONS = new BreadcrumbLinks(
+export class BreadcrumbLink {
+  static readonly HOME = new BreadcrumbLink(`${pathPrefix}/`, 'Home');
+  static readonly DATA = new BreadcrumbLink(`${pathPrefix}/data`, 'Data');
+  static readonly INTEGRATIONS = new BreadcrumbLink(
     `${pathPrefix}/integrations`,
     'Integrations'
   );
-  static readonly WORKFLOWS = new BreadcrumbLinks(
+  static readonly WORKFLOWS = new BreadcrumbLink(
     `${pathPrefix}/workflows`,
     'Workflows'
   );
-  static readonly ACCOUNT = new BreadcrumbLinks(
+  static readonly ACCOUNT = new BreadcrumbLink(
     `${pathPrefix}/account`,
     'Account'
   );
-  static readonly ERROR = new BreadcrumbLinks(
+  static readonly ERROR = new BreadcrumbLink(
     `${pathPrefix}/404`,
     'Page Not Found'
   );
@@ -63,7 +63,7 @@ export class BreadcrumbLinks {
  */
 const NavBar: React.FC<{
   user: UserProfile;
-  breadcrumbs: BreadcrumbLinks[];
+  breadcrumbs: BreadcrumbLink[];
 }> = ({ user, breadcrumbs }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);

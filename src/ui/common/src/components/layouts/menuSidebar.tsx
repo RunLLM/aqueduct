@@ -193,21 +193,6 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       </Box>
 
       <Box sx={{ width: '100%' }}>
-        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-        <Box sx={{ marginTop: 2 }}>
-          <Link href="mailto:support@aqueducthq.com" underline="none">
-            <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faMessage}
-                />
-              }
-              text="Report Issue"
-            />
-          </Link>
-        </Box>
-
         <Box sx={{ width: '100%' }}>
           <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
           <Box sx={{ my: 2 }}>

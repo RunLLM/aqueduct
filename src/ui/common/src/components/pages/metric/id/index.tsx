@@ -6,8 +6,9 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -70,6 +71,18 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       : undefined
   );
 
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
+  ];
+
   useEffect(() => {
     document.title = 'Metric Details | Aqueduct';
 
@@ -124,15 +137,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   ) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/metric/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <CircularProgress />
@@ -143,15 +148,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/metric/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <Alert severity="error">
@@ -176,15 +173,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   return (
     <Layout
-      breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.WORKFLOWS,
-        new BreadcrumbLinks(
-          path.split('/metric/')[0],
-          workflow.selectedDag.metadata.name
-        ),
-        new BreadcrumbLinks(path, operator ? operator.name : 'Operator'),
-      ]}
+      breadcrumbs={breadcrumbs}
       user={user}
     >
       <Box width={'800px'}>

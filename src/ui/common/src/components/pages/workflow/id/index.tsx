@@ -10,7 +10,7 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -343,9 +343,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   return (
     <Layout
       breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.WORKFLOWS,
-        new BreadcrumbLinks(path, workflow.selectedDag.metadata.name),
+        BreadcrumbLink.HOME,
+        BreadcrumbLink.WORKFLOWS,
+        new BreadcrumbLink(path, workflow.selectedDag.metadata.name),
       ]}
       user={user}
     >

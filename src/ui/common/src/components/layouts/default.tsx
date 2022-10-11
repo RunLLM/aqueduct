@@ -4,14 +4,14 @@ import React from 'react';
 import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
-import NavBar, { BreadcrumbLinks } from './NavBar';
+import NavBar, { BreadcrumbLink } from './NavBar';
 
 export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
 
 type Props = {
   user: UserProfile;
   children: React.ReactElement | React.ReactElement[];
-  breadcrumbs: BreadcrumbLinks[];
+  breadcrumbs: BreadcrumbLink[];
 };
 
 export const DefaultLayout: React.FC<Props> = ({

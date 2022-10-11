@@ -6,8 +6,9 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
@@ -91,6 +92,18 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         )
       : { metrics: [], checks: [] };
 
+  const pathPrefix = getPathPrefix();
+  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
+  const breadcrumbs = [
+    BreadcrumbLink.HOME,
+    BreadcrumbLink.WORKFLOWS,
+    new BreadcrumbLink(
+      workflowLink,
+      workflow.selectedDag.metadata.name
+    ),
+    new BreadcrumbLink(path, artifact ? artifact.name : 'Artifact'),
+  ];
+
   useEffect(() => {
     document.title = 'Artifact Details | Aqueduct';
 
@@ -140,15 +153,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   ) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/artifact/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <CircularProgress />
@@ -159,15 +164,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   if (isFailed(workflowDagResultWithLoadingStatus.status)) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/artifact/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <Alert severity="error">
@@ -181,15 +178,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   if (!artifact) {
     return (
       <Layout
-        breadcrumbs={[
-          BreadcrumbLinks.HOME,
-          BreadcrumbLinks.WORKFLOWS,
-          new BreadcrumbLinks(
-            path.split('/artifact/')[0],
-            workflow.selectedDag.metadata.name
-          ),
-          new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
-        ]}
+        breadcrumbs={breadcrumbs}
         user={user}
       >
         <Alert severity="error">
@@ -213,15 +202,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   return (
     <Layout
-      breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.WORKFLOWS,
-        new BreadcrumbLinks(
-          path.split('/artifact/')[0],
-          workflow.selectedDag.metadata.name
-        ),
-        new BreadcrumbLinks(path, artifact ? artifact.name : 'Artifact'),
-      ]}
+      breadcrumbs={breadcrumbs}
       user={user}
     >
       <Box width={'800px'}>

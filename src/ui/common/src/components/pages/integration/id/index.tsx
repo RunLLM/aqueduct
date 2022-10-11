@@ -14,7 +14,7 @@ import IntegrationDialog from '../../../../components/integrations/dialogs/dialo
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
-import { BreadcrumbLinks } from '../../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
@@ -122,9 +122,9 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   return (
     <Layout
       breadcrumbs={[
-        BreadcrumbLinks.HOME,
-        BreadcrumbLinks.INTEGRATIONS,
-        new BreadcrumbLinks(path, selectedIntegration.name),
+        BreadcrumbLink.HOME,
+        BreadcrumbLink.INTEGRATIONS,
+        new BreadcrumbLink(path, selectedIntegration.name),
       ]}
       user={user}
     >

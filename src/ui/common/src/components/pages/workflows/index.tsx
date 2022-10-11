@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { BreadcrumbLinks } from '../../../components/layouts/NavBar';
+import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
@@ -84,7 +84,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   return (
     <Layout
-      breadcrumbs={[BreadcrumbLinks.HOME, BreadcrumbLinks.WORKFLOWS]}
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
       <Box p={2}>
