@@ -141,7 +141,8 @@ REQUIREMENTS_FILE = "requirements.txt"
 BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
 
 UserFunction = Callable[..., Any]
-MetricFunction = Callable[..., Union[int, float, np.number]]
+Number = Union[int, float, np.number]
+MetricFunction = Callable[..., Number]
 CheckFunction = Callable[..., Union[bool, np.bool_]]
 
 

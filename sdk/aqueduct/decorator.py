@@ -25,6 +25,7 @@ from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
+    Number,
     UserFunction,
     artifact_name_from_op_name,
     generate_uuid,
@@ -440,7 +441,7 @@ def metric(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
-        def local_func(*inputs: Any) -> Union[int, float, np.number]:
+        def local_func(*inputs: Any) -> Number:
             raw_inputs = [elem.get() if _is_input_artifact(elem) else elem for elem in inputs]
             return func(*raw_inputs)
 
