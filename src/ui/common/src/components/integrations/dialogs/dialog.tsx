@@ -46,7 +46,7 @@ import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { KubernetesDialog } from './kubernetesDialog';
+import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { MariaDbDialog } from './mariadbDialog';
 import { MysqlDialog } from './mysqlDialog';
@@ -238,6 +238,7 @@ const IntegrationDialog: React.FC<Props> = ({
         <KubernetesDialog
           onUpdateField={setConfigField}
           value={config as KubernetesConfig}
+          apiKey={user.apiKey}
         />
       );
       break;
@@ -349,6 +350,8 @@ export function isConfigComplete(
       return isS3ConfigComplete(config as S3Config);
     case 'Athena':
       return isAthenaConfigComplete(config as AthenaConfig);
+    case 'Kubernetes':
+      return isK8sConfigComplete(config as KubernetesConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

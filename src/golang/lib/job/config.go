@@ -26,6 +26,7 @@ type ProcessConfig struct {
 type K8sJobManagerConfig struct {
 	KubeconfigPath     string `yaml:"kubeconfigPath" json:"kubeconfig_path"`
 	ClusterName        string `yaml:"clusterName" json:"cluster_name"`
+	UseSameCluster     bool   `json:"use_same_cluster"  yaml:"useSameCluster"`
 	AwsAccessKeyId     string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
 
