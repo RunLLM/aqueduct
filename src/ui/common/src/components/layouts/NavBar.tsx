@@ -53,7 +53,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) {}
+  constructor(public readonly address: string, public readonly name: any) { }
 
   toString() {
     return this.name;
@@ -157,7 +157,7 @@ const NavBar: React.FC<{
         </Breadcrumbs>
 
         <Box sx={{ marginLeft: 'auto' }}>
-          <Box onClick={handleClick} sx={{ display: 'flex' }}>
+          <Box onClick={handleClick} sx={{ display: 'flex', cursor: 'pointer' }}>
             {!!numUnreadNotifications && (
               <Box className={styles['notification-alert']}>
                 <Typography
@@ -184,7 +184,7 @@ const NavBar: React.FC<{
           />
         </Box>
 
-        <Box sx={{ marginLeft: '8px' }}>
+        <Box sx={{ cursor: 'pointer', marginLeft: '8px' }}>
           <FontAwesomeIcon
             className={styles['menu-sidebar-icon']}
             icon={faGear}
@@ -216,7 +216,7 @@ const NavBar: React.FC<{
           </Menu>
         </Box>
       </Toolbar>
-    </AppBar>
+    </AppBar >
   );
 };
 
