@@ -197,7 +197,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -215,7 +215,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={'800px'}>
+      <Box width={!sideSheetMode ? '800px' : 'auto'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">

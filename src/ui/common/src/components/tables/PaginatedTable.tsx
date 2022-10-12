@@ -35,7 +35,7 @@ const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
   };
 
   return (
-    <Paper sx={{ width: '800px', overflow: 'hidden' }}>
+    <Paper sx={{ maxWidth: '800px', overflow: 'hidden' }}>
       <TableContainer sx={{ maxHeight: '400px' }}>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
