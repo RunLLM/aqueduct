@@ -3,10 +3,14 @@ import React from 'react';
 
 import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
-import MenuSidebar, { MenuSidebarWidthNumber } from './menuSidebar';
+import MenuSidebar, {
+  MenuSidebarWidth,
+  MenuSidebarWidthNumber,
+} from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
 
 export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
+export const DefaultLayoutMargin = '24px';
 
 type Props = {
   user: UserProfile;
@@ -30,17 +34,18 @@ export const DefaultLayout: React.FC<Props> = ({
     >
       <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
         <MenuSidebar user={user} />
-
         <NavBar user={user} breadcrumbs={breadcrumbs} />
         {/* Pad top for breadcrumbs (64px). */}
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
         <Box
           sx={{
-            paddingTop: breadcrumbsSize,
-            marginLeft: MenuSidebarOffset,
-            marginRight: 0,
+            boxSizing: 'border-box',
             width: '100%',
-            marginTop: 3,
+            marginTop: breadcrumbsSize,
+            marginLeft: MenuSidebarWidth,
+            marginRight: 0,
+            paddingTop: DefaultLayoutMargin,
+            paddingLeft: DefaultLayoutMargin,
           }}
         >
           {children}

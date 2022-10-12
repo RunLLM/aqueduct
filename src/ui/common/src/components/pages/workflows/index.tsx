@@ -87,7 +87,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
-      <Box p={2}>
+      <Box>
         {heading}
         {allWorkflows.workflows.length >= 1 && (
           <SearchBar

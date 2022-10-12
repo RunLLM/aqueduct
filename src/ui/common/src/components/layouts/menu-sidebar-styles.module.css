@@ -1,9 +1,8 @@
 .menu-sidebar {
   max-width: 64px;
   width: 64px;
-  height: 99%;
+  height: 100%;
   max-height: 100vh;
-  padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 8px;
   padding-right: 8px;
@@ -31,6 +30,14 @@
   min-width: 64px;
   width: 64px;
   max-width: 64px;
+}
+
+.menu-sidebar-logo-link {
+  /* contains logo of size 48px */
+  width: 48px;
+  height: 48px;
+  /* ensures border size is 64px, which maps navbar */
+  padding: 8px;
 }
 
 .menu-sidebar-icon {

@@ -36,11 +36,9 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   const displayFilteredCards = (filteredDataCards, idx) => {
     return (
-      <Box key={idx}>
-        <Card>
-          <DataCard dataPreviewInfo={filteredDataCards} />
-        </Card>
-      </Box>
+      <Card key={idx} my={2}>
+        <DataCard dataPreviewInfo={filteredDataCards} />
+      </Card>
     );
   };
 
@@ -86,19 +84,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           getOptionLabel={getOptionLabel}
           setSearchTerm={setFilterText}
         />
-
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              my: 1,
-            }}
-          >
-            {dataCards}
-          </Box>
-        </Box>
+        {dataCards}
       </Box>
     </Layout>
   );

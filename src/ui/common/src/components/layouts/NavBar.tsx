@@ -6,7 +6,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
-  Avatar,
   Breadcrumbs,
   Link,
   Menu,
@@ -53,7 +52,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) { }
+  constructor(public readonly address: string, public readonly name: any) {}
 
   toString() {
     return this.name;
@@ -84,10 +83,6 @@ const NavBar: React.FC<{
       ).length
   );
 
-  const handleUserPopoverClick = (event: React.MouseEvent) => {
-    setUserPopoverAnchorEl(event.currentTarget);
-  };
-
   const handleCloseUserPopover = () => {
     setUserPopoverAnchorEl(null);
   };
@@ -103,29 +98,11 @@ const NavBar: React.FC<{
   const notificationsPopoverId = open ? 'simple-popover' : undefined;
   const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
 
-  const avatarStyling = { width: '24px', height: '24px', marginLeft: '16px' };
-
-  const avatar = user.picture ? (
-    <Avatar
-      className={styles['user-avatar']}
-      sx={avatarStyling}
-      src={user.picture}
-      onClick={handleUserPopoverClick}
-    />
-  ) : (
-    <Avatar
-      className={styles['user-avatar']}
-      sx={avatarStyling}
-      onClick={handleUserPopoverClick}
-    >
-      {user.name !== 'aqueduct user' ? user.name : null}
-    </Avatar>
-  );
-
   return (
     <AppBar
       sx={{
         width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
+        height: '64px',
         boxShadow: 'none',
         borderBottom: `2px solid ${theme.palette.gray[300]}`,
         backgroundColor: 'white',
@@ -157,7 +134,10 @@ const NavBar: React.FC<{
         </Breadcrumbs>
 
         <Box sx={{ marginLeft: 'auto' }}>
-          <Box onClick={handleClick} sx={{ display: 'flex', cursor: 'pointer' }}>
+          <Box
+            onClick={handleClick}
+            sx={{ display: 'flex', cursor: 'pointer' }}
+          >
             {!!numUnreadNotifications && (
               <Box className={styles['notification-alert']}>
                 <Typography
@@ -216,7 +196,7 @@ const NavBar: React.FC<{
           </Menu>
         </Box>
       </Toolbar>
-    </AppBar >
+    </AppBar>
   );
 };
 

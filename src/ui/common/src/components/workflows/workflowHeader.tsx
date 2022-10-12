@@ -300,7 +300,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         sx={{
           display: 'flex',
           alignItems: narrowView ? 'start' : 'center',
-          my: 1,
           flexDirection: narrowView ? 'column' : 'row',
         }}
       >
