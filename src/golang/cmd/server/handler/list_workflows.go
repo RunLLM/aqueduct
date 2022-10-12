@@ -129,6 +129,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 				Engine:          dbWorkflow.Engine,
 				WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
 			}
+
 			if !dbWorkflow.LastRunAt.IsNull {
 				response.LastRunAt = dbWorkflow.LastRunAt.Time.Unix()
 			}
@@ -140,9 +141,11 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 				// that the workflow has been registered
 				response.Status = shared.RegisteredExecutionStatus
 			}
+
 			workflows = append(workflows, response)
 		}
 	}
+
 	return workflows, http.StatusOK, nil
 }
 
