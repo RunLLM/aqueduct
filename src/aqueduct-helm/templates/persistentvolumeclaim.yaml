@@ -3,8 +3,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: aqueduct-pv-claim
 spec:
+  storageClassName: manual
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
-      storage: 3Gi
+      storage: 5Gi
