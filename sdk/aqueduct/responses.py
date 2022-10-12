@@ -130,7 +130,7 @@ class ListWorkflowResponseEntry(BaseModel):
             "created_at": human_readable_timestamp(self.created_at),
             "last_run_at": human_readable_timestamp(self.last_run_at),
             "last_run_status": str(self.status),
-            "engine": self.engine
+            "engine": self.engine,
         }
 
 
