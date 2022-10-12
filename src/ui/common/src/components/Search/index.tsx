@@ -46,7 +46,6 @@ export const SearchBar: React.FC<Props> = ({
         return (
           <TextField
             {...params}
-            label="Search"
             variant="standard"
             onChange={(e) => setSearchTerm(e.target.value)}
           />

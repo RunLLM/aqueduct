@@ -39,7 +39,7 @@ import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout from '../../../layouts/default';
+import DefaultLayout, { DefaultLayoutMargin } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
@@ -53,7 +53,6 @@ type WorkflowPageProps = {
 };
 
 const DrawerWidth = '800px';
-const RightMargin = '24px';
 
 const WorkflowPage: React.FC<WorkflowPageProps> = ({
   user,
@@ -222,8 +221,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  const RightMarginInPx = 24;
-
   // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   // const sideSheetOpen = currentNode.type !== NodeType.None;
 
@@ -351,12 +348,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     >
       <Box
         sx={{
+          boxSizing: 'border-box',
           display: 'flex',
           // TODO: just create a state variable to reflect the open state of the drawer.
           width:
             currentNode.type === NodeType.None
-              ? `calc(100% - ${RightMargin});`
-              : `calc(100% - ${DrawerWidth} - ${RightMargin});`,
+              ? `calc(100% - ${DefaultLayoutMargin});`
+              : `calc(100% - ${DrawerWidth} - ${DefaultLayoutMargin});`,
           height: '100%',
           flexDirection: 'column',
           transition: WidthTransition,
@@ -365,11 +363,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         id={WorkflowPageContentId}
       >
         {workflow.selectedDag && (
-          <WorkflowHeader
-            user={user}
-            workflowDag={workflow.selectedDag}
-            workflowId={workflowId}
-          />
+          <Box marginBottom={1}>
+            <WorkflowHeader
+              user={user}
+              workflowDag={workflow.selectedDag}
+              workflowId={workflowId}
+            />
+          </Box>
         )}
 
         <Divider />

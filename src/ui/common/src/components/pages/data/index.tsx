@@ -9,7 +9,7 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataCard } from '../../integrations/cards/card';
-import { Card } from '../../layouts/card';
+import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { filteredList, SearchBar } from '../../Search';
 import { LayoutProps } from '../types';
@@ -36,11 +36,9 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   const displayFilteredCards = (filteredDataCards, idx) => {
     return (
-      <Box key={idx}>
-        <Card>
-          <DataCard dataPreviewInfo={filteredDataCards} />
-        </Card>
-      </Box>
+      <Card key={idx} my={2}>
+        <DataCard dataPreviewInfo={filteredDataCards} />
+      </Card>
     );
   };
 
@@ -81,24 +79,15 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           Data
         </Typography>
 
-        <SearchBar
-          options={Object.values(dataCardsInfo.data.latest_versions)}
-          getOptionLabel={getOptionLabel}
-          setSearchTerm={setFilterText}
-        />
-
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              my: 1,
-            }}
-          >
-            {dataCards}
-          </Box>
+        <Box paddingLeft={CardPadding}>
+          {/* Aligns search bar to card text */}
+          <SearchBar
+            options={Object.values(dataCardsInfo.data.latest_versions)}
+            getOptionLabel={getOptionLabel}
+            setSearchTerm={setFilterText}
+          />
         </Box>
+        {dataCards}
       </Box>
     </Layout>
   );

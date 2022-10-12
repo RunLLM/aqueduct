@@ -78,7 +78,7 @@ const IntegrationsPage: React.FC<Props> = ({
 
         <Divider sx={{ width: '950px' }} />
 
-        <Box sx={{ my: 3, ml: 1 }}>
+        <Box sx={{ my: 3 }}>
           <Typography variant="h4" marginBottom={3}>
             Add an Integration
           </Typography>
@@ -104,8 +104,8 @@ const IntegrationsPage: React.FC<Props> = ({
           <Divider sx={{ width: '950px' }} />
         </Box>
 
-        <Box sx={{ marginTop: 3, marginBottom: 3, ml: 1 }}>
-          <Typography variant="h4" marginBottom={3}>
+        <Box sx={{ marginTop: 3, marginBottom: 3 }}>
+          <Typography variant="h4" marginBottom={2}>
             Connected Integrations
           </Typography>
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />
