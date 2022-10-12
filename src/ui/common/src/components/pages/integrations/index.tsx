@@ -104,7 +104,7 @@ const IntegrationsPage: React.FC<Props> = ({
           <Divider sx={{ width: '950px' }} />
         </Box>
 
-        <Box sx={{ marginTop: 3, marginBottom: 3, ml: 1 }}>
+        <Box sx={{ marginTop: 3, marginBottom: 3 }}>
           <Typography variant="h4" marginBottom={2}>
             Connected Integrations
           </Typography>
