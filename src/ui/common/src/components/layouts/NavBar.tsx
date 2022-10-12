@@ -153,10 +153,7 @@ const NavBar: React.FC<{
               </Box>
             )}
 
-            <FontAwesomeIcon
-              className={styles['menu-sidebar-icon']}
-              icon={faBell}
-            />
+            <FontAwesomeIcon className={styles['navbar-icon']} icon={faBell} />
           </Box>
 
           <NotificationsPopover
@@ -170,7 +167,7 @@ const NavBar: React.FC<{
 
         <Box sx={{ cursor: 'pointer', marginLeft: '8px' }}>
           <FontAwesomeIcon
-            className={styles['menu-sidebar-icon']}
+            className={styles['navbar-icon']}
             icon={faGear}
             onClick={handleUserPopoverClick}
           />
@@ -188,7 +185,7 @@ const NavBar: React.FC<{
             <Link
               to={`${pathPrefix}/account`}
               underline="none"
-              sx={{ color: 'blue.800' }}
+              sx={{ color: 'blue.900' }}
               component={RouterLink as any}
             >
               <MenuItem sx={{ width: '190px' }} disableRipple>
