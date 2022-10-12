@@ -168,6 +168,7 @@ const NavBar: React.FC<{
           <FontAwesomeIcon
             className={styles['menu-sidebar-icon']}
             icon={faGear}
+            onClick={handleUserPopoverClick}
           />
           <Menu
             id={userPopoverId}
