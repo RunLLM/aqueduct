@@ -51,7 +51,7 @@
   /* ensures height is 64px, which maps navbar */
   padding-top: 8px;
   padding-bottom: 6px;
-  border-bottom: 2px solid #E6E8F0;
+  border-bottom: 2px solid #E6E8F0; /* gray.300 */
 }
 
 .menu-sidebar-icon {
@@ -60,6 +60,7 @@
   min-height: 24px;
   max-width: 24px;
   max-height: 24px;
+  color: #002f5e; /* blue900 */
 }
 
 .user-avatar img {
