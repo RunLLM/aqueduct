@@ -9,7 +9,7 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataCard } from '../../integrations/cards/card';
-import { Card } from '../../layouts/card';
+import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { filteredList, SearchBar } from '../../Search';
 import { LayoutProps } from '../types';
@@ -79,11 +79,14 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           Data
         </Typography>
 
-        <SearchBar
-          options={Object.values(dataCardsInfo.data.latest_versions)}
-          getOptionLabel={getOptionLabel}
-          setSearchTerm={setFilterText}
-        />
+        <Box paddingLeft={CardPadding}>
+          {/* Aligns search bar to card text */}
+          <SearchBar
+            options={Object.values(dataCardsInfo.data.latest_versions)}
+            getOptionLabel={getOptionLabel}
+            setSearchTerm={setFilterText}
+          />
+        </Box>
         {dataCards}
       </Box>
     </Layout>

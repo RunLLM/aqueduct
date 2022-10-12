@@ -3,12 +3,13 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
+import { CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
+import { BreadcrumbLink } from '../../layouts/NavBar';
 import { filteredList, SearchBar } from '../../Search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
@@ -90,11 +91,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       <Box>
         {heading}
         {allWorkflows.workflows.length >= 1 && (
-          <SearchBar
-            options={allWorkflows.workflows}
-            getOptionLabel={(option) => option.name || ''}
-            setSearchTerm={setFilterText}
-          />
+          <Box marginLeft={CardPadding}>
+            {/* Align searchbar with card text */}
+            <SearchBar
+              options={allWorkflows.workflows}
+              getOptionLabel={(option) => option.name || ''}
+              setSearchTerm={setFilterText}
+            />
+          </Box>
         )}
         {workflowList}
       </Box>

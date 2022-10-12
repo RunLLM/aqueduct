@@ -3,6 +3,8 @@ import { styled } from '@mui/material/styles';
 
 import { theme } from '../../styles/theme/theme';
 
+export const CardPadding = '16px';
+
 export const Card = styled(Box)(({ theme: Theme }) => {
   return {
     borderRadius: 4,
@@ -10,6 +12,6 @@ export const Card = styled(Box)(({ theme: Theme }) => {
       backgroundColor: theme.palette.blue[50],
     },
     minWidth: '450px',
-    padding: '16px',
+    padding: CardPadding,
   };
 });
