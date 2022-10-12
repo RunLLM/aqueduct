@@ -132,9 +132,8 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           height="48px"
         />
       </Link>
-      <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
 
-      <Box sx={{ my: 2 }} className={styles['menu-sidebar-links']}>
+      <Box sx={{ my: 2 }} className={styles['menu-sidebar-content']}>
         <Link
           to={`${getPathPrefix()}/workflows`}
           className={styles['menu-sidebar-link']}
@@ -190,36 +189,34 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         </Link>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
-        <Box sx={{ width: '100%' }}>
-          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ my: 2 }}>
-            <Link href="https://docs.aqueducthq.com" underline="none">
-              <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faBook}
-                  />
-                }
-                text="Docs"
-              />
-            </Link>
-          </Box>
-          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ my: 2 }}>
-            <Link href="mailto:support@aqueducthq.com" underline="none">
-              <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faMessage}
-                  />
-                }
-                text="Report Issue"
-              />
-            </Link>
-          </Box>
+      <Box className={styles['menu-sidebar-footer']}>
+        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Box sx={{ my: 2 }}>
+          <Link href="https://docs.aqueducthq.com" underline="none">
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faBook}
+                />
+              }
+              text="Docs"
+            />
+          </Link>
+        </Box>
+        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Box sx={{ my: 2 }}>
+          <Link href="mailto:support@aqueducthq.com" underline="none">
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faMessage}
+                />
+              }
+              text="Report Issue"
+            />
+          </Link>
         </Box>
       </Box>
     </Box>

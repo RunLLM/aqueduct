@@ -1,11 +1,9 @@
 .menu-sidebar {
-  max-width: 64px;
-  width: 64px;
+  max-width: 80px;
+  width: 80px;
   height: 100%;
   max-height: 100vh;
   padding-bottom: 8px;
-  padding-left: 8px;
-  padding-right: 8px;
   display: flex;
   flex-direction: column;
   background-color: #002f5e; /* theme.colors.blue900 */
@@ -13,11 +11,21 @@
   z-index: 1;
 }
 
-.menu-sidebar-links {
+.menu-sidebar-content {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   width: '100%';
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.menu-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  width: '100%';
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .menu-sidebar-links-wrapper {
@@ -36,8 +44,14 @@
   /* contains logo of size 48px */
   width: 48px;
   height: 48px;
-  /* ensures border size is 64px, which maps navbar */
-  padding: 8px;
+  /* ensures border width is 80px, which maps sidebar */
+  padding-left: 16px;
+  padding-right: 16px;
+
+  /* ensures height is 64px, which maps navbar */
+  padding-top: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #E6E8F0;
 }
 
 .menu-sidebar-icon {
