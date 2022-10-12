@@ -218,7 +218,8 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 	testWorkflow1DAG := testWorkflow1DAGs[0]
 
 	// Create DAG for workflow 2
-	seedWorkflowDagWithWorkflows(t, 1, []uuid.UUID{testWorkflow2.Id})
+	testWorkflow2DAGs := seedWorkflowDagWithWorkflows(t, 1, []uuid.UUID{testWorkflow2.Id})
+	testWorkflow2DAG := testWorkflow2DAGs[0]
 
 	// Create DAG result for workflow 1 only
 	testWorkflow1Results := seedWorkflowDagResultWithDags(t, 1, []uuid.UUID{testWorkflow1DAG.Id})
@@ -242,7 +243,7 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 				ExecutionStatus: testWorkflow1Result.Status,
 				IsNull:          false,
 			},
-			Engine: testWorkflow1.Engine,
+			Engine: string(testWorkflow1DAGs[0].EngineConfig.Type),
 		},
 		{
 			Id:          testWorkflow2.Id,
@@ -255,7 +256,7 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 			Status: shared.NullExecutionStatus{
 				IsNull: true,
 			},
-			Engine: testWorkflow2.Engine,
+			Engine: string(testWorkflow2DAGs[0].EngineConfig.Type),
 		},
 	}
 

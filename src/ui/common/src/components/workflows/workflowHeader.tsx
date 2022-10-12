@@ -92,8 +92,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     nextUpdateComponent = (
       <Box sx={{ mt: 1 }}>
         <Typography variant="body2">
-          <strong> Workflow Engine: </strong>{' '}
-          {workflowDag.engine_config.type}
+          <strong> Workflow Engine: </strong>{workflowDag.engine_config.type}
         </Typography>
         <Typography variant="body2">
           <strong> Next Workflow Run: </strong>{' '}
