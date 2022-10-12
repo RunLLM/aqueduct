@@ -116,25 +116,24 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   }, []);
 
   const pathPrefix = getPathPrefix();
-  const sidebarContent = (
-    <>
-      <Box className={styles['menu-sidebar-popover-container']}>
-        <Link
-          to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
-          underline="none"
-          component={RouterLink as any}
-        >
-          <img
-            src={
-              'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-light/1x/logo_light_blue.png'
-            }
-            width="64px"
-            height="64px"
-          />
-        </Link>
-      </Box>
+  return (
+    <Box className={styles['menu-sidebar']}>
+      <Link
+        to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
+        underline="none"
+        className={styles['menu-sidebar-logo-link']}
+        component={RouterLink as any}
+      >
+        <img
+          src={
+            'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-light/1x/logo_light_blue.png'
+          }
+          width="48px"
+          height="48px"
+        />
+      </Link>
 
-      <Box sx={{ my: 2 }} className={styles['menu-sidebar-links']}>
+      <Box sx={{ my: 2 }} className={styles['menu-sidebar-content']}>
         <Link
           to={`${getPathPrefix()}/workflows`}
           className={styles['menu-sidebar-link']}
@@ -190,42 +189,38 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         </Link>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
-        <Box sx={{ width: '100%' }}>
-          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ my: 2 }}>
-            <Link href="https://docs.aqueducthq.com" underline="none">
-              <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faBook}
-                  />
-                }
-                text="Docs"
-              />
-            </Link>
-          </Box>
-          <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
-          <Box sx={{ my: 2 }}>
-            <Link href="mailto:support@aqueducthq.com" underline="none">
-              <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faMessage}
-                  />
-                }
-                text="Report Issue"
-              />
-            </Link>
-          </Box>
+      <Box className={styles['menu-sidebar-footer']}>
+        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Box sx={{ my: 2 }}>
+          <Link href="https://docs.aqueducthq.com" underline="none">
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faBook}
+                />
+              }
+              text="Docs"
+            />
+          </Link>
+        </Box>
+        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Box sx={{ my: 2 }}>
+          <Link href="mailto:support@aqueducthq.com" underline="none">
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faMessage}
+                />
+              }
+              text="Report Issue"
+            />
+          </Link>
         </Box>
       </Box>
-    </>
+    </Box>
   );
-
-  return <Box className={styles['menu-sidebar']}>{sidebarContent}</Box>;
 };
 
 export default MenuSidebar;

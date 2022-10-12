@@ -106,6 +106,7 @@ const NavBar: React.FC<{
     <AppBar
       sx={{
         width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
+        height: '64px',
         boxShadow: 'none',
         borderBottom: `2px solid ${theme.palette.gray[300]}`,
         backgroundColor: 'white',

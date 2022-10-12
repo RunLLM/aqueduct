@@ -41,7 +41,6 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        my: 1,
       }}
     >
       {[...integrations]
@@ -54,7 +53,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
                 color="inherit"
                 href={`${getPathPrefix()}/integration/${integration.id}`}
               >
-                <Card sx={{ marginY: 2 }}>
+                <Card sx={{ my: 2 }}>
                   <IntegrationCard integration={integration} />
                 </Card>
               </Link>
