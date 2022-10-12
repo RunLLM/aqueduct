@@ -243,7 +243,7 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 				ExecutionStatus: testWorkflow1Result.Status,
 				IsNull:          false,
 			},
-			Engine: string(testWorkflow1DAGs[0].EngineConfig.Type),
+			Engine: string(testWorkflow1DAG.EngineConfig.Type),
 		},
 		{
 			Id:          testWorkflow2.Id,
@@ -256,7 +256,7 @@ func TestGetWorkflowsWithLatestRunResult(t *testing.T) {
 			Status: shared.NullExecutionStatus{
 				IsNull: true,
 			},
-			Engine: string(testWorkflow2DAGs[0].EngineConfig.Type),
+			Engine: string(testWorkflow2DAG.EngineConfig.Type),
 		},
 	}
 
