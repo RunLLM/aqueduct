@@ -120,10 +120,12 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!!artifact && !sideSheetMode) {
-      document.title = `${
-        artifact ? artifact.name : 'Artifact Details'
-      } | Aqueduct`;
+    if (!!artifact) {
+      if (!sideSheetMode) {
+        document.title = `${
+          artifact ? artifact.name : 'Artifact Details'
+        } | Aqueduct`;
+      }
 
       if (
         !!artifact.result &&
