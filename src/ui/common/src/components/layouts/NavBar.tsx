@@ -83,6 +83,10 @@ const NavBar: React.FC<{
       ).length
   );
 
+  const handleUserPopoverClick = (event: React.MouseEvent) => {
+    setUserPopoverAnchorEl(event.currentTarget);
+  };
+
   const handleCloseUserPopover = () => {
     setUserPopoverAnchorEl(null);
   };
