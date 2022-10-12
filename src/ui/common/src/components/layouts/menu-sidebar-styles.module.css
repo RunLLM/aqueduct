@@ -60,6 +60,14 @@
   min-height: 24px;
   max-width: 24px;
   max-height: 24px;
+}
+
+.navbar-icon {
+  /* All icons in sidebar button are fixed to 24. */
+  min-width: 24px;
+  min-height: 24px;
+  max-width: 24px;
+  max-height: 24px;
   color: #002f5e; /* blue900 */
 }
 
