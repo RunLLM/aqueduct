@@ -137,7 +137,9 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   return (
     <Box
       sx={{
-        width: `${StatusBarWidthInPx}px`,
+        minWidth: `${StatusBarWidthInPx}px`,
+        width: 'fit-content',
+        maxWidth: '600px',
         maxHeight: `${MaxStatusBarListHeightInPx}px`,
         position: 'absolute',
         overflow: 'auto',
@@ -146,6 +148,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
         zIndex: 10,
         border: `1px solid`,
         borderColor: 'gray.500',
+        p: '4px',
       }}
     >
       {listItems.map((listItem, index) => {
@@ -166,12 +169,15 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
             <Box sx={{ marginLeft: '8px', marginTop: '16px' }}>
               {listItem ? workflowStatusIcons[listItem.level] : null}
             </Box>
+
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                verticalAlign: 'middle',
+                alignItems: 'start',
                 padding: 2,
+                textOverflow: 'wrap',
+                flex: 1,
               }}
             >
               <Typography
@@ -192,14 +198,16 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               >
                 {listItem.title}
               </Typography>
+
               <Typography
                 sx={{
                   fontFamily: 'Monospace',
                   fontWeight: 'light',
                   marginTop: '2px',
                   fontSize: '12px',
-                  whiteSpace: 'pre-wrap',
+                  textOverflow: 'wrap',
                 }}
+                component="pre"
               >
                 {listItem.message}
               </Typography>
@@ -519,7 +527,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         if (!!opExecState.error) {
           newWorkflowStatusItem.title = (
             <>
-              Error executing <b>${operatorName}</b> ({operatorId})
+              Error executing <b>{operatorName}</b> ({operatorId})
             </>
           );
           const err = opExecState.error;
@@ -546,7 +554,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       // add workflow status item to the list.
       normalizedWorkflowStatusItems.push(newWorkflowStatusItem);
 
-      // LEFT off here, see the normalize logs function and work from there :)
       if (opExecState && opExecState.user_logs) {
         const logs = opExecState?.user_logs;
         const stdoutLines = (logs.stdout ?? '').split('\n');

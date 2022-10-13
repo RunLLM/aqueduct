@@ -86,7 +86,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   ];
 
   useEffect(() => {
-    document.title = 'Operator Details | Aqueduct';
+    if (!sideSheetMode) {
+      document.title = 'Operator Details | Aqueduct';
+    }
 
     if (
       // Load workflow dag result if it's not cached

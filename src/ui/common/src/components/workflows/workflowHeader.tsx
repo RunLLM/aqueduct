@@ -60,7 +60,13 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   const getContainerSize = () => {
     const container = document.getElementById(WorkflowPageContentId);
-    setContainerWidth(container.clientWidth);
+
+    if (!container) {
+      // The page hasn't fully rendered yet.
+      setContainerWidth(1000); // Just a default value.
+    } else {
+      setContainerWidth(container.clientWidth);
+    }
   };
 
   useEffect(getContainerSize, [currentNode]);
