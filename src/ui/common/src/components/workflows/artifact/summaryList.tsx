@@ -15,13 +15,9 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
-  initiallyExpanded: boolean;
-};
-
-const listStyle = {
-  width: '100%',
-  maxWidth: 360,
-  bgcolor: 'background.paper',
+  // When appearance is set to 'value', we will display the value
+  // instead of a link whenever possible.
+  appearance: 'value' | 'link';
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -29,12 +25,12 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   artifactResults,
-  initiallyExpanded,
+  appearance,
 }) => {
   const items = artifactResults.map((artifactResult, index) => {
     let content = null,
       link = null;
-    if (artifactResult.result?.content_serialized) {
+    if (artifactResult.result?.content_serialized && appearance === 'value') {
       content = artifactResult.result.content_serialized;
     } else {
       link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${

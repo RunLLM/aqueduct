@@ -204,15 +204,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
-  const border = {
-    border: '2px',
-    borderStyle: 'solid',
-    borderRadius: '8px',
-    borderColor: 'gray.400',
-    margin: '16px',
-    padding: '16px',
-  };
-
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={'800px'}>
@@ -232,7 +223,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={inputs}
-                initiallyExpanded={true}
+                appearance="link"
               />
             </Box>
 
@@ -242,7 +233,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={outputs}
-                initiallyExpanded={true}
+                appearance="link"
               />
             </Box>
           </Box>
