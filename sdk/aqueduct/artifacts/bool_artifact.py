@@ -80,7 +80,6 @@ class BoolArtifact(BaseArtifact):
                 self._dag, self._artifact_id, parameters
             )
             content = previewed_artifact._get_content()
-            assert isinstance(content, bool) or isinstance(content, np.bool_)
 
             # If the artifact was previously generated lazily, materialize the contents.
             if parameters is None and self._get_content() is None:
