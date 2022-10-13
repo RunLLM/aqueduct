@@ -61,9 +61,7 @@ export enum ServiceType {
   Github = 'Github',
 }
 
-export type ExtractParameters =
-  | RelationalDBExtractParams
-  | GoogleSheetsExtractParams;
+export type ExtractParameters = RelationalDBExtractParams | GoogleSheetsExtractParams;
 
 export type RelationalDBExtractParams = {
   query: string;
@@ -72,6 +70,7 @@ export type RelationalDBExtractParams = {
 
 export type GoogleSheetsExtractParams = {
   spreadsheet_id: string;
+  query?: string;
   github_metadata?: GithubMetadata;
 };
 
@@ -111,6 +110,7 @@ export type Param = {
 };
 
 export type OperatorSpec = {
+  parameters: any;
   type: OperatorType;
   function?: FunctionOp;
   metric?: Metric;

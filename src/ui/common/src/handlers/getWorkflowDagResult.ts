@@ -34,8 +34,10 @@ export const handleGetWorkflowDagResult = createAsyncThunk<
     );
 
     const body = await resp.json();
+    console.log('handleGetWorklfowDagResult body: ', body);
 
     if (!resp.ok) {
+      console.log('error handleGetWorkflowDagResult: ', body.error);
       return thunkAPI.rejectWithValue(body.error);
     }
 

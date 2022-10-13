@@ -66,6 +66,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     },
   });
 
+  const [defaultFileExtension, setDefaultFileExtension] = useState<string>(".sql");
+
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
@@ -81,11 +83,12 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
-    new BreadcrumbLink(path, operator ? operator.name : 'Operator'),
+    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata?.name || ''),
+    new BreadcrumbLink(path, operator?.name || 'Operator'),
   ];
 
   useEffect(() => {
+    console.log('operator obj: ', operator);
     document.title = 'Operator Details | Aqueduct';
 
     if (
@@ -93,6 +96,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       !workflowDagResultWithLoadingStatus ||
       isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
+      console.log('operator details loading workflow dag result');
+      console.log('workflowId: ', workflowId);
+      console.log('workflowDagResultId: ', workflowDagResultId);
       dispatch(
         handleGetWorkflowDagResult({
           apiKey: user.apiKey,
@@ -105,7 +111,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
-      document.title = `${operator.name} | Aqueduct`;
+      document.title = `${operator?.name || 'Operator'} | Aqueduct`;
     }
   }, [operator]);
 
@@ -133,7 +139,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   };
 
   useEffect(() => {
+    console.log('operator changed');
     async function getFilesBlob() {
+      console.log('getFilesBlob()');
       // This is the function used to retrieve the contents in the function that generates the operator's zip file.
       const blob = await exportFunction(user, operatorId);
       if (blob) {
@@ -168,8 +176,67 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         await reader.close();
       }
     }
-    getFilesBlob();
-  }, []);
+
+    // TODO: only call this when we are inside a function operator. not an extract or load operator.
+
+    if (operator && operator?.spec?.type !== "extract" && operator?.spec?.type !== "load") {
+      console.log('getting files blob');
+      getFilesBlob();
+    } else if (operator) {
+      console.log('getting sql statement from operator');
+      let fileContent = '';
+      if (operator?.spec?.type === 'extract') {
+        fileContent = operator.spec.extract.parameters.query;
+      } else if (operator?.spec?.type === 'load') { // TODO
+
+        // TODO: Figure out how to support load operators here.
+        // Not sure what to do since load operator object doesn't have a query as part of it.
+        /*
+          export type LoadParameters = RelationalDBLoadParams | GoogleSheetsLoadParams;
+
+          export type RelationalDBLoadParams = {
+            table: string;
+            update_mode: string;
+          };
+        */
+        //fileContent = operator.spec.load.parameters.query;
+      }
+      setFiles((prevState) => {
+        console.log('parameters: ', operator.spec.extract);
+        //console.log('query: ', operator.spec.extract.parameters.query);
+
+        const files = {
+          // Note: not sure why this is here, but file viewer assumes the first entry to be blank like this
+          [""]: {
+            path: '',
+            language: 'SQL', // or plaintext
+            content: ''
+          },
+          [operator.name]: {
+            //[""]: {},
+            [`${operator.name}.sql`]: {
+              path: `${operator.name}/${operator.name}.sql`,
+              language: "sql",
+              content: fileContent //operator.spec.parameters.query
+            }
+          }
+        }
+
+        return files;
+      });
+    }
+  }, [operator]);
+
+  useEffect(() => {
+    // check operator type to determine what to set the filetype to
+    console.log('files changed operator: ', operator);
+    if (operator && operator?.spec?.type === 'extract' || operator?.spec?.type === 'load') {
+      setDefaultFileExtension('.sql');
+    } else if (operator && operator?.spec?.type === 'function') {
+      // function operators should default to showing python files.
+      setDefaultFileExtension('.py');
+    }
+  }, [files]);
 
   if (
     !workflowDagResultWithLoadingStatus ||
@@ -197,21 +264,14 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
-  const border = {
-    border: '2px',
-    borderStyle: 'solid',
-    borderRadius: '8px',
-    borderColor: 'gray.400',
-    margin: '16px',
-    padding: '16px',
-  };
+  console.log('operator deets default ext: ', defaultFileExtension);
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -264,7 +324,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             </Typography>
             <MultiFileViewer
               files={files}
-              defaultFile={operator ? operator.name : ''}
+              defaultFile={operator.name || ''}
+              defaultFileExtension={defaultFileExtension}
             />
           </Box>
         </Box>

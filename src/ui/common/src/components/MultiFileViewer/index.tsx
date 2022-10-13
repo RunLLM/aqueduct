@@ -13,19 +13,29 @@ type Props = {
   files: Record<string, any>;
   codeHeight?: string;
   defaultFile?: string;
+  defaultFileExtension?: string;
 };
 
 const MultiFileViewer: React.FC<Props> = ({
   files,
   codeHeight = '30vh',
   defaultFile = '',
+  defaultFileExtension = '.py'
 }) => {
   // NOTE: We're making a strong-ish assumption here that we're going to have files in a format
-  // where the root dir is the name of the operator and the main function is {operator_name}.py.
-  const [selectedFile, setSelectedFile] = useState(
-    defaultFile ? `/${defaultFile}/${defaultFile}.py` : ''
+  // where the root dir is the name of the operator and the main function is {operator_name}.{defaultFileExtension}.
+  console.log('multiFileviewer defaultfileextension: ', defaultFileExtension);
+  //defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : ''
+  const [selectedFilePath, setselectedFilePathPath] = useState(
+    defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : ''
   );
+  console.log('defaultFileExtension: ', defaultFileExtension);
+  console.log('selectedFilePath: ', selectedFilePath);
+
   const [matches, setMatches] = useState(false);
+  const [multiFileViewerTree, setMultiFileViewerTree] = useState<JSX.Element[]>([]);
+  const [hasFiles, setHasFiles] = useState<boolean>(false);
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1000px)');
@@ -37,32 +47,91 @@ const MultiFileViewer: React.FC<Props> = ({
     return () => window.removeEventListener('resize', listener);
   }, [matches]);
 
+  useEffect(() => {
+    const currentFile = getCurrentFile();
+    console.log('initial load currentFile: ', currentFile);
+    setSelected(currentFile);
+  }, []);
+
+  useEffect(() => {
+    console.log('defaultFile useEffect')
+    setselectedFilePathPath(defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : '');
+  }, [defaultFile]);
+
+  useEffect(() => {
+    console.log('defaultFileExtension useEffect');
+    setselectedFilePathPath(defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : '');
+  }, [defaultFileExtension])
+
   const isFile = (object) => {
+    console.log('isFile object: ', object);
     return (
       Object.keys(object).includes('language') &&
       typeof object.language === 'string'
     );
+
+    /* object that we're getting looks like this when we have sql files: */
+    /*
+      {
+        "": {},
+        "aqueduct_demo query 1.sql": {
+            "path": "aqueduct_demo query 1/aqueduct_demo query 1.sql",
+            "language": "sql",
+            "content": "SELECT * FROM customers;"
+        }
+      }
+  */
   };
 
-  let hasFiles = files && Object.keys(files).length > 0;
+  useEffect(() => {
+    setHasFiles(files && Object.keys(files).length > 0);
+  }, [files])
 
-  let selected = files;
-  if (hasFiles) {
-    const pathList = selectedFile.split('/').splice(1);
+  useEffect(() => {
+    console.log('defaultFileExtension, hasFiles useEffect if statement');
+    if (hasFiles) {
+      setMultiFileViewerTree(buildTree(files, ''));
+    }
+  }, [defaultFileExtension, hasFiles]);
 
-    pathList.forEach((section) => {
-      if (Object.keys(selected).includes(section)) {
-        selected = selected[section];
-      } else {
-        hasFiles = false;
-      }
-    });
+  // // TODO: refactor me into a useEffect
+  // let selected = files;
+
+  // // TODO: Refactor me into a useEffect
+  // console.log('isFile(selected): ', isFile(selected));
+  // if (!isFile(selected)) {
+  //   // Return the default "file"
+  //   selected = files[''];
+  // }
+
+  const getCurrentFile = () => {
+    let currentFile = files;
+    if (hasFiles) {
+      const pathList = selectedFilePath.split('/').splice(1);
+      console.log('pathList: ', pathList);
+
+      pathList.forEach((section) => {
+        if (Object.keys(selected).includes(section)) {
+          currentFile = selected[section];
+        } else {
+          //hasFiles = false;
+          setHasFiles(false);
+        }
+      });
+    }
+
+    if (!isFile(currentFile)) {
+      // Return the default "file"
+      currentFile = files[''];
+    }
+
+    return currentFile;
   }
 
-  if (!isFile(selected)) {
-    // Return the default "file"
-    selected = files[''];
-  }
+  useEffect(() => {
+    const currentFile = getCurrentFile();
+    setSelected(currentFile);
+  }, [files]) // may want to trigger this one when hasFiles changes. hope that this doesn't cause infinite loop.
 
   const buildTree = (currentDirectory, prefix) => {
     const keys = Object.keys(currentDirectory);
@@ -87,7 +156,7 @@ const MultiFileViewer: React.FC<Props> = ({
             key={fullPrefix}
             nodeId={fullPrefix}
             label={section}
-            onClick={() => setSelectedFile(fullPrefix)}
+            onClick={() => setselectedFilePathPath(fullPrefix)}
           />
         );
       });
@@ -101,7 +170,8 @@ const MultiFileViewer: React.FC<Props> = ({
         );
       });
 
-      return [...folderItems, ...fileItems];
+      const fileTree = [...folderItems, ...fileItems]
+      return fileTree;
     }
   };
 
@@ -110,6 +180,10 @@ const MultiFileViewer: React.FC<Props> = ({
     minimap: { enabled: false },
     wordWrap: 'on' as 'on' | 'off' | 'wordWrapColumn' | 'bounded',
   };
+
+  console.log('selected before render: ', selected);
+  console.log('files before render: ', files);
+
   return (
     <Box style={{ height: codeHeight, display: 'flex' }}>
       <Box style={{ width: '200px', height: '100%' }}>
@@ -117,11 +191,11 @@ const MultiFileViewer: React.FC<Props> = ({
           aria-label="file system navigator"
           defaultCollapseIcon={<FontAwesomeIcon icon={faChevronDown} />}
           defaultExpandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-          defaultExpanded={[`/${defaultFile}`]}
-          defaultSelected={[`/${defaultFile}/${defaultFile}.py`]}
+          expanded={[`/${defaultFile}`]}
+          selected={[selectedFilePath]}
         >
           {hasFiles ? (
-            buildTree(files, '')
+            multiFileViewerTree
           ) : (
             <Typography key="no_files">No files to display.</Typography>
           )}
@@ -134,13 +208,17 @@ const MultiFileViewer: React.FC<Props> = ({
           height: '100%',
         }}
       >
-        <Editor
-          path={selected.name}
-          language={selected.language}
-          value={selected.content}
-          saveViewState={true}
-          options={options}
-        />
+        {
+          selected && (
+            <Editor
+              path={selected.name}
+              language={selected.language}
+              value={selected.content}
+              saveViewState={true}
+              options={options}
+            />
+          )
+        }
       </Box>
     </Box>
   );
