@@ -85,11 +85,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-    isSucceeded(workflowDagResultWithLoadingStatus.status)
+      isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-          workflowDagResultWithLoadingStatus?.result,
-          artifactId
-        )
+        workflowDagResultWithLoadingStatus?.result,
+        artifactId
+      )
       : { metrics: [], checks: [] };
 
   const pathPrefix = getPathPrefix();
@@ -122,9 +122,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   useEffect(() => {
     if (!!artifact) {
       if (!sideSheetMode) {
-        document.title = `${
-          artifact ? artifact.name : 'Artifact Details'
-        } | Aqueduct`;
+        document.title = `${artifact ? artifact.name : 'Artifact Details'
+          } | Aqueduct`;
       }
 
       if (
@@ -192,7 +191,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={'800px'}>
+      <Box width={!sideSheetMode ? '800px' : 'auto'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
