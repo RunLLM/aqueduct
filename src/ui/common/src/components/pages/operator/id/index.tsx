@@ -86,7 +86,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   ];
 
   useEffect(() => {
-    document.title = 'Operator Details | Aqueduct';
+    if (!sideSheetMode) {
+      document.title = 'Operator Details | Aqueduct';
+    }
 
     if (
       // Load workflow dag result if it's not cached
@@ -204,15 +206,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
-  const border = {
-    border: '2px',
-    borderStyle: 'solid',
-    borderRadius: '8px',
-    borderColor: 'gray.400',
-    margin: '16px',
-    padding: '16px',
-  };
-
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={!sideSheetMode ? '800px' : 'auto'}>
@@ -232,6 +225,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={inputs}
+                appearance="link"
               />
             </Box>
 
@@ -241,6 +235,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={outputs}
+                appearance="link"
               />
             </Box>
           </Box>

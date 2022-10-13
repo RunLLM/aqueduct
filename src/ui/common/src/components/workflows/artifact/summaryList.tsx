@@ -17,6 +17,9 @@ type Props = {
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
   collapsePrimitives?: boolean;
+  // When appearance is set to 'value', we will display the value
+  // instead of a link whenever possible.
+  appearance?: 'value' | 'link';
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -24,13 +27,12 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   artifactResults,
+  appearance = 'link',
   collapsePrimitives = true,
 }) => {
   const items = artifactResults.map((artifactResult, index) => {
     let content = null,
       link = null;
-
-    console.log(artifactResult);
 
     let linkType = 'artifact';
     let linkTarget = artifactResult.id;
@@ -46,6 +48,7 @@ const SummaryList: React.FC<Props> = ({
 
     if (artifactResult.result?.content_serialized && collapsePrimitives) {
       // Show only the result and no link.
+    if (artifactResult.result?.content_serialized && appearance === 'value') {
       content = artifactResult.result.content_serialized;
     } else if (artifactResult.result?.content_serialized) {
       // Show the name and the value and link it.
