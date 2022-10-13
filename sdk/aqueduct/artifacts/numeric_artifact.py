@@ -110,8 +110,6 @@ class NumericArtifact(BaseArtifact):
             if parameters is None and self._get_content() is None:
                 self._set_content(content)
 
-            return content
-
         assert (
             isinstance(content, int) or isinstance(content, float) or isinstance(content, np.number)
         )
