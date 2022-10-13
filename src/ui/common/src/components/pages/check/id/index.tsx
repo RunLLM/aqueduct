@@ -1,6 +1,10 @@
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Link } from '@mui/material';
+import {
+  faTriangleExclamation,
+  faCircleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -8,6 +12,7 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
@@ -24,7 +29,10 @@ import DefaultLayout from '../../../layouts/default';
 import CheckTableItem from '../../../tables/CheckTableItem';
 import CheckHistory from '../../../workflows/artifact/check/history';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
+import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import { LayoutProps } from '../../types';
+import { CheckLevel, OperatorType } from '../../../../utils/operators';
+import { theme } from '../../../../styles/theme/theme';
 
 type CheckDetailsPageProps = {
   user: UserProfile;
@@ -59,35 +67,30 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     checkOperatorId = operatorIdProp;
   }
 
-  const [metricsExpanded, setMetricsExpanded] = useState<boolean>(true);
-  const [artifactsExpanded, setArtifactsExpanded] = useState<boolean>(true);
-
   const workflowDagResultWithLoadingStatus = useSelector(
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
+
+  const artifactId = operator?.outputs[0];
+  const artifactHistoryWithLoadingStatus = useSelector((state: RootState) =>
+    !!artifactId
+      ? state.artifactResultsReducer.artifacts[artifactId]
+      : undefined
+  );
 
   const pathPrefix = getPathPrefix();
   const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
+    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Check'),
   ];
-
-  const artifactId = operator?.outputs[0];
-
-  const artifactHistoryWithLoadingStatus = useSelector((state: RootState) =>
-    !!artifactId
-      ? state.artifactResultsReducer.artifacts[artifactId]
-      : undefined
-  );
 
   useEffect(() => {
     // Load workflow dag result if it's not cached
@@ -155,84 +158,41 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     );
   }
 
-  const mockCheckArtifactData = [
-    // severity in the mock corresponnds with level in the API response.
-    {
-      status: 'succeeded',
-      level: 'warning',
-      result: 'True',
-      date_completed: '3/14/2022 4:00 PST',
-    },
-    {
-      status: 'succeeded',
-      level: 'warning',
-      result: 'False',
-      date_completed: '3/14/2022 4:00 PST',
-    },
-    {
-      status: 'succeeded',
-      level: 'error',
-      result: 'True',
-      date_completed: '3/14/2022 4:00 PST',
-    },
-  ];
-  const historicalCheckData: Data = {
-    schema: {
-      fields: [
-        { name: 'status', type: 'varchar' },
-        { name: 'level', type: 'varchar' },
-        { name: 'result', type: 'varchar' },
-        { name: 'date_completed', type: 'varchar' },
-      ],
-      pandas_version: '0.0.1', // Not sure what actual value to put here, just filling in for now :)
-    },
-    data: mockCheckArtifactData,
-  };
+  const mapArtifacts = (artfIds: string[]) =>
+    artfIds
+      .map(
+        (artifactId) => {
+          // We do a structuredClone so that we can modify this -- otherwise, it's an unmodifiable pointer to a 
+          // Redux object.
+          let artifactResult = structuredClone((workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
+            artifactId
+          ]);
 
-  // Function to get the numerical value of the metric output
-  // TODO: Use this inside of the accordion component below.
-  // NOTE: This code is shared with the metric details page, perhaps we should make this into a hook or component.
-  const operatorOutputsList = operator.outputs.map((artifactId) => {
-    const artifactResult = (workflowDagResultWithLoadingStatus.result
-      ?.artifacts ?? {})[artifactId];
-    if (!artifactResult) {
-      return null;
-    }
+          if (!artifactResult) {
+            return artifactResult;
+          }
 
-    if (
-      !artifactResult.result ||
-      artifactResult.result.content_serialized === undefined
-    ) {
-      // Link to appropriate artifact details page
-      // Show tableIcon here as part of the link.
-      return (
-        <Box key={artifactId}>
-          <Link
-            to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
-            component={RouterLink as any}
-            sx={{ marginLeft: '16px' }}
-            underline="none"
-          >
-            {artifactResult.name}
-          </Link>
-        </Box>
-      );
-    }
+          const operatorType = workflowDagResultWithLoadingStatus.result?.operators[artifactResult.from]?.spec.type;
+          artifactResult.operatorType = operatorType;
 
-    return (
-      <Box key={artifactId} display="flex">
-        <CheckTableItem checkValue={artifactResult.result.content_serialized} />
-        <Link
-          to={`${getPathPrefix()}/workflow/${workflowId}/result/${workflowDagResultId}/artifact/${artifactId}`}
-          component={RouterLink as any}
-          sx={{ marginLeft: '16px' }}
-          underline="none"
-        >
-          {artifactResult.name}
-        </Link>
-      </Box>
-    );
-  });
+          return artifactResult;
+        }
+      )
+      .filter((artf) => !!artf);
+  const inputs = mapArtifacts(operator.inputs);
+  const outputs = mapArtifacts(operator.outputs);
+
+  const checkLevel = operator.spec.check.level;
+  const checkLevelDisplay = (
+    <Box sx={{ display: 'flex', alignItems: 'center' }} mb={2}>
+      <Typography variant="body2" sx={{ color: 'gray.800' }}>Check Level</Typography>
+      <Typography variant="body1" sx={{ mx: 1 }}>{checkLevel.charAt(0).toUpperCase() + checkLevel.slice(1)}</Typography>
+      <FontAwesomeIcon 
+        icon={checkLevel === CheckLevel.Error ? faCircleExclamation : faTriangleExclamation}
+        color={checkLevel === CheckLevel.Error ? theme.palette.red[600] : theme.palette.orange[600] }
+      />
+    </Box>
+  );
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -248,79 +208,40 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
           </Box>
         )}
 
+        <Box
+          width="100%"
+          paddingTop={sideSheetMode ? '16px' : '40px'}
+        >
+          {checkLevelDisplay}
+
+          <Box display="flex" width="100%">
+            <Box width="100%" sx={{ mr: '32px' }}>
+              <ArtifactSummaryList
+                title={'Inputs'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={inputs}
+                collapsePrimitives={false}
+              />
+            </Box>
+            <Box width="100%">
+              <ArtifactSummaryList
+                title={'Outputs'}
+                workflowId={workflowId}
+                dagResultId={workflowDagResultId}
+                artifactResults={outputs}
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: '32px' }} />
+
         <Box width="100%" marginTop={sideSheetMode ? '16px' : '40px'}>
-          <Typography variant="h5" marginBottom="8px">
-            Recent Results
-          </Typography>
           <CheckHistory
             historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             checkLevel={operator?.spec?.check?.level}
           />
-        </Box>
-        {/* commenting out metrics for now as we figure out what to do with them */}
-        {/* <Box width="100%" marginTop="32px">
-                    <Typography variant="h5">Related Outputs</Typography>
-                    <Accordion
-                        expanded={metricsExpanded}
-                        onChange={() => {
-                            setMetricsExpanded(!metricsExpanded);
-                        }}
-                    >
-                        <AccordionSummary
-                            expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-                            sx={{
-                                '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-                                    transform: 'rotate(90deg)',
-                                },
-                            }}
-                            aria-controls="input-accordion-content"
-                            id="input-accordion-header"
-                        >
-                            <Typography
-                                sx={{ width: '33%', flexShrink: 0 }}
-                                variant="h5"
-                                component="div"
-                                marginBottom="8px"
-                            >
-                                Metrics:
-                            </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <React.Fragment>{operatorOutputsList}</React.Fragment>
-                        </AccordionDetails>
-                    </Accordion>
-                </Box> */}
-
-        <Box width="100%" marginTop="32px">
-          <Accordion
-            expanded={artifactsExpanded}
-            onChange={() => {
-              setArtifactsExpanded(!artifactsExpanded);
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<FontAwesomeIcon icon={faChevronRight} />}
-              sx={{
-                '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
-                  transform: 'rotate(90deg)',
-                },
-              }}
-              aria-controls="artifacts-accordion-content"
-              id="artifacts-accordion-header"
-            >
-              <Typography
-                sx={{ width: '33%', flexShrink: 0 }}
-                variant="h5"
-                component="div"
-                marginBottom="8px"
-              >
-                Artifacts:
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <React.Fragment>{operatorOutputsList}</React.Fragment>
-            </AccordionDetails>
-          </Accordion>
         </Box>
       </Box>
     </Layout>

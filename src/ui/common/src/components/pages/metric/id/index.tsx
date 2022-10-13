@@ -76,12 +76,16 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag?.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 
+  console.log('selected dag is', workflow.selectedDag);
+
   useEffect(() => {
-    document.title = 'Metric Details | Aqueduct';
+    if (!sideSheetMode) {
+      document.title = 'Metric Details | Aqueduct';
+    }
 
     // Load workflow dag result if it's not cached
     if (
@@ -121,8 +125,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
       // this should only be set when the user is viewing this as a full page, not side sheet.
-      document.title = `${operator ? operator.name : 'Operator Details'
-        } | Aqueduct`;
+      document.title = `${operator.name} | Aqueduct`;
     }
   }, [operator]);
 
@@ -184,7 +187,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={inputs}
-                initiallyExpanded={true}
               />
             </Box>
             <Box width="32px" />
@@ -194,7 +196,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
                 workflowId={workflowId}
                 dagResultId={workflowDagResultId}
                 artifactResults={outputs}
-                initiallyExpanded={true}
               />
             </Box>
           </Box>

@@ -54,9 +54,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       (artifactStatusResult) => {
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp: new Date(
-            artifactStatusResult.exec_state?.timestamps?.finished_at
-          ).toLocaleString(),
+          timestamp: new Date( artifactStatusResult.exec_state?.timestamps?.finished_at).toLocaleString(),
           value: artifactStatusResult.content_serialized,
         };
       }
@@ -96,7 +94,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
             width: '100%',
             height: '100%',
             plot_bgcolor: theme.palette.gray[100],
-            margin: { b: 30, l: 30, t: 0, r: 0 },
+            margin: { b: 30, l: 50, t: 0, r: 0 },
             yaxis: { ticksuffix: ' ' },
           }}
         />
@@ -104,7 +102,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
 
       <Box width="500px" mt="32px">
         <Typography variant="h6" fontWeight="normal">
-          Historical Values
+          History
         </Typography>
         {historicalData.data.map((entry, index) => {
           let backgroundColor, hoverColor, icon;
@@ -153,10 +151,11 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 1 }} variant="body2">
+                {icon}
+
+                <Typography sx={{ ml: 1 }} variant="body2">
                   {entry.timestamp.toLocaleString()}
                 </Typography>
-                {icon}
               </Box>
               <Typography variant="body1">{entry.value.toString()}</Typography>
             </Box>
