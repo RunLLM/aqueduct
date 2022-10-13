@@ -40,7 +40,7 @@ export const DefaultLayout: React.FC<Props> = ({
         <Box
           sx={{
             boxSizing: 'border-box',
-            width: `calc(100% - ${MenuSidebarOffset} - 50px)`,
+            width: `calc(100% - ${MenuSidebarWidth} - ${DefaultLayoutMargin})`,
             marginTop: breadcrumbsSize,
             marginLeft: MenuSidebarWidth,
             marginRight: 0,
