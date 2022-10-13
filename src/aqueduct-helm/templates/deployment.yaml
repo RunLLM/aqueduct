@@ -45,7 +45,7 @@ spec:
               containerPort: 8080
               protocol: TCP
           volumeMounts:
-            - mountPath: "/root"
+            - mountPath: "/root/.aqueduct"
               name: aqueduct-pv-storage
           livenessProbe:
             httpGet:
