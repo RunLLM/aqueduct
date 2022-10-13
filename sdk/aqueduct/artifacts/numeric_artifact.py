@@ -26,6 +26,7 @@ from aqueduct.enums import (
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
 from aqueduct.utils import (
+    Number,
     artifact_name_from_op_name,
     format_header_for_print,
     generate_uuid,
@@ -65,7 +66,7 @@ class NumericArtifact(BaseArtifact):
         self,
         dag: DAG,
         artifact_id: uuid.UUID,
-        content: Optional[Union[int, float, np.number]] = None,
+        content: Optional[Number] = None,
         from_flow_run: bool = False,
     ):
         self._dag = dag
@@ -75,7 +76,7 @@ class NumericArtifact(BaseArtifact):
         self._from_flow_run = from_flow_run
         self._set_content(content)
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[int, float, np.number]:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Number:
         """Materializes a NumericArtifact into its immediate float value.
 
         Returns:
@@ -99,21 +100,21 @@ class NumericArtifact(BaseArtifact):
                     "Parameterizing historical artifacts is not currently supported."
                 )
 
-        if parameters is None and self._get_content() is not None:
-            return self._get_content()
+        content = self._get_content()
+        if parameters is not None or content is None:
+            previewed_artifact = artifact_utils.preview_artifact(
+                self._dag, self._artifact_id, parameters
+            )
 
-        previewed_artifact = artifact_utils.preview_artifact(
-            self._dag, self._artifact_id, parameters
-        )
+            content = previewed_artifact._get_content()
+            if parameters is None and self._get_content() is None:
+                self._set_content(content)
 
-        content = previewed_artifact._get_content()
+            return content
+
         assert (
             isinstance(content, int) or isinstance(content, float) or isinstance(content, np.number)
         )
-
-        if parameters is None and self._get_content() is None:
-            self._set_content(content)
-
         return content
 
     def list_preset_checks(self) -> List[str]:
