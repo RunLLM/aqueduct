@@ -86,7 +86,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   ];
 
   useEffect(() => {
-    document.title = 'Operator Details | Aqueduct';
+    if (!sideSheetMode) {
+      document.title = 'Operator Details | Aqueduct';
+    }
 
     if (
       // Load workflow dag result if it's not cached
@@ -188,6 +190,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     workflowDagResultWithLoadingStatus.status.loading ===
     LoadingStatusEnum.Failed
   ) {
+    console.log("triggering this redirect to 404.")
     navigate('/404');
     return null;
   }

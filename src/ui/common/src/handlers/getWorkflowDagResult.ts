@@ -36,6 +36,7 @@ export const handleGetWorkflowDagResult = createAsyncThunk<
     const body = await resp.json();
 
     if (!resp.ok) {
+      console.log('error body is', body);
       return thunkAPI.rejectWithValue(body.error);
     }
 

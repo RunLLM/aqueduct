@@ -9,23 +9,17 @@ type Props = {
   err?: Error;
   contentHeight?: string;
 };
-const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
+const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '2vh' }) => {
   const hasOutput = (obj) => {
     return obj !== undefined && obj.length > 0;
   };
 
   const [selectedTab, setSelectedTab] = useState(0);
-  const tabPanelOptions = {
-    height: contentHeight,
-    overflow: 'auto',
-    fontFamily: 'monospace, monospace',
-  };
-  const errorTabPanelOptions = { ...tabPanelOptions, color: 'red.500' };
-  const empty = { color: 'gray.200' };
-
-  const noStdOut = 'No output logs to display.';
-  const noStdErr = 'No error logs to display.';
-  const noErr = 'No errors to display.';
+  const emptyElement = (
+    <Box sx={{ p: 2, backgroundColor: 'gray.100' }}>
+      Nothing to see here!
+    </Box>
+  );
 
   return (
     <Box sx={{ mb: 4 }} pb={1}>
@@ -45,28 +39,42 @@ const LogViewer: React.FC<Props> = ({ logs, err, contentHeight = '10vh' }) => {
       <Box
         key={0}
         role="tabpanel"
-        sx={errorTabPanelOptions}
         hidden={selectedTab !== 0}
       >
-        {err !== undefined && hasOutput(err?.tip)
-          ? `${err.tip}:\n${err.context}`
-          : noErr}
+        {err !== undefined && hasOutput(err?.tip) ?
+          <Box sx={{ backgroundColor: 'red.100', color: 'red.600', p: 2, height: 'fit-content' }}>
+            <pre style={{ margin: '0px' }}>
+              {`${err.tip}\n${err.context}`}
+            </pre>
+          </Box> :
+          emptyElement
+        }
       </Box>
+
       <Box
         key={1}
         role="tabpanel"
-        sx={tabPanelOptions}
         hidden={selectedTab !== 1}
       >
-        {hasOutput(logs?.stdout) ? logs.stdout : noStdOut}
+        {hasOutput(logs?.stdout) ? 
+          <Box sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content'}}>
+            logs.stdout
+          </Box> : 
+          emptyElement
+        }
       </Box>
+
       <Box
         key={2}
         role="tabpanel"
-        sx={errorTabPanelOptions}
         hidden={selectedTab !== 2}
       >
-        {hasOutput(logs?.stderr) ? logs.stderr : noStdErr}
+        {hasOutput(logs?.stderr) ? 
+          <Box sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content'}}>
+            logs.stderr
+          </Box> : 
+          emptyElement
+        }
       </Box>
     </Box>
   );
