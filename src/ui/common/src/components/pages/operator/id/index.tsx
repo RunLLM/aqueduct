@@ -88,7 +88,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   ];
 
   useEffect(() => {
-    console.log('operator obj: ', operator);
     document.title = 'Operator Details | Aqueduct';
 
     if (
@@ -96,9 +95,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       !workflowDagResultWithLoadingStatus ||
       isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
-      console.log('operator details loading workflow dag result');
-      console.log('workflowId: ', workflowId);
-      console.log('workflowDagResultId: ', workflowDagResultId);
       dispatch(
         handleGetWorkflowDagResult({
           apiKey: user.apiKey,
@@ -202,9 +198,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         //fileContent = operator.spec.load.parameters.query;
       }
       setFiles((prevState) => {
-        console.log('parameters: ', operator.spec.extract);
-        //console.log('query: ', operator.spec.extract.parameters.query);
-
         const files = {
           // Note: not sure why this is here, but file viewer assumes the first entry to be blank like this
           [""]: {
@@ -270,8 +263,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
-
-  console.log('operator deets default ext: ', defaultFileExtension);
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>

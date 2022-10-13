@@ -24,14 +24,10 @@ const MultiFileViewer: React.FC<Props> = ({
 }) => {
   // NOTE: We're making a strong-ish assumption here that we're going to have files in a format
   // where the root dir is the name of the operator and the main function is {operator_name}.{defaultFileExtension}.
-  console.log('multiFileviewer defaultfileextension: ', defaultFileExtension);
   //defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : ''
   const [selectedFilePath, setselectedFilePathPath] = useState(
     defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : ''
   );
-  console.log('defaultFileExtension: ', defaultFileExtension);
-  console.log('selectedFilePath: ', selectedFilePath);
-
   const [matches, setMatches] = useState(false);
   const [multiFileViewerTree, setMultiFileViewerTree] = useState<JSX.Element[]>([]);
   const [hasFiles, setHasFiles] = useState<boolean>(false);
@@ -54,23 +50,23 @@ const MultiFileViewer: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    console.log('defaultFile useEffect')
+    //console.log('defaultFile useEffect')
     setselectedFilePathPath(defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : '');
   }, [defaultFile]);
 
   useEffect(() => {
-    console.log('defaultFileExtension useEffect');
+    //console.log('defaultFileExtension useEffect');
     setselectedFilePathPath(defaultFile ? `/${defaultFile}/${defaultFile}${defaultFileExtension}` : '');
-  }, [defaultFileExtension])
+  }, [defaultFileExtension]);
 
   const isFile = (object) => {
-    console.log('isFile object: ', object);
-    return (
-      Object.keys(object).includes('language') &&
-      typeof object.language === 'string'
-    );
+    //console.log('isFile object: ', object);
+    const keys = Object.keys(object);
+    const hasFileKeys = keys.includes("path") && keys.includes("language") && keys.includes("content");
+    //console.log('hasFileKeys: ', hasFileKeys);
+    return hasFileKeys;
 
-    /* object that we're getting looks like this when we have sql files: */
+    /* object that we're getting looks like this when we have a folder. A file would be smaller: */
     /*
       {
         "": {},
@@ -84,11 +80,12 @@ const MultiFileViewer: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    setHasFiles(files && Object.keys(files).length > 0);
-  }, [files])
+    const filesArePresent = files && Object.keys(files).length > 0;
+    setHasFiles(filesArePresent);
+  }, [files]);
 
   useEffect(() => {
-    console.log('defaultFileExtension, hasFiles useEffect if statement');
+    //console.log('defaultFileExtension, hasFiles useEffect if statement');
     if (hasFiles) {
       setMultiFileViewerTree(buildTree(files, ''));
     }
@@ -108,46 +105,66 @@ const MultiFileViewer: React.FC<Props> = ({
     let currentFile = files;
     if (hasFiles) {
       const pathList = selectedFilePath.split('/').splice(1);
-      console.log('pathList: ', pathList);
+      //console.log('pathList: ', pathList);
 
       pathList.forEach((section) => {
         if (Object.keys(selected).includes(section)) {
+          //console.log('setting currentFile after pathList');
+          //console.log('selected2: ', selected);
+          //console.log('section: ', section);
           currentFile = selected[section];
+          //console.log('selected[section]: ', currentFile);
         } else {
-          //hasFiles = false;
+          //console.log('setting hasFiles to false');
           setHasFiles(false);
         }
       });
     }
 
+    //console.log('currentFile before if check: ', currentFile);
     if (!isFile(currentFile)) {
       // Return the default "file"
       currentFile = files[''];
     }
 
+    //console.log('currentFile before return: ', currentFile);
     return currentFile;
   }
 
   useEffect(() => {
     const currentFile = getCurrentFile();
     setSelected(currentFile);
-  }, [files]) // may want to trigger this one when hasFiles changes. hope that this doesn't cause infinite loop.
+  }, [files, hasFiles]) // may want to trigger this one when hasFiles changes. hope that this doesn't cause infinite loop.
 
   const buildTree = (currentDirectory, prefix) => {
+    console.log('buildTree currentDirectory: ', currentDirectory);
+    console.log('buildTree prefix: ', prefix);
+
     const keys = Object.keys(currentDirectory);
+    console.log('buildTree keys: ', keys);
     if (keys.length > 0) {
       const files = [];
       const folders = [];
       keys.forEach((section) => {
+        console.log('build tree section: ', section);
+        console.log('buidl tree currentDirectory[section]:', currentDirectory[section]);
         if (isFile(currentDirectory[section])) {
+          console.log('pushing section to files: ', section);
           files.push(section);
         } else {
+          console.log('pushing section to folders:', section)
           folders.push(section);
         }
       });
 
+      console.log('files before sort: ', files);
+      console.log('folders before sort: ', folders);
+
       files.sort();
       folders.sort();
+
+      console.log('files after sort: ', files);
+      console.log('folders after sort: ', folders);
 
       const fileItems = files.map((section) => {
         const fullPrefix = `${prefix}/${section}`;
@@ -183,6 +200,10 @@ const MultiFileViewer: React.FC<Props> = ({
 
   console.log('selected before render: ', selected);
   console.log('files before render: ', files);
+
+  console.log('selected.name: ', selected?.name); // expect this to be undefined for now.
+  console.log('selected.language: ', selected?.language);
+  console.log('selected.content: ', selected?.content);
 
   return (
     <Box style={{ height: codeHeight, display: 'flex' }}>
