@@ -1,38 +1,32 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress, Link } from '@mui/material';
 import {
-  faTriangleExclamation,
   faCircleExclamation,
+  faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
-import React, { useEffect, useState } from 'react';
+import Typography from '@mui/material/Typography';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
+import { CheckLevel } from '../../../../utils/operators';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import DefaultLayout from '../../../layouts/default';
-import CheckTableItem from '../../../tables/CheckTableItem';
 import CheckHistory from '../../../workflows/artifact/check/history';
-import DetailsPageHeader from '../../components/DetailsPageHeader';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
+import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
-import { CheckLevel, OperatorType } from '../../../../utils/operators';
-import { theme } from '../../../../styles/theme/theme';
 
 type CheckDetailsPageProps = {
   user: UserProfile;
@@ -160,24 +154,27 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map(
-        (artifactId) => {
-          // We do a structuredClone so that we can modify this -- otherwise, it's an unmodifiable pointer to a 
-          // Redux object.
-          let artifactResult = structuredClone((workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
+      .map((artifactId) => {
+        // We do a structuredClone so that we can modify this -- otherwise, it's an unmodifiable pointer to a
+        // Redux object.
+        const artifactResult = structuredClone(
+          (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
             artifactId
-          ]);
+          ]
+        );
 
-          if (!artifactResult) {
-            return artifactResult;
-          }
-
-          const operatorType = workflowDagResultWithLoadingStatus.result?.operators[artifactResult.from]?.spec.type;
-          artifactResult.operatorType = operatorType;
-
+        if (!artifactResult) {
           return artifactResult;
         }
-      )
+
+        const operatorType =
+          workflowDagResultWithLoadingStatus.result?.operators[
+            artifactResult.from
+          ]?.spec.type;
+        artifactResult.operatorType = operatorType;
+
+        return artifactResult;
+      })
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
@@ -185,11 +182,23 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   const checkLevel = operator.spec.check.level;
   const checkLevelDisplay = (
     <Box sx={{ display: 'flex', alignItems: 'center' }} mb={2}>
-      <Typography variant="body2" sx={{ color: 'gray.800' }}>Check Level</Typography>
-      <Typography variant="body1" sx={{ mx: 1 }}>{checkLevel.charAt(0).toUpperCase() + checkLevel.slice(1)}</Typography>
-      <FontAwesomeIcon 
-        icon={checkLevel === CheckLevel.Error ? faCircleExclamation : faTriangleExclamation}
-        color={checkLevel === CheckLevel.Error ? theme.palette.red[600] : theme.palette.orange[600] }
+      <Typography variant="body2" sx={{ color: 'gray.800' }}>
+        Check Level
+      </Typography>
+      <Typography variant="body1" sx={{ mx: 1 }}>
+        {checkLevel.charAt(0).toUpperCase() + checkLevel.slice(1)}
+      </Typography>
+      <FontAwesomeIcon
+        icon={
+          checkLevel === CheckLevel.Error
+            ? faCircleExclamation
+            : faTriangleExclamation
+        }
+        color={
+          checkLevel === CheckLevel.Error
+            ? theme.palette.red[600]
+            : theme.palette.orange[600]
+        }
       />
     </Box>
   );
@@ -208,10 +217,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
           </Box>
         )}
 
-        <Box
-          width="100%"
-          paddingTop={sideSheetMode ? '16px' : '40px'}
-        >
+        <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
           {checkLevelDisplay}
 
           <Box display="flex" width="100%">

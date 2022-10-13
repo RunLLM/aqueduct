@@ -54,7 +54,9 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       (artifactStatusResult) => {
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp: new Date( artifactStatusResult.exec_state?.timestamps?.finished_at).toLocaleString(),
+          timestamp: new Date(
+            artifactStatusResult.exec_state?.timestamps?.finished_at
+          ).toLocaleString(),
           value: artifactStatusResult.content_serialized,
         };
       }

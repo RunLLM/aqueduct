@@ -4,11 +4,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { OperatorType } from '../../../utils/operators';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
+import { OperatorType } from '../../../utils/operators';
 import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
 
 type Props = {
@@ -32,21 +32,27 @@ const SummaryList: React.FC<Props> = ({
 
     console.log(artifactResult);
 
-    let linkType = "artifact";
+    let linkType = 'artifact';
     let linkTarget = artifactResult.id;
-    if (artifactResult.operatorType === OperatorType.Metric || artifactResult.operatorType === OperatorType.Check) {
+    if (
+      artifactResult.operatorType === OperatorType.Metric ||
+      artifactResult.operatorType === OperatorType.Check
+    ) {
       // For checks & metrics, we want to the URL to be of the form /metric/{operatorId}, which is why we set both the
       // linkType and linkTarget here.
       linkType = artifactResult.operatorType;
       linkTarget = artifactResult.from;
     }
-    
-    if (artifactResult.result?.content_serialized && collapsePrimitives) { // Show only the result and no link.
+
+    if (artifactResult.result?.content_serialized && collapsePrimitives) {
+      // Show only the result and no link.
       content = artifactResult.result.content_serialized;
-    } else if (artifactResult.result?.content_serialized) { // Show the name and the value and link it.
+    } else if (artifactResult.result?.content_serialized) {
+      // Show the name and the value and link it.
       link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
       content = `${artifactResult.name} (${artifactResult.result.content_serialized})`;
-    } else { // Show only the name and link it.
+    } else {
+      // Show only the name and link it.
       link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
       content = artifactResult.name;
     }

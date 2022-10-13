@@ -1,5 +1,6 @@
 // This file should mirror src/golang/workflow/artifact/response.go
 import { OperatorType } from 'src/utils/operators';
+
 import { ArtifactType } from '../../utils/artifacts';
 import { ExecState } from '../../utils/shared';
 

@@ -1,16 +1,16 @@
-import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import {
   faCheckCircle,
   faQuestionCircle,
   faXmarkCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 
-import { theme } from '../../../../styles/theme/theme';
-import ExecutionStatus from '../../../../utils/shared';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
+import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
+import ExecutionStatus from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 
 type CheckHistoryProps = {
@@ -56,7 +56,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
           level: checkLevel ? checkLevel : 'undefined',
           value: artifactStatusResult.content_serialized,
-          timestamp: new Date( artifactStatusResult.exec_state?.timestamps?.finished_at).toLocaleString(),
+          timestamp: new Date(
+            artifactStatusResult.exec_state?.timestamps?.finished_at
+          ).toLocaleString(),
         };
       }
     ),
@@ -115,7 +117,10 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             }}
             width="fit-content"
           >
-            <Box sx={{ display: 'flex', alignItems: 'center' }} width="fit-content">
+            <Box
+              sx={{ display: 'flex', alignItems: 'center' }}
+              width="fit-content"
+            >
               {icon}
 
               <Typography sx={{ ml: 1 }} variant="body2">
@@ -126,7 +131,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
         );
       })}
     </Box>
-  )
+  );
 };
 
 export default CheckHistory;
