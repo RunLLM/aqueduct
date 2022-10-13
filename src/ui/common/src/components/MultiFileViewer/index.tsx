@@ -60,13 +60,10 @@ const MultiFileViewer: React.FC<Props> = ({
   }, [defaultFileExtension]);
 
   const isFile = (object) => {
-    //console.log('isFile object: ', object);
     const keys = Object.keys(object);
     const hasFileKeys = keys.includes("path") && keys.includes("language") && keys.includes("content");
-    //console.log('hasFileKeys: ', hasFileKeys);
     return hasFileKeys;
 
-    /* object that we're getting looks like this when we have a folder. A file would be smaller: */
     /*
       {
         "": {},
@@ -204,6 +201,8 @@ const MultiFileViewer: React.FC<Props> = ({
   console.log('selected.name: ', selected?.name); // expect this to be undefined for now.
   console.log('selected.language: ', selected?.language);
   console.log('selected.content: ', selected?.content);
+
+  console.log('currentFile: ', getCurrentFile());
 
   return (
     <Box style={{ height: codeHeight, display: 'flex' }}>
