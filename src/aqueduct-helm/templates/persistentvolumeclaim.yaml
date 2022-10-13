@@ -1,3 +1,4 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes explains the accessMode configuration
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
