@@ -8,6 +8,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
+import { OperatorType } from '../../../utils/operators';
 import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
 
 type Props = {
@@ -15,9 +16,10 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
+  collapsePrimitives?: boolean;
   // When appearance is set to 'value', we will display the value
   // instead of a link whenever possible.
-  appearance: 'value' | 'link';
+  appearance?: 'value' | 'link';
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -25,17 +27,34 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   artifactResults,
-  appearance,
+  appearance = 'link',
+  collapsePrimitives = true,
 }) => {
   const items = artifactResults.map((artifactResult, index) => {
     let content = null,
       link = null;
-    if (artifactResult.result?.content_serialized && appearance === 'value') {
+
+    let linkType = 'artifact';
+    let linkTarget = artifactResult.id;
+    if (
+      artifactResult.operatorType === OperatorType.Metric ||
+      artifactResult.operatorType === OperatorType.Check
+    ) {
+      // For checks & metrics, we want to the URL to be of the form /metric/{operatorId}, which is why we set both the
+      // linkType and linkTarget here.
+      linkType = artifactResult.operatorType;
+      linkTarget = artifactResult.from;
+    }
+
+    if (artifactResult.result?.content_serialized && appearance === 'value' && collapsePrimitives) {
       content = artifactResult.result.content_serialized;
+    } else if (artifactResult.result?.content_serialized) {
+      // Show the name and the value and link it.
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
+      content = `${artifactResult.name} (${artifactResult.result.content_serialized})`;
     } else {
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/artifact/${
-        artifactResult.id
-      }`;
+      // Show only the name and link it.
+      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
       content = artifactResult.name;
     }
 

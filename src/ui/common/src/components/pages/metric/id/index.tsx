@@ -76,12 +76,16 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
+    new BreadcrumbLink(workflowLink, workflow.selectedDag?.metadata.name),
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 
+  console.log('selected dag is', workflow.selectedDag);
+
   useEffect(() => {
-    document.title = 'Metric Details | Aqueduct';
+    if (!sideSheetMode) {
+      document.title = 'Metric Details | Aqueduct';
+    }
 
     // Load workflow dag result if it's not cached
     if (

@@ -16,7 +16,6 @@ type Props = {
   workflowId: string;
   dagResultId: string;
   operatorResults: OperatorResultResponse[];
-  initiallyExpanded: boolean;
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -24,12 +23,12 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagResultId,
   operatorResults,
-  initiallyExpanded,
 }) => {
   const items = operatorResults.map((opResult, index) => {
     let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
       opResult.id
     }`;
+
     const opType = opResult.spec?.type;
     if (opType === OperatorType.SystemMetric || opType == OperatorType.Metric) {
       link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/metric/${
