@@ -46,9 +46,7 @@ const SummaryList: React.FC<Props> = ({
       linkTarget = artifactResult.from;
     }
 
-    if (artifactResult.result?.content_serialized && collapsePrimitives) {
-      // Show only the result and no link.
-    if (artifactResult.result?.content_serialized && appearance === 'value') {
+    if (artifactResult.result?.content_serialized && appearance === 'value' && collapsePrimitives) {
       content = artifactResult.result.content_serialized;
     } else if (artifactResult.result?.content_serialized) {
       // Show the name and the value and link it.
