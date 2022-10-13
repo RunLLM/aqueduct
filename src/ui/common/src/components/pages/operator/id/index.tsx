@@ -190,7 +190,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     workflowDagResultWithLoadingStatus.status.loading ===
     LoadingStatusEnum.Failed
   ) {
-    console.log("triggering this redirect to 404.")
     navigate('/404');
     return null;
   }
@@ -200,7 +199,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-          artifactId
+            artifactId
           ]
       )
       .filter((artf) => !!artf);

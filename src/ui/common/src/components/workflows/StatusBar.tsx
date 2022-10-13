@@ -178,7 +178,6 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 padding: 2,
                 textOverflow: 'wrap',
                 flex: 1,
-                // width: '100%',
               }}
             >
               <Typography
@@ -226,7 +225,6 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 >
                   {getTypeLabel(listItem.type)}
                 </Typography>
-
               </Box>
             </Box>
           </Box>
