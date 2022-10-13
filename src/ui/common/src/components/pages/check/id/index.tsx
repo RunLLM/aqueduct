@@ -236,7 +236,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={'800px'}>
+      <Box width={!sideSheetMode ? '800px' : 'auto'}>
         {!sideSheetMode && (
           <Box width="100%">
             <DetailsPageHeader

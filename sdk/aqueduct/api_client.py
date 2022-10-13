@@ -230,14 +230,15 @@ class APIClient:
         if parse_version(server_version) > parse_version(sdk_version):
             raise ClientValidationError(
                 "The SDK is outdated, it is using version %s, while the server is of version %s. "
-                "Please update your `aqueduct-sdk` package to the appropriate version. If running "
-                "within a Jupyter notebook, remember to restart the kernel."
-                % (sdk_version, server_version)
+                "Please update your `aqueduct-sdk` package to the appropriate version by running "
+                "`pip3 install aqueduct-sdk==<version>`. If running within a Jupyter notebook, "
+                "remember to restart the kernel." % (sdk_version, server_version)
             )
         elif parse_version(server_version) < parse_version(sdk_version):
             raise ClientValidationError(
                 "The server is outdated, it is using version %s, while the sdk is of version %s. "
-                "Please update your server, or downgrade your SDK so that the versions match."
+                "Please update your server, or downgrade your SDK so that the versions match. "
+                "The guide for updating the server is here: https://docs.aqueducthq.com/guides/updating-aqueduct"
                 % (server_version, sdk_version)
             )
 

@@ -34,7 +34,7 @@ export function getDataSideSheetContent(
       <Box
         px={'16px'}
         maxWidth="800px"
-        maxHeight="calc(100vh - 128px)"
+        height="100vh"
         sx={{ overflowY: 'scroll' }}
       >
         {children}

@@ -192,7 +192,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={'800px'}>
+      <Box width={!sideSheetMode ? '800px' : 'auto'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
