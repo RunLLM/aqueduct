@@ -438,7 +438,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 </Box>
               </Box>
             </Box>
-            <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
+            <Box sx={{ marginTop: `${drawerHeaderHeightInPx + 16}px` }}>
               {getDataSideSheetContent(
                 user,
                 currentNode,
