@@ -2,49 +2,54 @@ package vault
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"path/filepath"
+
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 )
 
 const (
-	FileVaultDir       = "vault/"
-	filePermissionCode = 0o664
+	FileVaultDir = "vault/"
 )
 
 type fileVault struct {
-	fileConfig *FileConfig
+	store storage.Storage
+	key   string
 }
 
-func NewFileVault(conf *FileConfig) (*fileVault, error) {
-	return &fileVault{fileConfig: conf}, nil
-}
+func newFileVault(fileStoreConf shared.FileConfig, key string) (Vault, error) {
+	// The file vault stores secrets under the ../vault subdirectory
+	fileStoreConf.Directory = filepath.Join(fileStoreConf.Directory, FileVaultDir)
 
-func (f *fileVault) Config() Config {
-	return f.fileConfig
+	store := storage.NewStorage(&shared.StorageConfig{
+		Type:       shared.FileStorageType,
+		FileConfig: &fileStoreConf,
+	})
+
+	return &fileVault{
+		store: store,
+		key:   key,
+	}, nil
 }
 
 func (f *fileVault) Put(ctx context.Context, name string, secrets map[string]string) error {
-	encrypted, err := encrypt(secrets, f.fileConfig.EncryptionKey)
+	encrypted, err := encrypt(secrets, f.key)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(f.getFullPath(name), encrypted, filePermissionCode)
+	return f.store.Put(ctx, name, encrypted)
 }
 
 func (f *fileVault) Get(ctx context.Context, name string) (map[string]string, error) {
-	ciphertext, err := os.ReadFile(f.getFullPath(name))
+	ciphertext, err := f.store.Get(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return decrypt(ciphertext, f.fileConfig.EncryptionKey)
+	return decrypt(ciphertext, f.key)
 }
 
 func (f *fileVault) Delete(ctx context.Context, name string) error {
-	return os.Remove(f.getFullPath(name))
-}
-
-func (f *fileVault) getFullPath(key string) string {
-	return fmt.Sprintf("%s/%s", f.fileConfig.Directory, key)
+	return f.store.Delete(ctx, name)
 }
