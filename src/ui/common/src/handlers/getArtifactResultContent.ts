@@ -60,13 +60,14 @@ export const handleGetArtifactResultContent = createAsyncThunk<
       } else if (
         artifactResult.serialization_type === SerializationType.Image
       ) {
+        // We first convert the image bytes into a base64 encoded string.
         const toBase64 = (file) =>
           new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () =>
               resolve(
-                // Use a regex to remove data url part
+                // Use a regex to remove the data url part.
                 (reader.result as string)
                   .replace('data:', '')
                   .replace(/^.+,/, '')
