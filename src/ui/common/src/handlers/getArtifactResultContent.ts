@@ -1,6 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import {
+  GetArtifactResultResponse,
+  SerializationType,
+} from '../utils/artifacts';
+import { ExecutionStatus } from '../utils/shared';
 
 const { apiAddress } = useAqueductConsts();
 
@@ -40,8 +45,40 @@ export const handleGetArtifactResultContent = createAsyncThunk<
     }
 
     const formData = await res.formData();
-    const data = await (formData.get('data') as File).text();
+    const metadataJson = await (formData.get('metadata') as File).text();
+    const artifactResult = JSON.parse(
+      metadataJson
+    ) as GetArtifactResultResponse;
 
-    return data;
+    if (artifactResult.exec_state.status === ExecutionStatus.Succeeded) {
+      if (
+        artifactResult.serialization_type === SerializationType.String ||
+        artifactResult.serialization_type === SerializationType.Table ||
+        artifactResult.serialization_type === SerializationType.Json
+      ) {
+        artifactResult.data = await (formData.get('data') as File).text();
+      } else if (
+        artifactResult.serialization_type === SerializationType.Image
+      ) {
+        // We first convert the image bytes into a base64 encoded string.
+        const toBase64 = (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () =>
+              resolve(
+                // Use a regex to remove the data url part.
+                (reader.result as string)
+                  .replace('data:', '')
+                  .replace(/^.+,/, '')
+              );
+            reader.onerror = (error) => reject(error);
+          });
+
+        artifactResult.data = await toBase64(formData.get('data') as File);
+      }
+    }
+
+    return artifactResult.data;
   }
 );
