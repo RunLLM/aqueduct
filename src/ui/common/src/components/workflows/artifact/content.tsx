@@ -55,28 +55,6 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
-  if (!contentWithLoadingStatus.data) {
-    if (
-      artifact.result.serialization_type === SerializationType.Bytes ||
-      artifact.result.serialization_type === SerializationType.Pickle
-    ) {
-      return (
-        <Alert severity="info">
-          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-            Artifact contains binary data that cannot be previewed.
-          </Typography>
-        </Alert>
-      );
-    } else {
-      // A catch-all case.
-      return (
-        <Typography variant="h5" component="div" marginBottom="8px">
-          No result to show for this artifact.
-        </Typography>
-      );
-    }
-  }
-
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:
       try {
@@ -106,22 +84,35 @@ const ArtifactContent: React.FC<Props> = ({
         return <Alert title="Cannot parse image data.">{err}</Alert>;
       }
     case SerializationType.Json:
-      // Convert to pretty-printed version.
-      const prettyJson = JSON.stringify(
-        JSON.parse(contentWithLoadingStatus.data),
-        null,
-        2
-      );
-      return (
-        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-          {prettyJson}
-        </Typography>
-      );
+      try {
+        // Convert to pretty-printed version.
+        const prettyJson = JSON.stringify(
+          JSON.parse(contentWithLoadingStatus.data),
+          null,
+          2
+        );
+        return (
+          <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+            {prettyJson}
+          </Typography>
+        );
+      } catch (err) {
+        return <Alert title="Cannot parse json data.">{err}</Alert>;
+      }
     case SerializationType.String:
       return (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
           {contentWithLoadingStatus.data}
         </Typography>
+      );
+    case SerializationType.Bytes:
+    case SerializationType.Pickle:
+      return (
+        <Alert severity="info">
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+            Artifact contains binary data that cannot be previewed.
+          </Typography>
+        </Alert>
       );
     default:
       return (
