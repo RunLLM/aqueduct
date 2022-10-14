@@ -176,10 +176,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
     // TODO: only call this when we are inside a function operator. not an extract or load operator.
     if (operator && operator?.spec?.type !== "extract" && operator?.spec?.type !== "load") {
-      console.log('getting files blob');
       getFilesBlob();
     } else if (operator) {
-      console.log('getting sql statement from operator');
       if (operator?.spec?.type === 'extract') {
         setFileContent(operator.spec.extract.parameters.query);
         setIsExtractOperator(true);
