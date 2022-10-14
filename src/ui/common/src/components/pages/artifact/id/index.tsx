@@ -97,7 +97,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
+    new BreadcrumbLink(
+      workflowLink,
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
+    ),
     new BreadcrumbLink(path, artifact ? artifact.name : 'Artifact'),
   ];
 
