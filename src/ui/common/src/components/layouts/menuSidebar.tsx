@@ -6,7 +6,7 @@ import {
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, Typography } from '@mui/material';
+import { Link, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -134,89 +134,99 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       </Link>
 
       <Box sx={{ my: 2 }} className={styles['menu-sidebar-content']}>
-        <Link
-          to={`${getPathPrefix()}/workflows`}
-          className={styles['menu-sidebar-link']}
-          underline="none"
-          component={RouterLink as any}
-        >
-          <SidebarButton
-            icon={
-              <FontAwesomeIcon
-                className={styles['menu-sidebar-icon']}
-                icon={faShareNodes}
-              />
-            }
-            text="Workflows"
-            selected={currentPage === '/workflows'}
-          />
-        </Link>
+        <Tooltip title="Workflows" arrow placement="right">
+          <Link
+            to={`${getPathPrefix()}/workflows`}
+            className={styles['menu-sidebar-link']}
+            underline="none"
+            component={RouterLink as any}
+          >
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faShareNodes}
+                />
+              }
+              text=""
+              selected={currentPage === '/workflows'}
+            />
+          </Link>
+        </Tooltip>
 
-        <Link
-          to={`${getPathPrefix()}/integrations`}
-          className={styles['menu-sidebar-link']}
-          underline="none"
-          component={RouterLink as any}
-        >
-          <SidebarButton
-            icon={
-              <FontAwesomeIcon
-                className={styles['menu-sidebar-icon']}
-                icon={faPlug}
-              />
-            }
-            text="Integrations"
-            selected={currentPage === '/integrations'}
-          />
-        </Link>
+        <Tooltip title="Integrations" arrow placement="right">
+          <Link
+            to={`${getPathPrefix()}/integrations`}
+            className={styles['menu-sidebar-link']}
+            underline="none"
+            component={RouterLink as any}
+          >
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faPlug}
+                />
+              }
+              text=""
+              selected={currentPage === '/integrations'}
+            />
+          </Link>
+        </Tooltip>
 
-        <Link
-          to={`${getPathPrefix()}/data`}
-          className={styles['menu-sidebar-link']}
-          underline="none"
-          component={RouterLink as any}
-        >
-          <SidebarButton
-            icon={
-              <FontAwesomeIcon
-                className={styles['menu-sidebar-icon']}
-                icon={faDatabase}
-              />
-            }
-            text="Data"
-            selected={currentPage === '/data'}
-          />
-        </Link>
+        <Tooltip title="Data" placement="right" arrow>
+          <Link
+            to={`${getPathPrefix()}/data`}
+            className={styles['menu-sidebar-link']}
+            underline="none"
+            component={RouterLink as any}
+          >
+            <SidebarButton
+              icon={
+                <FontAwesomeIcon
+                  className={styles['menu-sidebar-icon']}
+                  icon={faDatabase}
+                />
+              }
+              text=""
+              selected={currentPage === '/data'}
+            />
+          </Link>
+        </Tooltip>
       </Box>
 
       <Box className={styles['menu-sidebar-footer']}>
         <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Link href="https://docs.aqueducthq.com" underline="none">
-            <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faBook}
-                />
-              }
-              text="Docs"
-            />
-          </Link>
+          <Tooltip title="Documentation" placement="right" arrow>
+            <Link href="https://docs.aqueducthq.com" underline="none">
+              <SidebarButton
+                icon={
+                  <FontAwesomeIcon
+                    className={styles['menu-sidebar-icon']}
+                    icon={faBook}
+                  />
+                }
+                text=""
+              />
+            </Link>
+          </Tooltip>
         </Box>
         <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Link href="mailto:support@aqueducthq.com" underline="none">
-            <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faMessage}
-                />
-              }
-              text="Report Issue"
-            />
-          </Link>
+          <Tooltip title="Report Issue" placement="right" arrow>
+            <Link href="mailto:support@aqueducthq.com" underline="none">
+              <SidebarButton
+                icon={
+                  <FontAwesomeIcon
+                    className={styles['menu-sidebar-icon']}
+                    icon={faMessage}
+                  />
+                }
+                text=""
+              />
+            </Link>
+          </Tooltip>
         </Box>
       </Box>
     </Box>
