@@ -176,10 +176,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         return artifactResult;
       })
       .filter((artf) => !!artf);
-  const inputs = mapArtifacts(operator.inputs);
-  const outputs = mapArtifacts(operator.outputs);
+  const inputs = operator ? mapArtifacts(operator.inputs) : [];
+  const outputs = operator ? mapArtifacts(operator.outputs) : [];
 
-  const checkLevel = operator.spec.check.level;
+  const checkLevel = operator ? operator.spec.check.level : 'Check Level';
   const checkLevelDisplay = (
     <Box sx={{ display: 'flex', alignItems: 'center' }} mb={2}>
       <Typography variant="body2" sx={{ color: 'gray.800' }}>
