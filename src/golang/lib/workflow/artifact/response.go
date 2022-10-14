@@ -25,6 +25,7 @@ type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
 	Id uuid.UUID `json:"id"`
 
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.
 	// The value is the string representation of the file stored in that path.
@@ -48,6 +49,7 @@ func NewRawResultResponseFromDbObject(
 ) *RawResultResponse {
 	resultResp := &RawResultResponse{
 		Id:                dbArtifactResult.Id,
+		SerializationType: dbArtifactResult.Metadata.SerializationType,
 		ContentPath:       dbArtifactResult.ContentPath,
 		ContentSerialized: content,
 	}

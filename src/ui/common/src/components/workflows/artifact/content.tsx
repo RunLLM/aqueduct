@@ -2,7 +2,9 @@ import { AlertTitle, CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import Image from 'mui-image';
 
+import { SerializationType } from '../../../utils/artifacts';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { ArtifactType } from '../../../utils/artifacts';
@@ -63,50 +65,64 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
-  if (
-    artifact.type === ArtifactType.Bytes ||
-    artifact.type === ArtifactType.Picklable
-  ) {
-    return (
-      <Button
-        variant="contained"
-        sx={{ maxHeight: '32px' }}
-        onClick={() => {
-          const content = contentWithLoadingStatus.data;
-          const blob = new Blob([content], { type: 'text' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = artifact.name;
-          a.click();
-
-          return true;
-        }}
-      >
-        Download
-      </Button>
-    );
-  }
-
-  if (artifact.type === ArtifactType.Table) {
-    try {
-      const data = JSON.parse(contentWithLoadingStatus.data);
-      return <PaginatedTable data={data} />;
-    } catch (err) {
-      return (
-        <Alert title="Cannot parse table data.">
-          {err}
-          {contentWithLoadingStatus.data}
-        </Alert>
+  switch (artifact.result.serialization_type) {
+    case SerializationType.Table:
+      try {
+        const data = JSON.parse(contentWithLoadingStatus.data);
+        return <PaginatedTable data={data} />;
+      } catch (err) {
+        return (
+          <Alert title="Cannot parse table data.">
+            {err}
+            {contentWithLoadingStatus.data}
+          </Alert>
+        );
+      }
+    case SerializationType.Image:
+      try {
+        const srcFromBase64 = 'data:image/png;base64,' + contentWithLoadingStatus.data;
+        return (
+          <Image
+            src={srcFromBase64}
+            duration={0}
+            fit="contain"
+            width="fit-content"
+          />
+        );
+      } catch (err) {
+        return (
+          <Alert title="Cannot parse image data.">
+            {err}
+          </Alert>
+        );
+      }
+    case SerializationType.Json:
+      // Convert to pretty-printed version.
+      const prettyJson = JSON.stringify(
+        JSON.parse(contentWithLoadingStatus.data),
+        null,
+        2
       );
-    }
+      return (
+        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+          {prettyJson}
+        </Typography>
+      );
+    case SerializationType.String:
+      return (
+        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+          {contentWithLoadingStatus.data}
+        </Typography>
+      );
+    default:
+      return (
+        <Alert severity="info">
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+            Artifact contains binary data that cannot be previewed.
+          </Typography>
+        </Alert>
+      )
   }
-  // TODO: handle images here
-  return (
-    <Typography variant="body1" component="div" marginBottom="8px">
-      <code>{contentWithLoadingStatus.data}</code>
-    </Typography>
-  );
 };
 
 export default ArtifactContent;

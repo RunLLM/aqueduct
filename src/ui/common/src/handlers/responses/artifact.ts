@@ -13,18 +13,19 @@ export type ArtifactResponse = {
   to: string[];
 };
 
-export type ArtifactResultStatusResponse = {
+export type ArtifactResultMetadataResponse = {
   id: string;
   content_path: string;
+  serialization_type: string;
   content_serialized?: string;
   exec_state?: ExecState;
 };
 
 export type ArtifactResultResponse = ArtifactResponse & {
-  result?: ArtifactResultStatusResponse;
+  result?: ArtifactResultMetadataResponse;
   operatorType?: OperatorType;
 };
 
 export type ListArtifactResultsResponse = {
-  results: ArtifactResultStatusResponse[];
+  results: ArtifactResultMetadataResponse[];
 };
