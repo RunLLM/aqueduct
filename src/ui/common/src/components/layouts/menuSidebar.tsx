@@ -1,6 +1,8 @@
 import {
   faBook,
+  faDatabase,
   faMessage,
+  faPlug,
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -163,7 +165,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               icon={
                 <FontAwesomeIcon
                   className={styles['menu-sidebar-icon']}
-                  icon={faBook}
+                  icon={faPlug}
                 />
               }
               text=""
@@ -183,7 +185,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               icon={
                 <FontAwesomeIcon
                   className={styles['menu-sidebar-icon']}
-                  icon={faMessage}
+                  icon={faDatabase}
                 />
               }
               text=""

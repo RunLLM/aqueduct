@@ -103,11 +103,6 @@ export const DataPreviewer: React.FC<Props> = ({
             sx={{
               position: 'absolute',
               height: dataTableHeight ? dataTableHeight : '100%',
-              // height: '-webkit-fill-available',
-              // width: '100%',
-              // overflowX: 'scroll !important',
-              // overflowY: 'hidden',
-              // minWidth: '400px',
             }}
           >
             <DataTable
