@@ -42,6 +42,7 @@ type workflowResponse struct {
 	CreatedAt       int64                  `json:"created_at"`
 	LastRunAt       int64                  `json:"last_run_at"`
 	Status          shared.ExecutionStatus `json:"status"`
+	Engine          string                 `json:"engine"`
 	WatcherAuth0Ids []string               `json:"watcher_auth0_id"`
 }
 
@@ -125,6 +126,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 				Name:            dbWorkflow.Name,
 				Description:     dbWorkflow.Description,
 				CreatedAt:       dbWorkflow.CreatedAt.Unix(),
+				Engine:          dbWorkflow.Engine,
 				WatcherAuth0Ids: watchersMap[dbWorkflow.Id],
 			}
 

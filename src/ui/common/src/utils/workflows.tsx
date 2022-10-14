@@ -33,6 +33,7 @@ export type ListWorkflowSummary = {
   created_at: number;
   last_run_at: number;
   status: ExecutionStatus;
+  engine: string;
   watcher_auth0_id: string[];
 };
 
