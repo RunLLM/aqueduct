@@ -52,7 +52,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) {}
+  constructor(public readonly address: string, public readonly name: any) { }
 
   toString() {
     return this.name;
