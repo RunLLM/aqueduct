@@ -8,6 +8,7 @@ type Props = {
 };
 
 export const CodeBlock: React.FC<Props> = ({ language, children }) => {
+  console.log('codeblock children: ', children);
   return (
     <SyntaxHighlighter
       language={language}

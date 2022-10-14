@@ -20,6 +20,7 @@ import { isInitial, isLoading } from '../../../../utils/shared';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import { CodeBlock } from '../../../CodeBlock';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
@@ -45,6 +46,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const navigate = useNavigate();
   let { workflowId, workflowDagResultId, operatorId } = useParams();
   const path = useLocation().pathname;
+  const [isExtractOperator, setIsExtractOperator] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [fileContent, setFileContent] = useState(null);
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -81,14 +85,12 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag.metadata.name),
-    new BreadcrumbLink(path, operator ? operator.name : 'Operator'),
+    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata?.name || ''),
+    new BreadcrumbLink(path, operator?.name || 'Operator'),
   ];
 
   useEffect(() => {
-    if (!sideSheetMode) {
-      document.title = 'Operator Details | Aqueduct';
-    }
+    document.title = 'Operator Details | Aqueduct';
 
     if (
       // Load workflow dag result if it's not cached
@@ -107,7 +109,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
-      document.title = `${operator.name} | Aqueduct`;
+      document.title = `${operator?.name || 'Operator'} | Aqueduct`;
     }
   }, [operator]);
 
@@ -170,8 +172,20 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         await reader.close();
       }
     }
-    getFilesBlob();
-  }, []);
+
+
+    // TODO: only call this when we are inside a function operator. not an extract or load operator.
+    if (operator && operator?.spec?.type !== "extract" && operator?.spec?.type !== "load") {
+      console.log('getting files blob');
+      getFilesBlob();
+    } else if (operator) {
+      console.log('getting sql statement from operator');
+      if (operator?.spec?.type === 'extract') {
+        setFileContent(operator.spec.extract.parameters.query);
+        setIsExtractOperator(true);
+      }
+    }
+  }, [operator]);
 
   if (
     !workflowDagResultWithLoadingStatus ||
@@ -199,16 +213,42 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
+  const operatorPreview = () => {
+    if (!isExtractOperator) {
+      return (
+        <Box>
+          <Typography variant="h6" fontWeight="normal" mb={1}>
+            Code Preview
+          </Typography>
+          <MultiFileViewer
+            files={files}
+            defaultFile={operator.name || ''}
+          />
+        </Box>
+      )
+    }
+
+    return (
+      <Box>
+        <Typography variant="h6" fontWeight="normal" mb={1}>
+          Query Preview
+        </Typography>
+        <CodeBlock language="sql">{fileContent}</CodeBlock>
+      </Box>
+    )
+  }
+
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={!sideSheetMode ? '800px' : 'auto'}>
+      <Box width={'800px'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">
@@ -250,16 +290,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           </Box>
 
           <Divider sx={{ my: '32px' }} />
+          {operatorPreview()}
 
-          <Box>
-            <Typography variant="h6" fontWeight="normal" mb={1}>
-              Code Preview
-            </Typography>
-            <MultiFileViewer
-              files={files}
-              defaultFile={operator ? operator.name : ''}
-            />
-          </Box>
         </Box>
       </Box>
     </Layout>
