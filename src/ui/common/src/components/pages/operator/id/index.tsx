@@ -17,10 +17,10 @@ import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum } from '../../../../utils/shared';
 import { isInitial, isLoading } from '../../../../utils/shared';
+import { CodeBlock } from '../../../CodeBlock';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
-import { CodeBlock } from '../../../CodeBlock';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
@@ -85,7 +85,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata?.name || ''),
+    new BreadcrumbLink(
+      workflowLink,
+      workflow?.selectedDag?.metadata?.name || ''
+    ),
     new BreadcrumbLink(path, operator?.name || 'Operator'),
   ];
 
@@ -173,9 +176,12 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       }
     }
 
-
     // TODO: only call this when we are inside a function operator. not an extract or load operator.
-    if (operator && operator?.spec?.type !== "extract" && operator?.spec?.type !== "load") {
+    if (
+      operator &&
+      operator?.spec?.type !== 'extract' &&
+      operator?.spec?.type !== 'load'
+    ) {
       getFilesBlob();
     } else if (operator) {
       if (operator?.spec?.type === 'extract') {
@@ -211,7 +217,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-          artifactId
+            artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -225,12 +231,9 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           <Typography variant="h6" fontWeight="normal" mb={1}>
             Code Preview
           </Typography>
-          <MultiFileViewer
-            files={files}
-            defaultFile={operator.name || ''}
-          />
+          <MultiFileViewer files={files} defaultFile={operator.name || ''} />
         </Box>
-      )
+      );
     }
 
     return (
@@ -240,9 +243,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         </Typography>
         <CodeBlock language="sql">{fileContent}</CodeBlock>
       </Box>
-    )
-  }
-
+    );
+  };
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -289,7 +291,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
           <Divider sx={{ my: '32px' }} />
           {operatorPreview()}
-
         </Box>
       </Box>
     </Layout>
