@@ -16,10 +16,11 @@ import LogBlock, { LogLevel } from '../text/LogBlock';
 type Props = {
   previewData: ArtifactResult;
   error?: Error;
+  // TODO: remove this if no longer needed.
   dataTableHeight?: string;
 };
 
-const DataPreviewer: React.FC<Props> = ({
+export const DataPreviewer: React.FC<Props> = ({
   previewData,
   error,
   dataTableHeight,

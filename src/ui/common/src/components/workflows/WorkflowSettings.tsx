@@ -60,6 +60,7 @@ import {
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
+import StorageSelector from './storageSelector';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -250,6 +251,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
+  );
+
+  const dagResults = useSelector(
+    (state: RootState) => state.workflowReducer.dagResults
   );
 
   const [name, setName] = useState(workflowDag.metadata?.name);
@@ -783,7 +788,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               <Typography sx={{ fontWeight: 'bold' }} component="span">
                 ID:
               </Typography>
-              <Typography> {workflowDag.workflow_id}</Typography>
+              <Typography component="span">
+                {' '}
+                {workflowDag.workflow_id}
+              </Typography>
             </Box>
           </Box>
 
@@ -818,6 +826,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               />
             </Box>
           </Box>
+
+          {dagResults && dagResults.length > 0 && <StorageSelector />}
 
           <Box sx={{ my: 2 }}>
             <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>

@@ -1,7 +1,10 @@
+// This is being deprecated. Please use `workflowDagResults` combining with
+// `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'react-flow-renderer';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { RootState } from '../stores/store';
 import {
   Artifact,
   GetArtifactResultResponse,
@@ -127,7 +130,6 @@ export const handleGetOperatorResults = createAsyncThunk<
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
-
     return body as GetOperatorResultResponse;
   }
 );
@@ -306,13 +308,70 @@ export const handleDeleteWorkflow = createAsyncThunk<
   }
 );
 
+function collapsePosition(
+  position: positionResponse,
+  dag: WorkflowDag,
+  artifactResults: { [id: string]: ArtifactResult }
+): positionResponse {
+  const collapsingOp = Object.values(dag.operators).filter(
+    (op) =>
+      op.spec.type === OperatorType.Check ||
+      op.spec.type === OperatorType.Metric
+  );
+  const nodes = position.nodes;
+  const collapsedArtfIds = new Set();
+
+  const nodesMap: { [id: string]: Node<ReactFlowNodeData> } = {};
+  nodes.forEach((n) => {
+    nodesMap[n.id] = n;
+  });
+
+  // This map is useful to re-route edges
+  const collapsedArtfIdToUpstreamOpId: { [artfId: string]: string } = {};
+
+  collapsingOp.forEach((op) => {
+    // we only reduce metric / check nodes if its output size is 1
+    if (op.outputs.length === 1) {
+      const artfId = op.outputs[0];
+      const artfData = artifactResults[artfId]?.result?.data;
+      if (artfData && !!nodesMap[op.id]) {
+        nodesMap[op.id].data.result = artfData;
+        collapsedArtfIds.add(artfId);
+        collapsedArtfIdToUpstreamOpId[artfId] = op.id;
+      }
+    }
+  });
+
+  const enrichedNodes = Object.values(nodesMap);
+  const filteredNodes = enrichedNodes.filter(
+    (node) => !collapsedArtfIds.has(node.id)
+  );
+
+  const edges = position.edges ?? [];
+  // route the edges from removed artf nodes to op nodes they collapsed into.
+  edges.forEach((e) => {
+    if (collapsedArtfIds.has(e.source)) {
+      e.source = collapsedArtfIdToUpstreamOpId[e.source];
+    }
+  });
+
+  // remove any edge who's target is a metric artifact.
+  const filteredEdges = edges.filter((e) => !collapsedArtfIds.has(e.target));
+
+  return {
+    edges: filteredEdges,
+    nodes: filteredNodes,
+  };
+}
+
 export const handleGetSelectDagPosition = createAsyncThunk<
   positionResponse,
   {
     apiKey: string;
     operators: { [id: string]: Operator };
     artifacts: { [id: string]: Artifact };
-  }
+  },
+  { state: RootState }
 >(
   'workflowReducer/getSelectDagPosition',
   async (
@@ -352,10 +411,17 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
     );
     const edges = getEdges(operators);
-    return {
+    const allNodes = {
       nodes: opNodes.concat(artfNodes),
       edges: edges,
     } as positionResponse;
+    const dag = thunkAPI.getState().workflowReducer.selectedDag;
+    const artifactResults = thunkAPI.getState().workflowReducer.artifactResults;
+    if (!!dag && !!artifactResults) {
+      return collapsePosition(allNodes, dag, artifactResults);
+    }
+
+    return allNodes;
   }
 );
 

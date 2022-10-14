@@ -26,6 +26,9 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
   const lastRunComponent = workflow['last_run_at'] ? (
     <Box sx={{ fontSize: 1, my: 1 }}>
       <Typography variant="subtitle1">
+        <strong>Workflow Engine:</strong> {workflow.engine}
+      </Typography>
+      <Typography variant="subtitle1">
         <strong>Workflow Last Run:</strong> {lastUpdatedTime.toLocaleString()}
       </Typography>
     </Box>
@@ -47,7 +50,9 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
             {workflow.name}
           </Typography>
         </Box>
-        <WorkflowStatus status={workflow.status} />
+        <Box marginLeft={1}>
+          <WorkflowStatus status={workflow.status} />
+        </Box>
       </Box>
 
       <Box sx={{ flex: '1' }}>

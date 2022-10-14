@@ -24,16 +24,17 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   onPaneClicked,
   switchSideSheet,
 }) => {
-  const openSideSheetState = useSelector(
-    (state: RootState) => state.openSideSheetReducer
-  );
   const dagPositionState = useSelector(
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
-  const { fitView, viewportInitialized } = useReactFlow();
+  const currentNode = useSelector(
+    (state: RootState) => state.nodeSelectionReducer.selected
+  );
+
+  const { fitView } = useReactFlow();
   useEffect(() => {
-    fitView();
+    setTimeout(fitView, 1000);
   }, [dagPositionState]);
 
   useEffect(() => {
@@ -41,14 +42,16 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     // race condition between calling `fitView` and the viewport
     // updating. This might be because of the width transition we use, but
     // we're not 100% sure.
-    setTimeout(fitView, 200);
-  }, [openSideSheetState]);
+    setTimeout(fitView, 100);
+  }, [currentNode]);
+
+  const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
-      nodes={dagPositionState.result?.nodes}
-      edges={dagPositionState.result?.edges}
+      nodes={nodes}
+      edges={edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}

@@ -1,12 +1,12 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
-import DataPreviewer from './components/DataPreviewer';
+import { DataPreviewer } from './components/DataPreviewer';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
-import { DataCard, dataCardName } from './components/integrations/cards/card';
+import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
@@ -39,15 +39,22 @@ import MenuSidebar, {
   MenuSidebarWidth,
   SidebarButtonProps,
 } from './components/layouts/menuSidebar';
+import LogViewer from './components/LogViewer';
+import MultiFileViewer from './components/MultiFileViewer';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
+import ArtifactDetailsPage from './components/pages/artifact/id';
+import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
+import ErrorPage from './components/pages/ErrorPage';
 import { getServerSideProps } from './components/pages/getServerSideProps';
 import HomePage from './components/pages/HomePage';
 import IntegrationDetailsPage from './components/pages/integration/id';
 import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
+import MetricDetailsPage from './components/pages/metric/id';
+import OperatorDetailsPage from './components/pages/operator/id';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -56,12 +63,13 @@ import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
+import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
+import PaginatedTable from './components/tables/PaginatedTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
-import LogViewer from './components/workflows/log_viewer';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
 import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
@@ -85,6 +93,11 @@ import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import { Status } from './components/workflows/workflowStatus';
+import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
+import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
+import { handleListArtifactResults } from './handlers/listArtifactResults';
+import artifactResultContents from './reducers/artifactResultContents';
+import artifactResults from './reducers/artifactResults';
 import dataPreview, {
   dataPreviewSlice,
   getDataArtifactPreview,
@@ -145,6 +158,7 @@ import workflow, {
   workflowSlice,
   WorkflowState,
 } from './reducers/workflow';
+import workflowDagResults from './reducers/workflowDagResults';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import {
@@ -283,7 +297,10 @@ export {
   AqueductStraight,
   archiveNotification,
   Artifact,
+  ArtifactDetailsPage,
   ArtifactResult,
+  artifactResultContents,
+  artifactResults,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
   BaseNode,
@@ -294,6 +311,7 @@ export {
   Button,
   Card,
   Check,
+  CheckDetailsPage,
   CheckLevel,
   CheckOperatorNode,
   CheckStatus,
@@ -308,7 +326,6 @@ export {
   Data,
   DatabaseNode,
   DataCard,
-  dataCardName,
   DataColumn,
   DataColumnType,
   DataColumnTypeNames,
@@ -330,6 +347,7 @@ export {
   DeleteIntegrationDialog,
   DeleteWorkflowResponse,
   EdgeTypes,
+  ErrorPage,
   ExecutionStatus,
   exportCsv,
   exportFunction,
@@ -369,9 +387,12 @@ export {
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
+  handleGetArtifactResultContent,
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetWorkflow,
+  handleGetWorkflowDagResult,
+  handleListArtifactResults,
   handleListIntegrationObjects,
   handleListWorkflowSavedObjects,
   handleLoadIntegrationObject,
@@ -417,7 +438,9 @@ export {
   MenuSidebarOffset,
   MenuSidebarWidth,
   Metric,
+  MetricDetailsPage,
   MetricOperatorNode,
+  MultiFileViewer,
   MySqlCard,
   MySqlConfig,
   MysqlDialog,
@@ -442,11 +465,14 @@ export {
   openSideSheet,
   openSideSheetSlice,
   Operator,
+  OperatorDetailsPage,
+  OperatorExecStateTableType,
   OperatorResult,
   OperatorResultsSideSheet,
   OperatorSpec,
   OperatorType,
   OperatorTypeToNodeTypeMap,
+  PaginatedTable,
   PeriodUnit,
   PostgresCard,
   PostgresConfig,
@@ -509,6 +535,7 @@ export {
   workflow,
   WorkflowCard,
   WorkflowDag,
+  workflowDagResults,
   WorkflowDagResultSummary,
   WorkflowHeader,
   WorkflowPage,

@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com>",
-  "version": "0.0.19",
+  "version": "0.0.19.alpha",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "alias": {
@@ -29,6 +29,8 @@
     "@types/react": "^18.0.8"
   },
   "peerDependencies": {
+    "@monaco-editor/react": "^4.4.5",
+    "@zip.js/zip.js": "^2.6.29",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
@@ -42,6 +44,7 @@
     "autosuggest-highlight": "^3.2.1",
     "core-js": "^3.22.8",
     "cron-parser": "^4.0.0",
+    "plotly.js": "2.14.0",
     "query-string": "^7.1.1",
     "random-word-slugs": "^0.1.6",
     "react": "^18.1.0",
@@ -50,6 +53,7 @@
     "react-dom": "^18.1.0",
     "react-flow-renderer": "^10.1.0",
     "react-markdown": "^6.0.3",
+    "react-plotly.js": "2.5.1",
     "react-redux": "^8.0.0",
     "react-router-dom": "^6.3.0",
     "react-syntax-highlighter": "^15.5.0",

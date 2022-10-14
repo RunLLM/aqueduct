@@ -27,6 +27,7 @@ type LatestWorkflowResponse struct {
 	CreatedAt   time.Time                  `db:"created_at" json:"created_at"`
 	LastRunAt   utils.NullTime             `db:"last_run_at" json:"last_run_at"`
 	Status      shared.NullExecutionStatus `db:"status" json:"status"`
+	Engine      string                     `db:"engine" json:"engine"`
 }
 
 // Use to associate a workflow.name, workflow.id with workflow_dag_result.id (ENG-625)

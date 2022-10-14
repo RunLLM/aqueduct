@@ -3,11 +3,13 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
+import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { DataCard, dataCardName } from '../../integrations/cards/card';
-import { Card } from '../../layouts/card';
+import { DataCard } from '../../integrations/cards/card';
+import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { filteredList, SearchBar } from '../../Search';
 import { LayoutProps } from '../types';
@@ -23,6 +25,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   useEffect(() => {
     dispatch(getDataArtifactPreview({ apiKey }));
+    dispatch(handleLoadIntegrations({ apiKey }));
   }, []);
 
   const dataCardsInfo = useSelector(
@@ -33,11 +36,9 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   const displayFilteredCards = (filteredDataCards, idx) => {
     return (
-      <Box key={idx}>
-        <Card>
-          <DataCard dataPreviewInfo={filteredDataCards} />
-        </Card>
-      </Box>
+      <Card key={idx} my={2}>
+        <DataCard dataPreviewInfo={filteredDataCards} />
+      </Card>
     );
   };
 
@@ -48,7 +49,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dataCards = filteredList(
     filterText,
     Object.values(dataCardsInfo.data.latest_versions),
-    (dataCardInfo) => dataCardName(dataCardInfo),
+    (dataCardInfo) => dataCardInfo.artifact_name,
     displayFilteredCards,
     noItemsMessage
   );
@@ -64,35 +65,29 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     if (typeof option === 'string') {
       return option;
     }
-    return dataCardName(option);
+    return option.artifact_name;
   };
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
+      user={user}
+    >
       <div />
       <Box>
         <Typography variant="h2" gutterBottom component="div">
           Data
         </Typography>
 
-        <SearchBar
-          options={Object.values(dataCardsInfo.data.latest_versions)}
-          getOptionLabel={getOptionLabel}
-          setSearchTerm={setFilterText}
-        />
-
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              my: 1,
-            }}
-          >
-            {dataCards}
-          </Box>
+        <Box paddingLeft={CardPadding}>
+          {/* Aligns search bar to card text */}
+          <SearchBar
+            options={Object.values(dataCardsInfo.data.latest_versions)}
+            getOptionLabel={getOptionLabel}
+            setSearchTerm={setFilterText}
+          />
         </Box>
+        {dataCards}
       </Box>
     </Layout>
   );

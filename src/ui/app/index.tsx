@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage } from '@aqueducthq/common';
+import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, ErrorPage, AccountPage, OperatorDetailsPage, ArtifactDetailsPage, MetricDetailsPage, CheckDetailsPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
@@ -30,7 +30,7 @@ const App = () => {
   const pathPrefix = getPathPrefix();
   let routesContent: React.ReactElement;
   routesContent = (
-    <Routes>
+    <Routes>      
       <Route path={`${pathPrefix ?? "/"}`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
@@ -39,6 +39,12 @@ const App = () => {
       <Route path={`/${pathPrefix}/login`} element={user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />      
+      <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
+      <Route path="*" element={<Navigate replace to={`/404`} />} />
     </Routes>
   );
 

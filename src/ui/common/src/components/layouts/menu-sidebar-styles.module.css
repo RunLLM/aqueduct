@@ -1,12 +1,9 @@
 .menu-sidebar {
-  max-width: 200px;
-  width: 200px;
-  height: 97%;
+  max-width: 80px;
+  width: 80px;
+  height: 100%;
   max-height: 100vh;
-  padding-top: 24px;
-  padding-bottom: 24px;
-  padding-left: 13px;
-  padding-right: 13px;
+  padding-bottom: 8px;
   display: flex;
   flex-direction: column;
   background-color: #002f5e; /* theme.colors.blue900 */
@@ -14,16 +11,21 @@
   z-index: 1;
 }
 
-.menu-sidebar-popover-container {
-  width: 100%;
-  margin-bottom: 4px;
-}
-
-.menu-sidebar-links {
+.menu-sidebar-content {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   width: '100%';
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.menu-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  width: '100%';
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .menu-sidebar-links-wrapper {
@@ -33,9 +35,23 @@
 
 .menu-sidebar-link {
   /* this is fixed to 225 - 13 - 13, the sidebar width with padding-X removed */
-  min-width: 199px;
-  width: 199px;
-  max-width: 199px;
+  min-width: 64px;
+  width: 64px;
+  max-width: 64px;
+}
+
+.menu-sidebar-logo-link {
+  /* contains logo of size 48px */
+  width: 48px;
+  height: 48px;
+  /* ensures border width is 80px, which maps sidebar */
+  padding-left: 16px;
+  padding-right: 16px;
+
+  /* ensures height is 64px, which maps navbar */
+  padding-top: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #E6E8F0; /* gray.300 */
 }
 
 .menu-sidebar-icon {
@@ -44,8 +60,15 @@
   min-height: 24px;
   max-width: 24px;
   max-height: 24px;
-  /* Margin between icon and text */
-  margin-right: 14px;
+}
+
+.navbar-icon {
+  /* All icons in sidebar button are fixed to 24. */
+  min-width: 24px;
+  min-height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+  color: #002f5e; /* blue900 */
 }
 
 .user-avatar img {

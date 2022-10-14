@@ -21,7 +21,11 @@ export type DataSchema = {
 
 export type Data = {
   schema?: DataSchema;
-  data: any[];
+  // data is an array of objects whose keys correspond to the schema above.
+  // each element of the array corresponds to a row.
+  // each key of the row object corresponds to a column.
+  // column names must be unique (obviously ;) )
+  data: { [key: string]: string | number | boolean }[];
 };
 
 export type DataPreviewLoadSpec = {
@@ -40,6 +44,7 @@ export type DataPreviewInfo = {
   workflow_name: string;
   workflow_id: string;
   artifact_name: string;
+  artifact_id: string;
   load_specs: DataPreviewLoadSpec[];
   versions: Record<string, DataPreviewVersion>;
 };

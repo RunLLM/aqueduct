@@ -1,6 +1,6 @@
 import {
-  faChevronLeft,
-  faChevronRight,
+  faChevronDown,
+  faChevronUp,
   faCircleCheck,
   faCircleExclamation,
   faCircleInfo,
@@ -9,7 +9,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -32,9 +32,10 @@ import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { Artifact } from '../../utils/artifacts';
 import UserProfile from '../../utils/auth';
-import { Operator, OperatorType } from '../../utils/operators';
-import ExecutionStatus, { FailureType } from '../../utils/shared';
+import { Operator } from '../../utils/operators';
+import ExecutionStatus, { ExecState, FailureType } from '../../utils/shared';
 import getUniqueListBy from '../utils/list_utils';
+import { nodeTypeToStringLabel } from './nodes/nodeTypes';
 
 enum WorkflowStatusTabs {
   Errors = 'ERRORS',
@@ -47,24 +48,27 @@ enum WorkflowStatusTabs {
 type WorkflowStatusItem = {
   id: string;
   level: WorkflowStatusTabs;
-  title: string;
+  title: ReactElement;
   message: string;
   nodeId: string;
   type: string;
 };
 
 interface ActiveWorkflowStatusTabProps {
+  setActiveWorkflowStatusTab: (tab: WorkflowStatusTabs) => void;
   activeWorkflowStatusTab: string;
   listItems: WorkflowStatusItem[];
 }
 
-export const StatusBarHeaderHeightInPx = 50;
+export const StatusBarHeaderHeightInPx = 41;
 export const CollapsedStatusBarWidthInPx = 75;
-export const StatusBarWidthInPx = 400;
+export const StatusBarWidthInPx = 384;
+export const MaxStatusBarListHeightInPx = 384;
 
 const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   activeWorkflowStatusTab,
   listItems,
+  setActiveWorkflowStatusTab,
 }) => {
   const openSideSheetState = useSelector(
     (state: RootState) => state.openSideSheetReducer
@@ -113,14 +117,38 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
     dispatch(setBottomSideSheetOpenState(true));
   };
 
+  const getTypeLabel = (nodeType: string) => {
+    const label = nodeTypeToStringLabel[nodeType];
+
+    // Return catch all operator / artifact label if not found in lookup table.
+    if (!label) {
+      if (nodeType.includes('Op')) {
+        return 'Operator';
+      } else if (nodeType.includes('Artifact')) {
+        return 'Artifact';
+      }
+
+      return '';
+    }
+
+    return label;
+  };
+
   return (
     <Box
       sx={{
-        width: `${StatusBarWidthInPx}px`,
-        maxWidth: `${StatusBarWidthInPx}px`,
-        height: `calc(100% - ${StatusBarHeaderHeightInPx}px)`,
-        overflowX: 'auto',
+        minWidth: `${StatusBarWidthInPx}px`,
+        width: 'fit-content',
+        maxWidth: '600px',
+        maxHeight: `${MaxStatusBarListHeightInPx}px`,
+        position: 'absolute',
+        overflow: 'auto',
         backgroundColor: 'white',
+        borderRadius: '8px',
+        zIndex: 10,
+        border: `1px solid`,
+        borderColor: 'gray.500',
+        p: '4px',
       }}
     >
       {listItems.map((listItem, index) => {
@@ -133,25 +161,29 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               flexDirection: 'row',
               width: '100%',
               backgroundColor: 'white',
-              p: 2,
-              borderBottom: `1px solid`,
+              borderBottom: index === listItems.length - 1 ? null : `1px solid`,
               borderColor: 'gray.500',
               alignItems: 'start',
             }}
           >
-            {listItem ? workflowStatusIcons[listItem.level] : null}
+            <Box sx={{ marginLeft: '8px', marginTop: '16px' }}>
+              {listItem ? workflowStatusIcons[listItem.level] : null}
+            </Box>
+
             <Box
               sx={{
-                mx: 2,
                 display: 'flex',
                 flexDirection: 'column',
-                verticalAlign: 'middle',
+                alignItems: 'start',
+                padding: 2,
+                textOverflow: 'wrap',
+                flex: 1,
               }}
             >
               <Typography
                 sx={{
                   fontFamily: 'Monospace',
-                  fontWeight: 'bold',
+                  fontWeight: 'light',
                   marginRight: 2,
                   whiteSpace: 'normal',
                   '&:hover': { textDecoration: 'underline', cursor: 'pointer' },
@@ -159,22 +191,41 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
                 onClick={() => {
                   if (listItem.nodeId.length > 0 && listItem.type.length > 0) {
                     switchSideSheet(listItem.nodeId, listItem.type);
+                    dispatch(setWorkflowStatusBarOpenState(false));
+                    setActiveWorkflowStatusTab(WorkflowStatusTabs.Collapsed);
                   }
                 }}
               >
                 {listItem.title}
               </Typography>
+
               <Typography
                 sx={{
                   fontFamily: 'Monospace',
                   fontWeight: 'light',
                   marginTop: '2px',
                   fontSize: '12px',
-                  whiteSpace: 'pre-wrap',
+                  textOverflow: 'wrap',
                 }}
+                component="pre"
               >
                 {listItem.message}
               </Typography>
+
+              <Box width="100%">
+                <Typography
+                  sx={{
+                    fontFamily: 'Monospace',
+                    fontWeight: 'bold',
+                    marginTop: '4px',
+                    fontSize: '12px',
+                    whiteSpace: 'pre-wrap',
+                    marginLeft: 'auto',
+                  }}
+                >
+                  {getTypeLabel(listItem.type)}
+                </Typography>
+              </Box>
             </Box>
           </Box>
         );
@@ -199,7 +250,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     workflow.selectedDag?.operators ?? {};
 
   const [activeWorkflowStatusTab, setActiveWorkflowStatusTab] = useState(
-    WorkflowStatusTabs.Errors
+    WorkflowStatusTabs.Collapsed
   );
 
   const [numErrors, setNumErrors] = useState(0);
@@ -216,7 +267,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
   useEffect(() => {
-    setWorkflowStatusItems(normalizeWorkflowStatusItems());
+    const workflowStatusItems = normalizeWorkflowStatusItems();
+    setWorkflowStatusItems(workflowStatusItems);
   }, [workflow, selectedDag, artifacts, operators]); // recompute state when all derived values change.
 
   useEffect(() => {
@@ -251,7 +303,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Errors,
-              title: 'No errors.',
+              title: <>No errors.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -268,7 +320,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Warnings,
-              title: 'No warnings.',
+              title: <>No warnings.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -285,7 +337,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Logs,
-              title: 'No logs.',
+              title: <>No logs.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -302,7 +354,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             {
               id: '1',
               level: WorkflowStatusTabs.Checks,
-              title: 'No successful results.',
+              title: <>No successful results.</>,
               message: '',
               nodeId: '',
               type: '',
@@ -331,14 +383,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   };
 
   const collapseWorkflowStatusBar = (event: React.MouseEvent) => {
-    event.preventDefault();
+    event.stopPropagation();
     dispatch(setWorkflowStatusBarOpenState(false));
     setActiveWorkflowStatusTab(WorkflowStatusTabs.Collapsed);
   };
 
   // Chevron up is clicked. Errors tab is left most tab, so we select that one.
   const expandWorkflowStatusbar = (event: React.MouseEvent) => {
-    event.preventDefault();
+    event.stopPropagation();
     selectTab(WorkflowStatusTabs.Errors);
   };
 
@@ -368,34 +420,48 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const newWorkflowStatusItem: WorkflowStatusItem = {
         id: `id-artifactResult-${artifactId}`,
         level: WorkflowStatusTabs.Checks,
-        title: `${artifactName} Failed`,
+        title: (
+          <>
+            <b>{artifactName}</b> Failed
+          </>
+        ),
         message: '',
         nodeId: artifactId,
         type: 'tableArtifact',
       };
 
-      const artifactStatus = artifactResult.result?.status;
-      const artifactExecState = artifactResult.result?.exec_state;
+      const artifactStatus: ExecutionStatus = artifactResult.result?.status;
+      const artifactExecState: ExecState = artifactResult.result?.exec_state;
+
       if (
         artifactStatus === ExecutionStatus.Failed &&
         artifactExecState.failure_type == FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
-        newWorkflowStatusItem.title = `Non-fatal error occurred for ${artifactName}`;
+        newWorkflowStatusItem.title = (
+          <>
+            `Non-fatal error occurred for `<b>${artifactName}</b>
+          </>
+        );
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
+      } else if (artifactStatus === ExecutionStatus.Failed) {
+        newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
+        newWorkflowStatusItem.title = (
+          <>
+            Error creating <b>${artifactName}.</b>
+          </>
+        );
+        newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
       } else if (artifactStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
-        newWorkflowStatusItem.title = `Artifact ${artifactName} created.`;
-        newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId})`;
+        newWorkflowStatusItem.title = (
+          <>
+            <b>{artifactName}</b> created
+          </>
+        );
+        newWorkflowStatusItem.message = `Successfully created artifact ${artifactName} (${artifactId}).`;
       } else {
-        // artifact is either:
-        // 1) cancelled (the operator failed to run and did not write artifact content) .
-        // 2) failed (the operator failed to run but wrote artifact content).
-        // 3) pending.
-        // We do not display any sidebar message for any of these cases. The reason we do not display
-        // any error message on artifact failure status is because we expect the appropriate error message
-        // to be displayed by the operator. That is to say, if the artifact has failed, then the operator
-        // must have also failed.
+        // artifact is still pending, skip adding to list of workflow status items.
         return;
       }
 
@@ -407,6 +473,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const operatorName = operators[operatorId].name
         ? operators[operatorId].name
         : 'Operator';
+
       const operatorResult: OperatorResult =
         workflow.operatorResults[operatorId];
 
@@ -426,7 +493,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       const newWorkflowStatusItem: WorkflowStatusItem = {
         id: `id-operatorResult-${operatorId}`,
         level: WorkflowStatusTabs.Checks,
-        title: `${operatorName} Failed`,
+        title: (
+          <>
+            <b>{operatorName}</b> Failed
+          </>
+        ),
         message: '',
         nodeId: operatorId,
         type: OperatorTypeToNodeTypeMap[
@@ -434,25 +505,31 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ].toString(),
       };
 
-      const opStatus = operatorResult.result?.status;
-      const opExecState = operatorResult.result;
+      const opExecState: ExecState = operatorResult.result?.exec_state;
+      const operatorExecutionStatus: ExecutionStatus = operatorResult.result
+        ? operatorResult.result.exec_state.status
+        : null;
+
       if (
-        opStatus === ExecutionStatus.Failed &&
+        operatorExecutionStatus === ExecutionStatus.Failed &&
         opExecState.failure_type === FailureType.UserNonFatal
       ) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
-        newWorkflowStatusItem.title = `Warning for ${operatorName}`;
+        newWorkflowStatusItem.title = (
+          <>
+            `Warning for `<b>{operatorName}</b>
+          </>
+        );
         newWorkflowStatusItem.message = opExecState.error?.tip;
-      } else if (opStatus === ExecutionStatus.Failed) {
+      } else if (operatorExecutionStatus === ExecutionStatus.Failed) {
         // add to the errors array.
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         if (!!opExecState.error) {
-          // The message for a failed parameter is slightly different.
-          if (operators[operatorId].spec.type == OperatorType.Param) {
-            newWorkflowStatusItem.title = `Error with ${operatorName}`;
-          } else {
-            newWorkflowStatusItem.title = `Error executing ${operatorName} (${operatorId})`;
-          }
+          newWorkflowStatusItem.title = (
+            <>
+              Error executing <b>{operatorName}</b> ({operatorId})
+            </>
+          );
           const err = opExecState.error;
           newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
             err.context ?? ''
@@ -461,10 +538,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
         }
-      } else if (opStatus === ExecutionStatus.Succeeded) {
+      } else if (operatorExecutionStatus === ExecutionStatus.Succeeded) {
         newWorkflowStatusItem.level = WorkflowStatusTabs.Checks;
-        newWorkflowStatusItem.title = `${operatorName} succeeded`;
-        newWorkflowStatusItem.message = `Operator successfully executed`;
+        newWorkflowStatusItem.title = (
+          <>
+            <b>{operatorName}</b> succeeded
+          </>
+        );
+        newWorkflowStatusItem.message = `Operator successfully executed.`;
       } else {
         // operator result is still pending, so skip current item since we do not know if successful or failed.
         return;
@@ -473,15 +554,18 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       // add workflow status item to the list.
       normalizedWorkflowStatusItems.push(newWorkflowStatusItem);
 
-      // LEFT off here, see the normalize logs function and work from there :)
-      if (!!operatorResult.result?.user_logs) {
-        const logs = operatorResult.result.user_logs;
+      if (opExecState && opExecState.user_logs) {
+        const logs = opExecState?.user_logs;
         const stdoutLines = (logs.stdout ?? '').split('\n');
         for (let i = 0; i < stdoutLines.length - 1; i++) {
           normalizedWorkflowStatusItems.push({
             id: `${operatorId}-stdout-${i}`,
             level: WorkflowStatusTabs.Logs,
-            title: `${operatorName} stdout`,
+            title: (
+              <>
+                <b>{operatorName}</b> stdout
+              </>
+            ),
             message: stdoutLines[i],
             nodeId: operatorId,
             type: OperatorTypeToNodeTypeMap[
@@ -495,7 +579,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           normalizedWorkflowStatusItems.push({
             id: `${operatorId}-stderr-${i}`,
             level: WorkflowStatusTabs.Logs,
-            title: `${operatorName} stderr`,
+            title: (
+              <>
+                <b>{operatorName}</b> stderr
+              </>
+            ),
             message: stderrLines[i],
             nodeId: operatorId,
             type: OperatorTypeToNodeTypeMap[
@@ -515,9 +603,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const collapsed = activeWorkflowStatusTab === WorkflowStatusTabs.Collapsed;
 
   const statusBarIconStyles = {
-    mx: collapsed ? 0 : 1,
+    mx: 1,
     py: 1,
-    width: collapsed ? '100%' : '40px',
+    width: '40px',
     cursor: 'pointer',
     alignItems: 'start',
     display: 'flex',
@@ -526,48 +614,33 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   return (
     <Box
       sx={{
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
+        cursor: 'pointer',
         zIndex: 10,
-        height: '100%',
-        borderTop: '0px',
-        borderLeft: '1px',
-        borderRight: '0px',
-        borderBottom: '0px',
-        borderColor: theme.palette.gray['500'],
-        borderStyle: 'solid',
-        backgroundColor: theme.palette.gray['100'],
+        border: `1px solid ${theme.palette.gray['500']}`,
+        borderRadius: '8px',
+      }}
+      onClick={() => {
+        selectTab(WorkflowStatusTabs.Errors);
       }}
     >
       <Box
         sx={{
           display: 'flex',
-          flexDirection: collapsed ? 'column' : 'row',
-          alignItems: collapsed ? 'start' : 'center',
-          px: collapsed ? 1 : 0,
-          ml: collapsed ? 1 : 0,
-          py: collapsed ? 0 : 1,
-          height: collapsed ? undefined : `${StatusBarHeaderHeightInPx}px`,
-          width: collapsed ? CollapsedStatusBarWidthInPx : StatusBarWidthInPx,
+          flexDirection: 'row',
+          alignItems: 'center',
+          px: 0,
+          ml: 0,
+          height: `${StatusBarHeaderHeightInPx}px`,
+          borderBottom: null,
+          overflowY: 'none',
         }}
       >
-        <Box sx={{ cursor: 'pointer', my: 2, mx: collapsed ? 0 : 1 }}>
-          {collapsed ? (
-            <FontAwesomeIcon
-              icon={faChevronLeft}
-              onClick={expandWorkflowStatusbar}
-            />
-          ) : (
-            <FontAwesomeIcon
-              icon={faChevronRight}
-              onClick={collapseWorkflowStatusBar}
-            />
-          )}
-        </Box>
-
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Errors)}
+          onClick={(event: React.MouseEvent) => {
+            // handle event here and keep from being handled by root onClick listener of parent div.
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Errors);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -580,6 +653,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // red600
             '&:hover': { color: theme.palette.red['600'] },
             fontSize: '20px',
+            marginRight: 2,
+            marginLeft: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleExclamation} />
@@ -587,7 +662,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </Box>
 
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Warnings)}
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Warnings);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -600,6 +678,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // orange600
             '&:hover': { color: theme.palette.orange['600'] },
             fontSize: '20px',
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faTriangleExclamation} />
@@ -607,7 +686,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </Box>
 
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Logs)}
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Logs);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -620,6 +702,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // blue500
             '&:hover': { color: theme.palette.blue['500'] },
             fontSize: '20px',
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleInfo} />
@@ -627,7 +710,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </Box>
 
         <Box
-          onClick={() => selectTab(WorkflowStatusTabs.Checks)}
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation();
+            selectTab(WorkflowStatusTabs.Checks);
+          }}
           sx={{
             ...statusBarIconStyles,
             color:
@@ -640,16 +726,34 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 : '', // green500
             '&:hover': { color: theme.palette.green['500'] },
             fontSize: '20px',
+            marginRight: 2,
           }}
         >
           <FontAwesomeIcon icon={faCircleCheck} />
           <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
+        </Box>
+
+        <Box
+          sx={{ cursor: 'pointer', my: 2, marginLeft: 'auto', marginRight: 2 }}
+        >
+          {collapsed ? (
+            <FontAwesomeIcon
+              icon={faChevronDown}
+              onClick={expandWorkflowStatusbar}
+            />
+          ) : (
+            <FontAwesomeIcon
+              icon={faChevronUp}
+              onClick={collapseWorkflowStatusBar}
+            />
+          )}
         </Box>
       </Box>
 
       <ActiveWorkflowStatusTab
         activeWorkflowStatusTab={activeWorkflowStatusTab}
         listItems={listItems}
+        setActiveWorkflowStatusTab={setActiveWorkflowStatusTab}
       />
     </Box>
   );

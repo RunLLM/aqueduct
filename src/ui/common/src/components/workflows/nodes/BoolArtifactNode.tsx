@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const boolArtifactNodeIcon = faCircleCheck;
+
 const BoolArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faCircleCheck}
+      icon={boolArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Bool"
