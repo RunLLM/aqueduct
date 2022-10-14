@@ -188,6 +188,15 @@ func (s *AqServer) Init() error {
 		return err
 	}
 
+	if err := syncVaultWithStorage(
+		vault,
+		readers.IntegrationReader,
+		db,
+	); err != nil {
+		db.Close()
+		log.Fatalf("Unable to sync vault with storage: %v", err)
+	}
+
 	eng, err := engine.NewAqEngine(
 		db,
 		githubManager,
