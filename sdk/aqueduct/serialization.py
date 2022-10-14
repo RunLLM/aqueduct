@@ -1,6 +1,11 @@
 import base64
 import io
 import json
+import os
+import shutil
+import tempfile
+import uuid
+from pathlib import Path
 from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
@@ -10,6 +15,10 @@ from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
+
+# The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
+# This will be cleaned up within the serialization logic.
+_TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
@@ -36,6 +45,46 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
+# Duplicated in the python executor.
+# NOTE: this doesn't really belong in the serialization library, but we don't have a lower layer than this right now -
+# (utils.py imports this file).
+def make_temp_dir() -> str:
+    """
+    Create a unique, temporary directory in the local filesystem and returns the path.
+    """
+    dir_path = None
+    created = False
+    # Try to create the directory. If it already exists, try again with a new name.
+    while not created:
+        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
+        try:
+            os.mkdir(dir_path)
+            created = True
+        except FileExistsError:
+            pass
+
+    assert dir_path is not None
+    return str(dir_path)
+
+
+# Returns a tf.keras.Model type. We don't assume that every user has it installed,
+# so we return "Any" type.
+def _read_tf_keras_model(content: bytes) -> Any:
+    temp_model_dir = None
+    try:
+        temp_model_dir = make_temp_dir()
+        model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
+        with open(model_file_path, "wb") as f:
+            f.write(content)
+
+        from tensorflow import keras
+
+        return keras.load_model(model_file_path)
+    finally:
+        if temp_model_dir is not None and os.path.exists(temp_model_dir):
+            shutil.rmtree(temp_model_dir)
+
+
 # Not intended for use outside of `deserialize()`.
 __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     SerializationType.TABLE: _read_table_content,
@@ -44,6 +93,7 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     SerializationType.IMAGE: _read_image_content,
     SerializationType.STRING: _read_string_content,
     SerializationType.BYTES: _read_bytes_content,
+    SerializationType.TF_KERAS: _read_tf_keras_model,
 }
 
 
@@ -92,6 +142,19 @@ def _write_json_output(output: Any) -> bytes:
     return json.dumps(output).encode(_DEFAULT_ENCODING)
 
 
+def _write_tf_keras_model(output: Any) -> bytes:
+    temp_model_dir = None
+    try:
+        temp_model_dir = make_temp_dir()
+        model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
+
+        output.save_model(model_file_path)
+        return open(model_file_path, "rb").read()
+    finally:
+        if temp_model_dir is not None and os.path.exists(temp_model_dir):
+            shutil.rmtree(temp_model_dir)
+
+
 serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
@@ -99,6 +162,7 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.IMAGE: _write_image_output,
     SerializationType.STRING: _write_string_output,
     SerializationType.BYTES: _write_bytes_output,
+    SerializationType.TF_KERAS: _write_tf_keras_model,
 }
 
 

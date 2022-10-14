@@ -30,8 +30,11 @@ def run(spec: ParamSpec) -> None:
     storage = parse_storage(spec.storage_config)
 
     try:
-        val_bytes = storage.get(spec.output_content_path)
-        val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
+        val = deserialize(
+            spec.serialization_type,
+            spec.expected_type,
+            storage.get(spec.output_content_path),
+        )
 
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.

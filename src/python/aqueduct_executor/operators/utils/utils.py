@@ -1,6 +1,10 @@
-import base64
 import io
 import json
+import os
+import shutil
+import tempfile
+import uuid
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cloudpickle as pickle
@@ -11,7 +15,6 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     SerializationType,
-    artifact_to_serialization,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
 from aqueduct_executor.operators.utils.execution import (
@@ -35,6 +38,10 @@ _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
 _METADATA_SERIALIZATION_TYPE_KEY = "serialization_type"
+
+# The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
+# This will be cleaned up within the serialization logic.
+_TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
 def _read_csv(input_bytes: bytes) -> pd.DataFrame:
@@ -65,6 +72,44 @@ def _read_bytes_input(input_bytes: bytes) -> bytes:
     return input_bytes
 
 
+# Duplicated in the SDK.
+def _make_temp_dir() -> str:
+    """
+    Create a unique, temporary directory in the local filesystem and returns the path.
+    """
+    dir_path = None
+    created = False
+    # Try to create the directory. If it already exists, try again with a new name.
+    while not created:
+        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
+        try:
+            os.mkdir(dir_path)
+            created = True
+        except FileExistsError:
+            pass
+
+    assert dir_path is not None
+    return str(dir_path)
+
+
+# Returns a tf.keras.Model type. We don't assume that every user has it installed,
+# so we return "Any" type.
+def _read_tf_keras_model(input_bytes: bytes) -> Any:
+    temp_model_dir = None
+    try:
+        temp_model_dir = _make_temp_dir()
+        model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
+        with open(model_file_path, "wb") as f:
+            f.write(input_bytes)
+
+        from tensorflow import keras
+
+        return keras.load_model(model_file_path)
+    finally:
+        if temp_model_dir is not None and os.path.exists(temp_model_dir):
+            shutil.rmtree(temp_model_dir)
+
+
 # Not intended for use outside of `deserialize()`.
 __deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]] = {
     SerializationType.TABLE: _read_table_input,
@@ -73,11 +118,14 @@ __deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], An
     SerializationType.IMAGE: _read_image_input,
     SerializationType.STRING: _read_string_input,
     SerializationType.BYTES: _read_bytes_input,
+    SerializationType.TF_KERAS: _read_tf_keras_model,
 }
 
 
 def deserialize(
-    serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
+    serialization_type: SerializationType,
+    artifact_type: ArtifactType,
+    content: bytes,
 ) -> Any:
     """Deserializes a byte string into the appropriate python object."""
     if serialization_type not in __deserialization_function_mapping:
@@ -211,6 +259,23 @@ def _write_json_output(
     storage.put(output_path, json.dumps(output).encode(_DEFAULT_ENCODING))
 
 
+def _write_tf_keras_model(
+    storage: Storage,
+    output_path: str,
+    output: Any,
+) -> None:
+    temp_model_dir = None
+    try:
+        temp_model_dir = _make_temp_dir()
+        model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
+
+        output.save_model(model_file_path)
+        storage.put(output_path, open(model_file_path, "rb").read())
+    finally:
+        if temp_model_dir is not None and os.path.exists(temp_model_dir):
+            shutil.rmtree(temp_model_dir)
+
+
 _serialization_function_mapping = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
@@ -218,6 +283,7 @@ _serialization_function_mapping = {
     SerializationType.IMAGE: _write_image_output,
     SerializationType.STRING: _write_string_output,
     SerializationType.BYTES: _write_bytes_output,
+    SerializationType.TF_KERAS: _write_tf_keras_model,
 }
 
 
@@ -256,6 +322,7 @@ def write_artifact(
 def artifact_type_to_serialization_type(
     artifact_type: ArtifactType, content: Any
 ) -> SerializationType:
+    """Copy of the same method on in aqueduct executor."""
     if artifact_type == ArtifactType.TABLE:
         serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:
@@ -274,12 +341,12 @@ def artifact_type_to_serialization_type(
             serialization_type = SerializationType.JSON
         except:
             serialization_type = SerializationType.PICKLE
+    elif artifact_type == ArtifactType.TF_KERAS:
+        serialization_type = SerializationType.TF_KERAS
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert serialization_type is not None and (
-        serialization_type.value in artifact_to_serialization[artifact_type]
-    )
+    assert serialization_type is not None
     return serialization_type
 
 
@@ -368,4 +435,15 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             pickle.dumps(value)
             return ArtifactType.PICKLABLE
         except:
-            raise Exception("Failed to map type %s to supported artifact type." % type(value))
+            pass
+
+        try:
+            # Keras models cannot be pickled.
+            from tensorflow import keras
+
+            if isinstance(value, keras.Model):
+                return ArtifactType.TF_KERAS
+        except:
+            pass
+
+        raise Exception("Failed to map type %s to supported artifact type." % type(value))
