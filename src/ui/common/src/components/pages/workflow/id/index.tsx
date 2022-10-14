@@ -236,9 +236,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.DictArtifact ||
       currentNode.type === NodeType.GenericArtifact
     ) {
-      return selectedDag.artifacts[currentNode.id].name;
+      if (selectedDag.artifacts[currentNode.id]) {
+        return selectedDag.artifacts[currentNode.id].name;
+      }
+      return 'Artifact Node';
     } else {
-      return selectedDag.operators[currentNode.id].name;
+      if (selectedDag.artifacts[currentNode.id]) {
+        return selectedDag.operators[currentNode.id].name;
+      }
+      return 'Operator Node';
     }
   };
 
