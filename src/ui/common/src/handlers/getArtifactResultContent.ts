@@ -5,7 +5,6 @@ import {
   GetArtifactResultResponse,
   SerializationType,
 } from '../utils/artifacts';
-
 import { ExecutionStatus } from '../utils/shared';
 
 const { apiAddress } = useAqueductConsts();

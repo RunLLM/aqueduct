@@ -1,15 +1,13 @@
 import { AlertTitle, CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
-import React from 'react';
 import Image from 'mui-image';
+import React from 'react';
 
-import { SerializationType } from '../../../utils/artifacts';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
-import { ArtifactType } from '../../../utils/artifacts';
+import { SerializationType } from '../../../utils/artifacts';
 import { isFailed, isInitial, isLoading } from '../../../utils/shared';
-import { Button } from '../../primitives/Button.styles';
 import PaginatedTable from '../../tables/PaginatedTable';
 
 type Props = {
@@ -58,11 +56,25 @@ const ArtifactContent: React.FC<Props> = ({
   }
 
   if (!contentWithLoadingStatus.data) {
-    return (
-      <Typography variant="h5" component="div" marginBottom="8px">
-        No result to show for this artifact.
-      </Typography>
-    );
+    if (
+      artifact.result.serialization_type === SerializationType.Bytes ||
+      artifact.result.serialization_type === SerializationType.Pickle
+    ) {
+      return (
+        <Alert severity="info">
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+            Artifact contains binary data that cannot be previewed.
+          </Typography>
+        </Alert>
+      );
+    } else {
+      // A catch-all case.
+      return (
+        <Typography variant="h5" component="div" marginBottom="8px">
+          No result to show for this artifact.
+        </Typography>
+      );
+    }
   }
 
   switch (artifact.result.serialization_type) {
@@ -80,7 +92,8 @@ const ArtifactContent: React.FC<Props> = ({
       }
     case SerializationType.Image:
       try {
-        const srcFromBase64 = 'data:image/png;base64,' + contentWithLoadingStatus.data;
+        const srcFromBase64 =
+          'data:image/png;base64,' + contentWithLoadingStatus.data;
         return (
           <Image
             src={srcFromBase64}
@@ -90,11 +103,7 @@ const ArtifactContent: React.FC<Props> = ({
           />
         );
       } catch (err) {
-        return (
-          <Alert title="Cannot parse image data.">
-            {err}
-          </Alert>
-        );
+        return <Alert title="Cannot parse image data.">{err}</Alert>;
       }
     case SerializationType.Json:
       // Convert to pretty-printed version.
@@ -116,12 +125,13 @@ const ArtifactContent: React.FC<Props> = ({
       );
     default:
       return (
-        <Alert severity="info">
+        <Alert severity="error">
           <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-            Artifact contains binary data that cannot be previewed.
+            Cannot show preview due to unexpected serialization type:{' '}
+            {artifact.result.serialization_type}.
           </Typography>
         </Alert>
-      )
+      );
   }
 };
 

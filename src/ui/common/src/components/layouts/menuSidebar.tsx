@@ -1,8 +1,6 @@
 import {
   faBook,
-  faDatabase,
   faMessage,
-  faPlug,
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
