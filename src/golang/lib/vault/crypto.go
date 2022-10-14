@@ -29,15 +29,12 @@ func encrypt(secrets map[string]string, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	// allocate a byte array for encrypted value
-	dst := make([]byte, len(nonce))
-
 	serialized, err := json.Marshal(secrets)
 	if err != nil {
 		return nil, err
 	}
 
-	encrypted := gcm.Seal(dst, nonce, serialized, nil /* additionalData */)
+	encrypted := gcm.Seal(nonce, nonce, serialized, nil /* additionalData */)
 	return encrypted, nil
 }
 

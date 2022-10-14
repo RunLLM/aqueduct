@@ -80,8 +80,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 
-  console.log('selected dag is', workflow.selectedDag);
-
   useEffect(() => {
     if (!sideSheetMode) {
       document.title = 'Metric Details | Aqueduct';

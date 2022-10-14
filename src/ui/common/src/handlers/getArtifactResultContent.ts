@@ -2,7 +2,6 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import {
-  Artifact,
   GetArtifactResultResponse,
   SerializationType,
 } from '../utils/artifacts';
