@@ -154,14 +154,6 @@ func (s *AqServer) Init() error {
 		return err
 	}
 
-	vault, err := vault.NewFileVault(&vault.FileConfig{
-		Directory:     path.Join(aqPath, vault.FileVaultDir),
-		EncryptionKey: config.EncryptionKey(),
-	})
-	if err != nil {
-		return err
-	}
-
 	readers, err := CreateReaders(db.Config())
 	if err != nil {
 		return err
@@ -189,6 +181,12 @@ func (s *AqServer) Init() error {
 	)
 	if err != nil {
 		return err
+	}
+
+	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		db.Close()
+		log.Fatal("Unable to start vault: ", err)
 	}
 
 	eng, err := engine.NewAqEngine(
@@ -228,7 +226,6 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 
 	spec := job.NewWorkflowRetentionJobSpec(
 		s.Database.Config(),
-		s.Vault.Config(),
 		s.JobManager.Config(),
 	)
 

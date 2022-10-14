@@ -145,7 +145,6 @@ func (eng *aqEngine) ScheduleWorkflow(
 		name,
 		workflowId.String(),
 		eng.Database.Config(),
-		eng.Vault.Config(),
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
 			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
@@ -690,7 +689,6 @@ func (eng *aqEngine) TriggerWorkflow(
 		name,
 		workflowId.String(),
 		eng.Database.Config(),
-		eng.Vault.Config(),
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
 			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
@@ -922,7 +920,6 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			cronjobName,
 			workflowId.String(),
 			eng.Database.Config(),
-			eng.Vault.Config(),
 			&job.ProcessConfig{
 				BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
 				OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
