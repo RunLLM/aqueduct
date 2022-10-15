@@ -87,7 +87,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     BreadcrumbLink.WORKFLOWS,
     new BreadcrumbLink(
       workflowLink,
-      workflow?.selectedDag?.metadata?.name || ''
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
     ),
     new BreadcrumbLink(path, operator?.name || 'Operator'),
   ];

@@ -61,6 +61,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
+  const urlSearchParams = parse(window.location.search);
   const path = useLocation().pathname;
 
   const currentNode = useSelector(
@@ -81,14 +82,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }, [workflow.selectedDag]);
 
   useEffect(() => {
-    const urlSearchParams = parse(window.location.search);
     if (
       workflow.selectedResult !== undefined &&
       !urlSearchParams.workflowDagResultId
     ) {
       navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
     }
-  }, [workflow.selectedResult]);
+  }, [workflow.selectedResult, urlSearchParams]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -98,7 +98,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = parse(window.location.search);
+      const { workflowDagResultId } = urlSearchParams;
       for (let i = 0; i < workflow.dagResults.length; i++) {
         if (workflow.dagResults[i].id === workflowDagResultId) {
           workflowDagResultIndex = i;
@@ -109,7 +109,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults, window.location.search]);
+  }, [workflow.dagResults, urlSearchParams]);
 
   useEffect(() => {
     if (workflow.selectedDag) {
