@@ -7,7 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -29,9 +29,12 @@ import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
+import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
 import Status from './workflowStatus';
+
+export const WorkflowPageContentId = 'workflow-page-main';
 
 type Props = {
   user: UserProfile;
@@ -39,10 +42,35 @@ type Props = {
   workflowId: string;
 };
 
+const ContainerWidthBreakpoint = 700;
+
 const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const dispatch: AppDispatch = useDispatch();
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
+
+  const currentNode = useSelector(
+    (state: RootState) => state.nodeSelectionReducer.selected
+  );
+
+  // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place,
+  // it will be overridden.
+  const [containerWidth, setContainerWidth] = useState(1000);
+  const narrowView = containerWidth < ContainerWidthBreakpoint;
+
+  const getContainerSize = () => {
+    const container = document.getElementById(WorkflowPageContentId);
+
+    if (!container) {
+      // The page hasn't fully rendered yet.
+      setContainerWidth(1000); // Just a default value.
+    } else {
+      setContainerWidth(container.clientWidth);
+    }
+  };
+
+  useEffect(getContainerSize, [currentNode]);
+  window.addEventListener('resize', getContainerSize);
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
@@ -91,6 +119,10 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     );
     nextUpdateComponent = (
       <Box sx={{ mt: 1 }}>
+        <Typography variant="body2">
+          <strong> Workflow Engine: </strong>
+          {workflowDag.engine_config.type}
+        </Typography>
         <Typography variant="body2">
           <strong> Next Workflow Run: </strong>{' '}
           {nextUpdateTime.toDate().toLocaleString()}
@@ -274,19 +306,36 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <Status status={workflow.dagResults[0].status} />
+
           <Typography
             variant="h3"
-            sx={{ fontFamily: 'Monospace', mr: 2, lineHeight: 1 }}
+            sx={{ my: 1, lineHeight: 1 }}
+            fontWeight="normal"
           >
             {name}
           </Typography>
-
-          <Status status={workflow.dagResults[0].status} />
         </Box>
 
-        <Box sx={{ ml: 2 }}>
+        <Box sx={{ mr: 4 }}>
+          <Button
+            color="primary"
+            sx={{ height: '100%', mr: 2, fontSize: '20px' }}
+            onClick={() => setShowRunWorkflowDialog(true)}
+            size="large"
+          >
+            <FontAwesomeIcon icon={faPlay} />
+            <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
+          </Button>
+
           <Button
             variant="outlined"
             color="primary"
@@ -317,25 +366,24 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
       {nextUpdateComponent}
 
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: narrowView ? 'start' : 'center',
+          my: 1,
+          flexDirection: narrowView ? 'column' : 'row',
+        }}
+      >
         {workflow.dagResults && workflow.dagResults.length > 0 && (
           <VersionSelector />
         )}
 
-        {/* NOTE: Funnyily enough, `size=large` on a button is what
-                    makes it match the size of the `FormControl` when set to
-                    small. Go figure. */}
-        <Button
-          color="primary"
-          sx={{ height: '100%' }}
-          onClick={() => setShowRunWorkflowDialog(true)}
-          size="large"
-        >
-          <FontAwesomeIcon icon={faPlay} />
-          <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
-        </Button>
-        {runWorkflowDialog}
+        <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
+          <WorkflowStatusBar user={user} />
+        </Box>
       </Box>
+
+      {runWorkflowDialog}
 
       {showAirflowUpdateWarning && airflowUpdateWarning}
 

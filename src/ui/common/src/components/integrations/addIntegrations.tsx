@@ -12,6 +12,7 @@ import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { Service, ServiceInfoMap } from '../../utils/integrations';
 import IntegrationDialog from './dialogs/dialog';
+import IntegrationLogo from './logo';
 
 type Props = {
   user: UserProfile;
@@ -68,18 +69,19 @@ const AddIntegrations: React.FC<Props> = ({
                   },
                 }}
               >
-                <img
-                  src={integration.logo}
-                  width="100%"
-                  style={{
-                    opacity: integration.activated ? 1.0 : 0.3,
-                    height: '85px',
-                    width: '160px',
-                    maxWidth: '160px',
-                    maxHeight: '85px',
-                    objectFit: 'contain',
-                  }}
-                />
+                <Box
+                  width="160px"
+                  maxWidth="160px"
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                >
+                  <IntegrationLogo
+                    service={service}
+                    activated={integration.activated}
+                    size="large"
+                  />
+                </Box>
                 <Typography
                   variant={'body1'}
                   align={'center'}

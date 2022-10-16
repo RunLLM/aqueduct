@@ -7,7 +7,9 @@ import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowS
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
+import { CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
+import { BreadcrumbLink } from '../../layouts/NavBar';
 import { filteredList, SearchBar } from '../../Search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
@@ -54,6 +56,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Box>
   );
 
+  // TODO: Figure out why we have a _ here, probably don't need it since it's unused.
   const displayFilteredWorkflows = (workflow, _) => {
     return (
       <Box my={2}>
@@ -81,14 +84,22 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   );
 
   return (
-    <Layout user={user}>
-      <Box p={2}>
+    <Layout
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
+      user={user}
+    >
+      <Box>
         {heading}
-        <SearchBar
-          options={allWorkflows.workflows}
-          getOptionLabel={getOptionLabel}
-          setSearchTerm={setFilterText}
-        />
+        {allWorkflows.workflows.length >= 1 && (
+          <Box marginLeft={CardPadding}>
+            {/* Align searchbar with card text */}
+            <SearchBar
+              options={allWorkflows.workflows}
+              getOptionLabel={(option) => option.name || ''}
+              setSearchTerm={setFilterText}
+            />
+          </Box>
+        )}
         {workflowList}
       </Box>
     </Layout>

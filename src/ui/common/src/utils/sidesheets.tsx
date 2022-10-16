@@ -1,8 +1,11 @@
+import Box from '@mui/material/Box';
 import React from 'react';
 import { Node } from 'react-flow-renderer';
 
-import DataPreviewSideSheet from '../components/workflows/SideSheets/DataPreviewSideSheet';
-import OperatorResultsSideSheet from '../components/workflows/SideSheets/OperatorResultsSideSheet';
+import ArtifactDetailsPage from '../components/pages/artifact/id';
+import CheckDetailsPage from '../components/pages/check/id';
+import MetricDetailsPage from '../components/pages/metric/id';
+import OperatorDetailsPage from '../components/pages/operator/id';
 import { NodeType, SelectedNode, selectNode } from '../reducers/nodeSelection';
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
@@ -22,8 +25,23 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
 
 export function getDataSideSheetContent(
   user: UserProfile,
-  currentNode: SelectedNode
+  currentNode: SelectedNode,
+  workflowIdProp: string,
+  workflowDagResultIdProp: string
 ): React.ReactElement {
+  const SideSheetLayout = ({ children }) => {
+    return (
+      <Box
+        px={'16px'}
+        maxWidth="800px"
+        height="100vh"
+        sx={{ overflowY: 'scroll' }}
+      >
+        {children}
+      </Box>
+    );
+  };
+
   switch (currentNode.type) {
     case NodeType.BoolArtifact:
     case NodeType.NumericArtifact:
@@ -33,12 +51,51 @@ export function getDataSideSheetContent(
     case NodeType.ImageArtifact:
     case NodeType.DictArtifact:
     case NodeType.GenericArtifact:
-      return <DataPreviewSideSheet artifactId={currentNode.id} />;
+      return (
+        <ArtifactDetailsPage
+          user={user}
+          Layout={SideSheetLayout}
+          operatorIdProp={currentNode.id}
+          workflowDagResultIdProp={workflowDagResultIdProp}
+          workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
+        />
+      );
     case NodeType.CheckOp:
+      return (
+        <CheckDetailsPage
+          user={user}
+          Layout={SideSheetLayout}
+          operatorIdProp={currentNode.id}
+          workflowDagResultIdProp={workflowDagResultIdProp}
+          workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
+        />
+      );
     case NodeType.MetricOp:
+      return (
+        <MetricDetailsPage
+          user={user}
+          Layout={SideSheetLayout}
+          operatorIdProp={currentNode.id}
+          workflowDagResultIdProp={workflowDagResultIdProp}
+          workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
+        />
+      );
     case NodeType.ExtractOp:
     case NodeType.LoadOp:
-    case NodeType.FunctionOp:
-      return <OperatorResultsSideSheet user={user} currentNode={currentNode} />;
+    case NodeType.FunctionOp: {
+      return (
+        <OperatorDetailsPage
+          user={user}
+          Layout={SideSheetLayout}
+          operatorIdProp={currentNode.id}
+          workflowDagResultIdProp={workflowDagResultIdProp}
+          workflowIdProp={workflowIdProp}
+          sideSheetMode={true}
+        />
+      );
+    }
   }
 }

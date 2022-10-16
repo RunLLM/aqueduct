@@ -4,6 +4,7 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
@@ -54,7 +55,10 @@ const IntegrationsPage: React.FC<Props> = ({
   }
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.INTEGRATIONS]}
+      user={user}
+    >
       <Box>
         {/*<Breadcrumbs>
           <Link
@@ -72,15 +76,23 @@ const IntegrationsPage: React.FC<Props> = ({
           Integrations
         </Typography>
 
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Typography variant="h4">Add an Integration</Typography>
-          <Typography variant="h6">Data</Typography>
+        <Divider sx={{ width: '950px' }} />
+
+        <Box sx={{ my: 3 }}>
+          <Typography variant="h4" marginBottom={3}>
+            Add an Integration
+          </Typography>
+          <Typography variant="h6" marginBottom={2}>
+            Data
+          </Typography>
           <AddIntegrations
             user={user}
             category="data"
             supportedIntegrations={SupportedIntegrations}
           />
-          <Typography variant="h6">Compute</Typography>
+          <Typography variant="h6" marginTop={4} marginBottom={3}>
+            Compute
+          </Typography>
           <AddIntegrations
             user={user}
             category="compute"
@@ -88,10 +100,14 @@ const IntegrationsPage: React.FC<Props> = ({
           />
         </Box>
 
-        <Divider sx={{ width: '950px' }} />
+        <Box marginTop="40px">
+          <Divider sx={{ width: '950px' }} />
+        </Box>
 
-        <Box sx={{ my: 3, ml: 1 }}>
-          <Typography variant="h4">Connected Integrations</Typography>
+        <Box sx={{ marginTop: 3, marginBottom: 3 }}>
+          <Typography variant="h4" marginBottom={2}>
+            Connected Integrations
+          </Typography>
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />
         </Box>
       </Box>

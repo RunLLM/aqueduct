@@ -138,6 +138,7 @@ export type SQLiteConfig = {
 export type KubernetesConfig = {
   kubeconfig_path: string;
   cluster_name: string;
+  use_same_cluster: string;
 };
 
 export type LambdaConfig = {
@@ -177,7 +178,8 @@ export type Service =
   | 'Airflow'
   | 'Kubernetes'
   | 'SQLite'
-  | 'Lambda';
+  | 'Lambda'
+  | 'Google Sheets';
 
 type Info = {
   logo: string;

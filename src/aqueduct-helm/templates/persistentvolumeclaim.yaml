@@ -1,0 +1,13 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes explains the accessMode configuration
+# https://cloud.netapp.com/blog/cvo-blg-kubernetes-persistent-volume-claims-explained explains the dynamic provisioning
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aqueduct-pv-claim
+spec:
+  storageClassName: 
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

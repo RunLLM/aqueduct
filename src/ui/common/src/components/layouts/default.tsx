@@ -2,16 +2,27 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import UserProfile from '../../utils/auth';
-import MenuSidebar from './menuSidebar';
+import { breadcrumbsSize } from '../notifications/NotificationsPopover';
+import MenuSidebar, {
+  MenuSidebarWidth,
+  MenuSidebarWidthNumber,
+} from './menuSidebar';
+import NavBar, { BreadcrumbLink } from './NavBar';
 
-export const MenuSidebarOffset = '250px';
+export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
+export const DefaultLayoutMargin = '24px';
 
 type Props = {
   user: UserProfile;
   children: React.ReactElement | React.ReactElement[];
+  breadcrumbs: BreadcrumbLink[];
 };
 
-export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
+export const DefaultLayout: React.FC<Props> = ({
+  user,
+  children,
+  breadcrumbs,
+}) => {
   return (
     <Box
       sx={{
@@ -23,14 +34,18 @@ export const DefaultLayout: React.FC<Props> = ({ user, children }) => {
     >
       <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
         <MenuSidebar user={user} />
-
+        <NavBar user={user} breadcrumbs={breadcrumbs} />
+        {/* Pad top for breadcrumbs (64px). */}
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
         <Box
           sx={{
-            marginLeft: MenuSidebarOffset,
+            boxSizing: 'border-box',
+            width: `calc(100% - ${MenuSidebarWidth} - ${DefaultLayoutMargin})`,
+            marginTop: breadcrumbsSize,
+            marginLeft: MenuSidebarWidth,
             marginRight: 0,
-            width: '100%',
-            marginTop: 3,
+            paddingTop: DefaultLayoutMargin,
+            paddingLeft: DefaultLayoutMargin,
           }}
         >
           {children}

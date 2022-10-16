@@ -74,19 +74,18 @@ class BoolArtifact(BaseArtifact):
                     "Parameterizing historical artifacts is not currently supported."
                 )
 
-        if parameters is None and self._get_content() is not None:
-            return self._get_content()
+        content = self._get_content()
+        if parameters is not None or content is None:
+            previewed_artifact = artifact_utils.preview_artifact(
+                self._dag, self._artifact_id, parameters
+            )
+            content = previewed_artifact._get_content()
 
-        previewed_artifact = artifact_utils.preview_artifact(
-            self._dag, self._artifact_id, parameters
-        )
-        content = previewed_artifact._get_content()
+            # If the artifact was previously generated lazily, materialize the contents.
+            if parameters is None and self._get_content() is None:
+                self._set_content(content)
+
         assert isinstance(content, bool) or isinstance(content, np.bool_)
-
-        # If the artifact was previously generated lazily, materialize the contents.
-        if parameters is None and self._get_content() is None:
-            self._set_content(content)
-
         return content
 
     def describe(self) -> None:

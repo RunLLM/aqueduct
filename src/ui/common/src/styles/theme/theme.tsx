@@ -85,5 +85,9 @@ export const theme = {
     DarkSuccessMain75: 'rgba(102, 187, 106, 0.75)',
     DarkSuccessMain50: 'rgba(102, 187, 106, 0.5)',
     LogoDarkBlue: '#002F5E',
+    LogoLight: '#8AE3FF', //Matches logo color
+    NavBackgroundDark: '#002F5D', //(0,47,93)
+    NavMenuHover: '#6D94FD', //(109,148,253)
+    NavMenuActive: '#497AFA', //(73,122,250)
   },
 };

@@ -1,5 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import artifactResultContentsReducer from '../reducers/artifactResultContents';
+import artifactResultsReducer from '../reducers/artifactResults';
 import dataPreviewReducer from '../reducers/dataPreview';
 import integrationReducer from '../reducers/integration';
 import integrationsReducer from '../reducers/integrations';
@@ -8,20 +10,11 @@ import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
 import openSideSheetReducer from '../reducers/openSideSheet';
 import workflowReducer from '../reducers/workflow';
-//import {AnyAction, CombinedState, configureStore, Reducer} from '@reduxjs/toolkit';
-
-/*
-const rootReducer: Reducer<CombinedState<{
-    nodeSelectionReducer
-    issuesDisplay: CurrentDisplayState;
-    repoDetails: RepoDetailsState;
-    issues: IssuesState;
-    comments: CommentsState;
-}>, AnyAction>
-*/
+import workflowDagResultsReducer from '../reducers/workflowDagResults';
 
 export const store = configureStore({
   reducer: {
+    artifactResultContentsReducer,
     nodeSelectionReducer,
     openSideSheetReducer,
     notificationsReducer,
@@ -30,6 +23,8 @@ export const store = configureStore({
     integrationsReducer,
     integrationReducer,
     workflowReducer,
+    workflowDagResultsReducer,
+    artifactResultsReducer,
   },
 });
 

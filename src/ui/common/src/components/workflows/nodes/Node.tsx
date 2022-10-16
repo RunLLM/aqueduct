@@ -16,7 +16,7 @@ type Props = {
   data: ReactFlowNodeData;
   defaultLabel: string;
   isConnectable: boolean;
-  icon: IconDefinition;
+  icon?: IconDefinition;
 };
 
 export const Node: React.FC<Props> = ({
@@ -36,7 +36,7 @@ export const Node: React.FC<Props> = ({
 
   let execState: ExecState;
   if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result;
+    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
   } else {
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
@@ -84,9 +84,12 @@ export const Node: React.FC<Props> = ({
         '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      <Box sx={{ fontSize: '50px', mb: '2px' }}>
-        <FontAwesomeIcon icon={icon} />
-      </Box>
+      {icon && (
+        <Box sx={{ fontSize: '50px', mb: '2px' }}>
+          <FontAwesomeIcon icon={icon} />
+        </Box>
+      )}
+
       <Typography
         sx={{
           fontSize: '18px',

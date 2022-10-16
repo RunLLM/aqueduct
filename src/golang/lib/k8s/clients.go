@@ -8,13 +8,42 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+func CreateK8sClient(kubeconfigPath string, inCluster bool) (*kubernetes.Clientset, error) {
+	if inCluster {
+		return CreateClientInCluster()
+	} else {
+		return CreateClientOutsideCluster(kubeconfigPath)
+	}
+}
+
+// This is a helper function that creates a Kubernetes Clientset using the
+// `client-go/rest` library's `InClusterConfig()` function. This function will
+// only succeed if it is called from within a Kubernetes cluster. Otherwise,
+// the configuration retrieval will fail, and this function will call
+// `log.Fatal` and cause the program to crash. If this function is called from
+// within the cluster, it should not fail.
+func CreateClientInCluster() (*kubernetes.Clientset, error) {
+	k8sConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "Unexpected error while creating in-cluster Kubernetes client.")
+	}
+
+	k8sClient, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unexpected error while creating in-cluster Kubernetes client.")
+	}
+
+	return k8sClient, nil
+}
+
 // This is a helper function that creates a Kubernetes Clientset using the
 // kubeconfig that is located at `kubecfgLocation`.
-func CreateClientOutsideCluster(kubecfgLocation string) (*kubernetes.Clientset, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubecfgLocation)
+func CreateClientOutsideCluster(kubeconfigPath string) (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unexpected error while creating Kubernetes client.")
 	}

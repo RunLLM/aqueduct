@@ -8,8 +8,9 @@ import { parse } from 'query-string';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -30,24 +31,28 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
+import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { exportCsv } from '../../../../utils/preview';
-import { LoadingStatusEnum } from '../../../../utils/shared';
+import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import { ExecutionStatus } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout, { MenuSidebarOffset } from '../../../layouts/default';
+import DefaultLayout, { DefaultLayoutMargin } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
-import WorkflowStatusBar from '../../../workflows/StatusBar';
-import WorkflowHeader from '../../../workflows/workflowHeader';
+import WorkflowHeader, {
+  WorkflowPageContentId,
+} from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
+
+const DrawerWidth = '800px';
 
 const WorkflowPage: React.FC<WorkflowPageProps> = ({
   user,
@@ -56,6 +61,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
+  const urlSearchParams = parse(window.location.search);
+  const path = useLocation().pathname;
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -63,14 +70,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const switchSideSheet = sideSheetSwitcher(dispatch);
-  const openSideSheetState = useSelector(
-    (state: RootState) => state.openSideSheetReducer
-  );
+
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
-  );
-  const dagPosition = useSelector(
-    (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
   useEffect(() => {
@@ -80,14 +82,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }, [workflow.selectedDag]);
 
   useEffect(() => {
-    const urlSearchParams = parse(window.location.search);
     if (
       workflow.selectedResult !== undefined &&
       !urlSearchParams.workflowDagResultId
     ) {
       navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
     }
-  }, [workflow.selectedResult]);
+  }, [workflow.selectedResult, urlSearchParams]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -97,7 +98,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = parse(window.location.search);
+      const { workflowDagResultId } = urlSearchParams;
       for (let i = 0; i < workflow.dagResults.length; i++) {
         if (workflow.dagResults[i].id === workflowDagResultId) {
           workflowDagResultIndex = i;
@@ -108,7 +109,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults, window.location.search]);
+  }, [workflow.dagResults, urlSearchParams]);
 
   useEffect(() => {
     if (workflow.selectedDag) {
@@ -131,7 +132,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of the artifact for which we're retrieving
    * details.
    */
-  const updateArtifactDetails = (nodeId: string) => {
+  const getArtifactResultDetails = (nodeId: string) => {
     const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
     if (!artf || !workflow.selectedResult) {
       return;
@@ -159,7 +160,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of an artifact for which we're retrieving
    * results.
    */
-  const updateOperatorDetails = (nodeId: string) => {
+  const getOperatorResultDetails = (nodeId: string) => {
     // Verify the node is indeed an operator, and a result is selected
     const op = (workflow.selectedDag?.operators ?? {})[nodeId];
     if (!op || !workflow.selectedResult) {
@@ -177,13 +178,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
 
     for (const artfId of [...op.inputs, ...op.outputs]) {
-      updateArtifactDetails(artfId);
+      getArtifactResultDetails(artfId);
     }
   };
 
   useEffect(() => {
-    updateOperatorDetails(currentNode.id);
-    updateArtifactDetails(currentNode.id);
+    getOperatorResultDetails(currentNode.id);
+    getArtifactResultDetails(currentNode.id);
   }, [currentNode.id, workflow.selectedResult?.id]);
 
   const onPaneClicked = (event: React.MouseEvent) => {
@@ -195,20 +196,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const selectedDag = workflow.selectedDag;
-  const getDagDetails = () => {
+  const getDagResultDetails = () => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
       !!selectedDag
     ) {
       for (const op of Object.values(selectedDag.operators)) {
-        // We don't need to call updateArtifactDetails because
-        // updateOperatorDetails automatically does that for us.
-        updateOperatorDetails(op.id);
+        // We don't need to call getArtifactResultDetails because
+        // getOperatorResultDetails automatically does that for us.
+        getOperatorResultDetails(op.id);
       }
     }
   };
 
-  useEffect(getDagDetails, [workflow.selectedDag]);
+  useEffect(getDagResultDetails, [workflow.selectedResult?.id]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
@@ -220,56 +221,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  const SidebarMarginInPx = 24; // The amount of space on the left and the right of the bottom sidebar.
-
-  const getSideSheetWidth = (
-    workflowStatusBarOpen: boolean,
-    baseWidth = '100%'
-  ): string | string[] => {
-    // let's break down this formula:
-    // fullWindowWidth is calc(100% + 250px)
-    // menuSidebarOffset is 250px
-    // SidebarMarginInPx is 64px * 2 = 128px
-    // getStatusBarWidth is 400px when open, 75 when closed.
-    // final output: calc(calc(100% + 250px) - 250px - 128px - 400px)
-    return `calc(${baseWidth} - ${MenuSidebarOffset} - ${
-      2 * SidebarMarginInPx
-    }px - ${getStatusBarWidth(workflowStatusBarOpen)})`;
-  };
-
-  const CollapsedStatusBarWidthInPx = 75;
-  const StatusBarWidthInPx = 385;
-
-  /**
-   *
-   * @param workflowStatusBarOpen Whether or not the workflow status bar is open.
-   * @returns bottomSidesheetOffset The y offset from the bottom of the screen.
-   */
-  const getStatusBarWidth = (workflowStatusBarOpen: boolean): string => {
-    if (workflowStatusBarOpen) {
-      return `${StatusBarWidthInPx}px`;
-    } else {
-      return `${CollapsedStatusBarWidthInPx}px`;
-    }
-  };
-
-  // NOTE(vikram): This is a compliated bit of nonsense code. Because the
-  // percentages are relative, we need to reset the base width to be the full
-  // window width to take advantage of the helper function here. This ensures
-  // that the ReactFlow canvas and the status bars below are the same width.
-  // Here, `fullWindowWidth` refers to the full width of the viewport, which
-  // is the current 100% + the width of the menu sidebar. This is a hack that
-  // breaks the abstraction, but because the WorkflowStatusBar overlay is
-  // absolute-positioned, it's required in order to align the content with
-  // the status bar's width.
-  const fullWindowWidth = `calc(100% + ${MenuSidebarOffset})`;
-  const contentWidth = getSideSheetWidth(
-    openSideSheetState.workflowStatusBarOpen,
-    fullWindowWidth
-  );
+  // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
+  // const sideSheetOpen = currentNode.type !== NodeType.None;
 
   const contentBottomOffsetInPx = `32px`;
-
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -281,9 +236,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.DictArtifact ||
       currentNode.type === NodeType.GenericArtifact
     ) {
-      return selectedDag.artifacts[currentNode.id].name;
+      if (selectedDag.artifacts[currentNode.id]) {
+        return selectedDag.artifacts[currentNode.id].name;
+      }
+      return 'Artifact Node';
     } else {
-      return selectedDag.operators[currentNode.id].name;
+      if (selectedDag.artifacts[currentNode.id]) {
+        return selectedDag.operators[currentNode.id].name;
+      }
+      return 'Operator Node';
     }
   };
 
@@ -300,13 +261,80 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
 
       return (
-        <Button
-          onClick={() =>
-            exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
-          }
-        >
-          Export CSV
-        </Button>
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              // All we're really doing here is adding the artifactId onto the end of the URL.
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/artifact/${currentNode.id}`
+              );
+            }}
+          >
+            View Artifact Details
+          </Button>
+          <Button
+            onClick={() =>
+              exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
+            }
+          >
+            Export CSV
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.MetricOp) {
+      // Get the metrics id, and navigate to the metric details page.
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/metric/${currentNode.id}`
+              );
+            }}
+          >
+            View Metric Details
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.FunctionOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/operator/${currentNode.id}`
+              );
+            }}
+          >
+            View Operator Details
+          </Button>
+        </Box>
+      );
+    } else if (currentNode.type === NodeType.CheckOp) {
+      return (
+        <Box>
+          <Button
+            style={{ marginRight: '16px' }}
+            onClick={() => {
+              navigate(
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
+                }/check/${currentNode.id}`
+              );
+            }}
+          >
+            View Check Details
+          </Button>
+        </Box>
       );
     }
 
@@ -316,21 +344,38 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const drawerHeaderHeightInPx = 64;
 
   return (
-    <Layout user={user}>
+    <Layout
+      breadcrumbs={[
+        BreadcrumbLink.HOME,
+        BreadcrumbLink.WORKFLOWS,
+        new BreadcrumbLink(path, workflow.selectedDag.metadata.name),
+      ]}
+      user={user}
+    >
       <Box
         sx={{
+          boxSizing: 'border-box',
           display: 'flex',
-          width: contentWidth,
+          // TODO: just create a state variable to reflect the open state of the drawer.
+          width:
+            currentNode.type === NodeType.None
+              ? `calc(100% - ${DefaultLayoutMargin});`
+              : `calc(100% - ${DrawerWidth} - ${DefaultLayoutMargin});`,
           height: '100%',
           flexDirection: 'column',
+          transition: WidthTransition,
+          transitionDelay: '-150ms',
         }}
+        id={WorkflowPageContentId}
       >
         {workflow.selectedDag && (
-          <WorkflowHeader
-            user={user}
-            workflowDag={workflow.selectedDag}
-            workflowId={workflowId}
-          />
+          <Box marginBottom={1}>
+            <WorkflowHeader
+              user={user}
+              workflowDag={workflow.selectedDag}
+              workflowId={workflowId}
+            />
+          </Box>
         )}
 
         <Divider />
@@ -360,7 +405,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           anchor="right"
           variant="persistent"
           open={true}
-          PaperProps={{ sx: { overflowX: 'scroll', overflowY: 'hidden' } }}
+          PaperProps={{
+            sx: {
+              overflowX: 'scroll',
+              overflowY: 'hidden',
+              transition: 'width 200ms ease-in-out',
+              transitionDelay: '1000ms',
+            },
+          }}
         >
           <Box width="800px" maxWidth="800px" minHeight="100vh">
             <Box
@@ -376,22 +428,33 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 >
                   <FontAwesomeIcon icon={faChevronRight} />
                 </Box>
-                <Typography variant="h5" padding="16px">
-                  {getNodeLabel()}
-                </Typography>
-                <Box sx={{ mx: 2, alignSelf: 'center', marginLeft: 'auto' }}>
+                <Box maxWidth="400px">
+                  <Typography
+                    variant="h5"
+                    padding="16px"
+                    textOverflow="ellipsis"
+                    overflow="hidden"
+                    whiteSpace="nowrap"
+                  >
+                    {getNodeLabel()}
+                  </Typography>
+                </Box>
+                <Box sx={{ mx: 2, alignSelf: 'center' }}>
                   {getNodeActionButton()}
                 </Box>
               </Box>
             </Box>
-            <Box sx={{ marginTop: `${drawerHeaderHeightInPx}px` }}>
-              {getDataSideSheetContent(user, currentNode)}
+            <Box sx={{ marginTop: `${drawerHeaderHeightInPx + 16}px` }}>
+              {getDataSideSheetContent(
+                user,
+                currentNode,
+                workflowId,
+                workflow.selectedResult.id
+              )}
             </Box>
           </Box>
         </Drawer>
       )}
-
-      <WorkflowStatusBar user={user} />
     </Layout>
   );
 };

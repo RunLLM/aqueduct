@@ -9,10 +9,12 @@ type Props = {
   isConnectable: boolean;
 };
 
+export const jsonArtifactNodeIcon = faPencil;
+
 const JsonArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
   return (
     <Node
-      icon={faPencil}
+      icon={jsonArtifactNodeIcon}
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Parameter"

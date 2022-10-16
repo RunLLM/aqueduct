@@ -1,7 +1,10 @@
+// This is being deprecated. Please use `workflowDagResults` combining with
+// `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'react-flow-renderer';
 
 import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { RootState } from '../stores/store';
 import {
   Artifact,
   GetArtifactResultResponse,
@@ -18,7 +21,7 @@ import {
   getOperatorNode,
   ReactFlowNodeData,
 } from '../utils/reactflow';
-import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
+import { isSucceeded, LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import { ExecutionStatus } from '../utils/shared';
 import {
   DeleteWorkflowResponse,
@@ -127,7 +130,6 @@ export const handleGetOperatorResults = createAsyncThunk<
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
-
     return body as GetOperatorResultResponse;
   }
 );
@@ -306,13 +308,114 @@ export const handleDeleteWorkflow = createAsyncThunk<
   }
 );
 
+// Update `nodes` in-place and returns whether the update succeeded.
+function updateNodeWithResult(
+  nodes: Node<ReactFlowNodeData>[],
+  id: string,
+  data: string
+): boolean {
+  const matchingIdx = nodes
+    .map((node, idx) => (node.id === id ? idx : undefined))
+    .filter((x) => x !== undefined);
+  if (matchingIdx.length === 1) {
+    nodes[matchingIdx[0]].data.result = data;
+    return true;
+  }
+
+  return false;
+}
+
+// This function updates nodes in-place and should be called inside a reducer.
+// It updates the node matching artfId with the data.
+// If the node doesn't exist, we assume the node is collapsed and we will search
+// for the right 'parent' to add.
+function updateNodeWithArtifactResult(
+  nodes: Node<ReactFlowNodeData>[],
+  dag: WorkflowDag,
+  artfId: string,
+  data: string
+): void {
+  // try to update using artfId
+  if (updateNodeWithResult(nodes, artfId, data)) {
+    return;
+  }
+
+  // Ndoe with artfId doesn't exist. Figure opId and update with that:
+  const matchingOp = Object.values(dag.operators).filter((op) =>
+    op.outputs.includes(artfId)
+  );
+  if (matchingOp.length === 1) {
+    const opId = matchingOp[0].id;
+    updateNodeWithResult(nodes, opId, data);
+  }
+
+  // no match found. For now, we don't handle this case.
+}
+
+function collapsePosition(
+  position: positionResponse,
+  dag: WorkflowDag,
+  artifactResults: { [id: string]: ArtifactResult }
+): positionResponse {
+  const collapsingOp = Object.values(dag.operators).filter(
+    (op) =>
+      op.spec.type === OperatorType.Check ||
+      op.spec.type === OperatorType.Metric
+  );
+  const nodes = position.nodes;
+  const collapsedArtfIds = new Set();
+
+  const nodesMap: { [id: string]: Node<ReactFlowNodeData> } = {};
+  nodes.forEach((n) => {
+    nodesMap[n.id] = n;
+  });
+
+  // This map is useful to re-route edges
+  const collapsedArtfIdToUpstreamOpId: { [artfId: string]: string } = {};
+
+  collapsingOp.forEach((op) => {
+    // we only reduce metric / check nodes if its output size is 1
+    if (op.outputs.length === 1) {
+      const artfId = op.outputs[0];
+      const artfData = artifactResults[artfId]?.result?.data;
+      if (!!nodesMap[op.id]) {
+        nodesMap[op.id].data.result = artfData;
+        collapsedArtfIds.add(artfId);
+        collapsedArtfIdToUpstreamOpId[artfId] = op.id;
+      }
+    }
+  });
+
+  const enrichedNodes = Object.values(nodesMap);
+  const filteredNodes = enrichedNodes.filter(
+    (node) => !collapsedArtfIds.has(node.id)
+  );
+
+  const edges = position.edges ?? [];
+  // route the edges from removed artf nodes to op nodes they collapsed into.
+  edges.forEach((e) => {
+    if (collapsedArtfIds.has(e.source)) {
+      e.source = collapsedArtfIdToUpstreamOpId[e.source];
+    }
+  });
+
+  // remove any edge who's target is a metric artifact.
+  const filteredEdges = edges.filter((e) => !collapsedArtfIds.has(e.target));
+
+  return {
+    edges: filteredEdges,
+    nodes: filteredNodes,
+  };
+}
+
 export const handleGetSelectDagPosition = createAsyncThunk<
   positionResponse,
   {
     apiKey: string;
     operators: { [id: string]: Operator };
     artifacts: { [id: string]: Artifact };
-  }
+  },
+  { state: RootState }
 >(
   'workflowReducer/getSelectDagPosition',
   async (
@@ -352,10 +455,18 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
     );
     const edges = getEdges(operators);
-    return {
+    const allNodes = {
       nodes: opNodes.concat(artfNodes),
       edges: edges,
     } as positionResponse;
+    const dag = thunkAPI.getState().workflowReducer.selectedDag;
+    const artifactResults =
+      thunkAPI.getState().workflowReducer.artifactResults ?? {};
+    if (!!dag) {
+      return collapsePosition(allNodes, dag, artifactResults);
+    }
+
+    return allNodes;
   }
 );
 
@@ -431,6 +542,17 @@ export const workflowSlice = createSlice({
         err: '',
       };
       state.artifactResults[artifactId].result = response;
+      if (
+        isSucceeded(state.selectedDagPosition.loadingStatus) &&
+        !!state.selectedDag
+      ) {
+        updateNodeWithArtifactResult(
+          state.selectedDagPosition.result.nodes,
+          state.selectedDag,
+          artifactId,
+          response.data
+        );
+      }
     });
 
     builder.addCase(handleGetArtifactResults.rejected, (state, action) => {

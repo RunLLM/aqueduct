@@ -42,7 +42,8 @@ func (r *postgresReaderImpl) GetWorkflowsWithLatestRunResult(
 		SELECT DISTINCT ON 
 			(wf.id) wf.id AS id, wf.name AS name, 
 		 	wf.description AS description, wf.created_at AS created_at, 
-		 	wfdr.created_at AS last_run_at, wfdr.status as status 
+		 	wfdr.created_at AS last_run_at, wfdr.status as status, 
+			json_extract_path_text(wfd.engine_config, 'type') as engine
 		FROM 
 			workflow AS wf 
 			INNER JOIN app_user ON wf.user_id = app_user.id
