@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.1
-Released on October 12, 2022.
+Released on October 18, 2022.
 
 ### Key Features
 * Updates the UI to provide a simplified, more responsive layout and surface
