@@ -124,6 +124,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   };
 
   const getTypeLabel = (nodeType: string) => {
+    console.log('getTypeLabel nodeType: ', nodeType);
     const label = nodeTypeToStringLabel[nodeType];
 
     // Return catch all operator / artifact label if not found in lookup table.

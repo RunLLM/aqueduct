@@ -16,6 +16,9 @@ import { metricOperatorNodeIcon } from './MetricOperatorNode';
 import NumericArtifactNode, {
   numericArtifactNodeIcon,
 } from './NumericArtifactNode';
+import ParameterOperatorNode, {
+  paramOperatorNodeIcon,
+} from './ParameterOperatorNode';
 import StringArtifactNode, {
   stringArtifactNodeIcon,
 } from './StringArtifactNode';
@@ -39,6 +42,7 @@ export const nodeTypes = {
   loadOp: DatabaseNode,
   metricOp: MetricOperatorNode,
   checkOp: CheckOperatorNode,
+  paramOp: ParameterOperatorNode,
 };
 
 export const nodeTypeToStringLabel = {
@@ -57,6 +61,7 @@ export const nodeTypeToStringLabel = {
   loadOp: 'Load Operator',
   metricOp: 'Metric Operator',
   checkOp: 'Check Operator',
+  paramOp: 'Parameter Operator',
 };
 
 export const artifactTypeToIconMapping = {
@@ -76,6 +81,7 @@ export const artifactTypeToIconMapping = {
 };
 
 export const operatorTypeToIconMapping = {
+  [OperatorType.Param]: paramOperatorNodeIcon,
   [OperatorType.Function]: functionOperatorNodeIcon,
   [OperatorType.Extract]: databaseNodeIcon,
   [OperatorType.Load]: databaseNodeIcon,
