@@ -42,7 +42,7 @@ jobs:
         run: python3 -m pip install aqueduct-ml
 
       - name: Start the server
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Wait for server
         timeout-minutes: 1
