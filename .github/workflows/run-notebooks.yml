@@ -79,15 +79,40 @@ jobs:
         timeout-minutes: 10
         run: python3 run_notebook.py --path "tutorials/Parameters Tutorial.ipynb"
 
-      - name: Run Sentiment Notebook
-        working-directory: examples
-        timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
-
       - name: Run Churn Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "churn_prediction/Customer Churn Prediction.ipynb"
+
+      - name: Run Sentiment Analysis Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
+
+      # TODO(ENG-1821): Remove this once version 0.1 is released.
+      - name: Populate Housing and Diabetes Data
+        timeout-minutes: 1
+        run: python3 src/resources/demo_db/sqlite/v0.1/create_tables.py
+
+      - name: Run Classifying Diabetes Risk Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "diabetes-classifier/Classifying Diabetes Risk.ipynb"
+
+      - name: Run House Price Prediction Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "house-price-prediction/House Price Prediction.ipynb"
+
+      - name: Run MPG Regressor Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "mpg-regressor/Predicting MPG.ipynb"
+
+      - name: Run Wine Ratings Prediction Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "wine-ratings-prediction/Predict Missing Wine Ratings.ipynb"
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10

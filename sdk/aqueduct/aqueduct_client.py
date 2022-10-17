@@ -296,11 +296,11 @@ class Client:
     def publish_flow(
         self,
         name: str,
-        artifacts: Union[BaseArtifact, List[BaseArtifact]],
-        metrics: Optional[List[NumericArtifact]] = None,
-        checks: Optional[List[BoolArtifact]] = None,
         description: str = "",
         schedule: str = "",
+        artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
+        metrics: Optional[List[NumericArtifact]] = None,
+        checks: Optional[List[BoolArtifact]] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
