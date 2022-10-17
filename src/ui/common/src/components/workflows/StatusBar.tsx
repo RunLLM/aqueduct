@@ -124,7 +124,6 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
   };
 
   const getTypeLabel = (nodeType: string) => {
-    console.log('getTypeLabel nodeType: ', nodeType);
     const label = nodeTypeToStringLabel[nodeType];
 
     // Return catch all operator / artifact label if not found in lookup table.
@@ -539,9 +538,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
