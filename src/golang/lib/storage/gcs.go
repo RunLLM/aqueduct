@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"path"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -20,6 +22,25 @@ func newGCSStorage(gcsConfig *shared.GCSConfig) *gcsStorage {
 	}
 }
 
+// parseBucketAndKey uses a bucket in the form of bucket/path and a key and
+// returns the bucket name and the full key.
+func (g *gcsStorage) parseBucketAndKey(key string) (string, string) {
+	parts := strings.Split(g.gcsConfig.Bucket, "/")
+	if len(parts) == 1 {
+		// There is so subpath for this bucket
+		return parts[0], key
+	}
+
+	bucket := parts[0]
+	keyPath := parts[1:]
+
+	// The subpath should be prefixed to the key to get the full key path
+	keyPath = append(keyPath, key)
+	key = path.Join(keyPath...)
+
+	return bucket, key
+}
+
 func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	client, err := g.newClient(ctx)
 	if err != nil {
@@ -27,8 +48,10 @@ func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 	defer client.Close()
 
+	bucket, key := g.parseBucketAndKey(key)
+
 	// Check if object exists
-	_, err = client.Bucket(g.gcsConfig.Bucket).Object(key).Attrs(ctx)
+	_, err = client.Bucket(bucket).Object(key).Attrs(ctx)
 	if err != nil {
 		if err == storage.ErrObjectNotExist {
 			return nil, ErrObjectDoesNotExist
@@ -36,7 +59,7 @@ func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	rc, err := client.Bucket(g.gcsConfig.Bucket).Object(key).NewReader(ctx)
+	rc, err := client.Bucket(bucket).Object(key).NewReader(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +80,10 @@ func (g *gcsStorage) Put(ctx context.Context, key string, value []byte) error {
 	}
 	defer client.Close()
 
+	bucket, key := g.parseBucketAndKey(key)
+
 	buf := bytes.NewBuffer(value)
-	wc := client.Bucket(g.gcsConfig.Bucket).Object(key).NewWriter(ctx)
+	wc := client.Bucket(bucket).Object(key).NewWriter(ctx)
 
 	if _, err = io.Copy(wc, buf); err != nil {
 		return err
@@ -74,7 +99,9 @@ func (g *gcsStorage) Delete(ctx context.Context, key string) error {
 	}
 	defer client.Close()
 
-	return client.Bucket(g.gcsConfig.Bucket).Object(key).Delete(ctx)
+	bucket, key := g.parseBucketAndKey(key)
+
+	return client.Bucket(bucket).Object(key).Delete(ctx)
 }
 
 // newClient returns a GCS client for this storage object.
