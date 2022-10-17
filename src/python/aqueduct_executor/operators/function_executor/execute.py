@@ -136,7 +136,6 @@ def _execute_function(
         results = [results]
 
     inferred_result_types = [infer_artifact_type(res) for res in results]
-    print("HELLO: inferred result types: ", inferred_result_types)
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
