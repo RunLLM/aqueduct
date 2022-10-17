@@ -440,8 +440,6 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             # Keras models cannot be pickled.
             from tensorflow import keras
             if isinstance(value, keras.Model):
-                print("Keras Model Value has type ", type(value))
-
                 return ArtifactType.TF_KERAS
         except:
             pass
