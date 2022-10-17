@@ -523,7 +523,6 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         try:
             # Keras models cannot be pickled.
             from tensorflow import keras
-
             if isinstance(value, keras.Model):
                 return ArtifactType.TF_KERAS
         except:

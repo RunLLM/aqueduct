@@ -103,7 +103,6 @@ def _read_tf_keras_model(input_bytes: bytes) -> Any:
             f.write(input_bytes)
 
         from tensorflow import keras
-
         return keras.load_model(model_file_path)
     finally:
         if temp_model_dir is not None and os.path.exists(temp_model_dir):
@@ -269,7 +268,7 @@ def _write_tf_keras_model(
         temp_model_dir = _make_temp_dir()
         model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
 
-        output.save_model(model_file_path)
+        output.save(model_file_path)
         storage.put(output_path, open(model_file_path, "rb").read())
     finally:
         if temp_model_dir is not None and os.path.exists(temp_model_dir):
@@ -440,8 +439,9 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         try:
             # Keras models cannot be pickled.
             from tensorflow import keras
-
             if isinstance(value, keras.Model):
+                print("Keras Model Value has type ", type(value))
+
                 return ArtifactType.TF_KERAS
         except:
             pass
