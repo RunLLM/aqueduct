@@ -147,7 +147,7 @@ def _write_tf_keras_model(output: Any) -> bytes:
         temp_model_dir = make_temp_dir()
         model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
 
-        output.save_model(model_file_path)
+        output.save(model_file_path)
         return open(model_file_path, "rb").read()
     finally:
         if temp_model_dir is not None and os.path.exists(temp_model_dir):
