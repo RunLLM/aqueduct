@@ -56,7 +56,7 @@ To see Aqueduct in action on some real-world machine learning workflows, check o
 
 * [Churn Ensemble](https://github.com/aqueducthq/aqueduct/blob/main/examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
 * [Sentiment Analysis](https://github.com/aqueducthq/aqueduct/blob/main/examples/sentiment_analysis/Sentiment%20Model.ipynb)
-* [Impute Missing Wine Data](https://github.com/aqueducthq/aqueduct/blob/main/examples/training_and_inference/Training%20and%20Inference%20in%20a%20Single%20Workflow.ipynb)
+* [Impute Missing Wine Data](https://github.com/aqueducthq/aqueduct/blob/main/examples/training_and_inference/Impute%20Missing%20Wine%20Data.ipynb)
 * ... [and more](https://github.com/aqueducthq/aqueduct/tree/main/examples)!
 
 ## Why Aqueduct?
