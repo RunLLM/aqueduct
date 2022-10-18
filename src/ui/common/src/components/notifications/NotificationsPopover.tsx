@@ -69,7 +69,7 @@ export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
       <Box role="tabpanel" sx={{ minHeight: '400px' }}>
         {filteredNotifications.length > 0 ? (
           <List>
-            {filteredNotifications.map((notification, _) => {
+            {filteredNotifications.map((notification) => {
               return (
                 <NotificationListItem
                   user={user}

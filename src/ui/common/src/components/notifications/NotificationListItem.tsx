@@ -11,10 +11,7 @@ import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { dateString } from '../../utils/metadata';
-import {
-  NotificationAssociation,
-  NotificationLogLevel,
-} from '../../utils/notifications';
+import { NotificationLogLevel } from '../../utils/notifications';
 import { Notification } from '../../utils/notifications';
 
 type Props = {
@@ -27,8 +24,6 @@ export const NotificationListItem: React.FC<Props> = ({
   notification,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const association = notification.association;
-
   const colorMap = {
     [NotificationLogLevel.Success]: 'green.400',
     [NotificationLogLevel.Warning]: 'yellow.400',
@@ -39,39 +34,40 @@ export const NotificationListItem: React.FC<Props> = ({
 
   const borderColor = colorMap[notification.level];
 
-  let title;
-  switch (association.object) {
-    case NotificationAssociation.Workflow:
-    case NotificationAssociation.WorkflowDagResult: {
-      title = !!notification.workflowMetadata ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-          }}
-        >
-          <Typography variant="body1" sx={{ color: 'gray.800' }}>
-            <Typography
-              variant="body1"
-              gutterBottom
-              sx={{
-                fontFamily: 'Monospace',
-                '&:hover': { textDecoration: 'underline' },
-              }}
-            >
-              {notification.workflowMetadata.name}
-            </Typography>
-          </Typography>
-        </Box>
-      ) : (
-        <Box />
-      );
-      break;
-    }
+  // NOTE: Looks like title (and all the code in this switch statement) was unused and was giving us a linter warning :)
+  // let title;
+  // switch (association.object) {
+  //   case NotificationAssociation.Workflow:
+  //   case NotificationAssociation.WorkflowDagResult: {
+  //     title = !!notification.workflowMetadata ? (
+  //       <Box
+  //         sx={{
+  //           display: 'flex',
+  //           flexDirection: 'row',
+  //         }}
+  //       >
+  //         <Typography variant="body1" sx={{ color: 'gray.800' }}>
+  //           <Typography
+  //             variant="body1"
+  //             gutterBottom
+  //             sx={{
+  //               fontFamily: 'Monospace',
+  //               '&:hover': { textDecoration: 'underline' },
+  //             }}
+  //           >
+  //             {notification.workflowMetadata.name}
+  //           </Typography>
+  //         </Typography>
+  //       </Box>
+  //     ) : (
+  //       <Box />
+  //     );
+  //     break;
+  //   }
 
-    default:
-      title = <Box />;
-  }
+  //   default:
+  //     title = <Box />;
+  // }
 
   const content = (
     <Box

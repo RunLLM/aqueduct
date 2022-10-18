@@ -161,7 +161,7 @@ export const handleLoadIntegrationObject = createAsyncThunk<
 );
 
 export const handleListIntegrationObjects = createAsyncThunk<
-  any | string[],
+  string[],
   { apiKey: string; integrationId: string; forceLoad?: boolean },
   { state: RootState }
 >(

@@ -82,7 +82,7 @@ export const filteredList = (
   matchOn: (item: any) => string,
   listItems: (item: any, idx: number) => JSX.Element,
   noItemsMessage: JSX.Element
-) => {
+): JSX.Element => {
   if (allItems.length === 0) {
     return noItemsMessage;
   }

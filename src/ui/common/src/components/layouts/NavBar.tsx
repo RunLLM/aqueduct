@@ -52,9 +52,9 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: any) {}
+  constructor(public readonly address: string, public readonly name: string) {}
 
-  toString() {
+  toString(): string {
     return this.name;
   }
 }
@@ -129,7 +129,7 @@ const NavBar: React.FC<{
                 underline="hover"
                 color="inherit"
                 to={link.address}
-                component={RouterLink as any}
+                component={RouterLink}
               >
                 {link.name}
               </Link>
@@ -186,7 +186,7 @@ const NavBar: React.FC<{
               to={`${pathPrefix}/account`}
               underline="none"
               sx={{ color: 'blue.900' }}
-              component={RouterLink as any}
+              component={RouterLink}
             >
               <MenuItem sx={{ width: '190px' }} disableRipple>
                 <Box sx={{ fontSize: '20px', mr: 1 }}>
