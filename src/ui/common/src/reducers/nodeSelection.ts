@@ -41,7 +41,7 @@ export const ArtifactTypeToNodeTypeMap: { [key in ArtifactType]: NodeType } = {
   [ArtifactType.String]: NodeType.StringArtifact,
   [ArtifactType.Dict]: NodeType.DictArtifact,
   [ArtifactType.Tuple]: NodeType.DictArtifact,
-  [ArtifactType.List]: NodeType.ListArtifact,
+  [ArtifactType.List]: NodeType.DictArtifact, // TODO: ListArtifact,
   [ArtifactType.Image]: NodeType.ImageArtifact,
   [ArtifactType.Bytes]: NodeType.GenericArtifact,
   [ArtifactType.Picklable]: NodeType.GenericArtifact,

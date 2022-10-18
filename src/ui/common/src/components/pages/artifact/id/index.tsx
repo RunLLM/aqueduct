@@ -80,6 +80,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const artifact = (workflowDagResultWithLoadingStatus?.result?.artifacts ??
     {})[artifactId];
 
+  console.log("HELLO: 1 artifact", artifact)
+
   const artifactResultId = artifact?.result?.id;
   const contentWithLoadingStatus = artifactResultId
     ? artifactContents[artifactResultId]
@@ -173,6 +175,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     );
   }
 
+  console.log("Here, artifact should be null: ", artifact)
   if (!artifact) {
     return (
       <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -183,6 +186,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       </Layout>
     );
   }
+  console.log("Passed !artifact check")
 
   const mapOperators = (opIds: string[]) =>
     opIds

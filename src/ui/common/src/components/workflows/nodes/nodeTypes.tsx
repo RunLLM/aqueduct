@@ -31,7 +31,7 @@ export const nodeTypes = {
   stringArtifact: StringArtifactNode,
   imageArtifact: ImageArtifactNode,
   dictArtifact: DictArtifactNode,
-  listArtifact: ListArtifactNode,
+  listArtifact: DictArtifactNode, // TODO: ListArtifactNode,
   genericArtifact: GenericArtifactNode,
   function: FunctionOperatorNode,
 
@@ -69,7 +69,7 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Dict]: dictArtifactNodeIcon,
   // TODO: figure out if we should use other icon for tuple
   [ArtifactType.Tuple]: dictArtifactNodeIcon,
-  [ArtifactType.List]: listArtifactNodeIcon,
+  [ArtifactType.List]: dictArtifactNodeIcon, // TODO: listArtifactNodeIcon
   [ArtifactType.Table]: tableArtifactNodeIcon,
   [ArtifactType.Json]: jsonArtifactNodeIcon,
   // TODO: figure out what to show for bytes.
