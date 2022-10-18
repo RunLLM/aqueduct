@@ -8,7 +8,7 @@ image:
   repository: aqueducthq/aqueduct-py38
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.0.16"
+  tag: "0.1.0"
 
 imagePullSecrets: []
 nameOverride: ""
