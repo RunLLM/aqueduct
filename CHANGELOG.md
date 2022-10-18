@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1
+## 0.1.0
 Released on October 18, 2022.
 
 ### Key Features
