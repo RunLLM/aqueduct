@@ -1,4 +1,3 @@
-import json
 from enum import Enum, EnumMeta
 from typing import Any, Iterable, cast
 
@@ -64,6 +63,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     NUMERIC = "numeric"
     DICT = "dictionary"
     TUPLE = "tuple"
+    LIST = "list"
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
@@ -78,17 +78,3 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
-
-
-artifact_to_serialization = {
-    ArtifactType.STRING: [SerializationType.STRING],
-    ArtifactType.BOOL: [SerializationType.JSON],
-    ArtifactType.NUMERIC: [SerializationType.JSON],
-    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABLE: [SerializationType.TABLE],
-    ArtifactType.JSON: [SerializationType.STRING],
-    ArtifactType.BYTES: [SerializationType.BYTES],
-    ArtifactType.IMAGE: [SerializationType.IMAGE],
-    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
-}

@@ -75,6 +75,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     (state: RootState) => state.artifactResultContentsReducer.contents
   );
 
+  console.log("HELLO: artifact contents ", artifactContents)
+
   const artifact = (workflowDagResultWithLoadingStatus?.result?.artifacts ??
     {})[artifactId];
 

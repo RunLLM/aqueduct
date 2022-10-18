@@ -234,6 +234,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       currentNode.type === NodeType.StringArtifact ||
       currentNode.type === NodeType.ImageArtifact ||
       currentNode.type === NodeType.DictArtifact ||
+      currentNode.type == NodeType.ListArtifact ||
       currentNode.type === NodeType.GenericArtifact
     ) {
       if (selectedDag.artifacts[currentNode.id]) {

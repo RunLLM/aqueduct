@@ -529,6 +529,8 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.DICT
     elif isinstance(value, tuple):
         return ArtifactType.TUPLE
+    elif isinstance(value, list):
+        return ArtifactType.LIST
     else:
         try:
             pickle.dumps(value)

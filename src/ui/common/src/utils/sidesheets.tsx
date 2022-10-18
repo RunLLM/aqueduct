@@ -50,6 +50,7 @@ export function getDataSideSheetContent(
     case NodeType.StringArtifact:
     case NodeType.ImageArtifact:
     case NodeType.DictArtifact:
+    case NodeType.ListArtifact:
     case NodeType.GenericArtifact:
       return (
         <ArtifactDetailsPage

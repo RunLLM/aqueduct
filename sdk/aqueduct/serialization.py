@@ -116,24 +116,11 @@ def _bytes_to_base64_string(content: bytes) -> str:
     return base64.b64encode(content).decode(_DEFAULT_ENCODING)
 
 
-artifact_to_serialization = {
-    ArtifactType.STRING: [SerializationType.STRING],
-    ArtifactType.BOOL: [SerializationType.JSON],
-    ArtifactType.NUMERIC: [SerializationType.JSON],
-    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABLE: [SerializationType.TABLE],
-    ArtifactType.JSON: [SerializationType.STRING],
-    ArtifactType.BYTES: [SerializationType.BYTES],
-    ArtifactType.IMAGE: [SerializationType.IMAGE],
-    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
-}
-
-
 def artifact_type_to_serialization_type(
     artifact_type: ArtifactType, content: Any
 ) -> SerializationType:
     """Copy of the same method on in aqueduct executor."""
+    serialization_type = None
     if artifact_type == ArtifactType.TABLE:
         serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:
@@ -146,16 +133,12 @@ def artifact_type_to_serialization_type(
         serialization_type = SerializationType.JSON
     elif artifact_type == ArtifactType.PICKLABLE:
         serialization_type = SerializationType.PICKLE
-    elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE:
+    elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE or artifact_type == ArtifactType.LIST:
         try:
             json.dumps(content)
             serialization_type = SerializationType.JSON
         except:
             serialization_type = SerializationType.PICKLE
-    else:
-        raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert serialization_type is not None and (
-        serialization_type in artifact_to_serialization[artifact_type]
-    )
+    assert serialization_type is not None, "Unimplemented case for artifact type `%s`" % artifact_type
     return serialization_type
