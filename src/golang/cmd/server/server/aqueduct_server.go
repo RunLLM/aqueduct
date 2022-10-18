@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/maintenance"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
@@ -52,6 +55,9 @@ type AqServer struct {
 	AqPath     string
 	*Readers
 	*Writers
+
+	UnderMaintenance atomic.Bool
+	RequestMutex     sync.RWMutex
 }
 
 func NewAqServer() *AqServer {
@@ -132,6 +138,8 @@ func NewAqServer() *AqServer {
 		Readers:       readers,
 		Writers:       writers,
 	}
+
+	s.UnderMaintenance.Store(false)
 
 	allowedOrigins := []string{"*"}
 
@@ -222,9 +230,13 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 }
 
 func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
-	var middleware alice.Chain
+	s.RequestMutex.RLock()
+	defer s.RequestMutex.RUnlock()
+
+	var middlewareChain alice.Chain
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
-		middleware = alice.New(
+		middlewareChain = alice.New(
+			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 		)
@@ -235,7 +247,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	s.Router.Method(
 		string(handlerObj.Method()),
 		route,
-		middleware.ThenFunc(ExecuteHandler(s, handlerObj)),
+		middlewareChain.ThenFunc(ExecuteHandler(s, handlerObj)),
 	)
 }
 
