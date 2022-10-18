@@ -1,6 +1,6 @@
 apiVersion: v2
 name: aqueduct-helm
-description: A Helm chart for Kubernetes
+description: Helm chart for deploying Aqueduct on Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #
