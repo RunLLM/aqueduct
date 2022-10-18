@@ -100,6 +100,7 @@ interface DataTableProps {
   minColumnWidth?: number;
   onRowClick?: () => void;
   rowCount: number;
+  rowGetter: (row: Row) => any;
   rowHeight?: number;
 }
 
