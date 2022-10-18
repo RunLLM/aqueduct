@@ -483,7 +483,7 @@ export const workflowSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(handleGetSelectDagPosition.pending, (state, _) => {
+    builder.addCase(handleGetSelectDagPosition.pending, (state) => {
       state.selectedDagPosition = {
         loadingStatus: { loading: LoadingStatusEnum.Loading, err: '' },
       };
@@ -564,7 +564,7 @@ export const workflowSlice = createSlice({
       };
     });
 
-    builder.addCase(handleListWorkflowSavedObjects.pending, (state, _) => {
+    builder.addCase(handleListWorkflowSavedObjects.pending, (state) => {
       state.savedObjects.loadingStatus = {
         loading: LoadingStatusEnum.Loading,
         err: '',

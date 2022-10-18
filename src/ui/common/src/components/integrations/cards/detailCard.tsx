@@ -25,7 +25,6 @@ type DetailIntegrationCardProps = {
 
 export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
   integration,
-  connectStatus = undefined,
 }) => {
   let serviceCard;
   switch (integration.service) {

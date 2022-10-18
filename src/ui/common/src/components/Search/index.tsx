@@ -18,11 +18,7 @@ type Props = {
   setSearchTerm: (v: string) => void;
 };
 
-export const SearchBar: React.FC<Props> = ({
-  options,
-  getOptionLabel,
-  setSearchTerm,
-}) => {
+export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}

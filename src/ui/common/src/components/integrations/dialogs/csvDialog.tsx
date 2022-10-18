@@ -106,7 +106,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
           }
         }}
         displayFile={displayFileFn}
-        onReset={(_) => {
+        onReset={() => {
           setName('');
           setCSV(null);
         }}

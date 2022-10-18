@@ -79,7 +79,7 @@ export const GCSDialog: React.FC<Props> = ({
           readCredentialsFile(file, setFile);
         }}
         displayFile={null}
-        onReset={(_) => {
+        onReset={() => {
           setFile(null);
         }}
       />

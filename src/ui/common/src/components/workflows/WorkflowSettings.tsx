@@ -649,7 +649,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   let successfullyDeleted = 0;
   let unsuccessfullyDeleted = 0;
 
-  Object.entries(deleteWorkflowResults).map(([_, objectResults]) =>
+  Object.entries(deleteWorkflowResults).map(([_item, objectResults]) =>
     objectResults.map((objectResult) => {
       if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
         successfullyDeleted += 1;

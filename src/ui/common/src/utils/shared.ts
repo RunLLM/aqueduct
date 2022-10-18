@@ -12,19 +12,19 @@ export type LoadingStatus = {
   err: string;
 };
 
-export function isInitial(status: LoadingStatus) {
+export function isInitial(status: LoadingStatus): boolean {
   return status.loading === LoadingStatusEnum.Initial;
 }
 
-export function isLoading(status: LoadingStatus) {
+export function isLoading(status: LoadingStatus): boolean {
   return status.loading === LoadingStatusEnum.Loading;
 }
 
-export function isSucceeded(status: LoadingStatus) {
+export function isSucceeded(status: LoadingStatus): boolean {
   return status.loading === LoadingStatusEnum.Succeeded;
 }
 
-export function isFailed(status: LoadingStatus) {
+export function isFailed(status: LoadingStatus): boolean {
   return status.loading === LoadingStatusEnum.Failed;
 }
 
