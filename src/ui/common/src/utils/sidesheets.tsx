@@ -35,7 +35,7 @@ export function getDataSideSheetContent(
         px={'16px'}
         maxWidth="800px"
         height="100vh"
-        sx={{ overflowY: 'scroll' }}
+        sx={{ overflowY: 'hidden' }}
       >
         {children}
       </Box>
