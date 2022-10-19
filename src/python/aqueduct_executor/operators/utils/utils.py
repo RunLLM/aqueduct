@@ -29,6 +29,7 @@ from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDel
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from pandas import DataFrame
 from PIL import Image
+from aqueduct.serialization import deserialize
 
 _DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
@@ -121,24 +122,24 @@ __deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], An
     SerializationType.TF_KERAS: _read_tf_keras_model,
 }
 
-
-def deserialize(
-    serialization_type: SerializationType,
-    artifact_type: ArtifactType,
-    content: bytes,
-) -> Any:
-    """Deserializes a byte string into the appropriate python object."""
-    if serialization_type not in __deserialization_function_mapping:
-        raise Exception("Unsupported serialization type %s" % serialization_type)
-
-    deserialized_val = __deserialization_function_mapping[serialization_type](content)
-
-    # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
-    # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
-    # between the two here using the expected artifact type, at deserialization time.
-    if artifact_type == ArtifactType.TUPLE:
-        return tuple(deserialized_val)
-    return deserialized_val
+#
+# def deserialize(
+#     serialization_type: SerializationType,
+#     artifact_type: ArtifactType,
+#     content: bytes,
+# ) -> Any:
+#     """Deserializes a byte string into the appropriate python object."""
+#     if serialization_type not in __deserialization_function_mapping:
+#         raise Exception("Unsupported serialization type %s" % serialization_type)
+#
+#     deserialized_val = __deserialization_function_mapping[serialization_type](content)
+#
+#     # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
+#     # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
+#     # between the two here using the expected artifact type, at deserialization time.
+#     if artifact_type == ArtifactType.TUPLE:
+#         return tuple(deserialized_val)
+#     return deserialized_val
 
 
 def read_artifacts(
