@@ -19,7 +19,6 @@ const ArtifactContent: React.FC<Props> = ({
   artifact,
   contentWithLoadingStatus,
 }) => {
-
   if (!artifact.result) {
     return (
       <Typography variant="h5" component="div" marginBottom="8px">
@@ -81,7 +80,11 @@ const ArtifactContent: React.FC<Props> = ({
           />
         );
       } catch (err) {
-        return <Alert severity="error" title="Cannot parse image data.">{err}</Alert>;
+        return (
+          <Alert severity="error" title="Cannot parse image data.">
+            {err}
+          </Alert>
+        );
       }
     case SerializationType.Json:
       try {
@@ -97,7 +100,11 @@ const ArtifactContent: React.FC<Props> = ({
           </Typography>
         );
       } catch (err) {
-        return <Alert severity="error" title="Cannot parse json data.">{err.toString()}</Alert>;
+        return (
+          <Alert severity="error" title="Cannot parse json data.">
+            {err.toString()}
+          </Alert>
+        );
       }
     case SerializationType.String:
       return (
