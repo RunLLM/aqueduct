@@ -242,6 +242,7 @@ def write_artifact(
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = artifact_type_to_serialization_type(
         artifact_type, content
     ).value
+    print("HELLO: write artifact serialization type %s", output_metadata[_METADATA_SERIALIZATION_TYPE_KEY])
 
     if output_path is not None:
         _serialization_function_mapping[output_metadata[_METADATA_SERIALIZATION_TYPE_KEY]](

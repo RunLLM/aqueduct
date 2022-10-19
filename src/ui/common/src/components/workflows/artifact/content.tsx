@@ -19,6 +19,9 @@ const ArtifactContent: React.FC<Props> = ({
   artifact,
   contentWithLoadingStatus,
 }) => {
+  console.log("Artifact: ", artifact)
+  console.log("Content with loading status: ", contentWithLoadingStatus)
+
   if (!artifact.result) {
     return (
       <Typography variant="h5" component="div" marginBottom="8px">
@@ -55,6 +58,8 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
+  console.log("Artifact Content: serialization_type ", artifact.result.serialization_type)
+
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:
       try {
@@ -62,9 +67,8 @@ const ArtifactContent: React.FC<Props> = ({
         return <PaginatedTable data={data} />;
       } catch (err) {
         return (
-          <Alert title="Cannot parse table data.">
-            {err}
-            {contentWithLoadingStatus.data}
+          <Alert severity="error" title="Cannot parse table data.">
+            {`${err.toString}\n${contentWithLoadingStatus.data}`}
           </Alert>
         );
       }
@@ -81,7 +85,7 @@ const ArtifactContent: React.FC<Props> = ({
           />
         );
       } catch (err) {
-        return <Alert title="Cannot parse image data.">{err}</Alert>;
+        return <Alert severity="error" title="Cannot parse image data.">{err}</Alert>;
       }
     case SerializationType.Json:
       try {
@@ -97,7 +101,7 @@ const ArtifactContent: React.FC<Props> = ({
           </Typography>
         );
       } catch (err) {
-        return <Alert title="Cannot parse json data.">{err}</Alert>;
+        return <Alert severity="error" title="Cannot parse json data.">{err.toString()}</Alert>;
       }
     case SerializationType.String:
       return (

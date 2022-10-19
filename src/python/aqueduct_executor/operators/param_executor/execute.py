@@ -32,19 +32,22 @@ def run(spec: ParamSpec) -> None:
     try:
         val_bytes = storage.get(spec.output_content_path)
         val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
+        inferred_type = infer_artifact_type(val)
+
+        print("HELLO param inferred type: ", inferred_type)
+        print("HELLO param serialization type: ", spec.serialization_type)
 
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.
         utils.write_artifact(
             storage,
-            spec.expected_type,
+            inferred_type,
             None,  # output_content_path
             spec.output_metadata_path,
             val,
             system_metadata={},
         )
 
-        inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
             raise ExecFailureException(
                 failure_type=enums.FailureType.USER_FATAL,

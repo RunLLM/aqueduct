@@ -264,11 +264,19 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Box>
 
         {Object.keys(paramNameToDisplayProps).length > 0 && (
-          <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
-            {' '}
-            Parameters{' '}
-          </Typography>
-        )}
+            <Box>
+              <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
+                {' '}
+                Parameters{' '}
+              </Typography>
+              <Typography variant="caption">
+                For json-serializable types like dictionaries or lists, enter the string-serialized representation, without the outer quotes.
+                That is to say, the result of `json.dumps(val)`.
+              </Typography>
+            </Box>
+
+          )
+        }
         {Object.keys(paramNameToDisplayProps).map((paramName) => {
           return (
             <Box key={paramName}>
