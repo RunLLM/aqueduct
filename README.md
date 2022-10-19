@@ -62,9 +62,9 @@ Each Workflow can either be run on a fixed schedule or triggered on-demand.
 
 To see Aqueduct in action on some real-world machine learning workflows, check out some of our examples:
 
-* [Churn Ensemble](https://github.com/aqueducthq/aqueduct/blob/main/examples/churn_prediction/Build%20and%20Deploy%20Churn%20Ensemble.ipynb)
-* [Sentiment Analysis](https://github.com/aqueducthq/aqueduct/blob/main/examples/sentiment_analysis/Sentiment%20Model.ipynb)
-* [Impute Missing Wine Data](https://github.com/aqueducthq/aqueduct/blob/main/examples/training_and_inference/Impute%20Missing%20Wine%20Data.ipynb)
+* [Churn Ensemble](https://github.com/aqueducthq/aqueduct/blob/main/examples/churn_prediction/Customer%20Churn%20Prediction.ipynb)
+* [Sentiment Analysis](https://github.com/aqueducthq/aqueduct/blob/main/examples/sentiment-analysis/Sentiment%20Model.ipynb)
+* [Impute Missing Wine Data](https://github.com/aqueducthq/aqueduct/blob/main/examples/wine-ratings-prediction/Predict%20Missing%20Wine%20Ratings.ipynb)
 * ... [and more](https://github.com/aqueducthq/aqueduct/tree/main/examples)!
 
 ## What's next?
