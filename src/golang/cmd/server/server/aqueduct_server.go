@@ -57,7 +57,7 @@ type AqServer struct {
 	*Writers
 
 	// UnderMaintenance indicates whether the server is currently down for system maintenance.
-	UnderMaintenance atomic.Bool
+	UnderMaintenance atomic.Value
 	// RequestMutex's read lock is acquired and released by each request to indicate when there
 	// are no more active requests.
 	RequestMutex sync.RWMutex
