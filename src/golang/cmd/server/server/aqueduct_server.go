@@ -193,8 +193,7 @@ func (s *AqServer) Init() error {
 		readers.IntegrationReader,
 		db,
 	); err != nil {
-		db.Close()
-		log.Fatalf("Unable to sync vault with storage: %v", err)
+		return err
 	}
 
 	eng, err := engine.NewAqEngine(
