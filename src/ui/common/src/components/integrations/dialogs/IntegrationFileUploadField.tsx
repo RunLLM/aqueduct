@@ -115,7 +115,9 @@ export const IntegrationFileUploadField: React.FC<
         {displayFile ? (
           displayFile(file)
         ) : (
-          <CodeBlock language="plaintext">{file.data}</CodeBlock>
+          <CodeBlock language="plaintext">
+            <>{file.data}</>
+          </CodeBlock>
         )}
       </Box>
     );

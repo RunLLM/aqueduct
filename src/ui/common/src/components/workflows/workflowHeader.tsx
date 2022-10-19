@@ -203,8 +203,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       // Serialize the user's input string appropriately into base64. The input can either be a
       // 1) number 2) string 3) json.
       try {
-        const val = JSON.parse(strVal);
-
         // All jsonable values are serialized as json.
         serializedParams[key] = {
           val: btoa(strVal),

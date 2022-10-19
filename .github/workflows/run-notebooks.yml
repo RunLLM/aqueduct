@@ -11,14 +11,14 @@ on:
   pull_request:
     paths:
       - '.github/workflows/run-notebooks.yml'
-      - "examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+      - "examples/churn_prediction/Customer Churn Tutorial.ipynb"
       - "examples/sentiment_analysis/Sentiment Model.ipynb"
       - "integration_tests/notebook/imported_function.ipynb"
 
 jobs:
   run-notebooks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
 
@@ -42,7 +42,7 @@ jobs:
         run: python3 -m pip install aqueduct-ml
 
       - name: Start the server
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Wait for server
         timeout-minutes: 1
@@ -57,7 +57,7 @@ jobs:
         run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install Packages needed by the notebooks
         run: python3 -m pip install sklearn transformers torch
@@ -69,28 +69,58 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Run Sentiment Notebook
+      - name: Run Quickstart Tutorial Notebook
         working-directory: examples
-        timeout-minutes: 10
-        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --server_address localhost:8080
+        timeout-minutes: 5
+        run: python3 run_notebook.py --path "tutorials/Quickstart Tutorial.ipynb"
 
-      - name: Run Churn Notebook
+      - name: Run Parameter Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "churn_prediction/Build and Deploy Churn Ensemble.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "tutorials/Parameters Tutorial.ipynb"
 
-      - name: Run Parameterization Notebook
+      - name: Run Churn Tutorial Notebook
         working-directory: examples
         timeout-minutes: 10
-        run: python3 run_notebook.py --path "parameterization/Using Parameters.ipynb" --server_address localhost:8080
+        run: python3 run_notebook.py --path "churn_prediction/Customer Churn Prediction.ipynb"
+
+      - name: Run Sentiment Analysis Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
+
+      # TODO(ENG-1821): Remove this once version 0.1 is released.
+      - name: Populate Housing and Diabetes Data
+        timeout-minutes: 1
+        run: python3 src/resources/demo_db/sqlite/v0.1/create_tables.py
+
+      - name: Run Classifying Diabetes Risk Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "diabetes-classifier/Classifying Diabetes Risk.ipynb"
+
+      - name: Run House Price Prediction Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "house-price-prediction/House Price Prediction.ipynb"
+
+      - name: Run MPG Regressor Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "mpg-regressor/Predicting MPG.ipynb"
+
+      - name: Run Wine Ratings Prediction Notebook
+        working-directory: examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "wine-ratings-prediction/Predict Missing Wine Ratings.ipynb"
 
       - name: Run Imported Function Notebook
         timeout-minutes: 10
-        run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb" --server_address localhost:8080
+        run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb"
       
       - name: Run Util File Dependency Notebook
         timeout-minutes: 10
-        run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb" --server_address localhost:8080
+        run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb"
 
       - uses: actions/upload-artifact@v3
         if: always()

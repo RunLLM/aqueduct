@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 
 import { theme } from '../../styles/theme/theme';
 
-const AqueductButton = styled(Button)(({ theme: Theme }) => {
+const AqueductButton = styled(Button)(() => {
   return {
     [`&.${buttonClasses.root}`]: {
       textTransform: 'none',

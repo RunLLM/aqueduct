@@ -460,6 +460,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             width={SidesheetWidth}
             maxWidth={SidesheetWidth}
             minHeight="100vh"
+            sx={{ overflow: 'hidden' }}
           >
             <Box
               width="100%"

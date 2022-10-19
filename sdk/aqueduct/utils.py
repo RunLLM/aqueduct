@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -31,6 +30,7 @@ from aqueduct.logger import logger
 from aqueduct.operators import Operator, ParamSpec
 from aqueduct.serialization import (
     artifact_type_to_serialization_type,
+    make_temp_dir,
     serialization_function_mapping,
     serialize_val,
 )
@@ -160,22 +160,6 @@ def delete_zip_folder_and_file(dir_name: str) -> None:
         shutil.rmtree(dir_name)
 
 
-def make_zip_dir() -> str:
-    """
-    Given a base path, creates an unique directory and returns the path.
-    """
-    created = False
-    # Try to create the directory. If it already exists, try again with a new name.
-    while not created:
-        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
-        try:
-            os.mkdir(dir_path)
-            created = True
-        except FileExistsError:
-            pass
-    return str(dir_path)
-
-
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     op_name: str,
@@ -205,7 +189,7 @@ def serialize_function(
     """
     dir_path = None
     try:
-        dir_path = make_zip_dir()
+        dir_path = make_temp_dir()
         _package_files_and_requirements(
             func, os.path.join(os.getcwd(), dir_path), file_dependencies, requirements
         )
@@ -534,7 +518,18 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             pickle.dumps(value)
             return ArtifactType.PICKLABLE
         except:
-            raise Exception("Failed to map type %s to supported artifact type." % type(value))
+            pass
+
+        try:
+            # tf.keras.Model's can be pickled, but some classes that inherit from it cannot (eg. `tfrs.Model`)
+            from tensorflow import keras
+
+            if isinstance(value, keras.Model):
+                return ArtifactType.TF_KERAS
+        except:
+            pass
+
+        raise Exception("Failed to map type %s to supported artifact type." % type(value))
 
 
 def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
