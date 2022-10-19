@@ -23,6 +23,9 @@ export const SearchBar: React.FC<Props> = ({
   getOptionLabel,
   setSearchTerm,
 }) => {
+  if (options.length === 0) {
+    return null;
+  }
   return (
     <Autocomplete
       sx={{ width: 300 }}
@@ -36,7 +39,7 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => option.name || ''}
+      getOptionLabel={getOptionLabel}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">
@@ -52,7 +55,7 @@ export const SearchBar: React.FC<Props> = ({
         );
       }}
       renderOption={(props, option, { inputValue }) => {
-        const label = option.name || '';
+        const label = getOptionLabel(option);
 
         // Matches only matches if the inputValue matches the start of any word (separated by space.)
         // We may want to modify the functionality in the future because many workflow and artifact names
