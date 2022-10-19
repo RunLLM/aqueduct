@@ -63,7 +63,9 @@ type artifactResultMetadata struct {
 
 type getArtifactResultResponse struct {
 	Metadata *artifactResultMetadata `json:"metadata"`
-	Data     []byte                  `json:"data"`
+
+	// Only populated if the artifact content was written, regardless of whether the operator succeeded or not.
+	Data []byte `json:"data"`
 }
 
 type GetArtifactResultHandler struct {
@@ -230,17 +232,11 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		Metadata: &metadata,
 	}
 
-	if dbArtifactResult.Status == shared.SucceededExecutionStatus {
-		// We retrieve the data only when the artifact result status is `succeeded`.
-		data, err := storage.NewStorage(&workflowDag.StorageConfig).Get(
-			ctx,
-			dbArtifactResult.ContentPath,
-		)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
-		}
-
+	data, err := storage.NewStorage(&workflowDag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
+	if err == nil {
 		response.Data = data
+	} else if err != storage.ErrObjectDoesNotExist {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}
 
 	return response, http.StatusOK, nil

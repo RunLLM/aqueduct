@@ -169,6 +169,9 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 }
 
 // TODO: We should replace this once we migrate to services based on `artifact` objects
+// Fetches the artifact contents for all compact artifact data types. Returns a map from
+// content path to content. If an artifact's data was never written, it's entry will be
+// excluded from the map.
 func getArtifactContents(
 	ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
@@ -179,10 +182,14 @@ func getArtifactContents(
 	for _, artfResult := range dbArtifactResults {
 		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
 			// These artifacts has small content size and we can safely include them all in response.
-			if artf.Type.IsCompact() && !artfResult.ExecState.IsNull && artfResult.ExecState.ExecutionState.Terminated() {
+			if artf.Type.IsCompact() {
 				path := artfResult.ContentPath
-				// Read data from storage and deserialize payload to `container`
+				// Read data from storage and deserialize payload to `container`.
 				contentBytes, err := storageObj.Get(ctx, path)
+				if err == storage.ErrObjectDoesNotExist {
+					// If the data does not exist, skip the fetch.
+					continue
+				}
 				if err != nil {
 					return nil, errors.Wrap(err, "Unable to get artifact content from storage")
 				}
