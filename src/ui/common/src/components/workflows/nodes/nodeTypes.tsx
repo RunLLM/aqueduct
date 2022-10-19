@@ -11,6 +11,7 @@ import { functionOperatorNodeIcon } from './FunctionOperatorNode';
 import GenericArtifactNode from './GenericArtifactNode';
 import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
 import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
+import ListArtifactNode, { listArtifactNodeIcon } from './ListArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
 import { metricOperatorNodeIcon } from './MetricOperatorNode';
 import NumericArtifactNode, {
@@ -20,7 +21,6 @@ import StringArtifactNode, {
   stringArtifactNodeIcon,
 } from './StringArtifactNode';
 import TableArtifactNode, { tableArtifactNodeIcon } from './TableArtifactNode';
-import ListArtifactNode, {listArtifactNodeIcon} from "./ListArtifactNode";
 
 export const nodeTypes = {
   database: DatabaseNode,
@@ -31,7 +31,7 @@ export const nodeTypes = {
   stringArtifact: StringArtifactNode,
   imageArtifact: ImageArtifactNode,
   dictArtifact: DictArtifactNode,
-  listArtifact: DictArtifactNode, // TODO: ListArtifactNode,
+  listArtifact: ListArtifactNode,
   genericArtifact: GenericArtifactNode,
   function: FunctionOperatorNode,
 
@@ -69,7 +69,7 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Dict]: dictArtifactNodeIcon,
   // TODO: figure out if we should use other icon for tuple
   [ArtifactType.Tuple]: dictArtifactNodeIcon,
-  [ArtifactType.List]: dictArtifactNodeIcon, // TODO: listArtifactNodeIcon
+  [ArtifactType.List]: listArtifactNodeIcon,
   [ArtifactType.Table]: tableArtifactNodeIcon,
   [ArtifactType.Json]: jsonArtifactNodeIcon,
   // TODO: figure out what to show for bytes.

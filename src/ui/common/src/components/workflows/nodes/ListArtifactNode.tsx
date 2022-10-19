@@ -5,21 +5,21 @@ import { ReactFlowNodeData } from '../../../utils/reactflow';
 import Node from './Node';
 
 type Props = {
-    data: ReactFlowNodeData;
-    isConnectable: boolean;
+  data: ReactFlowNodeData;
+  isConnectable: boolean;
 };
 
 export const listArtifactNodeIcon = faList;
 
 const ListArtifactNode: React.FC<Props> = ({ data, isConnectable }) => {
-    return (
-        <Node
-            icon={listArtifactNodeIcon}
-            data={data}
-            isConnectable={isConnectable}
-            defaultLabel="List"
-        />
-    );
+  return (
+    <Node
+      icon={listArtifactNodeIcon}
+      data={data}
+      isConnectable={isConnectable}
+      defaultLabel="List"
+    />
+  );
 };
 
 export default memo(ListArtifactNode);

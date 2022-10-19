@@ -43,8 +43,6 @@ export function getDataSideSheetContent(
   };
 
   switch (currentNode.type) {
-    case NodeType.ListArtifact:
-      console.log("HELLO: current node has list type")
     case NodeType.BoolArtifact:
     case NodeType.NumericArtifact:
     case NodeType.TableArtifact:
@@ -52,6 +50,7 @@ export function getDataSideSheetContent(
     case NodeType.StringArtifact:
     case NodeType.ImageArtifact:
     case NodeType.DictArtifact:
+    case NodeType.ListArtifact:
     case NodeType.GenericArtifact:
       return (
         <ArtifactDetailsPage
