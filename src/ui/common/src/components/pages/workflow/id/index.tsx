@@ -414,7 +414,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             },
           }}
         >
-          <Box width="800px" maxWidth="800px" minHeight="100vh">
+          <Box
+            width="800px"
+            maxWidth="800px"
+            minHeight="100vh"
+            sx={{ overflow: 'scroll' }}
+          >
             <Box
               width="100%"
               sx={{ backgroundColor: theme.palette.gray['100'] }}
