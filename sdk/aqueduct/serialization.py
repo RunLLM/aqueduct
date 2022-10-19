@@ -97,7 +97,6 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 
-# WARNING: A copy of this function exists in `aqueduct_executor`. Make sure the two are in sync!
 def deserialize(
     serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
 ) -> Any:

@@ -2,10 +2,7 @@ import io
 import json
 import os
 import shutil
-import tempfile
-import uuid
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cloudpickle as pickle
 import numpy as np
@@ -49,97 +46,8 @@ def _read_csv(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
 
 
-def _read_table_input(input_bytes: bytes) -> pd.DataFrame:
-    return pd.read_json(io.BytesIO(input_bytes), orient="table")
-
-
-def _read_json_input(input_bytes: bytes) -> Any:
+def _read_json_bytes(input_bytes: bytes) -> Any:
     return json.loads(input_bytes.decode(_DEFAULT_ENCODING))
-
-
-def _read_pickle_input(input_bytes: bytes) -> Any:
-    return pickle.loads(input_bytes)
-
-
-def _read_image_input(input_bytes: bytes) -> Image.Image:
-    return Image.open(io.BytesIO(input_bytes))
-
-
-def _read_string_input(input_bytes: bytes) -> str:
-    return input_bytes.decode(_DEFAULT_ENCODING)
-
-
-def _read_bytes_input(input_bytes: bytes) -> bytes:
-    return input_bytes
-
-
-# Duplicated in the SDK.
-def _make_temp_dir() -> str:
-    """
-    Create a unique, temporary directory in the local filesystem and returns the path.
-    """
-    dir_path = None
-    created = False
-    # Try to create the directory. If it already exists, try again with a new name.
-    while not created:
-        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
-        try:
-            os.mkdir(dir_path)
-            created = True
-        except FileExistsError:
-            pass
-
-    assert dir_path is not None
-    return str(dir_path)
-
-
-# Returns a tf.keras.Model type. We don't assume that every user has it installed,
-# so we return "Any" type.
-def _read_tf_keras_model(input_bytes: bytes) -> Any:
-    temp_model_dir = None
-    try:
-        temp_model_dir = _make_temp_dir()
-        model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
-        with open(model_file_path, "wb") as f:
-            f.write(input_bytes)
-
-        from tensorflow import keras
-
-        return keras.load_model(model_file_path)
-    finally:
-        if temp_model_dir is not None and os.path.exists(temp_model_dir):
-            shutil.rmtree(temp_model_dir)
-
-
-# Not intended for use outside of `deserialize()`.
-__deserialization_function_mapping: Dict[SerializationType, Callable[[bytes], Any]] = {
-    SerializationType.TABLE: _read_table_input,
-    SerializationType.JSON: _read_json_input,
-    SerializationType.PICKLE: _read_pickle_input,
-    SerializationType.IMAGE: _read_image_input,
-    SerializationType.STRING: _read_string_input,
-    SerializationType.BYTES: _read_bytes_input,
-    SerializationType.TF_KERAS: _read_tf_keras_model,
-}
-
-#
-# def deserialize(
-#     serialization_type: SerializationType,
-#     artifact_type: ArtifactType,
-#     content: bytes,
-# ) -> Any:
-#     """Deserializes a byte string into the appropriate python object."""
-#     if serialization_type not in __deserialization_function_mapping:
-#         raise Exception("Unsupported serialization type %s" % serialization_type)
-#
-#     deserialized_val = __deserialization_function_mapping[serialization_type](content)
-#
-#     # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
-#     # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
-#     # between the two here using the expected artifact type, at deserialization time.
-#     if artifact_type == ArtifactType.TUPLE:
-#         return tuple(deserialized_val)
-#     return deserialized_val
 
 
 def read_artifacts(
@@ -191,10 +99,8 @@ def _read_metadata_key(
     storage: Storage, input_metadata_paths: List[str], key_name: str
 ) -> List[Dict[str, Any]]:
     metadata_inputs = [
-        _read_json_input(storage.get(input_path)) for input_path in input_metadata_paths
+        _read_json_bytes(storage.get(input_path)) for input_path in input_metadata_paths
     ]
-    print("key name is", key_name)
-    print("metadata_inputs is", metadata_inputs)
     if any(key_name not in metadata for metadata in metadata_inputs):
         raise Exception(key_name + " does not exist in input metadata.")
     return [metadata[key_name] for metadata in metadata_inputs]
