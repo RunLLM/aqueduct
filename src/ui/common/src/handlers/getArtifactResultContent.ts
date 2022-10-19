@@ -76,9 +76,9 @@ export const handleGetArtifactResultContent = createAsyncThunk<
 
         artifactResult.data = await toBase64(formData.get('data') as File);
       }
+      return artifactResult.data;
     }
-    // TODO: If the artifact result has no data, undefined is returned here.
-    // This happens if a non-parameter artifact's upstream operator failed.
-    return artifactResult.data;
+
+    return undefined;
   }
 );
