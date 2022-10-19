@@ -523,6 +523,7 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         try:
             # tf.keras.Model's can be pickled, but some classes that inherit from it cannot (eg. `tfrs.Model`)
             from tensorflow import keras
+
             if isinstance(value, keras.Model):
                 return ArtifactType.TF_KERAS
         except:

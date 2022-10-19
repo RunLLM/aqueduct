@@ -78,6 +78,7 @@ def _read_tf_keras_model(content: bytes) -> Any:
             f.write(content)
 
         from tensorflow import keras
+
         return keras.load_model(model_file_path)
     finally:
         if temp_model_dir is not None and os.path.exists(temp_model_dir):

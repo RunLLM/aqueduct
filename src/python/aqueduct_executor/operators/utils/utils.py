@@ -103,6 +103,7 @@ def _read_tf_keras_model(input_bytes: bytes) -> Any:
             f.write(input_bytes)
 
         from tensorflow import keras
+
         return keras.load_model(model_file_path)
     finally:
         if temp_model_dir is not None and os.path.exists(temp_model_dir):
@@ -439,6 +440,7 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         try:
             # tf.keras.Model's can be pickled, but some classes that inherit from it cannot (eg. `tfrs.Model`)
             from tensorflow import keras
+
             if isinstance(value, keras.Model):
                 return ArtifactType.TF_KERAS
         except:
