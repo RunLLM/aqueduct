@@ -34,41 +34,6 @@ export const NotificationListItem: React.FC<Props> = ({
 
   const borderColor = colorMap[notification.level];
 
-  // NOTE: Looks like title (and all the code in this switch statement) was unused and was giving us a linter warning :)
-  // let title;
-  // switch (association.object) {
-  //   case NotificationAssociation.Workflow:
-  //   case NotificationAssociation.WorkflowDagResult: {
-  //     title = !!notification.workflowMetadata ? (
-  //       <Box
-  //         sx={{
-  //           display: 'flex',
-  //           flexDirection: 'row',
-  //         }}
-  //       >
-  //         <Typography variant="body1" sx={{ color: 'gray.800' }}>
-  //           <Typography
-  //             variant="body1"
-  //             gutterBottom
-  //             sx={{
-  //               fontFamily: 'Monospace',
-  //               '&:hover': { textDecoration: 'underline' },
-  //             }}
-  //           >
-  //             {notification.workflowMetadata.name}
-  //           </Typography>
-  //         </Typography>
-  //       </Box>
-  //     ) : (
-  //       <Box />
-  //     );
-  //     break;
-  //   }
-
-  //   default:
-  //     title = <Box />;
-  // }
-
   const content = (
     <Box
       sx={{
@@ -135,11 +100,10 @@ export const NotificationListItem: React.FC<Props> = ({
     <Link
       underline="none"
       color="inherit"
-      href={`${getPathPrefix()}/workflow/${
-        notification.workflowMetadata.id
-      }?workflowDagResultId=${encodeURI(
-        notification.workflowMetadata.dag_result_id
-      )}`}
+      href={`${getPathPrefix()}/workflow/${notification.workflowMetadata.id
+        }?workflowDagResultId=${encodeURI(
+          notification.workflowMetadata.dag_result_id
+        )}`}
     >
       <ListItem
         sx={{
