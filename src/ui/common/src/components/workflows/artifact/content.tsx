@@ -19,8 +19,6 @@ const ArtifactContent: React.FC<Props> = ({
   artifact,
   contentWithLoadingStatus,
 }) => {
-  console.log("Artifact: ", artifact)
-  console.log("Content with loading status: ", contentWithLoadingStatus)
 
   if (!artifact.result) {
     return (
@@ -57,8 +55,6 @@ const ArtifactContent: React.FC<Props> = ({
       </Alert>
     );
   }
-
-  console.log("Artifact Content: serialization_type ", artifact.result.serialization_type)
 
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:

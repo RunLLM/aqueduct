@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -57,7 +56,6 @@ func newParamOperator(
 }
 
 func (po *paramOperatorImpl) JobSpec() job.Spec {
-	log.Errorf("HELLO: parameter serialization type: %s", po.dbOperator.Spec.Param().SerializationType)
 	return &job.ParamSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.ParamJobType,
