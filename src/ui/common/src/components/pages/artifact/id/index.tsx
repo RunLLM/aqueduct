@@ -69,8 +69,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-
   const artifactContents = useSelector(
     (state: RootState) => state.artifactResultContentsReducer.contents
   );

@@ -72,7 +72,7 @@ export type WorkflowDag = {
 //
 // For now, we only handle all lists / maps field. Ideally, we should
 // handle all fields like `workflow.id = workflow?.id ?? ''`.
-export function normalizeWorkflowDag(dag): WorkflowDag {
+export function normalizeWorkflowDag(dag: WorkflowDag): WorkflowDag {
   const operators: Operator[] = Object.values(dag.operators ?? {});
   dag.operators = {};
   operators.forEach((op) => {
@@ -114,7 +114,9 @@ export type DeleteWorkflowResponse = {
   saved_object_deletion_results: { [id: string]: SavedObjectDeletion[] };
 };
 
-export function normalizeGetWorkflowResponse(resp): GetWorkflowResponse {
+export function normalizeGetWorkflowResponse(
+  resp: GetWorkflowResponse
+): GetWorkflowResponse {
   const dags: WorkflowDag[] = Object.values(resp.workflow_dags ?? {});
   resp.workflow_dags = {};
   dags.forEach((dag) => {

@@ -136,7 +136,7 @@ export type Operator = {
 //
 // For now, we only handle all lists / maps field. Ideally, we should
 // handle all fields like `operator.id = operator?.id ?? ''`.
-export function normalizeOperator(op): Operator {
+export function normalizeOperator(op: Operator): Operator {
   op.inputs = op?.inputs ?? [];
   op.outputs = op?.outputs ?? [];
   return op;

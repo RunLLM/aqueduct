@@ -154,7 +154,7 @@ export const S3Dialog: React.FC<Props> = ({
           readCredentialsFile(file, setFile);
         }}
         displayFile={null}
-        onReset={(_) => {
+        onReset={() => {
           setFile(null);
         }}
       />

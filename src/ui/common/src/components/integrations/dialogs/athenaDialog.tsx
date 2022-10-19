@@ -159,7 +159,7 @@ export const AthenaDialog: React.FC<Props> = ({
           readCredentialsFile(file, setFile);
         }}
         displayFile={null}
-        onReset={(_) => {
+        onReset={() => {
           setFile(null);
         }}
       />

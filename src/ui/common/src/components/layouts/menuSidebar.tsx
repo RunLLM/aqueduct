@@ -122,7 +122,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
         underline="none"
         className={styles['menu-sidebar-logo-link']}
-        component={RouterLink as any}
+        component={RouterLink}
       >
         <img
           src={
@@ -139,7 +139,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/workflows`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={
@@ -159,7 +159,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/integrations`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={
@@ -179,7 +179,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/data`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={

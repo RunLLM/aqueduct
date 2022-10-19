@@ -76,7 +76,7 @@ export const BigQueryDialog: React.FC<Props> = ({
           readCredentialsFile(file, setFile);
         }}
         displayFile={null}
-        onReset={(_) => {
+        onReset={() => {
           setFile(null);
         }}
       />
@@ -87,7 +87,7 @@ export const BigQueryDialog: React.FC<Props> = ({
 export function readCredentialsFile(
   file: File,
   setFile: (credentials: FileData) => void
-) {
+): void {
   const reader = new FileReader();
   reader.onloadend = function (event) {
     const content = event.target.result as string;

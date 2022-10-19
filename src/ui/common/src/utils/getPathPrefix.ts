@@ -4,7 +4,8 @@
 // that should be appended to all routes.
 //
 // If no prefix is present, `getPathPrefix` returns an empty string.
-export const getPathPrefix = () => {
+const SageMakerProxyRegex = /\/proxy\/\d{4}/;
+export function getPathPrefix(): string {
   const location = window && window.location ? window.location.pathname : '';
 
   const result = location.match(SageMakerProxyRegex);
@@ -13,6 +14,6 @@ export const getPathPrefix = () => {
   } else {
     return result[0]; // The regex that was matched.
   }
-};
+}
 
-const SageMakerProxyRegex = /\/proxy\/\d{4}/;
+export default getPathPrefix;

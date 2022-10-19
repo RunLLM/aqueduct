@@ -47,7 +47,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   let { workflowId, workflowDagResultId, operatorId } = useParams();
   const path = useLocation().pathname;
   const [isExtractOperator, setIsExtractOperator] = useState(false);
-  const [preview, setPreview] = useState(null);
   const [fileContent, setFileContent] = useState(null);
 
   if (workflowIdProp) {
@@ -74,8 +73,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     (state: RootState) =>
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
-
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
 
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[operatorId];

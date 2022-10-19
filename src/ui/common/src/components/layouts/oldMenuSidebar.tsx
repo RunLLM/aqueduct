@@ -179,7 +179,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Link
           to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
           underline="none"
-          component={RouterLink as any}
+          component={RouterLink}
         >
           <img
             style={{ maxWidth: '250px', width: '100%', marginLeft: '4px' }}
@@ -232,7 +232,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/account`}
             underline="none"
             sx={{ color: 'blue.800' }}
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <MenuItem sx={{ width: '190px' }} disableRipple>
               <Box sx={{ fontSize: '20px', mr: 1 }}>
@@ -271,7 +271,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/workflows`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={
@@ -289,7 +289,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/integrations`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={
@@ -307,7 +307,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             to={`${getPathPrefix()}/data`}
             className={styles['menu-sidebar-link']}
             underline="none"
-            component={RouterLink as any}
+            component={RouterLink}
           >
             <SidebarButton
               icon={

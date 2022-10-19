@@ -9,7 +9,7 @@ export default function useUser(): {
   loading: boolean;
   user?: UserProfile;
 } {
-  const [cookies, setCookie, removeCookie] = useCookies(['aqueduct-api-key']);
+  const [cookies, setCookie] = useCookies(['aqueduct-api-key']);
   const apiKey = cookies['aqueduct-api-key'];
   const [user, setUser] = useState<UserProfile>(undefined);
   const [success, setSuccess] = useState(false);

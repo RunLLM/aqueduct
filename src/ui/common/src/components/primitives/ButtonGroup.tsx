@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 type Props = {
-  children: any;
+  children: JSX.Element[];
 };
 
 const ButtonGroup: React.FC<Props> = ({ children }) => {

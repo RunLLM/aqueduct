@@ -18,11 +18,7 @@ type Props = {
   setSearchTerm: (v: string) => void;
 };
 
-export const SearchBar: React.FC<Props> = ({
-  options,
-  getOptionLabel,
-  setSearchTerm,
-}) => {
+export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}
@@ -86,7 +82,7 @@ export const filteredList = (
   matchOn: (item: any) => string,
   listItems: (item: any, idx: number) => JSX.Element,
   noItemsMessage: JSX.Element
-) => {
+): JSX.Element => {
   if (allItems.length === 0) {
     return noItemsMessage;
   }
