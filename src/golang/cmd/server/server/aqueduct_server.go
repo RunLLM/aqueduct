@@ -185,8 +185,7 @@ func (s *AqServer) Init() error {
 
 	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
-		db.Close()
-		log.Fatal("Unable to start vault: ", err)
+		return err
 	}
 
 	eng, err := engine.NewAqEngine(

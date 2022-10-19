@@ -15,7 +15,7 @@ type Vault interface {
 	Delete(ctx context.Context, name string) error
 }
 
-// NewVault constucts a Vault from the storage config and encryption key provided.
+// NewVault constructs a Vault from the storage config and encryption key provided.
 func NewVault(storageConf *shared.StorageConfig, key string) (Vault, error) {
 	switch storageConf.Type {
 	case shared.FileStorageType:
