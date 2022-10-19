@@ -298,3 +298,19 @@ func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 
 	return http.HandlerFunc(fn)
 }
+
+// Pause puts the server in system maintenance mode by blocking all new requests
+// and waits for all active requests to finish.
+// It is the responsibility of the caller to call s.Restart() to allow requests
+// to be processed again once the system maintenance is complete.
+func (s *AqServer) Pause() {
+	s.UnderMaintenance.Store(true)
+	s.RequestMutex.Lock()
+}
+
+// Restart restarts a server that was previously stopped via s.Pause().
+func (s *AqServer) Restart() {
+	// init again
+	s.RequestMutex.Unlock()
+	s.UnderMaintenance.Store(false)
+}
