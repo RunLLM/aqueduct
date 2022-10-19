@@ -305,7 +305,7 @@ def test_materializing_failed_artifact(client):
         client.delete_flow(flow_id)
 
 
-def test_non_jsonable_param_types(client):
+def test_all_param_types(client):
     class EmptyClass:
         """
         For some reason, this class must be nested inside this test,
@@ -361,7 +361,17 @@ def test_non_jsonable_param_types(client):
     assert isinstance(tuple_output, GenericArtifact)
     assert tuple_output.get() == (1, 2, 3)
 
-    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output])
+    @op
+    def must_be_list(input):
+        assert isinstance(input, list)
+        return input
+
+    list_param = client.create_param("list", default=[4, 5, 6])
+    list_output = must_be_list(list_param)
+    assert isinstance(list_output, GenericArtifact)
+    assert list_output.get() == [4, 5, 6]
+
+    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output])
 
 
 def test_parameter_type_changes(client):

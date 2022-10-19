@@ -11,6 +11,7 @@ import { functionOperatorNodeIcon } from './FunctionOperatorNode';
 import GenericArtifactNode from './GenericArtifactNode';
 import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
 import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
+import ListArtifactNode, { listArtifactNodeIcon } from './ListArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
 import { metricOperatorNodeIcon } from './MetricOperatorNode';
 import NumericArtifactNode, {
@@ -33,6 +34,7 @@ export const nodeTypes = {
   stringArtifact: StringArtifactNode,
   imageArtifact: ImageArtifactNode,
   dictArtifact: DictArtifactNode,
+  listArtifact: ListArtifactNode,
   genericArtifact: GenericArtifactNode,
   function: FunctionOperatorNode,
 
@@ -53,6 +55,7 @@ export const nodeTypeToStringLabel = {
   stringArtifact: 'String Artifact',
   imageArtifact: 'Image Artifact',
   dictArtifact: 'Dictionary Artifact',
+  listArtifact: 'List Artifact',
   genericArtifact: 'Generic Artifact',
   // NOTE function and functionOp are the same. Should remove one in the future?
   function: 'Function Operator',
@@ -71,6 +74,7 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Dict]: dictArtifactNodeIcon,
   // TODO: figure out if we should use other icon for tuple
   [ArtifactType.Tuple]: dictArtifactNodeIcon,
+  [ArtifactType.List]: listArtifactNodeIcon,
   [ArtifactType.Table]: tableArtifactNodeIcon,
   [ArtifactType.Json]: jsonArtifactNodeIcon,
   // TODO: figure out what to show for bytes.

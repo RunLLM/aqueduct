@@ -163,6 +163,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         const isCustomizable = ![
           ArtifactType.Table,
           ArtifactType.Bytes,
+          ArtifactType.Tuple,
           ArtifactType.Image,
           ArtifactType.Picklable,
         ].includes(outputArtifact.type);
