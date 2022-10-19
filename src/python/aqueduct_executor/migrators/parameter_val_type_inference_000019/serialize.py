@@ -97,20 +97,6 @@ def _bytes_to_base64_string(content: bytes) -> str:
     return base64.b64encode(content).decode(_DEFAULT_ENCODING)
 
 
-artifact_to_serialization = {
-    ArtifactType.STRING: [SerializationType.STRING],
-    ArtifactType.BOOL: [SerializationType.JSON],
-    ArtifactType.NUMERIC: [SerializationType.JSON],
-    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABLE: [SerializationType.TABLE],
-    ArtifactType.JSON: [SerializationType.STRING],
-    ArtifactType.BYTES: [SerializationType.BYTES],
-    ArtifactType.IMAGE: [SerializationType.IMAGE],
-    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
-}
-
-
 def artifact_type_to_serialization_type(
     artifact_type: ArtifactType, content: Any
 ) -> SerializationType:
@@ -136,7 +122,5 @@ def artifact_type_to_serialization_type(
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert serialization_type is not None and (
-        serialization_type in artifact_to_serialization[artifact_type]
-    )
+    assert serialization_type is not None
     return serialization_type
