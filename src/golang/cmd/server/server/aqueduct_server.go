@@ -73,6 +73,11 @@ func NewAqServer() *AqServer {
 	}
 	s.UnderMaintenance.Store(false)
 
+	// Initialize the other server fields
+	if err := s.Init(); err != nil {
+		log.Fatalf("Unable to initialize server: %v", err)
+	}
+
 	allowedOrigins := []string{"*"}
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
@@ -81,11 +86,6 @@ func NewAqServer() *AqServer {
 	})
 	s.Router.Use(corsMiddleware.Handler)
 	s.Router.Use(middleware.Logger)
-
-	// Initialize the other server fields
-	if err := s.Init(); err != nil {
-		log.Fatalf("Unable to initialize server: %v", err)
-	}
 
 	// Register server handlers
 	AddAllHandlers(s)
@@ -175,7 +175,7 @@ func (s *AqServer) Init() error {
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
 		RequiredSchemaVersion,
-		s.SchemaVersionReader,
+		readers.SchemaVersionReader,
 		db,
 	); err != nil {
 		return err
