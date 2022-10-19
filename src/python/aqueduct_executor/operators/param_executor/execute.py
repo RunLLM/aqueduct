@@ -35,19 +35,19 @@ def run(spec: ParamSpec) -> None:
             spec.expected_type,
             storage.get(spec.output_content_path),
         )
+        inferred_type = infer_artifact_type(val)
 
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.
         utils.write_artifact(
             storage,
-            spec.expected_type,
+            inferred_type,
             None,  # output_content_path
             spec.output_metadata_path,
             val,
             system_metadata={},
         )
 
-        inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
             raise ExecFailureException(
                 failure_type=enums.FailureType.USER_FATAL,
