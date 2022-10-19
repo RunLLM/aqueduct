@@ -27,7 +27,7 @@ func newGCSStorage(gcsConfig *shared.GCSConfig) *gcsStorage {
 func (g *gcsStorage) parseBucketAndKey(key string) (string, string) {
 	parts := strings.Split(g.gcsConfig.Bucket, "/")
 	if len(parts) == 1 {
-		// There is so subpath for this bucket
+		// There is no subpath for this bucket
 		return parts[0], key
 	}
 
