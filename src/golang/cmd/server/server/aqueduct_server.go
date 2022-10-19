@@ -230,12 +230,9 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 }
 
 func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
-	s.RequestMutex.RLock()
-	defer s.RequestMutex.RUnlock()
-
-	var middlewareChain alice.Chain
+	var middleware alice.Chain
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
-		middlewareChain = alice.New(
+		middleware = alice.New(
 			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
@@ -247,7 +244,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	s.Router.Method(
 		string(handlerObj.Method()),
 		route,
-		middlewareChain.ThenFunc(ExecuteHandler(s, handlerObj)),
+		middleware.ThenFunc(ExecuteHandler(s, handlerObj)),
 	)
 }
 
