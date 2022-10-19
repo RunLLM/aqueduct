@@ -100,10 +100,11 @@ export const NotificationListItem: React.FC<Props> = ({
     <Link
       underline="none"
       color="inherit"
-      href={`${getPathPrefix()}/workflow/${notification.workflowMetadata.id
-        }?workflowDagResultId=${encodeURI(
-          notification.workflowMetadata.dag_result_id
-        )}`}
+      href={`${getPathPrefix()}/workflow/${
+        notification.workflowMetadata.id
+      }?workflowDagResultId=${encodeURI(
+        notification.workflowMetadata.dag_result_id
+      )}`}
     >
       <ListItem
         sx={{
