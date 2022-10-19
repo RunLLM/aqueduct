@@ -3,7 +3,6 @@ package request
 import (
 	"encoding/base64"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
@@ -45,8 +44,6 @@ func ExtractParamsfromRequest(r *http.Request) (map[string]param.Param, error) {
 	for paramName, paramSpecMap := range paramSpecMapByName {
 		encodedParamVal := paramSpecMap[paramValKey]
 		serializationType := paramSpecMap[paramSerializationTypeKey]
-
-		log.Errorf("HELLO: Trigger - Serialization type for %s is %s.", paramName, serializationType)
 
 		// Check that the parameter value is base64 encoded.
 		_, err = base64.StdEncoding.DecodeString(encodedParamVal)

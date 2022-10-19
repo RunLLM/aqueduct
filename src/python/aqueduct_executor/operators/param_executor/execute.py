@@ -34,9 +34,6 @@ def run(spec: ParamSpec) -> None:
         val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
         inferred_type = infer_artifact_type(val)
 
-        print("HELLO param inferred type: ", inferred_type)
-        print("HELLO param serialization type: ", spec.serialization_type)
-
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.
         utils.write_artifact(
