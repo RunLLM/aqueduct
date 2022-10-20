@@ -1,4 +1,4 @@
-export interface UserProfile {
+export type UserProfile = {
   name?: string;
   email?: string;
   sub?: string;
