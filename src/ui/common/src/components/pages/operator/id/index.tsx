@@ -1,3 +1,5 @@
+import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -6,7 +8,9 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import DefaultLayout from '../../../../components/layouts/default';
+import DefaultLayout, {
+  SidesheetContentWidth,
+} from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
@@ -14,10 +18,19 @@ import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagR
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
-import { exportFunction } from '../../../../utils/operators';
-import { LoadingStatusEnum } from '../../../../utils/shared';
-import { isInitial, isLoading } from '../../../../utils/shared';
+import {
+  exportFunction,
+  handleExportFunction,
+  hasFile,
+  OperatorType,
+} from '../../../../utils/operators';
+import {
+  isInitial,
+  isLoading,
+  LoadingStatusEnum,
+} from '../../../../utils/shared';
 import { CodeBlock } from '../../../CodeBlock';
+import { Button } from '../../../primitives/Button.styles';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
@@ -46,8 +59,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const navigate = useNavigate();
   let { workflowId, workflowDagResultId, operatorId } = useParams();
   const path = useLocation().pathname;
-  const [isExtractOperator, setIsExtractOperator] = useState(false);
-  const [fileContent, setFileContent] = useState(null);
 
   if (workflowIdProp) {
     workflowId = workflowIdProp;
@@ -173,18 +184,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       }
     }
 
-    // TODO: only call this when we are inside a function operator. not an extract or load operator.
-    if (
-      operator &&
-      operator?.spec?.type !== 'extract' &&
-      operator?.spec?.type !== 'load'
-    ) {
+    if (hasFile(operator?.spec?.type)) {
       getFilesBlob();
-    } else if (operator) {
-      if (operator?.spec?.type === 'extract') {
-        setFileContent(operator.spec.extract.parameters.query);
-        setIsExtractOperator(true);
-      }
     }
   }, [operator]);
 
@@ -222,30 +223,52 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const outputs = mapArtifacts(operator.outputs);
 
   const operatorPreview = () => {
-    if (!isExtractOperator) {
+    if (hasFile(operator?.spec?.type)) {
       return (
         <Box>
-          <Typography variant="h6" fontWeight="normal" mb={1}>
-            Code Preview
-          </Typography>
+          <Box mb={1} display="flex" flexDirection="row">
+            <Typography variant="h6" fontWeight="normal">
+              Code Preview
+            </Typography>
+            <Box flexGrow={1} />
+            <Button
+              onClick={async () => {
+                await handleExportFunction(
+                  user,
+                  operator.id,
+                  `${operator.name}.zip`
+                );
+              }}
+              color="secondary"
+            >
+              <FontAwesomeIcon icon={faCircleDown} />
+              <Typography sx={{ ml: 1 }}>{`${operator.name}.zip`}</Typography>
+            </Button>
+          </Box>
           <MultiFileViewer files={files} defaultFile={operator.name || ''} />
         </Box>
       );
     }
 
-    return (
-      <Box>
-        <Typography variant="h6" fontWeight="normal" mb={1}>
-          Query Preview
-        </Typography>
-        <CodeBlock language="sql">{fileContent}</CodeBlock>
-      </Box>
-    );
+    if (operator?.spec?.type === OperatorType.Extract) {
+      return (
+        <Box>
+          <Typography variant="h6" fontWeight="normal" mb={1}>
+            Query Preview
+          </Typography>
+          <CodeBlock language="sql">
+            <>{operator.spec.extract.parameters.query}</>
+          </CodeBlock>
+        </Box>
+      );
+    }
+
+    return null;
   };
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={'800px'}>
+      <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">

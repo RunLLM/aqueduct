@@ -1,4 +1,5 @@
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Drawer } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -32,14 +33,22 @@ import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
+import { handleExportFunction } from '../../../../utils/operators';
 import { exportCsv } from '../../../../utils/preview';
-import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
-import { ExecutionStatus } from '../../../../utils/shared';
+import {
+  ExecutionStatus,
+  LoadingStatusEnum,
+  WidthTransition,
+} from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
 } from '../../../../utils/sidesheets';
-import DefaultLayout, { DefaultLayoutMargin } from '../../../layouts/default';
+import DefaultLayout, {
+  DefaultLayoutMargin,
+  SidesheetButtonHeight,
+  SidesheetWidth,
+} from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
@@ -51,8 +60,6 @@ type WorkflowPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
-
-const DrawerWidth = '800px';
 
 const WorkflowPage: React.FC<WorkflowPageProps> = ({
   user,
@@ -249,6 +256,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const getNodeActionButton = () => {
+    const buttonStyle = {
+      height: SidesheetButtonHeight,
+      marginRight: '16px',
+    };
+
     if (currentNode.type === NodeType.TableArtifact) {
       // Since workflow is pending, it doesn't have a result set yet.
       let artifactResultData: Data | null = null;
@@ -263,7 +275,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       return (
         <Box>
           <Button
-            style={{ marginRight: '16px' }}
+            style={buttonStyle}
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
@@ -276,6 +288,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             View Artifact Details
           </Button>
           <Button
+            style={buttonStyle}
             onClick={() =>
               exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
             }
@@ -284,12 +297,34 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Button>
         </Box>
       );
-    } else if (currentNode.type === NodeType.MetricOp) {
+    }
+
+    const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
+    const exportOpButton = (
+      <Button
+        style={buttonStyle}
+        onClick={async () => {
+          await handleExportFunction(
+            user,
+            currentNode.id,
+            `${operator?.name ?? 'function'}.zip`
+          );
+        }}
+        color="primary"
+      >
+        <FontAwesomeIcon icon={faCircleDown} />
+        <Typography sx={{ ml: 1 }}>{`${
+          operator?.name ?? 'function'
+        }.zip`}</Typography>
+      </Button>
+    );
+
+    if (currentNode.type === NodeType.MetricOp) {
       // Get the metrics id, and navigate to the metric details page.
       return (
-        <Box>
+        <Box display="flex" flexDirection="row">
           <Button
-            style={{ marginRight: '16px' }}
+            style={buttonStyle}
             onClick={() => {
               navigate(
                 `${getPathPrefix()}/workflow/${workflowId}/result/${
@@ -300,13 +335,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             View Metric Details
           </Button>
+          {exportOpButton}
         </Box>
       );
-    } else if (currentNode.type === NodeType.FunctionOp) {
+    }
+
+    if (currentNode.type === NodeType.FunctionOp) {
       return (
-        <Box>
+        <Box display="flex" flexDirection="row">
           <Button
-            style={{ marginRight: '16px' }}
+            style={buttonStyle}
             onClick={() => {
               navigate(
                 `${getPathPrefix()}/workflow/${workflowId}/result/${
@@ -317,13 +355,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             View Operator Details
           </Button>
+          {exportOpButton}
         </Box>
       );
-    } else if (currentNode.type === NodeType.CheckOp) {
+    }
+
+    if (currentNode.type === NodeType.CheckOp) {
       return (
-        <Box>
+        <Box display="flex" flexDirection="row">
           <Button
-            style={{ marginRight: '16px' }}
+            style={buttonStyle}
             onClick={() => {
               navigate(
                 `${getPathPrefix()}/workflow/${workflowId}/result/${
@@ -334,6 +375,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             View Check Details
           </Button>
+          {exportOpButton}
         </Box>
       );
     }
@@ -360,7 +402,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           width:
             currentNode.type === NodeType.None
               ? `calc(100% - ${DefaultLayoutMargin});`
-              : `calc(100% - ${DrawerWidth} - ${DefaultLayoutMargin});`,
+              : `calc(100% - ${SidesheetWidth} - ${DefaultLayoutMargin});`,
           height: '100%',
           flexDirection: 'column',
           transition: WidthTransition,
@@ -407,24 +449,22 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           open={true}
           PaperProps={{
             sx: {
-              overflowX: 'scroll',
-              overflowY: 'hidden',
               transition: 'width 200ms ease-in-out',
               transitionDelay: '1000ms',
             },
           }}
         >
           <Box
-            width="800px"
-            maxWidth="800px"
+            width={SidesheetWidth}
+            maxWidth={SidesheetWidth}
             minHeight="100vh"
-            sx={{ overflow: 'scroll' }}
+            display="flex"
+            flexDirection="column"
           >
             <Box
               width="100%"
               sx={{ backgroundColor: theme.palette.gray['100'] }}
               height={`${drawerHeaderHeightInPx}px`}
-              position="fixed"
             >
               <Box display="flex">
                 <Box
@@ -449,7 +489,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 </Box>
               </Box>
             </Box>
-            <Box sx={{ marginTop: `${drawerHeaderHeightInPx + 16}px` }}>
+            <Box
+              sx={{
+                overflow: 'auto',
+                flexGrow: 1,
+                marginBottom: DefaultLayoutMargin,
+              }}
+            >
               {getDataSideSheetContent(
                 user,
                 currentNode,

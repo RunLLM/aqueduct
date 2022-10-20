@@ -12,6 +12,14 @@ export enum OperatorType {
   SystemMetric = 'system_metric',
 }
 
+export function hasFile(opType?: OperatorType): boolean {
+  return (
+    opType === OperatorType.Function ||
+    opType === OperatorType.Metric ||
+    opType === OperatorType.Check
+  );
+}
+
 export enum FunctionType {
   File = 'file',
   Github = 'github',

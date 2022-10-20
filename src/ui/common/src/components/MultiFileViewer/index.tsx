@@ -44,8 +44,7 @@ const MultiFileViewer: React.FC<Props> = ({
     );
   };
 
-  let hasFiles = files && Object.keys(files).length > 0;
-
+  const hasFiles = files && Object.keys(files).length > 0;
   let selected = files;
   if (hasFiles) {
     const pathList = selectedFile.split('/').splice(1);
@@ -53,8 +52,6 @@ const MultiFileViewer: React.FC<Props> = ({
     pathList.forEach((section) => {
       if (Object.keys(selected).includes(section)) {
         selected = selected[section];
-      } else {
-        hasFiles = false;
       }
     });
   }

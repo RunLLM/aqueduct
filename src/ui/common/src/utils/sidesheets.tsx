@@ -31,12 +31,7 @@ export function getDataSideSheetContent(
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
-      <Box
-        px={'16px'}
-        maxWidth="800px"
-        height="100vh"
-        sx={{ overflowY: 'scroll' }}
-      >
+      <Box px={'16px'} maxWidth="800px" height="100vh">
         {children}
       </Box>
     );
