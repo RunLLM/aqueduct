@@ -449,8 +449,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           open={true}
           PaperProps={{
             sx: {
-              overflowX: 'hidden',
-              overflowY: 'hidden',
               transition: 'width 200ms ease-in-out',
               transitionDelay: '1000ms',
             },
@@ -460,13 +458,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             width={SidesheetWidth}
             maxWidth={SidesheetWidth}
             minHeight="100vh"
-            sx={{ overflow: 'hidden' }}
+            display="flex"
+            flexDirection="column"
           >
             <Box
               width="100%"
               sx={{ backgroundColor: theme.palette.gray['100'] }}
               height={`${drawerHeaderHeightInPx}px`}
-              position="fixed"
             >
               <Box display="flex">
                 <Box
@@ -491,7 +489,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 </Box>
               </Box>
             </Box>
-            <Box sx={{ marginTop: `${drawerHeaderHeightInPx + 16}px` }}>
+            <Box
+              sx={{
+                overflow: 'auto',
+                flexGrow: 1,
+                marginBottom: DefaultLayoutMargin,
+              }}
+            >
               {getDataSideSheetContent(
                 user,
                 currentNode,

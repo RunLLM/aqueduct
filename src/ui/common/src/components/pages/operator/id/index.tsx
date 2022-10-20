@@ -257,7 +257,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             Query Preview
           </Typography>
           <CodeBlock language="sql">
-            {operator.spec.extract.parameters.query}
+            <>{operator.spec.extract.parameters.query}</>
           </CodeBlock>
         </Box>
       );
