@@ -6,7 +6,11 @@ from aqueduct.enums import ExecutionStatus
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.sentiment.model import sentiment_model
-from test_functions.simple.model import dummy_model, dummy_sentiment_model, dummy_sentiment_model_multiple_input
+from test_functions.simple.model import (
+    dummy_model,
+    dummy_sentiment_model,
+    dummy_sentiment_model_multiple_input,
+)
 from test_metrics.constant.model import constant_metric
 from utils import (
     delete_flow,

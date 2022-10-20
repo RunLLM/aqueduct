@@ -2,12 +2,9 @@ from checks_test import success_on_single_table_input
 from constants import SENTIMENT_SQL_QUERY
 from pandas import DataFrame
 from pandas._testing import assert_frame_equal
-
 from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 from test_metrics.constant.model import constant_metric
-from utils import (
-    get_integration_name,
-)
+from utils import get_integration_name
 
 
 def test_local_operator(client):

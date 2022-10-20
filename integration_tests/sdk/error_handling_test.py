@@ -1,4 +1,3 @@
-
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import get_integration_name

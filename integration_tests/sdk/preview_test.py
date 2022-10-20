@@ -11,7 +11,11 @@ from test_functions.simple.file_dependency_model import (
     model_with_missing_file_dependencies,
     model_with_out_of_package_file_dependency,
 )
-from test_functions.simple.model import dummy_model, dummy_sentiment_model, dummy_sentiment_model_multiple_input
+from test_functions.simple.model import (
+    dummy_model,
+    dummy_sentiment_model,
+    dummy_sentiment_model_multiple_input,
+)
 from utils import get_integration_name
 
 from aqueduct import op
