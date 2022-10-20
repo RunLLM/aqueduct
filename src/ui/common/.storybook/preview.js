@@ -25,7 +25,7 @@ export const parameters = {
 
 // Wrap MUI stories in theme context.
 export const withMuiTheme = (Story) => (
-  <ThemeProvider theme={muiTheme}>
+  <ThemeProvider theme={muiTheme} >
     <CssBaseline />
     <Story />
   </ThemeProvider>
