@@ -318,6 +318,9 @@ func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 func (s *AqServer) Pause() {
 	s.UnderMaintenance.Store(true)
 	s.RequestMutex.Lock()
+
+	// Close the database because it will be reopened when s.Restart() is called
+	s.Database.Close()
 }
 
 // Restart restarts a server that was previously stopped via s.Pause().
