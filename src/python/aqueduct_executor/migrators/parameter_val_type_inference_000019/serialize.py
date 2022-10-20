@@ -92,7 +92,6 @@ def _bytes_to_base64_string(content: bytes) -> str:
     """Helper to convert any bytes-type to a string, by first encoding it with base64 it.
     For example, image-serialized bytes are not `utf8` encoded, so if we want to convert
     such bytes to string, we must use this function.
-    To convert this string back to bytes, use `base64_string_to_bytes()` in the aqueduct_executor.
     """
     return base64.b64encode(content).decode(_DEFAULT_ENCODING)
 

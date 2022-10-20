@@ -1,3 +1,4 @@
+import base64
 import inspect
 import json
 import os
@@ -29,6 +30,7 @@ from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator, ParamSpec
 from aqueduct.serialization import (
+    DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     make_temp_dir,
     serialization_function_mapping,
@@ -532,6 +534,15 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         raise Exception("Failed to map type %s to supported artifact type." % type(value))
 
 
+def _bytes_to_base64_string(content: bytes) -> str:
+    """Helper to convert bytes to a base64-string.
+
+    For example, image-serialized bytes are not `utf8` encoded, so if we want to convert
+    such bytes to string, we must use this function.
+    """
+    return base64.b64encode(content).decode(DEFAULT_ENCODING)
+
+
 def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     serialization_type = artifact_type_to_serialization_type(artifact_type, val)
     assert serialization_type in serialization_function_mapping
@@ -539,7 +550,7 @@ def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     # We must base64 encode the resulting bytes, since we can't be sure
     # what encoding it was written in (eg. Image types are not encoded as "utf8").
     return ParamSpec(
-        val=serialize_val(val, serialization_type),
+        val=_bytes_to_base64_string(serialize_val(val, serialization_type)),
         serialization_type=serialization_type,
     )
 

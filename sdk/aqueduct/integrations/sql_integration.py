@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import date
 from typing import Optional, Union
 
 import pandas as pd
@@ -43,16 +44,18 @@ LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 # Regular Expression that matches any substring appearance with
 # "{{ }}" and a word inside with optional space in front or after
 # Potential Matches: "{{today}}", "{{ today  }}""
-#
-# Duplicated in the Python operators at `src/python/aqueduct_executor/operators/connectors/data/extract.py`
-# Make sure the two are in sync.
 TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
-# A dictionary of built-in tags to their replacement0 string functions.
-#
-# Duplicated in spirit by the Python operators at `src/python/aqueduct_executor/operators/connectors/data/extract.py`
-# Make sure the two are in sync.
-BUILT_IN_EXPANSIONS = {"today"}
+
+# A dictionary of built-in tags to their replacement string functions.
+def replace_today() -> str:
+    return "'" + date.today().strftime("%Y-%m-%d") + "'"
+
+
+# A dictionary of built-in tags to their replacement string functions.
+BUILT_IN_EXPANSIONS = {
+    "today": replace_today,
+}
 
 
 class RelationalDBIntegration(Integration):
