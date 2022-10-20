@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import date
 from typing import Optional, Union
 
 import pandas as pd
@@ -45,8 +46,16 @@ LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 # Potential Matches: "{{today}}", "{{ today  }}""
 TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
-# A dictionary of built-in tags to their replacement0 string functions.
-BUILT_IN_EXPANSIONS = {"today"}
+
+# A dictionary of built-in tags to their replacement string functions.
+def replace_today() -> str:
+    return "'" + date.today().strftime("%Y-%m-%d") + "'"
+
+
+# A dictionary of built-in tags to their replacement string functions.
+BUILT_IN_EXPANSIONS = {
+    "today": replace_today,
+}
 
 
 class RelationalDBIntegration(Integration):
