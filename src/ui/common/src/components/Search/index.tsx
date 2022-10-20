@@ -12,13 +12,22 @@ import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import React from 'react';
 
+import { DataPreviewInfo } from '../../utils/data';
+import { ListWorkflowSummary } from '../../utils/workflows';
+
+type searchObjects = DataPreviewInfo | ListWorkflowSummary;
+
 type Props = {
-  options: any[];
-  getOptionLabel: (v: any) => string;
+  options: searchObjects[];
+  getOptionLabel: (v: searchObjects) => string;
   setSearchTerm: (v: string) => void;
 };
 
-export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
+export const SearchBar: React.FC<Props> = ({
+  options,
+  getOptionLabel,
+  setSearchTerm,
+}) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}
@@ -32,7 +41,7 @@ export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => option.name || ''}
+      getOptionLabel={getOptionLabel}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">
@@ -48,7 +57,7 @@ export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
         );
       }}
       renderOption={(props, option, { inputValue }) => {
-        const label = option.name || '';
+        const label = getOptionLabel(option);
 
         // Matches only matches if the inputValue matches the start of any word (separated by space.)
         // We may want to modify the functionality in the future because many workflow and artifact names
@@ -78,9 +87,9 @@ export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
 
 export const filteredList = (
   filterText: string,
-  allItems: any[],
-  matchOn: (item: any) => string,
-  listItems: (item: any, idx: number) => JSX.Element,
+  allItems: searchObjects[],
+  matchOn: (item: searchObjects) => string,
+  listItems: (item: searchObjects, idx: number) => JSX.Element,
   noItemsMessage: JSX.Element
 ): JSX.Element => {
   if (allItems.length === 0) {
