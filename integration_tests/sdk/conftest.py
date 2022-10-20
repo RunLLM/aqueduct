@@ -10,9 +10,7 @@ import aqueduct
 # The option variable can be accessed through utils.flags during tests.
 # One can also mark test to be triggered only when `--{flag}` is turned on through
 # @pytest.mark.<flag_name>
-FLAGS = [
-    "requirements",
-]
+FLAGS = []
 
 
 def pytest_addoption(parser):
@@ -40,7 +38,8 @@ def fetch_flags(pytestconfig):
 
 @pytest.fixture(scope="function")
 def client(pytestconfig):
-    # Reset the global dag variable.
+    # Reset the global dag variable, in case it was dirtied by a previous test,
+    # since the dag is a global variable on the aqueduct package.
     aqueduct.dag.__GLOBAL_DAG__ = DAG(metadata=Metadata())
     api_key = os.getenv(API_KEY_ENV_NAME)
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
