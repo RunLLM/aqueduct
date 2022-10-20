@@ -5,7 +5,7 @@ import pytest
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from sdk.test_functions.sentiment.model import sentiment_model
+from test_functions.sentiment.model import sentiment_model
 from test_functions.simple.model import dummy_model, dummy_sentiment_model, dummy_sentiment_model_multiple_input
 from test_metrics.constant.model import constant_metric
 from utils import (
@@ -44,8 +44,6 @@ def test_sentiment_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
-
-@pytest.mark.publish
 def test_complex_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
@@ -132,7 +130,6 @@ def test_multiple_output_artifacts(client):
     )
 
 
-@pytest.mark.publish
 def test_publish_with_schedule(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -165,7 +162,6 @@ def test_invalid_flow(client):
         )
 
 
-@pytest.mark.publish
 def test_publish_flow_with_same_name(client):
     """Tests flow editing behavior."""
     db = client.integration(name=get_integration_name())
@@ -201,7 +197,6 @@ def test_publish_flow_with_same_name(client):
             delete_flow(client, flow_id)
 
 
-@pytest.mark.publish
 def test_refresh_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -229,7 +224,6 @@ def test_refresh_flow(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_get_artifact_from_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -250,7 +244,6 @@ def test_get_artifact_from_flow(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_get_artifact_reuse_for_computation(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -271,7 +264,6 @@ def test_get_artifact_reuse_for_computation(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_multiple_flows_with_same_schedule(client):
     try:
         db = client.integration(name=get_integration_name())
@@ -306,7 +298,6 @@ def test_multiple_flows_with_same_schedule(client):
         delete_flow(client, flow_2.id())
 
 
-@pytest.mark.publish
 def test_fetching_historical_flows_uses_old_data(client):
     db = client.integration(name=get_integration_name())
 

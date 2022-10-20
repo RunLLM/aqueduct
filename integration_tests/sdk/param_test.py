@@ -128,7 +128,6 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-@pytest.mark.publish
 def test_edit_param_for_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -181,7 +180,6 @@ def add_numbers(sql, num1, num2):
     return num1 + num2
 
 
-@pytest.mark.publish
 def test_trigger_flow_with_different_param(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -229,7 +227,6 @@ def test_trigger_flow_with_different_param(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_trigger_flow_with_different_sql_param(client):
     db = client.integration(name=get_integration_name())
 
@@ -269,7 +266,6 @@ def test_trigger_flow_with_different_sql_param(client):
         client.delete_flow(flow_id)
 
 
-@pytest.mark.publish
 def test_parameterizing_published_artifact(client):
     @op
     def generate_num():
@@ -293,7 +289,6 @@ def test_parameterizing_published_artifact(client):
         client.delete_flow(flow_id)
 
 
-@pytest.mark.publish
 def test_materializing_failed_artifact(client):
     @op
     def fail_fn():
@@ -316,7 +311,6 @@ def test_materializing_failed_artifact(client):
         client.delete_flow(flow_id)
 
 
-@pytest.mark.publish
 def test_non_jsonable_param_types(client):
     class EmptyClass:
         """

@@ -1,7 +1,7 @@
 import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from sdk.test_functions.simple.model import dummy_sentiment_model
+from test_functions.simple.model import dummy_sentiment_model
 from utils import generate_table_name, get_integration_name, run_flow_test
 
 from aqueduct import LoadUpdateMode, metric

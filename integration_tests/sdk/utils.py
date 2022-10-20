@@ -17,11 +17,6 @@ def get_integration_name() -> str:
     return integration_name
 
 
-def should_publish_flows() -> bool:
-    assert "publish" in flags
-    return flags["publish"]
-
-
 def generate_new_flow_name() -> str:
     return "test_" + uuid.uuid4().hex
 
@@ -42,17 +37,9 @@ def run_flow_test(
     expect_success: bool = True,
 ) -> Optional[Flow]:
     """
-    Actually publishes the flow if tests are run with --publish flag. This flow can be deleted
-    within this method if `delete_flow_after = True`.
-
-    If --publish is not supplied, we will instead realize all the artifacts with .get().
-    The --publish case only returns when the specified flow has run successfully at least `num_runs` times.
+    Publishes the flow and waits until it has run at least `num_runs` times with the expected status.
+    The flow is always deleted before this method returns, unless `delete_flow_after = False`.
     """
-    if not should_publish_flows():
-        for artifact in artifacts:
-            _ = artifact.get()
-        return None
-
     if len(name) == 0:
         name = generate_new_flow_name()
 

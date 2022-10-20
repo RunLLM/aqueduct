@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUserActionException
 from constants import CHURN_SQL_QUERY, SENTIMENT_SQL_QUERY
-from sdk.test_functions.simple.model import dummy_sentiment_model
+from test_functions.simple.model import dummy_sentiment_model
 from test_metrics.constant.model import constant_metric
 from utils import get_integration_name, run_flow_test
 
@@ -172,7 +172,6 @@ def test_check_with_series_output(client):
     run_flow_test(client, artifacts=[sql_artifact, passed, failed])
 
 
-@pytest.mark.publish
 def test_check_failure_with_varying_severity(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)

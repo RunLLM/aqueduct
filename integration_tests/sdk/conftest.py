@@ -11,7 +11,6 @@ import aqueduct
 # One can also mark test to be triggered only when `--{flag}` is turned on through
 # @pytest.mark.<flag_name>
 FLAGS = [
-    "publish",
     "requirements",
 ]
 
