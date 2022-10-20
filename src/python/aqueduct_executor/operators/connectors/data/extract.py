@@ -2,29 +2,13 @@ import re
 from datetime import date
 from typing import Any, Dict, Optional, Union
 
+from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils import enums
-
-# Regular Expression that matches any substring appearance with
-# "{{ }}" and a word inside with optional space in front or after
-# Potential Matches: "{{today}}", "{{ today  }}""
-#
-# Duplicated in the SDK at `sdk/aqueduct/integrations/sql_integration.py`.
-# Make sure the two are in sync.
-TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 
 def replace_today() -> str:
     return "'" + date.today().strftime("%Y-%m-%d") + "'"
-
-
-# A dictionary of built-in tags to their replacement string functions.
-#
-# Duplicated in spirit by the SDK at `sdk/aqueduct/integrations/sql_integration.py`.
-# Make sure the two are in sync.
-BUILT_IN_EXPANSIONS = {
-    "today": replace_today,
-}
 
 
 class RelationalParams(models.BaseParams):
