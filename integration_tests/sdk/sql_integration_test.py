@@ -1,7 +1,8 @@
 import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from utils import generate_table_name, get_integration_name, run_flow_test, run_sentiment_model
+from sdk.test_functions.simple.model import dummy_sentiment_model
+from utils import generate_table_name, get_integration_name, run_flow_test
 
 from aqueduct import LoadUpdateMode, metric
 
@@ -26,7 +27,7 @@ def test_invalid_source_integration(client):
 def test_invalid_destination_integration(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
 
     with pytest.raises(InvalidIntegrationException):
         db._metadata.name = "bad name"

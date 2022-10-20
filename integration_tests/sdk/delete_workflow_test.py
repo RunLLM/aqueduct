@@ -1,5 +1,5 @@
 import pytest
-from aqueduct.error import AqueductError, InvalidRequestError, InvalidUserArgumentException
+from aqueduct.error import InvalidRequestError
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
     check_flow_doesnt_exist,
@@ -8,7 +8,6 @@ from utils import (
     delete_flow,
     generate_new_flow_name,
     get_integration_name,
-    polling,
     run_flow_test,
 )
 
@@ -116,7 +115,7 @@ def test_delete_workflow_saved_objects_twice(client):
     been deleted.
     """
     integration = client.integration(name=get_integration_name())
-    name = generate_new_flow_name()
+    generate_new_flow_name()
     table_name = generate_new_flow_name()
     flow_ids_to_delete = set()
 

@@ -15,7 +15,7 @@ VALID_REQUIREMENTS_PATH = "transformers_model/requirements.txt"
 
 def _transformers_package_exists():
     try:
-        import transformers
+        pass
     except ImportError:
         return False
     return True
@@ -73,7 +73,7 @@ def test_infer_requirements(client):
     db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     with pytest.raises(AqueductError):
-        without_requirements_table = sentiment_prediction_without_reqs_path(table)
+        sentiment_prediction_without_reqs_path(table)
 
     _check_infer_requirements(transformers_exists=False)
     _install_transformers_package()

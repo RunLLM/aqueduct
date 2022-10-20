@@ -1,8 +1,9 @@
 import pytest
 from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 from constants import SENTIMENT_SQL_QUERY
-from test_functions.simple.model import dummy_model, dummy_model_2, dummy_sentiment_model
-from utils import get_integration_name, run_sentiment_model, run_sentiment_model_multiple_input
+from test_functions.simple.model import dummy_model, dummy_model_2, dummy_sentiment_model, \
+    dummy_sentiment_model_multiple_input
+from utils import get_integration_name
 
 
 def test_extract_with_default_name_collision(client):
@@ -15,7 +16,7 @@ def test_extract_with_default_name_collision(client):
     assert sql_artifact_1.name() == "%s query 1 artifact" % get_integration_name()
     assert sql_artifact_2.name() == "%s query 2 artifact" % get_integration_name()
 
-    fn_artifact = run_sentiment_model_multiple_input(sql_artifact_1, sql_artifact_2)
+    fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact_1, sql_artifact_2)
     fn_df = fn_artifact.get()
     assert list(fn_df) == [
         "hotel_name",
@@ -33,7 +34,7 @@ def test_extract_with_explicit_name_collision(client):
     db = client.integration(name=get_integration_name())
     sql_artifact_1 = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
-    fn_artifact = run_sentiment_model(sql_artifact_1)
+    fn_artifact = dummy_sentiment_model(sql_artifact_1)
 
     sql_artifact_2 = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
@@ -44,9 +45,9 @@ def test_extract_with_explicit_name_collision(client):
 
     # Cannot run a function on an artifact that has already been overwritten.
     with pytest.raises(ArtifactNotFoundException):
-        _ = run_sentiment_model(sql_artifact_1)
+        _ = dummy_sentiment_model(sql_artifact_1)
 
-    fn_artifact = run_sentiment_model(sql_artifact_2)
+    fn_artifact = dummy_sentiment_model(sql_artifact_2)
     fn_df = fn_artifact.get()
     assert list(fn_df) == [
         "hotel_name",
