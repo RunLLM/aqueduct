@@ -43,19 +43,19 @@ const (
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
 
 type AqServer struct {
-	Router *chi.Mux
-	Name   string
+	Router   *chi.Mux
+	Name     string
+	Database database.Database
+	*Readers
+	*Writers
 
 	// Only the following group of fields will be reinitialized when the server is restarted
-	Database      database.Database
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
 	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
-	*Readers
-	*Writers
 
 	// UnderMaintenance indicates whether the server is currently down for system maintenance.
 	UnderMaintenance atomic.Value
@@ -66,8 +66,44 @@ type AqServer struct {
 
 func NewAqServer() *AqServer {
 	ctx := context.Background()
+	aqPath := config.AqueductPath()
+
+	// The database cannot be reinitialized when the server restarts, because the database is passed
+	// to the middleware functions.
+	db, err := database.NewSqliteDatabase(&database.SqliteConfig{
+		File: path.Join(aqPath, database.SqliteDatabasePath),
+	})
+	if err != nil {
+		log.Fatalf("Unable to initialize database: %v", err)
+	}
+
+	readers, err := CreateReaders(db.Config())
+	if err != nil {
+		db.Close()
+		log.Fatalf("Unable to create database readers: %v", err)
+	}
+
+	writers, err := CreateWriters(db.Config())
+	if err != nil {
+		db.Close()
+		log.Fatalf("Unable to create database writers: %v", err)
+	}
+
+	if err := collections.RequireSchemaVersion(
+		context.Background(),
+		RequiredSchemaVersion,
+		readers.SchemaVersionReader,
+		db,
+	); err != nil {
+		db.Close()
+		log.Fatalf("Unable to confirm required database schema version: %v", err)
+	}
+
 	s := &AqServer{
 		Router:           chi.NewRouter(),
+		Database:         db,
+		Readers:          readers,
+		Writers:          writers,
 		UnderMaintenance: atomic.Value{},
 		RequestMutex:     sync.RWMutex{},
 	}
@@ -75,6 +111,7 @@ func NewAqServer() *AqServer {
 
 	// Initialize the other server fields
 	if err := s.Init(); err != nil {
+		db.Close()
 		log.Fatalf("Unable to initialize server: %v", err)
 	}
 
@@ -101,23 +138,27 @@ func NewAqServer() *AqServer {
 		accountOrganizationId,
 	)
 	if err != nil {
+		db.Close()
 		log.Fatal(err)
 	}
 
 	demoConnected, err := CheckBuiltinIntegration(ctx, s, accountOrganizationId)
 	if err != nil {
+		db.Close()
 		log.Fatal(err)
 	}
 
 	if !demoConnected {
 		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationWriter, s.Database, s.Vault)
 		if err != nil {
+			db.Close()
 			log.Fatal(err)
 		}
 	}
 
 	err = s.initializeWorkflowCronJobs(ctx)
 	if err != nil {
+		db.Close()
 		log.Fatalf("Failed to create cron jobs for existing workflows: %v", err)
 	} else {
 		log.Info("Successfully created cron jobs for existing workflows")
@@ -129,18 +170,6 @@ func NewAqServer() *AqServer {
 // Init sets all of the fields of this AqServer that depend on server configuration.
 func (s *AqServer) Init() error {
 	aqPath := config.AqueductPath()
-
-	db, err := database.NewSqliteDatabase(&database.SqliteConfig{
-		File: path.Join(aqPath, database.SqliteDatabasePath),
-	})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			db.Close()
-		}
-	}()
 
 	githubManager := github.NewUnimplementedManager()
 
@@ -162,25 +191,6 @@ func (s *AqServer) Init() error {
 		return err
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		return err
-	}
-
-	writers, err := CreateWriters(db.Config())
-	if err != nil {
-		return err
-	}
-
-	if err := collections.RequireSchemaVersion(
-		context.Background(),
-		RequiredSchemaVersion,
-		readers.SchemaVersionReader,
-		db,
-	); err != nil {
-		return err
-	}
-
 	storageConfig := config.Storage()
 
 	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
@@ -192,26 +202,23 @@ func (s *AqServer) Init() error {
 	}
 
 	eng, err := engine.NewAqEngine(
-		db,
+		s.Database,
 		githubManager,
 		previewCacheManager,
 		vault,
 		aqPath,
-		GetEngineReaders(readers),
-		GetEngineWriters(writers),
+		GetEngineReaders(s.Readers),
+		GetEngineWriters(s.Writers),
 	)
 	if err != nil {
 		return err
 	}
 
-	s.Database = db
 	s.GithubManager = githubManager
 	s.JobManager = jobManager
 	s.Vault = vault
 	s.AqPath = aqPath
 	s.AqEngine = eng
-	s.Readers = readers
-	s.Writers = writers
 
 	return nil
 }
@@ -318,9 +325,6 @@ func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 func (s *AqServer) Pause() {
 	s.UnderMaintenance.Store(true)
 	s.RequestMutex.Lock()
-
-	// Close the database because it will be reopened when s.Restart() is called
-	s.Database.Close()
 }
 
 // Restart restarts a server that was previously stopped via s.Pause().
