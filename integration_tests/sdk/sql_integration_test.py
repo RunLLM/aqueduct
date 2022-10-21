@@ -124,3 +124,21 @@ def test_sql_query_user_vs_builtin_precedence(client):
         query="select * from hotel_reviews where review_date > %s" % datestring
     )
     assert user_param_result.equals(expected_sql_artifact.get())
+
+
+def test_chained_sql_query(client):
+    client.create_param("nationality", default=" United Kingdom ")
+    warehouse = client.integration(name="aqueduct_demo")
+    reviews = warehouse.sql(
+        [
+            """
+        SELECT * FROM hotel_reviews
+    """,
+            " SELECT review, review_date from $ where reviewer_nationality ='{{nationality}}'",
+            " SELECT review from $",
+        ]
+    ).get()
+    expected_artf = warehouse.sql(
+        "SELECT review FROM hotel_reviews WHERE reviewer_nationality=' United Kingdom '"
+    ).get()
+    assert reviews.equals(expected_artf)
