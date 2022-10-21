@@ -188,6 +188,14 @@ func (s *AqServer) Init() error {
 		return err
 	}
 
+	if err := syncVaultWithStorage(
+		vault,
+		readers.IntegrationReader,
+		db,
+	); err != nil {
+		return err
+	}
+
 	eng, err := engine.NewAqEngine(
 		db,
 		githubManager,
