@@ -36,18 +36,6 @@ func MigrateStorageAndVault(
 	integrationReader integration.Reader,
 	db database.Database,
 ) error {
-	// Wait until there are no more workflow runs in progress
-	lock := NewExecutionLock()
-	if err := lock.Lock(); err != nil {
-		return err
-	}
-	defer func() {
-		unlockErr := lock.Unlock()
-		if unlockErr != nil {
-			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", unlockErr)
-		}
-	}()
-
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
 

@@ -175,9 +175,22 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// the connect integration request has succeeded and that the migration is now
 		// under way.
 		go func() {
+			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
 			defer h.RestartServer()
+
+			// Wait until there are no more workflow runs in progress
+			lock := utils.NewExecutionLock()
+			if err := lock.Lock(); err != nil {
+				log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
+				return
+			}
+			defer func() {
+				if err := lock.Unlock(); err != nil {
+					log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
+				}
+			}()
 
 			if err := setIntegrationAsStorage(
 				context.Background(),
