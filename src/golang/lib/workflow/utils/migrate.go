@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -15,37 +16,38 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// MigrateStorage moves all storage content from `oldConf` to `newConf`.
+// MigrateStorageAndVault moves all storage (and vault) content from `oldConf` to `newConf`.
 // This includes:
 //   - artifact result content
 //   - operator (function, check) code
+//   - vault content (integration credentials)
 //
 // If the migration is successful, the above content is deleted from `oldConf`.
-func MigrateStorage(
+func MigrateStorageAndVault(
 	ctx context.Context,
 	oldConf *shared.StorageConfig,
 	newConf *shared.StorageConfig,
+	orgID string,
 	dagReader workflow_dag.Reader,
 	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
+	integrationReader integration.Reader,
 	db database.Database,
 ) error {
-	// Wait until there are no more workflow runs in progress
-	lock := NewExecutionLock()
-	if err := lock.Lock(); err != nil {
-		return err
-	}
-	defer func() {
-		unlockErr := lock.Unlock()
-		if unlockErr != nil {
-			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", unlockErr)
-		}
-	}()
-
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
+
+	oldVault, err := vault.NewVault(oldConf, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
+
+	newVault, err := vault.NewVault(newConf, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
 
 	txn, err := db.BeginTx(ctx)
 	if err != nil {
@@ -53,7 +55,7 @@ func MigrateStorage(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	dags, err := dagReader.GetWorkflowDags(ctx, nil, txn)
+	dags, err := dagReader.ListWorkflowDags(ctx, txn)
 	if err != nil {
 		return err
 	}
@@ -138,6 +140,19 @@ func MigrateStorage(
 		}
 	}
 
+	// Migrate the vault portion of storage
+	toDeleteFromVault, err := MigrateVault(
+		ctx,
+		oldVault,
+		newVault,
+		orgID,
+		integrationReader,
+		txn,
+	)
+	if err != nil {
+		return err
+	}
+
 	if err := txn.Commit(ctx); err != nil {
 		return err
 	}
@@ -149,6 +164,13 @@ func MigrateStorage(
 		}
 	}
 
+	// Delete keys from `oldVault` now that everything is fully migrated to `newVault`
+	for _, key := range toDeleteFromVault {
+		if err := oldVault.Delete(ctx, key); err != nil {
+			log.Errorf("Unexpected error when deleting %v after vault migration: %v", key, err)
+		}
+	}
+
 	return nil
 }
 
@@ -156,7 +178,8 @@ func MigrateStorage(
 // This includes:
 //   - integration credentials
 //
-// If the migration is successful, the above content is deleted from `oldVault`.
+// It also returns the names of all the keys that have been migrated to `newVault`.
+// It is the responsibility of the caller to delete the keys if necessary.
 func MigrateVault(
 	ctx context.Context,
 	oldVault vault.Vault,
@@ -164,11 +187,13 @@ func MigrateVault(
 	orgID string,
 	integrationReader integration.Reader,
 	db database.Database,
-) error {
+) ([]string, error) {
 	integrations, err := integrationReader.GetIntegrationsByOrganization(ctx, orgID, db)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	keys := []string{}
 
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
@@ -177,13 +202,15 @@ func MigrateVault(
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := newVault.Put(ctx, key, val); err != nil {
-			return err
+			return nil, err
 		}
+
+		keys = append(keys, key)
 	}
 
-	return nil
+	return keys, nil
 }
