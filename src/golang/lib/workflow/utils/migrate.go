@@ -67,7 +67,7 @@ func MigrateStorageAndVault(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	dags, err := dagReader.GetWorkflowDags(ctx, nil, txn)
+	dags, err := dagReader.ListWorkflowDags(ctx, txn)
 	if err != nil {
 		return err
 	}
