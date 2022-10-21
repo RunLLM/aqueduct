@@ -183,14 +183,6 @@ func (s *AqServer) Init() error {
 		return err
 	}
 
-	vault, err := vault.NewFileVault(&vault.FileConfig{
-		Directory:     path.Join(aqPath, vault.FileVaultDir),
-		EncryptionKey: config.EncryptionKey(),
-	})
-	if err != nil {
-		return err
-	}
-
 	storageConfig := config.Storage()
 
 	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
@@ -198,6 +190,19 @@ func (s *AqServer) Init() error {
 		previewCacheSize,
 	)
 	if err != nil {
+		return err
+	}
+
+	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
+
+	if err := syncVaultWithStorage(
+		vault,
+		s.IntegrationReader,
+		s.Database,
+	); err != nil {
 		return err
 	}
 
@@ -235,7 +240,6 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 
 	spec := job.NewWorkflowRetentionJobSpec(
 		s.Database.Config(),
-		s.Vault.Config(),
 		s.JobManager.Config(),
 	)
 
