@@ -74,7 +74,8 @@ export type ExtractParameters =
   | GoogleSheetsExtractParams;
 
 export type RelationalDBExtractParams = {
-  query: string;
+  query?: string;
+  queries?: string[];
   github_metadata?: GithubMetadata;
 };
 

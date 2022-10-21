@@ -20,9 +20,11 @@ import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import {
   exportFunction,
+  GoogleSheetsExtractParams,
   handleExportFunction,
   hasFile,
   OperatorType,
+  RelationalDBExtractParams,
 } from '../../../../utils/operators';
 import {
   isInitial,
@@ -251,14 +253,52 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     }
 
     if (operator?.spec?.type === OperatorType.Extract) {
+      const extractParams = operator.spec.extract.parameters;
+      let content = null;
+
+      if ('query' in extractParams || 'queries' in extractParams) {
+        // relational
+        const relationalParams = extractParams as RelationalDBExtractParams;
+        const renderQuery = (q: string) => (
+          <CodeBlock language="sql">{q}</CodeBlock>
+        );
+
+        if (!!relationalParams.queries && relationalParams.queries.length > 0) {
+          content = (
+            <Box display="flex" flexDirection="column">
+              {relationalParams.queries.map((q, idx) => (
+                <Box mb={1} key={`extract-query-${idx}`}>
+                  {renderQuery(q)}
+                </Box>
+              ))}
+            </Box>
+          );
+        } else {
+          content = renderQuery(relationalParams.query);
+        }
+      } else {
+        // google sheet
+        const googleSheetsParams = extractParams as GoogleSheetsExtractParams;
+        content = (
+          <Box>
+            <Typography variant="body1" mb={1}>
+              <strong>Spreadsheet ID: </strong>
+              {googleSheetsParams.spreadsheet_id}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Query: </strong>
+              {googleSheetsParams.query}
+            </Typography>
+          </Box>
+        );
+      }
+
       return (
         <Box>
           <Typography variant="h6" fontWeight="normal" mb={1}>
-            Query Preview
+            Extract Parameters
           </Typography>
-          <CodeBlock language="sql">
-            <>{operator.spec.extract.parameters.query}</>
-          </CodeBlock>
+          {content}
         </Box>
       );
     }

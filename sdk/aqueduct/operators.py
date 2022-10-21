@@ -42,6 +42,7 @@ class GithubMetadata(BaseModel):
 
 class RelationalDBExtractParams(BaseModel):
     query: Optional[str] = None
+    queries: Optional[List[str]] = None
     github_metadata: Optional[GithubMetadata] = None
 
 

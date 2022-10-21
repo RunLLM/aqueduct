@@ -4,7 +4,7 @@ import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 type Props = {
   language: string;
-  children: JSX.Element;
+  children: string;
 };
 
 export const CodeBlock: React.FC<Props> = ({ language, children }) => {
@@ -12,7 +12,12 @@ export const CodeBlock: React.FC<Props> = ({ language, children }) => {
     <SyntaxHighlighter
       language={language}
       style={docco}
-      customStyle={{ borderRadius: 4, padding: '15px' }}
+      customStyle={{
+        borderRadius: 4,
+        padding: '15px',
+        // overrides built-in margin
+        margin: '0px',
+      }}
     >
       {children}
     </SyntaxHighlighter>
