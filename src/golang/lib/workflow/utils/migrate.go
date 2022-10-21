@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -15,21 +16,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// MigrateStorage moves all storage content from `oldConf` to `newConf`.
+// MigrateStorageAndVault moves all storage (and vault) content from `oldConf` to `newConf`.
 // This includes:
 //   - artifact result content
 //   - operator (function, check) code
+//   - vault content (integration credentials)
 //
 // If the migration is successful, the above content is deleted from `oldConf`.
-func MigrateStorage(
+func MigrateStorageAndVault(
 	ctx context.Context,
 	oldConf *shared.StorageConfig,
 	newConf *shared.StorageConfig,
+	orgID string,
 	dagReader workflow_dag.Reader,
 	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
+	integrationReader integration.Reader,
 	db database.Database,
 ) error {
 	// Wait until there are no more workflow runs in progress
@@ -46,6 +50,16 @@ func MigrateStorage(
 
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
+
+	oldVault, err := vault.NewVault(oldConf, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
+
+	newVault, err := vault.NewVault(newConf, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
 
 	txn, err := db.BeginTx(ctx)
 	if err != nil {
@@ -136,6 +150,18 @@ func MigrateStorage(
 		); err != nil {
 			return err
 		}
+	}
+
+	// Migrate the vault portion of storage
+	if err := MigrateVault(
+		ctx,
+		oldVault,
+		newVault,
+		orgID,
+		integrationReader,
+		txn,
+	); err != nil {
+		return err
 	}
 
 	if err := txn.Commit(ctx); err != nil {

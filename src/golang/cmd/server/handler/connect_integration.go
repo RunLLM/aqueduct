@@ -31,6 +31,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -62,8 +63,12 @@ type ConnectIntegrationHandler struct {
 	ArtifactReader       db_artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
+	IntegrationReader    integration.Reader
 	WorkflowDagWriter    workflow_dag.Writer
 	IntegrationWriter    integration.Writer
+
+	PauseServer   func()
+	RestartServer func()
 }
 
 func (*ConnectIntegrationHandler) Headers() []string {
@@ -159,25 +164,38 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	if args.SetAsStorage {
-		// This integration should be used as the new storage layer
-		if err := setIntegrationAsStorage(
-			ctx,
-			args.Service,
-			args.Config,
-			h.WorkflowDagReader,
-			h.WorkflowDagWriter,
-			h.ArtifactReader,
-			h.ArtifactResultReader,
-			h.OperatorReader,
-			h.Database,
-		); err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to change metadata store.")
-		}
-	}
-
 	if err := txn.Commit(ctx); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	if args.SetAsStorage {
+		// This integration should be used as the new storage layer.
+		// In order to do so, we need to migrate all content from the old store
+		// to the new store. This requires pausing the server and then restarting it.
+		// All of this logic is performed asynchronously so that the user knows that
+		// the connect integration request has succeeded and that the migration is now
+		// under way.
+		go func() {
+			h.PauseServer()
+			// Makes sure that the server is restarted
+			defer h.RestartServer()
+
+			if err := setIntegrationAsStorage(
+				ctx,
+				args.Service,
+				args.Config,
+				args.OrganizationId,
+				h.WorkflowDagReader,
+				h.WorkflowDagWriter,
+				h.ArtifactReader,
+				h.ArtifactResultReader,
+				h.OperatorReader,
+				h.IntegrationReader,
+				h.Database,
+			); err != nil {
+				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
+			}
+		}()
 	}
 
 	return emptyResp, http.StatusOK, nil
@@ -364,16 +382,19 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 }
 
 // setIntegrationAsStorage use the integration config `conf` and updates the global
-// storage config with it.
+// storage config with it. This involves migrating the storage (and vault) content to the new
+// storage layer.
 func setIntegrationAsStorage(
 	ctx context.Context,
 	svc integration.Service,
 	conf auth.Config,
+	orgID string,
 	dagReader workflow_dag.Reader,
 	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
+	integrationReader integration.Reader,
 	db database.Database,
 ) error {
 	data, err := conf.Marshal()
@@ -408,15 +429,17 @@ func setIntegrationAsStorage(
 	currentStorageConfig := config.Storage()
 
 	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorage(
+	if err := utils.MigrateStorageAndVault(
 		ctx,
 		&currentStorageConfig,
 		storageConfig,
+		orgID,
 		dagReader,
 		dagWriter,
 		artifactReader,
 		artifactResultReader,
 		operatorReader,
+		integrationReader,
 		db,
 	); err != nil {
 		return err

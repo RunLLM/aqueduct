@@ -21,8 +21,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 			OperatorReader:       s.OperatorReader,
+			IntegrationReader:    s.IntegrationReader,
 			WorkflowDagWriter:    s.WorkflowDagWriter,
 			IntegrationWriter:    s.IntegrationWriter,
+
+			PauseServer:   s.Pause,
+			RestartServer: s.Restart,
 		},
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
 			Database:          s.Database,
