@@ -1,0 +1,1 @@
+This suite of test is meant to always run with no concurrency. This allows us to test things that alter global state (eg. installing/unintallin python packages).
