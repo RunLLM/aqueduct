@@ -11,6 +11,6 @@ export type UserProfile = {
   userRole?: string;
   given_name?: string;
   family_name?: string;
-}
+};
 
 export default UserProfile;

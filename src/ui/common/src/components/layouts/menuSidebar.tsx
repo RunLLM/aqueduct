@@ -18,7 +18,15 @@ import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { menuSidebar, menuSidebarContent, menuSidebarFooter, menuSidebarIcon, menuSidebarLink, menuSidebarLogoLink, notificationAlert } from './menuSidebar.styles';
+import {
+  menuSidebar,
+  menuSidebarContent,
+  menuSidebarFooter,
+  menuSidebarIcon,
+  menuSidebarLink,
+  menuSidebarLogoLink,
+  notificationAlert,
+} from './menuSidebar.styles';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -143,10 +151,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           >
             <SidebarButton
               icon={
-                <FontAwesomeIcon
-                  style={menuSidebarIcon}
-                  icon={faShareNodes}
-                />
+                <FontAwesomeIcon style={menuSidebarIcon} icon={faShareNodes} />
               }
               text=""
               selected={currentPage === '/workflows'}
@@ -162,12 +167,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             component={RouterLink}
           >
             <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  style={menuSidebarIcon}
-                  icon={faPlug}
-                />
-              }
+              icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
               text=""
               selected={currentPage === '/integrations'}
             />
@@ -183,10 +183,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           >
             <SidebarButton
               icon={
-                <FontAwesomeIcon
-                  style={menuSidebarIcon}
-                  icon={faDatabase}
-                />
+                <FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />
               }
               text=""
               selected={currentPage === '/data'}
@@ -201,12 +198,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           <Tooltip title="Documentation" placement="right" arrow>
             <Link href="https://docs.aqueducthq.com" underline="none">
               <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    style={menuSidebarIcon}
-                    icon={faBook}
-                  />
-                }
+                icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faBook} />}
                 text=""
               />
             </Link>
@@ -218,10 +210,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             <Link href="mailto:support@aqueducthq.com" underline="none">
               <SidebarButton
                 icon={
-                  <FontAwesomeIcon
-                    style={menuSidebarIcon}
-                    icon={faMessage}
-                  />
+                  <FontAwesomeIcon style={menuSidebarIcon} icon={faMessage} />
                 }
                 text=""
               />

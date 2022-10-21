@@ -212,7 +212,7 @@ import {
   //SqlServerConfig,
   SupportedIntegrations,
 } from './utils/integrations';
-import { dateString, /*Member*/ } from './utils/metadata';
+import { dateString /*Member*/ } from './utils/metadata';
 import {
   archiveNotification,
   listNotifications,
@@ -274,9 +274,6 @@ import {
   //ListWorkflowSummary,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
-  //SavedObject,
-  //SavedObjectDeletion,
-  Workflow,
   //WorkflowDag,
   //WorkflowDagResultSummary,
   //WorkflowSchedule,
