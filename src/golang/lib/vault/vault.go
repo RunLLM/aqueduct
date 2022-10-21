@@ -23,6 +23,8 @@ func NewVault(storageConf *shared.StorageConfig, key string) (Vault, error) {
 		return newFileVault(*storageConf.FileConfig, key), nil
 	case shared.S3StorageType:
 		return newS3Vault(*storageConf.S3Config, key), nil
+	case shared.GCSStorageType:
+		return newGCSVault(*storageConf.GCSConfig, key), nil
 	default:
 		return nil, errors.Newf("Unsupported vault type: %v", storageConf.Type)
 	}
