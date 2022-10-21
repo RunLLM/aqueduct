@@ -15,7 +15,6 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -60,7 +59,7 @@ type ConnectIntegrationHandler struct {
 	JobManager job.JobManager
 
 	WorkflowDagReader    workflow_dag.Reader
-	ArtifactReader       db_artifact.Reader
+	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	IntegrationReader    integration.Reader
