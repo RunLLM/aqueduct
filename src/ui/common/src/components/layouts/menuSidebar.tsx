@@ -18,7 +18,7 @@ import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import styles from './menu-sidebar-styles.module.css';
+import { menuSidebar, menuSidebarContent, menuSidebarFooter, menuSidebarIcon, menuSidebarLink, menuSidebarLogoLink, notificationAlert } from './menuSidebar.styles';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -83,7 +83,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
         {text}
         <Box sx={{ display: 'flex', flexGrow: 1, flexDirection: 'row' }} />
         {!!numUpdates && (
-          <Box className={styles['notification-alert']}>
+          <Box style={notificationAlert}>
             <Typography
               variant="body2"
               sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
@@ -117,11 +117,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
 
   const pathPrefix = getPathPrefix();
   return (
-    <Box className={styles['menu-sidebar']}>
+    <Box style={menuSidebar}>
       <Link
         to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
         underline="none"
-        className={styles['menu-sidebar-logo-link']}
+        style={menuSidebarLogoLink}
         component={RouterLink}
       >
         <img
@@ -133,18 +133,18 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         />
       </Link>
 
-      <Box sx={{ my: 2 }} className={styles['menu-sidebar-content']}>
+      <Box sx={{ my: 2 }} style={menuSidebarContent}>
         <Tooltip title="Workflows" arrow placement="right">
           <Link
             to={`${getPathPrefix()}/workflows`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
               icon={
                 <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
+                  style={menuSidebarIcon}
                   icon={faShareNodes}
                 />
               }
@@ -157,14 +157,14 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Tooltip title="Integrations" arrow placement="right">
           <Link
             to={`${getPathPrefix()}/integrations`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
               icon={
                 <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
+                  style={menuSidebarIcon}
                   icon={faPlug}
                 />
               }
@@ -177,14 +177,14 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Tooltip title="Data" placement="right" arrow>
           <Link
             to={`${getPathPrefix()}/data`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
               icon={
                 <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
+                  style={menuSidebarIcon}
                   icon={faDatabase}
                 />
               }
@@ -195,7 +195,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         </Tooltip>
       </Box>
 
-      <Box className={styles['menu-sidebar-footer']}>
+      <Box style={menuSidebarFooter}>
         <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Documentation" placement="right" arrow>
@@ -203,7 +203,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               <SidebarButton
                 icon={
                   <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
+                    style={menuSidebarIcon}
                     icon={faBook}
                   />
                 }
@@ -219,7 +219,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
               <SidebarButton
                 icon={
                   <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
+                    style={menuSidebarIcon}
                     icon={faMessage}
                   />
                 }

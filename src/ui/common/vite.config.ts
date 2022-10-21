@@ -22,6 +22,12 @@ export default defineConfig(({ command, mode }) => {
             react(),
             externalizeDeps(),
         ],
+        css: {
+            modules: {
+                localsConvention: 'camelCase',
+                generateScopedName: "[name]__[local]___[hash:base64:5]",
+            }
+        },
         build: {
             commonjsOptions: {
                 include: ['src/index.tsx'],
@@ -31,6 +37,6 @@ export default defineConfig(({ command, mode }) => {
                 name: '@aqueducthq/common',
                 fileName: 'common',
             }
-        }
+        },
     }
 })

@@ -155,7 +155,7 @@ import workflow, {
   //SavedObjectResult,
   selectResultIdx,
   workflowSlice,
-  WorkflowState,
+  //WorkflowState,
 } from './reducers/workflow';
 import workflowDagResults from './reducers/workflowDagResults';
 import { store } from './stores/store';
@@ -277,9 +277,9 @@ import {
   //SavedObject,
   //SavedObjectDeletion,
   Workflow,
-  WorkflowDag,
-  WorkflowDagResultSummary,
-  WorkflowSchedule,
+  //WorkflowDag,
+  //WorkflowDagResultSummary,
+  //WorkflowSchedule,
   WorkflowUpdateTrigger,
 } from './utils/workflows';
 
@@ -532,16 +532,16 @@ export {
   //Workflow,
   workflow,
   WorkflowCard,
-  WorkflowDag,
+  //WorkflowDag,
   workflowDagResults,
-  WorkflowDagResultSummary,
+  //WorkflowDagResultSummary,
   WorkflowHeader,
   WorkflowPage,
-  WorkflowSchedule,
+  //WorkflowSchedule,
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,
-  WorkflowState,
+  //WorkflowState,
   WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,

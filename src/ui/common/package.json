@@ -17,13 +17,12 @@
   "scripts": {
     "preinstall": "npx force-resolutions",
     "start": "tsdx watch",
-    "build": "tsdx build",
+    "build": "vite build",
     "dev": "vite",
     "buildvite": "tsc && vite build",
-    "vitebuild": "vite build",
     "preview": "vite preview",
     "test": "tsdx test --passWithNoTests",
-    "prepare": "tsdx build",
+    "prepare": "npm run build",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
@@ -75,7 +74,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "module": "dist/common.esm.js",
+  "module": "dist/common.mjs",
   "size-limit": [
     {
       "path": "dist/common.cjs.production.min.js",
