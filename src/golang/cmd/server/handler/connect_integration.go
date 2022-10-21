@@ -181,7 +181,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			defer h.RestartServer()
 
 			if err := setIntegrationAsStorage(
-				ctx,
+				context.Background(),
 				args.Service,
 				args.Config,
 				args.OrganizationId,
