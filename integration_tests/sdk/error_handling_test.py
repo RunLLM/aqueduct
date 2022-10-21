@@ -1,6 +1,3 @@
-import io
-from contextlib import redirect_stdout
-
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import get_integration_name
@@ -37,7 +34,7 @@ def test_handle_bad_op_error(client):
     sql_artifact = db.sql(query=GOOD_QUERY)
 
     try:
-        processed_artifact = bad_op(sql_artifact)
+        bad_op(sql_artifact)
     except AqueductError as e:
         assert TIP_OP_EXECUTION in e.message
 

@@ -3,19 +3,24 @@ import sys
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
-from constants import SENTIMENT_SQL_QUERY
 from transformers_model.model import sentiment_prediction_using_transformers
-from utils import get_integration_name
 
 from aqueduct import infer_requirements, op
+
+# Parameters for the sentiment dataset.
+SENTIMENT_SQL_QUERY = "select * from hotel_reviews"
 
 INVALID_REQUIREMENTS_PATH = "~/random.txt"
 VALID_REQUIREMENTS_PATH = "transformers_model/requirements.txt"
 
 
+def _get_integration_name() -> str:
+    return "aqueduct_demo"
+
+
 def _transformers_package_exists():
     try:
-        import transformers
+        pass
     except ImportError:
         return False
     return True
@@ -64,16 +69,15 @@ def sentiment_prediction_without_reqs_path(reviews: pd.DataFrame) -> pd.DataFram
     return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
 
 
-@pytest.mark.requirements
 def test_infer_requirements(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
     # If no requirements are supplied, our inference will not pick up the transformers package.
-    db = client.integration(name=get_integration_name())
+    db = client.integration(name=_get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     with pytest.raises(AqueductError):
-        without_requirements_table = sentiment_prediction_without_reqs_path(table)
+        sentiment_prediction_without_reqs_path(table)
 
     _check_infer_requirements(transformers_exists=False)
     _install_transformers_package()
@@ -100,12 +104,11 @@ def sentiment_prediction_with_valid_reqs_path(reviews: pd.DataFrame) -> pd.DataF
     return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
 
 
-@pytest.mark.requirements
 def test_requirements_installation_from_path(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.integration(name=_get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # Check that no an invalid path fails.
@@ -124,19 +127,17 @@ def sentiment_prediction_with_string_requirements(reviews):
     return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
 
 
-@pytest.mark.requirements
 def test_requirements_installation_from_strings(client):
     # TODO(test the list if not well-formed.)
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.integration(name=_get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_with_string_requirements(table)
     assert valid_path_table.get().shape[0] == 100
 
 
-@pytest.mark.requirements
 def test_default_requirements_installation(client):
     """
     This uses the decorated function in the transformers_model/ subdirectory, which already has a requirements.txt
@@ -145,13 +146,12 @@ def test_default_requirements_installation(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.integration(name=_get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_using_transformers(table)
     assert valid_path_table.get().shape[0] == 100
 
 
-@pytest.mark.requirements
 def test_requirements_invalid_arguments(client):
 
     with pytest.raises(InvalidUserArgumentException):

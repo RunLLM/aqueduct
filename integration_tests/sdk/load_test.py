@@ -5,7 +5,6 @@ from utils import delete_flow, generate_new_flow_name, get_integration_name, run
 from aqueduct import LoadUpdateMode, op
 
 
-@pytest.mark.publish
 def test_list_saved_objects(client):
     integration = client.integration(name=get_integration_name())
     name = generate_new_flow_name()
@@ -69,7 +68,6 @@ def test_list_saved_objects(client):
             delete_flow(client, flow_id)
 
 
-@pytest.mark.publish
 def test_multiple_artifacts_saved_to_same_integration(client):
     integration = client.integration(name=get_integration_name())
 
@@ -99,7 +97,6 @@ def test_multiple_artifacts_saved_to_same_integration(client):
         delete_flow(client, flow.id())
 
 
-@pytest.mark.publish
 def test_lazy_artifact_with_save(client):
     db = client.integration(get_integration_name())
     reviews = db.sql(SHORT_SENTIMENT_SQL_QUERY)

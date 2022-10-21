@@ -5,7 +5,12 @@ import pytest
 from aqueduct.enums import ExecutionStatus
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
-from test_functions.simple.model import dummy_model
+from test_functions.sentiment.model import sentiment_model
+from test_functions.simple.model import (
+    dummy_model,
+    dummy_sentiment_model,
+    dummy_sentiment_model_multiple_input,
+)
 from test_metrics.constant.model import constant_metric
 from utils import (
     delete_flow,
@@ -13,19 +18,17 @@ from utils import (
     generate_table_name,
     get_integration_name,
     run_flow_test,
-    run_sentiment_model,
-    run_sentiment_model_multiple_input,
     wait_for_flow_runs,
 )
 
 import aqueduct
-from aqueduct import Flow, LoadUpdateMode, check, metric, op
+from aqueduct import LoadUpdateMode, check, metric, op
 
 
 def test_basic_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
@@ -33,13 +36,24 @@ def test_basic_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
-@pytest.mark.publish
+def test_sentiment_flow(client):
+    """Actually run the full sentiment model (with nltk dependency)."""
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    output_artifact = sentiment_model(sql_artifact)
+    output_artifact.save(
+        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
+    )
+
+    run_flow_test(client, artifacts=[output_artifact])
+
+
 def test_complex_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
-    fn_artifact = run_sentiment_model_multiple_input(sql_artifact1, sql_artifact2)
+    fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact1, sql_artifact2)
     output_artifact = dummy_model(fn_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
@@ -105,7 +119,7 @@ def test_multiple_output_artifacts(client):
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
-    fn_artifact1 = run_sentiment_model(sql_artifact1)
+    fn_artifact1 = dummy_sentiment_model(sql_artifact1)
     fn_artifact2 = dummy_model(sql_artifact2)
     fn_artifact1.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
@@ -120,11 +134,10 @@ def test_multiple_output_artifacts(client):
     )
 
 
-@pytest.mark.publish
 def test_publish_with_schedule(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
@@ -153,12 +166,11 @@ def test_invalid_flow(client):
         )
 
 
-@pytest.mark.publish
 def test_publish_flow_with_same_name(client):
     """Tests flow editing behavior."""
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
 
     # Remember to cleanup any created test data.
     flow_ids_to_delete = set()
@@ -189,11 +201,10 @@ def test_publish_flow_with_same_name(client):
             delete_flow(client, flow_id)
 
 
-@pytest.mark.publish
 def test_refresh_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
@@ -217,11 +228,10 @@ def test_refresh_flow(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_get_artifact_from_flow(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
@@ -238,11 +248,10 @@ def test_get_artifact_from_flow(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_get_artifact_reuse_for_computation(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = run_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
@@ -254,17 +263,16 @@ def test_get_artifact_reuse_for_computation(client):
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
         artifact_return = flow.latest().artifact(output_artifact.name())
         with pytest.raises(Exception):
-            output_artifact = run_sentiment_model(artifact_return)
+            output_artifact = dummy_sentiment_model(artifact_return)
     finally:
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_multiple_flows_with_same_schedule(client):
     try:
         db = client.integration(name=get_integration_name())
         sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-        output_artifact = run_sentiment_model(sql_artifact)
+        output_artifact = dummy_sentiment_model(sql_artifact)
         output_artifact_2 = dummy_model(sql_artifact)
 
         flow_1 = client.publish_flow(
@@ -294,7 +302,6 @@ def test_multiple_flows_with_same_schedule(client):
         delete_flow(client, flow_2.id())
 
 
-@pytest.mark.publish
 def test_fetching_historical_flows_uses_old_data(client):
     db = client.integration(name=get_integration_name())
 

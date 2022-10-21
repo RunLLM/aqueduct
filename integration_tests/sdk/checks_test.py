@@ -2,10 +2,11 @@ import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUserActionException
 from constants import CHURN_SQL_QUERY, SENTIMENT_SQL_QUERY
+from test_functions.simple.model import dummy_sentiment_model
 from test_metrics.constant.model import constant_metric
-from utils import get_integration_name, run_flow_test, run_sentiment_model
+from utils import get_integration_name, run_flow_test
 
-from aqueduct import CheckSeverity, check, op
+from aqueduct import CheckSeverity, check
 
 
 @check()
@@ -60,7 +61,7 @@ def test_check_on_multiple_mixed_inputs(client):
     metric = constant_metric(sql_artifact1)
 
     sql_artifact2 = db.sql(query=SENTIMENT_SQL_QUERY)
-    table = run_sentiment_model(sql_artifact2)
+    table = dummy_sentiment_model(sql_artifact2)
 
     check_artifact = success_on_multiple_mixed_inputs(metric, table)
     assert check_artifact.get()
@@ -125,7 +126,7 @@ def test_check_wrong_input_type(client):
     # Running a function operator on a check output, which is not allowed.
     check_artifact = success_on_single_table_input(sql_artifact)
     with pytest.raises(Exception):
-        fn_artifact = run_sentiment_model(check_artifact)
+        dummy_sentiment_model(check_artifact)
 
 
 def test_check_wrong_number_of_inputs(client):
@@ -135,7 +136,7 @@ def test_check_wrong_number_of_inputs(client):
 
     # TODO(ENG-863): Do we want a more specific error here?
     with pytest.raises(AqueductError):
-        check_artifact = success_on_single_table_input(sql_artifact1, sql_artifact2)
+        success_on_single_table_input(sql_artifact1, sql_artifact2)
 
 
 def test_check_with_numpy_bool_output(client):
@@ -171,7 +172,6 @@ def test_check_with_series_output(client):
     run_flow_test(client, artifacts=[sql_artifact, passed, failed])
 
 
-@pytest.mark.publish
 def test_check_failure_with_varying_severity(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -190,4 +190,4 @@ def test_check_failure_with_varying_severity(client):
 
     # In eager execution, this check should fail before we can publish the flow.
     with pytest.raises(AqueductError):
-        blocking_check = failure_blocking_check(sql_artifact)
+        failure_blocking_check(sql_artifact)
