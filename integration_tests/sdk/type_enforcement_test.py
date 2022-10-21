@@ -15,7 +15,6 @@ def output_different_types(should_return_num: bool) -> Union[str, int]:
     return "not a number"
 
 
-@pytest.mark.publish
 def test_flow_fails_on_unexpected_type_output(client):
     type_toggle = client.create_param("output_type_toggle", True)
     output = output_different_types(type_toggle)
@@ -33,7 +32,6 @@ def test_flow_fails_on_unexpected_type_output(client):
         client.delete_flow(flow.id())
 
 
-@pytest.mark.publish
 def test_flow_fails_on_unexpected_type_output_for_lazy(client):
     type_toggle = client.create_param("output_type_toggle", True)
     output = output_different_types.lazy(type_toggle)

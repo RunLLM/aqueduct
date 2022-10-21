@@ -13,7 +13,7 @@ import pandas as pd
 from aqueduct.enums import ArtifactType, SerializationType
 from PIL import Image
 
-_DEFAULT_ENCODING = "utf8"
+DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
 
 # The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
@@ -26,7 +26,7 @@ def _read_table_content(content: bytes) -> pd.DataFrame:
 
 
 def _read_json_content(content: bytes) -> Any:
-    return json.loads(content.decode(_DEFAULT_ENCODING))
+    return json.loads(content.decode(DEFAULT_ENCODING))
 
 
 def _read_pickle_content(content: bytes) -> Any:
@@ -38,14 +38,13 @@ def _read_image_content(content: bytes) -> Image.Image:
 
 
 def _read_string_content(content: bytes) -> str:
-    return content.decode(_DEFAULT_ENCODING)
+    return content.decode(DEFAULT_ENCODING)
 
 
 def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
-# Duplicated in the python executor.
 # NOTE: this doesn't really belong in the serialization library, but we don't have a lower layer than this right now -
 # (utils.py imports this file).
 def make_temp_dir() -> str:
@@ -97,7 +96,6 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 
-# WARNING: A copy of this function exists in `aqueduct_executor`. Make sure the two are in sync!
 def deserialize(
     serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
 ) -> Any:
@@ -117,7 +115,7 @@ def deserialize(
 
 def _write_table_output(output: pd.DataFrame) -> bytes:
     output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
-    return output_str.encode(_DEFAULT_ENCODING)
+    return output_str.encode(DEFAULT_ENCODING)
 
 
 def _write_image_output(output: Image.Image) -> bytes:
@@ -127,7 +125,7 @@ def _write_image_output(output: Image.Image) -> bytes:
 
 
 def _write_string_output(output: str) -> bytes:
-    return output.encode(_DEFAULT_ENCODING)
+    return output.encode(DEFAULT_ENCODING)
 
 
 def _write_bytes_output(output: bytes) -> bytes:
@@ -139,7 +137,7 @@ def _write_pickle_output(output: Any) -> bytes:
 
 
 def _write_json_output(output: Any) -> bytes:
-    return json.dumps(output).encode(_DEFAULT_ENCODING)
+    return json.dumps(output).encode(DEFAULT_ENCODING)
 
 
 def _write_tf_keras_model(output: Any) -> bytes:
@@ -166,38 +164,14 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 }
 
 
-def serialize_val(val: Any, serialization_type: SerializationType) -> str:
-    val_bytes = serialization_function_mapping[serialization_type](val)
-    return _bytes_to_base64_string(val_bytes)
-
-
-def _bytes_to_base64_string(content: bytes) -> str:
-    """Helper to convert bytes to a base64-string.
-
-    For example, image-serialized bytes are not `utf8` encoded, so if we want to convert
-    such bytes to string, we must use this function.
-    """
-    return base64.b64encode(content).decode(_DEFAULT_ENCODING)
-
-
-artifact_to_serialization = {
-    ArtifactType.STRING: [SerializationType.STRING],
-    ArtifactType.BOOL: [SerializationType.JSON],
-    ArtifactType.NUMERIC: [SerializationType.JSON],
-    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABLE: [SerializationType.TABLE],
-    ArtifactType.JSON: [SerializationType.STRING],
-    ArtifactType.BYTES: [SerializationType.BYTES],
-    ArtifactType.IMAGE: [SerializationType.IMAGE],
-    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
-}
+def serialize_val(val: Any, serialization_type: SerializationType) -> bytes:
+    """Serializes a parameter or computed value into bytes."""
+    return serialization_function_mapping[serialization_type](val)
 
 
 def artifact_type_to_serialization_type(
     artifact_type: ArtifactType, content: Any
 ) -> SerializationType:
-    """Copy of the same method on in aqueduct executor."""
     if artifact_type == ArtifactType.TABLE:
         serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:
@@ -216,10 +190,10 @@ def artifact_type_to_serialization_type(
             serialization_type = SerializationType.JSON
         except:
             serialization_type = SerializationType.PICKLE
+    elif artifact_type == ArtifactType.TF_KERAS:
+        serialization_type = SerializationType.TF_KERAS
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert serialization_type is not None and (
-        serialization_type in artifact_to_serialization[artifact_type]
-    )
+    assert serialization_type is not None
     return serialization_type

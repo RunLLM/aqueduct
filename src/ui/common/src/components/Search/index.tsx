@@ -18,7 +18,11 @@ type Props = {
   setSearchTerm: (v: string) => void;
 };
 
-export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
+export const SearchBar: React.FC<Props> = ({
+  options,
+  setSearchTerm,
+  getOptionLabel,
+}) => {
   return (
     <Autocomplete
       sx={{ width: 300 }}
@@ -32,7 +36,14 @@ export const SearchBar: React.FC<Props> = ({ options, setSearchTerm }) => {
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => option.name || ''}
+      getOptionLabel={(option) => {
+        if (getOptionLabel) {
+          return getOptionLabel(option);
+        }
+
+        // default case, just return .name if no function provided.
+        return option.name || '';
+      }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">

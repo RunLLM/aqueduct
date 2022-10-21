@@ -1,5 +1,5 @@
 import pytest
-from aqueduct.error import AqueductError, InvalidRequestError, InvalidUserArgumentException
+from aqueduct.error import InvalidRequestError
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
     check_flow_doesnt_exist,
@@ -8,14 +8,12 @@ from utils import (
     delete_flow,
     generate_new_flow_name,
     get_integration_name,
-    polling,
     run_flow_test,
 )
 
 from aqueduct import LoadUpdateMode
 
 
-@pytest.mark.publish
 def test_delete_workflow_invalid_saved_objects(client):
     """Check the flow cannot delete an object it had not saved."""
     integration = client.integration(name=get_integration_name())
@@ -48,7 +46,6 @@ def test_delete_workflow_invalid_saved_objects(client):
         delete_flow(client, flow_id)
 
 
-@pytest.mark.publish
 def test_delete_workflow_saved_objects(client):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     integration = client.integration(name=get_integration_name())
@@ -108,7 +105,6 @@ def test_delete_workflow_saved_objects(client):
             delete_flow(client, flow_id)
 
 
-@pytest.mark.publish
 def test_delete_workflow_saved_objects_twice(client):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
@@ -116,7 +112,7 @@ def test_delete_workflow_saved_objects_twice(client):
     been deleted.
     """
     integration = client.integration(name=get_integration_name())
-    name = generate_new_flow_name()
+    generate_new_flow_name()
     table_name = generate_new_flow_name()
     flow_ids_to_delete = set()
 
