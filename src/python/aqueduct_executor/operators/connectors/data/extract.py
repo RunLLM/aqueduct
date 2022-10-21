@@ -59,7 +59,7 @@ class RelationalParams(models.BaseParams):
 
         return queries[0]
 
-    def _expand_placeholders(self, query, parameters: Dict[str, str]) -> str:
+    def _expand_placeholders(self, query: str, parameters: Dict[str, str]) -> str:
         """Expands any tags found in the raw query, eg. {{ today }}.
 
         Relational queries can be arbitrarily parameterized the same way operators are. The only
@@ -88,10 +88,12 @@ class RelationalParams(models.BaseParams):
             int(bool(self.query)) + int(bool(self.queries)) == 1
         ), "Exactly one of .query and .queries fields should be set."
         query = ""
-        if bool(self.query):
+        if self.query is not None:
             query = self.query
             print(f"Compiling query {query} .")
-        else:
+        # this check mainly bypasses linter. The `assert` block above
+        # ensures self.queries is not None if we get here.
+        elif self.queries is not None:
             print(f"Compiling chain queries {self.queries} .")
             query = self._compile_chain(self.queries)
             print(f"Compiled chain query is {query} .")
