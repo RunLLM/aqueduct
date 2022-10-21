@@ -1,9 +1,9 @@
 import os
-import pytest
-import aqueduct
 
+import pytest
 from aqueduct.dag import DAG, Metadata
 
+import aqueduct
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
