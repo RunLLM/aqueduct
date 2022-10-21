@@ -153,14 +153,15 @@ func MigrateStorageAndVault(
 	}
 
 	// Migrate the vault portion of storage
-	if err := MigrateVault(
+	toDeleteFromVault, err := MigrateVault(
 		ctx,
 		oldVault,
 		newVault,
 		orgID,
 		integrationReader,
 		txn,
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 
@@ -175,6 +176,13 @@ func MigrateStorageAndVault(
 		}
 	}
 
+	// Delete keys from `oldVault` now that everything is fully migrated to `newVault`
+	for _, key := range toDeleteFromVault {
+		if err := oldVault.Delete(ctx, key); err != nil {
+			log.Errorf("Unexpected error when deleting %v after vault migration: %v", key, err)
+		}
+	}
+
 	return nil
 }
 
@@ -182,7 +190,8 @@ func MigrateStorageAndVault(
 // This includes:
 //   - integration credentials
 //
-// If the migration is successful, the above content is deleted from `oldVault`.
+// It also returns the names of all the keys that have been migrated to `newVault`.
+// It is the responsibility of the caller to delete the keys if necessary.
 func MigrateVault(
 	ctx context.Context,
 	oldVault vault.Vault,
@@ -190,11 +199,13 @@ func MigrateVault(
 	orgID string,
 	integrationReader integration.Reader,
 	db database.Database,
-) error {
+) ([]string, error) {
 	integrations, err := integrationReader.GetIntegrationsByOrganization(ctx, orgID, db)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	keys := []string{}
 
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
@@ -203,13 +214,15 @@ func MigrateVault(
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := newVault.Put(ctx, key, val); err != nil {
-			return err
+			return nil, err
 		}
+
+		keys = append(keys, key)
 	}
 
-	return nil
+	return keys, nil
 }

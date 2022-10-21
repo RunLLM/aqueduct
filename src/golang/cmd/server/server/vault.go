@@ -44,7 +44,7 @@ func syncVaultWithStorage(
 		return err
 	}
 
-	if err := utils.MigrateVault(
+	if _, err := utils.MigrateVault(
 		context.Background(),
 		oldVault,
 		vaultObj,
