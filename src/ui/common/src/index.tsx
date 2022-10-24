@@ -22,9 +22,7 @@ import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
 import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from './components/integrations/dialogs/dialog';
-import {
-  IntegrationFileUploadField,
-} from './components/integrations/dialogs/IntegrationFileUploadField';
+import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
 import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
@@ -151,10 +149,7 @@ import workflow, {
 import workflowDagResults from './reducers/workflowDagResults';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
-import {
-  ArtifactType,
-  getUpstreamOperator,
-} from './utils/artifacts';
+import { ArtifactType, getUpstreamOperator } from './utils/artifacts';
 import type { UserProfile } from './utils/auth';
 import {
   createCronString,
@@ -163,9 +158,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from './utils/cron';
-import {
-  DataColumnTypeNames,
-} from './utils/data';
+import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
 import {
   addTable,
@@ -193,10 +186,7 @@ import {
   ServiceType,
 } from './utils/operators';
 import { exportCsv } from './utils/preview';
-import {
-  EdgeTypes,
-  ReactflowNodeType,
-} from './utils/reactflow';
+import { EdgeTypes, ReactflowNodeType } from './utils/reactflow';
 import ExecutionStatus, {
   AllTransition,
   CheckStatus,
