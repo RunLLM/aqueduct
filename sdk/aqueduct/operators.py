@@ -41,6 +41,15 @@ class GithubMetadata(BaseModel):
 
 
 class RelationalDBExtractParams(BaseModel):
+    """
+    Specifies the query to run when extracting from a relational DB.
+    Exactly one of the 3 fields should be set.
+
+    query: the string to run a single query.
+    queries: a list of strings to run a chain of queries.
+    github_metadata: Github information to run a query stored in github.
+    """
+
     query: Optional[str] = None
     queries: Optional[List[str]] = None
     github_metadata: Optional[GithubMetadata] = None

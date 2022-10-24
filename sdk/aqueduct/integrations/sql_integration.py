@@ -47,7 +47,7 @@ LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 # The TAG for 'previous table' when the user specifies a chained query.
-CHAIN_TABLE_TAG = "$"
+PREV_TABLE_TAG = "$"
 
 # A dictionary of built-in tags to their replacement string functions.
 def replace_today() -> str:
@@ -156,7 +156,7 @@ class RelationalDBIntegration(Integration):
             for q in extract_params:
                 assert isinstance(
                     q, str
-                ), "The parameters should be a single string query, a list of string queries, or a RelationalDBExtractParams object."
+                ), "When using a list of queries, it must be a list of strings."
 
             if len(extract_params) == 1:
                 extract_params = RelationalDBExtractParams(

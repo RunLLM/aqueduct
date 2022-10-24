@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, CHAIN_TABLE_TAG, TAG_PATTERN
+from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, PREV_TABLE_TAG, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils import enums
 
@@ -25,6 +25,24 @@ class RelationalParams(models.BaseParams):
     github_metadata: Optional[Any]
 
     def _compile_chain(self, queries: List[str]) -> str:
+        """
+        `_compile_chain` compiles a chain query to a single query using `WITH` clause.
+        We generate temp_table_name and replace PREV_TABLE_TAG accordingly.
+
+        Example:
+        queries: [
+            "SELECT * FROM my_table",
+            "SELECT field_a, field_b FROM $",
+            "SELECT * FROM $",
+        ]
+
+        returns: `
+            WITH
+                generated_tmp_a AS (SELECT * FROM my_table),
+                generated_tmp_b AS (SELECT field_a, field_b FROM generated_tmp_a)
+            SELECT * FROM generated_tmp_b
+        `
+        """
         if not queries:
             return ""
 
@@ -37,12 +55,12 @@ class RelationalParams(models.BaseParams):
 
                 # replace tag except for the first query
                 if idx == 0:
-                    if CHAIN_TABLE_TAG in normalized_query:
+                    if PREV_TABLE_TAG in normalized_query:
                         raise Exception(
-                            f"Cannot compile chain. {CHAIN_TABLE_TAG} appears in the first query: {query}"
+                            f"Cannot compile chain. {PREV_TABLE_TAG} appears in the first query: {query}"
                         )
                 else:
-                    normalized_query = normalized_query.replace(CHAIN_TABLE_TAG, prev_table_name)
+                    normalized_query = normalized_query.replace(PREV_TABLE_TAG, prev_table_name)
 
                 # subquery goes to the 'WITH' clause except for the last one.
                 if idx < len(queries) - 1:
@@ -88,7 +106,7 @@ class RelationalParams(models.BaseParams):
             int(bool(self.query)) + int(bool(self.queries)) == 1
         ), "Exactly one of .query and .queries fields should be set."
         query = ""
-        if self.query is not None:
+        if self.query:
             query = self.query
             print(f"Compiling query {query} .")
         # this check mainly bypasses linter. The `assert` block above
