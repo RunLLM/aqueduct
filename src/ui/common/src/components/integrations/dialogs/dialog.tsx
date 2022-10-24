@@ -61,6 +61,7 @@ type Props = {
   service: Service;
   onCloseDialog: () => void;
   onSuccess: () => void;
+  showMigrationDialog: () => void;
   integrationToEdit?: Integration;
 };
 
@@ -69,6 +70,7 @@ const IntegrationDialog: React.FC<Props> = ({
   service,
   onCloseDialog,
   onSuccess,
+  showMigrationDialog,
   integrationToEdit = undefined,
 }) => {
   const editMode = !!integrationToEdit;
@@ -106,6 +108,8 @@ const IntegrationDialog: React.FC<Props> = ({
     setConfig((config) => {
       return { ...config, [field]: value };
     });
+  
+  const [migrateStorage, setMigrateStorage] = useState(false);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -113,6 +117,9 @@ const IntegrationDialog: React.FC<Props> = ({
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
       );
       onSuccess();
+      if (migrateStorage) {
+        showMigrationDialog();
+      }
       onCloseDialog();
     }
   }, [connectStatus]);
@@ -201,12 +208,15 @@ const IntegrationDialog: React.FC<Props> = ({
           onUpdateField={setConfigField}
           value={config as S3Config}
           editMode={editMode}
+          setMigrateStorage={setMigrateStorage}
         />
       );
       break;
     case 'GCS':
       const gcsConfig = config as GCSConfig;
+      // GCS can only be used storage currently
       gcsConfig.use_as_storage = 'true';
+      setMigrateStorage(true);
       serviceDialog = (
         <GCSDialog
           onUpdateField={setConfigField}

@@ -30,6 +30,7 @@ const AddIntegrations: React.FC<Props> = ({
   const handleSuccessToastClose = () => {
     setShowSuccessToast(null);
   };
+  const [showMigrationDialog, setShowMigrationDialog] = useState(false);
 
   return (
     <Box sx={{ maxWidth: '616px' }}>
@@ -107,6 +108,7 @@ const AddIntegrations: React.FC<Props> = ({
                         setShowDialog(false);
                         dispatch(resetConnectNewStatus());
                       }}
+                      showMigrationDialog={() => setShowMigrationDialog(true)}
                     />
                   )}
                 </Box>
@@ -123,6 +125,21 @@ const AddIntegrations: React.FC<Props> = ({
                     sx={{ width: '100%' }}
                   >
                     {`Successfully connected to ${service}!`}
+                  </Alert>
+                </Snackbar>
+                <Snackbar
+                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  open={showMigrationDialog}
+                  onClose={() => {setShowMigrationDialog(false)}}
+                  key={'integrations-dialog-migration-snackbar'}
+                  autoHideDuration={6000}
+                >
+                  <Alert
+                    onClose={() => {setShowMigrationDialog(false)}}
+                    severity="info"
+                    sx={{ width: '100%' }}
+                  >
+                    {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
                   </Alert>
                 </Snackbar>
               </Grid>

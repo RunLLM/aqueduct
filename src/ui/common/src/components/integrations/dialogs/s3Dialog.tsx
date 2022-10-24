@@ -30,12 +30,14 @@ type Props = {
   onUpdateField: (field: keyof S3Config, value: string) => void;
   value?: S3Config;
   editMode: boolean;
+  setMigrateStorage: (value: boolean) => void;
 };
 
 export const S3Dialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,
+  setMigrateStorage,
 }) => {
   const [fileName, setFileName] = useState<string>(null);
 
@@ -216,12 +218,13 @@ export const S3Dialog: React.FC<Props> = ({
         control={
           <Checkbox
             checked={value?.use_as_storage === 'true'}
-            onChange={(event) =>
+            onChange={(event) => {
               onUpdateField(
                 'use_as_storage',
                 event.target.checked ? 'true' : 'false'
-              )
-            }
+              );
+              setMigrateStorage(event.target.checked);
+            }}
             disabled={editMode}
           />
         }
