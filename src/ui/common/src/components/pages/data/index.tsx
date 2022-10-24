@@ -2,13 +2,13 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { DataPreviewInfo } from '../../../utils/data';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
+import { DataPreviewInfo } from '../../../utils/data';
 import { DataCard } from '../../integrations/cards/card';
 import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
