@@ -354,7 +354,7 @@ def test_fetching_historical_flows_uses_old_data(client):
             delete_flow(client, flow_id)
 
 
-def test_flow_with_args_and_kwargs(client):
+def test_flow_with_args(client):
     str_val = "this is a string"
     num_val = 1234
 
@@ -378,8 +378,3 @@ def test_flow_with_args_and_kwargs(client):
     # Implicit parameter creation is disallowed for variable-length parameters.
     with pytest.raises(InvalidUserArgumentException):
         foo_with_args(*[str_val, num_val])
-
-
-# TODO: get the above to work  (or at least throw an error) with implicit parameters
-# output = foo_with_args(str_val, num_val)
-# print(output.get())

@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, Union, cast, Mapping
+from typing import Any, Callable, List, Mapping, Optional, Union, cast
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -234,7 +234,7 @@ def _convert_input_arguments_to_parameters(
         if not isinstance(artifact, BaseArtifact):
             if implicit_params_disallowed:
                 raise InvalidUserArgumentException(
-                    """Input %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """ 
+                    """Input %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
                     """function that takes in variable-length parameters (eg. *args or **kwargs) is currently unsupported."""
                     % idx
                 )
