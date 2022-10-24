@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.1
+Released on October 24, 2022.
+
+### Enhancements
+* Adds support for Tensorflow Keras models to type system.
+* Re-enables downloading operator code.
+
+### Bugfixes
+* Fixes bug where artifact details view was not scrollable in drawer view.
+* Fixes bugs where parameter nodes were rendered incorrectly.
+* Fixes bug where search functionality was broken on the data page.
+
 ## 0.1.0
 Released on October 18, 2022.
 
