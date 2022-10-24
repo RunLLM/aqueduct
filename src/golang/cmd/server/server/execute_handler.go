@@ -48,8 +48,11 @@ func HandleSuccess(
 	handlerObj.SendResponse(w, resp)
 }
 
-func ExecuteHandler(server Server, handlerObj handler.Handler) func(w http.ResponseWriter, r *http.Request) {
+func ExecuteHandler(server *AqServer, handlerObj handler.Handler) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		server.RequestMutex.RLock()
+		defer server.RequestMutex.RUnlock()
+
 		args, statusCode, err := handlerObj.Prepare(r)
 		ctx := r.Context()
 		if err != nil {

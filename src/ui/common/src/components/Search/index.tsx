@@ -25,8 +25,8 @@ type Props = {
 
 export const SearchBar: React.FC<Props> = ({
   options,
-  getOptionLabel,
   setSearchTerm,
+  getOptionLabel,
 }) => {
   return (
     <Autocomplete
@@ -41,7 +41,14 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={getOptionLabel}
+      getOptionLabel={(option) => {
+        if (getOptionLabel) {
+          return getOptionLabel(option);
+        }
+
+        // default case, just return .name if no function provided.
+        return option.name || '';
+      }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">

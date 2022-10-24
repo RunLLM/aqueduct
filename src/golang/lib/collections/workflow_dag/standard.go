@@ -74,6 +74,17 @@ func (r *standardReaderImpl) GetWorkflowDags(
 	return workflowDags, err
 }
 
+func (r *standardReaderImpl) ListWorkflowDags(ctx context.Context, db database.Database) ([]DBWorkflowDag, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM workflow_dag;",
+		allColumns(),
+	)
+
+	var workflowDags []DBWorkflowDag
+	err := db.Query(ctx, &workflowDags, query)
+	return workflowDags, err
+}
+
 func (r *standardReaderImpl) GetWorkflowDagsByWorkflowId(
 	ctx context.Context,
 	workflowId uuid.UUID,

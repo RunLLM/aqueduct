@@ -16,9 +16,3 @@ Running a specific test:
 Running tests in parallel, with concurrency 5:
 - Install pytest-xdist
 - `<your env variables> pytest . -rP -n 5`
-
-There are two additional flags that can be included:
-
-`--complex_models`: if set, we will always run real models like sentiment and churn. Otherwise, tests will default instead to dummy functions, which are faster to evaluate.
-
-`--publish`: if set, flows will actually be published into the backend, with the expectation that they are deleted afterwards. Otherwise, we may only call `.get()` for much of the test verification. Leaving this flag out will improve speed tests, at the expense of losing test coverage of `publish_flow()`.

@@ -70,12 +70,12 @@ jobs:
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
       - name: Run the Integration Tests
-        timeout-minutes: 15
+        timeout-minutes: 30
         working-directory: integration_tests/sdk
         env:
           SERVER_ADDRESS: localhost:8080
           INTEGRATION: aqueduct_demo
-        run: pytest . -rP --publish --complex_models -n ${{ matrix.concurrency }}
+        run: pytest . -rP -n ${{ matrix.concurrency }}
 
       - uses: actions/upload-artifact@v3
         if: always()
