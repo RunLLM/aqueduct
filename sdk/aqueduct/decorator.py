@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, Union, cast
+from typing import Any, Callable, List, Optional, Union, cast, Mapping
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -208,21 +208,42 @@ def _type_check_decorated_function_arguments(
                 )
 
 
-def _convert_argument_to_parameter(
-    *input_artifacts: Any, function_argument_names: List[str]
+def _convert_input_arguments_to_parameters(
+    *input_artifacts: Any, func_params: Mapping[str, inspect.Parameter]
 ) -> List[BaseArtifact]:
     """
     Converts non-artifact inputs to parameters.
+
+    Errors if the implicitly-created parameter collides with an existing one. Also errors if the function has a
+    variable-length parameter, since we don't know what name to attribute to those.
+
+    `func_params` maps from parameter name to an `inspect.Parameter` object containing additional information.
     """
+    # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
+    # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
+    disallowed_kinds = [inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD]
+    implicit_params_disallowed = any(
+        param.kind in disallowed_kinds for param in func_params.values()
+    )
+
     dag = dag_module.__GLOBAL_DAG__
+    param_names = list(func_params.keys())
 
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
-            arg_name = function_argument_names[idx]
+            if implicit_params_disallowed:
+                raise InvalidUserArgumentException(
+                    """Input %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """ 
+                    """function that takes in variable-length parameters (eg. *args or **kwargs) is currently unsupported."""
+                    % idx
+                )
+
+            # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
+            arg_name = param_names[idx]
             if dag.get_operator(with_name=arg_name) is not None:
                 raise InvalidUserArgumentException(
-                    """Input to function argument "%s" is not an artifact type. We tried implicitly \
+                    """Input to function argument "%s" is not an artifact. We tried implicitly \
 creating a parameter named "%s", but an existing operator or parameter with the same name already exists."""
                     % (arg_name, arg_name)
                 )
@@ -314,8 +335,9 @@ def op(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
@@ -433,8 +455,9 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.METRIC, *artifacts)
@@ -575,8 +598,9 @@ def check(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.CHECK, *artifacts)
