@@ -1,20 +1,12 @@
 import time
 import uuid
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.enums import ExecutionStatus
-from pandas import DataFrame
-
-# Should be set before each test runs.
-from test_functions.sentiment.model import sentiment_model, sentiment_model_multiple_input
-from test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 
 import aqueduct
-from aqueduct import Flow, api_client
+from aqueduct import Flow
 
 flags: Dict[str, bool] = {}
 integration_name: Optional[str] = None
@@ -25,69 +17,12 @@ def get_integration_name() -> str:
     return integration_name
 
 
-def should_publish_flows() -> bool:
-    assert "publish" in flags
-    return flags["publish"]
-
-
-def should_run_complex_models() -> bool:
-    assert "complex_models" in flags
-    return flags["complex_models"]
-
-
 def generate_new_flow_name() -> str:
     return "test_" + uuid.uuid4().hex
 
 
 def generate_table_name() -> str:
     return "test_table_" + uuid.uuid4().hex[:24]
-
-
-def run_sentiment_model(artifact: TableArtifact) -> TableArtifact:
-    """
-    Calls the full sentiment model if --complex_models flag is set. Otherwise, will use simple model,
-    which appends the same column with a dummy value, but is much faster.
-    """
-    if should_run_complex_models():
-        return sentiment_model(artifact)
-    else:
-        return dummy_sentiment_model(artifact)
-
-
-def run_sentiment_model_local(artifact: TableArtifact) -> DataFrame:
-    """
-    Run sentiment model locally using .local() method. Calls the full sentiment model
-    local method if --complex_models flag is set. Otherwise, will use simple model,which
-    appends the same column with a dummy value.
-    """
-    if should_run_complex_models():
-        return sentiment_model.local(artifact)
-    else:
-        return dummy_sentiment_model.local(artifact)
-
-
-def run_sentiment_model_multiple_input(
-    artifact1: TableArtifact, artifact2: TableArtifact
-) -> TableArtifact:
-    """
-    Same test setup as `run_sentiment_model`.
-    """
-    if should_run_complex_models():
-        return sentiment_model_multiple_input(artifact1, artifact2)
-    else:
-        return dummy_sentiment_model_multiple_input(artifact1, artifact2)
-
-
-def run_sentiment_model_local_multiple_input(
-    artifact1: TableArtifact, artifact2: TableArtifact
-) -> DataFrame:
-    """
-    Same test setup as `run_sentiment_model_local` but takes in two artifacts.
-    """
-    if should_run_complex_models():
-        return sentiment_model_multiple_input.local(artifact1, artifact2)
-    else:
-        return dummy_sentiment_model_multiple_input.local(artifact1, artifact2)
 
 
 def run_flow_test(
@@ -102,17 +37,9 @@ def run_flow_test(
     expect_success: bool = True,
 ) -> Optional[Flow]:
     """
-    Actually publishes the flow if tests are run with --publish flag. This flow can be deleted
-    within this method if `delete_flow_after = True`.
-
-    If --publish is not supplied, we will instead realize all the artifacts with .get().
-    The --publish case only returns when the specified flow has run successfully at least `num_runs` times.
+    Publishes the flow and waits until it has run at least `num_runs` times with the expected status.
+    The flow is always deleted before this method returns, unless `delete_flow_after = False`.
     """
-    if not should_publish_flows():
-        for artifact in artifacts:
-            _ = artifact.get()
-        return None
-
     if len(name) == 0:
         name = generate_new_flow_name()
 

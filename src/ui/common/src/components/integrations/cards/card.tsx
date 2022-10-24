@@ -45,7 +45,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
         to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
           dataPreviewInfo.artifact_id
         }`}
-        component={RouterLink as any}
+        component={RouterLink}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>

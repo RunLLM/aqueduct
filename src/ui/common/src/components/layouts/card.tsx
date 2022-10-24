@@ -5,7 +5,7 @@ import { theme } from '../../styles/theme/theme';
 
 export const CardPadding = '16px';
 
-export const Card = styled(Box)(({ theme: Theme }) => {
+export const Card = styled(Box)(() => {
   return {
     borderRadius: 4,
     '&:hover': {

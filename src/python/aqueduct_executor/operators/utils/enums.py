@@ -69,6 +69,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"
     PICKLABLE = "picklable"
+    TF_KERAS = "tensorflow-keras-model"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
@@ -78,17 +79,4 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
-
-
-artifact_to_serialization = {
-    ArtifactType.STRING: [SerializationType.STRING],
-    ArtifactType.BOOL: [SerializationType.JSON],
-    ArtifactType.NUMERIC: [SerializationType.JSON],
-    ArtifactType.DICT: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TUPLE: [SerializationType.JSON, SerializationType.PICKLE],
-    ArtifactType.TABLE: [SerializationType.TABLE],
-    ArtifactType.JSON: [SerializationType.STRING],
-    ArtifactType.BYTES: [SerializationType.BYTES],
-    ArtifactType.IMAGE: [SerializationType.IMAGE],
-    ArtifactType.PICKLABLE: [SerializationType.PICKLE],
-}
+    TF_KERAS = "tensorflow-keras-model"

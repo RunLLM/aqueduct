@@ -203,8 +203,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       // Serialize the user's input string appropriately into base64. The input can either be a
       // 1) number 2) string 3) json.
       try {
-        const val = JSON.parse(strVal);
-
         // All jsonable values are serialized as json.
         serializedParams[key] = {
           val: btoa(strVal),
@@ -264,10 +262,17 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Box>
 
         {Object.keys(paramNameToDisplayProps).length > 0 && (
-          <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
-            {' '}
-            Parameters{' '}
-          </Typography>
+          <Box>
+            <Typography sx={{ mb: 1 }} style={{ fontWeight: 'bold' }}>
+              {' '}
+              Parameters{' '}
+            </Typography>
+            <Typography variant="caption">
+              For json-serializable types like dictionaries or lists, enter the
+              string-serialized representation, without the outer quotes. That
+              is to say, the result of `json.dumps(val)`.
+            </Typography>
+          </Box>
         )}
         {Object.keys(paramNameToDisplayProps).map((paramName) => {
           return (

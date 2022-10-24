@@ -104,10 +104,13 @@ interface DataTableProps {
   rowHeight?: number;
 }
 
+const DEFAULT_ROW_HEIGHT = 48;
+const DEFAULT_HEADER_HEIGHT = 72;
+
 class PreStyledDataTable extends React.PureComponent<DataTableProps> {
   static defaultProps = {
-    headerHeight: 72,
-    rowHeight: 48,
+    headerHeight: DEFAULT_HEADER_HEIGHT,
+    rowHeight: DEFAULT_ROW_HEIGHT,
     minColumnWidth: 150,
   };
 
@@ -201,8 +204,13 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
   };
 
   render() {
-    const { columns, rowHeight, headerHeight, minColumnWidth, ...tableProps } =
-      this.props;
+    const {
+      columns,
+      rowHeight = DEFAULT_ROW_HEIGHT,
+      headerHeight = DEFAULT_HEADER_HEIGHT,
+      minColumnWidth,
+      ...tableProps
+    } = this.props;
 
     let MIN_TABLE_WIDTH = 0;
     columns.forEach((column) => {
@@ -229,11 +237,11 @@ class PreStyledDataTable extends React.PureComponent<DataTableProps> {
           <Table
             height={height}
             width={MIN_TABLE_WIDTH}
-            rowHeight={rowHeight!}
+            rowHeight={rowHeight}
             gridStyle={{
               direction: 'inherit',
             }}
-            headerHeight={headerHeight!}
+            headerHeight={headerHeight}
             {...tableProps}
             rowClassName={this.getRowClassName}
           >

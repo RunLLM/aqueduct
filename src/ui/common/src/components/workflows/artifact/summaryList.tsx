@@ -98,7 +98,7 @@ const SummaryList: React.FC<Props> = ({
       return (
         <Link
           to={link}
-          component={RouterLink as any}
+          component={RouterLink}
           sx={{ textDecoration: 'none' }}
           key={artifactResult.id}
         >

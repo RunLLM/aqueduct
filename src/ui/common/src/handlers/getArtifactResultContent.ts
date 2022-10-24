@@ -5,7 +5,6 @@ import {
   GetArtifactResultResponse,
   SerializationType,
 } from '../utils/artifacts';
-import { ExecutionStatus } from '../utils/shared';
 
 const { apiAddress } = useAqueductConsts();
 
@@ -50,7 +49,7 @@ export const handleGetArtifactResultContent = createAsyncThunk<
       metadataJson
     ) as GetArtifactResultResponse;
 
-    if (artifactResult.exec_state.status === ExecutionStatus.Succeeded) {
+    if (formData.has('data')) {
       if (
         artifactResult.serialization_type === SerializationType.String ||
         artifactResult.serialization_type === SerializationType.Table ||
@@ -77,8 +76,9 @@ export const handleGetArtifactResultContent = createAsyncThunk<
 
         artifactResult.data = await toBase64(formData.get('data') as File);
       }
+      return artifactResult.data;
     }
 
-    return artifactResult.data;
+    return undefined;
   }
 );

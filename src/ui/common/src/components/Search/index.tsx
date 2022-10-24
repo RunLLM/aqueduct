@@ -20,8 +20,8 @@ type Props = {
 
 export const SearchBar: React.FC<Props> = ({
   options,
-  getOptionLabel,
   setSearchTerm,
+  getOptionLabel,
 }) => {
   if (options.length === 0) {
     return null;
@@ -39,7 +39,14 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={getOptionLabel}
+      getOptionLabel={(option) => {
+        if (getOptionLabel) {
+          return getOptionLabel(option);
+        }
+
+        // default case, just return .name if no function provided.
+        return option.name || '';
+      }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
           <InputAdornment position="start">
@@ -89,7 +96,7 @@ export const filteredList = (
   matchOn: (item: any) => string,
   listItems: (item: any, idx: number) => JSX.Element,
   noItemsMessage: JSX.Element
-) => {
+): JSX.Element => {
   if (allItems.length === 0) {
     return noItemsMessage;
   }

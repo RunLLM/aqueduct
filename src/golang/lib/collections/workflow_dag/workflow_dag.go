@@ -37,6 +37,7 @@ func (dag *DBWorkflowDag) GetOperatorByName(name string) *operator.DBOperator {
 type Reader interface {
 	GetWorkflowDag(ctx context.Context, id uuid.UUID, db database.Database) (*DBWorkflowDag, error)
 	GetWorkflowDags(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBWorkflowDag, error)
+	ListWorkflowDags(ctx context.Context, db database.Database) ([]DBWorkflowDag, error)
 	GetLatestWorkflowDag(ctx context.Context, workflowId uuid.UUID, db database.Database) (*DBWorkflowDag, error)
 	GetWorkflowDagsByWorkflowId(
 		ctx context.Context,

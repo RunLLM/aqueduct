@@ -57,7 +57,7 @@ const OperatorResultsSideSheet: React.FC<Props> = ({ user, currentNode }) => {
   const execState: ExecState =
     workflow.operatorResults[currentNode.id]?.result?.exec_state;
 
-  let spec, integration, actions;
+  let spec, actions;
 
   // Load the operator spec, which has a different variable name depending on
   // the type of the operator.

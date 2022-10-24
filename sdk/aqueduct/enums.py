@@ -151,6 +151,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     BYTES = "bytes"
     IMAGE = "image"  # corresponds to PIL.Image.Image type
     PICKLABLE = "picklable"
+    TF_KERAS = "tensorflow-keras-model"
 
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
@@ -160,6 +161,7 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     IMAGE = "image"
     STRING = "string"
     BYTES = "bytes"
+    TF_KERAS = "tensorflow-keras-model"
 
 
 class ExecutionMode(str, Enum, metaclass=MetaEnum):

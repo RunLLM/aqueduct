@@ -1,5 +1,7 @@
 import sys
 
+from aqueduct.serialization import deserialize
+from aqueduct.utils import infer_artifact_type
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (
@@ -11,7 +13,6 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import deserialize, infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:
@@ -30,21 +31,24 @@ def run(spec: ParamSpec) -> None:
     storage = parse_storage(spec.storage_config)
 
     try:
-        val_bytes = storage.get(spec.output_content_path)
-        val = deserialize(spec.serialization_type, spec.expected_type, val_bytes)
+        val = deserialize(
+            spec.serialization_type,
+            spec.expected_type,
+            storage.get(spec.output_content_path),
+        )
+        inferred_type = infer_artifact_type(val)
 
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.
         utils.write_artifact(
             storage,
-            spec.expected_type,
+            inferred_type,
             None,  # output_content_path
             spec.output_metadata_path,
             val,
             system_metadata={},
         )
 
-        inferred_type = infer_artifact_type(val)
         if inferred_type != spec.expected_type:
             raise ExecFailureException(
                 failure_type=enums.FailureType.USER_FATAL,

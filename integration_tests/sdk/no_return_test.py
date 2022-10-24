@@ -9,7 +9,6 @@ def no_return() -> None:
     return None
 
 
-@pytest.mark.publish
 def test_operator_with_no_return(client):
     result = no_return()
     assert result.get() is None

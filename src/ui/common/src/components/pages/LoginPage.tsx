@@ -15,9 +15,7 @@ export const LoginPage: React.FC = () => {
     document.title = 'Login | Aqueduct';
   }, []);
 
-  const [cookies, setCookie, removeCookie] = useCookies(['aqueduct-api-key']);
-
-  const [isAuthed, setIsAuthed] = useState<boolean>(false);
+  const [cookies, setCookie] = useCookies(['aqueduct-api-key']);
   const [validationError, setValidationError] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
@@ -30,7 +28,7 @@ export const LoginPage: React.FC = () => {
       : ''
   );
 
-  const [searchParams, _] = useSearchParams();
+  const [searchParams] = useSearchParams();
   // On page load, check if there's a query parameter with the API key. If there
   // is, then we automatically try to login with that API key.
   useEffect(() => {

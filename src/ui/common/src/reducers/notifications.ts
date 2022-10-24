@@ -18,11 +18,6 @@ const initialNotificationsState: NotificationsState = {
   notifications: [],
 };
 
-type UserPayload = {
-  user: UserProfile;
-  id: string;
-};
-
 export const handleArchiveNotification = createAsyncThunk<
   // return type of the payload creator
   void,

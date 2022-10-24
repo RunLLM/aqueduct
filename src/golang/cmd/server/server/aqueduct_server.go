@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/maintenance"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
@@ -40,101 +43,79 @@ const (
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
 
 type AqServer struct {
-	Router *chi.Mux
+	Router   *chi.Mux
+	Name     string
+	Database database.Database
+	*Readers
+	*Writers
 
-	Name          string
-	Database      database.Database
+	// Only the following group of fields will be reinitialized when the server is restarted
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
 	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
-	*Readers
-	*Writers
+
+	// UnderMaintenance indicates whether the server is currently down for system maintenance.
+	UnderMaintenance atomic.Value
+	// RequestMutex's read lock is acquired and released by each request to indicate when there
+	// are no more active requests.
+	RequestMutex sync.RWMutex
 }
 
 func NewAqServer() *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
+
+	// The database cannot be reinitialized when the server restarts, because the database is passed
+	// to the middleware functions.
 	db, err := database.NewSqliteDatabase(&database.SqliteConfig{
 		File: path.Join(aqPath, database.SqliteDatabasePath),
 	})
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
-	}
-
-	githubManager := github.NewUnimplementedManager()
-
-	jobManager, err := job.NewProcessJobManager(
-		&job.ProcessConfig{
-			BinaryDir:          path.Join(aqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
-		},
-	)
-	if err != nil {
-		db.Close()
-		log.Fatal("Unable to create job manager: ", err)
-	}
-
-	vault, err := vault.NewFileVault(&vault.FileConfig{
-		Directory:     path.Join(aqPath, vault.FileVaultDir),
-		EncryptionKey: config.EncryptionKey(),
-	})
-	if err != nil {
-		db.Close()
-		log.Fatal("Unable to start vault: ", err)
+		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
 	readers, err := CreateReaders(db.Config())
 	if err != nil {
 		db.Close()
-		log.Fatal("Unable to create readers: ", err)
+		log.Fatalf("Unable to create database readers: %v", err)
 	}
 
 	writers, err := CreateWriters(db.Config())
 	if err != nil {
 		db.Close()
-		log.Fatal("Unable to create writers: ", err)
+		log.Fatalf("Unable to create database writers: %v", err)
 	}
 
-	storageConfig := config.Storage()
-
-	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
-		&storageConfig,
-		previewCacheSize,
-	)
-	if err != nil {
-		log.Fatal("Unable to create preview artifact cache: ", err)
-	}
-
-	eng, err := engine.NewAqEngine(
+	if err := collections.RequireSchemaVersion(
+		context.Background(),
+		RequiredSchemaVersion,
+		readers.SchemaVersionReader,
 		db,
-		githubManager,
-		previewCacheManager,
-		vault,
-		aqPath,
-		GetEngineReaders(readers),
-		GetEngineWriters(writers),
-	)
-	if err != nil {
-		log.Fatal("Unable to create aqEngine: ", err)
+	); err != nil {
+		db.Close()
+		log.Fatalf("Unable to confirm required database schema version: %v", err)
 	}
 
 	s := &AqServer{
-		Router:        chi.NewRouter(),
-		Database:      db,
-		GithubManager: github.NewUnimplementedManager(),
-		JobManager:    jobManager,
-		Vault:         vault,
-		AqPath:        aqPath,
-		AqEngine:      eng,
-		Readers:       readers,
-		Writers:       writers,
+		Router:           chi.NewRouter(),
+		Database:         db,
+		Readers:          readers,
+		Writers:          writers,
+		UnderMaintenance: atomic.Value{},
+		RequestMutex:     sync.RWMutex{},
+	}
+	s.UnderMaintenance.Store(false)
+
+	// Initialize the other server fields
+	if err := s.Init(); err != nil {
+		db.Close()
+		log.Fatalf("Unable to initialize server: %v", err)
 	}
 
 	allowedOrigins := []string{"*"}
-
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
 		AllowedHeaders: GetAllHeaders(s),
@@ -142,17 +123,9 @@ func NewAqServer() *AqServer {
 	})
 	s.Router.Use(corsMiddleware.Handler)
 	s.Router.Use(middleware.Logger)
-	AddAllHandlers(s)
 
-	if err := collections.RequireSchemaVersion(
-		context.Background(),
-		RequiredSchemaVersion,
-		s.SchemaVersionReader,
-		db,
-	); err != nil {
-		db.Close()
-		log.Fatalf("Found incompatible database schema version: %v", err)
-	}
+	// Register server handlers
+	AddAllHandlers(s)
 
 	log.Infof("Creating a user account and a builtin SQLite integration.")
 	testUser, err := CreateTestAccount(
@@ -185,12 +158,69 @@ func NewAqServer() *AqServer {
 
 	err = s.initializeWorkflowCronJobs(ctx)
 	if err != nil {
+		db.Close()
 		log.Fatalf("Failed to create cron jobs for existing workflows: %v", err)
 	} else {
 		log.Info("Successfully created cron jobs for existing workflows")
 	}
 
 	return s
+}
+
+// Init sets all of the fields of this AqServer that depend on server configuration.
+func (s *AqServer) Init() error {
+	aqPath := config.AqueductPath()
+
+	githubManager := github.NewUnimplementedManager()
+
+	jobManager, err := job.NewProcessJobManager(
+		&job.ProcessConfig{
+			BinaryDir:          path.Join(aqPath, job.BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	vault, err := vault.NewFileVault(&vault.FileConfig{
+		Directory:     path.Join(aqPath, vault.FileVaultDir),
+		EncryptionKey: config.EncryptionKey(),
+	})
+	if err != nil {
+		return err
+	}
+
+	storageConfig := config.Storage()
+
+	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
+		&storageConfig,
+		previewCacheSize,
+	)
+	if err != nil {
+		return err
+	}
+
+	eng, err := engine.NewAqEngine(
+		s.Database,
+		githubManager,
+		previewCacheManager,
+		vault,
+		aqPath,
+		GetEngineReaders(s.Readers),
+		GetEngineWriters(s.Writers),
+	)
+	if err != nil {
+		return err
+	}
+
+	s.GithubManager = githubManager
+	s.JobManager = jobManager
+	s.Vault = vault
+	s.AqPath = aqPath
+	s.AqEngine = eng
+
+	return nil
 }
 
 func (s *AqServer) StartWorkflowRetentionJob(period string) error {
@@ -225,6 +255,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	var middleware alice.Chain
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
 		middleware = alice.New(
+			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserReader, s.Database),
 		)
@@ -285,4 +316,22 @@ func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+// Pause puts the server in system maintenance mode by blocking all new requests
+// and waits for all active requests to finish.
+// It is the responsibility of the caller to call s.Restart() to allow requests
+// to be processed again once the system maintenance is complete.
+func (s *AqServer) Pause() {
+	s.UnderMaintenance.Store(true)
+	s.RequestMutex.Lock()
+}
+
+// Restart restarts a server that was previously stopped via s.Pause().
+func (s *AqServer) Restart() {
+	if err := s.Init(); err != nil {
+		log.Fatalf("Unable to restart server: %v", err)
+	}
+	s.RequestMutex.Unlock()
+	s.UnderMaintenance.Store(false)
 }

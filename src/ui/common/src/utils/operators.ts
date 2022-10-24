@@ -12,6 +12,14 @@ export enum OperatorType {
   SystemMetric = 'system_metric',
 }
 
+export function hasFile(opType?: OperatorType): boolean {
+  return (
+    opType === OperatorType.Function ||
+    opType === OperatorType.Metric ||
+    opType === OperatorType.Check
+  );
+}
+
 export enum FunctionType {
   File = 'file',
   Github = 'github',
@@ -136,7 +144,7 @@ export type Operator = {
 //
 // For now, we only handle all lists / maps field. Ideally, we should
 // handle all fields like `operator.id = operator?.id ?? ''`.
-export function normalizeOperator(op): Operator {
+export function normalizeOperator(op: Operator): Operator {
   op.inputs = op?.inputs ?? [];
   op.outputs = op?.outputs ?? [];
   return op;

@@ -1,10 +1,10 @@
+import base64
 import inspect
 import json
 import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -30,7 +30,9 @@ from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
 from aqueduct.operators import Operator, ParamSpec
 from aqueduct.serialization import (
+    DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
+    make_temp_dir,
     serialization_function_mapping,
     serialize_val,
 )
@@ -160,22 +162,6 @@ def delete_zip_folder_and_file(dir_name: str) -> None:
         shutil.rmtree(dir_name)
 
 
-def make_zip_dir() -> str:
-    """
-    Given a base path, creates an unique directory and returns the path.
-    """
-    created = False
-    # Try to create the directory. If it already exists, try again with a new name.
-    while not created:
-        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
-        try:
-            os.mkdir(dir_path)
-            created = True
-        except FileExistsError:
-            pass
-    return str(dir_path)
-
-
 def serialize_function(
     func: Union[UserFunction, MetricFunction, CheckFunction],
     op_name: str,
@@ -205,7 +191,7 @@ def serialize_function(
     """
     dir_path = None
     try:
-        dir_path = make_zip_dir()
+        dir_path = make_temp_dir()
         _package_files_and_requirements(
             func, os.path.join(os.getcwd(), dir_path), file_dependencies, requirements
         )
@@ -534,7 +520,27 @@ def infer_artifact_type(value: Any) -> ArtifactType:
             pickle.dumps(value)
             return ArtifactType.PICKLABLE
         except:
-            raise Exception("Failed to map type %s to supported artifact type." % type(value))
+            pass
+
+        try:
+            # tf.keras.Model's can be pickled, but some classes that inherit from it cannot (eg. `tfrs.Model`)
+            from tensorflow import keras
+
+            if isinstance(value, keras.Model):
+                return ArtifactType.TF_KERAS
+        except:
+            pass
+
+        raise Exception("Failed to map type %s to supported artifact type." % type(value))
+
+
+def _bytes_to_base64_string(content: bytes) -> str:
+    """Helper to convert bytes to a base64-string.
+
+    For example, image-serialized bytes are not `utf8` encoded, so if we want to convert
+    such bytes to string, we must use this function.
+    """
+    return base64.b64encode(content).decode(DEFAULT_ENCODING)
 
 
 def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
@@ -544,7 +550,7 @@ def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     # We must base64 encode the resulting bytes, since we can't be sure
     # what encoding it was written in (eg. Image types are not encoded as "utf8").
     return ParamSpec(
-        val=serialize_val(val, serialization_type),
+        val=_bytes_to_base64_string(serialize_val(val, serialization_type)),
         serialization_type=serialization_type,
     )
 
