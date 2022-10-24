@@ -2,6 +2,7 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { ListWorkflowSummary } from '../../../utils/workflows';
 
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -94,7 +95,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             {/* Align searchbar with card text */}
             <SearchBar
               options={allWorkflows.workflows}
-              getOptionLabel={(option) => option.name || ''}
+              getOptionLabel={(option: ListWorkflowSummary) => option.name || ''}
               setSearchTerm={setFilterText}
             />
           </Box>

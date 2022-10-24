@@ -41,13 +41,13 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => {
+      getOptionLabel={(option: searchObjects) => {
         if (getOptionLabel) {
           return getOptionLabel(option);
         }
 
         // default case, just return .name if no function provided.
-        return option.name || '';
+        return (option as ListWorkflowSummary).name || '';
       }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
