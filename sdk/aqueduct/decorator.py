@@ -234,7 +234,7 @@ def _convert_input_arguments_to_parameters(
         if not isinstance(artifact, BaseArtifact):
             if implicit_params_disallowed:
                 raise InvalidUserArgumentException(
-                    """Input %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
+                    """Input at index %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
                     """function that takes in variable-length parameters (eg. *args or **kwargs) is currently unsupported."""
                     % idx
                 )
