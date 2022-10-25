@@ -1,10 +1,12 @@
 # Changelog
 
 ## 0.1.1
-Released on October 24, 2022.
+Released on October 25, 2022.
 
 ### Enhancements
 * Adds support for Tensorflow Keras models to type system.
+* Allows users to chain multiple SQL queries in the extract operator.
+* Automatically migrates all metadata and artifact snapshots when the user changes the storage layer.
 * Re-enables downloading operator code.
 
 ### Bugfixes
