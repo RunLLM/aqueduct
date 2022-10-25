@@ -34,6 +34,17 @@ const AddIntegrations: React.FC<Props> = ({
 
   return (
     <Box sx={{ maxWidth: '616px' }}>
+      {showMigrationDialog && (
+        <Alert
+          onClose={() => {
+            setShowMigrationDialog(false);
+          }}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
+        </Alert>
+      )}
       <Grid
         container
         spacing={1}
@@ -131,17 +142,6 @@ const AddIntegrations: React.FC<Props> = ({
             );
           })}
       </Grid>
-      {showMigrationDialog && (
-        <Alert
-          onClose={() => {
-            setShowMigrationDialog(false);
-          }}
-          severity="info"
-          sx={{ width: '100%' }}
-        >
-          {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
-        </Alert>
-      )}
     </Box>
   );
 };
