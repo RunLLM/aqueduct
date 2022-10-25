@@ -61,7 +61,7 @@ type Props = {
   service: Service;
   onCloseDialog: () => void;
   onSuccess: () => void;
-  showMigrationDialog: () => void;
+  showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
 };
 
@@ -70,7 +70,7 @@ const IntegrationDialog: React.FC<Props> = ({
   service,
   onCloseDialog,
   onSuccess,
-  showMigrationDialog,
+  showMigrationDialog = undefined,
   integrationToEdit = undefined,
 }) => {
   const editMode = !!integrationToEdit;
@@ -117,7 +117,7 @@ const IntegrationDialog: React.FC<Props> = ({
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
       );
       onSuccess();
-      if (migrateStorage) {
+      if (showMigrationDialog && migrateStorage) {
         showMigrationDialog();
       }
       onCloseDialog();

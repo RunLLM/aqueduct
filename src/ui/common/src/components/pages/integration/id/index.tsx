@@ -226,7 +226,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             setShowEditDialog(false);
             dispatch(resetEditStatus());
           }}
-          showMigrationDialog={() => {}}
           integrationToEdit={selectedIntegration}
         />
       )}
