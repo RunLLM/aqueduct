@@ -10,13 +10,13 @@
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
   "dependencies": {
-    "@aqueducthq/common": "0.1.0",
+    "@aqueducthq/common": "0.1.1",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@mui/base": "^5.0.0-alpha.84",
-    "@mui/material": "^5.6.2",
-    "@mui/system": "^5.6.2",
+    "@mui/material": "5.10.11",
+    "@mui/system": "5.10.10",
     "@reduxjs/toolkit": "^1.8.1",
     "dotenv": "^16.0.1",
     "react": "^18.1.0",
