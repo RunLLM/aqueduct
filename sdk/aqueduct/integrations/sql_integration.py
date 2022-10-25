@@ -125,7 +125,7 @@ class RelationalDBIntegration(Integration):
         Args:
             query:
                 The query to run. When a list is provided, we run the list
-                in a chain and returns the result of the final query.
+                in a chain and return the result of the final query.
             name:
                 Name of the query.
             description:

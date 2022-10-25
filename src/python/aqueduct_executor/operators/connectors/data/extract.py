@@ -18,7 +18,7 @@ class RelationalParams(models.BaseParams):
     # any user-defined tags like `{{today}}`.
     query_is_usable: Optional[bool] = False
 
-    # exactly one of 'query' and 'queries' will be set.
+    # Exactly one of 'query' and 'queries' will be set.
     # `query` represents a single query.
     query: Optional[str] = None
     # `queries` represents a chain of queries. We must first run _compile_chain
@@ -57,10 +57,10 @@ class RelationalParams(models.BaseParams):
         prev_table_name = ""
         normalized_query = ""
         for (idx, query) in enumerate(queries):
-            # remove spaces and trailing semicolumns if any.
+            # Remove spaces and trailing semicolumns if any.
             normalized_query = query.strip().rstrip(";")
 
-            # replace tag except for the first query
+            # Replace tag except for the first query
             if idx == 0:
                 if PREV_TABLE_TAG in normalized_query:
                     raise Exception(
@@ -69,17 +69,17 @@ class RelationalParams(models.BaseParams):
             else:
                 normalized_query = normalized_query.replace(PREV_TABLE_TAG, prev_table_name)
 
-            # subquery goes to the 'WITH' clause except for the last one.
+            # Subquery goes to the 'WITH' clause except for the last one.
             if idx < len(queries) - 1:
                 cur_table_name = f"aqueduct_{uuid.uuid4().hex}"
                 with_clause += f"{cur_table_name} AS (\n{normalized_query}\n)"
 
-                # there are more subqueries to append in this 'WITH' clause
+                # There are more subqueries to append in this 'WITH' clause
                 if idx < len(queries) - 2:
                     with_clause += ",\n"
                 prev_table_name = cur_table_name
 
-        # returns `WITH` clause with the normalized final query.
+        # Returns `WITH` clause with the normalized final query.
         return f"{with_clause}\n{normalized_query}"
 
     def _expand_placeholders(self, query: str, parameters: Dict[str, str]) -> str:
