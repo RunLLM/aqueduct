@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import date
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 from aqueduct.artifacts import utils as artifact_utils
@@ -46,6 +46,8 @@ LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 # Potential Matches: "{{today}}", "{{ today  }}""
 TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
+# The TAG for 'previous table' when the user specifies a chained query.
+PREV_TABLE_TAG = "$"
 
 # A dictionary of built-in tags to their replacement string functions.
 def replace_today() -> str:
@@ -112,7 +114,7 @@ class RelationalDBIntegration(Integration):
 
     def sql(
         self,
-        query: Union[str, RelationalDBExtractParams],
+        query: Union[str, List[str], RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
@@ -122,7 +124,8 @@ class RelationalDBIntegration(Integration):
 
         Args:
             query:
-                The query to run.
+                The query to run. When a list is provided, we run the list
+                in a chain and return the result of the final query.
             name:
                 Name of the query.
             description:
@@ -150,32 +153,59 @@ class RelationalDBIntegration(Integration):
             extract_params = RelationalDBExtractParams(
                 query=extract_params,
             )
+        elif isinstance(extract_params, list):
+            for q in extract_params:
+                assert isinstance(
+                    q, str
+                ), "When using a list of queries, it must be a list of strings."
+
+            if len(extract_params) == 1:
+                extract_params = RelationalDBExtractParams(
+                    query=extract_params[0],
+                )
+            else:
+                extract_params = RelationalDBExtractParams(
+                    queries=extract_params,
+                )
+        elif isinstance(
+            extract_params, RelationalDBExtractParams
+        ):  # query is a RelationalDBExtractParams object
+            if int(bool(extract_params.query)) + int(bool(extract_params.queries)) != 1:
+                raise Exception(
+                    "For a RelationalDBExtractParams object, exactly one of .query or .queries fields should be set."
+                )
 
         # Find any tags that need to be expanded in the query, and add the parameters that correspond
         # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
         sql_input_artifact_ids = []
+        matches = []
         if extract_params.query is not None:
             matches = re.findall(TAG_PATTERN, extract_params.query)
-            for match in matches:
-                param_name = match.strip(" {}")
-                param_artifact = self._dag.get_artifact_by_name(param_name)
-                if param_artifact is None:
-                    # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
-                    if param_name in BUILT_IN_EXPANSIONS:
-                        continue
 
-                    raise InvalidUserArgumentException(
-                        "There is no parameter defined with name `%s`." % param_name,
-                    )
+        if extract_params.queries is not None:
+            for q in extract_params.queries:
+                matches.extend(re.findall(TAG_PATTERN, q))
 
-                # Check that the parameter corresponds to a string value.
-                if param_artifact.type != ArtifactType.STRING:
-                    raise InvalidUserArgumentException(
-                        "The parameter `%s` must be defined as a string. Instead, got type %s"
-                        % (param_name, param_artifact.type)
-                    )
+        for match in matches:
+            param_name = match.strip(" {}")
+            param_artifact = self._dag.get_artifact_by_name(param_name)
+            if param_artifact is None:
+                # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
+                if param_name in BUILT_IN_EXPANSIONS:
+                    continue
 
-                sql_input_artifact_ids.append(param_artifact.id)
+                raise InvalidUserArgumentException(
+                    "There is no parameter defined with name `%s`." % param_name,
+                )
+
+            # Check that the parameter corresponds to a string value.
+            if param_artifact.type != ArtifactType.STRING:
+                raise InvalidUserArgumentException(
+                    "The parameter `%s` must be defined as a string. Instead, got type %s"
+                    % (param_name, param_artifact.type)
+                )
+
+            sql_input_artifact_ids.append(param_artifact.id)
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()

@@ -28,11 +28,20 @@ const OperatorParametersOverview: React.FC<Props> = ({
 
     // These checks tries to distinguish googlesheet vs relational
     // extracts based on the fields of type union exParams.
-    if ('query' in exParams) {
+    if ('query' in exParams || 'queries' in exParams) {
+      const relationalParams = exParams as RelationalDBExtractParams;
+      if (!!relationalParams.queries) {
+        return (
+          <Typography variant="body2" color={textColor}>
+            {`${relationalParams.queries.length} chained queries.`}
+          </Typography>
+        );
+      }
+
       return (
         <Typography variant="body2" color={textColor}>
           <strong>query: </strong>
-          <code>{(exParams as RelationalDBExtractParams).query}</code>
+          <code>{relationalParams.query}</code>
         </Typography>
       );
     } else if ('spreadsheet_id' in exParams) {

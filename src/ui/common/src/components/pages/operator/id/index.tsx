@@ -1,7 +1,12 @@
-import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleDown,
+  faQuestionCircle,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
@@ -16,13 +21,17 @@ import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import {
   exportFunction,
+  GoogleSheetsExtractParams,
   handleExportFunction,
   hasFile,
   OperatorType,
+  PREV_TABLE_TAG,
+  RelationalDBExtractParams,
 } from '../../../../utils/operators';
 import {
   isInitial,
@@ -251,14 +260,80 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     }
 
     if (operator?.spec?.type === OperatorType.Extract) {
+      const extractParams = operator.spec.extract.parameters;
+      let content = null;
+
+      if ('query' in extractParams || 'queries' in extractParams) {
+        // relational
+        const relationalParams = extractParams as RelationalDBExtractParams;
+        const renderQuery = (q: string) => (
+          <CodeBlock language="sql">{q}</CodeBlock>
+        );
+        let tooltips = '';
+        const chainTagTooltips =
+          '`$` refers to the output of the previous query.';
+
+        if (!!relationalParams.queries && relationalParams.queries.length > 0) {
+          const queries = relationalParams.queries;
+          content = (
+            <Box display="flex" flexDirection="column">
+              {relationalParams.queries.map((q, idx) => (
+                <Box mb={1} key={`extract-query-${idx}`}>
+                  {renderQuery(q)}
+                </Box>
+              ))}
+            </Box>
+          );
+          const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
+          tooltips = `These queries are chained. ${
+            hasChainTag ? chainTagTooltips : ''
+          }`;
+        } else {
+          content = renderQuery(relationalParams.query);
+        }
+
+        return (
+          <Box>
+            <Box display="flex" flexDirection="row" marginBottom={1}>
+              <Typography
+                variant="h6"
+                fontWeight="normal"
+                alignContent="center"
+              >
+                Query Details
+              </Typography>
+              {tooltips && (
+                <Tooltip arrow placement="right" title={tooltips}>
+                  <IconButton>
+                    <FontAwesomeIcon
+                      color={`${theme.palette.gray[700]}`}
+                      fontSize="16px"
+                      icon={faQuestionCircle}
+                    />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+            {content}
+          </Box>
+        );
+      }
+
+      // google sheet
+      const googleSheetsParams = extractParams as GoogleSheetsExtractParams;
       return (
         <Box>
           <Typography variant="h6" fontWeight="normal" mb={1}>
-            Query Preview
+            Spreadsheet Details
           </Typography>
-          <CodeBlock language="sql">
-            <>{operator.spec.extract.parameters.query}</>
-          </CodeBlock>
+          <Typography variant="body1" mb={1}>
+            <strong>Spreadsheet ID: </strong>
+            {googleSheetsParams.spreadsheet_id}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Query: </strong>
+            {googleSheetsParams.query}
+          </Typography>
         </Box>
       );
     }

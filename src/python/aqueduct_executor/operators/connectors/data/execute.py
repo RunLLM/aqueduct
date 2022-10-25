@@ -139,7 +139,7 @@ def run_extract(
         ), "Parameter value must be a string."
 
         parameters = dict(zip(spec.input_param_names, input_vals))
-        extract_params.expand_placeholders(parameters)
+        extract_params.compile(parameters)
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract() -> Any:

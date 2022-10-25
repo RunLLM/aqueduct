@@ -2,6 +2,10 @@ import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { ExecState, ExecutionStatus } from './shared';
 
+export const PREV_TABLE_TAG = '$';
+export const LEFT_PARAMS_TAG = '{{';
+export const RIGHT_PARAMS_TAG = '}}';
+
 export enum OperatorType {
   Function = 'function',
   Extract = 'extract',
@@ -74,7 +78,8 @@ export type ExtractParameters =
   | GoogleSheetsExtractParams;
 
 export type RelationalDBExtractParams = {
-  query: string;
+  query?: string;
+  queries?: string[];
   github_metadata?: GithubMetadata;
 };
 

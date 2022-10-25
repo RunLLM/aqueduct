@@ -11,6 +11,7 @@ type ExtractParams interface {
 type RelationalDBExtractParams struct {
 	GithubMetadata *gh_types.GithubMetadata `json:"github_metadata"`
 	Query          string                   `json:"query"`
+	Queries        []string                 `json:"queries"`
 }
 
 type PostgresExtractParams struct{ RelationalDBExtractParams }
