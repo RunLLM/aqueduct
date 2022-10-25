@@ -44,7 +44,7 @@ const OperatorsTable: React.FC<Props> = ({ workflow, operators }) => {
             </TableCell>
             <TableCell align="left">
               <Typography variant="body2" color="gray.900">
-                Parameters
+                Details
               </Typography>
             </TableCell>
           </TableRow>

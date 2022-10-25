@@ -18,7 +18,11 @@ class RelationalParams(models.BaseParams):
     # any user-defined tags like `{{today}}`.
     query_is_usable: Optional[bool] = False
 
+    # exactly one of 'query' and 'queries' will be set.
+    # `query` represents a single query.
     query: Optional[str] = None
+    # `queries` represents a chain of queries. We must first run _compile_chain
+    # to compile it to a single query before further processing.
     queries: Optional[List[str]] = None
 
     # TODO: Consider not including github as part of relational params when it is JSON marshalled
@@ -46,36 +50,37 @@ class RelationalParams(models.BaseParams):
         if not queries:
             return ""
 
-        if len(queries) > 1:
-            with_clause = "WITH\n"
-            prev_table_name = ""
-            for (idx, query) in enumerate(queries):
-                # remove spaces and trailing semicolumns if any.
-                normalized_query = query.strip().rstrip(";")
+        if len(queries) == 1:
+            return queries[0]
 
-                # replace tag except for the first query
-                if idx == 0:
-                    if PREV_TABLE_TAG in normalized_query:
-                        raise Exception(
-                            f"Cannot compile chain. {PREV_TABLE_TAG} appears in the first query: {query}"
-                        )
-                else:
-                    normalized_query = normalized_query.replace(PREV_TABLE_TAG, prev_table_name)
+        with_clause = "WITH\n"
+        prev_table_name = ""
+        normalized_query = ""
+        for (idx, query) in enumerate(queries):
+            # remove spaces and trailing semicolumns if any.
+            normalized_query = query.strip().rstrip(";")
 
-                # subquery goes to the 'WITH' clause except for the last one.
-                if idx < len(queries) - 1:
-                    cur_table_name = f"aqueduct_{uuid.uuid4().hex}"
-                    with_clause += f"{cur_table_name} AS (\n{normalized_query}\n)"
+            # replace tag except for the first query
+            if idx == 0:
+                if PREV_TABLE_TAG in normalized_query:
+                    raise Exception(
+                        f"Cannot compile chain. {PREV_TABLE_TAG} appears in the first query: {query}"
+                    )
+            else:
+                normalized_query = normalized_query.replace(PREV_TABLE_TAG, prev_table_name)
 
-                    # there are more subqueries to append in this 'WITH' clause
-                    if idx < len(queries) - 2:
-                        with_clause += ",\n"
-                    prev_table_name = cur_table_name
-                # otherwise, append the last query to 'WITH' clause
-                else:
-                    return f"{with_clause}\n{normalized_query}"
+            # subquery goes to the 'WITH' clause except for the last one.
+            if idx < len(queries) - 1:
+                cur_table_name = f"aqueduct_{uuid.uuid4().hex}"
+                with_clause += f"{cur_table_name} AS (\n{normalized_query}\n)"
 
-        return queries[0]
+                # there are more subqueries to append in this 'WITH' clause
+                if idx < len(queries) - 2:
+                    with_clause += ",\n"
+                prev_table_name = cur_table_name
+
+        # returns `WITH` clause with the normalized final query.
+        return f"{with_clause}\n{normalized_query}"
 
     def _expand_placeholders(self, query: str, parameters: Dict[str, str]) -> str:
         """Expands any tags found in the raw query, eg. {{ today }}.
@@ -102,19 +107,21 @@ class RelationalParams(models.BaseParams):
         return query
 
     def compile(self, parameters: Dict[str, str]) -> None:
+        """
+        `compile` compiles this object to a single query that can be
+        executed.
+        """
         assert (
             int(bool(self.query)) + int(bool(self.queries)) == 1
         ), "Exactly one of .query and .queries fields should be set."
-        query = ""
+
+        queries = self.queries or []
         if self.query:
-            query = self.query
-            print(f"Compiling query {query} .")
-        # this check mainly bypasses linter. The `assert` block above
-        # ensures self.queries is not None if we get here.
-        elif self.queries is not None:
-            print(f"Compiling chain queries {self.queries} .")
-            query = self._compile_chain(self.queries)
-            print(f"Compiled chain query is {query} .")
+            queries = [self.query]
+
+        print(f"Compiling queries {queries} .")
+        query = self._compile_chain(queries)
+        print(f"Compiled query is {query} .")
 
         query = self._expand_placeholders(query, parameters)
         print(f"Expanded query is `{query}`.")

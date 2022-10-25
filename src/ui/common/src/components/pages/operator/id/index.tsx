@@ -1,7 +1,12 @@
-import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleDown,
+  faQuestionCircle,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CircularProgress, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
@@ -23,7 +28,9 @@ import {
   GoogleSheetsExtractParams,
   handleExportFunction,
   hasFile,
+  LEFT_PARAMS_TAG,
   OperatorType,
+  PREV_TABLE_TAG,
   RelationalDBExtractParams,
 } from '../../../../utils/operators';
 import {
@@ -262,8 +269,14 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         const renderQuery = (q: string) => (
           <CodeBlock language="sql">{q}</CodeBlock>
         );
+        let tooltips = '';
+        const parameterTooltips =
+          'Contents in `{{}}` refers to the name of parameters.';
+        const chainTagTooltips =
+          '`$` refers to the outputs of the previous query.';
 
         if (!!relationalParams.queries && relationalParams.queries.length > 0) {
+          const queries = relationalParams.queries;
           content = (
             <Box display="flex" flexDirection="column">
               {relationalParams.queries.map((q, idx) => (
@@ -273,32 +286,58 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
               ))}
             </Box>
           );
+          const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
+          const hasParameters = queries.some((q) =>
+            q.includes(LEFT_PARAMS_TAG)
+          );
+          tooltips = `This is a chained query. ${
+            hasChainTag ? chainTagTooltips : ''
+          } ${hasParameters ? parameterTooltips : ''}`;
         } else {
           content = renderQuery(relationalParams.query);
+          if (relationalParams.query.includes(LEFT_PARAMS_TAG)) {
+            tooltips = parameterTooltips;
+          }
         }
-      } else {
-        // google sheet
-        const googleSheetsParams = extractParams as GoogleSheetsExtractParams;
-        content = (
+
+        return (
           <Box>
-            <Typography variant="body1" mb={1}>
-              <strong>Spreadsheet ID: </strong>
-              {googleSheetsParams.spreadsheet_id}
-            </Typography>
-            <Typography variant="body1">
-              <strong>Query: </strong>
-              {googleSheetsParams.query}
-            </Typography>
+            <Box display="flex" flexDirection="row" marginBottom={1}>
+              <Typography
+                variant="h6"
+                fontWeight="normal"
+                alignContent="center"
+              >
+                Query Details
+              </Typography>
+              {tooltips && (
+                <Tooltip arrow placement="right" title={tooltips}>
+                  <IconButton>
+                    <FontAwesomeIcon size="xs" icon={faQuestionCircle} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+            {content}
           </Box>
         );
       }
 
+      // google sheet
+      const googleSheetsParams = extractParams as GoogleSheetsExtractParams;
       return (
         <Box>
           <Typography variant="h6" fontWeight="normal" mb={1}>
-            Extract Parameters
+            Spreadsheet Details
           </Typography>
-          {content}
+          <Typography variant="body1" mb={1}>
+            <strong>Spreadsheet ID: </strong>
+            {googleSheetsParams.spreadsheet_id}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Query: </strong>
+            {googleSheetsParams.query}
+          </Typography>
         </Box>
       );
     }
