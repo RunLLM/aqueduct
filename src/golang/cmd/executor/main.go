@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/aqueducthq/aqueduct/cmd/executor/executor"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
@@ -27,7 +28,10 @@ var specSerialized = flag.String(
 var logsFilePath = flag.String(
 	logsFilePathFlagKey,
 	"",
-	"The path to the file the executor will log to. If not set, we'll log to stdout/err.")
+	"The path to the file the executor will log to. If not set, we'll log to stdout/err.",
+)
+
+var confPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "config", "config.yml")
 
 func init() {
 	flag.Parse()
@@ -42,6 +46,11 @@ func init() {
 				log.Infof("Unable to make directory %s: %v ", logsDir, err)
 			}
 		}
+	}
+
+	// Initialize config, the process should exit if this fails
+	if err := config.Init(confPath); err != nil {
+		log.Fatalf("Unable to initialize config: %v", err)
 	}
 }
 

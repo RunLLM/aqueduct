@@ -30,9 +30,21 @@ const AddIntegrations: React.FC<Props> = ({
   const handleSuccessToastClose = () => {
     setShowSuccessToast(null);
   };
+  const [showMigrationDialog, setShowMigrationDialog] = useState(false);
 
   return (
     <Box sx={{ maxWidth: '616px' }}>
+      {showMigrationDialog && (
+        <Alert
+          onClose={() => {
+            setShowMigrationDialog(false);
+          }}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
+        </Alert>
+      )}
       <Grid
         container
         spacing={1}
@@ -107,6 +119,7 @@ const AddIntegrations: React.FC<Props> = ({
                         setShowDialog(false);
                         dispatch(resetConnectNewStatus());
                       }}
+                      showMigrationDialog={() => setShowMigrationDialog(true)}
                     />
                   )}
                 </Box>

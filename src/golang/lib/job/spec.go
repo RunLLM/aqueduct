@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -59,7 +58,6 @@ const (
 // on datasets.
 type ExecutorConfiguration struct {
 	Database   *database.DatabaseConfig `yaml:"metadata" json:"metadata"`
-	Vault      vault.Config             `yaml:"vault" json:"vault"`
 	JobManager Config                   `yaml:"jobManager" json:"job_manager"`
 }
 
@@ -277,7 +275,6 @@ func (*CompileAirflowSpec) Type() JobType {
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
 func NewWorkflowRetentionJobSpec(
 	database *database.DatabaseConfig,
-	vault vault.Config,
 	jobManager Config,
 ) Spec {
 	return &WorkflowRetentionSpec{
@@ -288,7 +285,6 @@ func NewWorkflowRetentionJobSpec(
 
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
-			Vault:      vault,
 			JobManager: jobManager,
 		},
 	}
@@ -299,7 +295,6 @@ func NewWorkflowSpec(
 	name string,
 	workflowId string,
 	database *database.DatabaseConfig,
-	vault vault.Config,
 	jobManager Config,
 	githubManager github.ManagerConfig,
 	aqPath string,
@@ -316,7 +311,6 @@ func NewWorkflowSpec(
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,
-			Vault:      vault,
 			JobManager: jobManager,
 		},
 	}
