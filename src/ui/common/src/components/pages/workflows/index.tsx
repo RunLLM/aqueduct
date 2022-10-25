@@ -7,6 +7,7 @@ import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowS
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { LoadingStatusEnum } from '../../../utils/shared';
+import { ListWorkflowSummary } from '../../../utils/workflows';
 import { CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
@@ -94,7 +95,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             {/* Align searchbar with card text */}
             <SearchBar
               options={allWorkflows.workflows}
-              getOptionLabel={(option) => option.name || ''}
+              getOptionLabel={(option: ListWorkflowSummary) =>
+                option.name || ''
+              }
               setSearchTerm={setFilterText}
             />
           </Box>

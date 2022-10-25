@@ -12,9 +12,14 @@ import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import React from 'react';
 
+import { DataPreviewInfo } from '../../utils/data';
+import { ListWorkflowSummary } from '../../utils/workflows';
+
+type searchObjects = DataPreviewInfo | ListWorkflowSummary;
+
 type Props = {
-  options: any[];
-  getOptionLabel: (v: any) => string;
+  options: searchObjects[];
+  getOptionLabel: (v: searchObjects) => string;
   setSearchTerm: (v: string) => void;
 };
 
@@ -39,13 +44,13 @@ export const SearchBar: React.FC<Props> = ({
         setSearchTerm(val);
       }}
       freeSolo
-      getOptionLabel={(option) => {
+      getOptionLabel={(option: searchObjects) => {
         if (getOptionLabel) {
           return getOptionLabel(option);
         }
 
         // default case, just return .name if no function provided.
-        return option.name || '';
+        return (option as ListWorkflowSummary).name || '';
       }}
       renderInput={(params) => {
         params['InputProps']['startAdornment'] = (
@@ -92,9 +97,9 @@ export const SearchBar: React.FC<Props> = ({
 
 export const filteredList = (
   filterText: string,
-  allItems: any[],
-  matchOn: (item: any) => string,
-  listItems: (item: any, idx: number) => JSX.Element,
+  allItems: searchObjects[],
+  matchOn: (item: searchObjects) => string,
+  listItems: (item: searchObjects, idx: number) => JSX.Element,
   noItemsMessage: JSX.Element
 ): JSX.Element => {
   if (allItems.length === 0) {
