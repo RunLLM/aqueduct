@@ -21,6 +21,7 @@ import LogViewer from '../../../../components/LogViewer';
 import MultiFileViewer from '../../../../components/MultiFileViewer';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import {
@@ -28,7 +29,6 @@ import {
   GoogleSheetsExtractParams,
   handleExportFunction,
   hasFile,
-  LEFT_PARAMS_TAG,
   OperatorType,
   PREV_TABLE_TAG,
   RelationalDBExtractParams,
@@ -270,8 +270,6 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
           <CodeBlock language="sql">{q}</CodeBlock>
         );
         let tooltips = '';
-        const parameterTooltips =
-          'Contents in `{{}}` refers to the name of parameters.';
         const chainTagTooltips =
           '`$` refers to the outputs of the previous query.';
 
@@ -287,17 +285,11 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             </Box>
           );
           const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
-          const hasParameters = queries.some((q) =>
-            q.includes(LEFT_PARAMS_TAG)
-          );
           tooltips = `This is a chained query. ${
             hasChainTag ? chainTagTooltips : ''
-          } ${hasParameters ? parameterTooltips : ''}`;
+          }`;
         } else {
           content = renderQuery(relationalParams.query);
-          if (relationalParams.query.includes(LEFT_PARAMS_TAG)) {
-            tooltips = parameterTooltips;
-          }
         }
 
         return (
@@ -313,7 +305,11 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
               {tooltips && (
                 <Tooltip arrow placement="right" title={tooltips}>
                   <IconButton>
-                    <FontAwesomeIcon size="xs" icon={faQuestionCircle} />
+                    <FontAwesomeIcon
+                      color={`${theme.palette.gray[700]}`}
+                      fontSize="16px"
+                      icon={faQuestionCircle}
+                    />
                   </IconButton>
                 </Tooltip>
               )}
