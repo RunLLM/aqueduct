@@ -127,20 +127,21 @@ const AddIntegrations: React.FC<Props> = ({
                     {`Successfully connected to ${service}!`}
                   </Alert>
                 </Snackbar>
-                
               </Grid>
             );
           })}
       </Grid>
-      { 
+      {showMigrationDialog && (
         <Alert
-          onClose={() => {setShowMigrationDialog(false)}}
+          onClose={() => {
+            setShowMigrationDialog(false);
+          }}
           severity="info"
           sx={{ width: '100%' }}
         >
           {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
         </Alert>
-      }
+      )}
     </Box>
   );
 };

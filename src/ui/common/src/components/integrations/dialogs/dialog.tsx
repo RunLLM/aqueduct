@@ -108,7 +108,7 @@ const IntegrationDialog: React.FC<Props> = ({
     setConfig((config) => {
       return { ...config, [field]: value };
     });
-  
+
   const [migrateStorage, setMigrateStorage] = useState(false);
 
   useEffect(() => {
