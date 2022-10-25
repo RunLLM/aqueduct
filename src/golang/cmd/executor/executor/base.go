@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -52,7 +53,9 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 		return nil, err
 	}
 
-	vault, err := vault.NewVault(conf.Vault)
+	storageConfig := config.Storage()
+
+	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
 		return nil, err
 	}
