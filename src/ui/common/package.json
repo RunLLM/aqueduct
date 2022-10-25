@@ -16,13 +16,11 @@
   },
   "scripts": {
     "preinstall": "npx force-resolutions",
-    "start": "tsdx watch",
+    "start": "vite",
     "build": "vite build",
-    "dev": "vite",
-    "buildvite": "tsc && vite build",
     "preview": "vite preview",
     "test": "tsdx test --passWithNoTests",
-    "prepare": "npm run build",
+    "prepare": "vite build",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
@@ -65,7 +63,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "npm run lint:fix"
     }
   },
   "prettier": {
@@ -108,7 +106,6 @@
     "react-dom": "^18.1.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^7.0.8",
-    "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^3.9.10",
     "vite": "^3.1.0",
