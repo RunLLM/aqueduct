@@ -271,7 +271,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         );
         let tooltips = '';
         const chainTagTooltips =
-          '`$` refers to the outputs of the previous query.';
+          '`$` refers to the output of the previous query.';
 
         if (!!relationalParams.queries && relationalParams.queries.length > 0) {
           const queries = relationalParams.queries;
@@ -285,7 +285,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             </Box>
           );
           const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
-          tooltips = `This is a chained query. ${
+          tooltips = `These queries are chained. ${
             hasChainTag ? chainTagTooltips : ''
           }`;
         } else {
