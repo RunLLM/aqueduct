@@ -19,13 +19,14 @@ export type DataSchema = {
   pandas_version: string;
 };
 
+export type TableRow = { [key: string]: string | number | boolean };
 export type Data = {
   schema?: DataSchema;
   // data is an array of objects whose keys correspond to the schema above.
   // each element of the array corresponds to a row.
   // each key of the row object corresponds to a column.
   // column names must be unique (obviously ;) )
-  data: { [key: string]: string | number | boolean }[];
+  data: TableRow[];
 };
 
 export type DataPreviewLoadSpec = {

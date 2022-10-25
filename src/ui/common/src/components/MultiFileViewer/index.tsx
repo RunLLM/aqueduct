@@ -9,8 +9,18 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
+type FileMeta = {
+  path: string;
+  language: string;
+  content: string;
+};
+
+interface DirectoryMeta {
+  [key: string]: DirectoryMeta | FileMeta;
+}
+
 type Props = {
-  files: Record<string, any>;
+  files: DirectoryMeta;
   codeHeight?: string;
   defaultFile?: string;
 };
@@ -45,7 +55,7 @@ const MultiFileViewer: React.FC<Props> = ({
   };
 
   const hasFiles = files && Object.keys(files).length > 0;
-  let selected = files;
+  let selected: FileMeta | DirectoryMeta = files;
   if (hasFiles) {
     const pathList = selectedFile.split('/').splice(1);
 
@@ -107,6 +117,9 @@ const MultiFileViewer: React.FC<Props> = ({
     minimap: { enabled: false },
     wordWrap: 'on' as 'on' | 'off' | 'wordWrapColumn' | 'bounded',
   };
+
+  const selectedFileMeta = selected as FileMeta;
+
   return (
     <Box style={{ height: codeHeight, display: 'flex' }}>
       <Box style={{ width: '200px', height: '100%' }}>
@@ -132,9 +145,9 @@ const MultiFileViewer: React.FC<Props> = ({
         }}
       >
         <Editor
-          path={selected.name}
-          language={selected.language}
-          value={selected.content}
+          path={selectedFileMeta.path}
+          language={selectedFileMeta.language}
+          value={selectedFileMeta.content}
           saveViewState={true}
           options={options}
         />
