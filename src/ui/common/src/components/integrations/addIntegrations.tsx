@@ -127,25 +127,20 @@ const AddIntegrations: React.FC<Props> = ({
                     {`Successfully connected to ${service}!`}
                   </Alert>
                 </Snackbar>
-                <Snackbar
-                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                  open={showMigrationDialog}
-                  onClose={() => {setShowMigrationDialog(false)}}
-                  key={'integrations-dialog-migration-snackbar'}
-                  autoHideDuration={6000}
-                >
-                  <Alert
-                    onClose={() => {setShowMigrationDialog(false)}}
-                    severity="info"
-                    sx={{ width: '100%' }}
-                  >
-                    {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
-                  </Alert>
-                </Snackbar>
+                
               </Grid>
             );
           })}
       </Grid>
+      { 
+        <Alert
+          onClose={() => {setShowMigrationDialog(false)}}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
+        </Alert>
+      }
     </Box>
   );
 };
