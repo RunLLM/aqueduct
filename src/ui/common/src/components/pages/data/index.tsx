@@ -8,6 +8,7 @@ import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
+import { DataPreviewInfo } from '../../../utils/data';
 import { DataCard } from '../../integrations/cards/card';
 import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
@@ -49,7 +50,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dataCards = filteredList(
     filterText,
     Object.values(dataCardsInfo.data.latest_versions),
-    (dataCardInfo) => dataCardInfo.artifact_name,
+    (dataCardInfo: DataPreviewInfo) => dataCardInfo.artifact_name,
     displayFilteredCards,
     noItemsMessage
   );
@@ -58,7 +59,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     document.title = 'Data | Aqueduct';
   }, []);
 
-  const getOptionLabel = (option) => {
+  const getOptionLabel = (option: DataPreviewInfo) => {
     // When option string is invalid, none of 'options' will be selected
     // and the component will try to directly render the input string.
     // This check prevents applying `dataCardName` to the string.

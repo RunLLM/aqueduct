@@ -11,6 +11,8 @@ import {
   TableHeaderProps,
 } from 'react-virtualized';
 
+import { TableRow } from '../../utils/data';
+
 const classes = {
   flexContainer: 'ReactVirtualizedDemo-flexContainer',
   tableRow: 'ReactVirtualizedDemo-tableRow',
@@ -100,7 +102,7 @@ interface DataTableProps {
   minColumnWidth?: number;
   onRowClick?: () => void;
   rowCount: number;
-  rowGetter: (row: Row) => any;
+  rowGetter: (row: Row) => TableRow;
   rowHeight?: number;
 }
 
