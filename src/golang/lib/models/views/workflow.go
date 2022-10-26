@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// A LatestWorkflowStatus defines the status of the last run of a Workflow
+// LatestWorkflowStatus defines the status of the last run of a Workflow
 // and additional Workflow metadata.
 type LatestWorkflowStatus struct {
 	ID          uuid.UUID                  `db:"id" json:"id"`
