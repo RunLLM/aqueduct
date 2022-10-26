@@ -19,7 +19,6 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "tsdx test --passWithNoTests",
     "prepare": "vite build",
     "size": "size-limit",
     "analyze": "size-limit --why",
