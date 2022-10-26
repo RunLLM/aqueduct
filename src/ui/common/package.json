@@ -16,10 +16,10 @@
   },
   "scripts": {
     "preinstall": "npx force-resolutions",
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test --passWithNoTests",
-    "prepare": "tsdx build",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "vite build",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
@@ -29,21 +29,22 @@
     "@types/react": "^18.0.8"
   },
   "peerDependencies": {
-    "@monaco-editor/react": "^4.4.5",
-    "@zip.js/zip.js": "^2.6.29",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@fortawesome/free-brands-svg-icons": "^6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.18",
+    "@monaco-editor/react": "^4.4.5",
     "@mui/lab": "5.0.0-alpha.105",
     "@mui/material": "5.10.11",
     "@mui/x-data-grid": "5.17.8",
     "@reduxjs/toolkit": "^1.8.1",
+    "@zip.js/zip.js": "^2.6.29",
     "autosuggest-highlight": "^3.2.1",
     "core-js": "^3.22.8",
     "cron-parser": "^4.0.0",
+    "mui-image": "^1.0.7",
     "plotly.js": "2.14.0",
     "query-string": "^7.1.1",
     "random-word-slugs": "^0.1.6",
@@ -61,7 +62,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "npm run lint:fix"
     }
   },
   "prettier": {
@@ -70,7 +71,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "module": "dist/common.esm.js",
+  "module": "dist/common.mjs",
   "size-limit": [
     {
       "path": "dist/common.cjs.production.min.js",
@@ -88,6 +89,7 @@
     "@types/react-dom": "^18.0.5",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
+    "@vitejs/plugin-react": "^2.1.0",
     "autoprefixer": "^10.4.7",
     "cssnano": "^5.1.10",
     "eslint": "^7.32.0",
@@ -97,15 +99,15 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
-    "mui-image": "^1.0.7",
     "parcel": "2.6.0",
     "prettier": "^2.2.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^7.0.8",
-    "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
-    "typescript": "^3.9.10"
+    "typescript": "^3.9.10",
+    "vite": "^3.1.0",
+    "vite-plugin-externalize-deps": "^0.4.0"
   }
 }

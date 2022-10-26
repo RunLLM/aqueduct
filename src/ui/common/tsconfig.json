@@ -4,6 +4,14 @@
     "src",
     "types"
   ],
+  "exclude": [
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
   "compilerOptions": {
     "target": "es5",
     "lib": [
@@ -11,6 +19,7 @@
       "dom.iterable",
       "esnext"
     ],
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     // significant perf increase by skipping checking .d.ts files, particularly those in node_modules. Recommended by TS
     "skipLibCheck": true,
@@ -18,7 +27,6 @@
     "strict": false,
     // error out if import and file system have a casing mismatch. Recommended by TS
     "forceConsistentCasingInFileNames": true,
-    // `tsdx build` ignores this option, but it is commonly used when type-checking separately with `tsc`
     "noEmit": true,
     // interop between ESM and CJS modules. Recommended by TS
     "esModuleInterop": true,
@@ -39,12 +47,6 @@
     // match output dir to input dir. e.g. dist/index instead of dist/src/index
     "rootDir": "./src",
     "incremental": true,
-    // linter checks for common issues
-    //"noImplicitReturns": true,
-    //"noFallthroughCasesInSwitch": true,
-    // noUnused* overlap with @typescript-eslint/no-unused-vars, can disable if duplicative
-    //"noUnusedLocals": true,
-    //"noUnusedParameters": true,
     "paths": {
       "@components/*": [
         "components/*"

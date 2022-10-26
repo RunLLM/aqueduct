@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 
-import UserProfile from '../../utils/auth';
+import { UserProfile } from '../../utils/auth';
 import fetchUser from '../../utils/fetchUser';
 
 export default function useUser(): {

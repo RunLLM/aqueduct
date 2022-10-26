@@ -1,4 +1,4 @@
-export interface UserProfile {
+export type UserProfile = {
   name?: string;
   email?: string;
   sub?: string;
@@ -11,6 +11,6 @@ export interface UserProfile {
   userRole?: string;
   given_name?: string;
   family_name?: string;
-}
+};
 
 export default UserProfile;

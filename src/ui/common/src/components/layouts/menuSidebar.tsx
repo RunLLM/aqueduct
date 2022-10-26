@@ -18,7 +18,15 @@ import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import styles from './menu-sidebar-styles.module.css';
+import {
+  menuSidebar,
+  menuSidebarContent,
+  menuSidebarFooter,
+  menuSidebarIcon,
+  menuSidebarLink,
+  menuSidebarLogoLink,
+  notificationAlert,
+} from './menuSidebar.styles';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -83,7 +91,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
         {text}
         <Box sx={{ display: 'flex', flexGrow: 1, flexDirection: 'row' }} />
         {!!numUpdates && (
-          <Box className={styles['notification-alert']}>
+          <Box style={notificationAlert}>
             <Typography
               variant="body2"
               sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
@@ -117,11 +125,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
 
   const pathPrefix = getPathPrefix();
   return (
-    <Box className={styles['menu-sidebar']}>
+    <Box style={menuSidebar}>
       <Link
         to={`${pathPrefix.length > 0 ? pathPrefix : '/'}`}
         underline="none"
-        className={styles['menu-sidebar-logo-link']}
+        style={menuSidebarLogoLink}
         component={RouterLink}
       >
         <img
@@ -133,20 +141,17 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         />
       </Link>
 
-      <Box sx={{ my: 2 }} className={styles['menu-sidebar-content']}>
+      <Box sx={{ my: 2 }} style={menuSidebarContent}>
         <Tooltip title="Workflows" arrow placement="right">
           <Link
             to={`${getPathPrefix()}/workflows`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
               icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faShareNodes}
-                />
+                <FontAwesomeIcon style={menuSidebarIcon} icon={faShareNodes} />
               }
               text=""
               selected={currentPage === '/workflows'}
@@ -157,17 +162,12 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Tooltip title="Integrations" arrow placement="right">
           <Link
             to={`${getPathPrefix()}/integrations`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
-              icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faPlug}
-                />
-              }
+              icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
               text=""
               selected={currentPage === '/integrations'}
             />
@@ -177,16 +177,13 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         <Tooltip title="Data" placement="right" arrow>
           <Link
             to={`${getPathPrefix()}/data`}
-            className={styles['menu-sidebar-link']}
+            style={menuSidebarLink}
             underline="none"
             component={RouterLink}
           >
             <SidebarButton
               icon={
-                <FontAwesomeIcon
-                  className={styles['menu-sidebar-icon']}
-                  icon={faDatabase}
-                />
+                <FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />
               }
               text=""
               selected={currentPage === '/data'}
@@ -195,18 +192,13 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         </Tooltip>
       </Box>
 
-      <Box className={styles['menu-sidebar-footer']}>
+      <Box style={menuSidebarFooter}>
         <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Documentation" placement="right" arrow>
             <Link href="https://docs.aqueducthq.com" underline="none">
               <SidebarButton
-                icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faBook}
-                  />
-                }
+                icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faBook} />}
                 text=""
               />
             </Link>
@@ -218,10 +210,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             <Link href="mailto:support@aqueducthq.com" underline="none">
               <SidebarButton
                 icon={
-                  <FontAwesomeIcon
-                    className={styles['menu-sidebar-icon']}
-                    icon={faMessage}
-                  />
+                  <FontAwesomeIcon style={menuSidebarIcon} icon={faMessage} />
                 }
                 text=""
               />
