@@ -28,6 +28,9 @@ export const SearchBar: React.FC<Props> = ({
   setSearchTerm,
   getOptionLabel,
 }) => {
+  if (options.length === 0) {
+    return null;
+  }
   return (
     <Autocomplete
       sx={{ width: 300 }}
