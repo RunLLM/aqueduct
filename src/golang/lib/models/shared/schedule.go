@@ -3,7 +3,7 @@ package shared
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 // A CronString follows [cron convention](https://en.wikipedia.org/wiki/Cron).
@@ -27,9 +27,9 @@ type Schedule struct {
 }
 
 func (s *Schedule) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 func (s *Schedule) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }

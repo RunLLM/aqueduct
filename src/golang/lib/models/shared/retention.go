@@ -3,7 +3,7 @@ package shared
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 // A RetentionPolicy specifies that only KLatestRuns should be saved for each
@@ -13,9 +13,9 @@ type RetentionPolicy struct {
 }
 
 func (r *RetentionPolicy) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*r)
+	return utils.ValueJSONB(*r)
 }
 
 func (r *RetentionPolicy) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, r)
+	return utils.ScanJSONB(value, r)
 }
