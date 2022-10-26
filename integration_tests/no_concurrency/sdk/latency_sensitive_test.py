@@ -1,3 +1,7 @@
+from utils import SENTIMENT_SQL_QUERY, get_integration_name
+
+from aqueduct import op
+
 
 def test_preview_artifact_caching(client):
     db = client.integration(name=get_integration_name())
@@ -13,6 +17,8 @@ def test_preview_artifact_caching(client):
         return df
 
     # Check that the first run will take a while, but the second run will happen much faster.
+    import time
+
     start = time.time()
     slow_output = slow_fn(sql_artifact)
     first_duration = time.time() - start
