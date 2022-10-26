@@ -221,6 +221,8 @@ def _convert_input_arguments_to_parameters(
     """
     # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
     # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
+    # For example, `foo(*, positional_arg)` is allowed, but `foo(*args, positional_arg)` is not.
+    # See https://peps.python.org/pep-0362/#parameter-object for a description of each parameter kind.
     disallowed_kinds = [inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD]
     implicit_params_disallowed = any(
         param.kind in disallowed_kinds for param in func_params.values()
