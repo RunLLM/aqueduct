@@ -105,30 +105,6 @@ def test_invalid_file_dependencies(client):
         model_with_out_of_package_file_dependency(sql_artifact)
 
 
-def test_preview_artifact_caching(client):
-    db = client.integration(name=get_integration_name())
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-
-    @op
-    def slow_fn(df):
-        time.sleep(10)
-        return df
-
-    @op
-    def noop(df):
-        return df
-
-    # Check that the first run will take a while, but the second run will happen much faster.
-    start = time.time()
-    slow_output = slow_fn(sql_artifact)
-    duration = time.time() - start
-    assert duration > 10
-
-    start = time.time()
-    _ = noop(slow_output)
-    assert time.time() - start < duration
-
-
 def test_table_with_non_string_column_name(client):
     @op
     def bad_return():
