@@ -14,6 +14,7 @@ import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/da
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
+import { OperatorType } from '../../../../utils/operators';
 import {
   isFailed,
   isInitial,
@@ -186,7 +187,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         (opId) =>
           (workflowDagResultWithLoadingStatus.result?.operators ?? {})[opId]
       )
-      .filter((op) => !!op);
+      .filter((op) => !!op && op.spec?.type !== OperatorType.Param);
 
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
