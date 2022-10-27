@@ -352,3 +352,29 @@ def test_fetching_historical_flows_uses_old_data(client):
     finally:
         for flow_id in flows_to_delete:
             delete_flow(client, flow_id)
+
+
+def test_flow_with_args(client):
+    str_val = "this is a string"
+    num_val = 1234
+
+    @op
+    def foo_with_args(*args):
+        args_list = list(args)
+        assert args_list == [str_val, num_val]
+        return args_list
+
+    @op
+    def generate_str():
+        return str_val
+
+    @op
+    def generate_num():
+        return num_val
+
+    output = foo_with_args(generate_str(), generate_num())
+    assert output.get() == [str_val, num_val]
+
+    # Implicit parameter creation is disallowed for variable-length parameters.
+    with pytest.raises(InvalidUserArgumentException):
+        foo_with_args(*[str_val, num_val])
