@@ -25,6 +25,7 @@ const AddIntegrations: React.FC<Props> = ({
   supportedIntegrations,
   category,
 }) => {
+  const [showDialog, setShowDialog] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [showSuccessToast, setShowSuccessToast] = useState<Service>(null);
   const handleSuccessToastClose = () => {
@@ -59,8 +60,6 @@ const AddIntegrations: React.FC<Props> = ({
             }
 
             const service = svc as Service;
-            const [showDialog, setShowDialog] = useState(false);
-
             const iconWrapper = (
               <Box
                 onClick={() => {
