@@ -6,10 +6,10 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import '@fontsource/material-icons';
+//import '@fontsource/roboto/300.css'
 import { theme } from '../src/styles/theme/theme';
 
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-//import { darkTheme } from "../src/themes/dark.theme";
 
 const muiTheme = createTheme(theme);
 

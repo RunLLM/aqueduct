@@ -1,4 +1,17 @@
 module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(stories|story)\.mdx$/,
+        use: [
+          {
+            loader: require.resolve('@storybook/mdx2-csf/loader'),
+            options: {},
+          }
+        ]
+      }
+    ]
+  },
   stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
   addons: [
     "@storybook/addon-links",
@@ -6,6 +19,9 @@ module.exports = {
     "@storybook/addon-interactions",
   ],
   framework: "@storybook/react",
+  features: {
+    previewMdx2: true
+  },
   core: {
     builder: "@storybook/builder-webpack5",
   },
