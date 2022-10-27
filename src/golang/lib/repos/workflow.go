@@ -48,9 +48,9 @@ type workflowWriter interface {
 		db database.Database,
 	) (*models.Workflow, error)
 
-	// Update applies changes to the Workflow with id. It returns the updated Workflow.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Workflow, error)
-
 	// Delete deletes the Workflow with id.
 	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
+
+	// Update applies changes to the Workflow with id. It returns the updated Workflow.
+	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Workflow, error)
 }

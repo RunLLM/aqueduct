@@ -6,7 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
-// A RetentionPolicy specifies that only KLatestRuns should be saved for each
+// RetentionPolicy specifies that only KLatestRuns should be saved for each
 // workflow.
 type RetentionPolicy struct {
 	KLatestRuns int `json:"k_latest_runs"`
