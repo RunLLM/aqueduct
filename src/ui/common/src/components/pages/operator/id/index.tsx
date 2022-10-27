@@ -354,25 +354,29 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
             </Box>
           )}
           <Box display="flex" width="100%" pt={sideSheetMode ? '16px' : '40px'}>
-            <Box width="100%" mr="32px">
-              <ArtifactSummaryList
-                title="Inputs"
-                workflowId={workflowId}
-                dagResultId={workflowDagResultId}
-                artifactResults={inputs}
-                appearance="link"
-              />
-            </Box>
+            {inputs.length > 0 && (
+              <Box width="100%" mr="32px">
+                <ArtifactSummaryList
+                  title="Inputs"
+                  workflowId={workflowId}
+                  dagResultId={workflowDagResultId}
+                  artifactResults={inputs}
+                  appearance="link"
+                />
+              </Box>
+            )}
 
-            <Box width="100%">
-              <ArtifactSummaryList
-                title="Outputs"
-                workflowId={workflowId}
-                dagResultId={workflowDagResultId}
-                artifactResults={outputs}
-                appearance="link"
-              />
-            </Box>
+            {outputs.length > 0 && (
+              <Box width="100%">
+                <ArtifactSummaryList
+                  title="Outputs"
+                  workflowId={workflowId}
+                  dagResultId={workflowDagResultId}
+                  artifactResults={outputs}
+                  appearance="link"
+                />
+              </Box>
+            )}
           </Box>
 
           <Divider sx={{ my: '32px' }} />
