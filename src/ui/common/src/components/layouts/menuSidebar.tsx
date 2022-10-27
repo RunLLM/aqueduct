@@ -121,7 +121,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  }, []);
+  }, [dispatch, location.pathname, user]);
 
   const pathPrefix = getPathPrefix();
   return (

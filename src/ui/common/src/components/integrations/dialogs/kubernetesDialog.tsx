@@ -43,7 +43,7 @@ export const KubernetesDialog: React.FC<Props> = ({
     };
 
     fetchEnvironment().catch(console.error);
-  }, []);
+  }, [apiKey, onUpdateField, value?.use_same_cluster]);
 
   return (
     <Box sx={{ mt: 2 }}>

@@ -31,7 +31,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   useEffect(() => {
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, []);
+  }, [dispatch, user.apiKey]);
 
   const allWorkflows = useSelector(
     (state: RootState) => state.listWorkflowReducer

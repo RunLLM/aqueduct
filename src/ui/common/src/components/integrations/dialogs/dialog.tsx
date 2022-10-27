@@ -122,7 +122,15 @@ const IntegrationDialog: React.FC<Props> = ({
       }
       onCloseDialog();
     }
-  }, [connectStatus]);
+  }, [
+    connectStatus,
+    dispatch,
+    migrateStorage,
+    onCloseDialog,
+    onSuccess,
+    showMigrationDialog,
+    user.apiKey,
+  ]);
 
   const dialogHeader = (
     <Box

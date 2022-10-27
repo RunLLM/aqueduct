@@ -133,7 +133,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  }, []);
+  }, [dispatch, location.pathname, user]);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);

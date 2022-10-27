@@ -22,7 +22,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
       csv: csv,
     };
     setDialogConfig(config);
-  }, [name, csv]);
+  }, [name, csv, setDialogConfig]);
 
   const displayFileFn = (file: FileData) => {
     const allRows = file.data.split(/\r?\n/);

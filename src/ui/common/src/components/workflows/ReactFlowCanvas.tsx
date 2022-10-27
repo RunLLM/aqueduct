@@ -35,7 +35,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   const { fitView } = useReactFlow();
   useEffect(() => {
     setTimeout(fitView, 1000);
-  }, [dagPositionState]);
+  }, [dagPositionState, fitView]);
 
   useEffect(() => {
     // NOTE(vikram): There's a timeout here because there seems to be a
@@ -43,7 +43,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     // updating. This might be because of the width transition we use, but
     // we're not 100% sure.
     setTimeout(fitView, 100);
-  }, [currentNode]);
+  }, [currentNode, fitView]);
 
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 

@@ -1,5 +1,10 @@
 import { Box, Button, Input, Typography } from '@mui/material';
-import React, { MouseEventHandler, useEffect, useRef } from 'react';
+import React, {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
@@ -65,17 +70,32 @@ export const IntegrationFileUploadField: React.FC<
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // const handleDrop = (e) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
 
-    setDragging(false);
+  //   setDragging(false);
 
-    const { files } = e.dataTransfer;
-    if (files && files.length) {
-      onFiles(files);
-    }
-  };
+  //   const { files } = e.dataTransfer;
+  //   if (files && files.length) {
+  //     onFiles(files);
+  //   }
+  // };
+
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setDragging(false);
+
+      const { files } = e.dataTransfer;
+      if (files && files.length) {
+        onFiles(files);
+      }
+    },
+    [onFiles]
+  );
 
   useEffect(() => {
     if (drop.current) {
@@ -84,7 +104,7 @@ export const IntegrationFileUploadField: React.FC<
       drop.current.addEventListener('dragover', handleDragOver);
       drop.current.addEventListener('drop', handleDrop);
     }
-  }, []);
+  }, [handleDrop]);
 
   if (file) {
     header = (

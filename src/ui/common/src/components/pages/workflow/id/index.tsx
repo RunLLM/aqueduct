@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -95,12 +95,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     ) {
       navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
     }
-  }, [workflow.selectedResult, urlSearchParams]);
+  }, [workflow.selectedResult, urlSearchParams, navigate]);
 
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
-  }, []);
+  }, [dispatch, user.apiKey, workflowId]);
 
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
@@ -116,7 +116,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
-  }, [workflow.dagResults, urlSearchParams]);
+  }, [
+    workflow.dagResults,
+    urlSearchParams,
+    workflow.selectedResult.id,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (workflow.selectedDag) {
@@ -128,7 +133,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         })
       );
     }
-  }, [workflow.selectedDag]);
+  }, [dispatch, user.apiKey, workflow.selectedDag]);
 
   /**
    * This function dispatches calls to fetch artifact results and contents.
@@ -139,22 +144,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of the artifact for which we're retrieving
    * details.
    */
-  const getArtifactResultDetails = (nodeId: string) => {
-    const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
-    if (!artf || !workflow.selectedResult) {
-      return;
-    }
 
-    if (!(nodeId in workflow.artifactResults)) {
-      dispatch(
-        handleGetArtifactResults({
-          apiKey: user.apiKey,
-          workflowDagResultId: workflow.selectedResult.id,
-          artifactId: nodeId,
-        })
-      );
-    }
-  };
+  const getArtifactResultDetails = useCallback(
+    (nodeId: string) => {
+      const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
+      if (!artf || !workflow.selectedResult) {
+        return;
+      }
+
+      if (!(nodeId in workflow.artifactResults)) {
+        dispatch(
+          handleGetArtifactResults({
+            apiKey: user.apiKey,
+            workflowDagResultId: workflow.selectedResult.id,
+            artifactId: nodeId,
+          })
+        );
+      }
+    },
+    [
+      dispatch,
+      user.apiKey,
+      workflow.artifactResults,
+      workflow.selectedDag?.artifacts,
+      workflow.selectedResult,
+    ]
+  );
 
   /**
    * This function fetches both the metadata of a particular operator as well
@@ -167,32 +182,47 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * @param nodeId the UUID of an artifact for which we're retrieving
    * results.
    */
-  const getOperatorResultDetails = (nodeId: string) => {
-    // Verify the node is indeed an operator, and a result is selected
-    const op = (workflow.selectedDag?.operators ?? {})[nodeId];
-    if (!op || !workflow.selectedResult) {
-      return;
-    }
+  const getOperatorResultDetails = useCallback(
+    (nodeId: string) => {
+      // Verify the node is indeed an operator, and a result is selected
+      const op = (workflow.selectedDag?.operators ?? {})[nodeId];
+      if (!op || !workflow.selectedResult) {
+        return;
+      }
 
-    if (!(nodeId in workflow.operatorResults)) {
-      dispatch(
-        handleGetOperatorResults({
-          apiKey: user.apiKey,
-          workflowDagResultId: workflow.selectedResult.id,
-          operatorId: nodeId,
-        })
-      );
-    }
+      if (!(nodeId in workflow.operatorResults)) {
+        dispatch(
+          handleGetOperatorResults({
+            apiKey: user.apiKey,
+            workflowDagResultId: workflow.selectedResult.id,
+            operatorId: nodeId,
+          })
+        );
+      }
 
-    for (const artfId of [...op.inputs, ...op.outputs]) {
-      getArtifactResultDetails(artfId);
-    }
-  };
+      for (const artfId of [...op.inputs, ...op.outputs]) {
+        getArtifactResultDetails(artfId);
+      }
+    },
+    [
+      dispatch,
+      getArtifactResultDetails,
+      user.apiKey,
+      workflow.operatorResults,
+      workflow.selectedDag?.operators,
+      workflow.selectedResult,
+    ]
+  );
 
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
     getArtifactResultDetails(currentNode.id);
-  }, [currentNode.id, workflow.selectedResult?.id]);
+  }, [
+    currentNode.id,
+    getArtifactResultDetails,
+    getOperatorResultDetails,
+    workflow.selectedResult?.id,
+  ]);
 
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -216,7 +246,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   };
 
-  useEffect(getDagResultDetails, [workflow.selectedResult?.id]);
+  useEffect(getDagResultDetails, [
+    getOperatorResultDetails,
+    selectedDag,
+    workflow.loadingStatus.loading,
+    workflow.selectedResult?.id,
+  ]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {

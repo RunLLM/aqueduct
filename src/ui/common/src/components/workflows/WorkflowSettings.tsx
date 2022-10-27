@@ -98,7 +98,7 @@ const PeriodicScheduleSelector: React.FC<PeriodicScheduleSelectorProps> = ({
         dayOfMonth,
       })
     );
-  }, [timeUnit, minute, time, dayOfWeek, dayOfMonth]);
+  }, [timeUnit, minute, time, dayOfWeek, dayOfMonth, setSchedule]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -240,7 +240,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         workflowId: workflowDag.workflow_id,
       })
     );
-  }, []);
+  }, [dispatch, user.apiKey, workflowDag.workflow_id]);
 
   const savedObjectsResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjects
