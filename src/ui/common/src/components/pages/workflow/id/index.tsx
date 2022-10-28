@@ -75,9 +75,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     (state: RootState) => state.nodeSelectionReducer.selected
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-
   const switchSideSheet = sideSheetSwitcher(dispatch);
-
   const artifactResult = useSelector(
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
@@ -119,7 +117,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   }, [
     workflow.dagResults,
     urlSearchParams,
-    workflow.selectedResult.id,
+    workflow.selectedResult?.id,
     dispatch,
   ]);
 
@@ -218,7 +216,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     getOperatorResultDetails(currentNode.id);
     getArtifactResultDetails(currentNode.id);
   }, [
-    currentNode.id,
+    currentNode?.id,
     getArtifactResultDetails,
     getOperatorResultDetails,
     workflow.selectedResult?.id,
