@@ -60,6 +60,7 @@ const (
 	GCS          Service = "GCS"
 	Athena       Service = "Athena"
 	Lambda       Service = "Lambda"
+	MongoDB      Service = "MongoDB"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
@@ -68,7 +69,7 @@ const (
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
 	switch svc {
-	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS, Lambda:
+	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS, Lambda, MongoDb:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)
@@ -87,6 +88,7 @@ func GetRelationalDatabaseIntegrations() map[Service]bool {
 		AqueductDemo: true,
 		Sqlite:       true,
 		Athena:       true,
+		MongoDB:      true,
 	}
 }
 
