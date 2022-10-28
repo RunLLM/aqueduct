@@ -98,12 +98,20 @@ class SqlServerConfig(models.BaseConfig):
     port: str
 
 
+class MongoDbConfig(models.BaseConfig):
+    username: str
+    password: str
+    database: str
+    host: str
+
+
 class SqliteConfig(models.BaseConfig):
     database: str
 
 
 Config = Union[
     BigQueryConfig,
+    MongoDbConfig,
     GCSConfig,
     MySqlConfig,
     PostgresConfig,
