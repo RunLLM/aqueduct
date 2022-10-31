@@ -60,18 +60,6 @@ const IntegrationsPage: React.FC<Props> = ({
       user={user}
     >
       <Box>
-        {/*<Breadcrumbs>
-          <Link
-            underline="hover"
-            color="inherit"
-            to="/"
-            component={RouterLink as any}
-          >
-            Home
-          </Link>
-          <Typography color="text.primary">Integrations</Typography>
-        </Breadcrumbs>*/}
-
         <Typography variant="h2" gutterBottom component="div">
           Integrations
         </Typography>

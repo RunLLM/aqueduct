@@ -125,13 +125,19 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         })
       );
     }
-  }, []);
+  }, [
+    dispatch,
+    user.apiKey,
+    workflowDagResultId,
+    workflowDagResultWithLoadingStatus,
+    workflowId,
+  ]);
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
       document.title = `${operator?.name || 'Operator'} | Aqueduct`;
     }
-  }, [operator]);
+  }, [operator, sideSheetMode]);
 
   const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;
@@ -196,7 +202,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     if (hasFile(operator?.spec?.type)) {
       getFilesBlob();
     }
-  }, [operator]);
+  }, [maxRenderSize, operator, operatorId, user]);
 
   if (
     !workflowDagResultWithLoadingStatus ||

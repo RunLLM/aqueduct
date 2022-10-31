@@ -26,7 +26,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
     dispatch(
       handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad })
     );
-  }, []);
+  }, [dispatch, forceLoad, user.apiKey]);
 
   const integrations = useSelector((state: RootState) =>
     Object.values(state.integrationsReducer.integrations)

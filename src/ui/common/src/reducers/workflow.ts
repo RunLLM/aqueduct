@@ -3,7 +3,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'react-flow-renderer';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import {
   Artifact,
@@ -33,8 +33,6 @@ import {
   WorkflowDag,
   WorkflowDagResultSummary,
 } from '../utils/workflows';
-
-const { apiAddress } = useAqueductConsts();
 
 type positionResponse = {
   nodes: Node<ReactFlowNodeData>[];
