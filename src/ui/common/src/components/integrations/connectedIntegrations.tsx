@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IntegrationCard } from '../../components/integrations/cards/card';
@@ -22,7 +22,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
-  useEffect(() => {
+  useCallback(() => {
     dispatch(
       handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad })
     );

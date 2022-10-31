@@ -180,7 +180,7 @@ export type Service =
   | 'Lambda'
   | 'Google Sheets';
 
-type Info = {
+export type Info = {
   logo: string;
   activated: boolean;
   category: string;

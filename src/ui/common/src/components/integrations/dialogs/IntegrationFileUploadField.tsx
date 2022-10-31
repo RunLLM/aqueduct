@@ -1,10 +1,5 @@
 import { Box, Button, Input, Typography } from '@mui/material';
-import React, {
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { MouseEventHandler, useEffect, useRef } from 'react';
 
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
@@ -70,32 +65,17 @@ export const IntegrationFileUploadField: React.FC<
     e.stopPropagation();
   };
 
-  // const handleDrop = (e) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  //   setDragging(false);
+    setDragging(false);
 
-  //   const { files } = e.dataTransfer;
-  //   if (files && files.length) {
-  //     onFiles(files);
-  //   }
-  // };
-
-  const handleDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setDragging(false);
-
-      const { files } = e.dataTransfer;
-      if (files && files.length) {
-        onFiles(files);
-      }
-    },
-    [onFiles]
-  );
+    const { files } = e.dataTransfer;
+    if (files && files.length) {
+      onFiles(files);
+    }
+  };
 
   useEffect(() => {
     if (drop.current) {
@@ -104,6 +84,16 @@ export const IntegrationFileUploadField: React.FC<
       drop.current.addEventListener('dragover', handleDragOver);
       drop.current.addEventListener('drop', handleDrop);
     }
+
+    // clean up event listeners
+    return () => {
+      if (drop.current) {
+        drop.current.removeEventListener('dragenter', handleDragEnter);
+        drop.current.removeEventListener('dragleave', handleDragLeave);
+        drop.current.removeEventListener('dragover', handleDragOver);
+        drop.current.removeEventListener('drop', handleDrop);
+      }
+    };
   }, [handleDrop]);
 
   if (file) {
