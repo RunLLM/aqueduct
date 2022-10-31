@@ -31,7 +31,7 @@ def fetch_flags(pytestconfig):
 
 
 def all_data_integration_names() -> List[str]:
-    """We currently only support the demo database, but this can eventually be configured through the command line."""
+    """We currently only support the demo database, but this can eventually be configured arbitrarily."""
     return ["aqueduct_demo"]
 
 

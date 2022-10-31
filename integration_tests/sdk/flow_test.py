@@ -134,7 +134,9 @@ def test_multiple_output_artifacts(client, data_integration):
 
 
 def test_publish_with_schedule(client, data_integration):
-    db = client.integration(data_integration, )
+    db = client.integration(
+        data_integration,
+    )
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(

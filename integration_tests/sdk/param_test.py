@@ -12,12 +12,7 @@ from aqueduct.error import (
 )
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
-from utils import (
-    delete_flow,
-    generate_new_flow_name,
-    run_flow_test,
-    wait_for_flow_runs,
-)
+from utils import delete_flow, generate_new_flow_name, run_flow_test, wait_for_flow_runs
 
 from aqueduct import metric, op
 
