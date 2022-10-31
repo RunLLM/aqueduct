@@ -70,18 +70,6 @@ export const IntegrationFileUploadField: React.FC<
     e.stopPropagation();
   };
 
-  // const handleDrop = (e) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   setDragging(false);
-
-  //   const { files } = e.dataTransfer;
-  //   if (files && files.length) {
-  //     onFiles(files);
-  //   }
-  // };
-
   const handleDrop = useCallback(
     (e) => {
       e.preventDefault();

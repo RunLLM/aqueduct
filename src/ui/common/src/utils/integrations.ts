@@ -1,6 +1,5 @@
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-
-const apiAddress = process.env.SERVER_ADDRESS;
 
 export const aqueductDemoName = 'aqueduct_demo';
 
