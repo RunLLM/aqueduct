@@ -15,7 +15,6 @@ from pandas._testing import assert_frame_equal
 from utils import (
     delete_flow,
     generate_new_flow_name,
-    get_integration_name,
     run_flow_test,
     wait_for_flow_runs,
 )
@@ -114,8 +113,8 @@ def append_row_to_df(df, row):
     return df
 
 
-def test_parameter_in_basic_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_parameter_in_basic_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
@@ -128,8 +127,8 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-def test_edit_param_for_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_edit_param_for_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
@@ -180,8 +179,8 @@ def add_numbers(sql, num1, num2):
     return num1 + num2
 
 
-def test_trigger_flow_with_different_param(client):
-    db = client.integration(name=get_integration_name())
+def test_trigger_flow_with_different_param(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     num1 = client.create_param(name="num1", default=5)
@@ -227,8 +226,8 @@ def test_trigger_flow_with_different_param(client):
         client.delete_flow(flow.id())
 
 
-def test_trigger_flow_with_different_sql_param(client):
-    db = client.integration(name=get_integration_name())
+def test_trigger_flow_with_different_sql_param(client, data_integration):
+    db = client.integration(data_integration)
 
     _ = client.create_param("table_name", default="hotel_reviews")
     sql_artifact = db.sql(query="select * from {{ table_name}}")

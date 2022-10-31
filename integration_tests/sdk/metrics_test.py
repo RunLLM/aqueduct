@@ -3,21 +3,21 @@ import pytest
 from aqueduct.error import AqueductError
 from constants import SENTIMENT_SQL_QUERY
 from test_metrics.constant.model import constant_metric
-from utils import get_integration_name, run_flow_test
+from utils import run_flow_test
 
 from aqueduct import metric
 
 
-def test_basic_metric(client):
-    db = client.integration(name=get_integration_name())
+def test_basic_metric(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     metric = constant_metric(sql_artifact)
     assert metric.get() == 17.5
 
 
-def test_metric_bound(client):
-    db = client.integration(name=get_integration_name())
+def test_metric_bound(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     metric = constant_metric(sql_artifact)
@@ -40,8 +40,8 @@ def test_metric_bound(client):
     assert not check_artifact.get()
 
 
-def test_register_metric(client):
-    db = client.integration(name=get_integration_name())
+def test_register_metric(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     metric_artifact = constant_metric(sql_artifact)
     run_flow_test(client, artifacts=[sql_artifact, metric_artifact])
@@ -59,8 +59,8 @@ def metric_with_multiple_inputs(df1, m, df2):
     return m + 10
 
 
-def test_metric_mixed_inputs(client):
-    db = client.integration(name=get_integration_name())
+def test_metric_mixed_inputs(client, data_integration):
+    db = client.integration(data_integration)
     sql1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql2 = db.sql(query=SENTIMENT_SQL_QUERY)
     metric_input = constant_metric(sql1)
