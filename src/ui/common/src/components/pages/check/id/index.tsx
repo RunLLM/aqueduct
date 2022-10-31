@@ -82,16 +82,21 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata.name),
+    new BreadcrumbLink(
+      workflowLink,
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
+    ),
     new BreadcrumbLink(path, operator ? operator.name : 'Check'),
   ];
 
   useEffect(() => {
     // Load workflow dag result if it's not cached
+    console.log('workflowdagresult useeffect');
     if (
       !workflowDagResultWithLoadingStatus ||
       isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
+      console.log('fetching workflowDagResult');
       dispatch(
         handleGetWorkflowDagResult({
           apiKey: user.apiKey,
