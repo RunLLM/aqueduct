@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2
+Released on October 31, 2022.
+
+### Enhancements
+* Hides search bar on data viewing page when there are no artifacts.
+* Adds support for variable length arguments (`*args`) in Aqueduct functions.
+
+### Bugfixes
+* Fixes a bug where updating the metadata of a paused workflow would fail.
+* Fixes a bug where parameters were shown as having an upstream function that
+    wasn't accessible from the UI.
+
 ## 0.1.1
 Released on October 25, 2022.
 
