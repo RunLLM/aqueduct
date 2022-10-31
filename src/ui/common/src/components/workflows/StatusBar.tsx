@@ -9,7 +9,13 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -244,10 +250,16 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const selectedDag = workflow.selectedDag;
-  const artifacts: { [id: string]: Artifact } =
-    workflow.selectedDag?.artifacts ?? {};
-  const operators: { [id: string]: Operator } =
-    workflow.selectedDag?.operators ?? {};
+
+  const artifacts: { [id: string]: Artifact } = useMemo(
+    () => workflow.selectedDag?.artifacts ?? {},
+    [workflow.selectedDag?.artifacts]
+  );
+
+  const operators: { [id: string]: Operator } = useMemo(
+    () => workflow.selectedDag?.operators ?? {},
+    [workflow.selectedDag?.operators]
+  );
 
   const [activeWorkflowStatusTab, setActiveWorkflowStatusTab] = useState(
     WorkflowStatusTabs.Collapsed
@@ -265,11 +277,6 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
 
   // List of the workflow status items filtered out by category: errors, warnings, logs and checks passed.
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
-
-  useEffect(() => {
-    const workflowStatusItems = normalizeWorkflowStatusItems();
-    setWorkflowStatusItems(workflowStatusItems);
-  }, [workflow, selectedDag, artifacts, operators]); // recompute state when all derived values change.
 
   useEffect(() => {
     const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
@@ -394,7 +401,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     selectTab(WorkflowStatusTabs.Errors);
   };
 
-  const normalizeWorkflowStatusItems = () => {
+  const normalizeWorkflowStatusItems = useCallback(() => {
     const normalizedWorkflowStatusItems: WorkflowStatusItem[] = [];
 
     Object.keys(artifacts).map(async (artifactId) => {
@@ -598,7 +605,25 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       normalizedWorkflowStatusItems,
       'id'
     );
-  };
+  }, [
+    artifacts,
+    dispatch,
+    operators,
+    user.apiKey,
+    workflow.artifactResults,
+    workflow.operatorResults,
+    workflow.selectedResult.id,
+  ]);
+
+  useEffect(() => {
+    setWorkflowStatusItems(normalizeWorkflowStatusItems());
+  }, [
+    workflow,
+    selectedDag,
+    artifacts,
+    operators,
+    normalizeWorkflowStatusItems,
+  ]); // recompute state when all derived values change.
 
   const collapsed = activeWorkflowStatusTab === WorkflowStatusTabs.Collapsed;
 

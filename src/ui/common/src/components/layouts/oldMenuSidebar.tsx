@@ -11,7 +11,7 @@ import { Avatar, Link, Menu, MenuItem, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
@@ -127,13 +127,13 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       ).length
   );
 
-  useEffect(() => {
+  useCallback(() => {
     setCurrentPage(location.pathname);
 
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  }, []);
+  }, [dispatch, location.pathname, user]);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);
