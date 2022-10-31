@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
@@ -77,7 +77,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
-  useCallback(() => {
+  useEffect(() => {
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
     dispatch(
       handleListIntegrationObjects({
@@ -94,7 +94,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [dispatch, integrationId, user.apiKey]);
 
-  useCallback(() => {
+  useEffect(() => {
     if (!isLoading(testConnectStatus)) {
       setShowTestConnectToast(false);
     }

@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -44,7 +44,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
   const [selectedObject, setSelectedObject] = useState<string>('');
   const [openPanel, setOpenPanel] = useState<number>(-1);
 
-  useCallback(() => {
+  useEffect(() => {
     dispatch(
       handleLoadIntegrationObject({
         apiKey: user.apiKey,

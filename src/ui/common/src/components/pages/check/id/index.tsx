@@ -91,12 +91,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   useEffect(() => {
     // Load workflow dag result if it's not cached
-    console.log('workflowdagresult useeffect');
     if (
       !workflowDagResultWithLoadingStatus ||
       isInitial(workflowDagResultWithLoadingStatus.status)
     ) {
-      console.log('fetching workflowDagResult');
       dispatch(
         handleGetWorkflowDagResult({
           apiKey: user.apiKey,
