@@ -165,7 +165,7 @@ const NavBar: React.FC<{
           />
         </Box>
 
-        <Box sx={{ cursor: 'pointer', marginLeft: '8px' }}>
+        <Box sx={{ cursor: 'pointer', marginLeft: '16px' }}>
           <FontAwesomeIcon
             className={styles['navbar-icon']}
             icon={faGear}
