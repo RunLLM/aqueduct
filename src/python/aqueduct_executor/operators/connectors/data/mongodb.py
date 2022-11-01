@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
-from aqueduct_executor.operators.connectors.data.config import MongoDbConfig
+from aqueduct_executor.operators.connectors.data.config import MySqlConfig
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
@@ -15,7 +15,7 @@ class MongoDbConnector(connector.DataConnector):
     _client: MongoClient[Any]
     _db_name: str
 
-    def __init__(self, config: MongoDbConfig):
+    def __init__(self, config: MySqlConfig):
         self._client = MongoClient(
             host=config.host,
             username=config.username,
