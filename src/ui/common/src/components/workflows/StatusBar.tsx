@@ -460,7 +460,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         newWorkflowStatusItem.title = (
           <>
-            Error creating <b>${artifactName}.</b>
+            Error creating <b>{artifactName}.</b>
           </>
         );
         newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;

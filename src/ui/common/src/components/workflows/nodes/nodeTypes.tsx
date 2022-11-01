@@ -61,7 +61,7 @@ export const nodeTypeToStringLabel = {
   loadOp: 'Load Operator',
   metricOp: 'Metric Operator',
   checkOp: 'Check Operator',
-  paramOp: 'Parameter Operator',
+  paramOp: 'Parameter',
 };
 
 export const artifactTypeToIconMapping = {
