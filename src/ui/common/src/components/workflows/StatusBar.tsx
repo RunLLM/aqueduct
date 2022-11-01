@@ -19,6 +19,7 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
+  ArtifactTypeToNodeTypeMap,
   NodeType,
   OperatorTypeToNodeTypeMap,
   selectNode,
@@ -434,11 +435,15 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ),
         message: '',
         nodeId: artifactId,
-        type: 'tableArtifact',
+        type: 'Artifact',
       };
 
       const artifactStatus: ExecutionStatus = artifactResult.result?.status;
       const artifactExecState: ExecState = artifactResult.result?.exec_state;
+      const artifactType: string = artifactResult.result?.artifact_type;
+
+      const artifactNodeType: string = ArtifactTypeToNodeTypeMap[artifactType];
+      newWorkflowStatusItem.type = artifactNodeType;
 
       if (
         artifactStatus === ExecutionStatus.Failed &&
@@ -455,7 +460,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Errors;
         newWorkflowStatusItem.title = (
           <>
-            Error creating <b>${artifactName}.</b>
+            Error creating <b>{artifactName}.</b>
           </>
         );
         newWorkflowStatusItem.message = `Unable to create artifact ${artifactName} (${artifactId}).`;
