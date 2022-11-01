@@ -19,6 +19,11 @@ class MySqlConfig(models.BaseConfig):
     port: str
 
 
+class MongoDbConfig(models.BaseConfig):
+    auth_uri: str
+    database: str
+
+
 class PostgresConfig(models.BaseConfig):
     username: str
     password: str
@@ -106,6 +111,7 @@ Config = Union[
     BigQueryConfig,
     GCSConfig,
     MySqlConfig,
+    MongoDbConfig,
     PostgresConfig,
     S3Config,
     AthenaConfig,
