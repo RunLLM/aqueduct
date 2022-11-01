@@ -19,6 +19,7 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
+  ArtifactTypeToNodeTypeMap,
   NodeType,
   OperatorTypeToNodeTypeMap,
   selectNode,
@@ -434,11 +435,15 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         ),
         message: '',
         nodeId: artifactId,
-        type: 'tableArtifact',
+        type: 'Artifact',
       };
 
       const artifactStatus: ExecutionStatus = artifactResult.result?.status;
       const artifactExecState: ExecState = artifactResult.result?.exec_state;
+      const artifactType: string = artifactResult.result?.artifact_type;
+
+      const artifactNodeType: string = ArtifactTypeToNodeTypeMap[artifactType];
+      newWorkflowStatusItem.type = artifactNodeType;
 
       if (
         artifactStatus === ExecutionStatus.Failed &&
@@ -538,8 +543,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
-            }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
+            err.context ?? ''
+          }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;

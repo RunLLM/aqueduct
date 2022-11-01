@@ -66,7 +66,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
 
