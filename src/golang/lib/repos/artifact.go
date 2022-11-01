@@ -44,7 +44,7 @@ type artifactWriter interface {
 	) (*models.Artifact, error)
 
 	// Update applies changes to the Artifact with id. It returns the updated Artifact.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Workflow, error)
+	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Artifact, error)
 
 	// Delete deletes the Artifact with id.
 	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
