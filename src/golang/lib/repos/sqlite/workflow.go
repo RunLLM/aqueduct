@@ -42,7 +42,7 @@ func (*workflowReader) Get(ctx context.Context, id uuid.UUID, db database.Databa
 	)
 	args := []interface{}{id}
 
-	return getOneWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, db, query, args...)
 }
 
 func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, db database.Database) (*models.Workflow, error) {
@@ -52,7 +52,7 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	)
 	args := []interface{}{ownerID, name}
 
-	return getOneWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, db, query, args...)
 }
 
 func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, db database.Database) ([]views.LatestWorkflowStatus, error) {
@@ -122,7 +122,7 @@ func (*workflowReader) List(ctx context.Context, db database.Database) ([]models
 		models.WorkflowCols(),
 	)
 
-	return getWorkflow(ctx, db, query)
+	return getWorkflows(ctx, db, query)
 }
 
 func (*workflowReader) ValidateOrg(ctx context.Context, id uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error) {
@@ -171,7 +171,7 @@ func (*workflowWriter) Create(
 	}
 
 	args := []interface{}{id, userID, name, description, schedule, time.Now(), retentionPolicy}
-	return getOneWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, db, query, args...)
 }
 
 func (*workflowWriter) Delete(ctx context.Context, id uuid.UUID, db database.Database) error {
@@ -200,14 +200,14 @@ func (*workflowWriter) Update(
 	return &workflow, err
 }
 
-func getWorkflow(ctx context.Context, db database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
+func getWorkflows(ctx context.Context, db database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
 	var workflows []models.Workflow
 	err := db.Query(ctx, &workflows, query, args...)
 	return workflows, err
 }
 
-func getOneWorkflow(ctx context.Context, db database.Database, query string, args ...interface{}) (*models.Workflow, error) {
-	workflows, err := getWorkflow(ctx, db, query, args...)
+func getWorkflow(ctx context.Context, db database.Database, query string, args ...interface{}) (*models.Workflow, error) {
+	workflows, err := getWorkflows(ctx, db, query, args...)
 	if err != nil {
 		return nil, nil
 	}
