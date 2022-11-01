@@ -1,4 +1,3 @@
-import json
 import re
 from datetime import date
 from typing import List, Optional, Union
@@ -13,7 +12,6 @@ from aqueduct.enums import (
     ArtifactType,
     ExecutionMode,
     LoadUpdateMode,
-    SerializationType,
     ServiceType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
@@ -52,6 +50,28 @@ PREV_TABLE_TAG = "$"
 # A dictionary of built-in tags to their replacement string functions.
 def replace_today() -> str:
     return "'" + date.today().strftime("%Y-%m-%d") + "'"
+
+
+def find_parameter_names(query: str) -> List[str]:
+    matches = re.findall(TAG_PATTERN, query)
+    return [match.strip(" {}") for match in matches]
+
+
+def find_parameter_artifacts(dag: DAG, names: List[str]) -> List[ArtifactMetadata]:
+    artifacts = []
+    for name in names:
+        artf = dag.get_artifact_by_name(name)
+        if artf is None:
+            # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
+            if name in BUILT_IN_EXPANSIONS:
+                continue
+
+            raise InvalidUserArgumentException(
+                "There is no parameter defined with name `%s`." % name,
+            )
+        artifacts.append(artf)
+
+    return artifacts
 
 
 # A dictionary of built-in tags to their replacement string functions.
@@ -130,6 +150,8 @@ class RelationalDBIntegration(Integration):
                 Name of the query.
             description:
                 Description of the query.
+            lazy:
+                Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
 
         Returns:
             TableArtifact representing result of the SQL query.
@@ -178,34 +200,25 @@ class RelationalDBIntegration(Integration):
         # Find any tags that need to be expanded in the query, and add the parameters that correspond
         # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
         sql_input_artifact_ids = []
-        matches = []
+        queries = []
         if extract_params.query is not None:
-            matches = re.findall(TAG_PATTERN, extract_params.query)
+            queries = [extract_params.query]
 
         if extract_params.queries is not None:
-            for q in extract_params.queries:
-                matches.extend(re.findall(TAG_PATTERN, q))
+            queries = extract_params.queries
 
-        for match in matches:
-            param_name = match.strip(" {}")
-            param_artifact = self._dag.get_artifact_by_name(param_name)
-            if param_artifact is None:
-                # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
-                if param_name in BUILT_IN_EXPANSIONS:
-                    continue
+        param_names = [name for q in queries for name in find_parameter_names(q)]
+        param_artifacts = find_parameter_artifacts(self._dag, param_names)
 
-                raise InvalidUserArgumentException(
-                    "There is no parameter defined with name `%s`." % param_name,
-                )
-
+        for artf in param_artifacts:
             # Check that the parameter corresponds to a string value.
-            if param_artifact.type != ArtifactType.STRING:
+            if artf.type != ArtifactType.STRING:
                 raise InvalidUserArgumentException(
                     "The parameter `%s` must be defined as a string. Instead, got type %s"
-                    % (param_name, param_artifact.type)
+                    % (artf.name, artf.type)
                 )
 
-            sql_input_artifact_ids.append(param_artifact.id)
+            sql_input_artifact_ids.append(artf.id)
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()

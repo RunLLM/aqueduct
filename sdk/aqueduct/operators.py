@@ -73,6 +73,11 @@ class S3ExtractParams(BaseModel):
     merge: Optional[bool]
 
 
+class MongoExtractParams(BaseModel):
+    table: str
+    query_serialized: str
+
+
 UnionExtractParams = Union[
     SalesforceExtractParams,
     S3ExtractParams,
