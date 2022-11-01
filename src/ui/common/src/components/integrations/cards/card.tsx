@@ -17,6 +17,7 @@ import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
 import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
+import { MongoDbCard } from './mongoDbCard';
 import { MySqlCard } from './mysqlCard';
 import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
@@ -109,6 +110,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'MariaDB':
       serviceCard = <MariaDbCard integration={integration} />;
+      break;
+    case 'MongoDB':
+      serviceCard = <MongoDbCard integration={integration} />;
       break;
     case 'BigQuery':
       serviceCard = <BigQueryCard integration={integration} />;

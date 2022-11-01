@@ -49,6 +49,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { MariaDbDialog } from './mariadbDialog';
+import { MongoDbDialog } from './mongoDbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
@@ -187,6 +188,15 @@ const IntegrationDialog: React.FC<Props> = ({
     case 'MariaDB':
       serviceDialog = (
         <MariaDbDialog
+          onUpdateField={setConfigField}
+          value={config as RedshiftConfig}
+          editMode={editMode}
+        />
+      );
+      break;
+    case 'MongoDB':
+      serviceDialog = (
+        <MongoDbDialog
           onUpdateField={setConfigField}
           value={config as RedshiftConfig}
           editMode={editMode}
