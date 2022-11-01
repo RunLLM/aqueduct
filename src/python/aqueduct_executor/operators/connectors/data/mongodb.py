@@ -18,6 +18,7 @@ class MongoDbConnector(connector.DataConnector):
     def __init__(self, config: MySqlConfig):
         self._client = MongoClient(
             host=config.host,
+            port=int(config.port),
             username=config.username,
             password=config.password,
             connect=True,
