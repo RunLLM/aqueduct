@@ -47,7 +47,6 @@ func WorkflowColsWithPrefix() string {
 	}
 
 	return strings.Join(cols, ",")
-
 }
 
 func allWorkflowCols() []string {

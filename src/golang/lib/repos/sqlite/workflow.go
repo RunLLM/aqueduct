@@ -209,7 +209,7 @@ func getWorkflows(ctx context.Context, db database.Database, query string, args 
 func getWorkflow(ctx context.Context, db database.Database, query string, args ...interface{}) (*models.Workflow, error) {
 	workflows, err := getWorkflows(ctx, db, query, args...)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	if len(workflows) != 1 {
