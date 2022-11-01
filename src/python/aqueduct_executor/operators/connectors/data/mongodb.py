@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
-from aqueduct_executor.operators.connectors.data.config import MySqlConfig
+from aqueduct_executor.operators.connectors.data.config import MongoDbConfig
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
@@ -15,15 +15,22 @@ class MongoDbConnector(connector.DataConnector):
     _client: MongoClient[Any]
     _db_name: str
 
-    def __init__(self, config: MySqlConfig):
+    def __init__(self, config: MongoDbConfig):
         self._client = MongoClient(
-            host=config.host,
-            port=int(config.port),
-            username=config.username,
-            password=config.password,
+            config.auth_uri,
             connect=True,
         )
         self._db_name = config.database
+        self._test()
+
+    def _test(self) -> None:
+        try:
+            self._client.test
+            assert (
+                self._db_name in self._client.list_database_names()
+            ), f"Database {self._db_name} does not exist."
+        except Exception as e:
+            raise ConnectionError("Unable to connect") from e
 
     def __del__(self) -> None:
         self._client.close()
@@ -34,11 +41,7 @@ class MongoDbConnector(connector.DataConnector):
         return self._client[self._db_name]
 
     def authenticate(self) -> None:
-        try:
-            # try to connect to the database
-            self._connect_db()
-        except Exception as e:
-            raise ConnectionError("Unable to connect") from e
+        self._test()
 
     def _discover(self, session: Optional[ClientSession] = None) -> List[str]:
         return self._connect_db(session).list_collection_names()

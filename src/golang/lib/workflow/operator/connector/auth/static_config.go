@@ -28,7 +28,12 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 
 	// TODO: This is hacky for now. It assumes the only confidential information
 	// is "password" or "service_account_credentials" or "config_file_content".
-	sensitiveKeys := []string{"password", "service_account_credentials", "config_file_content"}
+	sensitiveKeys := []string{
+		"auth_uri",
+		"password",
+		"service_account_credentials",
+		"config_file_content",
+	}
 
 	for key, val := range sc.Conf {
 		if !sliceContains(sensitiveKeys, key) {
