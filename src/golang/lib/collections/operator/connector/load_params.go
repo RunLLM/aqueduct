@@ -86,6 +86,11 @@ func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, b
 		return &sqlite.RelationalDBLoadParams, true
 	}
 
+	mongo, ok := params.(*MongoDbLoadParams)
+	if ok {
+		return &mongo.RelationalDBLoadParams, true
+	}
+
 	return nil, false
 }
 
