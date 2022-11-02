@@ -14,6 +14,7 @@ def install_missing_packages(missing_path: str, spec: FunctionSpec):
     install_output = subprocess.run(
         [sys.executable, "-m", "pip", "install", "-r", missing_path], capture_output=True, text=True
     )
+
     if result.returncode != 0:
         exception = ExecFailureException(
             failure_type=FailureType.USER_FATAL,
@@ -22,6 +23,7 @@ def install_missing_packages(missing_path: str, spec: FunctionSpec):
         from_exception_exec_state = ExecutionState.from_exception(
             exception, user_logs=Logs(stdout=result.stdout, stderr=result.stderr)
         )
+
         utils.write_exec_state(
             parse_storage(spec.storage_config), spec.metadata_path, from_exception_exec_state
         )
