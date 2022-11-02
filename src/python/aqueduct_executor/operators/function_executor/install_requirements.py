@@ -15,13 +15,13 @@ def install_missing_packages(missing_path: str, spec: FunctionSpec):
         [sys.executable, "-m", "pip", "install", "-r", missing_path], capture_output=True, text=True
     )
 
-    if result.returncode != 0:
+    if install_output.returncode != 0:
         exception = ExecFailureException(
             failure_type=FailureType.USER_FATAL,
             tip="We are unable to install certain dependency packages. Please remove them from the requirement file and try again.",
         )
         from_exception_exec_state = ExecutionState.from_exception(
-            exception, user_logs=Logs(stdout=result.stdout, stderr=result.stderr)
+            exception, user_logs=Logs(stdout=install_output.stdout, stderr=install_output.stderr)
         )
 
         utils.write_exec_state(
