@@ -82,6 +82,7 @@ UnionExtractParams = Union[
     SalesforceExtractParams,
     S3ExtractParams,
     GoogleSheetsExtractParams,
+    MongoExtractParams,
     RelationalDBExtractParams,
 ]
 
