@@ -335,7 +335,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
       <Button
-        style={buttonStyle}
+        style={{ ...buttonStyle, maxWidth: '300px' }}
         onClick={async () => {
           await handleExportFunction(
             user,
@@ -346,9 +346,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         color="primary"
       >
         <FontAwesomeIcon icon={faCircleDown} />
-        <Typography sx={{ ml: 1 }}>{`${
-          operator?.name ?? 'function'
-        }.zip`}</Typography>
+        <Typography
+          sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >{`${operator?.name ?? 'function'}.zip`}</Typography>
       </Button>
     );
 
