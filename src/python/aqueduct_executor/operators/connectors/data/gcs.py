@@ -36,6 +36,3 @@ class GCSConnector(connector.DataConnector):
 
     def delete(self, objects: Any) -> List[SavedObjectDelete]:
         raise Exception("Delete is not currently supported for GCS.")
-
-    def _delete_object(self, name: Any, context: Any) -> None:
-        raise Exception("Delete helper is not implemented for GCS.")

@@ -34,20 +34,6 @@ class DataConnector(ABC):
         """
 
     @abstractmethod
-    def _delete_object(  # type: ignore
-        self,
-        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
-        name,  # str
-        context,  # Optional[Dict[str, Any]]
-    ) -> None:
-        """Delete object from integration. Helper function for delete.
-
-        Args:
-            name: Name of object to delete.
-            context: Any other variable.
-        """
-
-    @abstractmethod
     def delete(  # type: ignore
         self,
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
