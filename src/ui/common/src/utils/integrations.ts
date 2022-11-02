@@ -348,7 +348,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: 'compute',
   },
   ['MongoDB']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mongo_logo.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mongo.png',
     activated: true,
     category: 'data',
   },
