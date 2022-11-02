@@ -160,6 +160,12 @@ class MongoDbIntegration(Integration):
         return MongoDbCollectionIntegration(self._dag, self._metadata, name)
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the S3 integration."""
+        """Prints out a human-readable description of the MongoDB integration."""
         print("==================== MongoDB Integration  =============================")
         self._metadata.describe()
+
+    def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
+        return SaveConfig(
+            integration_info=self._metadata,
+            parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),
+        )
