@@ -5,6 +5,7 @@ import React from 'react';
 import {
   GoogleSheetsExtractParams,
   GoogleSheetsLoadParams,
+  MongoDBExtractParams,
   Operator,
   OperatorType,
   RelationalDBExtractParams,
@@ -50,6 +51,27 @@ const OperatorParametersOverview: React.FC<Props> = ({
           <strong>spreadsheet ID: </strong>
           {(exParams as GoogleSheetsExtractParams).spreadsheet_id}
         </Typography>
+      );
+    } else if ('query_serialized' in exParams) {
+      const mongoDbParams = exParams as MongoDBExtractParams;
+      return (
+        <Box>
+          <Typography variant="body2" color={textColor}>
+            <strong>table: </strong>
+            <code>{mongoDbParams.table}</code>
+          </Typography>
+          <Typography variant="body2" color={textColor}>
+            <strong>query: </strong>
+            <code>
+              {JSON.stringify(
+                // pretty print
+                JSON.parse(mongoDbParams.query_serialized),
+                null,
+                2
+              )}
+            </code>
+          </Typography>
+        </Box>
       );
     }
   } else if (operator.spec.type === OperatorType.Load) {
