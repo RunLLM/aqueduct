@@ -134,7 +134,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		// This triggers `db.my_table.find({})`
 		queryParams = &connector.MongoDbExtractParams{
 			Table:           args.tableName,
-			QuerySerialized: "{\"kargs\": \"[{}]\"}",
+			QuerySerialized: "{\"kargs\": [{}]}",
 		}
 	} else {
 		queryParams = &connector.RelationalDBExtractParams{
