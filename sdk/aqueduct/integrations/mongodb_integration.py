@@ -65,8 +65,8 @@ class MongoDbCollectionIntegration(Integration):
         try:
             serialized_args = json.dumps(
                 {
-                    kargs: kargs or [],
-                    kwargs: kwargs or {},
+                    "kargs": kargs or [],
+                    "kwargs": kwargs or {},
                 }
             )
         except Exception as e:
