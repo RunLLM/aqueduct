@@ -129,7 +129,7 @@ class MongoDbCollectionIntegration(Integration):
             # We are in lazy mode.
             return TableArtifact(self._dag, output_artf_id)
 
-    def save_config(self, update_mode: LoadUpdateMode) -> SaveConfig:
+    def config(self, update_mode: LoadUpdateMode) -> SaveConfig:
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=self._collection_name, update_mode=update_mode),
