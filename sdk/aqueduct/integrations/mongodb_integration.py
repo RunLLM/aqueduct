@@ -148,17 +148,15 @@ class MongoDbIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
-    def __getattribute__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:
         """
-        Overrided `__get_attribute__` allows caller to access integration by
+        Overrided `__get_attr__` allows caller to access integration by
         arbitrary attribute with similar experience as mongo API:
 
         mongo_integration = client.integration("my_integration_name")
         my_table_artifact = mongo_integration.my_table.find({})
 
         """
-        if hasattr(self, name):
-            return super().__getattribute__(name)
         return MongoDbCollectionIntegration(self._dag, self._metadata, name)
 
     def describe(self) -> None:
