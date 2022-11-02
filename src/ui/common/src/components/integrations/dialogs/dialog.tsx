@@ -31,6 +31,8 @@ import {
   IntegrationConfig,
   KubernetesConfig,
   LambdaConfig,
+  MariaDbConfig,
+  MongoDbConfig,
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
@@ -189,7 +191,7 @@ const IntegrationDialog: React.FC<Props> = ({
       serviceDialog = (
         <MariaDbDialog
           onUpdateField={setConfigField}
-          value={config as RedshiftConfig}
+          value={config as MariaDbConfig}
           editMode={editMode}
         />
       );
@@ -198,7 +200,7 @@ const IntegrationDialog: React.FC<Props> = ({
       serviceDialog = (
         <MongoDbDialog
           onUpdateField={setConfigField}
-          value={config as RedshiftConfig}
+          value={config as MongoDbConfig}
           editMode={editMode}
         />
       );

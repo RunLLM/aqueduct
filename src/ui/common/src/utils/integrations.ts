@@ -64,11 +64,8 @@ export type MariaDbConfig = {
 };
 
 export type MongoDbConfig = {
-  host: string;
-  port: string;
+  auth_uri: string;
   database: string;
-  username: string;
-  password?: string;
 };
 
 export type SqlServerConfig = {
@@ -353,7 +350,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['MongoDB']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
     activated: true,
-    category: 'compute',
+    category: 'data',
   },
 };
 

@@ -6,11 +6,8 @@ import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: MongoDbConfig = {
-  host: '127.0.0.1',
-  port: '3306',
+  auth_uri: '********',
   database: 'aqueduct-db',
-  username: 'aqueduct',
-  password: '********',
 };
 
 type Props = {
@@ -27,29 +24,13 @@ export const MongoDbDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
-        label={'Host*'}
-        description={'The hostname or IP address of the MongoDB server.'}
+        label={'Uri*'}
+        description={'The connection uri to your mongoDB server.'}
         spellCheck={false}
         required={true}
-        placeholder={Placeholders.host}
-        onChange={(event) => onUpdateField('host', event.target.value)}
-        value={value?.host ?? null}
-        disabled={editMode}
-        warning={editMode ? undefined : readOnlyFieldWarning}
-        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
-
-      <IntegrationTextInputField
-        label={'Port*'}
-        description={'The port number of the MongoDB server.'}
-        spellCheck={false}
-        required={true}
-        placeholder={Placeholders.port}
-        onChange={(event) => onUpdateField('port', event.target.value)}
-        value={value?.port ?? null}
-        disabled={editMode}
-        warning={editMode ? undefined : readOnlyFieldWarning}
-        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
+        placeholder={Placeholders.auth_uri}
+        onChange={(event) => onUpdateField('auth_uri', event.target.value)}
+        value={value?.auth_uri ?? null}
       />
 
       <IntegrationTextInputField
@@ -63,27 +44,6 @@ export const MongoDbDialog: React.FC<Props> = ({
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
-
-      <IntegrationTextInputField
-        spellCheck={false}
-        required={true}
-        label="Username*"
-        description="The username of a user with access to the above database."
-        placeholder={Placeholders.username}
-        onChange={(event) => onUpdateField('username', event.target.value)}
-        value={value?.username ?? null}
-      />
-
-      <IntegrationTextInputField
-        spellCheck={false}
-        required={true}
-        label="Password*"
-        description="The password corresponding to the above username."
-        placeholder={Placeholders.password}
-        type="password"
-        onChange={(event) => onUpdateField('password', event.target.value)}
-        value={value?.password ?? null}
       />
     </Box>
   );

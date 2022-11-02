@@ -13,18 +13,6 @@ export const MongoDbCard: React.FC<Props> = ({ integration }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Typography variant="body1">
-        <strong>Host: </strong>
-        {config.host}
-      </Typography>
-      <Typography variant="body1">
-        <strong>Port: </strong>
-        {config.port}
-      </Typography>
-      <Typography variant="body1">
-        <strong>User: </strong>
-        {config.username}
-      </Typography>
-      <Typography variant="body1">
         <strong>Database: </strong>
         {config.database}
       </Typography>
