@@ -10,7 +10,7 @@ from aqueduct_executor.operators.utils.execution import ExecFailureException, Ex
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
-def install_missing_packages(missing_path: str, spec: FunctionSpec):
+def install_missing_packages(missing_path: str, spec: FunctionSpec) -> None:
     install_output = subprocess.run(
         [sys.executable, "-m", "pip", "install", "-r", missing_path], capture_output=True, text=True
     )
