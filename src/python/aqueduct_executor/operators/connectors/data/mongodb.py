@@ -51,7 +51,7 @@ class MongoDbConnector(connector.DataConnector):
 
     def extract(self, params: extract.MongoDbParams) -> Any:
         assert params.usable()
-        query = params.query()
+        query = params.query
         assert query is not None
 
         raw_results = self._connect_db()[params.table].find(
