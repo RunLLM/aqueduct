@@ -503,25 +503,13 @@ export const workflowSlice = createSlice({
     });
     builder.addCase(handleGetOperatorResults.pending, (state, action) => {
       const operatorId = action.meta.arg.operatorId;
-      // TODO: left off here.
-      // console.log('operatorId: ', operatorId);
-      // const currentState = current(state.operatorResults);
-      // console.log('state.operatorResults:', currentState);
-
       state.operatorResults[operatorId] = {
         loadingStatus: {
           loading: LoadingStatusEnum.Loading,
           err: ''
-        }
+        },
+        result: null,
       };
-
-      // if (operatorId) {
-      //   state.operatorResults[operatorId] = {
-      //     loadingStatus: { loading: LoadingStatusEnum.Loading, err: '' },
-      //   };
-      // } else {
-      //   console.log('operatorId undefined or null');
-      // }
     });
     builder.addCase(handleGetOperatorResults.fulfilled, (state, action) => {
       const operatorId = action.meta.arg.operatorId;
@@ -533,30 +521,8 @@ export const workflowSlice = createSlice({
         },
         result: response,
       };
-
-      // if (operatorId) {
-      //   const currentOperatorResults = current(state.operatorResults);
-      //   if (!state.operatorResults[operatorId]) {
-      //     console.log('currentOperatorResults debug: ', currentOperatorResults);
-      //     //debugger;
-      //     state.operatorResults[operatorId] = {
-      //       loadingStatus: {
-      //         loading: LoadingStatusEnum.Succeeded,
-      //         err: '',
-      //       }
-      //     };
-      //   }
-      //   const currentState = current(state.operatorResults[operatorId]);
-      //   console.log('currentState fulfilled', currentState);
-      //   state.operatorResults[operatorId].loadingStatus = {
-      //     loading: LoadingStatusEnum.Succeeded,
-      //     err: '',
-      //   };
-      //   state.operatorResults[operatorId].result = response;
-      // } else {
-      //   console.log('operatorId fulfilled undefined or null');
-      // }
     });
+
     builder.addCase(handleGetOperatorResults.rejected, (state, action) => {
       const operatorId = action.meta.arg.operatorId;
       const payload = action.payload;

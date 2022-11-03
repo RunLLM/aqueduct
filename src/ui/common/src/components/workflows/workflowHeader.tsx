@@ -107,7 +107,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   const name = workflowDag.metadata?.name ?? '';
   const description = workflowDag.metadata?.description;
-  console.log('description: ', description);
 
   let nextUpdateComponent;
   if (
