@@ -9,7 +9,7 @@ type ExtractParams interface {
 }
 
 type MongoDBExtractParams struct {
-	Table string `json:"table"`
+	Collection string `json:"collection"`
 	// `QuerySerialized` is the serialized {args, kwargs} passed to
 	// mongo's `.find()` API.
 	QuerySerialized string `json:"query_serialized"`

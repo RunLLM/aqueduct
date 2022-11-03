@@ -74,7 +74,7 @@ class S3ExtractParams(BaseModel):
 
 
 class MongoExtractParams(BaseModel):
-    table: str
+    collection: str
     query_serialized: str
 
 
