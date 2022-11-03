@@ -1,11 +1,10 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 
 export default async function fetchUser(
   apiKey: string
 ): Promise<{ success: boolean; user?: UserProfile }> {
   try {
-    const { apiAddress } = useAqueductConsts();
     const response = await fetch(`${apiAddress}/api/user`, {
       method: 'GET',
       headers: {

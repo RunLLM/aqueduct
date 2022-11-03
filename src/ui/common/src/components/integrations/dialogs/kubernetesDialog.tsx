@@ -4,7 +4,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 
 import { KubernetesConfig } from '../../../utils/integrations';
-import { useAqueductConsts } from '../../hooks/useAqueductConsts';
+import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
@@ -18,8 +18,6 @@ type Props = {
   value?: KubernetesConfig;
   apiKey: string;
 };
-
-const { apiAddress } = useAqueductConsts();
 
 export const KubernetesDialog: React.FC<Props> = ({
   onUpdateField,
@@ -45,7 +43,7 @@ export const KubernetesDialog: React.FC<Props> = ({
     };
 
     fetchEnvironment().catch(console.error);
-  }, []);
+  }, [apiKey, onUpdateField, value?.use_same_cluster]);
 
   return (
     <Box sx={{ mt: 2 }}>

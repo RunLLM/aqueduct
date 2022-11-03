@@ -10,7 +10,7 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -111,7 +111,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  useEffect(() => {
+  useCallback(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
@@ -122,7 +122,15 @@ const IntegrationDialog: React.FC<Props> = ({
       }
       onCloseDialog();
     }
-  }, [connectStatus]);
+  }, [
+    connectStatus,
+    dispatch,
+    migrateStorage,
+    onCloseDialog,
+    onSuccess,
+    showMigrationDialog,
+    user.apiKey,
+  ]);
 
   const dialogHeader = (
     <Box
@@ -216,12 +224,12 @@ const IntegrationDialog: React.FC<Props> = ({
       const gcsConfig = config as GCSConfig;
       // GCS can only be used storage currently
       gcsConfig.use_as_storage = 'true';
-      setMigrateStorage(true);
       serviceDialog = (
         <GCSDialog
           onUpdateField={setConfigField}
           value={config as GCSConfig}
           editMode={editMode}
+          setMigrateStorage={setMigrateStorage}
         />
       );
       break;

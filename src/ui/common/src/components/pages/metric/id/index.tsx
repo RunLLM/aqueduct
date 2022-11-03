@@ -98,7 +98,14 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         })
       );
     }
-  }, []);
+  }, [
+    dispatch,
+    sideSheetMode,
+    user.apiKey,
+    workflowDagResultId,
+    workflowDagResultWithLoadingStatus,
+    workflowId,
+  ]);
 
   useEffect(() => {
     // Load artifact history once workflow dag results finished loading
@@ -118,7 +125,14 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         })
       );
     }
-  }, [workflowDagResultWithLoadingStatus, artifactId]);
+  }, [
+    workflowDagResultWithLoadingStatus,
+    artifactId,
+    artifactHistoryWithLoadingStatus,
+    dispatch,
+    user.apiKey,
+    workflowId,
+  ]);
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
@@ -127,7 +141,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
         operator ? operator.name : 'Operator Details'
       } | Aqueduct`;
     }
-  }, [operator]);
+  }, [operator, sideSheetMode]);
 
   if (
     !workflowDagResultWithLoadingStatus ||
