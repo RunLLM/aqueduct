@@ -22,32 +22,32 @@ type TestSuite struct {
 	// List of all repos
 	workflow repos.Workflow
 
-	db database.Database
+	DB database.Database
 }
 
 // SetupSuite is run only once before all tests. It initializes the database
 // connection and creates the repos. It initializes the database schema
 // to the latest version.
 func (ts *TestSuite) SetupSuite() {
-	db, err := database.NewSqliteInMemoryDatabase(&database.SqliteConfig{})
+	DB, err := database.NewSqliteInMemoryDatabase(&database.SqliteConfig{})
 	if err != nil {
 		ts.T().Errorf("Unable to create SQLite client: %v", err)
 	}
 
 	ts.ctx = context.Background()
-	ts.db = db
+	ts.DB = DB
 
 	// Initialize repos
 	ts.workflow = sqlite.NewWorklowRepo()
 
 	// Init database schema
-	if err := initDBSchema(db); err != nil {
-		db.Close()
+	if err := initDBSchema(DB); err != nil {
+		DB.Close()
 		ts.T().Errorf("Unable to initialize database schema: %v", err)
 	}
 }
 
-func initDBSchema(db database.Database) error {
+func initDBSchema(DB database.Database) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func initDBSchema(db database.Database) error {
 		}
 	}()
 
-	if err := migrator.GoTo(context.Background(), models.SchemaVersion, db); err != nil {
+	if err := migrator.GoTo(context.Background(), models.SchemaVersion, DB); err != nil {
 		return err
 	}
 
@@ -89,12 +89,12 @@ func (ts *TestSuite) TearDownTest() {
 	DELETE FROM notification;
 	;
 	`
-	if err := ts.db.Execute(ts.ctx, query); err != nil {
+	if err := ts.DB.Execute(ts.ctx, query); err != nil {
 		ts.T().Errorf("Unable to clear database: %v", err)
 	}
 }
 
 // TearDownSuite is run after all tests complete.
 func (ts *TestSuite) TearDownSuite() {
-	ts.db.Close()
+	ts.DB.Close()
 }
