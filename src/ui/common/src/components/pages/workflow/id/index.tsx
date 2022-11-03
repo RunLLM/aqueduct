@@ -144,14 +144,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    */
 
   const getArtifactResultDetails = useCallback(
-    (nodeId: string) => {
+    async (nodeId: string) => {
       const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
       if (!artf || !workflow.selectedResult) {
         return;
       }
 
       if (!(nodeId in workflow.artifactResults)) {
-        dispatch(
+        await dispatch(
           handleGetArtifactResults({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
@@ -181,7 +181,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * results.
    */
   const getOperatorResultDetails = useCallback(
-    (nodeId: string) => {
+    async (nodeId: string) => {
       // Verify the node is indeed an operator, and a result is selected
       const op = (workflow.selectedDag?.operators ?? {})[nodeId];
       if (!op || !workflow.selectedResult) {
@@ -189,7 +189,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
 
       if (!(nodeId in workflow.operatorResults)) {
-        dispatch(
+        await dispatch(
           handleGetOperatorResults({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
@@ -204,7 +204,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     },
     [
       dispatch,
-      getArtifactResultDetails,
+      //getArtifactResultDetails,
       user.apiKey,
       workflow.operatorResults,
       workflow.selectedDag?.operators,
@@ -214,13 +214,22 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
+  }, [currentNode]);
+
+  useEffect(() => {
     getArtifactResultDetails(currentNode.id);
-  }, [
-    currentNode?.id,
-    getArtifactResultDetails,
-    getOperatorResultDetails,
-    workflow.selectedResult?.id,
-  ]);
+  }, [currentNode]);
+
+  // Turning this useEffect into two so that the funcntions aren't called when the other one gets called.
+  // useEffect(() => {
+  //   getOperatorResultDetails(currentNode.id);
+  //   getArtifactResultDetails(currentNode.id);
+  // }, [
+  //   currentNode?.id,
+  //   //getArtifactResultDetails,
+  //   //getOperatorResultDetails,
+  //   //workflow.selectedResult?.id,
+  // ]);
 
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -231,7 +240,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const selectedDag = workflow.selectedDag;
-  const getDagResultDetails = () => {
+  // const getDagResultDetails = () => {
+  //   if (
+  //     workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
+  //     !!selectedDag
+  //   ) {
+  //     for (const op of Object.values(selectedDag.operators)) {
+  //       // We don't need to call getArtifactResultDetails because
+  //       // getOperatorResultDetails automatically does that for us.
+  //       getOperatorResultDetails(op.id);
+  //     }
+  //   }
+  // };
+
+  useEffect(() => {
     if (
       workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
       !!selectedDag
@@ -242,14 +264,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         getOperatorResultDetails(op.id);
       }
     }
-  };
+  }, [workflow.loadingStatus.loading, selectedDag, workflow.selectedResult?.loading]);
 
-  useEffect(getDagResultDetails, [
-    getOperatorResultDetails,
-    selectedDag,
-    workflow.loadingStatus.loading,
-    workflow.selectedResult?.id,
-  ]);
+  // TODO: See about combining this useEffect and getDagResultDetails into one function
+  // useEffect(() => getDagResultDetails(), [
+  //   getOperatorResultDetails,
+  //   selectedDag,
+  //   workflow.loadingStatus.loading,
+  //   workflow.selectedResult?.id,
+  // ]);
 
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
@@ -312,8 +335,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -346,9 +368,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         color="primary"
       >
         <FontAwesomeIcon icon={faCircleDown} />
-        <Typography sx={{ ml: 1 }}>{`${
-          operator?.name ?? 'function'
-        }.zip`}</Typography>
+        <Typography sx={{ ml: 1 }}>{`${operator?.name ?? 'function'
+          }.zip`}</Typography>
       </Button>
     );
 
@@ -360,8 +381,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -380,8 +400,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -400,8 +419,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}

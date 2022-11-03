@@ -107,11 +107,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   const name = workflowDag.metadata?.name ?? '';
   const description = workflowDag.metadata?.description;
+  console.log('description: ', description);
 
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -362,11 +363,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       </Box>
 
       {description && (
-        <Typography variant="body1">
-          <ReactMarkdown className={style.reactMarkdown}>
-            {description}
-          </ReactMarkdown>
-        </Typography>
+        <ReactMarkdown className={style.reactMarkdown}>
+          {description}
+        </ReactMarkdown>
       )}
 
       {nextUpdateComponent}

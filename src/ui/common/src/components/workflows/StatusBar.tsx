@@ -279,31 +279,31 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   // List of the workflow status items filtered out by category: errors, warnings, logs and checks passed.
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
+  const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (workflowStatusItem) => {
+      return workflowStatusItem.level === WorkflowStatusTabs.Errors;
+    }
+  );
+
+  const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (workflowStatusItem) => {
+      return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
+    }
+  );
+
+  const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (workflowStatusItem) => {
+      return workflowStatusItem.level === WorkflowStatusTabs.Logs;
+    }
+  );
+
+  const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (workflowStatusItem) => {
+      return workflowStatusItem.level === WorkflowStatusTabs.Checks;
+    }
+  );
+  // was useEffect, useMemo should fix error.
   useEffect(() => {
-    const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
-      (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Errors;
-      }
-    );
-
-    const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
-      (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
-      }
-    );
-
-    const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
-      (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Logs;
-      }
-    );
-
-    const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
-      (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Checks;
-      }
-    );
-
     switch (activeWorkflowStatusTab) {
       case WorkflowStatusTabs.Errors: {
         if (filteredErrors.length === 0) {
@@ -379,10 +379,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       }
     }
 
-    setNumErrors(filteredErrors.length);
-    setNumWarnings(filteredWarnings.length);
-    setNumWorkflowLogs(filteredLogs.length);
-    setNumWorkflowChecksPassed(filteredChecks.length);
+    //setNumErrors(filteredErrors.length);
+    //setNumWarnings(filteredWarnings.length);
+    //setNumWorkflowLogs(filteredLogs.length);
+    //setNumWorkflowChecksPassed(filteredChecks.length);
   }, [workflowStatusItems, activeWorkflowStatusTab]);
 
   const selectTab = (tab: WorkflowStatusTabs) => {
@@ -402,7 +402,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     selectTab(WorkflowStatusTabs.Errors);
   };
 
-  const normalizeWorkflowStatusItems = useCallback(() => {
+  // this right here used to be normalizeWorkflowStatusItems.
+  useEffect(() => {
     const normalizedWorkflowStatusItems: WorkflowStatusItem[] = [];
 
     Object.keys(artifacts).map(async (artifactId) => {
@@ -413,14 +414,17 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         workflow.artifactResults[artifactId];
 
       // Check if artifactResult is in the map, if not fetch it.
+      // TODO: Try adding an await here.
       if (!artifactResult) {
-        dispatch(
-          handleGetArtifactResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: workflow.selectedResult.id,
-            artifactId: artifactId,
-          })
-        );
+
+        // TODO: trying to comment this out to see if fixes our issue.
+        // await dispatch(
+        //   handleGetArtifactResults({
+        //     apiKey: user.apiKey,
+        //     workflowDagResultId: workflow.selectedResult.id,
+        //     artifactId: artifactId,
+        //   })
+        // );
 
         return;
       }
@@ -492,13 +496,15 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       if (!operatorResult) {
         // We can fetch it here, or we can also do so when user opens the respective node.
         // Not sure which time is the best to do this.
-        dispatch(
-          handleGetOperatorResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: workflow.selectedResult.id,
-            operatorId: operatorId,
-          })
-        );
+
+        // TODO: commenting this out to see if it removes our error.
+        // await dispatch(
+        //   handleGetOperatorResults({
+        //     apiKey: user.apiKey,
+        //     workflowDagResultId: workflow.selectedResult.id,
+        //     operatorId: operatorId,
+        //   })
+        // );
         return;
       }
 
@@ -543,9 +549,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
@@ -606,10 +611,11 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       }
     });
 
-    return getUniqueListBy<WorkflowStatusItem>(
+    const statusItems = getUniqueListBy<WorkflowStatusItem>(
       normalizedWorkflowStatusItems,
       'id'
     );
+    setWorkflowStatusItems(statusItems);
   }, [
     artifacts,
     dispatch,
@@ -620,15 +626,14 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     workflow.selectedResult.id,
   ]);
 
-  useEffect(() => {
-    setWorkflowStatusItems(normalizeWorkflowStatusItems());
-  }, [
-    workflow,
-    selectedDag,
-    artifacts,
-    operators,
-    normalizeWorkflowStatusItems,
-  ]); // recompute state when all derived values change.
+  // moved this to the useCallback above.
+  //  const statusItems = normalizeWorkflowStatusItems();
+
+  // useEffect(() => {
+  //   // TODO: Moving this to inside the normalizeWorkflowStatusItems callback.
+  //   //setWorkflowStatusItems(statusItems);
+  //   normalizeWorkflowStatusItems();
+  // }, [workflow, selectedDag, artifacts, operators]); // recompute state when all derived values change.
 
   const collapsed = activeWorkflowStatusTab === WorkflowStatusTabs.Collapsed;
 
@@ -688,7 +693,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           }}
         >
           <FontAwesomeIcon icon={faCircleExclamation} />
-          <Typography sx={{ ml: 1 }}>{numErrors}</Typography>
+          <Typography sx={{ ml: 1 }}>{filteredErrors.length}</Typography>
         </Box>
 
         <Box
@@ -712,7 +717,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           }}
         >
           <FontAwesomeIcon icon={faTriangleExclamation} />
-          <Typography sx={{ ml: 1 }}>{numWarnings}</Typography>
+          <Typography sx={{ ml: 1 }}>{filteredWarnings.length}</Typography>
         </Box>
 
         <Box
@@ -736,7 +741,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           }}
         >
           <FontAwesomeIcon icon={faCircleInfo} />
-          <Typography sx={{ ml: 1 }}>{numWorkflowLogs}</Typography>
+          <Typography sx={{ ml: 1 }}>{filteredLogs.length}</Typography>
         </Box>
 
         <Box
@@ -760,7 +765,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
           }}
         >
           <FontAwesomeIcon icon={faCircleCheck} />
-          <Typography sx={{ ml: 1 }}>{numWorkflowChecksPassed}</Typography>
+          <Typography sx={{ ml: 1 }}>{filteredChecks.length}</Typography>
         </Box>
 
         <Box

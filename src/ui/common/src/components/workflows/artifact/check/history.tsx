@@ -103,7 +103,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
 
         return (
           <Box
-            key={entry.timestamp.toString()}
+            key={`${index}-${entry.timestamp.toString()}`}
             p={2}
             sx={{
               display: 'flex',
