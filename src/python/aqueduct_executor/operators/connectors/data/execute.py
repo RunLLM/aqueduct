@@ -336,7 +336,7 @@ def setup_connector(
                 "Unable to initialize MongoDb connector. Have you run `aqueduct install mongodb`?"
             )
 
-        from aqueduct_executor.operators.connectors.data.mongodb import (
+        from aqueduct_executor.operators.connectors.data.mongodb import (  # type: ignore
             MongoDbConnector as OpConnector,
         )
     else:
