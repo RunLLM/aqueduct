@@ -1,7 +1,5 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-
-const { apiAddress } = useAqueductConsts();
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -181,7 +179,7 @@ export type Service =
   | 'Lambda'
   | 'Google Sheets';
 
-type Info = {
+export type Info = {
   logo: string;
   activated: boolean;
   category: string;

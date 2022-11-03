@@ -55,7 +55,7 @@ export const AthenaDialog: React.FC<Props> = ({
     if (!value?.type) {
       onUpdateField('type', AWSCredentialType.AccessKey);
     }
-  }, []);
+  }, [onUpdateField, value?.type]);
 
   const configProfileInput = (
     <IntegrationTextInputField
