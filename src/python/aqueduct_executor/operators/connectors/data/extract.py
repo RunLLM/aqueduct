@@ -153,7 +153,7 @@ class MongoDBFindParams(models.BaseParams):
 
 
 class MongoDBParams(models.BaseParams):
-    table: str
+    collection: str
     query_serialized: str
     query: Optional[MongoDBFindParams] = None
 
@@ -162,7 +162,7 @@ class MongoDBParams(models.BaseParams):
         self.query = parse_obj_as(MongoDBFindParams, json.loads(expanded))
 
     def usable(self) -> bool:
-        return bool(self.query) and bool(self.table)
+        return bool(self.query) and bool(self.collection)
 
 
 Params = Union[RelationalParams, S3Params, MongoDBParams]

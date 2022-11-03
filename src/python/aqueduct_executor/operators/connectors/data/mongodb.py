@@ -54,7 +54,7 @@ class MongoDBConnector(connector.DataConnector):
         query = params.query
         assert query is not None
 
-        raw_results = self._connect_db()[params.table].find(
+        raw_results = self._connect_db()[params.collection].find(
             *(query.args or []), **(query.kwargs or {})
         )
         return pd.DataFrame(raw_results)
@@ -74,7 +74,7 @@ class MongoDBConnector(connector.DataConnector):
                 replace = False
                 if exists:
                     if params.update_mode == common.UpdateMode.FAIL:
-                        raise Exception(f"Specified table {params.table} already exists.")
+                        raise Exception(f"Specified collection {params.table} already exists.")
 
                     collection = db[params.table]
                     if params.update_mode == common.UpdateMode.REPLACE:
