@@ -10,7 +10,7 @@ import {
   isLoading,
   isSucceeded,
 } from '../../utils/shared';
-import DataTable from '../tables/DataTable';
+import PaginatedTable from '../tables/PaginatedTable';
 
 type Props = {
   objectName: string;
@@ -46,14 +46,6 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
   }
 
   if (isSucceeded(object.status) && !!object.data) {
-    const columnsContent = object.data.schema.fields.map((column) => {
-      return {
-        dataKey: column.name,
-        label: column.name,
-        type: column.type,
-      };
-    });
-
     content = (
       <Box
         sx={{
@@ -63,11 +55,7 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
           overflowY: 'hidden',
         }}
       >
-        <DataTable
-          rowCount={object.data.data.length}
-          rowGetter={({ index }) => object.data.data[index]}
-          columns={columnsContent}
-        />
+        <PaginatedTable data={object.data} />
       </Box>
     );
   }
