@@ -63,9 +63,7 @@ client = aqueduct.Client(
             marginTop: '8px',
           }}
         >
-          <CodeBlock language="python">
-            {apiConnectionSnippet}
-          </CodeBlock>
+          <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
         </Box>
       </Box>
     </Layout>
