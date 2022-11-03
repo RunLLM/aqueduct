@@ -48,8 +48,7 @@ class MongoDBCollectionIntegration(Integration):
         Under the hood, we call mongo SDK's `find` API to extract from DB, using arguments you
         provided to this function.
 
-        You can additionally add the following key-word arguments for
-        this operator:
+        You can additionally provide the following keyword arguments:
             name:
                 Name of the query.
             description:
@@ -141,7 +140,7 @@ class MongoDBIntegration(Integration):
     Class for MongoDB integration. This works similar to mongo's `Database` object:
 
     mongo_integration = client.integration("my_integration_name")
-    my_table_artifact = mongo_integration.my_table.find({})
+    my_table_artifact = mongo_integration.collection("my_collection").find({})
     """
 
     def __init__(self, dag: DAG, metadata: IntegrationInfo):
@@ -150,12 +149,11 @@ class MongoDBIntegration(Integration):
 
     def collection(self, name: str) -> Any:
         """
-        Overrided `__get_attr__` allows caller to access integration by
-        arbitrary attribute with similar experience as mongo API:
+        `collection` returns a specific collection object to call `.find()` method.
+        Example:
 
         mongo_integration = client.integration("my_integration_name")
-        my_table_artifact = mongo_integration.my_table.find({})
-
+        my_table_artifact = mongo_integration.collection("my_collection").find({})
         """
         return MongoDBCollectionIntegration(self._dag, self._metadata, name)
 
