@@ -31,31 +31,31 @@ func NewWorklowRepo() repos.Workflow {
 	}
 }
 
-func (*workflowReader) Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, id, models.WorkflowTable, db)
+func (*workflowReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
+	return utils.IdExistsInTable(ctx, ID, models.WorkflowTable, DB)
 }
 
-func (*workflowReader) Get(ctx context.Context, id uuid.UUID, db database.Database) (*models.Workflow, error) {
+func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM workflow WHERE id = $1;`,
 		models.WorkflowCols(),
 	)
-	args := []interface{}{id}
+	args := []interface{}{ID}
 
-	return getWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, DB, query, args...)
 }
 
-func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, db database.Database) (*models.Workflow, error) {
+func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM workflow WHERE user_id = $1 and name = $2;`,
 		models.WorkflowCols(),
 	)
 	args := []interface{}{ownerID, name}
 
-	return getWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, DB, query, args...)
 }
 
-func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, db database.Database) ([]views.LatestWorkflowStatus, error) {
+func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, DB database.Database) ([]views.LatestWorkflowStatus, error) {
 	// Get workflow metadata (id, name, description, creation time, last run time, and last run status)
 	// for all workflows whose `organization_id` is `organizationId` ordered by when the workflow was created.
 	// Get the last run DAG by getting the max created_at timestamp for all workflow DAGs associated with each
@@ -112,20 +112,20 @@ func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UU
 	args := []interface{}{orgID}
 
 	var latestWorkflowResponse []views.LatestWorkflowStatus
-	err := db.Query(ctx, &latestWorkflowResponse, query, args...)
+	err := DB.Query(ctx, &latestWorkflowResponse, query, args...)
 	return latestWorkflowResponse, err
 }
 
-func (*workflowReader) List(ctx context.Context, db database.Database) ([]models.Workflow, error) {
+func (*workflowReader) List(ctx context.Context, DB database.Database) ([]models.Workflow, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM workflow;`,
 		models.WorkflowCols(),
 	)
 
-	return getWorkflows(ctx, db, query)
+	return getWorkflows(ctx, DB, query)
 }
 
-func (*workflowReader) ValidateOrg(ctx context.Context, id uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error) {
+func (*workflowReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error) {
 	query := `
 	SELECT 
 		COUNT(*) AS count 
@@ -134,10 +134,10 @@ func (*workflowReader) ValidateOrg(ctx context.Context, id uuid.UUID, orgID uuid
 	WHERE
 		workflow.id = $1
 		AND app_user.organization_id = $2;`
-	args := []interface{}{id, orgID}
+	args := []interface{}{ID, orgID}
 
 	var count utils.CountResult
-	err := db.Query(ctx, &count, query, args...)
+	err := DB.Query(ctx, &count, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -152,7 +152,7 @@ func (*workflowWriter) Create(
 	description string,
 	schedule *shared.Schedule,
 	retentionPolicy *shared.RetentionPolicy,
-	db database.Database,
+	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
 		models.WorkflowID,
@@ -163,28 +163,28 @@ func (*workflowWriter) Create(
 		models.WorkflowCreatedAt,
 		models.WorkflowRetention,
 	}
-	query := db.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
+	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
-	id, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, db)
+	id, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
 	if err != nil {
 		return nil, err
 	}
 
 	args := []interface{}{id, userID, name, description, schedule, time.Now(), retentionPolicy}
-	return getWorkflow(ctx, db, query, args...)
+	return getWorkflow(ctx, DB, query, args...)
 }
 
-func (*workflowWriter) Delete(ctx context.Context, id uuid.UUID, db database.Database) error {
+func (*workflowWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
 	query := `DELETE FROM workflow WHERE id = $1;`
-	args := []interface{}{id}
-	return db.Execute(ctx, query, args...)
+	args := []interface{}{ID}
+	return DB.Execute(ctx, query, args...)
 }
 
 func (*workflowWriter) Update(
 	ctx context.Context,
-	id uuid.UUID,
+	ID uuid.UUID,
 	changes map[string]interface{},
-	db database.Database,
+	DB database.Database,
 ) (*models.Workflow, error) {
 	var workflow models.Workflow
 	err := utils.UpdateRecordToDest(
@@ -193,21 +193,21 @@ func (*workflowWriter) Update(
 		changes,
 		models.WorkflowTable,
 		models.WorkflowID,
-		id,
+		ID,
 		models.WorkflowCols(),
-		db,
+		DB,
 	)
 	return &workflow, err
 }
 
-func getWorkflows(ctx context.Context, db database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
+func getWorkflows(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
 	var workflows []models.Workflow
-	err := db.Query(ctx, &workflows, query, args...)
+	err := DB.Query(ctx, &workflows, query, args...)
 	return workflows, err
 }
 
-func getWorkflow(ctx context.Context, db database.Database, query string, args ...interface{}) (*models.Workflow, error) {
-	workflows, err := getWorkflows(ctx, db, query, args...)
+func getWorkflow(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Workflow, error) {
+	workflows, err := getWorkflows(ctx, DB, query, args...)
 	if err != nil {
 		return nil, err
 	}
