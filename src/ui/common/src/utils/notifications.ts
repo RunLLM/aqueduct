@@ -1,7 +1,6 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 
-const { apiAddress } = useAqueductConsts();
 export enum NotificationStatus {
   Unread = 'unread',
   Archived = 'archived',

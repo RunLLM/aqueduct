@@ -119,7 +119,13 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         })
       );
     }
-  }, []);
+  }, [
+    dispatch,
+    user.apiKey,
+    workflowDagResultId,
+    workflowDagResultWithLoadingStatus,
+    workflowId,
+  ]);
 
   useEffect(() => {
     if (!!artifact) {
@@ -145,7 +151,16 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         );
       }
     }
-  }, [artifact]);
+  }, [
+    artifact,
+    artifactId,
+    artifactResultId,
+    contentWithLoadingStatus,
+    dispatch,
+    sideSheetMode,
+    user.apiKey,
+    workflowDagResultId,
+  ]);
 
   if (
     !workflowDagResultWithLoadingStatus ||

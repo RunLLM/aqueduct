@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com>",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "alias": {
@@ -23,7 +23,9 @@
     "size": "size-limit",
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
-    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
+    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "resolutions": {
     "@types/react": "^18.0.8"
@@ -31,6 +33,8 @@
   "peerDependencies": {
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
+    "@fontsource/material-icons": "^4.5.4",
+    "@fontsource/roboto": "^4.5.8",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@fortawesome/free-brands-svg-icons": "^6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
@@ -83,19 +87,32 @@
     }
   ],
   "devDependencies": {
+    "@babel/core": "^7.19.3",
     "@babel/preset-react": "^7.17.12",
+    "@mdx-js/react": "^2.1.5",
     "@size-limit/preset-small-lib": "^7.0.8",
+    "@storybook/addon-actions": "6.5.12",
+    "@storybook/addon-essentials": "6.5.12",
+    "@storybook/addon-interactions": "6.5.12",
+    "@storybook/addon-links": "6.5.12",
+    "@storybook/builder-webpack5": "6.5.12",
+    "@storybook/manager-webpack5": "6.5.12",
+    "@storybook/mdx2-csf": "^0.0.3",
+    "@storybook/react": "6.5.12",
+    "@storybook/testing-library": "0.0.13",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.5",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
     "@vitejs/plugin-react": "^2.1.0",
     "autoprefixer": "^10.4.7",
+    "babel-loader": "^8.2.5",
     "cssnano": "^5.1.10",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
@@ -108,6 +125,7 @@
     "tslib": "^2.4.0",
     "typescript": "^3.9.10",
     "vite": "^3.1.0",
-    "vite-plugin-externalize-deps": "^0.4.0"
+    "vite-plugin-externalize-deps": "^0.4.0",
+    "webpack": "^5.74.0"
   }
 }

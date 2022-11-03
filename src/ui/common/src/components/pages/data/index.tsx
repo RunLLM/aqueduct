@@ -27,7 +27,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   useEffect(() => {
     dispatch(getDataArtifactPreview({ apiKey }));
     dispatch(handleLoadIntegrations({ apiKey }));
-  }, []);
+  }, [apiKey, dispatch]);
 
   const dataCardsInfo = useSelector(
     (state: RootState) => state.dataPreviewReducer
