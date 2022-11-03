@@ -2,9 +2,7 @@ package tests
 
 import (
 	"context"
-	"flag"
 	"os"
-	"testing"
 
 	"github.com/aqueducthq/aqueduct/cmd/migrator/migrator"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -15,8 +13,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var runTests = flag.Bool("database", false, "If this flag is set, the database integration tests will be run.")
-
+// TestSuite contains all fields that are needed by the database integration
+// tests. Each test case should be implemented as a method of TestSuite.
 type TestSuite struct {
 	suite.Suite
 	ctx context.Context
@@ -99,13 +97,4 @@ func (ts *TestSuite) TearDownTest() {
 // TearDownSuite is run after all tests complete.
 func (ts *TestSuite) TearDownSuite() {
 	ts.db.Close()
-}
-
-func TestDatabaseSuite(t *testing.T) {
-	flag.Parse()
-	if !*runTests {
-		t.Skip("Skipping database integration tests.")
-	}
-
-	suite.Run(t, new(TestSuite))
 }
