@@ -15,5 +15,5 @@ GLOBAL_LAZY_KEY = "lazy"
 GLOBAL_ENGINE_KEY = "engine"
 __GLOBAL_CONFIG__ = GlobalConfig(lazy=False)
 
-# Initialize a unconfigured api client. It will be configured when the user construct an Aqueduct client.
+# Initialize an unconfigured api client. It will be configured when the user construct an Aqueduct client.
 __GLOBAL_API_CLIENT__ = APIClient()

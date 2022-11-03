@@ -386,6 +386,7 @@ def test_flow_with_args(client):
 
 def test_publish_with_redundant_config_fields(client):
     """Once the user-facing `FlowConfig` struct is deprecated, we can get rid of this test."""
+
     @op
     def noop():
         return 123

@@ -419,6 +419,7 @@ class Client:
         else:
             retention_policy = retention_policy_from_latest_runs(k_latest_runs)
 
+        # Set's the execution `engine` if one was provided.
         engine_defined_on_config = config and config.engine
         if engine or engine_defined_on_config:
             if engine and engine_defined_on_config:
@@ -427,12 +428,7 @@ class Client:
                 )
 
             self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
-            if engine:
-                if engine not in self._connected_integrations.keys():
-                    raise InvalidIntegrationException(
-                        "Not connected to compute integration %s!" % name
-                    )
-            else:
+            if engine_defined_on_config:
                 assert config and config.engine
                 for integration in self._connected_integrations.values():
                     if integration.id == config.engine._metadata.id:
@@ -443,6 +439,16 @@ class Client:
                     raise InvalidIntegrationException(
                         "Not connected to the given compute integration!"
                     )
+        # Fallback to the globally configured engine, if it was indeed configured.
+        elif globals.__GLOBAL_CONFIG__.engine is not None:
+            engine = globals.__GLOBAL_CONFIG__.engine
+
+        if engine is None:
+            engine_config = EngineConfig()
+        else:
+            if engine not in self._connected_integrations.keys():
+                raise InvalidIntegrationException("Not connected to compute integration %s!" % name)
+            engine_config = generate_engine_config(self._connected_integrations[engine])
 
         dag = apply_deltas_to_dag(
             self._dag,
@@ -462,11 +468,7 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
-
-        if engine is None:
-            dag.engine_config = EngineConfig()
-        else:
-            dag.engine_config = generate_engine_config(self._connected_integrations[engine])
+        dag.engine_config = engine_config
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
