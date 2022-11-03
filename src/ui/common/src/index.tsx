@@ -76,6 +76,7 @@ import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode'
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
 import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
+import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
@@ -349,6 +350,7 @@ export {
   OperatorType,
   OperatorTypeToNodeTypeMap,
   PaginatedTable,
+  ParameterOperatorNode,
   PeriodUnit,
   PostgresCard,
   PostgresDialog,

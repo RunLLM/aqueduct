@@ -66,7 +66,6 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[checkOperatorId];
 
@@ -82,7 +81,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow?.selectedDag?.metadata.name),
+    new BreadcrumbLink(
+      workflowLink,
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
+    ),
     new BreadcrumbLink(path, operator ? operator.name : 'Check'),
   ];
 
@@ -100,7 +102,13 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         })
       );
     }
-  }, []);
+  }, [
+    dispatch,
+    user.apiKey,
+    workflowDagResultId,
+    workflowDagResultWithLoadingStatus,
+    workflowId,
+  ]);
 
   useEffect(() => {
     // Load artifact history once workflow dag results finished loading
@@ -121,13 +129,20 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         })
       );
     }
-  }, [workflowDagResultWithLoadingStatus, artifactId]);
+  }, [
+    workflowDagResultWithLoadingStatus,
+    artifactId,
+    artifactHistoryWithLoadingStatus,
+    dispatch,
+    user.apiKey,
+    workflowId,
+  ]);
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
       document.title = `${operator.name} | Aqueduct`;
     }
-  }, [operator]);
+  }, [operator, sideSheetMode]);
 
   if (
     !workflowDagResultWithLoadingStatus ||

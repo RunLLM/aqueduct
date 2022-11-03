@@ -1,4 +1,4 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { ExecState, ExecutionStatus } from './shared';
 
@@ -168,8 +168,6 @@ export type GetOperatorResultResponse = {
   exec_state: ExecState;
   status: ExecutionStatus;
 };
-
-const { apiAddress } = useAqueductConsts();
 
 export async function exportFunction(
   user: UserProfile,

@@ -1,10 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { DataPreview } from '../utils/data';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
-
-const { apiAddress } = useAqueductConsts();
 
 export interface DataPreviewState {
   loadingStatus: LoadingStatus;

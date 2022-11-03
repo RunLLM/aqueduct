@@ -27,7 +27,6 @@ import { LayoutProps } from '../../types';
 type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
-  maxRenderSize?: number;
   workflowIdProp?: string;
   workflowDagResultIdProp?: string;
   operatorIdProp?: string;
@@ -96,13 +95,19 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         })
       );
     }
-  }, []);
+  }, [
+    dispatch,
+    user.apiKey,
+    workflowDagResultId,
+    workflowDagResultWithLoadingStatus,
+    workflowId,
+  ]);
 
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
       document.title = `${operator?.name || 'Operator'} | Aqueduct`;
     }
-  }, [operator]);
+  }, [operator, sideSheetMode]);
 
   const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;

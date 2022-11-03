@@ -32,7 +32,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -98,7 +98,7 @@ const PeriodicScheduleSelector: React.FC<PeriodicScheduleSelectorProps> = ({
         dayOfMonth,
       })
     );
-  }, [timeUnit, minute, time, dayOfWeek, dayOfMonth]);
+  }, [timeUnit, minute, time, dayOfWeek, dayOfMonth, setSchedule]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -233,14 +233,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dispatch: AppDispatch = useDispatch();
 
-  useEffect(() => {
+  useCallback(() => {
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
         workflowId: workflowDag.workflow_id,
       })
     );
-  }, []);
+  }, [dispatch, user.apiKey, workflowDag.workflow_id]);
 
   const savedObjectsResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjects
