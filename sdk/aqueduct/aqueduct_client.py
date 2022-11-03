@@ -373,6 +373,9 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
+        if config is not None:
+            logger().warning("`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly.")
+
         if artifacts is None or artifacts == []:
             raise InvalidUserArgumentException(
                 "Must supply at least one artifact to compute when creating a flow."
