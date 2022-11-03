@@ -166,26 +166,17 @@ func (n *NullUUIDSlice) Scan(value interface{}) error {
 	return nil
 }
 
-type Metadata struct {
-	Schema []map[string]string // Table Schema from Pandas
-	// Metrics from the system regarding the op used to create the artifact result.
-	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
-	SystemMetrics     map[string]string `json:"system_metadata,omitempty"`
-	SerializationType SerializationType `json:"serialization_type,omitempty"`
-	ArtifactType      artifact.Type     `json:"artifact_type,omitempty"`
-}
-
 type NullMetadata struct {
 	Metadata
 	IsNull bool
 }
 
 func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return ValueJSONB(*m)
 }
 
 func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return ScanJSONB(value, m)
 }
 
 func (n *NullMetadata) Value() (driver.Value, error) {

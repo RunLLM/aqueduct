@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
@@ -15,5 +13,5 @@ type ArtifactResult struct {
 	ArtifactId          uuid.UUID `db:"artifact_id" json:"artifact_id"`
 	ContentPath            string                 `db:"content_path" json:"content_path"`
 	ExecState shared.NullExecutionState `db:"execution_state" json:"execution_state"`
-	Metadata  primitive.NullMetadata              `db:"metadata" json:"metadata"`
+	Metadata  utils.NullMetadata              `db:"metadata" json:"metadata"`
 }
