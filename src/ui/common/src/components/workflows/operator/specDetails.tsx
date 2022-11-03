@@ -104,7 +104,7 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
     if (hasFile(operator?.spec?.type)) {
       getFilesBlob();
     }
-  }, [operator]);
+  }, [operator, user]);
 
   if (operator.spec === undefined) {
     return null;
