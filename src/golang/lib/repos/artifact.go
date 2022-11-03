@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -39,7 +38,7 @@ type artifactWriter interface {
 		ctx context.Context,
 		name string,
 		description string,
-		artifactType Type,
+		artifactType shared.Type,
 		db database.Database,
 	) (*models.Artifact, error)
 
