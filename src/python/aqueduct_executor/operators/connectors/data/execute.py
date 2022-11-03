@@ -128,7 +128,7 @@ def run_extract(
     # Search for user-defined placeholder if this is a relational query, and replace them with
     # the appropriate values.
     if isinstance(extract_params, extract.RelationalParams) or isinstance(
-        extract_params, extract.MongoDbParams
+        extract_params, extract.MongoDBParams
     ):
         assert len(spec.input_param_names) == len(spec.input_content_paths)
         input_vals, _ = utils.read_artifacts(
@@ -333,11 +333,11 @@ def setup_connector(
             import pymongo
         except:
             raise MissingConnectorDependencyException(
-                "Unable to initialize MongoDb connector. Have you run `aqueduct install mongodb`?"
+                "Unable to initialize MongoDB connector. Have you run `aqueduct install mongodb`?"
             )
 
         from aqueduct_executor.operators.connectors.data.mongodb import (  # type: ignore
-            MongoDbConnector as OpConnector,
+            MongoDBConnector as OpConnector,
         )
     else:
         raise Exception("Unknown connector name: %s" % connector_name)
