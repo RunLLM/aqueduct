@@ -78,7 +78,7 @@ class MongoDBCollectionIntegration(Integration):
             ) from e
 
         mongo_extract_params = MongoExtractParams(
-            table=self._collection_name, query_serialized=serialized_args
+            collection=self._collection_name, query_serialized=serialized_args
         )
         param_names = find_parameter_names(serialized_args)
         param_artifacts = find_parameter_artifacts(self._dag, param_names)
@@ -148,7 +148,7 @@ class MongoDBIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
-    def __getattr__(self, name: str) -> Any:
+    def collection(self, name: str) -> Any:
         """
         Overrided `__get_attr__` allows caller to access integration by
         arbitrary attribute with similar experience as mongo API:
@@ -164,8 +164,8 @@ class MongoDBIntegration(Integration):
         print("==================== MongoDB Integration  =============================")
         self._metadata.describe()
 
-    def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
+    def config(self, collection: str, update_mode: LoadUpdateMode) -> SaveConfig:
         return SaveConfig(
             integration_info=self._metadata,
-            parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),
+            parameters=RelationalDBLoadParams(table=collection, update_mode=update_mode),
         )
