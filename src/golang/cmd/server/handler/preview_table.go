@@ -133,7 +133,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	if integrationObject.Service == integration.MongoDB {
 		// This triggers `db.my_table.find({})`
 		queryParams = &connector.MongoDBExtractParams{
-			Table:           args.tableName,
+			Collection:      args.tableName,
 			QuerySerialized: "{\"args\": [{}]}",
 		}
 	} else {
