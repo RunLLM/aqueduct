@@ -18,7 +18,9 @@ def install_missing_packages(missing_path: str, spec: FunctionSpec) -> None:
     if install_output.returncode != 0:
         exception = ExecFailureException(
             failure_type=FailureType.USER_FATAL,
-            tip="We are unable to install certain dependency packages. Please remove them from the requirement file and try again.",
+            tip="We are unable to install certain dependency packages. Please remove them from the \
+requirement file and try again. Please refer to the stderr log for which package \
+caused the installation error.",
         )
         from_exception_exec_state = ExecutionState.from_exception(
             exception, user_logs=Logs(stdout=install_output.stdout, stderr=install_output.stderr)
@@ -46,7 +48,7 @@ def run(local_path: str, requirements_path: str, missing_path: str, spec: Functi
     if len(missing) > 0:
         with open(missing_path, "w") as f:
             f.write("\n".join(missing))
-            install_missing_packages(missing_path, spec)
+        install_missing_packages(missing_path, spec)
 
 
 if __name__ == "__main__":
