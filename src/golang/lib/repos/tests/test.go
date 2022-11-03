@@ -2,7 +2,9 @@ package tests
 
 import (
 	"context"
+	"flag"
 	"os"
+	"testing"
 
 	"github.com/aqueducthq/aqueduct/cmd/migrator/migrator"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -13,8 +15,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var runTests = flag.Bool("database", false, "If this flag is set, the database integration tests will be run.")
+
 type TestSuite struct {
 	suite.Suite
+	ctx context.Context
 
 	// List of all repos
 	workflow repos.Workflow
@@ -31,6 +36,7 @@ func (ts *TestSuite) SetupSuite() {
 		ts.T().Errorf("Unable to create SQLite client: %v", err)
 	}
 
+	ts.ctx = context.Background()
 	ts.db = db
 
 	// Initialize repos
@@ -66,4 +72,40 @@ func initDBSchema(db database.Database) error {
 	}
 
 	return nil
+}
+
+// TearDownTest is run after each test finishes.
+func (ts *TestSuite) TearDownTest() {
+	// Clear all of the tables
+	query := `
+	DELETE FROM app_user;
+	DELETE FROM integration;
+	DELETE FROM workflow;
+	DELETE FROM workflow_dag;
+	DELETE FROM workflow_dag_result;
+	DELETE FROM workflow_dag_edge;
+	DELETE FROM operator;
+	DELETE FROM operator_result;
+	DELETE FROM artifact;
+	DELETE FROM artifact_result;
+	DELETE FROM notification;
+	;
+	`
+	if err := ts.db.Execute(ts.ctx, query); err != nil {
+		ts.T().Errorf("Unable to clear database: %v", err)
+	}
+}
+
+// TearDownSuite is run after all tests complete.
+func (ts *TestSuite) TearDownSuite() {
+	ts.db.Close()
+}
+
+func TestDatabaseSuite(t *testing.T) {
+	flag.Parse()
+	if !*runTests {
+		t.Skip("Skipping database integration tests.")
+	}
+
+	suite.Run(t, new(TestSuite))
 }
