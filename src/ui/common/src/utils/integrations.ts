@@ -61,7 +61,7 @@ export type MariaDbConfig = {
   password?: string;
 };
 
-export type MongoDbConfig = {
+export type MongoDBConfig = {
   auth_uri: string;
   database: string;
 };

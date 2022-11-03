@@ -1,22 +1,22 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { MongoDbConfig } from '../../../utils/integrations';
+import { MongoDBConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
-const Placeholders: MongoDbConfig = {
+const Placeholders: MongoDBConfig = {
   auth_uri: '********',
   database: 'aqueduct-db',
 };
 
 type Props = {
-  onUpdateField: (field: keyof MongoDbConfig, value: string) => void;
-  value?: MongoDbConfig;
+  onUpdateField: (field: keyof MongoDBConfig, value: string) => void;
+  value?: MongoDBConfig;
   editMode: boolean;
 };
 
-export const MongoDbDialog: React.FC<Props> = ({
+export const MongoDBDialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,

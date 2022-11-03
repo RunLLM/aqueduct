@@ -11,6 +11,7 @@ import {
   RelationalDBExtractParams,
   RelationalDBLoadParams,
 } from '../../utils/operators';
+import { CodeBlock } from '../CodeBlock';
 
 type Props = {
   operator: Operator;
@@ -60,17 +61,17 @@ const OperatorParametersOverview: React.FC<Props> = ({
             <strong>table: </strong>
             <code>{mongoDbParams.table}</code>
           </Typography>
-          <Typography variant="body2" color={textColor}>
+          <Typography variant="body2" color={textColor} mb={1}>
             <strong>query: </strong>
-            <code>
-              {JSON.stringify(
-                // pretty print
-                JSON.parse(mongoDbParams.query_serialized),
-                null,
-                2
-              )}
-            </code>
           </Typography>
+          <CodeBlock language="json">
+            {JSON.stringify(
+              // pretty print
+              JSON.parse(mongoDbParams.query_serialized),
+              null,
+              2
+            )}
+          </CodeBlock>
         </Box>
       );
     }

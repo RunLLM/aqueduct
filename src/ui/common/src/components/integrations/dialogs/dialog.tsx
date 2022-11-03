@@ -32,7 +32,7 @@ import {
   KubernetesConfig,
   LambdaConfig,
   MariaDbConfig,
-  MongoDbConfig,
+  MongoDBConfig,
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
@@ -51,7 +51,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { MariaDbDialog } from './mariadbDialog';
-import { MongoDbDialog } from './mongoDbDialog';
+import { MongoDBDialog } from './mongoDbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
@@ -206,9 +206,9 @@ const IntegrationDialog: React.FC<Props> = ({
       break;
     case 'MongoDB':
       serviceDialog = (
-        <MongoDbDialog
+        <MongoDBDialog
           onUpdateField={setConfigField}
-          value={config as MongoDbConfig}
+          value={config as MongoDBConfig}
           editMode={editMode}
         />
       );
