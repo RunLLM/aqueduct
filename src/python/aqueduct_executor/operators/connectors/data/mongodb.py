@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
-from aqueduct_executor.operators.connectors.data.config import MongoDbConfig
+from aqueduct_executor.operators.connectors.data.config import MongoDBConfig
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
@@ -11,11 +11,11 @@ from pymongo.client_session import ClientSession
 from pymongo.database import Database
 
 
-class MongoDbConnector(connector.DataConnector):
+class MongoDBConnector(connector.DataConnector):
     _client: MongoClient[Any]
     _db_name: str
 
-    def __init__(self, config: MongoDbConfig):
+    def __init__(self, config: MongoDBConfig):
         self._client = MongoClient(
             config.auth_uri,
             connect=True,
@@ -49,13 +49,13 @@ class MongoDbConnector(connector.DataConnector):
     def discover(self) -> List[str]:
         return self._discover()
 
-    def extract(self, params: extract.MongoDbParams) -> Any:
+    def extract(self, params: extract.MongoDBParams) -> Any:
         assert params.usable()
         query = params.query
         assert query is not None
 
         raw_results = self._connect_db()[params.table].find(
-            *(query.kargs or []), **(query.kwargs or {})
+            *(query.args or []), **(query.kwargs or {})
         )
         return pd.DataFrame(raw_results)
 
@@ -79,11 +79,9 @@ class MongoDbConnector(connector.DataConnector):
                     collection = db[params.table]
                     if params.update_mode == common.UpdateMode.REPLACE:
                         replace = True
-
-                if not exists:
+                else:
                     collection = db.create_collection(params.table)
 
-                assert collection is not None
                 if replace:
                     collection.delete_many({})
                 collection.insert_many(df.to_dict("records"))

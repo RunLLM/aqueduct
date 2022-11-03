@@ -8,8 +8,10 @@ type ExtractParams interface {
 	isExtractParams()
 }
 
-type MongoDbExtractParams struct {
-	Table           string `json:"table"`
+type MongoDBExtractParams struct {
+	Table string `json:"table"`
+	// `QuerySerialized` is the serialized {args, kwargs} passed to
+	// mongo's `.find()` API.
 	QuerySerialized string `json:"query_serialized"`
 }
 
@@ -77,7 +79,7 @@ func (*SalesforceExtractParams) isExtractParams() {}
 
 func (*S3ExtractParams) isExtractParams() {}
 
-func (*MongoDbExtractParams) isExtractParams() {}
+func (*MongoDBExtractParams) isExtractParams() {}
 
 // `CastToRelationalDBExtractParams` performs a 'casting' from params to `*RelationalDBExtractParams`.
 // This is useful for cases where we need to explicitly access relational DB information for extract.

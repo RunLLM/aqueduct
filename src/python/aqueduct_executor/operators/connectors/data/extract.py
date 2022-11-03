@@ -147,22 +147,22 @@ class S3Params(models.BaseParams):
     merge: Optional[bool]
 
 
-class MongoDbFindParams(models.BaseParams):
-    kargs: Optional[List[Any]] = None
+class MongoDBFindParams(models.BaseParams):
+    args: Optional[List[Any]] = None
     kwargs: Optional[Dict[str, Any]] = None
 
 
-class MongoDbParams(models.BaseParams):
+class MongoDBParams(models.BaseParams):
     table: str
     query_serialized: str
-    query: Optional[MongoDbFindParams] = None
+    query: Optional[MongoDBFindParams] = None
 
     def compile(self, parameters: Dict[str, str]) -> None:
         expanded = _expand_placeholders(self.query_serialized, parameters)
-        self.query = parse_obj_as(MongoDbFindParams, json.loads(expanded))
+        self.query = parse_obj_as(MongoDBFindParams, json.loads(expanded))
 
     def usable(self) -> bool:
         return bool(self.query) and bool(self.table)
 
 
-Params = Union[RelationalParams, S3Params, MongoDbParams]
+Params = Union[RelationalParams, S3Params, MongoDBParams]

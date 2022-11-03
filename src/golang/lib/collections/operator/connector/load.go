@@ -58,8 +58,8 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 		params = &SalesforceLoadParams{}
 	case integration.S3:
 		params = &S3LoadParams{}
-	case integration.MongoDb:
-		params = &MongoDbLoadParams{}
+	case integration.MongoDB:
+		params = &MongoDBLoadParams{}
 	default:
 		return errors.Newf("Unknown Service type: %s, unable to unmarshal LoadParams", l.Service)
 	}
