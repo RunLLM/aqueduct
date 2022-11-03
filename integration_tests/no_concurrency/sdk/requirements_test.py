@@ -68,7 +68,7 @@ def test_infer_requirements(client):
         _uninstall_transformers_package()
 
     # If no requirements are supplied, our inference will not pick up the transformers package.
-    db = client.integration(data_integration)
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     with pytest.raises(AqueductError):
         sentiment_prediction_without_reqs_path(table)
@@ -102,7 +102,7 @@ def test_requirements_installation_from_path(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(data_integration)
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # Check that no an invalid path fails.
@@ -126,7 +126,7 @@ def test_requirements_installation_from_strings(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(data_integration)
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_with_string_requirements(table)
     assert valid_path_table.get().shape[0] == 100
@@ -140,7 +140,7 @@ def test_default_requirements_installation(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(data_integration)
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_using_transformers(table)
     assert valid_path_table.get().shape[0] == 100

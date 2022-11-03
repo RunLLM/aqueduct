@@ -4,7 +4,7 @@ from aqueduct import op
 
 
 def test_preview_artifact_caching(client):
-    db = client.integration(data_integration)
+    db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     @op
