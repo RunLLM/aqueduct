@@ -6,10 +6,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
-// A CronString follows [cron convention](https://en.wikipedia.org/wiki/Cron).
+// CronString follows cron convention: https://en.wikipedia.org/wiki/Cron.
 type CronString string
 
-// An UpdateTrigger specifies how a workflow can be invoked.
+// UpdateTrigger specifies how a workflow can be invoked.
 type UpdateTrigger string
 
 const (
@@ -18,7 +18,7 @@ const (
 	AirflowUpdateTrigger  UpdateTrigger = "airflow"
 )
 
-// A Schedule defines the frequency for running a workflow.
+// Schedule defines the frequency for running a workflow.
 type Schedule struct {
 	Trigger              UpdateTrigger `json:"trigger"`
 	CronSchedule         CronString    `json:"cron_schedule"`
