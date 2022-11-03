@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import pytest
 import utils
@@ -20,13 +21,6 @@ def pytest_addoption(parser):
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
-INTEGRATION = "INTEGRATION"
-
-
-@pytest.fixture(autouse=True)
-def fetch_connected_integration_env_variable():
-    utils.integration_name = os.getenv(INTEGRATION)
-    yield
 
 
 @pytest.fixture(autouse=True)
@@ -34,6 +28,16 @@ def fetch_flags(pytestconfig):
     for flag in FLAGS:
         utils.flags[flag] = pytestconfig.getoption(flag)
     yield
+
+
+def all_data_integration_names() -> List[str]:
+    """We currently only support the demo database, but this can eventually be configured arbitrarily."""
+    return ["aqueduct_demo"]
+
+
+@pytest.fixture(scope="session", params=all_data_integration_names())
+def data_integration(request):
+    return request.param
 
 
 @pytest.fixture(scope="function")

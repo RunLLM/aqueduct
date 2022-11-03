@@ -1,5 +1,3 @@
-import time
-
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
@@ -16,13 +14,12 @@ from test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from utils import get_integration_name
 
 from aqueduct import op
 
 
-def test_basic_get(client):
-    db = client.integration(name=get_integration_name())
+def test_basic_get(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_df = sql_artifact.get()
     assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
@@ -40,8 +37,8 @@ def test_basic_get(client):
     assert output_df.shape[0] == 100
 
 
-def test_multiple_input_get(client):
-    db = client.integration(name=get_integration_name())
+def test_multiple_input_get(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -72,8 +69,8 @@ def test_multiple_input_get(client):
     assert fn_df.shape[0] == 100
 
 
-def test_basic_file_dependencies(client):
-    db = client.integration(name=get_integration_name())
+def test_basic_file_dependencies(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     output_artifact = model_with_file_dependency(sql_artifact)
@@ -88,8 +85,8 @@ def test_basic_file_dependencies(client):
     assert output_df.shape[0] == 100
 
 
-def test_invalid_file_dependencies(client):
-    db = client.integration(name=get_integration_name())
+def test_invalid_file_dependencies(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     with pytest.raises(AqueductError):

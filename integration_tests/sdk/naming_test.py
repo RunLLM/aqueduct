@@ -7,18 +7,17 @@ from test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from utils import get_integration_name
 
 
-def test_extract_with_default_name_collision(client):
+def test_extract_with_default_name_collision(client, data_integration):
     # In the case where no explicit name is supplied, we expect new extract
     # operators to always be created.
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact_1 = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact_2 = db.sql(query=SENTIMENT_SQL_QUERY)
 
-    assert sql_artifact_1.name() == "%s query 1 artifact" % get_integration_name()
-    assert sql_artifact_2.name() == "%s query 2 artifact" % get_integration_name()
+    assert sql_artifact_1.name() == "%s query 1 artifact" % data_integration
+    assert sql_artifact_2.name() == "%s query 2 artifact" % data_integration
 
     fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact_1, sql_artifact_2)
     fn_df = fn_artifact.get()
@@ -33,9 +32,9 @@ def test_extract_with_default_name_collision(client):
     assert fn_df.shape[0] == 100
 
 
-def test_extract_with_explicit_name_collision(client):
+def test_extract_with_explicit_name_collision(client, data_integration):
     # In the case where an explicit name is supplied, we will overwrite any colliding ops.
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact_1 = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     fn_artifact = dummy_sentiment_model(sql_artifact_1)
@@ -63,10 +62,10 @@ def test_extract_with_explicit_name_collision(client):
     assert fn_df.shape[0] == 100
 
 
-def test_function_with_name_collision(client):
+def test_function_with_name_collision(client, data_integration):
     """Colliding functions are always overwritten."""
 
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     # There's not an easy way to programmatically change the function, so lets
@@ -88,9 +87,9 @@ def test_function_with_name_collision(client):
     assert fn_df.shape[0] == 100
 
 
-def test_naming_collision_with_different_types(client):
+def test_naming_collision_with_different_types(client, data_integration):
     # An overwrite is invalid because the operators are of different types.
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
 
     # Function collides with existing sql artifact
@@ -104,9 +103,9 @@ def test_naming_collision_with_different_types(client):
         _ = db.sql(query=SENTIMENT_SQL_QUERY, name="dummy_sentiment_model")
 
 
-def test_naming_collision_with_dependency(client):
+def test_naming_collision_with_dependency(client, data_integration):
     # Overwrite is invalid when the operator being replaced is an upstream dependency.
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, name="sentiment_model")
     dummy_model_output = dummy_model(sql_artifact)
     dummy_model_2_output = dummy_model_2(dummy_model_output)
