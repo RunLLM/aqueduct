@@ -60,8 +60,8 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 		params = &SalesforceExtractParams{}
 	case integration.S3:
 		params = &S3ExtractParams{}
-	case integration.MongoDb:
-		params = &MongoDbExtractParams{}
+	case integration.MongoDB:
+		params = &MongoDBExtractParams{}
 	default:
 		return errors.Newf("Unknown Service type: %s, unable to unmarshal ExtractParams", e.Service)
 	}

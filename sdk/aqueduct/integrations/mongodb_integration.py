@@ -24,7 +24,7 @@ from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 from aqueduct import globals
 
 
-class MongoDbCollectionIntegration(Integration):
+class MongoDBCollectionIntegration(Integration):
     _collection_name: str
     _dag: DAG
 
@@ -35,7 +35,7 @@ class MongoDbCollectionIntegration(Integration):
 
     def find(
         self,
-        *kargs: List[Any],
+        *args: List[Any],
         name: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
@@ -65,7 +65,7 @@ class MongoDbCollectionIntegration(Integration):
         try:
             serialized_args = json.dumps(
                 {
-                    "kargs": kargs or [],
+                    "args": args or [],
                     "kwargs": kwargs or {},
                 }
             )
@@ -136,7 +136,7 @@ class MongoDbCollectionIntegration(Integration):
         )
 
 
-class MongoDbIntegration(Integration):
+class MongoDBIntegration(Integration):
     """
     Class for MongoDB integration. This works similar to mongo's `Database` object:
 
@@ -157,7 +157,7 @@ class MongoDbIntegration(Integration):
         my_table_artifact = mongo_integration.my_table.find({})
 
         """
-        return MongoDbCollectionIntegration(self._dag, self._metadata, name)
+        return MongoDBCollectionIntegration(self._dag, self._metadata, name)
 
     def describe(self) -> None:
         """Prints out a human-readable description of the MongoDB integration."""

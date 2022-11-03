@@ -27,7 +27,7 @@ type BigQueryLoadParams struct{ RelationalDBLoadParams }
 
 type SqliteLoadParams struct{ RelationalDBLoadParams }
 
-type MongoDbLoadParams struct{ RelationalDBLoadParams }
+type MongoDBLoadParams struct{ RelationalDBLoadParams }
 
 type GoogleSheetsLoadParams struct {
 	Filepath string `json:"filepath"`
@@ -86,7 +86,7 @@ func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, b
 		return &sqlite.RelationalDBLoadParams, true
 	}
 
-	mongo, ok := params.(*MongoDbLoadParams)
+	mongo, ok := params.(*MongoDBLoadParams)
 	if ok {
 		return &mongo.RelationalDBLoadParams, true
 	}
@@ -118,4 +118,4 @@ func (*SalesforceLoadParams) isLoadParams() {}
 
 func (*S3LoadParams) isLoadParams() {}
 
-func (*MongoDbLoadParams) isLoadParams() {}
+func (*MongoDBLoadParams) isLoadParams() {}

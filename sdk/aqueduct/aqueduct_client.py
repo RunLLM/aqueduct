@@ -30,7 +30,7 @@ from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import Integration, IntegrationInfo
 from .integrations.k8s_integration import K8sIntegration
 from .integrations.lambda_integration import LambdaIntegration
-from .integrations.mongodb_integration import MongoDbIntegration
+from .integrations.mongodb_integration import MongoDBIntegration
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
@@ -197,7 +197,7 @@ class Client:
         AirflowIntegration,
         K8sIntegration,
         LambdaIntegration,
-        MongoDbIntegration,
+        MongoDBIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -253,7 +253,7 @@ class Client:
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.MONGO_DB:
-            return MongoDbIntegration(
+            return MongoDBIntegration(
                 dag=self._dag,
                 metadata=integration_info,
             )
