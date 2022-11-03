@@ -53,6 +53,15 @@ def find_parameter_names(query: str) -> List[str]:
 
 
 def find_parameter_artifacts(dag: DAG, names: List[str]) -> List[ArtifactMetadata]:
+    """
+    `find_parameter_artifacts` finds all parameter artifacts corresponding to given `names`.
+    parameters:
+        names: the list of names, repeating names are allowed.
+    returns:
+        a list of unique parameter artifacts for these names. Built-in names are omitted.
+
+    raises: InvalidUserArgumentException if there's no parameter for the provided name.
+    """
     artifacts = []
     for name in names:
         artf = dag.get_artifact_by_name(name)
