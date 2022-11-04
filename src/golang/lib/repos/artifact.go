@@ -38,7 +38,7 @@ type artifactWriter interface {
 		ctx context.Context,
 		name string,
 		description string,
-		artifactType shared.Type,
+		artifactType shared.ArtifactType,
 		db database.Database,
 	) (*models.Artifact, error)
 
