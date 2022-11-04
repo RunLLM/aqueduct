@@ -306,7 +306,7 @@ class Client:
         name: str,
         description: str = "",
         schedule: str = "",
-        engine: str = "",
+        engine: Optional[str] = None,
         artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
@@ -374,7 +374,9 @@ class Client:
             A flow object handle to be used to fetch information about this productionized flow.
         """
         if config is not None:
-            logger().warning("`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly.")
+            logger().warning(
+                "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
+            )
 
         if artifacts is None or artifacts == []:
             raise InvalidUserArgumentException(
@@ -450,7 +452,9 @@ class Client:
             engine_config = EngineConfig()
         else:
             if engine not in self._connected_integrations.keys():
-                raise InvalidIntegrationException("Not connected to compute integration %s!" % name)
+                raise InvalidIntegrationException(
+                    "Not connected to compute integration %s!" % engine
+                )
             engine_config = generate_engine_config(self._connected_integrations[engine])
 
         dag = apply_deltas_to_dag(
