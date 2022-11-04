@@ -165,12 +165,12 @@ func (*workflowWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
-	id, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
+	ID, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
 	if err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{id, userID, name, description, schedule, time.Now(), retentionPolicy}
+	args := []interface{}{ID, userID, name, description, schedule, time.Now(), retentionPolicy}
 	return getWorkflow(ctx, DB, query, args...)
 }
 
