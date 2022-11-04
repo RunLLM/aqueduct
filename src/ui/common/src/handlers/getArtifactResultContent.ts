@@ -6,8 +6,6 @@ import {
   SerializationType,
 } from '../utils/artifacts';
 
-const { apiAddress } = useAqueductConsts();
-
 export const handleGetArtifactResultContent = createAsyncThunk<
   string,
   {
