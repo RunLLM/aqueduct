@@ -7,6 +7,3 @@ SHORT_SENTIMENT_SQL_QUERY = "select * from hotel_reviews limit 5"
 CHURN_SQL_QUERY = "select * from customer_activity"
 
 WINE_SQL_QUERY = "select * from wine"
-
-# For using the Aqueduct engine.
-AQUEDUCT_ENGINE = "aqueduct_engine"

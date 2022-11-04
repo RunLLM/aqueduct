@@ -11,7 +11,6 @@ import aqueduct
 # The option variable can be accessed through utils.flags during tests.
 # One can also mark test to be triggered only when `--{flag}` is turned on through
 # @pytest.mark.<flag_name>
-from sdk.constants import AQUEDUCT_ENGINE
 
 FLAGS = []
 
