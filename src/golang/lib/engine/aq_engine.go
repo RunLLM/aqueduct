@@ -342,11 +342,18 @@ func (eng *aqEngine) PreviewWorkflow(
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
 	// previewing workflows always happens using the ProcessJobManager
-	jobManager, err := job.NewProcessJobManager(
-		&job.ProcessConfig{
-			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
-			OperatorStorageDir: path.Join(eng.AqPath, job.OperatorStorageDir),
-		},
+	jobManagerConfig, err := generateJobManagerConfig(
+		ctx,
+		dbWorkflowDag,
+		eng.AqPath,
+		eng.Vault,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig from WorkflowDag.")
+	}
+
+	jobManager, err := job.NewJobManager(
+		jobManagerConfig,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create JobManager.")
