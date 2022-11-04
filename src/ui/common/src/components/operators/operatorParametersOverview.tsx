@@ -58,8 +58,8 @@ const OperatorParametersOverview: React.FC<Props> = ({
       return (
         <Box>
           <Typography variant="body2" color={textColor}>
-            <strong>table: </strong>
-            <code>{mongoDbParams.table}</code>
+            <strong>collection: </strong>
+            <code>{mongoDbParams.collection}</code>
           </Typography>
           <Typography variant="body2" color={textColor} mb={1}>
             <strong>query: </strong>

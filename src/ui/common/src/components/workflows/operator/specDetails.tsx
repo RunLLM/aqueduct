@@ -204,8 +204,8 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
             </Typography>
           </Box>
           <Typography variant="body2" alignContent="center" marginBottom={1}>
-            <strong>Table: </strong>
-            {params.table}
+            <strong>Collection: </strong>
+            {params.collection}
           </Typography>
           <Typography variant="body2" alignContent="center" marginBottom={1}>
             <strong>Query: </strong>

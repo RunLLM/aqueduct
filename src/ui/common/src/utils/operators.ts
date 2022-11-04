@@ -85,7 +85,7 @@ export type RelationalDBExtractParams = {
 };
 
 export type MongoDBExtractParams = {
-  table: string;
+  collection: string;
   query_serialized: string;
 };
 
