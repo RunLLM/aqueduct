@@ -25,6 +25,7 @@ type userWriter interface {
 		ctx context.Context,
 		orgID string,
 		apiKey string,
+		DB database.Database,
 	) (*models.User, error)
 
 	// ResetAPIKey resets the API key for the User with ID.
