@@ -147,6 +147,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     NUMERIC = "numeric"
     DICT = "dictionary"
     TUPLE = "tuple"
+    LIST = "list"
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"
