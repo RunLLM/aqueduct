@@ -10,5 +10,5 @@ type Artifact struct {
 	ID          uuid.UUID   `db:"id" json:"id"`
 	Name        string      `db:"name" json:"name"`
 	Description string      `db:"description" json:"description"`
-	Type        shared.Type `db:"type" json:"type"`
+	Type        shared.ArtifactType `db:"type" json:"type"`
 }

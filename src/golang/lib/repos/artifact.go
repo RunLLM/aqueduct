@@ -22,13 +22,13 @@ type artifactReader interface {
 	// Get returns the Artifact with ID.
 	Get(ctx context.Context, ID uuid.UUID, db database.Database) (*models.Artifact, error)
 
-	// Get returns the Artifacts with IDs.
-	GetMultiple(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.Artifact, error)
+	// GetBatch returns the Artifacts with IDs.
+	GetBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.Artifact, error)
 
-	// GetByWorkflowDagId returns the workflows created by workflow dag with ID workflowDagId.
-	GetByWorkflowDagId(ctx context.Context, workflowDagID uuid.UUID, db database.Database) ([]models.Artifact, error)
+	// GetByDAG returns the Artifacts created by the workflow DAG with ID workflowDagID.
+	GetByDAG(ctx context.Context, workflowDagID uuid.UUID, db database.Database) ([]models.Artifact, error)
 
-	// ValidateOrg returns whether the Workflow was created by a user in orgID.
+	// ValidateOrg returns whether the Artifact was created by a user in orgID.
 	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error)
 }
 
@@ -48,6 +48,6 @@ type artifactWriter interface {
 	// Delete deletes the Artifact with ID.
 	Delete(ctx context.Context, ID uuid.UUID, db database.Database) error
 
-	// DeleteMultiple deletes the Artifacts with IDs.
-	DeleteMultiple(ctx context.Context, IDs []uuid.UUID, db database.Database) error
+	// DeleteBatch deletes the Artifacts with IDs.
+	DeleteBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) error
 }
