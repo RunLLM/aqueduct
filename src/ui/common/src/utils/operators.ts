@@ -75,12 +75,18 @@ export enum ServiceType {
 
 export type ExtractParameters =
   | RelationalDBExtractParams
-  | GoogleSheetsExtractParams;
+  | GoogleSheetsExtractParams
+  | MongoDBExtractParams;
 
 export type RelationalDBExtractParams = {
   query?: string;
   queries?: string[];
   github_metadata?: GithubMetadata;
+};
+
+export type MongoDBExtractParams = {
+  collection: string;
+  query_serialized: string;
 };
 
 export type GoogleSheetsExtractParams = {

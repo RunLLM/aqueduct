@@ -59,8 +59,5 @@ class AthenaConnector(connector.DataConnector):
     ) -> None:
         raise Exception("Save operation not supported for Athena.")
 
-    def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
-        return
-
     def delete(self, objects: List[str]) -> List[SavedObjectDelete]:
         raise Exception("Delete operation not supported for Athena.")

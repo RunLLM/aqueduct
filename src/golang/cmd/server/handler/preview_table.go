@@ -129,16 +129,25 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{operatorMetadataPath, artifactMetadataPath, artifactContentPath})
 	}()
 
-	query := fmt.Sprintf("SELECT * FROM %s;", args.tableName)
+	var queryParams connector.ExtractParams
+	if integrationObject.Service == integration.MongoDB {
+		// This triggers `db.my_table.find({})`
+		queryParams = &connector.MongoDBExtractParams{
+			Collection:      args.tableName,
+			QuerySerialized: "{\"args\": [{}]}",
+		}
+	} else {
+		queryParams = &connector.RelationalDBExtractParams{
+			Query: fmt.Sprintf("SELECT * FROM %s;", args.tableName),
+		}
+	}
 
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
 		connector.Extract{
 			Service:       integrationObject.Service,
 			IntegrationId: integrationObject.Id,
-			Parameters: &connector.RelationalDBExtractParams{
-				Query: query,
-			},
+			Parameters:    queryParams,
 		},
 		operatorMetadataPath,
 		[]string{}, /* inputParamNames */

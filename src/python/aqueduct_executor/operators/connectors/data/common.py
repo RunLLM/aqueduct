@@ -17,6 +17,7 @@ class Name(Enum, metaclass=enums.MetaEnum):
     SQLITE = "SQLite"
     AQUEDUCT_DEMO = "Aqueduct Demo"
     GCS = "GCS"
+    MONGO_DB = "MongoDB"
 
 
 class UpdateMode(Enum, metaclass=enums.MetaEnum):
