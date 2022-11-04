@@ -11,6 +11,8 @@ import aqueduct
 # The option variable can be accessed through utils.flags during tests.
 # One can also mark test to be triggered only when `--{flag}` is turned on through
 # @pytest.mark.<flag_name>
+from sdk.constants import AQUEDUCT_ENGINE
+
 FLAGS = []
 
 
@@ -37,6 +39,15 @@ def all_data_integration_names() -> List[str]:
 
 @pytest.fixture(scope="session", params=all_data_integration_names())
 def data_integration(request):
+    return request.param
+
+
+def all_engine_integrations():
+    return [None]
+
+
+@pytest.fixture(scope="session", params=all_engine_integrations())
+def engine(request):
     return request.param
 
 
