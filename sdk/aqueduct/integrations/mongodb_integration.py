@@ -147,9 +147,9 @@ class MongoDBIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
-    def collection(self, name: str) -> Any:
-        """
-        `collection` returns a specific collection object to call `.find()` method.
+    def collection(self, name: str) -> MongoDBCollectionIntegration:
+        """Returns a specific collection object to call `.find()` method.
+
         Example:
 
         mongo_integration = client.integration("my_integration_name")
