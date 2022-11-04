@@ -54,9 +54,13 @@ class MongoDBConnector(connector.DataConnector):
         query = params.query
         assert query is not None
 
-        raw_results = self._connect_db()[params.collection].find(
-            *(query.args or []), **(query.kwargs or {})
-        )
+        db = self._connect_db()
+        collection = params.collection
+        assert (
+            collection in db.list_collection_names()
+        ), f"Collection `{collection}` does not exist."
+
+        raw_results = db[collection].find(*(query.args or []), **(query.kwargs or {}))
         return pd.DataFrame(raw_results)
 
     def load(
