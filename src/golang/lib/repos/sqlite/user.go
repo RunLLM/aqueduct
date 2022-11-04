@@ -123,6 +123,8 @@ func getUser(ctx context.Context, DB database.Database, query string, args ...in
 
 // generateAPIKey generates a unique API key.
 func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
+	query := `SELECT COUNT(1) AS count FROM app_user WHERE api_key = $1;`
+
 	for {
 		b := make([]byte, apiKeyLength/2)
 		_, err := rand.Read(b)
@@ -131,16 +133,17 @@ func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
 		}
 		apiKey := fmt.Sprintf("%x", b)
 
-		r := userReader{}
-		_, err = r.GetByAPIKey(ctx, apiKey, DB)
+		args := []interface{}{apiKey}
 
-		if err == database.ErrNoRows {
-			// Generated API key is unique
-			return apiKey, nil
-		}
-
+		var count utils.CountResult
+		err = DB.Query(ctx, &count, query, args...)
 		if err != nil {
 			return "", err
+		}
+
+		if count.Count == 0 {
+			// Generated API key is unique
+			return apiKey, nil
 		}
 	}
 }
