@@ -1,13 +1,12 @@
 from aqueduct.decorator import to_operator
 from constants import SENTIMENT_SQL_QUERY
 from test_function import dummy_sentiment_model_function
-from utils import get_integration_name
 
 from aqueduct import op
 
 
-def test_to_operator_local_function(client):
-    db = client.integration(name=get_integration_name())
+def test_to_operator_local_function(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     @op
@@ -27,8 +26,8 @@ def test_to_operator_local_function(client):
     assert df_normal["positivity"].equals(df_func["positivity"])
 
 
-def test_to_operator_imported_function(client):
-    db = client.integration(name=get_integration_name())
+def test_to_operator_imported_function(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     @op(file_dependencies=["test_function.py"])

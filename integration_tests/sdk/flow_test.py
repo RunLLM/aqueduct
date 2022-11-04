@@ -16,7 +16,6 @@ from utils import (
     delete_flow,
     generate_new_flow_name,
     generate_table_name,
-    get_integration_name,
     run_flow_test,
     wait_for_flow_runs,
 )
@@ -25,8 +24,8 @@ import aqueduct
 from aqueduct import LoadUpdateMode, check, metric, op
 
 
-def test_basic_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_basic_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -36,9 +35,9 @@ def test_basic_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
-def test_sentiment_flow(client):
+def test_sentiment_flow(client, data_integration):
     """Actually run the full sentiment model (with nltk dependency)."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = sentiment_model(sql_artifact)
     output_artifact.save(
@@ -48,8 +47,8 @@ def test_sentiment_flow(client):
     run_flow_test(client, artifacts=[output_artifact])
 
 
-def test_complex_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_complex_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -114,8 +113,8 @@ def test_complex_flow(client):
         delete_flow(client, flow_id)
 
 
-def test_multiple_output_artifacts(client):
-    db = client.integration(name=get_integration_name())
+def test_multiple_output_artifacts(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -134,8 +133,10 @@ def test_multiple_output_artifacts(client):
     )
 
 
-def test_publish_with_schedule(client):
-    db = client.integration(name=get_integration_name())
+def test_publish_with_schedule(client, data_integration):
+    db = client.integration(
+        data_integration,
+    )
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -166,9 +167,9 @@ def test_invalid_flow(client):
         )
 
 
-def test_publish_flow_with_same_name(client):
+def test_publish_flow_with_same_name(client, data_integration):
     """Tests flow editing behavior."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
 
@@ -201,8 +202,8 @@ def test_publish_flow_with_same_name(client):
             delete_flow(client, flow_id)
 
 
-def test_refresh_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_refresh_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -228,8 +229,8 @@ def test_refresh_flow(client):
         client.delete_flow(flow.id())
 
 
-def test_get_artifact_from_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_get_artifact_from_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -248,8 +249,8 @@ def test_get_artifact_from_flow(client):
         client.delete_flow(flow.id())
 
 
-def test_get_artifact_reuse_for_computation(client):
-    db = client.integration(name=get_integration_name())
+def test_get_artifact_reuse_for_computation(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -268,9 +269,9 @@ def test_get_artifact_reuse_for_computation(client):
         client.delete_flow(flow.id())
 
 
-def test_multiple_flows_with_same_schedule(client):
+def test_multiple_flows_with_same_schedule(client, data_integration):
     try:
-        db = client.integration(name=get_integration_name())
+        db = client.integration(data_integration)
         sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
         output_artifact = dummy_sentiment_model(sql_artifact)
         output_artifact_2 = dummy_model(sql_artifact)
@@ -302,8 +303,8 @@ def test_multiple_flows_with_same_schedule(client):
         delete_flow(client, flow_2.id())
 
 
-def test_fetching_historical_flows_uses_old_data(client):
-    db = client.integration(name=get_integration_name())
+def test_fetching_historical_flows_uses_old_data(client, data_integration):
+    db = client.integration(data_integration)
 
     # Write a new table into the demo db.
     flows_to_delete = []
