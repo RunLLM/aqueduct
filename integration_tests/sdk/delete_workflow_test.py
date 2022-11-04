@@ -13,7 +13,7 @@ from utils import (
 from aqueduct import LoadUpdateMode
 
 
-def test_delete_workflow_invalid_saved_objects(client, data_integration):
+def test_delete_workflow_invalid_saved_objects(client, data_integration, engine):
     """Check the flow cannot delete an object it had not saved."""
     integration = client.integration(data_integration)
     name = generate_new_flow_name()
@@ -26,7 +26,14 @@ def test_delete_workflow_invalid_saved_objects(client, data_integration):
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
-    flow_id = run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+    flow_id = run_flow_test(
+        client,
+        [table],
+        engine,
+        name=name,
+        num_runs=1,
+        delete_flow_after=False,
+    ).id()
 
     ###
 
@@ -45,7 +52,7 @@ def test_delete_workflow_invalid_saved_objects(client, data_integration):
         delete_flow(client, flow_id)
 
 
-def test_delete_workflow_saved_objects(client, data_integration):
+def test_delete_workflow_saved_objects(client, data_integration, engine):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     integration = client.integration(data_integration)
     name = generate_new_flow_name()
@@ -59,7 +66,7 @@ def test_delete_workflow_saved_objects(client, data_integration):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     flow_ids_to_delete.add(
-        run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+        run_flow_test(client, [table], engine, name=name, num_runs=1, delete_flow_after=False).id()
     )
 
     ###
@@ -67,7 +74,7 @@ def test_delete_workflow_saved_objects(client, data_integration):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
 
     flow_ids_to_delete.add(
-        run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id()
+        run_flow_test(client, [table], engine, name=name, num_runs=2, delete_flow_after=False).id()
     )
 
     ###
@@ -104,7 +111,7 @@ def test_delete_workflow_saved_objects(client, data_integration):
             delete_flow(client, flow_id)
 
 
-def test_delete_workflow_saved_objects_twice(client, data_integration):
+def test_delete_workflow_saved_objects_twice(client, data_integration, engine):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
     it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already
@@ -122,14 +129,14 @@ def test_delete_workflow_saved_objects_twice(client, data_integration):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     # Workflow 1's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id())
 
     ###
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
 
     # Workflow 2's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id())
 
     ###
 

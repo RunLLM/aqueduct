@@ -75,7 +75,7 @@ def test_sql_query_with_parameter(client, data_integration):
         _ = sql_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_sql_query_with_multiple_parameters(client, data_integration):
+def test_sql_query_with_multiple_parameters(client, data_integration, engine):
     db = client.integration(data_integration)
 
     _ = client.create_param("table_name", default="hotel_reviews")
@@ -105,7 +105,7 @@ def test_sql_query_with_multiple_parameters(client, data_integration):
     assert result.get() == len(nationality.get())
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
-    run_flow_test(client, artifacts=[result])
+    run_flow_test(client, artifacts=[result], engine=engine)
 
 
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
