@@ -184,7 +184,11 @@ def artifact_type_to_serialization_type(
         serialization_type = SerializationType.JSON
     elif artifact_type == ArtifactType.PICKLABLE:
         serialization_type = SerializationType.PICKLE
-    elif artifact_type == ArtifactType.DICT or artifact_type == ArtifactType.TUPLE or artifact_type == ArtifactType.LIST:
+    elif (
+        artifact_type == ArtifactType.DICT
+        or artifact_type == ArtifactType.TUPLE
+        or artifact_type == ArtifactType.LIST
+    ):
         try:
             json.dumps(content)
             serialization_type = SerializationType.JSON
@@ -195,5 +199,7 @@ def artifact_type_to_serialization_type(
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
 
-    assert serialization_type is not None, "Unimplemented case for artifact type `%s`" % artifact_type
+    assert serialization_type is not None, (
+        "Unimplemented case for artifact type `%s`" % artifact_type
+    )
     return serialization_type

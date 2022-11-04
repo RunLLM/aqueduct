@@ -371,7 +371,9 @@ def test_all_param_types(client):
     assert isinstance(list_output, GenericArtifact)
     assert list_output.get() == [4, 5, 6]
 
-    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output])
+    run_flow_test(
+        client, artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output]
+    )
 
 
 def test_parameter_type_changes(client):
