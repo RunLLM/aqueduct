@@ -2,13 +2,13 @@ import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_sentiment_model
-from utils import generate_table_name, get_integration_name, run_flow_test
+from utils import generate_table_name, run_flow_test
 
 from aqueduct import LoadUpdateMode, metric
 
 
-def test_sql_integration_load_table(client):
-    db = client.integration(name=get_integration_name())
+def test_sql_integration_load_table(client, data_integration):
+    db = client.integration(data_integration)
     df = db.table(name="hotel_reviews")
     assert len(df) == 100
     assert list(df) == [
@@ -24,8 +24,8 @@ def test_invalid_source_integration(client):
         client.integration(name="wrong integration name")
 
 
-def test_invalid_destination_integration(client):
-    db = client.integration(name=get_integration_name())
+def test_invalid_destination_integration(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
 
@@ -36,8 +36,8 @@ def test_invalid_destination_integration(client):
         )
 
 
-def test_sql_today_tag(client):
-    db = client.integration(name=get_integration_name())
+def test_sql_today_tag(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact_today = db.sql(query="select * from hotel_reviews where review_date = {{today}}")
     assert sql_artifact_today.get().empty
     sql_artifact_not_today = db.sql(
@@ -46,8 +46,8 @@ def test_sql_today_tag(client):
     assert len(sql_artifact_not_today.get()) == 100
 
 
-def test_sql_query_with_parameter(client):
-    db = client.integration(name=get_integration_name())
+def test_sql_query_with_parameter(client, data_integration):
+    db = client.integration(data_integration)
 
     # Missing parameters.
     with pytest.raises(InvalidUserArgumentException):
@@ -75,8 +75,8 @@ def test_sql_query_with_parameter(client):
         _ = sql_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_sql_query_with_multiple_parameters(client):
-    db = client.integration(name=get_integration_name())
+def test_sql_query_with_multiple_parameters(client, data_integration):
+    db = client.integration(data_integration)
 
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
@@ -108,9 +108,9 @@ def test_sql_query_with_multiple_parameters(client):
     run_flow_test(client, artifacts=[result])
 
 
-def test_sql_query_user_vs_builtin_precedence(client):
+def test_sql_query_user_vs_builtin_precedence(client, data_integration):
     """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
 
     sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
     builtin_result = sql_artifact.get()

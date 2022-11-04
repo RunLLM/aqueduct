@@ -9,12 +9,6 @@ import aqueduct
 from aqueduct import Flow
 
 flags: Dict[str, bool] = {}
-integration_name: Optional[str] = None
-
-
-def get_integration_name() -> str:
-    assert integration_name is not None
-    return integration_name
 
 
 def generate_new_flow_name() -> str:
