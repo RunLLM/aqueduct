@@ -114,6 +114,10 @@ func getUser(ctx context.Context, DB database.Database, query string, args ...in
 		return nil, err
 	}
 
+	if len(users) == 0 {
+		return nil, database.ErrNoRows
+	}
+
 	if len(users) != 1 {
 		return nil, errors.Newf("Expected 1 user but got %v", len(users))
 	}
@@ -123,8 +127,6 @@ func getUser(ctx context.Context, DB database.Database, query string, args ...in
 
 // generateAPIKey generates a unique API key.
 func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
-	query := `SELECT COUNT(1) AS count FROM app_user WHERE api_key = $1;`
-
 	for {
 		b := make([]byte, apiKeyLength/2)
 		_, err := rand.Read(b)
@@ -133,17 +135,15 @@ func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
 		}
 		apiKey := fmt.Sprintf("%x", b)
 
-		args := []interface{}{apiKey}
-
-		var count utils.CountResult
-		err = DB.Query(ctx, &count, query, args...)
-		if err != nil {
-			return "", err
+		r := &userReader{}
+		_, err = r.GetByAPIKey(ctx, apiKey, DB)
+		if err != nil && errors.IsError(err, database.ErrNoRows) {
+			// No row with this API key was found
+			return apiKey, nil
 		}
 
-		if count.Count == 0 {
-			// Generated API key is unique
-			return apiKey, nil
+		if err != nil {
+			return "", err
 		}
 	}
 }

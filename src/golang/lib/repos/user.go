@@ -16,6 +16,7 @@ type User interface {
 
 type userReader interface {
 	// GetByAPIKey returns the User with the API key apiKey.
+	// It returns a database.ErrNoRows if no rows are found.
 	GetByAPIKey(ctx context.Context, apiKey string, DB database.Database) (*models.User, error)
 }
 
