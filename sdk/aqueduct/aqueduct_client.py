@@ -460,7 +460,7 @@ class Client:
         else:
             if engine not in self._connected_integrations.keys():
                 raise InvalidIntegrationException(
-                    "Not connected to compute integration %s!" % engine
+                    "Not connected to compute integration `%s`!" % engine
                 )
             engine_config = generate_engine_config(self._connected_integrations[engine])
 
