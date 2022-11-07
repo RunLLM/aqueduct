@@ -132,9 +132,6 @@ func NewAqServer() *AqServer {
 	testUser, err := CreateTestAccount(
 		ctx,
 		s,
-		"",
-		"",
-		"",
 		config.APIKey(),
 		accountOrganizationId,
 	)
@@ -215,6 +212,7 @@ func (s *AqServer) Init() error {
 		aqPath,
 		GetEngineReaders(s.Readers),
 		GetEngineWriters(s.Writers),
+		GetEngineRepos(s.Repos),
 	)
 	if err != nil {
 		return err
@@ -262,7 +260,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 		middleware = alice.New(
 			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
-			authentication.RequireApiKey(s.UserReader, s.Database),
+			authentication.RequireApiKey(s.UserRepo, s.Database),
 		)
 	} else {
 		panic(handler.ErrUnsupportedAuthMethod)

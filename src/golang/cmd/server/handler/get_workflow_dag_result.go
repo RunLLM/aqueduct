@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -49,7 +48,6 @@ type GetWorkflowDagResultHandler struct {
 	ArtifactResultReader    artifact_result.Reader
 	OperatorReader          operator.Reader
 	OperatorResultReader    operator_result.Reader
-	UserReader              user.Reader
 	WorkflowReader          workflow.Reader
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
@@ -81,7 +79,7 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {

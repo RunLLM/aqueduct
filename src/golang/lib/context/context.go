@@ -6,7 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -22,7 +22,7 @@ const (
 )
 
 type AqContext struct {
-	user.User
+	models.User
 	RequestId string
 	// StorageConfig is a copy of the global storage config as of the creation of this AqContext
 	StorageConfig *shared.StorageConfig
@@ -76,10 +76,10 @@ func ParseAqContext(ctx context.Context) (*AqContext, int, error) {
 	storageConfig := config.Storage()
 
 	return &AqContext{
-		User: user.User{
-			Id:             userId,
-			OrganizationId: organizationId,
-			Auth0Id:        auth0Id,
+		User: models.User{
+			ID:      userId,
+			OrgID:   organizationId,
+			Auth0ID: auth0Id,
 		},
 		RequestId:     requestId,
 		StorageConfig: &storageConfig,

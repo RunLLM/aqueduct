@@ -45,7 +45,6 @@ type Readers struct {
 }
 
 type Writers struct {
-	UserWriter                 user.Writer
 	IntegrationWriter          integration.Writer
 	NotificationWriter         notification.Writer
 	ArtifactWriter             artifact.Writer
@@ -67,11 +66,6 @@ func CreateRepos() *Repos {
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	userReader, err := user.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	integrationReader, err := integration.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -162,11 +156,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 }
 
 func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
-	userWriter, err := user.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	integrationWriter, err := integration.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -228,7 +217,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 	}
 
 	return &Writers{
-		UserWriter:                 userWriter,
 		IntegrationWriter:          integrationWriter,
 		NotificationWriter:         notificationWriter,
 		ArtifactWriter:             artifactWriter,
@@ -254,7 +242,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 		OperatorResultReader:       readers.OperatorResultReader,
 		ArtifactReader:             readers.ArtifactReader,
 		ArtifactResultReader:       readers.ArtifactResultReader,
-		UserReader:                 readers.UserReader,
 		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
@@ -272,5 +259,11 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 		ArtifactWriter:          writers.ArtifactWriter,
 		ArtifactResultWriter:    writers.ArtifactResultWriter,
 		NotificationWriter:      writers.NotificationWriter,
+	}
+}
+
+func GetEngineRepos(repos *Repos) *engine.EngineRepos {
+	return &engine.EngineRepos{
+		User: repos.UserRepo,
 	}
 }

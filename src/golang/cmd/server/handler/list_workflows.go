@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -51,7 +50,6 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	UserReader              user.Reader
 	ArtifactReader          artifact.Reader
 	OperatorReader          operator.Reader
 	WorkflowReader          workflow.Reader
@@ -89,12 +87,12 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 	// Asynchronously sync self-orchestrated workflow runs
 	go func() {
-		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrganizationId); err != nil {
+		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrgID); err != nil {
 			logging.LogAsyncEvent(ctx, logging.ServerComponent, "Sync Workflows", err)
 		}
 	}()
 
-	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrganizationId, h.Database)
+	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrgID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}

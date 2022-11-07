@@ -27,6 +27,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -77,6 +78,10 @@ type EngineWriters struct {
 	NotificationWriter      notification.Writer
 }
 
+type EngineRepos struct {
+	User repos.User
+}
+
 type aqEngine struct {
 	Database       database.Database
 	GithubManager  github.Manager
@@ -90,6 +95,7 @@ type aqEngine struct {
 	// Readers and Writers needed for workflow management
 	*EngineReaders
 	*EngineWriters
+	*EngineRepos
 }
 
 type workflowRunMetadata struct {
@@ -122,6 +128,7 @@ func NewAqEngine(
 	aqPath string,
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
+	engineRepos *EngineRepos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
@@ -134,6 +141,7 @@ func NewAqEngine(
 		AqPath:              aqPath,
 		EngineReaders:       engineReaders,
 		EngineWriters:       engineWriters,
+		EngineRepos:         engineRepos,
 	}, nil
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -42,7 +41,6 @@ type RegisterAirflowWorkflowHandler struct {
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
 	WorkflowDagResultReader workflow_dag_result.Reader
-	UserReader              user.Reader
 
 	WorkflowDagResultWriter workflow_dag_result.Writer
 	OperatorResultWriter    operator_result.Writer
@@ -73,7 +71,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		aqContext.Id,
+		aqContext.ID,
 		h.GithubManager,
 		aqContext.StorageConfig,
 	)
@@ -84,8 +82,8 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.IntegrationReader,
 		h.Database,
 	)
