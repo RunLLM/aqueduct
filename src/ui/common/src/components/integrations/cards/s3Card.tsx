@@ -13,7 +13,7 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
   const config = integration.config as S3Config;
   return (
     <Box>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Bucket: </strong>
         {config.bucket}
       </Typography>

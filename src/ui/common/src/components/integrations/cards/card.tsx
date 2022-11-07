@@ -52,8 +52,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ flex: 1 }}>
               <Typography
-                variant="h4"
-                gutterBottom
+                variant="h6"
                 component="div"
                 sx={{
                   fontFamily: 'Monospace',
@@ -68,10 +67,10 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
             </Box>
           </Box>
           <Box sx={{ fontSize: 1, my: 1 }}>
-            <Typography variant="subtitle1">
+            <Typography variant="body2">
               <strong>Workflow:</strong> {dataPreviewInfo.workflow_name}
             </Typography>
-            <Typography variant="subtitle1">
+            <Typography variant="body2">
               <strong>Last Updated:</strong>{' '}
               {new Date(latestVersion.timestamp * 1000).toLocaleString()}
             </Typography>
@@ -140,7 +139,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
         <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
+          <Typography sx={{ fontFamily: 'Monospace' }} variant="h6">
             {integration.name}
           </Typography>
         </Box>
@@ -149,7 +148,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
 
       {serviceCard}
 
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Connected On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
