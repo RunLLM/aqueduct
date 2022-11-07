@@ -39,18 +39,19 @@ const (
 )
 
 const (
-	WorkflowJobType           JobType = "workflow"
-	FunctionJobType           JobType = "function"
-	ParamJobType              JobType = "param"
-	SystemMetricJobType       JobType = "system_metric"
-	AuthenticateJobType       JobType = "authenticate"
-	ExtractJobType            JobType = "extract"
-	LoadJobType               JobType = "load"
-	LoadTableJobType          JobType = "load-table"
-	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
-	DiscoverJobType           JobType = "discover"
-	WorkflowRetentionType     JobType = "workflow_retention"
-	CompileAirflowJobType     JobType = "compile_airflow"
+	WorkflowJobType                  JobType = "workflow"
+	FunctionJobType                  JobType = "function"
+	ParamJobType                     JobType = "param"
+	SystemMetricJobType              JobType = "system_metric"
+	AuthenticateJobType              JobType = "authenticate"
+	ExtractJobType                   JobType = "extract"
+	LoadJobType                      JobType = "load"
+	LoadTableJobType                 JobType = "load-table"
+	DeleteSavedObjectsJobType        JobType = "delete-saved-objects"
+	DiscoverJobType                  JobType = "discover"
+	WorkflowRetentionType            JobType = "workflow_retention"
+	CompileAirflowJobType            JobType = "compile_airflow"
+	ValidateCondaInstallationJobType JobType = "validate_conda_installation"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -224,6 +225,18 @@ type CompileAirflowSpec struct {
 	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
 }
 
+type ValidateCondaInstallationSpec struct {
+	BaseSpec
+}
+
+func (v *ValidateCondaInstallationSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (v *ValidateCondaInstallationSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("Workflow job specs don't have a storage config.")
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -270,6 +283,10 @@ func (*DiscoverSpec) Type() JobType {
 
 func (*CompileAirflowSpec) Type() JobType {
 	return CompileAirflowJobType
+}
+
+func (*ValidateCondaInstallationSpec) Type() JobType {
+	return ValidateCondaInstallationJobType
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
@@ -516,6 +533,15 @@ func NewCompileAirflowSpec(
 		TaskSpecs:         taskSpecs,
 		TaskEdges:         taskEdges,
 	}, nil
+}
+
+func NewValidateCondaInstallationSpec(name string) Spec {
+	return &ValidateCondaInstallationSpec{
+		BaseSpec{
+			Type: ValidateCondaInstallationJobType,
+			Name: name,
+		},
+	}
 }
 
 // `EncodeSpec` first serialize `spec` according to `SerializationType` and returns the base64 encoded string.

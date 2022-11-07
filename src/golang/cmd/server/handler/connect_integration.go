@@ -295,6 +295,11 @@ func ValidateConfig(
 		return validateLambdaConfig(ctx, config)
 	}
 
+	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
+	if service == integration.Conda {
+		return validateConda(ctx, jobManager, jobName)
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
 
@@ -303,7 +308,6 @@ func ValidateConfig(
 		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
 	}()
 
-	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	jobSpec := job.NewAuthenticateSpec(
 		jobName,
 		storageConfig,
@@ -563,6 +567,24 @@ func validateLambdaConfig(
 ) (int, error) {
 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateConda(
+	ctx context.Context,
+	jobManager job.JobManager,
+	jobName string,
+) (int, error) {
+	errMsg := "Unable to validate conda installation. Have you run `aqueduct install conda`?"
+	if err := jobManager.Launch(ctx, jobName, job.NewValidateCondaInstallationSpec(jobName)); err != nil {
+		return http.StatusBadRequest, errors.Wrap(err, errMsg)
+	}
+
+	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollAuthenticateInterval, pollAuthenticateTimeout)
+	if err != nil || jobStatus == shared.FailedExecutionStatus {
+		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 
 	return http.StatusOK, nil

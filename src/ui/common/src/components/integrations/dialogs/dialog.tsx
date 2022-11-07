@@ -58,6 +58,7 @@ import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 import { SQLiteDialog } from './sqliteDialog';
+import { CondaDialog } from './condaDialog';
 
 type Props = {
   user: UserProfile;
@@ -289,6 +290,8 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Conda':
+      serviceDialog = <CondaDialog/>;
     default:
       return null;
   }

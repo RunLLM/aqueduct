@@ -61,6 +61,7 @@ const (
 	Athena       Service = "Athena"
 	Lambda       Service = "Lambda"
 	MongoDB      Service = "MongoDB"
+	Conda        Service = "Conda"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
