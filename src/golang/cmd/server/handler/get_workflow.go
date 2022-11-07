@@ -68,7 +68,8 @@ type GetWorkflowHandler struct {
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
 	WorkflowDagResultReader workflow_dag_result.Reader
-	UserReader              user.Reader
+	// TODO: Replace this with repos.User after ENG-1917
+	UserReader user.Reader
 
 	WorkflowDagWriter       workflow_dag.Writer
 	WorkflowDagResultWriter workflow_dag_result.Writer
