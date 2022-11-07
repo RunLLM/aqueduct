@@ -11,13 +11,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -68,13 +68,12 @@ type GetWorkflowHandler struct {
 	WorkflowDagReader       workflow_dag.Reader
 	WorkflowDagEdgeReader   workflow_dag_edge.Reader
 	WorkflowDagResultReader workflow_dag_result.Reader
+	UserReader              user.Reader
 
 	WorkflowDagWriter       workflow_dag.Writer
 	WorkflowDagResultWriter workflow_dag_result.Writer
 	OperatorResultWriter    operator_result.Writer
 	ArtifactResultWriter    artifact_result.Writer
-
-	UserRepo repos.User
 }
 
 func (*GetWorkflowHandler) Name() string {

@@ -66,6 +66,11 @@ func CreateRepos() *Repos {
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
+	userReader, err := user.NewReader(dbConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	integrationReader, err := integration.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -264,6 +269,6 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 
 func GetEngineRepos(repos *Repos) *engine.EngineRepos {
 	return &engine.EngineRepos{
-		User: repos.UserRepo,
+		UserRepo: repos.UserRepo,
 	}
 }

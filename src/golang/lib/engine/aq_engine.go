@@ -79,7 +79,7 @@ type EngineWriters struct {
 }
 
 type EngineRepos struct {
-	User repos.User
+	UserRepo repos.User
 }
 
 type aqEngine struct {
@@ -307,7 +307,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.ArtifactResultWriter,
 		eng.WorkflowReader,
 		eng.NotificationWriter,
-		eng.UserReader,
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
@@ -396,7 +395,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.ArtifactResultWriter,
 		eng.WorkflowReader,
 		eng.NotificationWriter,
-		eng.UserReader,
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
