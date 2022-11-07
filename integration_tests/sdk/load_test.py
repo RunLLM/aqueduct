@@ -15,25 +15,33 @@ def test_list_saved_objects(client, data_integration, engine):
 
         # This will create the table.
         flow_ids_to_delete.add(
-            run_flow_test(client, [table], name=name, engine=engine, num_runs=1, delete_flow_after=False).id()
+            run_flow_test(
+                client, [table], name=name, engine=engine, num_runs=1, delete_flow_after=False
+            ).id()
         )
 
         # Change to append mode.
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
         flow_ids_to_delete.add(
-            run_flow_test(client, [table], name=name, engine=engine, num_runs=2, delete_flow_after=False).id()
+            run_flow_test(
+                client, [table], name=name, engine=engine, num_runs=2, delete_flow_after=False
+            ).id()
         )
 
         # Redundant append mode change.
         table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
         flow_ids_to_delete.add(
-            run_flow_test(client, [table], name=name, engine=engine, num_runs=3, delete_flow_after=False).id()
+            run_flow_test(
+                client, [table], name=name, engine=engine, num_runs=3, delete_flow_after=False
+            ).id()
         )
 
         # Create a different table from the same artifact.
         table.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
         flow_ids_to_delete.add(
-            run_flow_test(client, [table], name=name, engine=engine, num_runs=4, delete_flow_after=False).id()
+            run_flow_test(
+                client, [table], name=name, engine=engine, num_runs=4, delete_flow_after=False
+            ).id()
         )
 
         ###
@@ -75,7 +83,9 @@ def test_multiple_artifacts_saved_to_same_integration(client, data_integration, 
     table_2 = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
     table_2.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
 
-    flow = run_flow_test(client, artifacts=[table_1, table_2], engine=engine, delete_flow_after=False)
+    flow = run_flow_test(
+        client, artifacts=[table_1, table_2], engine=engine, delete_flow_after=False
+    )
     try:
         data = client.flow(flow.id()).list_saved_objects()
 

@@ -129,14 +129,18 @@ def test_delete_workflow_saved_objects_twice(client, data_integration, engine):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     # Workflow 1's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(
+        run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id()
+    )
 
     ###
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
 
     # Workflow 2's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(
+        run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id()
+    )
 
     ###
 

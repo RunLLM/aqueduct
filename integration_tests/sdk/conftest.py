@@ -6,6 +6,7 @@ from aqueduct.dag import DAG, Metadata
 
 import aqueduct
 
+
 def pytest_addoption(parser):
     # We currently only support a single engine backend at a time.
     parser.addoption(f"--engine", action="store", default=None)

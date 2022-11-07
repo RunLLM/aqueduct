@@ -68,6 +68,7 @@ def test_check_on_multiple_mixed_inputs(client, data_integration, engine):
 
     run_flow_test(client, artifacts=[check_artifact], engine=engine)
 
+
 def test_edit_check(client, data_integration):
     """Test that checks can be edited by replacing with the same name."""
     db = client.integration(data_integration)

@@ -356,7 +356,12 @@ def test_fetching_historical_flows_uses_old_data(client, data_integration, engin
         table = generate_new_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
         run_flow_test(
-            client, name=setup_flow_name, artifacts=[table], engine=engine, num_runs=2, delete_flow_after=False
+            client,
+            name=setup_flow_name,
+            artifacts=[table],
+            engine=engine,
+            num_runs=2,
+            delete_flow_after=False,
         )
 
         # Fetching the historical flow and materializing the data will not use the new data

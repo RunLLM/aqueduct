@@ -133,7 +133,9 @@ def test_edit_param_for_flow(client, data_integration, engine):
 
     flow_id = None
     try:
-        flow = run_flow_test(client, artifacts=[output], name=flow_name, engine=engine, delete_flow_after=False)
+        flow = run_flow_test(
+            client, artifacts=[output], name=flow_name, engine=engine, delete_flow_after=False
+        )
         flow_id = flow.id()
 
         # Edit the flow with a different row to append and re-publish
@@ -144,7 +146,12 @@ def test_edit_param_for_flow(client, data_integration, engine):
         # Wait for the first run, then refresh the workflow and verify that it runs at least
         # one more time (two runs total, since the original was manually triggered).
         flow = run_flow_test(
-            client, artifacts=[output], name=flow_name, engine=engine, num_runs=2, delete_flow_after=False
+            client,
+            artifacts=[output],
+            name=flow_name,
+            engine=engine,
+            num_runs=2,
+            delete_flow_after=False,
         )
 
         # Verify that the parameters were edited as expected.
@@ -183,7 +190,9 @@ def test_trigger_flow_with_different_param(client, data_integration, engine):
     output = add_numbers(sql_artifact, num1, num2)
 
     flow_name = generate_new_flow_name()
-    flow = run_flow_test(client, artifacts=[output], engine=engine, name=flow_name, delete_flow_after=False)
+    flow = run_flow_test(
+        client, artifacts=[output], engine=engine, name=flow_name, delete_flow_after=False
+    )
 
     # First, check that triggering the flow with a non-existant parameter will error.
     with pytest.raises(InvalidUserArgumentException):

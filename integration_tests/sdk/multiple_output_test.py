@@ -27,7 +27,9 @@ def test_multiple_outputs(client, engine):
     assert str_output.get() == "hello world."
     assert int_output.get() == 2468
 
-    run_flow_test(client, artifacts=[str_output, int_output], engine=engine, delete_flow_after=False)
+    run_flow_test(
+        client, artifacts=[str_output, int_output], engine=engine, delete_flow_after=False
+    )
 
 
 def test_multiple_outputs_user_failure(client):

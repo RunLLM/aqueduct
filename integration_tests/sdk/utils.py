@@ -8,6 +8,7 @@ from aqueduct.enums import ExecutionStatus
 import aqueduct
 from aqueduct import Flow
 
+
 def generate_new_flow_name() -> str:
     return "test_" + uuid.uuid4().hex
 
