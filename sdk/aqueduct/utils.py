@@ -290,6 +290,7 @@ def _package_files_and_requirements(
     # This is the absolute path to the requirements file we are sending to the backend.
     packaged_requirements_path = os.path.join(dir_path, REQUIREMENTS_FILE)
     if requirements is not None:
+        # The operator has a custom requirements specification.
         assert isinstance(requirements, str) or all(isinstance(req, str) for req in requirements)
 
         if isinstance(requirements, str):
@@ -305,16 +306,16 @@ def _package_files_and_requirements(
             with open(packaged_requirements_path, "x") as f:
                 f.write("\n".join(requirements))
 
-    # If there already exists a requirements.txt in the same directory as the function.
     elif os.path.exists(REQUIREMENTS_FILE):
+        # There exists a workflow-level requirements file (need to reside in the same directory as the function).
         logger().info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-            % (os.getcwd(), func.__name__)
+            % (func.__name__, os.getcwd())
         )
-        shutil.copy(REQUIREMENTS_FILE, os.path.join(dir_path, REQUIREMENTS_FILE))
+        shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
 
-    # No requirements have been provided, so we do our best to infer.
     else:
+        # No requirements have been provided, so we use `pip freeze` to infer.
         logger().info(
             "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
             % func.__name__
