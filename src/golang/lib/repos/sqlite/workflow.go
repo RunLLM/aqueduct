@@ -212,6 +212,10 @@ func getWorkflow(ctx context.Context, DB database.Database, query string, args .
 		return nil, err
 	}
 
+	if len(workflows) == 0 {
+		return nil, database.ErrNoRows
+	}
+
 	if len(workflows) != 1 {
 		return nil, errors.Newf("Expected 1 workflow but got %v", len(workflows))
 	}

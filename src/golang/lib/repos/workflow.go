@@ -21,9 +21,11 @@ type workflowReader interface {
 	Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error)
 
 	// Get returns the Workflow with ID.
+	// It returns a database.ErrNoRows if no rows are found.
 	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error)
 
 	// GetByOwnerAndName returns the workflow created by ownerID named name.
+	// It returns a database.ErrNoRows if no rows are found.
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
 	// GetLatestStatusesByOrg returns the LatestWorkflowStatus for each workflow owned by orgID.
