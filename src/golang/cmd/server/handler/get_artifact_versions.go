@@ -81,7 +81,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	loadStatus, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
 		ctx,
-		args.OrganizationId,
+		args.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -90,7 +90,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	latestWorkflowDagIdObjects, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationId(
 		ctx,
-		args.OrganizationId,
+		args.OrgID,
 		h.Database,
 	)
 	if err != nil {

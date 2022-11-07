@@ -65,8 +65,8 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {

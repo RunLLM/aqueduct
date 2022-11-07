@@ -109,7 +109,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -144,8 +144,8 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		integrationObject, err := h.IntegrationReader.GetIntegrationByNameAndUser(
 			ctx,
 			integrationName,
-			args.AqContext.Id,
-			args.AqContext.OrganizationId,
+			args.AqContext.ID,
+			args.AqContext.OrgID,
 			h.Database,
 		)
 		if err != nil {

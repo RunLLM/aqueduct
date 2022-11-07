@@ -65,8 +65,8 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 
 	integrations, err := h.IntegrationReader.GetIntegrationsByUser(
 		ctx,
-		args.OrganizationId,
-		args.Id,
+		args.OrgID,
+		args.ID,
 		h.Database,
 	)
 	if err != nil {

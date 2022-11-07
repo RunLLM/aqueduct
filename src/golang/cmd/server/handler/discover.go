@@ -76,8 +76,8 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -174,7 +174,7 @@ func (h *DiscoverHandler) Perform(
 
 	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
 		ctx,
-		args.OrganizationId,
+		args.OrgID,
 		h.Database,
 	)
 	if err != nil {

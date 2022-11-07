@@ -147,7 +147,7 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	ok, err := h.ArtifactReader.ValidateArtifactOwnership(
 		r.Context(),
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		artifactId,
 		h.Database,
 	)

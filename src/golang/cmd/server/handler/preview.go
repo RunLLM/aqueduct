@@ -135,7 +135,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		aqContext.Id,
+		aqContext.ID,
 		h.GithubManager,
 		aqContext.StorageConfig,
 	)
@@ -146,8 +146,8 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.IntegrationReader,
 		h.Database,
 	)
