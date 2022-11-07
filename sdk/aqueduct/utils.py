@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 import cloudpickle as pickle
 import multipart
 import numpy as np
+import pkg_resources
 import requests
 from aqueduct.config import (
     AirflowEngineConfig,
@@ -326,6 +327,8 @@ def _package_files_and_requirements(
     # Prune out any blacklisted requirements.
     _filter_out_blacklisted_requirements(packaged_requirements_path)
 
+    _add_cloudpickle_to_requirements(packaged_requirements_path)
+
     os.chdir(current_directory_path)
 
 
@@ -341,8 +344,26 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
             f.write(line)
 
 
+def _add_cloudpickle_to_requirements(packaged_requirements_path: str) -> None:
+    """
+    Regardless of how we detect dependencies, we must include cloudpickle (with client's version
+    number) as a requirement because the server needs to install the same version of cloudpickle as
+    the client.
+
+    If the user-specified requirements file already contains a cloudpickle entry and the version
+    number matches, the installation process will still succeed. If there is a mismatch, the installation
+    will fail and the user should fix the version number to match the version installed on the client.
+    """
+    with open(packaged_requirements_path, "a") as f:
+        cloudpickle_requirement = (
+            "\ncloudpickle==%s" % pkg_resources.get_distribution("cloudpickle").version
+        )
+        f.write(cloudpickle_requirement)
+
+
 def _infer_requirements() -> List[str]:
-    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+    """
+    Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
 
     Returns:
         A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
