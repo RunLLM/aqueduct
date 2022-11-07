@@ -10,6 +10,7 @@ import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
+import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
 import { MySqlCard } from './components/integrations/cards/mysqlCard';
 import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
@@ -25,6 +26,7 @@ import IntegrationDialog from './components/integrations/dialogs/dialog';
 import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
 import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
+import { MongoDBDialog } from './components/integrations/dialogs/mongoDbDialog';
 import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
 import { PostgresDialog } from './components/integrations/dialogs/postgresDialog';
 import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog';
@@ -319,6 +321,8 @@ export {
   MenuSidebarWidth,
   MetricDetailsPage,
   MetricOperatorNode,
+  MongoDBCard,
+  MongoDBDialog,
   MultiFileViewer,
   MySqlCard,
   MysqlDialog,

@@ -42,15 +42,6 @@ from aqueduct.utils import (
     get_description_for_metric,
     serialize_function,
 )
-from great_expectations.core import ExpectationConfiguration
-from great_expectations.core.batch import RuntimeBatchRequest
-from great_expectations.data_context import BaseDataContext
-from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    DatasourceConfig,
-    FilesystemStoreBackendDefaults,
-)
-from great_expectations.validator.validator import Validator
 from ruamel import yaml
 
 from aqueduct import globals
@@ -202,6 +193,18 @@ class TableArtifact(BaseArtifact):
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
+
+        # We import on demand since this takes 1-2 seconds, and we don't want to incur that every time
+        # we reference the SDK.
+        from great_expectations.core import ExpectationConfiguration
+        from great_expectations.core.batch import RuntimeBatchRequest
+        from great_expectations.data_context import BaseDataContext
+        from great_expectations.data_context.types.base import (
+            DataContextConfig,
+            DatasourceConfig,
+            FilesystemStoreBackendDefaults,
+        )
+        from great_expectations.validator.validator import Validator
 
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
             data_context_config = DataContextConfig(

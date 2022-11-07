@@ -7,10 +7,36 @@ from typing import Any, Dict, List, Optional, Union
 from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, PREV_TABLE_TAG, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils import enums
+from pydantic import parse_obj_as
 
 
 def replace_today() -> str:
     return "'" + date.today().strftime("%Y-%m-%d") + "'"
+
+
+def _expand_placeholders(query: str, parameters: Dict[str, str]) -> str:
+    """Expands any tags found in the raw query, eg. {{ today }}.
+
+    Relational queries can be arbitrarily parameterized the same way operators are. The only
+    requirement is that these parameters must be defined as strings.
+
+    User-defined parameters are prioritized over built-in ones. Eg. if the user defines a parameter
+    named "today" that they set with value "1234", the "{{today}}" will be expanded as "1234", even
+    though there already is a built-in expansion.
+    """
+    matches = re.findall(TAG_PATTERN, query)
+    for match in matches:
+        tag_name = match.strip(" {}")
+
+        if tag_name in parameters:
+            query = query.replace(match, parameters[tag_name])
+        elif tag_name in BUILT_IN_EXPANSIONS:
+            expansion_func = BUILT_IN_EXPANSIONS[tag_name]
+            query = query.replace(match, expansion_func())
+        else:
+            # If there's a tag in the query for which no expansion value is available, we error here.
+            raise Exception("Unable to expand tag `%s` for query `%s`." % (tag_name, query))
+    return query
 
 
 class RelationalParams(models.BaseParams):
@@ -82,30 +108,6 @@ class RelationalParams(models.BaseParams):
         # Returns `WITH` clause with the normalized final query.
         return f"{with_clause}\n{normalized_query}"
 
-    def _expand_placeholders(self, query: str, parameters: Dict[str, str]) -> str:
-        """Expands any tags found in the raw query, eg. {{ today }}.
-
-        Relational queries can be arbitrarily parameterized the same way operators are. The only
-        requirement is that these parameters must be defined as strings.
-
-        User-defined parameters are prioritized over built-in ones. Eg. if the user defines a parameter
-        named "today" that they set with value "1234", the "{{today}}" will be expanded as "1234", even
-        though there already is a built-in expansion.
-        """
-        matches = re.findall(TAG_PATTERN, query)
-        for match in matches:
-            tag_name = match.strip(" {}")
-
-            if tag_name in parameters:
-                query = query.replace(match, parameters[tag_name])
-            elif tag_name in BUILT_IN_EXPANSIONS:
-                expansion_func = BUILT_IN_EXPANSIONS[tag_name]
-                query = query.replace(match, expansion_func())
-            else:
-                # If there's a tag in the query for which no expansion value is available, we error here.
-                raise Exception("Unable to expand tag `%s` for query `%s`." % (tag_name, query))
-        return query
-
     def compile(self, parameters: Dict[str, str]) -> None:
         """
         `compile` compiles this object to a single query that can be
@@ -123,7 +125,7 @@ class RelationalParams(models.BaseParams):
         query = self._compile_chain(queries)
         print(f"Compiled query is {query} .")
 
-        query = self._expand_placeholders(query, parameters)
+        query = _expand_placeholders(query, parameters)
         print(f"Expanded query is `{query}`.")
         self.query = query
         self.query_is_usable = True
@@ -145,4 +147,22 @@ class S3Params(models.BaseParams):
     merge: Optional[bool]
 
 
-Params = Union[RelationalParams, S3Params]
+class MongoDBFindParams(models.BaseParams):
+    args: Optional[List[Any]] = None
+    kwargs: Optional[Dict[str, Any]] = None
+
+
+class MongoDBParams(models.BaseParams):
+    collection: str
+    query_serialized: str
+    query: Optional[MongoDBFindParams] = None
+
+    def compile(self, parameters: Dict[str, str]) -> None:
+        expanded = _expand_placeholders(self.query_serialized, parameters)
+        self.query = parse_obj_as(MongoDBFindParams, json.loads(expanded))
+
+    def usable(self) -> bool:
+        return bool(self.query) and bool(self.collection)
+
+
+Params = Union[RelationalParams, S3Params, MongoDBParams]
