@@ -18,7 +18,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 )
+
+type Repos struct {
+	UserRepo repos.User
+}
 
 type Readers struct {
 	UserReader                 user.Reader
@@ -52,6 +58,12 @@ type Writers struct {
 	WorkflowWatcherWriter      workflow_watcher.Writer
 	WorkflowDagResultWriter    workflow_dag_result.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
+}
+
+func CreateRepos() *Repos {
+	return &Repos{
+		UserRepo: sqlite.NewUserRepo(),
+	}
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {

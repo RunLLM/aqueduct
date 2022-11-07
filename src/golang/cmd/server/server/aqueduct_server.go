@@ -47,6 +47,7 @@ type AqServer struct {
 	Database database.Database
 	*Readers
 	*Writers
+	*Repos
 
 	// Only the following group of fields will be reinitialized when the server is restarted
 	GithubManager github.Manager
@@ -103,6 +104,7 @@ func NewAqServer() *AqServer {
 		Database:         db,
 		Readers:          readers,
 		Writers:          writers,
+		Repos:            CreateRepos(),
 		UnderMaintenance: atomic.Value{},
 		RequestMutex:     sync.RWMutex{},
 	}
