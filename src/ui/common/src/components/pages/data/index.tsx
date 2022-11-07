@@ -76,10 +76,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     >
       <div />
       <Box>
-        <Typography variant="h2" gutterBottom component="div">
-          Data
-        </Typography>
-
         <Box paddingLeft={CardPadding}>
           {/* Aligns search bar to card text */}
           <SearchBar

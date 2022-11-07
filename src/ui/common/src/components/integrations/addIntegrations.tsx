@@ -44,12 +44,7 @@ const AddIntegrations: React.FC<Props> = ({
           {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
         </Alert>
       )}
-      <Grid
-        container
-        spacing={1}
-        sx={{ my: '16px', width: '100%' }}
-        columns={4}
-      >
+      <Grid container spacing={1} sx={{ width: '100%' }} columns={4}>
         {Object.entries(supportedIntegrations)
           .filter(([svc]) => svc !== 'Aqueduct Demo')
           .map(([svc, integration]) => {

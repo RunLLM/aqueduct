@@ -129,9 +129,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       user={user}
     >
       <Box sx={{ paddingBottom: '4px' }}>
-        <Typography variant="h2" gutterBottom component="div">
-          Integration Details
-        </Typography>
         <Box display="flex" flexDirection="row" alignContent="top">
           <DetailIntegrationCard
             integration={selectedIntegration}
