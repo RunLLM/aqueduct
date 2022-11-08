@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -91,6 +94,8 @@ func NewOperator(
 	execMode ExecutionMode,
 	db database.Database,
 ) (Operator, error) {
+	log.Errorf("HELLO: Operator Spec Resources: %v", dbOperator.Spec.Resources())
+
 	if len(inputs) != len(inputExecPaths) {
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
 	}

@@ -20,7 +20,14 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec, ResourceConfig
+from aqueduct.operators import (
+    CheckSpec,
+    FunctionSpec,
+    MetricSpec,
+    Operator,
+    OperatorSpec,
+    ResourceConfig,
+)
 from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
     CheckFunction,
@@ -323,7 +330,7 @@ def op(
         file_dependencies,
         requirements,
     )
-    if num_outputs < 1:
+    if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
 
     if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
@@ -371,7 +378,9 @@ def op(
             return wrap_spec(
                 OperatorSpec(
                     function=function_spec,
-                    resources=ResourceConfig(num_cpus=num_cpus, memory_mb=memory_mb) if resource_config_set else None,
+                    resources=ResourceConfig(num_cpus=num_cpus, memory_mb=memory_mb)
+                    if resource_config_set
+                    else None,
                 ),
                 *artifacts,
                 op_name=name,

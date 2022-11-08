@@ -144,7 +144,6 @@ class FunctionSpec(BaseModel):
     type: FunctionType
     language = "Python"
     granularity: FunctionGranularity
-    s3_path: Optional[str]
     github_metadata: Optional[GithubMetadata]
     entry_point: Optional[EntryPoint] = None
 
@@ -175,6 +174,9 @@ class ParamSpec(BaseModel):
 
 
 class ResourceConfig(BaseModel):
+    # These resources are configured exactly. The user is not given any more
+    # or any less. If the requested resources exceeds capacity, and error
+    # will be thrown at execution time.
     num_cpus: Optional[int]
     memory_mb: Optional[int]
 
