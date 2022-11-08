@@ -20,7 +20,6 @@ func IsCondaConnected(
 		userId,
 		db,
 	)
-
 	if err != nil {
 		return false, err
 	}
