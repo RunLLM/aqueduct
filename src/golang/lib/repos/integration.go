@@ -17,36 +17,36 @@ type Integration interface {
 }
 
 type integrationReader interface {
-	// Get returns the Integration with id.
-	Get(ctx context.Context, id uuid.UUID, db database.Database) (*models.Integration, error)
+	// Get returns the Integration with ID.
+	Get(ctx context.Context, ID uuid.UUID, db database.Database) (*models.Integration, error)
 
-	// GetMultiple returns the Integrations with ids.
-	GetMultiple(ctx context.Context, ids []uuid.UUID, db database.Database) ([]models.Integration, error)
+	// GetBatch returns the Integrations with IDs.
+	GetBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.Integration, error)
 
-	// GetByServiceAndUser returns the Integrations with the specified service by the user with the id userId.
-	GetByServiceAndUser(ctx context.Context, service shared.Service, userId uuid.UUID, db database.Database) ([]models.Integration, error)
+	// GetByServiceAndUser returns the Integrations with the specified service by the user with the ID userID.
+	GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, db database.Database) ([]models.Integration, error)
 
-	// GetByOrganization returns the Integrations by the organization with the id organizationId.
-	GetByOrganization(ctx context.Context, organizationId string, db database.Database) ([]models.Integration, error)
+	// GetByOrganization returns the Integrations by the organization with the ID orgID.
+	GetByOrganization(ctx context.Context, orgId string, db database.Database) ([]models.Integration, error)
 
-	// GetByUser returns the Integrations by the user with the id userId in the organization with the id organizationId.
-	GetByUser(ctx context.Context, organizationId string, userId uuid.UUID, db database.Database) ([]models.Integration, error)
+	// GetByUser returns the Integrations by the user with the ID userID in the organization with the ID orgID.
+	GetByUser(ctx context.Context, orgID string, userID uuid.UUID, db database.Database) ([]models.Integration, error)
 
-	// GetByNameAndUser returns the Integrations with name integrationName by the user with the id userId in the organization with the id organizationId.
-	GetByNameAndUser(ctx context.Context, integrationName string, userId uuid.UUID, organizationId string, db database.Database) ([]models.Integration, error)
+	// GetByNameAndUser returns the Integrations with name integrationName by the user with the ID userID in the organization with the ID orgID.
+	GetByNameAndUser(ctx context.Context, integrationName string, userID uuid.UUID, orgID string, db database.Database) ([]models.Integration, error)
 
 	// GetByConfigField returns the Integrations with config fieldName=fieldValue.
 	GetByConfigField(ctx context.Context, fieldName string, fieldValue string, db database.Database) ([]models.Integration, error)
 
-	// ValidateOwnership returns the Integrations with config fieldName=fieldValue.
-	ValidateOwnership(ctx context.Context, integrationId uuid.UUID, organizationId string, userId uuid.UUID, db database.Database) (bool, error)
+	// ValidateOwnership checks whether the integration is owned by the user.
+	ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, db database.Database) (bool, error)
 }
 
 type integrationWriter interface {
 	// Create inserts a new Integration with the specified fields.
 	Create(
 		ctx context.Context,
-		organizationId string,
+		orgID string,
 		service shared.Service,
 		name string,
 		config *utils.Config,
@@ -57,8 +57,8 @@ type integrationWriter interface {
 	// CreateForUser inserts a new Integration with the specified fields for the given user.
 	CreateForUser(
 		ctx context.Context,
-		organizationId string,
-		userId uuid.UUID,
+		orgID string,
+		userID uuid.UUID,
 		service shared.Service,
 		name string,
 		config *utils.Config,
@@ -66,9 +66,9 @@ type integrationWriter interface {
 		db database.Database,
 	) (*models.Integration, error)
 
-	// Delete deletes the Integration with id.
-	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
+	// Delete deletes the Integration with ID.
+	Delete(ctx context.Context, ID uuid.UUID, db database.Database) error
 
-	// Update applies changes to the Integration with id. It returns the updated Integration.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Integration, error)
+	// Update applies changes to the Integration with ID. It returns the updated Integration.
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Integration, error)
 }
