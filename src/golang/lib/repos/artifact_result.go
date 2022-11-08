@@ -16,31 +16,31 @@ type ArtifactResult interface {
 }
 
 type artifactResultReader interface {
-	// Get returns the ArtifactResult with id.
-	Get(ctx context.Context, id uuid.UUID, db database.Database) (*models.ArtifactResult, error)
+	// Get returns the ArtifactResult with ID.
+	Get(ctx context.Context, ID uuid.UUID, db database.Database) (*models.ArtifactResult, error)
 
-	// GetMultiple returns the ArtifactResults with ids.
-	GetMultiple(ctx context.Context, ids []uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
+	// GetBatch returns the ArtifactResults with IDs.
+	GetBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
 
-	// GetByArtifactId returns the ArtifactResult with id artifactId.
-	GetByArtifactId(ctx context.Context, artifactId uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
+	// GetByArtifact returns the ArtifactResult with ID artifactID.
+	GetByArtifact(ctx context.Context, artifactID uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
 
-	// GetByArtifactId returns the ArtifactResult with artifact name name and workflow id workflowId .
-	GetByArtifactNameAndWorkflowId(ctx context.Context, workflowId uuid.UUID, name string, db database.Database) ([]models.ArtifactResult, error)
+	// GetByArtifactAndWorkflow returns the ArtifactResult with artifact name artifactName and workflow ID workflowID.
+	GetByArtifactAndWorkflow(ctx context.Context, workflowID uuid.UUID, artifactName string, db database.Database) ([]models.ArtifactResult, error)
 
-	// GetByWorkflowDagResultIdAndArtifactId returns the ArtifactResult with artifact name name and workflow DAG id workflowDagResultId.
-	GetByWorkflowDagResultIdAndArtifactId(ctx context.Context, workflowDagResultId uuid.UUID, artifactId uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
+	// GetByDAGAndArtifact returns the ArtifactResult with artifact ID artifactID and workflow DAG ID workflowDAGResultID.
+	GetByDAGAndArtifact(ctx context.Context, workflowDAGResultID uuid.UUID, artifactID uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
 
-	// GetByWorkflowDagResultIds returns the ArtifactResult from a workflow DAG with an id in the workflowDagResultIds list.
-	GetByWorkflowDagResultIds(ctx context.Context, workflowDagResultIds []uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
+	// GetByDAGs returns the ArtifactResult from a workflow DAG with an ID in the workflowDAGResultIDs list.
+	GetByDAGs(ctx context.Context, workflowDAGResultIDs []uuid.UUID, db database.Database) ([]models.ArtifactResult, error)
 }
 
 type artifactResultWriter interface {
 	// Create inserts a new ArtifactResult with the specified fields.
 	Create(
 		ctx context.Context,
-		workflowDagResultId uuid.UUID,
-		artifactId uuid.UUID,
+		workflowDAGResultID uuid.UUID,
+		artifactID uuid.UUID,
 		contentPath string,
 		db database.Database,
 	) (*models.ArtifactResult, error)
@@ -48,20 +48,20 @@ type artifactResultWriter interface {
 	// CreateWithExecStateAndMetadata inserts a new ArtifactResult with the specified fields.
 	CreateWithExecStateAndMetadata(
 		ctx context.Context,
-		workflowDagResultId uuid.UUID,
-		artifactId uuid.UUID,
+		workflowDAGResultID uuid.UUID,
+		artifactID uuid.UUID,
 		contentPath string,
 		execState *shared.ExecutionState,
 		metadata *shared.Metadata,
 		db database.Database,
 	) (*models.ArtifactResult, error)
 
-	// Delete deletes the ArtifactResult with id.
-	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
+	// Delete deletes the ArtifactResult with ID.
+	Delete(ctx context.Context, ID uuid.UUID, db database.Database) error
 
-	// DeleteMultiple deletes the ArtifactResult with id.
-	DeleteMultiple(ctx context.Context, ids []uuid.UUID, db database.Database) error
+	// DeleteBatch deletes the ArtifactResult with ID.
+	DeleteBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) error
 
-	// Update applies changes to the ArtifactResult with id. It returns the updated ArtifactResult.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.ArtifactResult, error)
+	// Update applies changes to the ArtifactResult with ID. It returns the updated ArtifactResult.
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, db database.Database) (*models.ArtifactResult, error)
 }
