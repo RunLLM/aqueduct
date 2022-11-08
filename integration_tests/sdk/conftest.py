@@ -8,7 +8,8 @@ import aqueduct
 
 
 def pytest_addoption(parser):
-    # We currently only support a single engine backend at a time.
+    # We currently only support a single data integration and compute engine per test suite run.
+    parser.addoption(f"--data", action="store", default="aqueduct_demo")
     parser.addoption(f"--engine", action="store", default=None)
 
 
@@ -16,14 +17,9 @@ API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 
 
-def all_data_integration_names() -> List[str]:
-    """We currently only support the demo database, but this can eventually be configured arbitrarily."""
-    return ["aqueduct_demo"]
-
-
-@pytest.fixture(scope="session", params=all_data_integration_names())
-def data_integration(request):
-    return request.param
+@pytest.fixture(scope="session")
+def data_integration(pytestconfig):
+    return pytestconfig.getoption("data")
 
 
 @pytest.fixture(scope="session")
