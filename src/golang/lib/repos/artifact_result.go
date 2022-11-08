@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
 
@@ -53,7 +52,7 @@ type artifactResultWriter interface {
 		artifactId uuid.UUID,
 		contentPath string,
 		execState *shared.ExecutionState,
-		metadata *utils.Metadata,
+		metadata *shared.Metadata,
 		db database.Database,
 	) (*models.ArtifactResult, error)
 
