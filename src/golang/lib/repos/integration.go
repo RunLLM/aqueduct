@@ -26,8 +26,8 @@ type integrationReader interface {
 	// GetByServiceAndUser returns the Integrations with the specified service by the user with the ID userID.
 	GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, db database.Database) ([]models.Integration, error)
 
-	// GetByOrganization returns the Integrations by the organization with the ID orgID.
-	GetByOrganization(ctx context.Context, orgId string, db database.Database) ([]models.Integration, error)
+	// GetByOrg returns the Integrations by the organization with the ID orgID.
+	GetByOrg(ctx context.Context, orgId string, db database.Database) ([]models.Integration, error)
 
 	// GetByUser returns the Integrations by the user with the ID userID in the organization with the ID orgID.
 	GetByUser(ctx context.Context, orgID string, userID uuid.UUID, db database.Database) ([]models.Integration, error)
