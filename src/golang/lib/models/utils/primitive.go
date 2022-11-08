@@ -165,3 +165,13 @@ func (n *NullUUIDSlice) Scan(value interface{}) error {
 	n.UUIDSlice, n.IsNull = *uuidSlice, false
 	return nil
 }
+
+type Config map[string]string
+
+func (c *Config) Value() (driver.Value, error) {
+	return ValueJSONB(*c)
+}
+
+func (c *Config) Scan(value interface{}) error {
+	return ScanJSONB(value, c)
+}
