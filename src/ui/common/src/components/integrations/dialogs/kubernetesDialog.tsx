@@ -29,7 +29,9 @@ export const KubernetesDialog: React.FC<Props> = ({
     if (!value?.use_same_cluster) {
       onUpdateField('use_same_cluster', 'false');
     }
+  }, [apiKey, onUpdateField, value?.use_same_cluster]);
 
+  useEffect(() => {
     const fetchEnvironment = async () => {
       const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
         method: 'GET',
@@ -43,7 +45,7 @@ export const KubernetesDialog: React.FC<Props> = ({
     };
 
     fetchEnvironment().catch(console.error);
-  }, [apiKey, onUpdateField, value?.use_same_cluster]);
+  }, []);
 
   return (
     <Box sx={{ mt: 2 }}>
