@@ -6,7 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
 
@@ -24,14 +24,14 @@ type integrationReader interface {
 	GetMultiple(ctx context.Context, ids []uuid.UUID, db database.Database) ([]models.Integration, error)
 
 	// GetByServiceAndUser returns the Integrations with the specified service by the user with the id userId.
-	GetByServiceAndUser(ctx context.Context, service Service, userId uuid.UUID, db database.Database) ([]models.Integration, error)
+	GetByServiceAndUser(ctx context.Context, service shared.Service, userId uuid.UUID, db database.Database) ([]models.Integration, error)
 
 	// GetByOrganization returns the Integrations by the organization with the id organizationId.
 	GetByOrganization(ctx context.Context, organizationId string, db database.Database) ([]models.Integration, error)
 
 	// GetByUser returns the Integrations by the user with the id userId in the organization with the id organizationId.
 	GetByUser(ctx context.Context, organizationId string, userId uuid.UUID, db database.Database) ([]models.Integration, error)
-	
+
 	// GetByNameAndUser returns the Integrations with name integrationName by the user with the id userId in the organization with the id organizationId.
 	GetByNameAndUser(ctx context.Context, integrationName string, userId uuid.UUID, organizationId string, db database.Database) ([]models.Integration, error)
 
@@ -47,7 +47,7 @@ type integrationWriter interface {
 	Create(
 		ctx context.Context,
 		organizationId string,
-		service Service,
+		service shared.Service,
 		name string,
 		config *utils.Config,
 		validated bool,
@@ -59,7 +59,7 @@ type integrationWriter interface {
 		ctx context.Context,
 		organizationId string,
 		userId uuid.UUID,
-		service Service,
+		service shared.Service,
 		name string,
 		config *utils.Config,
 		validated bool,
