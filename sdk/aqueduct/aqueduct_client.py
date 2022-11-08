@@ -492,6 +492,9 @@ class Client:
         )
         dag.engine_config = engine_config
 
+        # This is an important validation to take right before publishing the flow.
+        dag.verify()
+
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
             resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)

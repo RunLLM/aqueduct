@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, TriggerType
-from aqueduct.error import ArtifactNotFoundException, InternalAqueductError
+from aqueduct.enums import ArtifactType, OperatorType, TriggerType, RuntimeType
+from aqueduct.error import ArtifactNotFoundException, InternalAqueductError, InvalidUserArgumentException
 from aqueduct.operators import (
     Operator,
     OperatorSpec,
@@ -33,6 +33,7 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
+
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, ArtifactMetadata] = {}
@@ -49,6 +50,29 @@ class DAG(BaseModel):
         fields = {
             "operators_by_name": {"exclude": ...},
         }
+
+    def verify(self) -> None:
+        """This method must be called before the DAG is published, as a final check that everything is consistent.
+
+        Currently, it:
+        1) Makes sure that the specified compute engine can handle the specified resource requests.
+        """
+        custom_num_cpus_allowed, custom_memory_allowed = False
+        if self.engine_config.type == RuntimeType.K8S:
+            custom_num_cpus_allowed, custom_memory_allowed = True, True
+
+        for op in self.operators.values():
+            if op.spec.resources is not None:
+                if not custom_num_cpus_allowed and op.spec.resources.num_cpus:
+                    raise InvalidUserArgumentException(
+                        "Operator %s configures the number of cpus, which is not supported when running on %s."
+                        % (op.name, self.engine_config.type)
+                    )
+                if not custom_memory_allowed and op.spec.resources.memory_mb:
+                    raise InvalidUserArgumentException(
+                        "Operator %s configures the amount of memory, which is not supported when running on %s."
+                        % (op.name, self.engine_config.type)
+                    )
 
     def must_get_operator(
         self,

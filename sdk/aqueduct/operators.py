@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 from aqueduct.enums import (
     ArtifactType,
@@ -15,7 +15,7 @@ from aqueduct.enums import (
     SerializationType,
     ServiceType,
 )
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.error import AqueductError
 from aqueduct.integrations.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
@@ -174,6 +174,11 @@ class ParamSpec(BaseModel):
     serialization_type: SerializationType
 
 
+class ResourceConfig(BaseModel):
+    num_cpus: Optional[int]
+    memory_mb: Optional[int]
+
+
 class OperatorSpec(BaseModel):
     extract: Optional[ExtractSpec]
     load: Optional[LoadSpec]
@@ -182,6 +187,7 @@ class OperatorSpec(BaseModel):
     check: Optional[CheckSpec]
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
+    resources: Optional[ResourceConfig]
 
 
 class Operator(BaseModel):

@@ -20,7 +20,7 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
+from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec, ResourceConfig
 from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
     CheckFunction,
@@ -267,6 +267,8 @@ def op(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: int = 1,
+    num_cpus: Optional[int] = None,
+    memory_mb: Optional[int] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -295,7 +297,12 @@ def op(
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
-
+        num_cpus:
+            The number of cpus that this operator will run with. This operator will execute with *exactly*
+            this number of cpus. If not enough cpus are available, operator execution will fail.
+        memory_mb:
+            The amount of memory (in MBs) this operator will run with. This operator will execute with *exactly*
+            this amount of memory. If not enough memory is available, operator execution will fail.
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -311,9 +318,19 @@ def op(
 
         >>> recommendations.get()
     """
-    _type_check_decorator_arguments(description, file_dependencies, requirements)
+    _type_check_decorator_arguments(
+        description,
+        file_dependencies,
+        requirements,
+    )
     if num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
+
+    if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
+        raise InvalidUserArgumentException("`num_cpus` must be set to a positive integer.")
+    if memory_mb is not None and (not isinstance(memory_mb, int) or memory_mb < 0):
+        raise InvalidUserArgumentException("`memory_mb` must be set to a positive integer.")
+    resource_config_set = num_cpus or memory_mb
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -345,13 +362,17 @@ def op(
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
+
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
                 file=zip_file,
             )
             return wrap_spec(
-                OperatorSpec(function=function_spec),
+                OperatorSpec(
+                    function=function_spec,
+                    resources=ResourceConfig(num_cpus=num_cpus, memory_mb=memory_mb) if resource_config_set else None,
+                ),
                 *artifacts,
                 op_name=name,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],
