@@ -298,7 +298,7 @@ func ValidateConfig(
 
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == integration.Conda {
-		return validateConda(ctx, jobManager, jobName)
+		return validateConda(ctx)
 	}
 
 	// Schedule authenticate job
@@ -573,11 +573,7 @@ func validateLambdaConfig(
 	return http.StatusOK, nil
 }
 
-func validateConda(
-	ctx context.Context,
-	jobManager job.JobManager,
-	jobName string,
-) (int, error) {
+func validateConda(ctx context.Context) (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
 	if err := exec.Command("conda", "--version").Run(); err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
