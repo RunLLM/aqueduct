@@ -324,7 +324,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <Status status={workflow.dagResults[0].status} />
 
           <Typography
-            variant="h3"
+            variant="h4"
             sx={{ my: 1, lineHeight: 1 }}
             fontWeight="normal"
           >

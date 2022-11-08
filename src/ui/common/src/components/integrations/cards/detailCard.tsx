@@ -68,7 +68,7 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
     integration.service !== 'Lambda'
   ) {
     createdOnText = (
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Created On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
