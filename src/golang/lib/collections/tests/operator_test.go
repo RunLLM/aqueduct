@@ -43,6 +43,7 @@ func seedOperatorWithSpecs(t *testing.T, count int, specs []operator.Spec) []ope
 			randString(10),
 			randString(15),
 			&specs[i],
+			nil,
 			db,
 		)
 		require.Nil(t, err)
@@ -79,6 +80,7 @@ func TestCreateOperator(t *testing.T) {
 		expectedOperator.Name,
 		expectedOperator.Description,
 		&expectedOperator.Spec,
+		nil,
 		db,
 	)
 	require.Nil(t, err)
@@ -113,6 +115,7 @@ func TestGetOperatorsByIntegrationId(t *testing.T) {
 		expectedOperator.Name,
 		expectedOperator.Description,
 		&expectedOperator.Spec,
+		nil,
 		db,
 	)
 	require.Nil(t, err)

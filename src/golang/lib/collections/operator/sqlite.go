@@ -54,9 +54,10 @@ func (w *sqliteWriterImpl) CreateOperator(
 	name string,
 	description string,
 	spec *Spec,
+	executionEnvironmentID *uuid.UUID,
 	db database.Database,
 ) (*DBOperator, error) {
-	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, SpecColumn}
+	insertColumns := []string{IdColumn, NameColumn, DescriptionColumn, SpecColumn, ExecutionEnvironmentIDColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
@@ -64,7 +65,7 @@ func (w *sqliteWriterImpl) CreateOperator(
 		return nil, err
 	}
 
-	args := []interface{}{id, name, description, spec}
+	args := []interface{}{id, name, description, spec, executionEnvironmentID}
 
 	var operator DBOperator
 	err = db.Query(ctx, &operator, insertOperatorStmt, args...)

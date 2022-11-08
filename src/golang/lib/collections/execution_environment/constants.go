@@ -1,7 +1,6 @@
 package execution_environment
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -21,18 +20,6 @@ func allColumns() string {
 			IdColumn,
 			SpecColumn,
 			HashColumn,
-		},
-		",",
-	)
-}
-
-// Returns a joined string of all WorkflowDagResult columns prefixed by table name.
-func allColumnsWithPrefix() string {
-	return strings.Join(
-		[]string{
-			fmt.Sprintf("%s.%s", tableName, IdColumn),
-			fmt.Sprintf("%s.%s", tableName, SpecColumn),
-			fmt.Sprintf("%s.%s", tableName, HashColumn),
 		},
 		",",
 	)

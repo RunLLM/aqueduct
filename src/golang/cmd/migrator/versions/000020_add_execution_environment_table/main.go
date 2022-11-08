@@ -7,11 +7,11 @@ import (
 )
 
 func UpPostgres(ctx context.Context, db database.Database) error {
-	return db.Execute(ctx, postgresAddTableScript)
+	return db.Execute(ctx, upPostgresScript)
 }
 
 func UpSqlite(ctx context.Context, db database.Database) error {
-	return db.Execute(ctx, sqliteAddTableScript)
+	return db.Execute(ctx, upSqliteScript)
 }
 
 func DownPostgres(ctx context.Context, db database.Database) error {
