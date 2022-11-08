@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.config import EngineConfig
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidArtifactTypeException
+from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
 from aqueduct.responses import ArtifactResult
 from aqueduct.serialization import deserialize
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils import generate_engine_config, infer_artifact_type
 
 from aqueduct import globals
 
@@ -48,6 +49,19 @@ def preview_artifacts(
         ],
         make_copy=True,
     )
+
+    if globals.__GLOBAL_CONFIG__.engine is not None:
+        engine = globals.__GLOBAL_CONFIG__.engine
+        if engine is None:
+            engine_config = EngineConfig()
+        else:
+            conntected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+            if engine not in conntected_integrations.keys():
+                raise InvalidIntegrationException(
+                    "Not connected to compute integration %s!" % engine
+                )
+            engine_config = generate_engine_config(conntected_integrations[engine])
+        subgraph.engine_config = engine_config
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 
