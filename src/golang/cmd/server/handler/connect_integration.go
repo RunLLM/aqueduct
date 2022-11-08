@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -577,13 +578,8 @@ func validateConda(
 	jobManager job.JobManager,
 	jobName string,
 ) (int, error) {
-	errMsg := "Unable to validate conda installation. Have you run `aqueduct install conda`?"
-	if err := jobManager.Launch(ctx, jobName, job.NewValidateCondaInstallationSpec(jobName)); err != nil {
-		return http.StatusBadRequest, errors.Wrap(err, errMsg)
-	}
-
-	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollAuthenticateInterval, pollAuthenticateTimeout)
-	if err != nil || jobStatus == shared.FailedExecutionStatus {
+	errMsg := "Unable to validate conda installation. Do you have conda installed?"
+	if err := exec.Command("conda", "--version").Run(); err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 

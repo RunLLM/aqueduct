@@ -254,8 +254,6 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--spec",
 			specStr,
 		), nil
-	} else if spec.Type() == ValidateCondaInstallationJobType {
-		return exec.Command("conda", "--version"), nil
 	} else {
 		return nil, errors.New("Unsupported JobType was passed in.")
 	}
