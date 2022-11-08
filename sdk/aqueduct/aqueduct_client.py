@@ -429,7 +429,9 @@ class Client:
             retention_policy = retention_policy_from_latest_runs(-1)
         else:
             if not isinstance(k_latest_runs, int):
-                raise InvalidUserArgumentException("`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs))
+                raise InvalidUserArgumentException(
+                    "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
+                )
             retention_policy = retention_policy_from_latest_runs(k_latest_runs)
 
         # Set's the execution `engine` if one was provided.
@@ -460,7 +462,9 @@ class Client:
             engine_config = EngineConfig()
         else:
             if not isinstance(engine, str):
-                raise InvalidUserArgumentException("`engine` parameter must be a string, got %s." % type(engine))
+                raise InvalidUserArgumentException(
+                    "`engine` parameter must be a string, got %s." % type(engine)
+                )
 
             if engine not in self._connected_integrations.keys():
                 raise InvalidIntegrationException(
