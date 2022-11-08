@@ -10,7 +10,7 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -114,7 +114,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  useCallback(() => {
+  useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
