@@ -20,7 +20,7 @@ func requireDeepEqual(t *testing.T, expected, actual interface{}) {
 	)
 }
 
-// requireDeepEqualWorkflows that the expected and actual lists of Workflows
+// requireDeepEqualWorkflows asserts that the expected and actual lists of Workflows
 // contain the same elements.
 func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow) {
 	require.Equal(t, len(expected), len(actual))

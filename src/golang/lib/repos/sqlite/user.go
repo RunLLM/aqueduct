@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -114,8 +113,6 @@ func getUser(ctx context.Context, DB database.Database, query string, args ...in
 	if err != nil {
 		return nil, err
 	}
-
-	logrus.Infof("Getting user: %v", users)
 
 	if len(users) == 0 {
 		return nil, database.ErrNoRows
