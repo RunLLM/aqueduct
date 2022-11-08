@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -17,54 +16,29 @@ type Operator interface {
 }
 
 type operatorReader interface {
-	// Exists returns whether a Workflow with id exists.
-	Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error)
+	// Exists returns whether a Operator with ID exists.
+	Exists(ctx context.Context, ID uuid.UUID, db database.Database) (bool, error)
 
-	// Get returns the Workflow with id.
-	Get(ctx context.Context, id uuid.UUID, db database.Database) (*models.Workflow, error)
+	// Get returns the Operator with ID.
+	Get(ctx context.Context, ID uuid.UUID, db database.Database) (*models.Operator, error)
 
-	// GetByOwnerAndName returns the workflow created by ownerID named name.
-	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, db database.Database) (*models.Workflow, error)
+	// GetBatch returns the Operators with IDs.
+	GetBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.Operator, error)
 
-	// GetLatestStatusesByOrg returns the LatestWorkflowStatus for each workflow owned by orgID.
-	GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, db database.Database) ([]views.LatestWorkflowStatus, error)
+	// GetByDAG returns the Operators in a workflow DAG.
+	GetByDAG(ctx context.Context, workflowDAGID uuid.UUID, db database.Database) ([]models.Operator, error)
 
-	// List returns all Workflows.
-	List(ctx context.Context, db database.Database) ([]models.Workflow, error)
+	// GetDistinctLoadOperatorsByWorkflow returns the Load Operators in a workflow.
+	GetDistinctLoadOperatorsByWorkflow(ctx context.Context, workflowID uuid.UUID, db database.Database) ([]models.LoadOperator, error)
 
-	// ValidateOrg returns whether the Workflow was created by a user in orgID.
-	ValidateOrg(ctx context.Context, id uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error)
-	Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error)
-	GetOperator(ctx context.Context, id uuid.UUID, db database.Database) (*DBOperator, error)
-	GetOperators(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBOperator, error)
-	GetOperatorsByWorkflowDagId(
-		ctx context.Context,
-		workflowDagId uuid.UUID,
-		db database.Database,
-	) ([]DBOperator, error)
-	GetDistinctLoadOperatorsByWorkflowId(
-		ctx context.Context,
-		workflowId uuid.UUID,
-		db database.Database,
-	) ([]GetDistinctLoadOperatorsByWorkflowIdResponse, error)
-	GetLoadOperatorsForWorkflowAndIntegration(
-		ctx context.Context,
-		workflowId uuid.UUID,
-		integrationId uuid.UUID,
-		objectName string,
-		db database.Database,
-	) ([]DBOperator, error)
-	ValidateOperatorOwnership(
-		ctx context.Context,
-		organizationId string,
-		operatorId uuid.UUID,
-		db database.Database,
-	) (bool, error)
-	GetOperatorsByIntegrationId(
-		ctx context.Context,
-		integrationId uuid.UUID,
-		db database.Database,
-	) ([]DBOperator, error)
+	// GetLoadOperatorsByWorkflowAndIntegration returns the Operators in a workflow related to an integration.
+	GetLoadOperatorsByWorkflowAndIntegration(ctx context.Context, workflowID uuid.UUID, integrationID uuid.UUID, objectName string, db database.Database) ([]models.Operator, error)
+
+	// GetLoadOperatorsByIntegration returns the Operators related to an integration.
+	GetLoadOperatorsByIntegration(ctx context.Context, integrationID uuid.UUID, objectName string, db database.Database) ([]models.Operator, error)
+
+	// ValidateOrg returns whether the Operator was created by the specified organization.
+	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error)
 }
 
 type operatorWriter interface {
@@ -73,16 +47,16 @@ type operatorWriter interface {
 		ctx context.Context,
 		name string,
 		description string,
-		spec *Spec,
+		spec *shared.Spec,
 		db database.Database,
 	) (*models.Operator, error)
 
-	// Delete deletes the Operator with id.
-	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
+	// Delete deletes the Operator with ID.
+	Delete(ctx context.Context, ID uuid.UUID, db database.Database) error
 
-	// DeleteMultiple deletes the Operators with ids.
-	DeleteMultiple(ctx context.Context, ids []uuid.UUID, db database.Database) error
+	// DeleteBatch deletes the Operators with IDs.
+	DeleteBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) error
 
-	// Update applies changes to the Operator with id. It returns the updated Operator.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Operator, error)
+	// Update applies changes to the Operator with ID. It returns the updated Operator.
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Operator, error)
 }
