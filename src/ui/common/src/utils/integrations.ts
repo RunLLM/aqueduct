@@ -355,7 +355,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/conda.png',
     activated: true,
     category: 'compute',
-  }
+  },
 };
 
 // Helper function to format integration service

@@ -10,7 +10,7 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -46,6 +46,7 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
+import { CondaDialog } from './condaDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -58,7 +59,6 @@ import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 import { SQLiteDialog } from './sqliteDialog';
-import { CondaDialog } from './condaDialog';
 
 type Props = {
   user: UserProfile;
@@ -115,7 +115,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  useCallback(() => {
+  useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
         handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
@@ -291,7 +291,8 @@ const IntegrationDialog: React.FC<Props> = ({
       );
       break;
     case 'Conda':
-      serviceDialog = <CondaDialog/>;
+      serviceDialog = <CondaDialog />;
+      break;
     default:
       return null;
   }
@@ -385,6 +386,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'Kubernetes':
       return isK8sConfigComplete(config as KubernetesConfig);
+    case 'Conda':
+      return true;
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

@@ -20,6 +20,7 @@ import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
+import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
 import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from './components/integrations/dialogs/dialog';
@@ -236,6 +237,7 @@ export {
   CodeBlock,
   CollapsedStatusBarWidthInPx,
   computeTopologicalOrder,
+  CondaDialog,
   ConnectedIntegrations,
   ContentSidebarOffsetInPx,
   createCronString,
