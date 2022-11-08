@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -17,8 +16,8 @@ type Notification interface {
 }
 
 type notificationReader interface {
-	// Get returns the Workflow with id.
-	GetByReceiver(ctx context.Context, receiverId uuid.UUID, status Status, db database.Database) ([]models.Notification, error)
+	// GetByReceiver returns the Workflow with ID.
+	GetByReceiver(ctx context.Context, receiverID uuid.UUID, status shared.Status, db database.Database) ([]models.Notification, error)
 
 	// ValidateUser returns whether the Notification belongs to userID.
 	ValidateUser(ctx context.Context, notificationID uuid.UUID, userID uuid.UUID, db database.Database) (bool, error)
@@ -28,13 +27,13 @@ type notificationWriter interface {
 	// Create inserts a new Notification with the specified fields.
 	Create(
 		ctx context.Context,
-		receiverId uuid.UUID,
+		receiverID uuid.UUID,
 		content string,
-		level Level,
-		association NotificationAssociation,
+		level shared.Level,
+		association shared.NotificationAssociation,
 		db database.Database,
 	) (*models.Notification, error)
 
-	// Update applies changes to the status of the Notification with id. It returns the updated Notification.
-	Update(ctx context.Context, id uuid.UUID, status Status, db database.Database) (*models.Notification, error)
+	// Update applies changes to the status of the Notification with ID. It returns the updated Notification.
+	Update(ctx context.Context, ID uuid.UUID, status shared.Status, db database.Database) (*models.Notification, error)
 }
