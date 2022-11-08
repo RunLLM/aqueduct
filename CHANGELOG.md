@@ -10,6 +10,7 @@ Released on November 7, 2022.
 * Improves operator execution time by only importing `great_expectations` when
     it's being used; the library import is quite slow, so doing it on every
     operator was wasteful.
+* Adjusts various font sizes in the UI to improve presentation.
 * Adds MongoDB integration.
 * Adds `engine` parameter to `global_config`, allowing users to specify a
     default compute engine; `engine` is also now an optional parameter to
