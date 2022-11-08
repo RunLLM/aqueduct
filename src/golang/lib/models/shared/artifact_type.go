@@ -3,17 +3,17 @@ package shared
 type ArtifactType string
 
 const (
-	Untyped   ArtifactType = "untyped"
-	String    ArtifactType = "string"
-	Bool      ArtifactType = "boolean"
-	Numeric   ArtifactType = "numeric"
-	Dict      ArtifactType = "dictionary"
-	Tuple     ArtifactType = "tuple"
-	Table     ArtifactType = "table"
-	Json      ArtifactType = "json"
-	Bytes     ArtifactType = "bytes"
-	Image     ArtifactType = "image"
-	Picklable ArtifactType = "picklable"
+	UntypedArtifact   ArtifactType = "untyped"
+	StringArtifact    ArtifactType = "string"
+	BoolArtifact      ArtifactType = "boolean"
+	NumericArtifact   ArtifactType = "numeric"
+	DictArtifact      ArtifactType = "dictionary"
+	TupleArtifact     ArtifactType = "tuple"
+	TableArtifact     ArtifactType = "table"
+	JsonArtifact      ArtifactType = "json"
+	BytesArtifact     ArtifactType = "bytes"
+	ImageArtifact     ArtifactType = "image"
+	PicklableArtifact ArtifactType = "picklable"
 )
 
 // `IsCompact` indicates if the value is 'small' enough to pass around in-memory.
@@ -21,5 +21,5 @@ const (
 // This is typically used for request / response handling.
 // TODO (ENG-1687): persist compact values directly to DB.
 func (t ArtifactType) IsCompact() bool {
-	return t == Bool || t == Numeric || t == String
+	return t == BoolArtifact || t == NumericArtifact || t == StringArtifact
 }
