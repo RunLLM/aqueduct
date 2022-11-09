@@ -2,6 +2,7 @@ package models
 
 import (
 	"strings"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -39,6 +40,7 @@ type LoadOperator struct {
 	TableName       string         `db:"table_name" json:"object_name"`
 	UpdateMode      string         `db:"update_mode" json:"update_mode"`
 }
+
 // OperatorCols returns a comma-separated string of all Operator columns.
 func OperatorCols() string {
 	return strings.Join(allOperatorCols(), ",")
