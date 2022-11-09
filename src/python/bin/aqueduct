@@ -366,16 +366,11 @@ def install_postgres():
 def install_bigquery():
     execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery"])
 
-
 def install_snowflake():
     execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy"])
 
-
 def install_s3():
     execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
-
-def install_conda():
-    execute_command([sys.executable, "-m", "pip", "install", "conda"])
 
 def install_athena():
     execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
@@ -459,8 +454,6 @@ def install(system):
         install_sqlserver()
     elif system == "mongodb":
         install_mongodb()
-    elif system == "conda":
-        install_conda()
     else:
         raise Exception("Unsupported system: %s" % system)
 
