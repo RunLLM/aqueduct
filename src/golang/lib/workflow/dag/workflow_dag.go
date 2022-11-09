@@ -44,10 +44,14 @@ type WorkflowDag interface {
 	// of all operators on this DAG.
 	FindMissingEnv(ctx context.Context) ([]environment.Environment, error)
 
-	// BindOperatorsToEnvs updates operator DB rows such that each operator
+	// BindOperatorsToEnvs updates all operators such that each operator
 	// points to the environment object matching its dependencies.
+	//
 	// This function assumes there's no missing environments, and should error
 	// if there's any environment missing.
+	//
+	// This function DO NOT update operators in DB. One should call `op.Persist()`
+	// to do so.
 	BindOperatorsToEnvs(ctx context.Context) error
 }
 

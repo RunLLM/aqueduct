@@ -947,5 +947,5 @@ func (eng *aqEngine) InitEnv(
 	ctx context.Context,
 	env *environment.Environment,
 ) error {
-	return env.CreateConda()
+	return CreateConda(env)
 }

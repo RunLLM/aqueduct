@@ -1,4 +1,4 @@
-package environment
+package engine
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/environment"
 	"github.com/google/uuid"
 )
 
@@ -28,16 +29,16 @@ func IsCondaConnected(
 	return len(integrations) > 0, nil
 }
 
-func (e *Environment) CondaName() string {
-	return fmt.Sprintf("aqueduct_%s", e.Id.String())
+func CondaName(env *environment.Environment) string {
+	return fmt.Sprintf("aqueduct_%s", env.Id.String())
 }
 
 // `CreateConda` creates the conda environment based on this
 // environment's python version and dependencies.
-func (e *Environment) CreateConda() error {
+func CreateConda(env *environment.Environment) error {
 	return nil
 }
 
-func (e *Environment) DeleteCondaIfExists() error {
+func DeleteCondaIfExists(env *environment.Environment) error {
 	return nil
 }
