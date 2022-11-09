@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/google/uuid"
 )
 
 type sqliteReaderImpl struct {
@@ -25,7 +26,7 @@ func newSqliteWriter() Writer {
 
 func (w *sqliteWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash string,
+	spec Spec, hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	insertColumns := []string{

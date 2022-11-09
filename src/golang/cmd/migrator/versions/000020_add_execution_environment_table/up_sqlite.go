@@ -4,7 +4,7 @@ const upSqliteScript = `
 CREATE TABLE IF NOT EXISTS execution_environment (
     id BLOB NOT NULL PRIMARY KEY,
     spec BLOB NOT NULL,
-    hash TEXT NOT NULL UNIQUE
+    hash BLOB NOT NULL UNIQUE
 );
 
 ALTER TABLE operator 

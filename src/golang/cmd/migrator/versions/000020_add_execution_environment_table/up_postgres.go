@@ -4,7 +4,7 @@ const upPostgresScript = `
 CREATE TABLE IF NOT EXISTS execution_environment (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     spec JSONB NOT NULL,
-    hash VARCHAR NOT NULL UNIQUE
+    hash UUID NOT NULL UNIQUE
 );
 
 ALTER TABLE operator 

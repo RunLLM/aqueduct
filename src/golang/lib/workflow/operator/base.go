@@ -11,7 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/environment"
+	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -51,7 +51,7 @@ type baseOperator struct {
 
 	// TODO: This is public to avoid compiling error.
 	// We should change this to private once this attribute is used.
-	Env *environment.Environment
+	ExecEnv *execEnv.ExecutionEnvironment
 }
 
 func (bo *baseOperator) Type() operator.Type {

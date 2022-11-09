@@ -26,7 +26,7 @@ func NewNoopWriter(throwError bool) Writer {
 
 func (w *noopWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash string,
+	spec Spec, hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
@@ -45,6 +45,14 @@ func (r *noopReaderImpl) GetExecutionEnvironments(
 	ids []uuid.UUID,
 	db database.Database,
 ) ([]DBExecutionEnvironment, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}
+
+func (r *noopReaderImpl) GetExecutionEnvironmentByHash(
+	ctx context.Context,
+	hash uuid.UUID,
+	db database.Database,
+) (*DBExecutionEnvironment, error) {
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
