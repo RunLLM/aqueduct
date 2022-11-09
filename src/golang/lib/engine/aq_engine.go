@@ -342,7 +342,6 @@ func (eng *aqEngine) PreviewWorkflow(
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
 	// previewing workflows always happens using the ProcessJobManager
-	log.Infof("EngineConfig  %s", dbWorkflowDag.EngineConfig.Type)
 	jobManagerConfig, err := generateJobManagerConfig(
 		ctx,
 		dbWorkflowDag,
