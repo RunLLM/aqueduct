@@ -22,6 +22,7 @@ import (
 	_000017 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000017_update_to_canceled_status"
 	_000018 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000018_add_dag_result_exec_state_column"
 	_000019 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000019_add_serialization_type_value_to_param_op"
+	_000020 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000020_add_execution_environment_table"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -142,5 +143,11 @@ func init() {
 		upPostgres: _000019.Up, upSqlite: _000019.Up,
 		downPostgres: _000019.Down,
 		name:         "add serialization type and value to param op",
+	}
+
+	registeredMigrations[20] = &migration{
+		upPostgres: _000020.UpPostgres, upSqlite: _000020.UpSqlite,
+		downPostgres: _000020.DownPostgres,
+		name:         "add execution environment table",
 	}
 }

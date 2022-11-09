@@ -141,6 +141,7 @@ func WriteWorkflowDagToDatabase(
 				operator.Name,
 				operator.Description,
 				&operator.Spec,
+				nil, // setting execution environment id to null for now.
 				db,
 			)
 			if err != nil {
