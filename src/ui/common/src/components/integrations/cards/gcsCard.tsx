@@ -12,7 +12,7 @@ export const GCSCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as GCSConfig;
   return (
     <Box>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Bucket: </strong>
         {config.bucket}
       </Typography>

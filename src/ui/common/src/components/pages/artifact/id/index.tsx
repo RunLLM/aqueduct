@@ -104,8 +104,6 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   ];
 
   useEffect(() => {
-    document.title = 'Artifact Details | Aqueduct';
-
     // Load workflow dag result if it's not cached
     if (
       !workflowDagResultWithLoadingStatus ||
