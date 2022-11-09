@@ -10,7 +10,7 @@ import (
 // A Workflow maps to the workflow table.
 type Workflow struct {
 	ID              uuid.UUID              `db:"id" json:"id"`
-	UserId          uuid.UUID              `db:"user_id" json:"user_id"`
+	UserID          uuid.UUID              `db:"user_id" json:"user_id"`
 	Name            string                 `db:"name" json:"name"`
 	Description     string                 `db:"description" json:"description"`
 	Schedule        shared.Schedule        `db:"schedule" json:"schedule"`
