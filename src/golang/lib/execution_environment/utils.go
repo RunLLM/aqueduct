@@ -7,7 +7,6 @@ import (
 	"os/exec"
 
 	"github.com/dropbox/godropbox/errors"
-
 	log "github.com/sirupsen/logrus"
 )
 

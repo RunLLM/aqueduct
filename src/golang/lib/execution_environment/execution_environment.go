@@ -26,13 +26,18 @@ type ExecutionEnvironment struct {
 }
 
 func (e *ExecutionEnvironment) CreateDBRecord(ctx context.Context) error {
-	_, err := e.execEnvWriter.CreateExecutionEnvironment(
+	hash, err := e.Hash()
+	if err != nil {
+		return err
+	}
+
+	_, err = e.execEnvWriter.CreateExecutionEnvironment(
 		ctx,
 		dbExecEnv.Spec{
 			PythonVersion: e.PythonVersion,
 			Dependencies:  e.Dependencies,
 		},
-		e.Hash(),
+		hash,
 		e.db,
 	)
 	return err
@@ -44,14 +49,17 @@ func (e *ExecutionEnvironment) DeleteDBRecord(ctx context.Context) error {
 
 // Hash generates a hash based on the environment's
 // dependency set and python version.
-func (e *ExecutionEnvironment) Hash() uuid.UUID {
+func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 	sliceToHash := append(e.Dependencies, e.PythonVersion)
 	sort.Strings(sliceToHash)
 
 	buf := &bytes.Buffer{}
-	gob.NewEncoder(buf).Encode(sliceToHash)
+	err := gob.NewEncoder(buf).Encode(sliceToHash)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
-	return uuid.NewSHA1(uuid.NameSpaceOID, buf.Bytes())
+	return uuid.NewSHA1(uuid.NameSpaceOID, buf.Bytes()), nil
 }
 
 func (e *ExecutionEnvironment) Name() string {
@@ -102,8 +110,7 @@ func (e *ExecutionEnvironment) DeleteEnv() error {
 		e.Name(),
 	}
 
-	runCmd(condaCmdPrefix, deleteArgs...)
-	return nil
+	return runCmd(condaCmdPrefix, deleteArgs...)
 }
 
 // GetExecEnvFromDB returns an exec env object from DB by its hash.
