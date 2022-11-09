@@ -143,6 +143,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             user={user}
             service={service}
             onSuccess={() => {
+              setShowDialog(false);
               setShowSuccessToast(service);
             }}
             onCloseDialog={() => {
