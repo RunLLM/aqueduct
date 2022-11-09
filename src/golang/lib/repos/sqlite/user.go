@@ -51,7 +51,7 @@ func (*userWriter) Create(
 	cols := []string{
 		models.UserID,
 		models.UserEmail,
-		models.UserOrganizationID,
+		models.UserOrgID,
 		models.UserRole,
 		models.UserAPIKey,
 		models.UserAuth0ID,
