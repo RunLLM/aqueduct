@@ -17,23 +17,23 @@ type Workflow interface {
 }
 
 type workflowReader interface {
-	// Exists returns whether a Workflow with id exists.
-	Exists(ctx context.Context, id uuid.UUID, db database.Database) (bool, error)
+	// Exists returns whether a Workflow with ID exists.
+	Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error)
 
-	// Get returns the Workflow with id.
-	Get(ctx context.Context, id uuid.UUID, db database.Database) (*models.Workflow, error)
+	// Get returns the Workflow with ID.
+	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error)
 
 	// GetByOwnerAndName returns the workflow created by ownerID named name.
-	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, db database.Database) (*models.Workflow, error)
+	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
 	// GetLatestStatusesByOrg returns the LatestWorkflowStatus for each workflow owned by orgID.
-	GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, db database.Database) ([]views.LatestWorkflowStatus, error)
+	GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, DB database.Database) ([]views.LatestWorkflowStatus, error)
 
 	// List returns all Workflows.
-	List(ctx context.Context, db database.Database) ([]models.Workflow, error)
+	List(ctx context.Context, DB database.Database) ([]models.Workflow, error)
 
 	// ValidateOrg returns whether the Workflow was created by a user in orgID.
-	ValidateOrg(ctx context.Context, id uuid.UUID, orgID uuid.UUID, db database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error)
 }
 
 type workflowWriter interface {
@@ -45,12 +45,12 @@ type workflowWriter interface {
 		description string,
 		schedule *shared.Schedule,
 		retentionPolicy *shared.RetentionPolicy,
-		db database.Database,
+		DB database.Database,
 	) (*models.Workflow, error)
 
-	// Delete deletes the Workflow with id.
-	Delete(ctx context.Context, id uuid.UUID, db database.Database) error
+	// Delete deletes the Workflow with ID.
+	Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error
 
-	// Update applies changes to the Workflow with id. It returns the updated Workflow.
-	Update(ctx context.Context, id uuid.UUID, changes map[string]interface{}, db database.Database) (*models.Workflow, error)
+	// Update applies changes to the Workflow with ID. It returns the updated Workflow.
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Workflow, error)
 }
