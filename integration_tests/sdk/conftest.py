@@ -2,42 +2,29 @@ import os
 from typing import List
 
 import pytest
-import utils
 from aqueduct.dag import DAG, Metadata
 
 import aqueduct
 
-# Usage: add a <flag> in FLAGS which will enable `--{flag}` in test cmd options.
-# The option variable can be accessed through utils.flags during tests.
-# One can also mark test to be triggered only when `--{flag}` is turned on through
-# @pytest.mark.<flag_name>
-FLAGS = []
-
 
 def pytest_addoption(parser):
-    for flag in FLAGS:
-        parser.addoption(f"--{flag}", action="store_true", default=False)
+    # We currently only support a single data integration and compute engine per test suite run.
+    parser.addoption(f"--data", action="store", default="aqueduct_demo")
+    parser.addoption(f"--engine", action="store", default=None)
 
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 
 
-@pytest.fixture(autouse=True)
-def fetch_flags(pytestconfig):
-    for flag in FLAGS:
-        utils.flags[flag] = pytestconfig.getoption(flag)
-    yield
+@pytest.fixture(scope="session")
+def data_integration(pytestconfig):
+    return pytestconfig.getoption("data")
 
 
-def all_data_integration_names() -> List[str]:
-    """We currently only support the demo database, but this can eventually be configured arbitrarily."""
-    return ["aqueduct_demo"]
-
-
-@pytest.fixture(scope="session", params=all_data_integration_names())
-def data_integration(request):
-    return request.param
+@pytest.fixture(scope="session")
+def engine(pytestconfig):
+    return pytestconfig.getoption("engine")
 
 
 @pytest.fixture(scope="function")
@@ -53,19 +40,3 @@ def client(pytestconfig):
         )
 
     return aqueduct.Client(api_key, server_address)
-
-
-def pytest_configure(config):
-    for flag in FLAGS:
-        config.addinivalue_line(
-            "markers",
-            f"{flag}: mark test to only run if --{flag} command line flag is supplied",
-        )
-
-
-# This allows us to skip tests that depend on command line flags, because pytest.mark.skipif() is evaluated
-# before our fixtures are, so we cannot reference fixtures in our test skip condition.
-def pytest_runtest_setup(item):
-    for flag in FLAGS:
-        if flag in item.keywords and not item.config.getoption(f"--{flag}"):
-            pytest.skip(f"need --{flag} option to run this test")
