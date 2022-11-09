@@ -17,16 +17,16 @@ type OperatorResult interface {
 
 type operatorResultReader interface {
 	// Get returns the OperatorResult with ID.
-	Get(ctx context.Context, ID uuid.UUID, db database.Database) (*models.OperatorResult, error)
+	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
 
 	// GetBatch returns the OperatorResults with IDs.
-	GetBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) ([]models.OperatorResult, error)
+	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 
 	// GetByWorkflowDagResultIdAndOperatorId returns the OperatorResult given the operatorID and workflowDAGResultIDs.
-	GetByDAGAndOperator(ctx context.Context, workflowDAGResultIDs, operatorID uuid.UUID, db database.Database) (*models.OperatorResult, error)
+	GetByDAGAndOperator(ctx context.Context, workflowDAGResultIDs, operatorID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
 
 	// GetByDAG returns the OperatorResult given workflowDAGResultIDs.
-	GetByDAG(ctx context.Context, workflowDAGResultIDs []uuid.UUID, db database.Database) ([]models.OperatorResult, error)
+	GetByDAG(ctx context.Context, workflowDAGResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 }
 
 type operatorResultWriter interface {
@@ -36,15 +36,15 @@ type operatorResultWriter interface {
 		workflowDAGResultID uuid.UUID,
 		operatorID uuid.UUID,
 		execState *shared.ExecutionState,
-		db database.Database,
+		DB database.Database,
 	) (*models.OperatorResult, error)
 
 	// Delete deletes the OperatorResult with ID.
-	Delete(ctx context.Context, ID uuid.UUID, db database.Database) error
+	Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error
 
 	// DeleteBatch deletes the OperatorResults with IDs.
-	DeleteBatch(ctx context.Context, IDs []uuid.UUID, db database.Database) error
+	DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
 
 	// Update applies changes to the OperatorResult with ID. It returns the updated OperatorResult.
-	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, db database.Database) (*models.OperatorResult, error)
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.OperatorResult, error)
 }
