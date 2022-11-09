@@ -46,6 +46,7 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
+import { CondaDialog } from './condaDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -289,6 +290,9 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Conda':
+      serviceDialog = <CondaDialog />;
+      break;
     default:
       return null;
   }
@@ -382,6 +386,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'Kubernetes':
       return isK8sConfigComplete(config as KubernetesConfig);
+    case 'Conda':
+      return true;
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

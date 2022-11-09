@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/environment"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -60,6 +61,11 @@ type Engine interface {
 		timeConfig *AqueductTimeConfig,
 		parameters map[string]param.Param,
 	) (shared.ExecutionStatus, error)
+
+	// InitEnv initialize the given environment for this engine.
+	// This typically involves time-consuming steps that we want to avoid
+	// during execution time, like creating conda or docker img.
+	InitEnv(ctx context.Context, env *environment.Environment) error
 }
 
 // AqEngine should be implemented by aqEngine
