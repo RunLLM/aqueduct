@@ -11,12 +11,12 @@ const (
 	UserTable = "app_user"
 
 	// User column names
-	UserID             = "id"
-	UserEmail          = "email"
-	UserOrganizationID = "organization_id"
-	UserRole           = "role"
-	UserAPIKey         = "api_key"
-	UserAuth0ID        = "auth0_id"
+	UserID      = "id"
+	UserEmail   = "email"
+	UserOrgID   = "organization_id"
+	UserRole    = "role"
+	UserAPIKey  = "api_key"
+	UserAuth0ID = "auth0_id"
 )
 
 // A User maps to the app_user table.
@@ -49,7 +49,7 @@ func allUserCols() []string {
 	return []string{
 		UserID,
 		UserEmail,
-		UserOrganizationID,
+		UserOrgID,
 		UserRole,
 		UserAPIKey,
 		UserAuth0ID,
