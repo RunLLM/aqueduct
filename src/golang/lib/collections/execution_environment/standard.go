@@ -17,7 +17,7 @@ type standardWriterImpl struct{}
 
 func (w *standardWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash string,
+	spec Spec, hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	insertColumns := []string{SpecColumn, HashColumn}
@@ -67,6 +67,21 @@ func (r *standardReaderImpl) GetExecutionEnvironments(
 	var results []DBExecutionEnvironment
 	err := db.Query(ctx, &results, query, args...)
 	return results, err
+}
+
+func (r *standardReaderImpl) GetExecutionEnvironmentByHash(
+	ctx context.Context,
+	hash uuid.UUID,
+	db database.Database,
+) (*DBExecutionEnvironment, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM execution_environment WHERE hash = $1;",
+		allColumns(),
+	)
+	var result DBExecutionEnvironment
+
+	err := db.Query(ctx, &result, query, hash)
+	return &result, err
 }
 
 func (w *standardWriterImpl) UpdateExecutionEnvironment(
