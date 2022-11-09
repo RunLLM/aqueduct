@@ -3,12 +3,12 @@ package dag
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/environment"
+	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
 )
 
-func (w *workflowDagImpl) FindMissingEnv(
+func (w *workflowDagImpl) FindMissingExecEnv(
 	ctx context.Context,
-) ([]environment.Environment, error) {
+) ([]execEnv.ExecutionEnvironment, error) {
 	return nil, nil
 }
 

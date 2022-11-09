@@ -13,6 +13,11 @@ on:
       - '.github/workflows/run-notebooks.yml'
       - "examples/churn_prediction/Customer Churn Tutorial.ipynb"
       - "examples/sentiment_analysis/Sentiment Model.ipynb"
+      - "examples/diabetes-classifier/Classifying Diabetes Risk.ipynb"
+      - "examples/house-price-prediction/House Price Prediction.ipynb"
+      - "examples/mpg-regressor/Predicting MPG.ipynb"
+      - "examples/tutorials/Parameters Tutorial.ipynb"
+      - "examples/tutorials/Quickstart Tutorial.ipynb"
       - "integration_tests/notebook/imported_function.ipynb"
 
 jobs:
@@ -60,7 +65,7 @@ jobs:
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install Packages needed by the notebooks
-        run: python3 -m pip install sklearn transformers torch
+        run: python3 -m pip install scikit-learn transformers torch
 
       - name: Wait for server again
         timeout-minutes: 1
