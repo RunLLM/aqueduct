@@ -16,10 +16,9 @@ pyarrow==7.0.0 \
 boto3==1.18.0 \
 pydantic==1.9.0 \
 scikit_learn==1.0.2
+# aqueduct-ml==0.1.3
 
-RUN git clone https://github.com/aqueducthq/aqueduct.git
-RUN cd aqueduct && git checkout eng-1951-add-ability-to-configure-cpu-and-memory
-RUN cd aqueduct/src/python && pip3 install .
+RUN pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ aqueduct-ml-test-kenny==0.1.3
 
 ENV PYTHONUNBUFFERED 1
 

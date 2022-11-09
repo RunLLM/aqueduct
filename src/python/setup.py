@@ -9,7 +9,7 @@ readme_path = Path(os.environ["PWD"], "../../README.md")
 long_description = open(readme_path).read()
 
 setup(
-    name="aqueduct-ml",
+    name="aqueduct-ml-test-kenny",
     version="0.1.3",
     install_requires=install_requires,
     scripts=["bin/aqueduct"],
