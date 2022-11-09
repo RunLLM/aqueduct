@@ -282,7 +282,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
       return 'Artifact Node';
     } else {
-      if (selectedDag.artifacts[currentNode.id]) {
+      if (selectedDag.operators[currentNode.id]) {
         return selectedDag.operators[currentNode.id].name;
       }
       return 'Operator Node';

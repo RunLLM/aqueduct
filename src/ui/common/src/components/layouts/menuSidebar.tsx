@@ -193,7 +193,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       </Box>
 
       <Box style={menuSidebarFooter}>
-        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Documentation" placement="right" arrow>
             <Link href="https://docs.aqueducthq.com" underline="none">
@@ -204,7 +204,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             </Link>
           </Tooltip>
         </Box>
-        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Report Issue" placement="right" arrow>
             <Link href="mailto:support@aqueducthq.com" underline="none">
