@@ -1,12 +1,14 @@
 from os import cpu_count
 
 from aqueduct import op
+from aqueduct.enums import ServiceType
 from utils import generate_new_flow_name, run_flow_test
+import pytest
 
 
-# TODO: narrow this to only K8s
-def test_custom_num_cpus_for_k8s(client, engine):
-    """Assumption: nodes in the K8s cluster have more than 6 CPUs.
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+def test_custom_num_cpus(client, engine):
+    """Assumption: nodes in the K8s cluster have more than 4 CPUs.
 
     We run a special operator that checks the number of CPUs that are available.
     We check the expected default number of cpus, as well as a custom number.
@@ -31,8 +33,8 @@ def test_custom_num_cpus_for_k8s(client, engine):
 
     num_default_available_cpus = count_default_available_cpus.lazy()
 
-    # Returns 6, the custom number of CPUs on the K8s cluster.
-    @op(requirements=[], resources={"num_cpus": 6})
+    # Returns 4, the custom number of CPUs on the K8s cluster.
+    @op(requirements=[], resources={"num_cpus": 4})
     def count_with_custom_available_cpus():
         return _count_available_cpus()
 
@@ -68,7 +70,8 @@ def test_custom_num_cpus_for_k8s(client, engine):
             client.delete_flow(flow.id())
 
 
-def test_custom_memory_for_k8s(client, engine):
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+def test_custom_memory(client, engine):
     """Assumption: nodes in the K8s cluster have more than 200MB of capacity.
 
     Customize our memory to be 200MB. We will run two different methods, one that allocates less than

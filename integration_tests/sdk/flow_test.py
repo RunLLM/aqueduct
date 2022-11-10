@@ -26,7 +26,6 @@ from utils import (
 import aqueduct
 from aqueduct import FlowConfig, LoadUpdateMode, check, metric, op
 
-
 def test_basic_flow(client, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
