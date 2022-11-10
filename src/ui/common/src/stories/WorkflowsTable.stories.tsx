@@ -1,16 +1,18 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { CheckLevel } from '../utils/operators';
 
+import CheckItem from '../components/pages/workflows/components/CheckItem';
+import EngineItem from '../components/pages/workflows/components/EngineItem';
+import MetricItem, {
+  MetricPreview,
+} from '../components/pages/workflows/components/MetricItem';
+import WorkflowNameItem from '../components/pages/workflows/components/WorkflowNameItem';
 import WorkflowTable, {
   WorkflowTableData,
 } from '../components/tables/WorkflowTable';
 import { SupportedIntegrations } from '../utils/integrations';
+import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
-import CheckItem from '../components/pages/workflows/components/CheckItem';
-import EngineItem from '../components/pages/workflows/components/EngineItem';
-import MetricItem, { MetricPreview } from '../components/pages/workflows/components/MetricItem';
-import WorkflowNameItem from '../components/pages/workflows/components/WorkflowNameItem';
 
 export const WorkflowsTable: React.FC = () => {
   const checkPreviews = [
@@ -20,7 +22,7 @@ export const WorkflowsTable: React.FC = () => {
       status: ExecutionStatus.Succeeded,
       level: CheckLevel.Error,
       value: 'True',
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     },
     {
       checkId: '2',
@@ -28,7 +30,7 @@ export const WorkflowsTable: React.FC = () => {
       status: ExecutionStatus.Failed,
       level: CheckLevel.Error,
       value: 'True',
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     },
     {
       checkId: '3',
@@ -37,7 +39,7 @@ export const WorkflowsTable: React.FC = () => {
       status: ExecutionStatus.Pending,
       level: CheckLevel.Warning,
       value: null,
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     },
     {
       checkId: '4',
@@ -46,7 +48,7 @@ export const WorkflowsTable: React.FC = () => {
       status: ExecutionStatus.Succeeded,
       level: CheckLevel.Warning,
       value: 'False',
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     },
     {
       checkId: '5',
@@ -55,7 +57,7 @@ export const WorkflowsTable: React.FC = () => {
       status: ExecutionStatus.Canceled,
       level: CheckLevel.Warning,
       value: 'False',
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     },
   ];
 

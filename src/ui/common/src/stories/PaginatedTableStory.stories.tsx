@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import React from 'react';
 
 import { PaginatedTable } from '../components/tables/PaginatedTable';
 import { Data } from '../utils/data';
