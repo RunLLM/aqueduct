@@ -20,7 +20,7 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "19"
+SCHEMA_VERSION = "20"
 CHUNK_SIZE = 4096
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
@@ -374,6 +374,8 @@ def install_snowflake():
 def install_s3():
     execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
 
+def install_conda():
+    execute_command([sys.executable, "-m", "pip", "install", "conda"])
 
 def install_athena():
     execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
@@ -457,6 +459,8 @@ def install(system):
         install_sqlserver()
     elif system == "mongodb":
         install_mongodb()
+    elif system == "conda":
+        install_conda()
     else:
         raise Exception("Unsupported system: %s" % system)
 

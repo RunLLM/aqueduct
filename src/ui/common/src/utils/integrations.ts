@@ -183,7 +183,8 @@ export type Service =
   | 'SQLite'
   | 'Lambda'
   | 'Google Sheets'
-  | 'MongoDB';
+  | 'MongoDB'
+  | 'Conda';
 
 export type Info = {
   logo: string;
@@ -349,6 +350,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mongo.png',
     activated: true,
     category: 'data',
+  },
+  ['Conda']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/conda.png',
+    activated: true,
+    category: 'compute',
   },
 };
 

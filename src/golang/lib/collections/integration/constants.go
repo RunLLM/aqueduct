@@ -61,6 +61,7 @@ const (
 	Athena       Service = "Athena"
 	Lambda       Service = "Lambda"
 	MongoDB      Service = "MongoDB"
+	Conda        Service = "Conda"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
@@ -69,7 +70,7 @@ const (
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
 	switch svc {
-	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS, Lambda, MongoDB:
+	case Postgres, Snowflake, MySql, Redshift, MariaDb, SqlServer, BigQuery, GoogleSheets, Salesforce, S3, Athena, AqueductDemo, Github, Sqlite, Airflow, Kubernetes, GCS, Lambda, MongoDB, Conda:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)

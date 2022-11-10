@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -295,6 +296,11 @@ func ValidateConfig(
 		return validateLambdaConfig(ctx, config)
 	}
 
+	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
+	if service == integration.Conda {
+		return validateConda()
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
 
@@ -303,7 +309,6 @@ func ValidateConfig(
 		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
 	}()
 
-	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	jobSpec := job.NewAuthenticateSpec(
 		jobName,
 		storageConfig,
@@ -563,6 +568,15 @@ func validateLambdaConfig(
 ) (int, error) {
 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateConda() (int, error) {
+	errMsg := "Unable to validate conda installation. Do you have conda installed?"
+	if err := exec.Command("conda", "--version").Run(); err != nil {
+		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 
 	return http.StatusOK, nil
