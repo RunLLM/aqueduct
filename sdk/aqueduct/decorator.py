@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Mapping, Optional, Union, cast, Dict
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -267,6 +267,7 @@ will be used when running the function."""
             artifacts[idx] = new_artifact
     return artifacts
 
+
 # Supported resource configuration keys, supplied in the `resources` field of the decorators.
 NUM_CPUS_KEY = "num_cpus"
 MEMORY_KEY = "memory"
@@ -302,8 +303,6 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
         )
 
     return multiplier * int(memory_scalar_str)
-
-
 
 
 def op(
@@ -392,16 +391,22 @@ def op(
         memory = resources.get(MEMORY_KEY)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
-            raise InvalidUserArgumentException("`num_cpus` value must be set to a positive integer.")
+            raise InvalidUserArgumentException(
+                "`num_cpus` value must be set to a positive integer."
+            )
 
         # `memory` value can be either an int (in MBs) or a string. We will convert it into an integer
         # representing the number of MBs.
         if memory is not None:
             if not isinstance(memory, int) and not isinstance(memory, str):
-                raise InvalidUserArgumentException("`memory` value must be either an integer or string.")
+                raise InvalidUserArgumentException(
+                    "`memory` value must be either an integer or string."
+                )
 
-            if isinstance(memory , int) and memory < 0:
-                raise InvalidUserArgumentException("If `memory` value is set as an integer, it must be positive.")
+            if isinstance(memory, int) and memory < 0:
+                raise InvalidUserArgumentException(
+                    "If `memory` value is set as an integer, it must be positive."
+                )
 
             # We'll need to convert the string value into an integer (in MBs).
             if isinstance(memory, str):
