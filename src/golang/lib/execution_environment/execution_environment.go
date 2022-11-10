@@ -12,6 +12,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const condaCmdPrefix = "conda"
@@ -131,15 +132,15 @@ func GetExecEnvFromDB(
 	execEnvReader db_exec_env.Reader,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	db_exec_env, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
+	dbExecEnv, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ExecutionEnvironment{
-		Id:            db_exec_env.Id,
-		PythonVersion: db_exec_env.Spec.PythonVersion,
-		Dependencies:  db_exec_env.Spec.Dependencies,
+		Id:            dbExecEnv.Id,
+		PythonVersion: dbExecEnv.Spec.PythonVersion,
+		Dependencies:  dbExecEnv.Spec.Dependencies,
 	}, nil
 }
 
@@ -162,13 +163,23 @@ func IsCondaConnected(
 	return len(integrations) > 0, nil
 }
 
-// `SyncEnvsWithDB` keep args `envs` in-sync with DB.
+// Best-effort to delete all envs and log any error
+func deleteEnvs(envs []ExecutionEnvironment) {
+	for _, env := range envs {
+		err := env.DeleteEnv()
+		if err != nil {
+			log.Errorf("Failed to delete env %s: %v", env.Id.String(), err)
+		}
+	}
+}
+
+// CreateMissingAndSyncExistingEnvs env %s: %vistingEnvs` keep argerrsync with DB.
 // In other words, it creates new db rows for missing envs
 // and fetch existing ones.
 //
 // Returns a map with the original key, mapped to the synced
 // env object from the DB rows.
-func SyncEnvsWithDB(
+func CreateMissingAndSyncExistingEnvs(
 	ctx context.Context,
 	envReader db_exec_env.Reader,
 	envWriter db_exec_env.Writer,
@@ -202,13 +213,16 @@ func SyncEnvsWithDB(
 
 		// Env is missing
 		if err == database.ErrNoRows {
-			env.CreateDBRecord(ctx, envWriter, db)
+			err = env.CreateDBRecord(ctx, envWriter, db)
+			if err != nil {
+				deleteEnvs(addedEnvs)
+				return nil, err
+			}
+
 			err = env.CreateEnv()
 			if err != nil {
-				for _, addedEnv := range addedEnvs {
-					addedEnv.DeleteEnv()
-					addedEnv.DeleteDBRecord(ctx, envWriter, db)
-				}
+				deleteEnvs(addedEnvs)
+				return nil, err
 			}
 
 			results[key] = env
