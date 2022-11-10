@@ -33,6 +33,7 @@ import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
+import StatusChip from './workflowStatus';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -111,7 +112,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -321,7 +322,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         }}
       >
         <Box sx={{ flex: 1 }}>
-          <ExecutionChip status={workflow.dagResults[0].status} />
+          <StatusChip status={workflow.dagResults[0].status} />
 
           <Typography
             variant="h4"
@@ -330,7 +331,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           >
             {name}
           </Typography>
-        </Box>
+        </Box >
 
         <Box sx={{ mr: 4 }}>
           <Button
@@ -361,7 +362,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             workflowDag={workflowDag}
           />
         </Box>
-      </Box>
+      </Box >
 
       {description && (
         <Typography variant="body1">
@@ -424,7 +425,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           {errorMessage}
         </Alert>
       </Snackbar>
-    </Box>
+    </Box >
   );
 };
 
