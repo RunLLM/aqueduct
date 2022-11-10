@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Mapping, Optional, Union, cast
+from typing import Any, Callable, List, Mapping, Optional, Union, cast, Dict
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -267,6 +267,44 @@ will be used when running the function."""
             artifacts[idx] = new_artifact
     return artifacts
 
+# Supported resource configuration keys, supplied in the `resources` field of the decorators.
+NUM_CPUS_KEY = "num_cpus"
+MEMORY_KEY = "memory"
+
+
+def _convert_memory_string_to_mbs(memory_str: str) -> int:
+    """Converts a memory string supplied by the user into the equivalent number in MBs.
+
+    Only "MB" and "GB" suffixes are supported, case-insensitive.
+    """
+    memory_str = memory_str.strip()
+    if len(memory_str) <= 2:
+        raise InvalidUserArgumentException(
+            "Memory value `%s` not long enough, it must be a number and a two character suffix (eg. 100MB)."
+            % memory_str
+        )
+
+    if memory_str[-2:].upper() == "MB":
+        multiplier = 1
+    elif memory_str[-2:].upper() == "GB":
+        multiplier = 1000
+    else:
+        raise InvalidUserArgumentException(
+            "Memory value `%s` is invalid. It must have a suffix that is one of mb/MB/gb/GB."
+            % memory_str,
+        )
+
+    memory_scalar_str = memory_str[:-2].strip()
+    if not memory_scalar_str.isnumeric():
+        raise InvalidUserArgumentException(
+            "Memory value `%s` has an invalid value. `%s` must be a positive integer."
+            % (memory_str, memory_scalar_str),
+        )
+
+    return multiplier * int(memory_scalar_str)
+
+
+
 
 def op(
     name: Optional[Union[str, UserFunction]] = None,
@@ -274,8 +312,7 @@ def op(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: int = 1,
-    num_cpus: Optional[int] = None,
-    memory_mb: Optional[int] = None,
+    resources: Optional[Dict[str, Any]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -304,12 +341,25 @@ def op(
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
-        num_cpus:
-            The number of cpus that this operator will run with. This operator will execute with *exactly*
-            this number of cpus. If not enough cpus are available, operator execution will fail.
-        memory_mb:
-            The amount of memory (in MBs) this operator will run with. This operator will execute with *exactly*
-            this amount of memory. If not enough memory is available, operator execution will fail.
+        resources:
+            A dictionary containing the custom resource configurations that this operator will run with.
+            These configurations are guaranteed to be followed, we will not silently ignore any of them.
+            If a resource configuration is unsupported by a particular execution engine, we will fail at
+            execution time. The supported keys are:
+
+            "num_cpus" (int):
+                The number of cpus that this operator will run with. This operator will execute with *exactly*
+                this number of cpus. If not enough cpus are available, operator execution will fail.
+            "memory" (int, str):
+                The amount of memory this operator will run with. This operator will execute with *exactly*
+                this amount of memory. If not enough memory is available, operator execution will fail.
+
+                If an integer value is supplied, the memory unit is assumed to be MB. If a string is supplied,
+                a suffix indicating the memory unit must be supplied. Supported memory units are "MB" and "GB",
+                case-insensitive.
+
+                For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
+
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -333,11 +383,33 @@ def op(
     if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
 
-    if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
-        raise InvalidUserArgumentException("`num_cpus` must be set to a positive integer.")
-    if memory_mb is not None and (not isinstance(memory_mb, int) or memory_mb < 0):
-        raise InvalidUserArgumentException("`memory_mb` must be set to a positive integer.")
-    resource_config_set = num_cpus or memory_mb
+    resource_config = None
+    if resources is not None:
+        if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
+            raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
+
+        num_cpus = resources.get(NUM_CPUS_KEY)
+        memory = resources.get(MEMORY_KEY)
+
+        if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
+            raise InvalidUserArgumentException("`num_cpus` value must be set to a positive integer.")
+
+        # `memory` value can be either an int (in MBs) or a string. We will convert it into an integer
+        # representing the number of MBs.
+        if memory is not None:
+            if not isinstance(memory, int) and not isinstance(memory, str):
+                raise InvalidUserArgumentException("`memory` value must be either an integer or string.")
+
+            if isinstance(memory , int) and memory < 0:
+                raise InvalidUserArgumentException("If `memory` value is set as an integer, it must be positive.")
+
+            # We'll need to convert the string value into an integer (in MBs).
+            if isinstance(memory, str):
+                memory = _convert_memory_string_to_mbs(memory)
+
+            assert isinstance(memory, int)
+
+        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory)
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -378,9 +450,7 @@ def op(
             return wrap_spec(
                 OperatorSpec(
                     function=function_spec,
-                    resources=ResourceConfig(num_cpus=num_cpus, memory_mb=memory_mb)
-                    if resource_config_set
-                    else None,
+                    resources=resource_config,
                 ),
                 *artifacts,
                 op_name=name,
