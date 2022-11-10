@@ -16,21 +16,17 @@ type User interface {
 
 type userReader interface {
 	// GetByAPIKey returns the User with the API key apiKey.
+	// It returns a database.ErrNoRows if no rows are found.
 	GetByAPIKey(ctx context.Context, apiKey string, DB database.Database) (*models.User, error)
-
-	// GetOrgAdmin returns the admin User for the organization orgID.
-	GetOrgAdmin(ctx context.Context, orgID string, DB database.Database) (*models.User, error)
 }
 
 type userWriter interface {
 	// Creates inserts a new User with the specified fields.
 	Create(
 		ctx context.Context,
-		email string,
 		orgID string,
-		role string,
 		apiKey string,
-		auth0ID string,
+		DB database.Database,
 	) (*models.User, error)
 
 	// ResetAPIKey resets the API key for the User with ID.
