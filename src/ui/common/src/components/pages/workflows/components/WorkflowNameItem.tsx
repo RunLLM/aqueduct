@@ -1,24 +1,29 @@
-import { Box, Typography } from "@mui/material";
-import Status from "../../../../components/workflows/workflowStatus";
-import ExecutionStatus from "../../../../utils/shared";
+import { Box, Typography } from '@mui/material';
+import React from 'react';
+
+import { StatusIndicator } from '../../../../components/workflows/workflowStatus';
+import ExecutionStatus from '../../../../utils/shared';
 
 interface WorkflowNameItemProps {
-    name: string;
-    status: ExecutionStatus;
+  name: string;
+  status: ExecutionStatus;
 }
 
 export const WorkflowNameItem: React.FC<WorkflowNameItemProps> = ({
-    name,
-    status,
+  name,
+  status,
 }) => {
-    return (
-        <Box display="flex" alignItems="left" justifyContent="space-between">
-            <Status status={status} />
-            <Typography sx={{ justifyContent: 'right' }} variant="body1">
-                {name}
-            </Typography>
-        </Box>
-    );
+  return (
+    <Box display="flex" alignItems="left">
+      <StatusIndicator status={status} />
+      <Typography
+        sx={{ marginLeft: '8px', justifyContent: 'right' }}
+        variant="body1"
+      >
+        {name}
+      </Typography>
+    </Box>
+  );
 };
 
 export default WorkflowNameItem;
