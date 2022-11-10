@@ -5,8 +5,12 @@ from utils import generate_new_flow_name, run_flow_test
 
 
 # TODO: narrow this to only K8s
-def test_custom_num_cpus(client, engine):
-    """Assumption: nodes in the K8s cluster have more than 6 CPUs."""
+def test_custom_num_cpus_for_k8s(client, engine):
+    """Assumption: nodes in the K8s cluster have more than 6 CPUs.
+
+    We run a special operator that checks the number of CPUs that are available.
+    We check the expected default number of cpus, as well as a custom number.
+    """
 
     def _count_available_cpus():
         # Copied from: https://donghao.org/2022/01/20/how-to-get-the-number-of-cpu-cores-inside-a-container/
@@ -62,3 +66,39 @@ def test_custom_num_cpus(client, engine):
     finally:
         for flow in flows:
             client.delete_flow(flow.id())
+
+
+def test_custom_memory_for_k8s(client, engine):
+    """Assumption: nodes in the K8s cluster have more than 200MB of capacity.
+
+    Customize our memory to be 200MB. We will run two different methods, one that allocates less than
+    this amount and one that allocates more. The latter should fail.
+    """
+    @op(requirements=[], resources={"memory": "200MB"})
+    def fn_expect_success():
+        return 123
+
+    success_output = fn_expect_success.lazy()
+
+    @op(requirements=[], resources={"memory": "200MB"})
+    def fn_expect_failure():
+        # Allocate 200MB of memory.
+        output = bytearray(1000 * 1000 * 100 * 2)
+        return output
+
+    failure_output = fn_expect_failure.lazy()
+
+    run_flow_test(
+        client,
+        name=generate_new_flow_name(),
+        artifacts=success_output,
+        engine=engine,
+    )
+
+    run_flow_test(
+        client,
+        name=generate_new_flow_name(),
+        artifacts=failure_output,
+        engine=engine,
+        expect_success=False,
+    )
