@@ -9,6 +9,7 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -23,7 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -50,16 +51,17 @@ type AqueductTimeConfig struct {
 }
 
 type EngineReaders struct {
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	OperatorReader          operator_db.Reader
-	OperatorResultReader    operator_result.Reader
-	ArtifactReader          artifact_db.Reader
-	ArtifactResultReader    artifact_result.Reader
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
+	WorkflowReader             workflow.Reader
+	WorkflowDagReader          workflow_dag.Reader
+	WorkflowDagEdgeReader      workflow_dag_edge.Reader
+	WorkflowDagResultReader    workflow_dag_result.Reader
+	OperatorReader             operator_db.Reader
+	OperatorResultReader       operator_result.Reader
+	ArtifactReader             artifact_db.Reader
+	ArtifactResultReader       artifact_result.Reader
+	UserReader                 user.Reader
+	IntegrationReader          integration.Reader
+	ExecutionEnvironmentReader db_exec_env.Reader
 }
 
 type EngineWriters struct {
@@ -945,7 +947,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 
 func (eng *aqEngine) InitEnv(
 	ctx context.Context,
-	env *execution_environment.ExecutionEnvironment,
+	env *exec_env.ExecutionEnvironment,
 ) error {
 	return env.CreateEnv()
 }

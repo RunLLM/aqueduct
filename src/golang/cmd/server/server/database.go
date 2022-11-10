@@ -4,6 +4,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -20,35 +21,37 @@ import (
 )
 
 type Readers struct {
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
-	NotificationReader      notification.Reader
-	ArtifactReader          artifact.Reader
-	ArtifactResultReader    artifact_result.Reader
-	OperatorReader          operator.Reader
-	OperatorResultReader    operator_result.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowWatcherReader   workflow_watcher.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	SchemaVersionReader     schema_version.Reader
-	CustomReader            queries.Reader
+	UserReader                 user.Reader
+	IntegrationReader          integration.Reader
+	NotificationReader         notification.Reader
+	ArtifactReader             artifact.Reader
+	ArtifactResultReader       artifact_result.Reader
+	OperatorReader             operator.Reader
+	OperatorResultReader       operator_result.Reader
+	WorkflowReader             workflow.Reader
+	WorkflowDagReader          workflow_dag.Reader
+	WorkflowDagEdgeReader      workflow_dag_edge.Reader
+	WorkflowWatcherReader      workflow_watcher.Reader
+	WorkflowDagResultReader    workflow_dag_result.Reader
+	SchemaVersionReader        schema_version.Reader
+	CustomReader               queries.Reader
+	ExecutionEnvironmentReader exec_env.Reader
 }
 
 type Writers struct {
-	UserWriter              user.Writer
-	IntegrationWriter       integration.Writer
-	NotificationWriter      notification.Writer
-	ArtifactWriter          artifact.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	OperatorWriter          operator.Writer
-	OperatorResultWriter    operator_result.Writer
-	WorkflowWriter          workflow.Writer
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
-	WorkflowWatcherWriter   workflow_watcher.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
+	UserWriter                 user.Writer
+	IntegrationWriter          integration.Writer
+	NotificationWriter         notification.Writer
+	ArtifactWriter             artifact.Writer
+	ArtifactResultWriter       artifact_result.Writer
+	OperatorWriter             operator.Writer
+	OperatorResultWriter       operator_result.Writer
+	WorkflowWriter             workflow.Writer
+	WorkflowDagWriter          workflow_dag.Writer
+	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
+	WorkflowWatcherWriter      workflow_watcher.Writer
+	WorkflowDagResultWriter    workflow_dag_result.Writer
+	ExecutionEnvironmentWriter exec_env.Writer
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
@@ -122,21 +125,27 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
+	execEnvReader, err := exec_env.NewReader(dbConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Readers{
-		UserReader:              userReader,
-		IntegrationReader:       integrationReader,
-		NotificationReader:      notificationReader,
-		ArtifactReader:          artifactReader,
-		ArtifactResultReader:    artifactResultReader,
-		OperatorReader:          operatorReader,
-		OperatorResultReader:    operatorResultReader,
-		WorkflowReader:          workflowReader,
-		WorkflowDagReader:       workflowDagReader,
-		WorkflowDagEdgeReader:   workflowDagEdgeReader,
-		WorkflowWatcherReader:   workflowWatcherReader,
-		WorkflowDagResultReader: workflowDagResultReader,
-		SchemaVersionReader:     schemaVersionReader,
-		CustomReader:            queriesReader,
+		UserReader:                 userReader,
+		IntegrationReader:          integrationReader,
+		NotificationReader:         notificationReader,
+		ArtifactReader:             artifactReader,
+		ArtifactResultReader:       artifactResultReader,
+		OperatorReader:             operatorReader,
+		OperatorResultReader:       operatorResultReader,
+		WorkflowReader:             workflowReader,
+		WorkflowDagReader:          workflowDagReader,
+		WorkflowDagEdgeReader:      workflowDagEdgeReader,
+		WorkflowWatcherReader:      workflowWatcherReader,
+		WorkflowDagResultReader:    workflowDagResultReader,
+		SchemaVersionReader:        schemaVersionReader,
+		CustomReader:               queriesReader,
+		ExecutionEnvironmentReader: execEnvReader,
 	}, nil
 }
 
@@ -201,34 +210,41 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
+	execEnvWriter, err := exec_env.NewWriter(dbConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Writers{
-		UserWriter:              userWriter,
-		IntegrationWriter:       integrationWriter,
-		NotificationWriter:      notificationWriter,
-		ArtifactWriter:          artifactWriter,
-		ArtifactResultWriter:    artifactResultWriter,
-		OperatorWriter:          operatorWriter,
-		OperatorResultWriter:    operatorResultWriter,
-		WorkflowWriter:          workflowWriter,
-		WorkflowDagWriter:       workflowDagWriter,
-		WorkflowDagEdgeWriter:   workflowDagEdgeWriter,
-		WorkflowWatcherWriter:   workflowWatcherWriter,
-		WorkflowDagResultWriter: workflowDagResultWriter,
+		UserWriter:                 userWriter,
+		IntegrationWriter:          integrationWriter,
+		NotificationWriter:         notificationWriter,
+		ArtifactWriter:             artifactWriter,
+		ArtifactResultWriter:       artifactResultWriter,
+		OperatorWriter:             operatorWriter,
+		OperatorResultWriter:       operatorResultWriter,
+		WorkflowWriter:             workflowWriter,
+		WorkflowDagWriter:          workflowDagWriter,
+		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
+		WorkflowWatcherWriter:      workflowWatcherWriter,
+		WorkflowDagResultWriter:    workflowDagResultWriter,
+		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
 }
 
 func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
-		WorkflowReader:          readers.WorkflowReader,
-		WorkflowDagReader:       readers.WorkflowDagReader,
-		WorkflowDagEdgeReader:   readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader: readers.WorkflowDagResultReader,
-		OperatorReader:          readers.OperatorReader,
-		OperatorResultReader:    readers.OperatorResultReader,
-		ArtifactReader:          readers.ArtifactReader,
-		ArtifactResultReader:    readers.ArtifactResultReader,
-		UserReader:              readers.UserReader,
-		IntegrationReader:       readers.IntegrationReader,
+		WorkflowReader:             readers.WorkflowReader,
+		WorkflowDagReader:          readers.WorkflowDagReader,
+		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
+		WorkflowDagResultReader:    readers.WorkflowDagResultReader,
+		OperatorReader:             readers.OperatorReader,
+		OperatorResultReader:       readers.OperatorResultReader,
+		ArtifactReader:             readers.ArtifactReader,
+		ArtifactResultReader:       readers.ArtifactResultReader,
+		UserReader:                 readers.UserReader,
+		IntegrationReader:          readers.IntegrationReader,
+		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
 }
 

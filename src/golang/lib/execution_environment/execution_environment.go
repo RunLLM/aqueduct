@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	dbExecEnv "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
@@ -20,31 +20,41 @@ type ExecutionEnvironment struct {
 	Id            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
-
-	execEnvWriter dbExecEnv.Writer
-	db            database.Database
 }
 
-func (e *ExecutionEnvironment) CreateDBRecord(ctx context.Context) error {
+func (e *ExecutionEnvironment) CreateDBRecord(
+	ctx context.Context,
+	execEnvWriter db_exec_env.Writer,
+	db database.Database,
+) error {
 	hash, err := e.Hash()
 	if err != nil {
 		return err
 	}
 
-	_, err = e.execEnvWriter.CreateExecutionEnvironment(
+	dbEnv, err := execEnvWriter.CreateExecutionEnvironment(
 		ctx,
-		dbExecEnv.Spec{
+		db_exec_env.Spec{
 			PythonVersion: e.PythonVersion,
 			Dependencies:  e.Dependencies,
 		},
 		hash,
-		e.db,
+		db,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	e.Id = dbEnv.Id
+	return nil
 }
 
-func (e *ExecutionEnvironment) DeleteDBRecord(ctx context.Context) error {
-	return e.execEnvWriter.DeleteExecutionEnvironment(ctx, e.Id, e.db)
+func (e *ExecutionEnvironment) DeleteDBRecord(
+	ctx context.Context,
+	execEnvWriter db_exec_env.Writer,
+	db database.Database,
+) error {
+	return execEnvWriter.DeleteExecutionEnvironment(ctx, e.Id, db)
 }
 
 // Hash generates a hash based on the environment's
@@ -118,21 +128,18 @@ func (e *ExecutionEnvironment) DeleteEnv() error {
 func GetExecEnvFromDB(
 	ctx context.Context,
 	hash uuid.UUID,
-	execEnvReader dbExecEnv.Reader,
-	execEnvWriter dbExecEnv.Writer,
+	execEnvReader db_exec_env.Reader,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	dbExecEnv, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
+	db_exec_env, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ExecutionEnvironment{
-		Id:            dbExecEnv.Id,
-		PythonVersion: dbExecEnv.Spec.PythonVersion,
-		Dependencies:  dbExecEnv.Spec.Dependencies,
-		execEnvWriter: execEnvWriter,
-		db:            db,
+		Id:            db_exec_env.Id,
+		PythonVersion: db_exec_env.Spec.PythonVersion,
+		Dependencies:  db_exec_env.Spec.Dependencies,
 	}, nil
 }
 
@@ -153,4 +160,62 @@ func IsCondaConnected(
 	}
 
 	return len(integrations) > 0, nil
+}
+
+// `SyncEnvsWithDB` keep args `envs` in-sync with DB.
+// In other words, it creates new db rows for missing envs
+// and fetch existing ones.
+//
+// Returns a map with the original key, mapped to the synced
+// env object from the DB rows.
+func SyncEnvsWithDB(
+	ctx context.Context,
+	envReader db_exec_env.Reader,
+	envWriter db_exec_env.Writer,
+	envs map[uuid.UUID]ExecutionEnvironment,
+	db database.Database,
+) (map[uuid.UUID]ExecutionEnvironment, error) {
+	// visitedResults is an envHash to boolean mapping
+	// to track already visited envHash. This helps reduce
+	// the number of DB access.
+	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
+	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
+	for key, env := range envs {
+		hash, err := env.Hash()
+		if err != nil {
+			return nil, err
+		}
+
+		_, ok := visitedResults[hash]
+		if ok {
+			results[key] = visitedResults[hash]
+			continue
+		}
+
+		existingEnv, err := GetExecEnvFromDB(
+			ctx,
+			hash,
+			envReader,
+			db,
+		)
+
+		// Env is missing
+		if err == database.ErrNoRows {
+			env.CreateDBRecord(ctx, envWriter, db)
+			results[key] = env
+			visitedResults[hash] = env
+			continue
+		}
+
+		// DB error
+		if err != nil {
+			return nil, err
+		}
+
+		// Env is not missing
+		visitedResults[hash] = *existingEnv
+		results[key] = *existingEnv
+	}
+
+	return results, nil
 }

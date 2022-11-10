@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -89,6 +90,7 @@ func NewOperator(
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	execMode ExecutionMode,
+	execEnv *exec_env.ExecutionEnvironment,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
@@ -137,6 +139,7 @@ func NewOperator(
 
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,
+		ExecEnv:          execEnv,
 	}
 
 	if dbOperator.Spec.IsFunction() {
