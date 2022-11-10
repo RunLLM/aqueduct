@@ -1,4 +1,4 @@
-import { faCircleExclamation, faTriangleExclamation, faCircleCheck, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCircleExclamation, faTriangleExclamation, faCircleCheck, faQuestionCircle, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Typography } from "@mui/material";
 import { useState } from "react";
@@ -21,6 +21,12 @@ const successIcon = (<Box sx={{ fontSize: '20px', color: theme.palette.green['40
 const unknownIcon = (
     <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
         <FontAwesomeIcon icon={faQuestionCircle} />
+    </Box>
+);
+
+const canceledIcon = (
+    <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
+        <FontAwesomeIcon icon={faCircleXmark} />
     </Box>
 );
 
@@ -60,6 +66,8 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
                     statusIcon = warningIcon;
                 }
             }
+        } else if (checks[i].status === ExecutionStatus.Canceled) {
+            statusIcon = canceledIcon;
         } else if (checks[i].status !== ExecutionStatus.Succeeded) {
             statusIcon = unknownIcon;
         }
