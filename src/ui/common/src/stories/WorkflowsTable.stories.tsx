@@ -48,6 +48,15 @@ export const WorkflowsTable: React.FC = () => {
       value: 'False',
       timestamp: new Date().toLocaleString()
     },
+    {
+      checkId: '5',
+      name: 'canceled_test',
+      // TODO: Come up with coherent color scheme for all of these different status levels.
+      status: ExecutionStatus.Canceled,
+      level: CheckLevel.Warning,
+      value: 'False',
+      timestamp: new Date().toLocaleString()
+    },
   ];
 
   const checkTableItem = <CheckItem checks={checkPreviews} />;
