@@ -49,9 +49,10 @@ type baseOperator struct {
 	execMode         ExecutionMode
 	execState        shared.ExecutionState
 
-	// TODO: This is public to avoid compiling error.
-	// We should change this to private once this attribute is used.
-	ExecEnv *exec_env.ExecutionEnvironment
+	// If set to nil, the job manager will run this operator in the server's default Python environment.
+	// Otherwise, it will switch to the approppriate Conda environment before running the operator.
+	// This only applies to operators running with the Aqueduct engine.
+	execEnv *exec_env.ExecutionEnvironment
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -382,5 +383,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
+		ExecEnv:                     bfo.execEnv,
 	}
 }
