@@ -179,6 +179,7 @@ func SyncEnvsWithDB(
 	// to track already visited envHash. This helps reduce
 	// the number of DB access.
 	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
+	addedEnvs := make([]ExecutionEnvironment, 0, len(envs))
 	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
 	for key, env := range envs {
 		hash, err := env.Hash()
@@ -202,8 +203,17 @@ func SyncEnvsWithDB(
 		// Env is missing
 		if err == database.ErrNoRows {
 			env.CreateDBRecord(ctx, envWriter, db)
+			err = env.CreateEnv()
+			if err != nil {
+				for _, addedEnv := range addedEnvs {
+					addedEnv.DeleteEnv()
+					addedEnv.DeleteDBRecord(ctx, envWriter, db)
+				}
+			}
+
 			results[key] = env
 			visitedResults[hash] = env
+			addedEnvs = append(addedEnvs, env)
 			continue
 		}
 
