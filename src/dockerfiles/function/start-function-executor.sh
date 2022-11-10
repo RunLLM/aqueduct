@@ -1,5 +1,4 @@
 #!/bin/bash
-JOB_SPEC=$1
 FUNCTION_EXTRACT_PATH=$(python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
