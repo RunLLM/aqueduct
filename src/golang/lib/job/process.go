@@ -188,11 +188,23 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
-		cmd = exec.Command(
-			"bash",
-			filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
-			specStr,
-		)
+		if functionSpec.ExecEnv != nil {
+			cmd = exec.Command(
+				"conda",
+				"run",
+				"-n",
+				functionSpec.ExecEnv.Name(),
+				"bash",
+				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
+				specStr,
+			)
+		} else {
+			cmd = exec.Command(
+				"bash",
+				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
+				specStr,
+			)
+		}
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {

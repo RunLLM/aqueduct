@@ -139,7 +139,7 @@ func NewOperator(
 
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted: false,
-		ExecEnv:          execEnv,
+		execEnv:          execEnv,
 	}
 
 	if dbOperator.Spec.IsFunction() {

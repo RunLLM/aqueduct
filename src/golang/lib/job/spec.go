@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -141,6 +142,11 @@ type FunctionSpec struct {
 	OutputMetadataPaths         []string      `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	ExpectedOutputArtifactTypes []string      `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
 	OperatorType                operator.Type `json:"operator_type" yaml:"operator_type"`
+	// We use this field as an indication of whether we should switch to certain environment before
+	// running a function.
+	// This field is not used by the Python side, so we use - to omit it during JSON serialization.
+	// Otherwise, Pydantic will complain about this extra field. It's good for performance reason as well.
+	ExecEnv *exec_env.ExecutionEnvironment `json:"-" yaml:"-"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
