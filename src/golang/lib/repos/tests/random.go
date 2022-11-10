@@ -22,8 +22,8 @@ func randString(n int) string {
 	return string(b)
 }
 
-// pollIDs polls IDs n times.
-func pollIDs(n int, IDs []uuid.UUID) []uuid.UUID {
+// sampleIDs randomly samples IDs n times with replacement.
+func sampleIDs(n int, IDs []uuid.UUID) []uuid.UUID {
 	polled := make([]uuid.UUID, 0, n)
 	for i := 0; i < n; i++ {
 		ID := IDs[rand.Intn(len(IDs))]
@@ -32,11 +32,12 @@ func pollIDs(n int, IDs []uuid.UUID) []uuid.UUID {
 	return polled
 }
 
-// pollUserIDs polls users n times and returns the IDs of those users.
-func pollUserIDs(n int, users []models.User) []uuid.UUID {
+// sampleUserIDs randomly samples users n times with replacement,
+// and returns the ID of selected Users.
+func sampleUserIDs(n int, users []models.User) []uuid.UUID {
 	userIDs := make([]uuid.UUID, 0, len(users))
 	for _, user := range users {
 		userIDs = append(userIDs, user.ID)
 	}
-	return pollIDs(n, userIDs)
+	return sampleIDs(n, userIDs)
 }

@@ -30,7 +30,7 @@ func (ts *TestSuite) seedUser(count int) []models.User {
 // It creates a new user as the workflows' owner.
 func (ts *TestSuite) seedWorkflow(count int) []models.Workflow {
 	users := ts.seedUser(1)
-	userIDs := pollUserIDs(count, users)
+	userIDs := sampleUserIDs(count, users)
 	return ts.seedWorkflowWithUser(count, userIDs)
 }
 
