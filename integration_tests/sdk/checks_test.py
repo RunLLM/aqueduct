@@ -32,17 +32,17 @@ def success_on_multiple_mixed_inputs(metric, df):
     return True
 
 
-def test_check_on_table(client, data_integration):
+def test_check_on_table(client, data_integration, engine):
     """Test check on a function operator."""
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     check_artifact = success_on_single_table_input(sql_artifact)
     assert check_artifact.get()
 
-    run_flow_test(client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact], engine=engine)
 
 
-def test_check_on_metric(client, data_integration):
+def test_check_on_metric(client, data_integration, engine):
     """Test check on a metric operator."""
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -51,10 +51,10 @@ def test_check_on_metric(client, data_integration):
     check_artifact = success_on_single_metric_input(metric)
     assert check_artifact.get()
 
-    run_flow_test(client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact], engine=engine)
 
 
-def test_check_on_multiple_mixed_inputs(client, data_integration):
+def test_check_on_multiple_mixed_inputs(client, data_integration, engine):
     """Test check on multiple tables and metrics."""
     db = client.integration(data_integration)
     sql_artifact1 = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -66,7 +66,7 @@ def test_check_on_multiple_mixed_inputs(client, data_integration):
     check_artifact = success_on_multiple_mixed_inputs(metric, table)
     assert check_artifact.get()
 
-    run_flow_test(client, artifacts=[check_artifact])
+    run_flow_test(client, artifacts=[check_artifact], engine=engine)
 
 
 def test_edit_check(client, data_integration):
@@ -151,7 +151,7 @@ def test_check_with_numpy_bool_output(client, data_integration):
     assert check_artifact.get()
 
 
-def test_check_with_series_output(client, data_integration):
+def test_check_with_series_output(client, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
@@ -169,10 +169,10 @@ def test_check_with_series_output(client, data_integration):
     failed = failure_check_return_series_of_booleans(sql_artifact)
     assert not failed.get()
 
-    run_flow_test(client, artifacts=[sql_artifact, passed, failed])
+    run_flow_test(client, artifacts=[sql_artifact, passed, failed], engine=engine)
 
 
-def test_check_failure_with_varying_severity(client, data_integration):
+def test_check_failure_with_varying_severity(client, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
@@ -186,7 +186,7 @@ def test_check_failure_with_varying_severity(client, data_integration):
         return False
 
     nonblocking_check = failure_nonblocking_check(sql_artifact)
-    run_flow_test(client, artifacts=[sql_artifact, nonblocking_check])
+    run_flow_test(client, artifacts=[sql_artifact, nonblocking_check], engine=engine)
 
     # In eager execution, this check should fail before we can publish the flow.
     with pytest.raises(AqueductError):

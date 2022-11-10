@@ -8,8 +8,6 @@ from aqueduct.enums import ExecutionStatus
 import aqueduct
 from aqueduct import Flow
 
-flags: Dict[str, bool] = {}
-
 
 def generate_new_flow_name() -> str:
     return "test_" + uuid.uuid4().hex
@@ -22,6 +20,7 @@ def generate_table_name() -> str:
 def run_flow_test(
     client: aqueduct.Client,
     artifacts: List[BaseArtifact],
+    engine: Optional[str],
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
     name: str = "",
@@ -40,6 +39,7 @@ def run_flow_test(
     flow = client.publish_flow(
         name=name,
         artifacts=artifacts,
+        engine=engine,
         metrics=metrics,
         checks=checks,
         schedule=schedule,

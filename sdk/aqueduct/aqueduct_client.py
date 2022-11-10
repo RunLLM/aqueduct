@@ -327,11 +327,10 @@ class Client:
 
         The default execution engine of the flow is Aqueduct. In order to specify which
         execution engine the flow will be running on, use "config" parameter. Eg:
-        >>> k8s_integration = client.integration("k8s_integration")
         >>> flow = client.publish_flow(
-        >>>     name = "k8s_example",
-        >>>     artifacts = [output],
-        >>>     config = FlowConfig(engine=k8s_integration),
+        >>>     name="k8s_example",
+        >>>     artifacts=[output],
+        >>>     engine="k8s_integration",
         >>> )
 
         Args:
@@ -429,6 +428,10 @@ class Client:
         if k_latest_runs is None:
             retention_policy = retention_policy_from_latest_runs(-1)
         else:
+            if not isinstance(k_latest_runs, int):
+                raise InvalidUserArgumentException(
+                    "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
+                )
             retention_policy = retention_policy_from_latest_runs(k_latest_runs)
 
         # Set's the execution `engine` if one was provided.
@@ -458,9 +461,14 @@ class Client:
         if engine is None:
             engine_config = EngineConfig()
         else:
+            if not isinstance(engine, str):
+                raise InvalidUserArgumentException(
+                    "`engine` parameter must be a string, got %s." % type(engine)
+                )
+
             if engine not in self._connected_integrations.keys():
                 raise InvalidIntegrationException(
-                    "Not connected to compute integration %s!" % engine
+                    "Not connected to compute integration `%s`!" % engine
                 )
             engine_config = generate_engine_config(self._connected_integrations[engine])
 

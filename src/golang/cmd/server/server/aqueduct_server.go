@@ -20,6 +20,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -32,8 +33,6 @@ import (
 )
 
 const (
-	RequiredSchemaVersion = 15
-
 	accountOrganizationId = "aqueduct"
 
 	// The maximum number of entries this cache can have.
@@ -91,7 +90,7 @@ func NewAqServer() *AqServer {
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		RequiredSchemaVersion,
+		models.SchemaVersion,
 		readers.SchemaVersionReader,
 		db,
 	); err != nil {
