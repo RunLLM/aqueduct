@@ -2,7 +2,7 @@ package job
 
 const (
 	Function37DockerImage         = "aqueducthq/function37"
-	Function38DockerImage         = "aqueducthq/function38"
+	Function38DockerImage         = "kingxu95/function38"
 	Function39DockerImage         = "aqueducthq/function39"
 	Function310DockerImage        = "aqueducthq/function310"
 	ParameterDockerImage          = "aqueducthq/param"

@@ -2,7 +2,9 @@ package operator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -69,6 +71,7 @@ func (bo *baseOperator) ID() uuid.UUID {
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
+	// TODO: should we propagate this error message to the user somehow? Mark it as internal error.
 	log.Errorf("Execution had system failure: %s. %v", logMsg, err)
 
 	failureType := shared.SystemFailure
@@ -205,6 +208,28 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 	return nil
 }
 
+// `writeExecState` is only ever called for writing errors that occur outside the python executor
+// context.
+func (bo *baseOperator) writeExecState(
+	ctx context.Context,
+	err error,
+) error {
+	execState := shared.ExecutionState{
+		Status:      shared.FailedExecutionStatus,
+		FailureType: &shared.UserFatalFailure,
+		Error: &shared.Error{
+			Context: "",
+			Tip:     err.Error(),
+		},
+		// TODO: need to set timestamps!
+	}
+
+	serializedExecState, err := json.Marshal(execState)
+	if err != nil {
+		return err
+	}
+	return storage.NewStorage(bo.storageConfig).Put(ctx, bo.metadataPath, serializedExecState)
+}
 func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
@@ -232,7 +257,24 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
+		} else if jobErr := err.(*job.JobError); jobErr != nil {
+			if jobErr.Code == job.User {
+				// Update the operator's ExecState
+				err = bo.writeExecState(ctx, jobErr)
+				if err == nil {
+					execState := bo.fetchExecState(ctx)
+					bo.updateExecState(execState)
+					return bo.ExecState(), nil
+				}
+				// If there was an issue updating the operator's exec state, fallback to a system error.
+			}
+			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
+			bo.updateExecState(execState)
+			return bo.ExecState(), nil
 		} else {
+			// This clause is only here because the JobManager interface hasn't been migrated to use
+			// `JobError`'s yet.
+
 			// This is just an internal polling error state.
 			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
 			bo.updateExecState(execState)
