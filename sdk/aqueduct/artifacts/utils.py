@@ -55,12 +55,12 @@ def preview_artifacts(
         if engine is None:
             engine_config = EngineConfig()
         else:
-            conntected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
-            if engine not in conntected_integrations.keys():
+            connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+            if engine not in connected_integrations.keys():
                 raise InvalidIntegrationException(
                     "Not connected to compute integration %s!" % engine
                 )
-            engine_config = generate_engine_config(conntected_integrations[engine])
+            engine_config = generate_engine_config(connected_integrations[engine])
         subgraph.engine_config = engine_config
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
