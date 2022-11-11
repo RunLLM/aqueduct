@@ -81,11 +81,6 @@ export const VersionSelector: React.FC = () => {
     });
   };
 
-  let menuItems = getMenuItems();
-  useEffect(() => {
-    menuItems = getMenuItems();
-  }, [results]);
-
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <FormControl sx={{ minWidth: 120 }} size="small">
@@ -95,7 +90,7 @@ export const VersionSelector: React.FC = () => {
           autoWidth
           value={selectedResultIdx}
         >
-          {menuItems}
+          {getMenuItems()}
         </Select>
       </FormControl>
     </Box>
