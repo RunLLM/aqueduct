@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -38,6 +39,20 @@ type WorkflowDag interface {
 
 	// InitOpAndArtifactResults initializes the operators and artifact results for this dag.
 	InitOpAndArtifactResults(ctx context.Context) error
+
+	// FindMissingExecEnv returns `Environment` objects for all missing environments
+	// of all operators on this DAG.
+	FindMissingExecEnv(ctx context.Context) ([]execEnv.ExecutionEnvironment, error)
+
+	// BindOperatorsToEnvs updates all operators such that each operator
+	// points to the environment object matching its dependencies.
+	//
+	// This function assumes there's no missing environments, and should error
+	// if there's any environment missing.
+	//
+	// This function DO NOT update operators in DB. One should call `op.Persist()`
+	// to do so.
+	BindOperatorsToEnvs(ctx context.Context) error
 }
 
 type workflowDagImpl struct {

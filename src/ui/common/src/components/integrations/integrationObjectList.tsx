@@ -52,7 +52,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
         object: selectedObject,
       })
     );
-  }, [selectedObject]);
+  }, [dispatch, integration.id, selectedObject, user.apiKey]);
 
   if (
     integration.service === 'Kubernetes' ||

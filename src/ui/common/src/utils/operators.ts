@@ -1,4 +1,4 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { ExecState, ExecutionStatus } from './shared';
 
@@ -75,12 +75,18 @@ export enum ServiceType {
 
 export type ExtractParameters =
   | RelationalDBExtractParams
-  | GoogleSheetsExtractParams;
+  | GoogleSheetsExtractParams
+  | MongoDBExtractParams;
 
 export type RelationalDBExtractParams = {
   query?: string;
   queries?: string[];
   github_metadata?: GithubMetadata;
+};
+
+export type MongoDBExtractParams = {
+  collection: string;
+  query_serialized: string;
 };
 
 export type GoogleSheetsExtractParams = {
@@ -162,8 +168,6 @@ export type GetOperatorResultResponse = {
   exec_state: ExecState;
   status: ExecutionStatus;
 };
-
-const { apiAddress } = useAqueductConsts();
 
 export async function exportFunction(
   user: UserProfile,

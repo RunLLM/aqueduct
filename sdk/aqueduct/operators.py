@@ -73,10 +73,16 @@ class S3ExtractParams(BaseModel):
     merge: Optional[bool]
 
 
+class MongoExtractParams(BaseModel):
+    collection: str
+    query_serialized: str
+
+
 UnionExtractParams = Union[
     SalesforceExtractParams,
     S3ExtractParams,
     GoogleSheetsExtractParams,
+    MongoExtractParams,
     RelationalDBExtractParams,
 ]
 

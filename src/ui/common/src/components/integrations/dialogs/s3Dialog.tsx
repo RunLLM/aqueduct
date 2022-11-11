@@ -62,7 +62,7 @@ export const S3Dialog: React.FC<Props> = ({
     if (!value?.use_as_storage) {
       onUpdateField('use_as_storage', 'false');
     }
-  }, []);
+  }, [onUpdateField, value?.type, value?.use_as_storage]);
 
   const configProfileInput = (
     <IntegrationTextInputField

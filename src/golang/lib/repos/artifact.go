@@ -25,8 +25,8 @@ type artifactReader interface {
 	// GetBatch returns the Artifacts with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
-	// GetByDAG returns the Artifacts created by the workflow DAG with ID workflowDagID.
-	GetByDAG(ctx context.Context, workflowDagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
+	// GetByDAG returns the Artifacts created by the workflow DAG with ID dagID.
+	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
 	// ValidateOrg returns whether the Artifact was created by a user in orgID.
 	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error)

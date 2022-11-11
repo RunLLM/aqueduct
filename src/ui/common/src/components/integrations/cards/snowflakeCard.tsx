@@ -12,19 +12,19 @@ export const SnowflakeCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as SnowflakeConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Account Identifier: </strong>
         {config.account_identifier}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Warehouse: </strong>
         {config.warehouse}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>User: </strong>
         {config.username}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Database: </strong>
         {config.database}
       </Typography>

@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
-import { CopyBlock, github } from 'react-code-blocks';
 
 import UserProfile from '../../utils/auth';
+import { CodeBlock } from '../CodeBlock';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import DefaultLayout from '../layouts/default';
 import { BreadcrumbLink } from '../layouts/NavBar';
@@ -60,15 +60,10 @@ client = aqueduct.Client(
         </Typography>
         <Box
           sx={{
-            span: { padding: '0 !important' },
+            marginTop: '8px',
           }}
         >
-          <CopyBlock
-            text={apiConnectionSnippet}
-            language="python"
-            showLineNumbers={false}
-            theme={github}
-          />
+          <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
         </Box>
       </Box>
     </Layout>

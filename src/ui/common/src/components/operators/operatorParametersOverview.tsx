@@ -5,11 +5,13 @@ import React from 'react';
 import {
   GoogleSheetsExtractParams,
   GoogleSheetsLoadParams,
+  MongoDBExtractParams,
   Operator,
   OperatorType,
   RelationalDBExtractParams,
   RelationalDBLoadParams,
 } from '../../utils/operators';
+import { CodeBlock } from '../CodeBlock';
 
 type Props = {
   operator: Operator;
@@ -50,6 +52,27 @@ const OperatorParametersOverview: React.FC<Props> = ({
           <strong>spreadsheet ID: </strong>
           {(exParams as GoogleSheetsExtractParams).spreadsheet_id}
         </Typography>
+      );
+    } else if ('query_serialized' in exParams) {
+      const mongoDbParams = exParams as MongoDBExtractParams;
+      return (
+        <Box>
+          <Typography variant="body2" color={textColor}>
+            <strong>collection: </strong>
+            <code>{mongoDbParams.collection}</code>
+          </Typography>
+          <Typography variant="body2" color={textColor} mb={1}>
+            <strong>query: </strong>
+          </Typography>
+          <CodeBlock language="json">
+            {JSON.stringify(
+              // pretty print
+              JSON.parse(mongoDbParams.query_serialized),
+              null,
+              2
+            )}
+          </CodeBlock>
+        </Box>
       );
     }
   } else if (operator.spec.type === OperatorType.Load) {

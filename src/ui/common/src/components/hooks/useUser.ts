@@ -34,7 +34,7 @@ export default function useUser(): {
     };
 
     getUser();
-  }, []);
+  }, [apiKey, setCookie]);
 
   return { success, loading, user };
 }
