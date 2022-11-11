@@ -15,7 +15,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 var ErrInvalidStatusToLaunch = errors.New("Cannot launch operator. The operator is in an invalid status.")
@@ -92,17 +91,6 @@ func NewOperator(
 	execMode ExecutionMode,
 	db database.Database,
 ) (Operator, error) {
-	resources := dbOperator.Spec.Resources()
-	if resources != nil {
-		log.Errorf("HELLO: Operator Spec Resources: %v", *resources)
-		if resources.MemoryMB != nil {
-			log.Errorf("HELLO: memory ", *resources.MemoryMB)
-		}
-		if resources.NumCpus != nil {
-			log.Errorf("HELLO: num_cpus ", *resources.NumCpus)
-		}
-	}
-
 	if len(inputs) != len(inputExecPaths) {
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
 	}

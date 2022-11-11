@@ -38,7 +38,7 @@ const (
 )
 
 type ResourceConfig struct {
-	NumCpus  *int `json:"num_cpus,omitempty"`
+	NumCPU   *int `json:"num_cpus,omitempty"`
 	MemoryMB *int `json:"memory_mb,omitempty"`
 }
 

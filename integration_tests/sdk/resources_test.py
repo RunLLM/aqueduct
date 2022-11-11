@@ -1,9 +1,10 @@
 from os import cpu_count
 
-from aqueduct import op
+import pytest
 from aqueduct.enums import ServiceType
 from utils import generate_new_flow_name, run_flow_test
-import pytest
+
+from aqueduct import op
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
@@ -63,7 +64,10 @@ def test_custom_num_cpus(client, engine):
         assert (
             default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
         )
-        assert custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get() == 6
+        assert (
+            custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get()
+            == 6
+        )
 
     finally:
         for flow in flows:
@@ -77,6 +81,7 @@ def test_custom_memory(client, engine):
     Customize our memory to be 200MB. We will run two different methods, one that allocates less than
     this amount and one that allocates more. The latter should fail.
     """
+
     @op(requirements=[], resources={"memory": "200MB"})
     def fn_expect_success():
         return 123
@@ -85,8 +90,8 @@ def test_custom_memory(client, engine):
 
     @op(requirements=[], resources={"memory": "200MB"})
     def fn_expect_failure():
-        # Allocate 200MB of memory.
-        output = bytearray(1000 * 1000 * 100 * 2)
+        # Overallocate memory at runtime.
+        output = bytearray(1000 * 1000 * 100 * 4)
         return output
 
     failure_output = fn_expect_failure.lazy()

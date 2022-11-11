@@ -492,7 +492,7 @@ class Client:
         )
         dag.engine_config = engine_config
 
-        # This is an important validation to take right before publishing the flow.
+        # Final check that the dag is ready to publish.
         dag.verify()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:

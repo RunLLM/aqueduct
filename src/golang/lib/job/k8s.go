@@ -70,8 +70,8 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
 
 		if functionSpec.Resources != nil {
-			if functionSpec.Resources.NumCpus != nil {
-				resourceRequest[k8s.PodResourceCPUKey] = strconv.Itoa(*functionSpec.Resources.NumCpus)
+			if functionSpec.Resources.NumCPU != nil {
+				resourceRequest[k8s.PodResourceCPUKey] = strconv.Itoa(*functionSpec.Resources.NumCPU)
 			}
 			if functionSpec.Resources.MemoryMB != nil {
 				// Set the request to be in "M" = Megabytes.

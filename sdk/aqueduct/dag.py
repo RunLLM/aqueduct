@@ -55,7 +55,8 @@ class DAG(BaseModel):
         }
 
     def verify(self) -> None:
-        """This method must be called before the DAG is published, as a final check that everything is consistent.
+        """This method must be called before the DAG is published in publish_flow(), as a final check that
+        everything is consistent.
 
         Currently, it:
         1) Makes sure that the specified compute engine can handle the specified resource requests.

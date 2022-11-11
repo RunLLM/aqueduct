@@ -446,7 +446,6 @@ def op(
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
-
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,
