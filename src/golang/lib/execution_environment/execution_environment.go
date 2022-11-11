@@ -137,11 +137,7 @@ func GetExecEnvFromDB(
 		return nil, err
 	}
 
-	return &ExecutionEnvironment{
-		Id:            dbExecEnv.Id,
-		PythonVersion: dbExecEnv.Spec.PythonVersion,
-		Dependencies:  dbExecEnv.Spec.Dependencies,
-	}, nil
+	return newFromDBExecutionEnvironment(dbExecEnv), nil
 }
 
 func IsCondaConnected(
@@ -171,6 +167,37 @@ func deleteEnvs(envs []ExecutionEnvironment) {
 			log.Errorf("Failed to delete env %s: %v", env.Id.String(), err)
 		}
 	}
+}
+
+func newFromDBExecutionEnvironment(
+	dbExecEnv *db_exec_env.DBExecutionEnvironment,
+) *ExecutionEnvironment {
+	return &ExecutionEnvironment{
+		Id:            dbExecEnv.Id,
+		PythonVersion: dbExecEnv.Spec.PythonVersion,
+		Dependencies:  dbExecEnv.Spec.Dependencies,
+	}
+}
+
+func GetExecutionEnvironmentsMapByOperatorIds(
+	ctx context.Context,
+	opIDs []uuid.UUID,
+	envReader db_exec_env.Reader,
+	db database.Database,
+) (map[uuid.UUID]ExecutionEnvironment, error) {
+	dbEnvMap, err := envReader.GetExecutionEnvironmentsMapByOperatorID(
+		ctx, opIDs, db,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[uuid.UUID]ExecutionEnvironment, len(dbEnvMap))
+	for id, dbEnv := range dbEnvMap {
+		results[id] = *newFromDBExecutionEnvironment(&dbEnv)
+	}
+
+	return results, nil
 }
 
 // CreateMissingAndSyncExistingEnvs env %s: %vistingEnvs` keep argerrsync with DB.

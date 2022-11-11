@@ -84,6 +84,46 @@ func (r *standardReaderImpl) GetExecutionEnvironmentByHash(
 	return &result, err
 }
 
+func (r *standardReaderImpl) GetExecutionEnvironmentsMapByOperatorID(
+	ctx context.Context,
+	opIDs []uuid.UUID,
+	db database.Database,
+) (map[uuid.UUID]DBExecutionEnvironment, error) {
+	type resultRow struct {
+		Id         uuid.UUID `db:"id"`
+		OperatorId uuid.UUID `db:"operator_id"`
+		Hash       uuid.UUID `db:"hash"`
+		Spec       Spec      `db:"spec"`
+	}
+
+	query := fmt.Sprintf(`
+		SELECT operator.id AS operator_id, %s
+		FROM execution_environment, operator
+		WHERE operator.execution_environment_id = execution_environment.id
+		AND operator.id IN (%s);`,
+		allColumnsWithPrefix(),
+		stmt_preparers.GenerateArgsList(len(opIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(opIDs)
+	var results []resultRow
+	err := db.Query(ctx, &results, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	resultMap := make(map[uuid.UUID]DBExecutionEnvironment, len(results))
+	for _, row := range results {
+		resultMap[row.OperatorId] = DBExecutionEnvironment{
+			Id:   row.Id,
+			Spec: row.Spec,
+			Hash: row.Hash,
+		}
+	}
+
+	return resultMap, nil
+}
+
 func (w *standardWriterImpl) UpdateExecutionEnvironment(
 	ctx context.Context,
 	id uuid.UUID,

@@ -17,6 +17,11 @@ type Reader interface {
 	GetExecutionEnvironment(ctx context.Context, id uuid.UUID, db database.Database) (*DBExecutionEnvironment, error)
 	GetExecutionEnvironments(ctx context.Context, ids []uuid.UUID, db database.Database) ([]DBExecutionEnvironment, error)
 	GetExecutionEnvironmentByHash(ctx context.Context, hash uuid.UUID, db database.Database) (*DBExecutionEnvironment, error)
+	GetExecutionEnvironmentsMapByOperatorID(
+		ctx context.Context,
+		opIDs []uuid.UUID,
+		db database.Database,
+	) (map[uuid.UUID]DBExecutionEnvironment, error)
 }
 
 type Writer interface {

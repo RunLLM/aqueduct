@@ -9,11 +9,13 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -62,10 +64,12 @@ type artifactTypeMetadata struct {
 type PreviewHandler struct {
 	PostHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	GithubManager     github.Manager
-	AqEngine          engine.AqEngine
+	Database                   database.Database
+	IntegrationReader          integration.Reader
+	ExecutionEnvironmentReader db_exec_env.Reader
+	ExecutionEnvironmentWriter db_exec_env.Writer
+	GithubManager              github.Manager
+	AqEngine                   engine.AqEngine
 }
 
 func (*PreviewHandler) Name() string {
@@ -181,6 +185,11 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
+	execEnvByOpId, err := h.setupExecEnv(ctx, args)
+	if err != nil {
+		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error setting up python environments.")
+	}
+
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
@@ -190,6 +199,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	workflowPreviewResult, err := h.AqEngine.PreviewWorkflow(
 		ctx,
 		dagSummary.Dag,
+		execEnvByOpId,
 		timeConfig,
 	)
 	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
@@ -219,6 +229,63 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		ArtifactContents:      artifactContents,
 		ArtifactTypesMetadata: artifactTypesMetadata,
 	}, statusCode, nil
+}
+
+func (h *PreviewHandler) setupExecEnv(
+	ctx context.Context,
+	args *previewArgs,
+) (map[uuid.UUID]exec_env.ExecutionEnvironment, error) {
+	condaConnected, err := exec_env.IsCondaConnected(
+		ctx, args.Id, h.IntegrationReader, h.Database,
+	)
+
+	dagSummary := args.DagSummary
+
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to verify if conda is connected.")
+	}
+
+	// For now, do nothing if conda is not connected.
+	if !condaConnected {
+		return nil, nil
+	}
+
+	rawEnvByOperator := make(
+		map[uuid.UUID]exec_env.ExecutionEnvironment,
+		len(dagSummary.FileContentsByOperatorUUID),
+	)
+
+	for opId, zipball := range dagSummary.FileContentsByOperatorUUID {
+		rawEnv, err := exec_env.InferDependenciesFromZipFile(zipball)
+		if err != nil {
+			return nil, err
+		}
+
+		rawEnvByOperator[opId] = *rawEnv
+	}
+
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	envByOperator, err := exec_env.CreateMissingAndSyncExistingEnvs(
+		ctx,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		rawEnvByOperator,
+		txn,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return envByOperator, nil
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {
