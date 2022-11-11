@@ -1,4 +1,6 @@
 #!/bin/bash
+# NOTE: Keep this in sync with the `start-function-executor.sh` in `/src/python/aqueduct_executor`.
+
 JOB_SPEC=$1
 FUNCTION_EXTRACT_PATH=$(python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 EXIT_CODE=$?

@@ -42,13 +42,8 @@ test:
 	cd golang && go test -v $$(go list ./...)
 
 # Database integration tests
-test-db-sqlite:
-	cd golang && go test -v github.com/aqueducthq/aqueduct/lib/collections/tests -database-integration -database-type=sqlite
-
-test-db-postgres:
-	cd golang && go test -v github.com/aqueducthq/aqueduct/lib/collections/tests -database-integration -database-type=postgres
-
-test-database: test-db-sqlite test-db-postgres
+test-database:
+	cd golang && go test -v github.com/aqueducthq/aqueduct/lib/repos/tests -database
 
 lint-go:
 	gofumpt -w golang/

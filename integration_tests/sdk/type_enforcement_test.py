@@ -15,11 +15,11 @@ def output_different_types(should_return_num: bool) -> Union[str, int]:
     return "not a number"
 
 
-def test_flow_fails_on_unexpected_type_output(client):
+def test_flow_fails_on_unexpected_type_output(client, engine):
     type_toggle = client.create_param("output_type_toggle", True)
     output = output_different_types(type_toggle)
 
-    flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+    flow = run_flow_test(client, artifacts=[output], engine=engine, delete_flow_after=False)
 
     try:
         client.trigger(flow.id(), parameters={"output_type_toggle": False})
@@ -32,13 +32,13 @@ def test_flow_fails_on_unexpected_type_output(client):
         client.delete_flow(flow.id())
 
 
-def test_flow_fails_on_unexpected_type_output_for_lazy(client):
+def test_flow_fails_on_unexpected_type_output_for_lazy(client, engine):
     type_toggle = client.create_param("output_type_toggle", True)
     output = output_different_types.lazy(type_toggle)
 
     # The flow will first be lazily executed, and the new type information
     # will be persisted to the database.
-    flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+    flow = run_flow_test(client, artifacts=[output], engine=engine, delete_flow_after=False)
 
     try:
         # Because we are violating our inferred types, this will fail!

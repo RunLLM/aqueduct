@@ -23,6 +23,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -947,4 +948,11 @@ func (eng *aqEngine) updateWorkflowSchedule(
 		}
 	}
 	return nil
+}
+
+func (eng *aqEngine) InitEnv(
+	ctx context.Context,
+	env *execution_environment.ExecutionEnvironment,
+) error {
+	return env.CreateEnv()
 }
