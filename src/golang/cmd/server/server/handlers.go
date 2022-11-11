@@ -163,10 +163,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:             s.Vault,
 		},
 		routes.PreviewRoute: &handler.PreviewHandler{
-			Database:          s.Database,
-			IntegrationReader: s.IntegrationReader,
-			GithubManager:     s.GithubManager,
-			AqEngine:          s.AqEngine,
+			Database:                   s.Database,
+			IntegrationReader:          s.IntegrationReader,
+			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
+			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
+			GithubManager:              s.GithubManager,
+			AqEngine:                   s.AqEngine,
 		},
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:          s.Database,

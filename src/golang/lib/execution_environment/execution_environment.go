@@ -35,7 +35,7 @@ func (e *ExecutionEnvironment) CreateDBRecord(
 
 	dbEnv, err := execEnvWriter.CreateExecutionEnvironment(
 		ctx,
-		db_exec_env.Spec{
+		&db_exec_env.Spec{
 			PythonVersion: e.PythonVersion,
 			Dependencies:  e.Dependencies,
 		},
@@ -61,8 +61,10 @@ func (e *ExecutionEnvironment) DeleteDBRecord(
 // Hash generates a hash based on the environment's
 // dependency set and python version.
 func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
-	sliceToHash := append(e.Dependencies, e.PythonVersion)
-	sort.Strings(sliceToHash)
+	sliceToHash := make([]string, 0, len(e.Dependencies)+1)
+	sliceToHash = append(sliceToHash, e.Dependencies...)
+	sliceToHash = append(sliceToHash, e.PythonVersion)
+	sort.Strings(e.Dependencies)
 
 	buf := &bytes.Buffer{}
 	err := gob.NewEncoder(buf).Encode(sliceToHash)
@@ -90,6 +92,10 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 	err := runCmd(condaCmdPrefix, createArgs...)
 	if err != nil {
 		return err
+	}
+
+	for _, d := range e.Dependencies {
+		fmt.Println(d)
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.

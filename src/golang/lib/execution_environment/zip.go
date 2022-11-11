@@ -3,6 +3,7 @@ package execution_environment
 import (
 	"archive/zip"
 	"bytes"
+	"io/ioutil"
 	"sort"
 	"strings"
 
@@ -37,22 +38,23 @@ func InferDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, error)
 				return nil, err
 			}
 
-			defer reader.Close()
-			buf := make([]byte, 0, zipFile.UncompressedSize64)
-			_, err = reader.Read(buf)
+			buf, err := ioutil.ReadAll(reader)
 			if err != nil {
 				return nil, err
 			}
 
 			contents := string(buf)
-
 			if isReqFile {
 				rows := strings.Split(contents, "\n")
 				normalizedRows := make([]string, 0, len(rows))
 				for _, row := range rows {
-					normalizedRows = append(
-						normalizedRows, strings.TrimSpace(row),
-					)
+					normalizedRow := strings.TrimSpace(row)
+					// Deal with empty rows
+					if normalizedRow != "" {
+						normalizedRows = append(
+							normalizedRows, normalizedRow,
+						)
+					}
 				}
 
 				sort.Strings(normalizedRows)

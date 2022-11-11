@@ -17,7 +17,8 @@ type standardWriterImpl struct{}
 
 func (w *standardWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash uuid.UUID,
+	spec *Spec,
+	hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	insertColumns := []string{SpecColumn, HashColumn}

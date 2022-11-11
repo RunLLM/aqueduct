@@ -27,7 +27,8 @@ type Reader interface {
 type Writer interface {
 	CreateExecutionEnvironment(
 		ctx context.Context,
-		spec Spec, hash uuid.UUID,
+		spec *Spec,
+		hash uuid.UUID,
 		db database.Database,
 	) (*DBExecutionEnvironment, error)
 	UpdateExecutionEnvironment(
