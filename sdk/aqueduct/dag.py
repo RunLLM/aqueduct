@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType, ServiceType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -45,27 +45,26 @@ class DAG(BaseModel):
     # Is excluded from json serialization.
     operator_by_name: Dict[str, Operator] = {}
 
-    # These fields must be set when publishing the workflow
+    # The fields below must be set when publishing the workflow
     metadata: Metadata
-    engine_config: EngineConfig = EngineConfig()
+    # Must be set through `set_engine_config()`.
+    engine_config: Optional[EngineConfig] = None
 
     class Config:
         fields = {
             "operators_by_name": {"exclude": ...},
         }
 
-    def verify(self) -> None:
-        """This method must be called before the DAG is published in publish_flow(), as a final check that
-        everything is consistent.
+    def set_engine_config(self, engine_config: EngineConfig) -> None:
+        """ Sets the engine config.
 
-        Currently, it:
-        1) Makes sure that the specified compute engine can handle the specified resource requests.
+        Before setting the config, we make sure that the specified compute engine can handle the specified resource requests.
         """
         allowed_customizable_resources: Dict[str, bool] = {
             "num_cpus": False,
             "memory": False,
         }
-        if self.engine_config.type == RuntimeType.K8S:
+        if engine_config.type == RuntimeType.K8S:
             allowed_customizable_resources = {
                 "num_cpus": True,
                 "memory": True,
@@ -75,14 +74,16 @@ class DAG(BaseModel):
             if op.spec.resources is not None:
                 if not allowed_customizable_resources["num_cpus"] and op.spec.resources.num_cpus:
                     raise InvalidUserArgumentException(
-                        "Operator %s cannot configure the number of cpus, since it is not supported when running on %s."
+                        "Operator `%s` cannot configure the number of cpus, since it is not supported when running on %s."
                         % (op.name, self.engine_config.type)
                     )
                 if not allowed_customizable_resources["memory"] and op.spec.resources.memory_mb:
                     raise InvalidUserArgumentException(
-                        "Operator %s cannot configure the amount of memory, since it is not supported when running on %s."
+                        "Operator `%s` cannot configure the amount of memory, since it is not supported when running on %s."
                         % (op.name, self.engine_config.type)
                     )
+
+        self.engine_config = engine_config
 
     def must_get_operator(
         self,

@@ -490,10 +490,7 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
-        dag.engine_config = engine_config
-
-        # Final check that the dag is ready to publish.
-        dag.verify()
+        dag.set_engine_config(engine_config)
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
