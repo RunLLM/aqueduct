@@ -491,6 +491,7 @@ class Client:
             retention_policy=retention_policy,
         )
         dag.set_engine_config(engine_config)
+        assert dag.engine_config is not None
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow

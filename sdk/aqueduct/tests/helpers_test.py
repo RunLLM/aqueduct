@@ -5,7 +5,6 @@ from aqueduct.error import InvalidUserArgumentException
 
 
 def test_convert_memory_string_to_mbs():
-
     def _run_test(input: str, expected: int, err_msg: str = ""):
         """`err_msg` only needs to be a substring of the exception message."""
         try:

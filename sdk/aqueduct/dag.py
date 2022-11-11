@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType, ServiceType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -56,7 +56,7 @@ class DAG(BaseModel):
         }
 
     def set_engine_config(self, engine_config: EngineConfig) -> None:
-        """ Sets the engine config.
+        """Sets the engine config.
 
         Before setting the config, we make sure that the specified compute engine can handle the specified resource requests.
         """
@@ -75,12 +75,12 @@ class DAG(BaseModel):
                 if not allowed_customizable_resources["num_cpus"] and op.spec.resources.num_cpus:
                     raise InvalidUserArgumentException(
                         "Operator `%s` cannot configure the number of cpus, since it is not supported when running on %s."
-                        % (op.name, self.engine_config.type)
+                        % (op.name, engine_config.type)
                     )
                 if not allowed_customizable_resources["memory"] and op.spec.resources.memory_mb:
                     raise InvalidUserArgumentException(
                         "Operator `%s` cannot configure the amount of memory, since it is not supported when running on %s."
-                        % (op.name, self.engine_config.type)
+                        % (op.name, engine_config.type)
                     )
 
         self.engine_config = engine_config

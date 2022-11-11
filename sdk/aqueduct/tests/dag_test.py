@@ -6,7 +6,8 @@ from aqueduct.tests.utils import (
     _construct_dag,
     _construct_operator,
     default_artifact,
-    generate_uuids, default_function_spec,
+    default_function_spec,
+    generate_uuids,
 )
 
 
@@ -101,7 +102,7 @@ def test_set_engine_config():
         ],
         artifacts=[
             default_artifact(id=fn_artifact_ids[0], name="Function Artifact"),
-        ]
+        ],
     )
 
     # Can only set to K8s runtime.
