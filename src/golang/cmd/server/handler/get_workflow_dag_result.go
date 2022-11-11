@@ -193,7 +193,6 @@ func getArtifactContents(
 				if err != nil {
 					return nil, errors.Wrap(err, "Unable to get artifact content from storage")
 				}
-
 				contents[path] = string(contentBytes)
 			}
 		}

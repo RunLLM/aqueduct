@@ -1,7 +1,5 @@
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-
-const { apiAddress } = useAqueductConsts();
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -61,6 +59,11 @@ export type MariaDbConfig = {
   database: string;
   username: string;
   password?: string;
+};
+
+export type MongoDBConfig = {
+  auth_uri: string;
+  database: string;
 };
 
 export type SqlServerConfig = {
@@ -179,9 +182,11 @@ export type Service =
   | 'Kubernetes'
   | 'SQLite'
   | 'Lambda'
-  | 'Google Sheets';
+  | 'Google Sheets'
+  | 'MongoDB'
+  | 'Conda';
 
-type Info = {
+export type Info = {
   logo: string;
   activated: boolean;
   category: string;
@@ -338,6 +343,16 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Lambda']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
+    activated: true,
+    category: 'compute',
+  },
+  ['MongoDB']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mongo.png',
+    activated: true,
+    category: 'data',
+  },
+  ['Conda']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/conda.png',
     activated: true,
     category: 'compute',
   },

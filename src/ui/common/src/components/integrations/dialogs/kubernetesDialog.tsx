@@ -4,7 +4,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 
 import { KubernetesConfig } from '../../../utils/integrations';
-import { useAqueductConsts } from '../../hooks/useAqueductConsts';
+import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
@@ -19,8 +19,6 @@ type Props = {
   apiKey: string;
 };
 
-const { apiAddress } = useAqueductConsts();
-
 export const KubernetesDialog: React.FC<Props> = ({
   onUpdateField,
   value,
@@ -31,7 +29,9 @@ export const KubernetesDialog: React.FC<Props> = ({
     if (!value?.use_same_cluster) {
       onUpdateField('use_same_cluster', 'false');
     }
+  }, [apiKey, onUpdateField, value?.use_same_cluster]);
 
+  useEffect(() => {
     const fetchEnvironment = async () => {
       const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
         method: 'GET',

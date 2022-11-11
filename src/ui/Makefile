@@ -9,10 +9,12 @@ endif
 # This command can be used to temporarily link a version of the component
 # library that you've developed locally into the app UI.
 link-dev:
-	cd common && npm install && sudo npm link
+	cd app && npm unlink
+	cd common && npm install && npm link
 	cd app && npm link @aqueducthq/common
 
-dev: link-dev
+dev: 
+	cd common && npm run build
 	cd app && npm run start
 
 dist:

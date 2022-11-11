@@ -1,12 +1,10 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import {
   GetArtifactResultResponse,
   SerializationType,
 } from '../utils/artifacts';
-
-const { apiAddress } = useAqueductConsts();
 
 export const handleGetArtifactResultContent = createAsyncThunk<
   string,

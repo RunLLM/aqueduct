@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.1.3
+Released on November 7, 2022.
+
+### Enhancements
+* Surfaces errors with parameter validation in workflow status summary.
+* Catches errors generated during `requirements.txt` installation and surfaces
+    them eagerly; previously, these errors were ignored.
+* Improves operator execution time by only importing `great_expectations` when
+    it's being used; the library import is quite slow, so doing it on every
+    operator was wasteful.
+* Adjusts various font sizes in the UI to improve presentation.
+* Adds MongoDB integration.
+* Adds `engine` parameter to `global_config`, allowing users to specify a
+    default compute engine; `engine` is also now an optional parameter to
+    `publish_flow`:
+    * If the `engine` argument to `publish_flow` is specified, it will override
+        the `global_config`. Otherwise, the engine set in `global_config` will
+        be used.
+    * If neither the `engine` argument to `publish_flow` or `global_config` is
+        set, the workflow will be executed on the default Aqueduct execution
+        engine.
+
+### Bugfixes
+* Fixes bug where operator details button text overflowed.
+
+## 0.1.2
+Released on October 31, 2022.
+
+### Enhancements
+* Hides search bar on data viewing page when there are no artifacts.
+* Adds support for variable length arguments (`*args`) in Aqueduct functions.
+
+### Bugfixes
+* Fixes a bug where updating the metadata of a paused workflow would fail.
+* Fixes a bug where parameters were shown as having an upstream function that
+    wasn't accessible from the UI.
+
 ## 0.1.1
 Released on October 25, 2022.
 

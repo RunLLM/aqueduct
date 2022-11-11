@@ -12,15 +12,15 @@ export const PostgresCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as PostgresConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Host: </strong>
         {config.host}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>User: </strong>
         {config.username}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2">
         <strong>Database: </strong>
         {config.database}
       </Typography>
