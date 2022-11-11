@@ -71,3 +71,47 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 
 	return workflows
 }
+
+// seedDAG creates count DAG records.
+// It also creates a new Workflow to associate with the DAG.
+func (ts *TestSuite) seedDAG(count int) []models.DAG {
+	workflows := ts.seedWorkflow(1)
+	workflowIDs := sampleWorkflowIDs(count, workflows)
+	return ts.seedDAGWithWorkflow(count, workflowIDs)
+}
+
+// seedDAGWithWorkflow creates count DAG records. It uses workflowIDs as the Workflow
+// associated with each DAG.
+func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []models.DAG {
+	require.Len(ts.T(), workflowIDs, count)
+
+	dags := make([]models.DAG, 0, count)
+
+	for i := 0; i < count; i++ {
+		workflowID := workflowIDs[i]
+		storageConfig := &shared.StorageConfig{
+			Type: shared.S3StorageType,
+			S3Config: &shared.S3Config{
+				Region: "us-east-2",
+				Bucket: "test",
+			},
+		}
+		engineConfig := &shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
+			AqueductConfig: &shared.AqueductConfig{},
+		}
+
+		dag, err := ts.dag.Create(
+			ts.ctx,
+			workflowID,
+			storageConfig,
+			engineConfig,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		dags = append(dags, *dag)
+	}
+
+	return dags
+}

@@ -41,3 +41,25 @@ func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow)
 		requireDeepEqual(t, expectedWorkflow, foundWorkflow)
 	}
 }
+
+// requireDeepEqualDAGs asserts that the expected and actual lists of DAGs
+// containt the same elements.
+func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedDAG := range expected {
+		found := false
+		var foundDAG models.DAG
+
+		for _, actualDAG := range actual {
+			if expectedDAG.ID == actualDAG.ID {
+				found = true
+				foundDAG = actualDAG
+				break
+			}
+		}
+
+		require.True(t, found, "Unable to find DAG: %v", expectedDAG)
+		requireDeepEqual(t, expectedDAG, foundDAG)
+	}
+}
