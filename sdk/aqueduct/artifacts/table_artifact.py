@@ -263,7 +263,11 @@ class TableArtifact(BaseArtifact):
 
         check_name = "ge_table_check: {%s}" % expectation_name
 
-        zip_file = serialize_function(great_expectations_check_method, check_name, requirements=["pandas", "great-expectations", "ruamel.yaml"])
+        zip_file = serialize_function(
+            great_expectations_check_method,
+            check_name,
+            requirements=["pandas", "great-expectations", "ruamel.yaml"],
+        )
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
             granularity=FunctionGranularity.TABLE,
@@ -377,7 +381,9 @@ class TableArtifact(BaseArtifact):
 
         metric_name = "num_rows"
         metric_description = "compute number of rows for %s" % table_name
-        zip_file = serialize_function(internal_num_rows_metric, metric_name, requirements=["pandas"])
+        zip_file = serialize_function(
+            internal_num_rows_metric, metric_name, requirements=["pandas"]
+        )
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
