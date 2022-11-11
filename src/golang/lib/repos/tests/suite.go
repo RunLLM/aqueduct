@@ -20,6 +20,7 @@ type TestSuite struct {
 	ctx context.Context
 
 	// List of all repos
+	dag      repos.DAG
 	workflow repos.Workflow
 	user     repos.User
 
@@ -39,6 +40,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.DB = DB
 
 	// Initialize repos
+	ts.dag = sqlite.NewDAGRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
 
