@@ -33,14 +33,16 @@ func InferDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, error)
 		if strings.Contains(zipFile.Name, ReqFileName) || strings.Contains(zipFile.Name, PythonVersionFileName) {
 			isReqFile := strings.Contains(zipFile.Name, ReqFileName)
 			reader, err := zipFile.Open()
-			defer reader.Close()
-
 			if err != nil {
 				return nil, err
 			}
 
+			defer reader.Close()
 			buf := make([]byte, 0, zipFile.UncompressedSize64)
-			reader.Read(buf)
+			_, err = reader.Read(buf)
+			if err != nil {
+				return nil, err
+			}
 
 			contents := string(buf)
 
