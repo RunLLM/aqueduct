@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -15,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -230,6 +230,7 @@ func (bo *baseOperator) writeExecState(
 	}
 	return storage.NewStorage(bo.storageConfig).Put(ctx, bo.metadataPath, serializedExecState)
 }
+
 func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
