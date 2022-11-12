@@ -55,7 +55,7 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	return getWorkflow(ctx, DB, query, args...)
 }
 
-func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID uuid.UUID, DB database.Database) ([]views.LatestWorkflowStatus, error) {
+func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LatestWorkflowStatus, error) {
 	// Get workflow metadata (id, name, description, creation time, last run time, and last run status)
 	// for all workflows whose `organization_id` is `organizationId` ordered by when the workflow was created.
 	// Get the last run DAG by getting the max created_at timestamp for all workflow DAGs associated with each
@@ -125,7 +125,7 @@ func (*workflowReader) List(ctx context.Context, DB database.Database) ([]models
 	return getWorkflows(ctx, DB, query)
 }
 
-func (*workflowReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error) {
+func (*workflowReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
 	query := `
 	SELECT 
 		COUNT(*) AS count 
@@ -165,12 +165,12 @@ func (*workflowWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
-	id, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
+	ID, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
 	if err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{id, userID, name, description, schedule, time.Now(), retentionPolicy}
+	args := []interface{}{ID, userID, name, description, schedule, time.Now(), retentionPolicy}
 	return getWorkflow(ctx, DB, query, args...)
 }
 
