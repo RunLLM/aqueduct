@@ -215,14 +215,14 @@ func (bo *baseOperator) writeExecState(
 	err error,
 ) error {
 	execState := shared.ExecutionState{
-		Status:      shared.FailedExecutionStatus,
-		FailureType: &shared.UserFatalFailure,
+		Status: shared.FailedExecutionStatus,
 		Error: &shared.Error{
 			Context: "",
 			Tip:     err.Error(),
 		},
 		// TODO: need to set timestamps!
 	}
+	*execState.FailureType = shared.UserFatalFailure
 
 	serializedExecState, err := json.Marshal(execState)
 	if err != nil {
