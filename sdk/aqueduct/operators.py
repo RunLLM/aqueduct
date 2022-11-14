@@ -175,7 +175,7 @@ class ParamSpec(BaseModel):
 
 class ResourceConfig(BaseModel):
     # These resources are configured exactly. The user is not given any more
-    # or any less. If the requested resources exceeds capacity, and error
+    # or any less. If the requested resources exceeds capacity, an error
     # will be thrown at execution time.
     num_cpus: Optional[int]
     memory_mb: Optional[int]
