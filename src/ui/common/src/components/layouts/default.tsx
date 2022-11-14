@@ -6,7 +6,6 @@ import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
 
-//export const MenuSidebarOffset = `${MenuSidebarWidthNumber + 50}px`;
 export const DefaultLayoutMargin = '24px';
 export const SidesheetMargin = '16px';
 export const SidesheetWidth = '800px';
