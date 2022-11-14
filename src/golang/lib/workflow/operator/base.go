@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -71,8 +69,7 @@ func (bo *baseOperator) ID() uuid.UUID {
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
-	// TODO: should we propagate this error message to the user somehow? Mark it as internal error.
-	log.Errorf("Execution had system failure: %s. %v", logMsg, err)
+	log.Errorf("Execution had system failure: %s %v", logMsg, err)
 
 	failureType := shared.SystemFailure
 	return &shared.ExecutionState{
@@ -81,6 +78,23 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 		Error: &shared.Error{
 			Context: fmt.Sprintf("%v", err),
 			Tip:     shared.TipUnknownInternalError,
+		},
+	}
+}
+
+func jobManagerUserFailureExecState(err *job.JobError, logMsg string) *shared.ExecutionState {
+	log.Errorf("Job execution had a user-facing issue: %s %v", logMsg, err)
+
+	failureType := shared.UserFatalFailure
+	return &shared.ExecutionState{
+		Status:      shared.FailedExecutionStatus,
+		FailureType: &failureType,
+
+		// We only need to surface the user-facing message back the user,
+		// since the stack trace is within our own code.
+		Error: &shared.Error{
+			Context: "",
+			Tip:     err.GetMessage(),
 		},
 	}
 }
@@ -208,29 +222,6 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 	return nil
 }
 
-// `writeExecState` is only ever called for writing errors that occur outside the python executor
-// context.
-func (bo *baseOperator) writeExecState(
-	ctx context.Context,
-	err error,
-) error {
-	execState := shared.ExecutionState{
-		Status: shared.FailedExecutionStatus,
-		Error: &shared.Error{
-			Context: "",
-			Tip:     err.Error(),
-		},
-		// TODO: need to set timestamps!
-	}
-	*execState.FailureType = shared.UserFatalFailure
-
-	serializedExecState, err := json.Marshal(execState)
-	if err != nil {
-		return err
-	}
-	return storage.NewStorage(bo.storageConfig).Put(ctx, bo.metadataPath, serializedExecState)
-}
-
 func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error) {
 	if bo.jobName == "" {
 		return nil, errors.Newf("Internal error: a job name was not set for this operator.")
@@ -259,26 +250,14 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
 		} else {
-			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
+			var execState *shared.ExecutionState
 
-			// Catch any errors here that are coming from outside of the python executors,
-			// and that need a better user-facing message (eg. OOM issues).
-			if jobErr := err.(*job.JobError); jobErr != nil {
-				if jobErr.Code == job.User {
-					userFailureType := shared.UserFatalFailure
-					execState = &shared.ExecutionState{
-						Status:      shared.FailedExecutionStatus,
-						FailureType: &userFailureType,
-
-						// We only need to surface the user-facing message back the user,
-						// since the stack trace is within our own code.
-						Error: &shared.Error{
-							Context: "",
-							Tip:     err.(errors.DropboxError).GetMessage(),
-						},
-						// TODO: need to set timestamps!
-					}
-				}
+			// Catch any errors here that originate from within the JobManager, outside of the
+			// python execution context, and that need a better user-facing message (eg. OOM issues).
+			if jobErr := err.(*job.JobError); jobErr != nil && jobErr.Code == job.User {
+				execState = jobManagerUserFailureExecState(jobErr, "Job manager failed due to user error.")
+			} else {
+				execState = unknownSystemFailureExecState(err, "Unable to poll job manager.")
 			}
 			bo.updateExecState(execState)
 			return bo.ExecState(), nil
