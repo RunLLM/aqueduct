@@ -18,9 +18,9 @@ const (
 func allColumns() string {
 	return strings.Join(
 		[]string{
-			fmt.Sprintf("%s.%s", tableName, IdColumn),
-			fmt.Sprintf("%s.%s", tableName, SpecColumn),
-			fmt.Sprintf("%s.%s", tableName, HashColumn),
+			IdColumn,
+			SpecColumn,
+			HashColumn,
 		},
 		",",
 	)
@@ -31,9 +31,9 @@ func allColumns() string {
 func allColumnsWithPrefix() string {
 	return strings.Join(
 		[]string{
-			IdColumn,
-			SpecColumn,
-			HashColumn,
+			fmt.Sprintf("%s.%s", tableName, IdColumn),
+			fmt.Sprintf("%s.%s", tableName, SpecColumn),
+			fmt.Sprintf("%s.%s", tableName, HashColumn),
 		},
 		",",
 	)
