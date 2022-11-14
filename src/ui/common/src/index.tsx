@@ -97,9 +97,9 @@ import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
 import artifactResultContents from './reducers/artifactResultContents';
 import artifactResults from './reducers/artifactResults';
-// import dataPreview, {
-//   //dataPreviewSlice
-// } from './reducers/dataPreview';
+import dataPreview, {
+  dataPreviewSlice
+} from './reducers/dataPreview';
 import { getDataArtifactPreview } from './reducers/dataPreview';
 import integration, {
   handleConnectToNewIntegration,
@@ -246,10 +246,10 @@ export {
   DataCard,
   DataColumnTypeNames,
   DataPage,
-  //dataPreview,
+  dataPreview,
   DataPreviewer,
   //DataPreviewSideSheet,
-  //dataPreviewSlice,
+  dataPreviewSlice,
   DataTable,
   dateString,
   DayOfWeek,
