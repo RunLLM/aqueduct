@@ -16,7 +16,7 @@ var (
 )
 
 // These error codes come from our JobManagers when they fail to properly guide
-// their a job through its proper lifecycle. Errors surfaced this way propagated
+// their a job through its proper lifecycle. Errors surfaced this way are propagated
 // outside the python executor context. Their meaning is consistent across all
 // types of JobManagers.
 type JobErrorCode int
@@ -42,6 +42,7 @@ func WrapInJobError(code JobErrorCode, err error) error {
 			Code:         code,
 		}
 	}
+
 	return &JobError{
 		DropboxError: errors.New(err.Error()),
 		Code:         code,

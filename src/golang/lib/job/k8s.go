@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib"
@@ -122,6 +123,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	)
 }
 
+// TODO: handle the other caller of Poll().
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
@@ -133,6 +135,8 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		status = shared.SucceededExecutionStatus
 	} else if job.Status.Failed == 1 {
 		status = shared.FailedExecutionStatus
+
+		log.Errorf("HELLO: failed status: ", status)
 
 		// Fetch more detailed information about the failure, in case there is valuable
 		// context we can surface to the user.
@@ -163,6 +167,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		}
 
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
+			log.Errorf("HELLO: throwing the OOMKilled error!")
 			return status, WrapInJobError(
 				User,
 				errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."),

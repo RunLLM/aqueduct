@@ -258,26 +258,28 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
-		} else if jobErr := err.(*job.JobError); jobErr != nil {
-			if jobErr.Code == job.User {
-				// Update the operator's ExecState
-				err = bo.writeExecState(ctx, jobErr)
-				if err == nil {
-					execState := bo.fetchExecState(ctx)
-					bo.updateExecState(execState)
-					return bo.ExecState(), nil
-				}
-				// If there was an issue updating the operator's exec state, fallback to a system error.
-			}
-			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
-			bo.updateExecState(execState)
-			return bo.ExecState(), nil
 		} else {
-			// This clause is only here because the JobManager interface hasn't been migrated to use
-			// `JobError`'s yet.
-
-			// This is just an internal polling error state.
 			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
+
+			// Catch any errors here that are coming from outside of the python executors,
+			// and that need a better user-facing message (eg. OOM issues).
+			if jobErr := err.(*job.JobError); jobErr != nil {
+				if jobErr.Code == job.User {
+					userFailureType := shared.UserFatalFailure
+					execState = &shared.ExecutionState{
+						Status:      shared.FailedExecutionStatus,
+						FailureType: &userFailureType,
+
+						// We only need to surface the user-facing message back the user,
+						// since the stack trace is within our own code.
+						Error: &shared.Error{
+							Context: "",
+							Tip:     err.(errors.DropboxError).GetMessage(),
+						},
+						// TODO: need to set timestamps!
+					}
+				}
+			}
 			bo.updateExecState(execState)
 			return bo.ExecState(), nil
 		}
