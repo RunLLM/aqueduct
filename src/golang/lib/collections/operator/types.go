@@ -37,6 +37,11 @@ const (
 	SystemMetricType Type = "system_metric"
 )
 
+type ResourceConfig struct {
+	NumCPU   *int `json:"num_cpus,omitempty"`
+	MemoryMB *int `json:"memory_mb,omitempty"`
+}
+
 type specUnion struct {
 	Type         Type                        `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
@@ -46,6 +51,9 @@ type specUnion struct {
 	Load         *connector.Load             `json:"load,omitempty"`
 	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
+
+	// This can currently only be set for function operators.
+	Resources *ResourceConfig `json:"resources,omitempty"`
 }
 
 type Spec struct {
@@ -97,6 +105,10 @@ func (s Spec) IsFunction() bool {
 
 func (s Spec) HasFunction() bool {
 	return s.IsFunction() || s.IsCheck() || s.IsMetric()
+}
+
+func (s Spec) Resources() *ResourceConfig {
+	return s.spec.Resources
 }
 
 func (s Spec) Function() *function.Function {
