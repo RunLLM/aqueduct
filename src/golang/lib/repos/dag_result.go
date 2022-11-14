@@ -32,6 +32,8 @@ type dagResultReader interface {
 
 type dagResultWriter interface {
 	// Creates inserts a new DAGResult with the specified fields.
+	// It returns an ErrInvalidPendingTimestamp if execState.Timestamps.PendingAt is
+	// not set, since that value is used for DAGResult.CreatedAt.
 	Create(
 		ctx context.Context,
 		dagID uuid.UUID,
