@@ -55,7 +55,8 @@ func LaunchJob(
 					Name:      name,
 					Namespace: namespace,
 
-					// TODO: comment
+					// We label each pod with the job name, so we can query for it later (when polling).
+					// This is a valid assumption, only because we spawn one pod per job.
 					Labels: map[string]string{
 						"job-name": name,
 					},
