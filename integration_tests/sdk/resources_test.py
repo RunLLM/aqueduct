@@ -1,6 +1,7 @@
 from os import cpu_count
 
 import pytest
+from aqueduct import global_config
 from aqueduct.enums import ServiceType
 from utils import generate_new_flow_name, run_flow_test
 
@@ -27,19 +28,20 @@ def test_custom_num_cpus(client, engine):
         cpus = cpu_count() if container_cpus < 1 else container_cpus
         return cpus
 
+    global_config({"engine":engine})
     # Returns the default number of CPUs of the K8s cluster. (Currently 2)
     @op(requirements=[])
     def count_default_available_cpus():
         return _count_available_cpus()
 
-    num_default_available_cpus = count_default_available_cpus.lazy()
+    num_default_available_cpus = count_default_available_cpus()
 
     # Returns 4, the custom number of CPUs on the K8s cluster.
     @op(requirements=[], resources={"num_cpus": 4})
     def count_with_custom_available_cpus():
         return _count_available_cpus()
 
-    num_count_available_cpus = count_with_custom_available_cpus.lazy()
+    num_count_available_cpus = count_with_custom_available_cpus()
 
     flows = []
     try:
@@ -81,12 +83,13 @@ def test_custom_memory(client, engine):
     Customize our memory to be 200MB. We will run two different methods, one that allocates less than
     this amount and one that allocates more. The latter should fail.
     """
+    global_config({"engine":engine})
 
     @op(requirements=[], resources={"memory": "200MB"})
     def fn_expect_success():
         return 123
 
-    success_output = fn_expect_success.lazy()
+    success_output = fn_expect_success()
 
     @op(requirements=[], resources={"memory": "200MB"})
     def fn_expect_failure():
@@ -94,7 +97,7 @@ def test_custom_memory(client, engine):
         output = bytearray(1000 * 1000 * 100 * 4)
         return output
 
-    failure_output = fn_expect_failure.lazy()
+    failure_output = fn_expect_failure()
 
     run_flow_test(
         client,
