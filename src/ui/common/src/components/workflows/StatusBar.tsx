@@ -68,7 +68,7 @@ interface ActiveWorkflowStatusTabProps {
 }
 
 export const StatusBarHeaderHeightInPx = 41;
-export const CollapsedStatusBarWidthInPx = 75;
+//export const CollapsedStatusBarWidthInPx = 75;
 export const StatusBarWidthInPx = 384;
 export const MaxStatusBarListHeightInPx = 384;
 

@@ -229,51 +229,55 @@ export async function addTable(
   }
 }
 
-export async function fetchRepos(
-  user: UserProfile
-): Promise<[string[], string]> {
-  try {
-    const res = await fetch(`${apiAddress}/api/integrations/github/repos`, {
-      method: 'GET',
-      headers: {
-        'api-key': user.apiKey,
-      },
-    });
+// TODO: Maybe move this to enterprise
+// Not sure what to do with it since unused at the moment.
+// export async function fetchRepos(
+//   user: UserProfile
+// ): Promise<[string[], string]> {
+//   try {
+//     const res = await fetch(`${apiAddress}/api/integrations/github/repos`, {
+//       method: 'GET',
+//       headers: {
+//         'api-key': user.apiKey,
+//       },
+//     });
 
-    if (!res.ok) {
-      return [[], await res.text()];
-    }
+//     if (!res.ok) {
+//       return [[], await res.text()];
+//     }
 
-    const body = await res.json();
-    return [body.repos, ''];
-  } catch (err) {
-    return [[], err];
-  }
-}
+//     const body = await res.json();
+//     return [body.repos, ''];
+//   } catch (err) {
+//     return [[], err];
+//   }
+// }
 
-export async function fetchBranches(
-  user: UserProfile,
-  repo: string
-): Promise<[string[], string]> {
-  try {
-    const res = await fetch(`${apiAddress}/api/integrations/github/branches`, {
-      method: 'GET',
-      headers: {
-        'api-key': user.apiKey,
-        'github-repo': repo,
-      },
-    });
+// TODO: Maybe move this to enterprise
+// Not sure what to do with it since unused at the moment.
+// export async function fetchBranches(
+//   user: UserProfile,
+//   repo: string
+// ): Promise<[string[], string]> {
+//   try {
+//     const res = await fetch(`${apiAddress}/api/integrations/github/branches`, {
+//       method: 'GET',
+//       headers: {
+//         'api-key': user.apiKey,
+//         'github-repo': repo,
+//       },
+//     });
 
-    if (!res.ok) {
-      return [[], await res.text()];
-    }
+//     if (!res.ok) {
+//       return [[], await res.text()];
+//     }
 
-    const body = await res.json();
-    return [body.branches, ''];
-  } catch (err) {
-    return [[], err];
-  }
-}
+//     const body = await res.json();
+//     return [body.branches, ''];
+//   } catch (err) {
+//     return [[], err];
+//   }
+// }
 
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {

@@ -1,4 +1,4 @@
-export const ContentSidebarOffsetInPx = 100;
+//export const ContentSidebarOffsetInPx = 100;
 
 export enum LoadingStatusEnum {
   Initial = 'initial',
@@ -69,8 +69,8 @@ export default ExecutionStatus;
 export const TransitionLengthInMs = 200;
 
 export const WidthTransition = `width ${TransitionLengthInMs}ms ease-in-out`;
-export const HeightTransition = `height ${TransitionLengthInMs}ms ease-in-out`;
-export const AllTransition = `all ${TransitionLengthInMs}ms ease-in-out`;
+//export const HeightTransition = `height ${TransitionLengthInMs}ms ease-in-out`;
+//export const AllTransition = `all ${TransitionLengthInMs}ms ease-in-out`;
 
 export type Logs = {
   stdout?: string;

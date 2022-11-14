@@ -146,51 +146,51 @@ export type ListWorkflowResponse = {
  *   need to save for rendering edges.
  *
  */
-export function computeTopologicalOrder(operators: {
-  [id: string]: Operator;
-}): [string[][], number[]] {
-  const artifactToDownstream: { [id: string]: string[] } = {};
-  const upstreamCount: { [id: string]: number } = {};
-  const layers: string[][] = [];
-  const activeLayerEdges: number[] = [];
-  let activeEdges = 0;
-  layers.push([]);
-  activeLayerEdges.push(0);
+// export function computeTopologicalOrder(operators: {
+//   [id: string]: Operator;
+// }): [string[][], number[]] {
+//   const artifactToDownstream: { [id: string]: string[] } = {};
+//   const upstreamCount: { [id: string]: number } = {};
+//   const layers: string[][] = [];
+//   const activeLayerEdges: number[] = [];
+//   let activeEdges = 0;
+//   layers.push([]);
+//   activeLayerEdges.push(0);
 
-  for (const opId in operators) {
-    const op = operators[opId];
-    op.inputs.map((artfId) => {
-      if (!(artfId in artifactToDownstream)) {
-        artifactToDownstream[artfId] = [];
-      }
-      artifactToDownstream[artfId].push(opId);
-    });
+//   for (const opId in operators) {
+//     const op = operators[opId];
+//     op.inputs.map((artfId) => {
+//       if (!(artfId in artifactToDownstream)) {
+//         artifactToDownstream[artfId] = [];
+//       }
+//       artifactToDownstream[artfId].push(opId);
+//     });
 
-    upstreamCount[opId] = op.inputs.length;
-    if (op.inputs.length === 0) {
-      layers[layers.length - 1].push(opId);
-    }
-  }
+//     upstreamCount[opId] = op.inputs.length;
+//     if (op.inputs.length === 0) {
+//       layers[layers.length - 1].push(opId);
+//     }
+//   }
 
-  while (layers[layers.length - 1].length > 0) {
-    const frontier = layers[layers.length - 1];
-    layers.push([]);
-    frontier.map((opId) => {
-      const op = operators[opId];
-      op.outputs.map((artfId) => {
-        if (artfId in artifactToDownstream) {
-          artifactToDownstream[artfId].map((downstreamOpId) => {
-            activeEdges += 1;
-            upstreamCount[downstreamOpId] = upstreamCount[downstreamOpId] - 1;
-            if (upstreamCount[downstreamOpId] === 0) {
-              layers[layers.length - 1].push(downstreamOpId);
-              activeEdges -= operators[downstreamOpId].inputs.length;
-            }
-          });
-        }
-      });
-    });
-    activeLayerEdges.push(activeEdges);
-  }
-  return [layers, activeLayerEdges];
-}
+//   while (layers[layers.length - 1].length > 0) {
+//     const frontier = layers[layers.length - 1];
+//     layers.push([]);
+//     frontier.map((opId) => {
+//       const op = operators[opId];
+//       op.outputs.map((artfId) => {
+//         if (artfId in artifactToDownstream) {
+//           artifactToDownstream[artfId].map((downstreamOpId) => {
+//             activeEdges += 1;
+//             upstreamCount[downstreamOpId] = upstreamCount[downstreamOpId] - 1;
+//             if (upstreamCount[downstreamOpId] === 0) {
+//               layers[layers.length - 1].push(downstreamOpId);
+//               activeEdges -= operators[downstreamOpId].inputs.length;
+//             }
+//           });
+//         }
+//       });
+//     });
+//     activeLayerEdges.push(activeEdges);
+//   }
+//   return [layers, activeLayerEdges];
+// }

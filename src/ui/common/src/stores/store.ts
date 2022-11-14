@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import artifactResultContentsReducer from '../reducers/artifactResultContents';
 import artifactResultsReducer from '../reducers/artifactResults';
-import dataPreviewReducer from '../reducers/dataPreview';
+//import dataPreviewReducer from '../reducers/dataPreview';
 import integrationReducer from '../reducers/integration';
 import integrationsReducer from '../reducers/integrations';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
@@ -19,7 +19,7 @@ export const store = configureStore({
     openSideSheetReducer,
     notificationsReducer,
     listWorkflowReducer,
-    dataPreviewReducer,
+    //dataPreviewReducer,
     integrationsReducer,
     integrationReducer,
     workflowReducer,

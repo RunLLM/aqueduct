@@ -16,7 +16,7 @@ import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
-import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
+//import { SqlServerCard } from './components/integrations/cards/sqlServerCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
@@ -34,7 +34,7 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
-import DefaultLayout, { MenuSidebarOffset } from './components/layouts/default';
+import DefaultLayout /*, { MenuSidebarOffset }*/ from './components/layouts/default';
 import MenuSidebar, {
   MenuSidebarWidth,
 } from './components/layouts/menuSidebar';
@@ -80,10 +80,10 @@ import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNod
 import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
-import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
-import OperatorResultsSideSheet from './components/workflows/SideSheets/OperatorResultsSideSheet';
+//import DataPreviewSideSheet from './components/workflows/SideSheets/DataPreviewSideSheet';
+//import OperatorResultsSideSheet from './components/workflows/SideSheets/OperatorResultsSideSheet';
 import WorkflowStatusBar, {
-  CollapsedStatusBarWidthInPx,
+  //CollapsedStatusBarWidthInPx,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
 } from './components/workflows/StatusBar';
@@ -97,10 +97,10 @@ import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
 import artifactResultContents from './reducers/artifactResultContents';
 import artifactResults from './reducers/artifactResults';
-import dataPreview, {
-  dataPreviewSlice,
-  getDataArtifactPreview,
-} from './reducers/dataPreview';
+// import dataPreview, {
+//   //dataPreviewSlice
+// } from './reducers/dataPreview';
+import { getDataArtifactPreview } from './reducers/dataPreview';
 import integration, {
   handleConnectToNewIntegration,
   handleEditIntegration,
@@ -153,7 +153,7 @@ import workflow, {
 import workflowDagResults from './reducers/workflowDagResults';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
-import { ArtifactType, getUpstreamOperator } from './utils/artifacts';
+import { ArtifactType /*getUpstreamOperator*/ } from './utils/artifacts';
 import type { UserProfile } from './utils/auth';
 import {
   createCronString,
@@ -166,8 +166,8 @@ import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
 import {
   addTable,
-  fetchBranches,
-  fetchRepos,
+  //fetchBranches,
+  //fetchRepos,
   formatService,
   SupportedIntegrations,
 } from './utils/integrations';
@@ -192,17 +192,17 @@ import {
 import { exportCsv } from './utils/preview';
 import { EdgeTypes, ReactflowNodeType } from './utils/reactflow';
 import ExecutionStatus, {
-  AllTransition,
+  //AllTransition,
   CheckStatus,
-  ContentSidebarOffsetInPx,
-  HeightTransition,
+  //ContentSidebarOffsetInPx,
+  //HeightTransition,
   LoadingStatusEnum,
-  TransitionLengthInMs,
+  //TransitionLengthInMs,
   WidthTransition,
 } from './utils/shared';
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
 import {
-  computeTopologicalOrder,
+  //computeTopologicalOrder,
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
   WorkflowUpdateTrigger,
@@ -213,7 +213,7 @@ export {
   AddIntegrations,
   addTable,
   AddTableDialog,
-  AllTransition,
+  //AllTransition,
   AqueductBezier,
   AqueductDemoCard,
   AqueductQuadratic,
@@ -235,21 +235,21 @@ export {
   CheckOperatorNode,
   CheckStatus,
   CodeBlock,
-  CollapsedStatusBarWidthInPx,
-  computeTopologicalOrder,
+  //CollapsedStatusBarWidthInPx,
+  //computeTopologicalOrder,
   CondaDialog,
   ConnectedIntegrations,
-  ContentSidebarOffsetInPx,
+  //ContentSidebarOffsetInPx,
   createCronString,
   CSVDialog,
   DatabaseNode,
   DataCard,
   DataColumnTypeNames,
   DataPage,
-  dataPreview,
+  //dataPreview,
   DataPreviewer,
-  DataPreviewSideSheet,
-  dataPreviewSlice,
+  //DataPreviewSideSheet,
+  //dataPreviewSlice,
   DataTable,
   dateString,
   DayOfWeek,
@@ -261,8 +261,8 @@ export {
   ExecutionStatus,
   exportCsv,
   exportFunction,
-  fetchBranches,
-  fetchRepos,
+  //fetchBranches,
+  //fetchRepos,
   fetchUser,
   filteredList,
   formatService,
@@ -274,7 +274,7 @@ export {
   getNextUpdateTime,
   GettingStartedTutorial,
   getUniqueListBy,
-  getUpstreamOperator,
+  //getUpstreamOperator,
   handleArchiveAllNotifications,
   handleArchiveNotification,
   handleConnectToNewIntegration,
@@ -294,7 +294,7 @@ export {
   handleLoadIntegrationOperators,
   handleLoadIntegrations,
   handleTestConnectIntegration,
-  HeightTransition,
+  //HeightTransition,
   HomePage,
   IconButton,
   integration,
@@ -319,7 +319,7 @@ export {
   MariaDbCard,
   MariaDbDialog,
   MenuSidebar,
-  MenuSidebarOffset,
+  //MenuSidebarOffset,
   MenuSidebarWidth,
   MetricDetailsPage,
   MetricOperatorNode,
@@ -348,7 +348,7 @@ export {
   openSideSheetSlice,
   OperatorDetailsPage,
   OperatorExecStateTableType,
-  OperatorResultsSideSheet,
+  //OperatorResultsSideSheet,
   OperatorType,
   OperatorTypeToNodeTypeMap,
   PaginatedTable,
@@ -369,15 +369,21 @@ export {
   selectNode,
   selectResultIdx,
   ServiceType,
+  // TODO: Refactor to remove sidesheet state
   setAllSideSheetState,
+  // TODO: Refactor to remove sidesheet state
   setBottomSideSheetOpenState,
+  // TODO: Refactor to remove sidesheet state
   setLeftSideSheetOpenState,
+  // TODO: Refactor to remove sidesheet state
   setRightSideSheetOpenState,
+  // TODO: Refactor to remove sidesheet state
   setWorkflowStatusBarOpenState,
+  // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
   SnowflakeCard,
   SnowflakeDialog,
-  SqlServerCard,
+  //SqlServerCard,
   Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
@@ -387,7 +393,7 @@ export {
   TableArtifactNode,
   Tabs,
   theme,
-  TransitionLengthInMs,
+  //TransitionLengthInMs,
   useAqueductConsts,
   UserProfile,
   useUser,

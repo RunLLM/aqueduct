@@ -1,21 +1,21 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { DataPreview } from '../utils/data';
-import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
+import { LoadingStatus } from '../utils/shared';
 
 export interface DataPreviewState {
   loadingStatus: LoadingStatus;
   data: DataPreview;
 }
 
-const initialPreviewState: DataPreviewState = {
-  loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
-  data: {
-    historical_versions: {},
-    latest_versions: {},
-  },
-};
+// const initialPreviewState: DataPreviewState = {
+//   loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
+//   data: {
+//     historical_versions: {},
+//     latest_versions: {},
+//   },
+// };
 
 export const getDataArtifactPreview = createAsyncThunk<
   DataPreview,
@@ -46,30 +46,30 @@ export const getDataArtifactPreview = createAsyncThunk<
   }
 );
 
-export const dataPreviewSlice = createSlice({
-  name: 'dataPreviewReducer',
-  initialState: initialPreviewState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder.addCase(getDataArtifactPreview.pending, (state) => {
-      state.loadingStatus = { loading: LoadingStatusEnum.Loading, err: '' };
-    });
+// export const dataPreviewSlice = createSlice({
+//   name: 'dataPreviewReducer',
+//   initialState: initialPreviewState,
+//   reducers: {},
+//   extraReducers: (builder) => {
+//     builder.addCase(getDataArtifactPreview.pending, (state) => {
+//       state.loadingStatus = { loading: LoadingStatusEnum.Loading, err: '' };
+//     });
 
-    builder.addCase(
-      getDataArtifactPreview.fulfilled,
-      (state, { payload }: PayloadAction<DataPreview>) => {
-        state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
-        state.data = payload;
-      }
-    );
+//     builder.addCase(
+//       getDataArtifactPreview.fulfilled,
+//       (state, { payload }: PayloadAction<DataPreview>) => {
+//         state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
+//         state.data = payload;
+//       }
+//     );
 
-    builder.addCase(getDataArtifactPreview.rejected, (state, { payload }) => {
-      state.loadingStatus = {
-        loading: LoadingStatusEnum.Failed,
-        err: payload as string,
-      };
-    });
-  },
-});
+//     builder.addCase(getDataArtifactPreview.rejected, (state, { payload }) => {
+//       state.loadingStatus = {
+//         loading: LoadingStatusEnum.Failed,
+//         err: payload as string,
+//       };
+//     });
+//   },
+// });
 
-export default dataPreviewSlice.reducer;
+// export default dataPreviewSlice.reducer;
