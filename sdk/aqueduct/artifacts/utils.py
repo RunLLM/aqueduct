@@ -61,7 +61,8 @@ def preview_artifacts(
                     "Not connected to compute integration %s!" % engine
                 )
             engine_config = generate_engine_config(connected_integrations[engine])
-        subgraph.engine_config = engine_config
+        subgraph.set_engine_config(engine_config)
+        assert subgraph.engine_config is not None
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 
