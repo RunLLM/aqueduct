@@ -10,7 +10,7 @@ import (
 const (
 	DAGEdgeTable = "workflow_dag_edge"
 
-	// DAGEdge column name
+	// DAGEdge column names
 	DAGEdgeDagID  = "workflow_dag_id"
 	DAGEdgeType   = "type"
 	DAGEdgeFromID = "from_id"
