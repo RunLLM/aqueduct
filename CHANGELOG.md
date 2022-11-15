@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.4
+Released on November 14, 2022.
+
+### Enhancements
+* Extends internal integration test framework to support automated testing
+    against third-party compute engines.
+* Significantly refactors internal data model implementations to improve
+    readability and maintainability.
+
+### Bugfixes
+* Fixes bug where certain dividers on the navigation sidebar were too wide.
+* Fixes bug where opening sidesheets would change page name.
+* Fixes bug where function executor Dockerfiles had incorrect start script.
+* Fixes bug that caused built-in metric and check functions to have different
+    Python environments than regular operators. 
+
 ## 0.1.3
 Released on November 7, 2022.
 
