@@ -189,17 +189,12 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		}
 
 		if functionSpec.ExecEnv != nil {
-			//log.Info("!!!!!!using conda to run operator!!!!!!")
-			/*cmd = exec.Command(
+			log.Info("!!!!!!using conda to run operator!!!!!!")
+			cmd = exec.Command(
 				"conda",
 				"run",
 				"-n",
 				functionSpec.ExecEnv.Name(),
-				"bash",
-				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
-				specStr,
-			)*/
-			cmd = exec.Command(
 				"bash",
 				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
 				specStr,

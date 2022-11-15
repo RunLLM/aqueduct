@@ -235,7 +235,7 @@ func (h *PreviewHandler) setupExecEnv(
 	ctx context.Context,
 	args *previewArgs,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, error) {
-	condaConnected, err := exec_env.IsCondaConnected(
+	condaIntegration, err := exec_env.GetCondaIntegration(
 		ctx, args.Id, h.IntegrationReader, h.Database,
 	)
 
@@ -246,7 +246,7 @@ func (h *PreviewHandler) setupExecEnv(
 	}
 
 	// For now, do nothing if conda is not connected.
-	if !condaConnected {
+	if condaIntegration == nil {
 		return nil, nil
 	}
 
@@ -260,6 +260,8 @@ func (h *PreviewHandler) setupExecEnv(
 		if err != nil {
 			return nil, err
 		}
+
+		rawEnv.CondaPath = condaIntegration.Config["conda_path"]
 
 		rawEnvByOperator[opId] = *rawEnv
 	}

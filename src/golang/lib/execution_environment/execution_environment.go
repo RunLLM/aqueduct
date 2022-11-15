@@ -6,21 +6,22 @@ import (
 	"encoding/gob"
 	"fmt"
 	"sort"
+	"time"
 
-	"github.com/aqueducthq/aqueduct/lib"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
-const condaCmdPrefix = "conda"
-
 type ExecutionEnvironment struct {
+	// TODO: Double check if the json tags can be removed.
 	Id            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
+	CondaPath     string    `json:"-"`
 }
 
 func (e *ExecutionEnvironment) CreateDBRecord(
@@ -89,31 +90,53 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"-y",
 	}
 
-	err := runCmd(condaCmdPrefix, createArgs...)
+	start := time.Now()
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs...)
 	if err != nil {
 		return err
 	}
+	duration := time.Since(start)
+	log.Infof("Conda creation took %d seconds", duration.Seconds())
 
+	forkEnvPath := fmt.Sprintf("%s/envs/aqueduct_python%s/lib/python%s/site-packages", e.CondaPath, e.PythonVersion, e.PythonVersion)
+	log.Infof("forkEnvPath is %s", forkEnvPath)
+
+	forkArgs := []string{
+		"develop",
+		"-n",
+		e.Name(),
+		forkEnvPath,
+	}
+
+	start = time.Now()
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs...)
+	if err != nil {
+		return err
+	}
+	duration = time.Since(start)
+	log.Infof("Conda fork took %d seconds", duration.Seconds())
+
+	log.Info("Printing dependencies...")
 	for _, d := range e.Dependencies {
 		fmt.Println(d)
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.
-	// We manually add the aqueduct-ml package because the env sent from
-	// the client may not contain this required package.
 	installArgs := append([]string{
 		"run",
 		"-n",
 		e.Name(),
 		"pip3",
 		"install",
-		fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
 	}, e.Dependencies...)
 
-	err = runCmd(condaCmdPrefix, installArgs...)
+	start = time.Now()
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs...)
 	if err != nil {
 		return err
 	}
+	duration = time.Since(start)
+	log.Infof("Conda dep install took %d seconds", duration.Seconds())
 
 	return nil
 }
@@ -127,7 +150,8 @@ func (e *ExecutionEnvironment) DeleteEnv() error {
 		e.Name(),
 	}
 
-	return runCmd(condaCmdPrefix, deleteArgs...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+	return err
 }
 
 // GetExecEnvFromDB returns an exec env object from DB by its hash.
@@ -146,12 +170,12 @@ func GetExecEnvFromDB(
 	return newFromDBExecutionEnvironment(dbExecEnv), nil
 }
 
-func IsCondaConnected(
+func GetCondaIntegration(
 	ctx context.Context,
 	userId uuid.UUID,
 	integrationReader integration.Reader,
 	db database.Database,
-) (bool, error) {
+) (*integration.Integration, error) {
 	integrations, err := integrationReader.GetIntegrationsByServiceAndUser(
 		ctx,
 		integration.Conda,
@@ -159,10 +183,14 @@ func IsCondaConnected(
 		db,
 	)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return len(integrations) > 0, nil
+	if len(integrations) == 0 {
+		return nil, nil
+	}
+
+	return &integrations[0], nil
 }
 
 // Best-effort to delete all envs and log any error

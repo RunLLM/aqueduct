@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,12 +19,15 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -263,6 +265,12 @@ func ConnectIntegration(
 		vaultObject,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	if args.Service == integration.Conda {
+		if err = initializeConda(integrationObject.Id, integrationWriter, db); err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize Conda environments.")
+		}
 	}
 
 	return http.StatusOK, nil
@@ -575,9 +583,65 @@ func validateLambdaConfig(
 
 func validateConda() (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
-	if err := exec.Command("conda", "--version").Run(); err != nil {
+	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "--version")
+	if err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 
 	return http.StatusOK, nil
+}
+
+func initializeConda(
+	integrationID uuid.UUID,
+	integrationWriter integration.Writer,
+	db database.Database,
+) error {
+	out, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "info", "--base")
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Conda base path is %s", out)
+
+	_, err = integrationWriter.UpdateIntegration(
+		context.Background(),
+		integrationID,
+		map[string]interface{}{
+			"config": (*collection_utils.Config)(&map[string]string{
+				"conda_path": strings.TrimSpace(out),
+			}),
+		},
+		db,
+	)
+	if err != nil {
+		return err
+	}
+
+	pythonVersions := []string{"3.7", "3.8", "3.9", "3.10"}
+	for _, pythonVersion := range pythonVersions {
+		args := []string{
+			"create",
+			"-n",
+			fmt.Sprintf("aqueduct_python%s", pythonVersion),
+			fmt.Sprintf("python==%s", pythonVersion),
+			"-y",
+		}
+		_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
+	}
+
+	// This is to ensure we can use `conda develop` to update the python path later on.
+	args := []string{
+		"install",
+		"conda-build",
+		"-y",
+	}
+	_, _, err = lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
