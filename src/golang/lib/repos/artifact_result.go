@@ -52,7 +52,7 @@ type artifactResultWriter interface {
 		artifactID uuid.UUID,
 		contentPath string,
 		execState *shared.ExecutionState,
-		metadata *shared.Metadata,
+		metadata *shared.ArtifactResultMetadata,
 		DB database.Database,
 	) (*models.ArtifactResult, error)
 

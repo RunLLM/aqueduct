@@ -1,11 +1,11 @@
 package shared
 
 import (
-	"time"
-	"github.com/dropbox/godropbox/errors"
 	"database/sql/driver"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/dropbox/godropbox/errors"
 )
 
 // This should mirror all ExecutionStatus
