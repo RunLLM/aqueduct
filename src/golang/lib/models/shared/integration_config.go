@@ -1,6 +1,14 @@
 package shared
 
 import (
+	"database/sql/driver"
+
+	"database/sql/driver"
+	"github.com/dropbox/godropbox/errors"
+
+	"github.com/dropbox/godropbox/errors"
+
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -67,9 +75,9 @@ func (scb *ConfigBool) UnmarshalJSON(data []byte) error {
 type IntegrationConfig map[string]string
 
 func (c *IntegrationConfig) Value() (driver.Value, error) {
-	return ValueJSONB(*c)
+	return utils.ValueJSONB(*c)
 }
 
 func (c *IntegrationConfig) Scan(value interface{}) error {
-	return ScanJSONB(value, c)
+	return utils.ScanJSONB(value, c)
 }
