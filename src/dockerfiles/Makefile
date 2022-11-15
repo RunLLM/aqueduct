@@ -133,16 +133,16 @@ publish-lambda:
 # Building GPU Images
 
 build-function-gpu:
-	docker build . -t aqueducthq/function37gpu:$(VERSION) -f gpu/functiongpu.dockerfile --build-arg CONDA_ENV=py37_env
-	docker build . -t aqueducthq/function38gpu:$(VERSION) -f gpu/functiongpu.dockerfile --build-arg CONDA_ENV=py38_env
-	docker build . -t aqueducthq/function39gpu:$(VERSION) -f gpu/functiongpu.dockerfile --build-arg CONDA_ENV=py39_env
-	docker build . -t aqueducthq/function310gpu:$(VERSION) -f gpu/functiongpu.dockerfile --build-arg CONDA_ENV=py310_env
+	docker build . -t aqueducthq/function37gpu:$(VERSION) -f gpu/function37gpu.dockerfile
+	docker build . -t aqueducthq/function38gpu:$(VERSION) -f gpu/function38gpu.dockerfile
+	docker build . -t aqueducthq/function39gpu:$(VERSION) -f gpu/function39gpu.dockerfile
+	docker build . -t aqueducthq/function310gpu:$(VERSION) -f gpu/function310gpu.dockerfile
 
 publish-gpu:
-	docker push hsubbaraj/function37gpu:$(VERSION)
-	docker push hsubbaraj/function38gpu:$(VERSION)
-	docker push hsubbaraj/function39gpu:$(VERSION)
-	docker push hsubbaraj/function310gpu:$(VERSION)
+	docker push aqueducthq/function37gpu:$(VERSION)
+	docker push aqueducthq/function38gpu:$(VERSION)
+	docker push aqueducthq/function39gpu:$(VERSION)
+	docker push aqueducthq/function310gpu:$(VERSION)
 
 .PHONY:
 
