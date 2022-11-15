@@ -14,6 +14,8 @@ const (
 	PodResourceCPUKey       = "cpu"
 	PodResourceMemoryKey    = "memory"
 	PodSelectorLabelRoleKey = "role"
+	GPUResourceName         = "gpuname"
+	DefaultGPULimit         = "1"
 
 	// Cluster constants
 	DockerSecretName = "regcred"

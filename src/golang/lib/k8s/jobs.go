@@ -85,7 +85,6 @@ func LaunchJob(
 		// Assign environment variables from secret references
 		job.Spec.Template.Spec.Containers[0].EnvFrom = generateK8sEnvVarFromSecrets(secretEnvVariables)
 	}
-
 	_, err := k8sClient.BatchV1().Jobs(job.ObjectMeta.Namespace).Create(context.Background(), &job, createOptions)
 	if err != nil {
 		return errors.Wrap(err, "Error launching job.")
