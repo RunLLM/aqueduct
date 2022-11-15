@@ -28,12 +28,12 @@ type k8sJobManager struct {
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8sClient")
 	}
 
 	err = k8s.CreateNamespaces(k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8s Namespaces")
 	}
 
 	secretsMap := map[string]string{}
@@ -41,7 +41,7 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
 	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8s Secrets")
 	}
 
 	return &k8sJobManager{
@@ -55,16 +55,25 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+	launchGpu := false
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
 	}
+
 	environmentVariables := map[string]string{}
 
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
 			return ErrInvalidJobSpec
+		}
+		if functionSpec.Resources != nil {
+			if functionSpec.Resources.GPUResourceName != nil {
+				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
+				launchGpu = true
+			}
+
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
@@ -106,7 +115,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		}
 	}
 
-	containerRepo, err := mapJobTypeToDockerImage(spec)
+	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
 	if err != nil {
 		return err
 	}
@@ -158,7 +167,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(spec Spec) (string, error) {
+func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -169,18 +178,34 @@ func mapJobTypeToDockerImage(spec Spec) (string, error) {
 		if err != nil {
 			return "", errors.New("Unable to determine Python Version.")
 		}
-		switch pythonVersion {
-		case function.PythonVersion37:
-			return Function37DockerImage, nil
-		case function.PythonVersion38:
-			return Function38DockerImage, nil
-		case function.PythonVersion39:
-			return Function39DockerImage, nil
-		case function.PythonVersion310:
-			return Function310DockerImage, nil
-		default:
-			return "", errors.New("Unable to determine Python Version.")
+		if launchGpu {
+			switch pythonVersion {
+			case function.PythonVersion37:
+				return GpuFunction37DockerImage, nil
+			case function.PythonVersion38:
+				return GpuFunction38DockerImage, nil
+			case function.PythonVersion39:
+				return GpuFunction39DockerImage, nil
+			case function.PythonVersion310:
+				return GpuFunction310DockerImage, nil
+			default:
+				return "", errors.New("Unable to determine Python Version.")
+			}
+		} else {
+			switch pythonVersion {
+			case function.PythonVersion37:
+				return Function37DockerImage, nil
+			case function.PythonVersion38:
+				return Function38DockerImage, nil
+			case function.PythonVersion39:
+				return Function39DockerImage, nil
+			case function.PythonVersion310:
+				return Function310DockerImage, nil
+			default:
+				return "", errors.New("Unable to determine Python Version.")
+			}
 		}
+
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToDockerImage(authenticateSpec.ConnectorName)

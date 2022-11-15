@@ -271,6 +271,7 @@ will be used when running the function."""
 # Supported resource configuration keys, supplied in the `resources` field of the decorators.
 NUM_CPUS_KEY = "num_cpus"
 MEMORY_KEY = "memory"
+GPU_RESOURCE_NAME_KEY = "gpu_resource_name"
 
 
 def _convert_memory_string_to_mbs(memory_str: str) -> int:
@@ -358,6 +359,8 @@ def op(
                 case-insensitive.
 
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
+            "gpu_resource_name" (str):
+                Name of the gpu resource to use (only applicable for Kubernetes engine).
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -389,6 +392,7 @@ def op(
 
         num_cpus = resources.get(NUM_CPUS_KEY)
         memory = resources.get(MEMORY_KEY)
+        gpu_resource_name = resources.get(GPU_RESOURCE_NAME_KEY)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
             raise InvalidUserArgumentException(
@@ -413,8 +417,13 @@ def op(
                 memory = _convert_memory_string_to_mbs(memory)
 
             assert isinstance(memory, int)
+        
+        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
+            raise InvalidUserArgumentException(
+                "`gpu_resource_name` value must be set to a string."
+            )
 
-        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory)
+        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name)
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -439,17 +448,14 @@ def op(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts,
-                func_params=inspect.signature(func).parameters,
+                *input_artifacts, func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-                file=zip_file,
+                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
             )
             return wrap_spec(
                 OperatorSpec(
@@ -562,8 +568,7 @@ def metric(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts,
-                func_params=inspect.signature(func).parameters,
+                *input_artifacts, func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.METRIC, *artifacts)
@@ -598,9 +603,7 @@ def metric(
         """
 
         @wraps(func)
-        def wrapped(
-            *input_artifacts: BaseArtifact,
-        ) -> NumericArtifact:
+        def wrapped(*input_artifacts: BaseArtifact,) -> NumericArtifact:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
@@ -705,17 +708,14 @@ def check(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts,
-                func_params=inspect.signature(func).parameters,
+                *input_artifacts, func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.CHECK, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE,
-                granularity=FunctionGranularity.TABLE,
-                file=zip_file,
+                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
 
@@ -739,9 +739,7 @@ def check(
         """
 
         @wraps(func)
-        def wrapped(
-            *input_artifacts: BaseArtifact,
-        ) -> BoolArtifact:
+        def wrapped(*input_artifacts: BaseArtifact,) -> BoolArtifact:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
