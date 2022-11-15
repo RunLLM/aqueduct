@@ -12,13 +12,7 @@ from aqueduct.error import (
 )
 from constants import SENTIMENT_SQL_QUERY
 from pandas._testing import assert_frame_equal
-from utils import (
-    delete_flow,
-    generate_new_flow_name,
-    get_integration_name,
-    run_flow_test,
-    wait_for_flow_runs,
-)
+from utils import delete_flow, generate_new_flow_name, run_flow_test, wait_for_flow_runs
 
 from aqueduct import metric, op
 
@@ -114,8 +108,8 @@ def append_row_to_df(df, row):
     return df
 
 
-def test_parameter_in_basic_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_parameter_in_basic_flow(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
@@ -128,8 +122,8 @@ def test_parameter_in_basic_flow(client):
     assert output_df.equals(input_df)
 
 
-def test_edit_param_for_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_edit_param_for_flow(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
@@ -139,7 +133,9 @@ def test_edit_param_for_flow(client):
 
     flow_id = None
     try:
-        flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+        flow = run_flow_test(
+            client, artifacts=[output], name=flow_name, engine=engine, delete_flow_after=False
+        )
         flow_id = flow.id()
 
         # Edit the flow with a different row to append and re-publish
@@ -150,7 +146,12 @@ def test_edit_param_for_flow(client):
         # Wait for the first run, then refresh the workflow and verify that it runs at least
         # one more time (two runs total, since the original was manually triggered).
         flow = run_flow_test(
-            client, artifacts=[output], name=flow_name, num_runs=2, delete_flow_after=False
+            client,
+            artifacts=[output],
+            name=flow_name,
+            engine=engine,
+            num_runs=2,
+            delete_flow_after=False,
         )
 
         # Verify that the parameters were edited as expected.
@@ -180,8 +181,8 @@ def add_numbers(sql, num1, num2):
     return num1 + num2
 
 
-def test_trigger_flow_with_different_param(client):
-    db = client.integration(name=get_integration_name())
+def test_trigger_flow_with_different_param(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     num1 = client.create_param(name="num1", default=5)
@@ -189,7 +190,9 @@ def test_trigger_flow_with_different_param(client):
     output = add_numbers(sql_artifact, num1, num2)
 
     flow_name = generate_new_flow_name()
-    flow = run_flow_test(client, artifacts=[output], name=flow_name, delete_flow_after=False)
+    flow = run_flow_test(
+        client, artifacts=[output], engine=engine, name=flow_name, delete_flow_after=False
+    )
 
     # First, check that triggering the flow with a non-existant parameter will error.
     with pytest.raises(InvalidUserArgumentException):
@@ -227,8 +230,8 @@ def test_trigger_flow_with_different_param(client):
         client.delete_flow(flow.id())
 
 
-def test_trigger_flow_with_different_sql_param(client):
-    db = client.integration(name=get_integration_name())
+def test_trigger_flow_with_different_sql_param(client, data_integration, engine):
+    db = client.integration(data_integration)
 
     _ = client.create_param("table_name", default="hotel_reviews")
     sql_artifact = db.sql(query="select * from {{ table_name}}")
@@ -238,7 +241,7 @@ def test_trigger_flow_with_different_sql_param(client):
     flow_id = None
     try:
         flow = run_flow_test(
-            client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False
+            client, artifacts=[sql_artifact], name=flow_name, engine=engine, delete_flow_after=False
         )
         flow_id = flow.id()
 
@@ -266,7 +269,7 @@ def test_trigger_flow_with_different_sql_param(client):
         client.delete_flow(flow_id)
 
 
-def test_parameterizing_published_artifact(client):
+def test_parameterizing_published_artifact(client, engine):
     @op
     def generate_num():
         return 1234
@@ -275,7 +278,7 @@ def test_parameterizing_published_artifact(client):
 
     flow_id = None
     try:
-        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow = run_flow_test(client, artifacts=[output], engine=engine, delete_flow_after=False)
         flow_id = flow.id()
 
         artifact = flow.latest().artifact(name="generate_num artifact")
@@ -289,7 +292,7 @@ def test_parameterizing_published_artifact(client):
         client.delete_flow(flow_id)
 
 
-def test_materializing_failed_artifact(client):
+def test_materializing_failed_artifact(client, engine):
     @op
     def fail_fn():
         5 / 0
@@ -298,7 +301,7 @@ def test_materializing_failed_artifact(client):
     flow_id = None
     try:
         flow = run_flow_test(
-            client, artifacts=[output], expect_success=False, delete_flow_after=False
+            client, artifacts=[output], engine=engine, expect_success=False, delete_flow_after=False
         )
         flow_id = flow.id()
 
@@ -311,7 +314,7 @@ def test_materializing_failed_artifact(client):
         client.delete_flow(flow_id)
 
 
-def test_non_jsonable_param_types(client):
+def test_all_param_types(client, engine):
     class EmptyClass:
         """
         For some reason, this class must be nested inside this test,
@@ -367,10 +370,24 @@ def test_non_jsonable_param_types(client):
     assert isinstance(tuple_output, GenericArtifact)
     assert tuple_output.get() == (1, 2, 3)
 
-    run_flow_test(client, artifacts=[pickle_output, bytes_output, string_output, tuple_output])
+    @op
+    def must_be_list(input):
+        assert isinstance(input, list)
+        return input
+
+    list_param = client.create_param("list", default=[4, 5, 6])
+    list_output = must_be_list(list_param)
+    assert isinstance(list_output, GenericArtifact)
+    assert list_output.get() == [4, 5, 6]
+
+    run_flow_test(
+        client,
+        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output],
+        engine=engine,
+    )
 
 
-def test_parameter_type_changes(client):
+def test_parameter_type_changes(client, engine):
     @op
     def noop(input):
         return input
@@ -384,7 +401,7 @@ def test_parameter_type_changes(client):
 
     flow_id = None
     try:
-        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow = run_flow_test(client, artifacts=[output], engine=engine, delete_flow_after=False)
         flow_id = flow.id()
 
         # TODO(ENG-1684): we should not allow the user to trigger successfully with the wrong type.

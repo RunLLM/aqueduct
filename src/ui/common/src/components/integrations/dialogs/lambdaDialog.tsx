@@ -20,7 +20,7 @@ export const LambdaDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         spellCheck={false}
         required={true}
         label="Lambda Role ARN"
-        description="Region in which to run Lambda functions."
+        description="ARN for Lambda executor role."
         placeholder={Placeholders.role_arn}
         onChange={(event) => onUpdateField('role_arn', event.target.value)}
         value={value?.role_arn ?? null}

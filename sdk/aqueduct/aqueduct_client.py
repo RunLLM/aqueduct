@@ -9,7 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.config import FlowConfig
+from aqueduct.config import EngineConfig, FlowConfig
 from aqueduct.parameter_utils import create_param
 
 from aqueduct import dag, globals
@@ -30,6 +30,7 @@ from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import Integration, IntegrationInfo
 from .integrations.k8s_integration import K8sIntegration
 from .integrations.lambda_integration import LambdaIntegration
+from .integrations.mongodb_integration import MongoDBIntegration
 from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
@@ -54,6 +55,14 @@ def global_config(config_dict: Dict[str, Any]) -> None:
         if not isinstance(lazy_val, bool):
             raise InvalidUserArgumentException("Must supply a boolean for the lazy key.")
         globals.__GLOBAL_CONFIG__.lazy = lazy_val
+
+    if globals.GLOBAL_ENGINE_KEY in config_dict:
+        engine_name = config_dict[globals.GLOBAL_ENGINE_KEY]
+        if not isinstance(engine_name, str):
+            raise InvalidUserArgumentException(
+                "Engine should be the string name of your compute integration."
+            )
+        globals.__GLOBAL_CONFIG__.engine = engine_name
 
 
 def get_apikey() -> str:
@@ -196,6 +205,7 @@ class Client:
         AirflowIntegration,
         K8sIntegration,
         LambdaIntegration,
+        MongoDBIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -250,6 +260,11 @@ class Client:
             return LambdaIntegration(
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.MONGO_DB:
+            return MongoDBIntegration(
+                dag=self._dag,
+                metadata=integration_info,
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
@@ -298,9 +313,11 @@ class Client:
         name: str,
         description: str = "",
         schedule: str = "",
+        engine: Optional[str] = None,
         artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
+        k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -310,16 +327,26 @@ class Client:
 
         The default execution engine of the flow is Aqueduct. In order to specify which
         execution engine the flow will be running on, use "config" parameter. Eg:
-        >>> k8s_integration = client.integration("k8s_integration")
         >>> flow = client.publish_flow(
-        >>>     name = "k8s_example",
-        >>>     artifacts = [output],
-        >>>     config = FlowConfig(engine=k8s_integration),
+        >>>     name="k8s_example",
+        >>>     artifacts=[output],
+        >>>     engine="k8s_integration",
         >>> )
 
         Args:
             name:
                 The name of the newly created flow.
+            description:
+                A description for the new flow.
+            schedule:
+                A cron expression specifying the cadence that this flow
+                will run on. If empty, the flow will only execute manually.
+                For example, to run at the top of every hour:
+
+                >> schedule = aqueduct.hourly(minute: 0)
+            engine:
+                The name of the compute integration (eg. "my_lambda_integration") this the flow will
+                be computed on.
             artifacts:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be computed if they are upstream
@@ -330,20 +357,16 @@ class Client:
             checks:
                 All the checks that you would like to compute. If not supplied, we will implicitly
                 include all checks computed on artifacts in the flow.
-            description:
-                A description for the new flow.
-            schedule: A cron expression specifying the cadence that this flow
-                will run on. If empty, the flow will only execute manually.
-                For example, to run at the top of every hour:
-
-                >> schedule = aqueduct.hourly(minute: 0)
-
+            k_latest_runs:
+                Number of most-recent runs of this flow that Aqueduct should keep. Runs outside of
+                this bound are garbage collected. Defaults to persisting all runs.
             config:
+                This field will be deprecated. Please use `engine` and `k_latest_runs` instead.
+
                 An optional set of config fields for this flow.
                 - engine: Specify where this flow should run with one of your connected integrations.
                 - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
                     Runs outside of this bound are deleted. Defaults to persisting all runs.
-                We currently support Airflow.
 
         Raises:
             InvalidUserArgumentException:
@@ -356,6 +379,11 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
+        if config is not None:
+            logger().warning(
+                "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
+            )
+
         if artifacts is None or artifacts == []:
             raise InvalidUserArgumentException(
                 "Must supply at least one artifact to compute when creating a flow."
@@ -388,10 +416,61 @@ class Client:
             implicitly_include_checks = False
 
         cron_schedule = schedule_from_cron_string(schedule)
-        if not (config and config.k_latest_runs):
+
+        k_latest_runs_from_flow_config = config.k_latest_runs if config else None
+        if k_latest_runs and k_latest_runs_from_flow_config:
+            raise InvalidUserArgumentException(
+                "Cannot set `k_latest_runs` in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
+            )
+        if k_latest_runs is None and k_latest_runs_from_flow_config:
+            k_latest_runs = k_latest_runs_from_flow_config
+
+        if k_latest_runs is None:
             retention_policy = retention_policy_from_latest_runs(-1)
         else:
-            retention_policy = retention_policy_from_latest_runs(config.k_latest_runs)
+            if not isinstance(k_latest_runs, int):
+                raise InvalidUserArgumentException(
+                    "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
+                )
+            retention_policy = retention_policy_from_latest_runs(k_latest_runs)
+
+        # Set's the execution `engine` if one was provided.
+        engine_defined_on_config = config and config.engine
+        if engine or engine_defined_on_config:
+            if engine and engine_defined_on_config:
+                raise InvalidUserArgumentException(
+                    "Cannot set compute engine in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
+                )
+
+            self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+            if engine_defined_on_config:
+                assert config and config.engine
+                for integration in self._connected_integrations.values():
+                    if integration.id == config.engine._metadata.id:
+                        engine = integration.name
+                        break
+
+                if engine is None:
+                    raise InvalidIntegrationException(
+                        "Not connected to the given compute integration!"
+                    )
+        # Fallback to the globally configured engine, if it was indeed configured.
+        elif globals.__GLOBAL_CONFIG__.engine is not None:
+            engine = globals.__GLOBAL_CONFIG__.engine
+
+        if engine is None:
+            engine_config = EngineConfig()
+        else:
+            if not isinstance(engine, str):
+                raise InvalidUserArgumentException(
+                    "`engine` parameter must be a string, got %s." % type(engine)
+                )
+
+            if engine not in self._connected_integrations.keys():
+                raise InvalidIntegrationException(
+                    "Not connected to compute integration `%s`!" % engine
+                )
+            engine_config = generate_engine_config(self._connected_integrations[engine])
 
         dag = apply_deltas_to_dag(
             self._dag,
@@ -411,7 +490,8 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
-        dag.engine_config = generate_engine_config(config)
+        dag.set_engine_config(engine_config)
+        assert dag.engine_config is not None
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow

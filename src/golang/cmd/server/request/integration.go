@@ -43,7 +43,11 @@ func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]stri
 
 // isUserOnlyIntegration returns whether the specified service is only accessible by the user.
 func isUserOnlyIntegration(svc integration.Service) bool {
-	userSpecific := []integration.Service{integration.GoogleSheets, integration.Github}
+	userSpecific := []integration.Service{
+		integration.GoogleSheets,
+		integration.Github,
+		integration.Conda,
+	}
 	for _, s := range userSpecific {
 		if s == svc {
 			return true

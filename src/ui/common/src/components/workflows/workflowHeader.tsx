@@ -163,6 +163,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         const isCustomizable = ![
           ArtifactType.Table,
           ArtifactType.Bytes,
+          ArtifactType.Tuple,
           ArtifactType.Image,
           ArtifactType.Picklable,
         ].includes(outputArtifact.type);
@@ -204,6 +205,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       // 1) number 2) string 3) json.
       try {
         // All jsonable values are serialized as json.
+        JSON.parse(strVal);
         serializedParams[key] = {
           val: btoa(strVal),
           serialization_type: SerializationType.Json,
@@ -322,7 +324,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <Status status={workflow.dagResults[0].status} />
 
           <Typography
-            variant="h3"
+            variant="h4"
             sx={{ my: 1, lineHeight: 1 }}
             fontWeight="normal"
           >

@@ -41,6 +41,9 @@ src/python/build/
 # next.js
 **/.next
 
+# StorybookJS
+**/storybook-static
+
 # misc
 *.pem
 

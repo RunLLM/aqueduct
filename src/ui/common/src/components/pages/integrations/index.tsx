@@ -60,29 +60,11 @@ const IntegrationsPage: React.FC<Props> = ({
       user={user}
     >
       <Box>
-        {/*<Breadcrumbs>
-          <Link
-            underline="hover"
-            color="inherit"
-            to="/"
-            component={RouterLink as any}
-          >
-            Home
-          </Link>
-          <Typography color="text.primary">Integrations</Typography>
-        </Breadcrumbs>*/}
-
-        <Typography variant="h2" gutterBottom component="div">
-          Integrations
-        </Typography>
-
-        <Divider sx={{ width: '950px' }} />
-
-        <Box sx={{ my: 3 }}>
-          <Typography variant="h4" marginBottom={3}>
+        <Box>
+          <Typography variant="h5" marginBottom={2}>
             Add an Integration
           </Typography>
-          <Typography variant="h6" marginBottom={2}>
+          <Typography variant="h6" marginY={2}>
             Data
           </Typography>
           <AddIntegrations
@@ -90,7 +72,7 @@ const IntegrationsPage: React.FC<Props> = ({
             category="data"
             supportedIntegrations={SupportedIntegrations}
           />
-          <Typography variant="h6" marginTop={4} marginBottom={3}>
+          <Typography variant="h6" marginY={2}>
             Compute
           </Typography>
           <AddIntegrations
@@ -100,12 +82,12 @@ const IntegrationsPage: React.FC<Props> = ({
           />
         </Box>
 
-        <Box marginTop="40px">
+        <Box marginY={3}>
           <Divider sx={{ width: '950px' }} />
         </Box>
 
-        <Box sx={{ marginTop: 3, marginBottom: 3 }}>
-          <Typography variant="h4" marginBottom={2}>
+        <Box>
+          <Typography variant="h5" marginY={2}>
             Connected Integrations
           </Typography>
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />

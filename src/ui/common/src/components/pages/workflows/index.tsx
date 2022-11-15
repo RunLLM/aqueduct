@@ -31,7 +31,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   useEffect(() => {
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, []);
+  }, [dispatch, user.apiKey]);
 
   const allWorkflows = useSelector(
     (state: RootState) => state.listWorkflowReducer
@@ -48,14 +48,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   ) {
     return null;
   }
-
-  const heading = (
-    <Box mb={2}>
-      <Typography variant="h2" gutterBottom component="div">
-        Workflows
-      </Typography>
-    </Box>
-  );
 
   const displayFilteredWorkflows = (workflow) => {
     return (
@@ -89,7 +81,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       user={user}
     >
       <Box>
-        {heading}
         {allWorkflows.workflows.length >= 1 && (
           <Box marginLeft={CardPadding}>
             {/* Align searchbar with card text */}

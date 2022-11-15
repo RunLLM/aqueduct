@@ -7,10 +7,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-const (
-	requiredSchemaVersion = 8
-)
-
 type Executor interface {
 	// `Run` should execute the executor with the given context.
 	Run(ctx context.Context) error

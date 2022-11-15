@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
@@ -20,7 +20,14 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
+from aqueduct.operators import (
+    CheckSpec,
+    FunctionSpec,
+    MetricSpec,
+    Operator,
+    OperatorSpec,
+    ResourceConfig,
+)
 from aqueduct.parameter_utils import create_param
 from aqueduct.utils import (
     CheckFunction,
@@ -208,21 +215,44 @@ def _type_check_decorated_function_arguments(
                 )
 
 
-def _convert_argument_to_parameter(
-    *input_artifacts: Any, function_argument_names: List[str]
+def _convert_input_arguments_to_parameters(
+    *input_artifacts: Any, func_params: Mapping[str, inspect.Parameter]
 ) -> List[BaseArtifact]:
     """
     Converts non-artifact inputs to parameters.
+
+    Errors if the implicitly-created parameter collides with an existing one. Also errors if the function has a
+    variable-length parameter, since we don't know what name to attribute to those.
+
+    `func_params` maps from parameter name to an `inspect.Parameter` object containing additional information.
     """
+    # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
+    # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
+    # For example, `foo(*, positional_arg)` is allowed, but `foo(*args, positional_arg)` is not.
+    # See https://peps.python.org/pep-0362/#parameter-object for a description of each parameter kind.
+    disallowed_kinds = [inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD]
+    implicit_params_disallowed = any(
+        param.kind in disallowed_kinds for param in func_params.values()
+    )
+
     dag = dag_module.__GLOBAL_DAG__
+    param_names = list(func_params.keys())
 
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
-            arg_name = function_argument_names[idx]
+            if implicit_params_disallowed:
+                raise InvalidUserArgumentException(
+                    """Input at index %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
+                    """function that takes in variable-length parameters (eg. *args or **kwargs) is currently unsupported."""
+                    % idx
+                )
+
+            # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
+            arg_name = param_names[idx]
             if dag.get_operator(with_name=arg_name) is not None:
                 raise InvalidUserArgumentException(
-                    """Input to function argument "%s" is not an artifact type. We tried implicitly \
+                    """Input to function argument "%s" is not an artifact. We tried implicitly \
 creating a parameter named "%s", but an existing operator or parameter with the same name already exists."""
                     % (arg_name, arg_name)
                 )
@@ -238,12 +268,50 @@ will be used when running the function."""
     return artifacts
 
 
+# Supported resource configuration keys, supplied in the `resources` field of the decorators.
+NUM_CPUS_KEY = "num_cpus"
+MEMORY_KEY = "memory"
+
+
+def _convert_memory_string_to_mbs(memory_str: str) -> int:
+    """Converts a memory string supplied by the user into the equivalent number in MBs.
+
+    Only "MB" and "GB" suffixes are supported, case-insensitive.
+    """
+    memory_str = memory_str.strip()
+    if len(memory_str) <= 2:
+        raise InvalidUserArgumentException(
+            "Memory value `%s` not long enough, it must be a number and a two character suffix (eg. 100MB)."
+            % memory_str
+        )
+
+    if memory_str[-2:].upper() == "MB":
+        multiplier = 1
+    elif memory_str[-2:].upper() == "GB":
+        multiplier = 1000
+    else:
+        raise InvalidUserArgumentException(
+            "Memory value `%s` is invalid. It must have a suffix that is one of mb/MB/gb/GB."
+            % memory_str,
+        )
+
+    memory_scalar_str = memory_str[:-2].strip()
+    if not memory_scalar_str.isnumeric():
+        raise InvalidUserArgumentException(
+            "Memory value `%s` has an invalid value. `%s` must be a positive integer."
+            % (memory_str, memory_scalar_str),
+        )
+
+    return multiplier * int(memory_scalar_str)
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: int = 1,
+    resources: Optional[Dict[str, Any]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -272,6 +340,24 @@ def op(
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
+        resources:
+            A dictionary containing the custom resource configurations that this operator will run with.
+            These configurations are guaranteed to be followed, we will not silently ignore any of them.
+            If a resource configuration is unsupported by a particular execution engine, we will fail at
+            execution time. The supported keys are:
+
+            "num_cpus" (int):
+                The number of cpus that this operator will run with. This operator will execute with *exactly*
+                this number of cpus. If not enough cpus are available, operator execution will fail.
+            "memory" (int, str):
+                The amount of memory this operator will run with. This operator will execute with *exactly*
+                this amount of memory. If not enough memory is available, operator execution will fail.
+
+                If an integer value is supplied, the memory unit is assumed to be MB. If a string is supplied,
+                a suffix indicating the memory unit must be supplied. Supported memory units are "MB" and "GB",
+                case-insensitive.
+
+                For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -288,9 +374,47 @@ def op(
 
         >>> recommendations.get()
     """
-    _type_check_decorator_arguments(description, file_dependencies, requirements)
-    if num_outputs < 1:
+    _type_check_decorator_arguments(
+        description,
+        file_dependencies,
+        requirements,
+    )
+    if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
+
+    resource_config = None
+    if resources is not None:
+        if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
+            raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
+
+        num_cpus = resources.get(NUM_CPUS_KEY)
+        memory = resources.get(MEMORY_KEY)
+
+        if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
+            raise InvalidUserArgumentException(
+                "`num_cpus` value must be set to a positive integer."
+            )
+
+        # `memory` value can be either an int (in MBs) or a string. We will convert it into an integer
+        # representing the number of MBs.
+        if memory is not None:
+            if not isinstance(memory, int) and not isinstance(memory, str):
+                raise InvalidUserArgumentException(
+                    "`memory` value must be either an integer or string."
+                )
+
+            if isinstance(memory, int) and memory < 0:
+                raise InvalidUserArgumentException(
+                    "If `memory` value is set as an integer, it must be positive."
+                )
+
+            # We'll need to convert the string value into an integer (in MBs).
+            if isinstance(memory, str):
+                memory = _convert_memory_string_to_mbs(memory)
+
+            assert isinstance(memory, int)
+
+        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory)
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -314,8 +438,9 @@ def op(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
@@ -327,7 +452,10 @@ def op(
                 file=zip_file,
             )
             return wrap_spec(
-                OperatorSpec(function=function_spec),
+                OperatorSpec(
+                    function=function_spec,
+                    resources=resource_config,
+                ),
                 *artifacts,
                 op_name=name,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],
@@ -433,8 +561,9 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.METRIC, *artifacts)
@@ -575,8 +704,9 @@ def check(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
-            artifacts = _convert_argument_to_parameter(
-                *input_artifacts, function_argument_names=inspect.getfullargspec(func)[0]
+            artifacts = _convert_input_arguments_to_parameters(
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.CHECK, *artifacts)

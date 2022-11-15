@@ -2,7 +2,7 @@ import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
@@ -18,18 +18,24 @@ type Props = {
   onUpdateField: (field: keyof GCSConfig, value: string) => void;
   value?: GCSConfig;
   editMode: boolean;
+  setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export const GCSDialog: React.FC<Props> = ({
   onUpdateField,
   value,
   editMode,
+  setMigrateStorage,
 }) => {
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
     onUpdateField('service_account_credentials', fileData?.data);
   };
+
+  useEffect(() => {
+    setMigrateStorage(true);
+  }, [setMigrateStorage]);
 
   const fileData =
     fileName && !!value?.service_account_credentials
