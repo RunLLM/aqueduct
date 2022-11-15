@@ -27,7 +27,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.1.3"
+package_version = "0.1.4"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -362,20 +362,14 @@ def install_mongodb():
 def install_postgres():
     execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
 
-
 def install_bigquery():
     execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery"])
-
 
 def install_snowflake():
     execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy"])
 
-
 def install_s3():
     execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
-
-def install_conda():
-    execute_command([sys.executable, "-m", "pip", "install", "conda"])
 
 def install_athena():
     execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
@@ -459,8 +453,6 @@ def install(system):
         install_sqlserver()
     elif system == "mongodb":
         install_mongodb()
-    elif system == "conda":
-        install_conda()
     else:
         raise Exception("Unsupported system: %s" % system)
 
