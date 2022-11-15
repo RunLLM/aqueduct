@@ -28,7 +28,7 @@ def test_custom_num_cpus(client, engine):
         cpus = cpu_count() if container_cpus < 1 else container_cpus
         return cpus
 
-    global_config({"engine":engine})
+    global_config({"engine": engine})
     # Returns the default number of CPUs of the K8s cluster. (Currently 2)
     @op(requirements=[])
     def count_default_available_cpus():
@@ -83,7 +83,7 @@ def test_custom_memory(client, engine):
     Customize our memory to be 200MB. We will run two different methods, one that allocates less than
     this amount and one that allocates more. The latter should fail.
     """
-    global_config({"engine":engine})
+    global_config({"engine": engine})
 
     @op(requirements=[], resources={"memory": "200MB"})
     def fn_expect_success():

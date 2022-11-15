@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
-from aqueduct.enums import ServiceType,RuntimeType
+from aqueduct.enums import ServiceType, RuntimeType
 from aqueduct import global_config
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.file_dependency_model import (
@@ -112,9 +112,10 @@ def test_table_with_non_string_column_name(client):
     with pytest.raises(AqueductError):
         bad_return()
 
+
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_basic_get(client, data_integration,engine):
-    global_config({"engine":engine})
+def test_basic_get(client, data_integration, engine):
+    global_config({"engine": engine})
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_df = sql_artifact.get()
@@ -133,9 +134,10 @@ def test_basic_get(client, data_integration,engine):
     ]
     assert output_df.shape[0] == 100
 
+
 @pytest.mark.enable_only_for_engine_type(ServiceType.LAMBDA)
-def test_basic_get(client, data_integration,engine):
-    global_config({"engine":engine})
+def test_basic_get(client, data_integration, engine):
+    global_config({"engine": engine})
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     sql_df = sql_artifact.get()

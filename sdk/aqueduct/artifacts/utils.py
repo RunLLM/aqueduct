@@ -36,6 +36,20 @@ def preview_artifacts(
     Returns a list of artifacts, each corresponding to one of the provided `target_artifact_ids`, in
     the same order.
     """
+    if globals.__GLOBAL_CONFIG__.engine is not None:
+        engine = globals.__GLOBAL_CONFIG__.engine
+        if engine is None:
+            engine_config = EngineConfig()
+        else:
+            connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+            if engine not in connected_integrations.keys():
+                raise InvalidIntegrationException(
+                    "Not connected to compute integration %s!" % engine
+                )
+            engine_config = generate_engine_config(connected_integrations[engine])
+        dag.engine_config = engine_config
+        assert dag.engine_config is not None
+
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[
@@ -49,20 +63,6 @@ def preview_artifacts(
         ],
         make_copy=True,
     )
-
-    if globals.__GLOBAL_CONFIG__.engine is not None:
-        engine = globals.__GLOBAL_CONFIG__.engine
-        if engine is None:
-            engine_config = EngineConfig()
-        else:
-            connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
-            if engine not in connected_integrations.keys():
-                raise InvalidIntegrationException(
-                    "Not connected to compute integration %s!" % engine
-                )
-            engine_config = generate_engine_config(connected_integrations[engine])
-        subgraph.set_engine_config(engine_config)
-        assert subgraph.engine_config is not None
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 
