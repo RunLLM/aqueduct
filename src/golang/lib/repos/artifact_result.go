@@ -22,24 +22,24 @@ type artifactResultReader interface {
 	// GetBatch returns the ArtifactResults with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
 
-	// GetByArtifact returns the ArtifactResult with ID artifactID.
+	// GetByArtifact returns the ArtifactResults with IDs artifactID.
 	GetByArtifact(ctx context.Context, artifactID uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
 
 	// GetByArtifactAndWorkflow returns the ArtifactResult with artifact name artifactName and workflow ID workflowID.
 	GetByArtifactAndWorkflow(ctx context.Context, workflowID uuid.UUID, artifactName string, DB database.Database) ([]models.ArtifactResult, error)
 
-	// GetByDAGAndArtifact returns the ArtifactResult with artifact ID artifactID and workflow DAG ID workflowDAGResultID.
-	GetByDAGAndArtifact(ctx context.Context, workflowDAGResultID uuid.UUID, artifactID uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
+	// GetByArtifactAndDAGResult returns the ArtifactResult with artifact ID artifactID and workflow DAG ID dagResultID.
+	GetByArtifactAndDAGResult(ctx context.Context, dagResultID uuid.UUID, artifactID uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
 
-	// GetByDAGs returns the ArtifactResult from a workflow DAG with an ID in the workflowDAGResultIDs list.
-	GetByDAGs(ctx context.Context, workflowDAGResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
+	// GetByDAGResults returns the ArtifactResult from a workflow DAG result with an ID in the dagResultIDs list.
+	GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
 }
 
 type artifactResultWriter interface {
 	// Create inserts a new ArtifactResult with the specified fields.
 	Create(
 		ctx context.Context,
-		workflowDAGResultID uuid.UUID,
+		dagResultID uuid.UUID,
 		artifactID uuid.UUID,
 		contentPath string,
 		DB database.Database,
@@ -48,7 +48,7 @@ type artifactResultWriter interface {
 	// CreateWithExecStateAndMetadata inserts a new ArtifactResult with the specified fields.
 	CreateWithExecStateAndMetadata(
 		ctx context.Context,
-		workflowDAGResultID uuid.UUID,
+		dagResultID uuid.UUID,
 		artifactID uuid.UUID,
 		contentPath string,
 		execState *shared.ExecutionState,
