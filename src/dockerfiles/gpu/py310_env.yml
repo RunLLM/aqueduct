@@ -14,6 +14,4 @@ dependencies:
   - pip:
     - scikit_learn==1.0.2
     - typing_extensions==4.3.0
-    - tensorflow
-    - torch
-    # - aqueduct-ml==0.1.3
+    - aqueduct-ml==0.1.3
