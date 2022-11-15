@@ -45,7 +45,7 @@ export const AirflowDialog: React.FC<Props> = ({
     if (s3CredsProfile) {
       onUpdateField('s3_credentials_profile', s3CredsProfile);
     }
-  }, [host, s3CredsProfile]);
+  }, [host, onUpdateField, s3CredsProfile]);
 
   return (
     <Box sx={{ mt: 2 }}>

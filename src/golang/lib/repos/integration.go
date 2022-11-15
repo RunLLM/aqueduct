@@ -23,7 +23,7 @@ type integrationReader interface {
 	// GetBatch returns the Integrations with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Integration, error)
 
-	// GetByServiceAndUser returns the Integrations with the specified service by the user with the ID userID.
+	// GetByServiceAndUser returns the Integrations with the specified service created by the user with the ID userID.
 	GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
 
 	// GetByOrg returns the Integrations by the organization with the ID orgID.
@@ -38,7 +38,7 @@ type integrationReader interface {
 	// GetByConfigField returns the Integrations with config fieldName=fieldValue.
 	GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Integration, error)
 
-	// ValidateOwnership checks whether the integration is owned by the user.
+	// ValidateOwnership checks whether the integration is owned by the user if the integration is of type userOnly otherwise, checks whether the integration is owned by the organizaion orgID.
 	ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error)
 }
 

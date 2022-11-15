@@ -20,14 +20,14 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "19"
+SCHEMA_VERSION = "20"
 CHUNK_SIZE = 4096
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.1.1"
+package_version = "0.1.4"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -356,26 +356,23 @@ def start(expose, port, verbose):
     popen_handle = execute_command_nonblocking(command)
     return popen_handle, server_port
 
+def install_mongodb():
+    execute_command([sys.executable, "-m", "pip", "install", "pymongo"])
 
 def install_postgres():
     execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
 
-
 def install_bigquery():
     execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery"])
-
 
 def install_snowflake():
     execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy"])
 
-
 def install_s3():
     execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
 
-
 def install_athena():
     execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
-
 
 def install_mysql():
     system = platform.system()
@@ -454,6 +451,8 @@ def install(system):
         install_mysql()
     elif system == "sqlserver" or system == "azuresql":
         install_sqlserver()
+    elif system == "mongodb":
+        install_mongodb()
     else:
         raise Exception("Unsupported system: %s" % system)
 

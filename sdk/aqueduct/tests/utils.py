@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from aqueduct.artifacts.metadata import ArtifactMetadata
@@ -56,18 +56,20 @@ def _construct_operator(
     operator_type: OperatorType,
     inputs: List[uuid.UUID],
     outputs: List[uuid.UUID],
+    spec: Optional[OperatorSpec] = None,
 ):
     """Only sets the fields needed to figure out the DAG structure, not to actually execute the operator."""
-    if operator_type == OperatorType.EXTRACT:
-        spec = default_extract_spec()
-    elif operator_type == OperatorType.FUNCTION:
-        spec = default_function_spec()
-    elif operator_type == OperatorType.CHECK:
-        spec = default_check_spec()
-    elif operator_type == OperatorType.METRIC:
-        spec = default_metric_spec()
-    else:
-        spec = default_load_spec()
+    if spec is None:
+        if operator_type == OperatorType.EXTRACT:
+            spec = default_extract_spec()
+        elif operator_type == OperatorType.FUNCTION:
+            spec = default_function_spec()
+        elif operator_type == OperatorType.CHECK:
+            spec = default_check_spec()
+        elif operator_type == OperatorType.METRIC:
+            spec = default_metric_spec()
+        else:
+            spec = default_load_spec()
 
     return Operator(
         id=id,

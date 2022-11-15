@@ -25,10 +25,10 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
 
   const lastRunComponent = workflow['last_run_at'] ? (
     <Box sx={{ fontSize: 1, my: 1 }}>
-      <Typography variant="subtitle1">
+      <Typography variant="body2">
         <strong>Workflow Engine:</strong> {workflow.engine}
       </Typography>
-      <Typography variant="subtitle1">
+      <Typography variant="body2">
         <strong>Workflow Last Run:</strong> {lastUpdatedTime.toLocaleString()}
       </Typography>
     </Box>
@@ -39,8 +39,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Box sx={{ flex: 1 }}>
           <Typography
-            variant="h4"
-            gutterBottom
+            variant="h6"
             component="div"
             sx={{
               fontFamily: 'Monospace',
@@ -60,18 +59,9 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
 
         {workflow.description && (
           <Box my={1}>
-            <Box
-              sx={{
-                maxHeight: '80px',
-                overflowY: 'hidden',
-                textOverflow: 'ellipsis',
-                mt: 1,
-              }}
-            >
-              <ReactMarkdown className={style.reactMarkdown}>
-                {workflow.description}
-              </ReactMarkdown>
-            </Box>
+            <ReactMarkdown className={style.reactMarkdown}>
+              {workflow.description}
+            </ReactMarkdown>
           </Box>
         )}
       </Box>

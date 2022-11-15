@@ -1,8 +1,12 @@
-from aqueduct.enums import OperatorType
+from aqueduct.config import EngineConfig
+from aqueduct.enums import OperatorType, RuntimeType
+from aqueduct.error import InvalidUserArgumentException
+from aqueduct.operators import ResourceConfig
 from aqueduct.tests.utils import (
     _construct_dag,
     _construct_operator,
     default_artifact,
+    default_function_spec,
     generate_uuids,
 )
 
@@ -75,3 +79,45 @@ def test_list_downstream_operators():
     }
 
     assert set(dag.list_downstream_operators(load_op_ids[0])) == set(load_op_ids)
+
+
+def test_set_engine_config():
+    """Check that certain resource configurations are not compatible with certain engines."""
+    fn_op_ids = generate_uuids(1)
+    fn_artifact_ids = generate_uuids(1)
+
+    fn_spec = default_function_spec()
+    fn_spec.resources = ResourceConfig(num_cpus=10, memory_mb=200)
+
+    dag = _construct_dag(
+        operators=[
+            _construct_operator(
+                id=fn_op_ids[0],
+                name="Function",
+                operator_type=OperatorType.FUNCTION,
+                inputs=[],
+                outputs=[fn_artifact_ids[0]],
+                spec=fn_spec,
+            ),
+        ],
+        artifacts=[
+            default_artifact(id=fn_artifact_ids[0], name="Function Artifact"),
+        ],
+    )
+
+    # Can only set to K8s runtime.
+    dag.set_engine_config(EngineConfig(type=RuntimeType.K8S))
+
+    try:
+        dag.set_engine_config(EngineConfig())
+    except InvalidUserArgumentException as e:
+        assert "not supported" in str(e)
+    else:
+        assert False, "Expected failure"
+
+    try:
+        dag.set_engine_config(EngineConfig(type=RuntimeType.AIRFLOW))
+    except InvalidUserArgumentException as e:
+        assert "not supported" in str(e)
+    else:
+        assert False, "Expected failure"

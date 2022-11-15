@@ -7,3 +7,5 @@ export const useAqueductConsts = (): AqueductConsts => {
     apiAddress: process.env.SERVER_ADDRESS,
   };
 };
+
+export const apiAddress = process.env.SERVER_ADDRESS;

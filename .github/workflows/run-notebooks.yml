@@ -13,6 +13,11 @@ on:
       - '.github/workflows/run-notebooks.yml'
       - "examples/churn_prediction/Customer Churn Tutorial.ipynb"
       - "examples/sentiment_analysis/Sentiment Model.ipynb"
+      - "examples/diabetes-classifier/Classifying Diabetes Risk.ipynb"
+      - "examples/house-price-prediction/House Price Prediction.ipynb"
+      - "examples/mpg-regressor/Predicting MPG.ipynb"
+      - "examples/tutorials/Parameters Tutorial.ipynb"
+      - "examples/tutorials/Quickstart Tutorial.ipynb"
       - "integration_tests/notebook/imported_function.ipynb"
 
 jobs:
@@ -60,7 +65,7 @@ jobs:
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install Packages needed by the notebooks
-        run: python3 -m pip install sklearn transformers torch
+        run: python3 -m pip install scikit-learn transformers torch
 
       - name: Wait for server again
         timeout-minutes: 1
@@ -88,11 +93,6 @@ jobs:
         working-directory: examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment-analysis/Sentiment Model.ipynb"
-
-      # TODO(ENG-1821): Remove this once version 0.1 is released.
-      - name: Populate Housing and Diabetes Data
-        timeout-minutes: 1
-        run: python3 src/resources/demo_db/sqlite/v0.1/create_tables.py
 
       - name: Run Classifying Diabetes Risk Notebook
         working-directory: examples

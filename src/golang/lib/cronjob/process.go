@@ -93,9 +93,9 @@ func (j *ProcessCronjobManager) EditCronJob(ctx context.Context, name string, cr
 		return errors.New("Cron job not found")
 	} else {
 		if cronMetadata.cronJob == nil {
-			// This means the current cron job is paused.
+			// This means the current cron job is already paused.
 			if cronString == "" {
-				return errors.Newf("Attempting to pause an already paused cron job %s", name)
+				return nil
 			}
 
 			cronJob, err := j.cronScheduler.Cron(cronString).Do(cronFunction)

@@ -4,18 +4,12 @@ import pandas as pd
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from transformers_model.model import sentiment_prediction_using_transformers
+from utils import SENTIMENT_SQL_QUERY, get_integration_name
 
 from aqueduct import infer_requirements, op
 
-# Parameters for the sentiment dataset.
-SENTIMENT_SQL_QUERY = "select * from hotel_reviews"
-
 INVALID_REQUIREMENTS_PATH = "~/random.txt"
 VALID_REQUIREMENTS_PATH = "transformers_model/requirements.txt"
-
-
-def _get_integration_name() -> str:
-    return "aqueduct_demo"
 
 
 def _transformers_package_exists():
@@ -74,7 +68,7 @@ def test_infer_requirements(client):
         _uninstall_transformers_package()
 
     # If no requirements are supplied, our inference will not pick up the transformers package.
-    db = client.integration(name=_get_integration_name())
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     with pytest.raises(AqueductError):
         sentiment_prediction_without_reqs_path(table)
@@ -108,7 +102,7 @@ def test_requirements_installation_from_path(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=_get_integration_name())
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # Check that no an invalid path fails.
@@ -132,7 +126,7 @@ def test_requirements_installation_from_strings(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=_get_integration_name())
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_with_string_requirements(table)
     assert valid_path_table.get().shape[0] == 100
@@ -146,7 +140,7 @@ def test_default_requirements_installation(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=_get_integration_name())
+    db = client.integration(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_using_transformers(table)
     assert valid_path_table.get().shape[0] == 100

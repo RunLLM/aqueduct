@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 
 import { theme } from '../../styles/theme/theme';
 
-export const CardPadding = '16px';
+export const CardPadding = '8px';
 
 export const Card = styled(Box)(() => {
   return {

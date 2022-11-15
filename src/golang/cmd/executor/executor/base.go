@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -41,7 +42,7 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		requiredSchemaVersion,
+		models.SchemaVersion,
 		schemaVersionReader,
 		db,
 	); err != nil {

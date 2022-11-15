@@ -1,4 +1,3 @@
-import json
 from enum import Enum, EnumMeta
 from typing import Any, Iterable, cast
 
@@ -64,6 +63,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     NUMERIC = "numeric"
     DICT = "dictionary"
     TUPLE = "tuple"
+    LIST = "list"
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"

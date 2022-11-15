@@ -7,16 +7,15 @@ from utils import (
     check_table_exists,
     delete_flow,
     generate_new_flow_name,
-    get_integration_name,
     run_flow_test,
 )
 
 from aqueduct import LoadUpdateMode
 
 
-def test_delete_workflow_invalid_saved_objects(client):
+def test_delete_workflow_invalid_saved_objects(client, data_integration, engine):
     """Check the flow cannot delete an object it had not saved."""
-    integration = client.integration(name=get_integration_name())
+    integration = client.integration(data_integration)
     name = generate_new_flow_name()
     table_name = generate_new_flow_name()
     flow_id = None
@@ -27,14 +26,21 @@ def test_delete_workflow_invalid_saved_objects(client):
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
-    flow_id = run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+    flow_id = run_flow_test(
+        client,
+        [table],
+        engine,
+        name=name,
+        num_runs=1,
+        delete_flow_after=False,
+    ).id()
 
     ###
 
     try:
         tables = client.flow(flow_id).list_saved_objects()
-        tables[get_integration_name()][0].object_name = "I_DON_T_EXIST"
-        tables[get_integration_name()] = [tables[get_integration_name()][0]]
+        tables[data_integration][0].object_name = "I_DON_T_EXIST"
+        tables[data_integration] = [tables[data_integration][0]]
 
         # Cannot delete a flow if the saved objects specified had not been saved by the flow.
         with pytest.raises(InvalidRequestError):
@@ -46,9 +52,9 @@ def test_delete_workflow_invalid_saved_objects(client):
         delete_flow(client, flow_id)
 
 
-def test_delete_workflow_saved_objects(client):
+def test_delete_workflow_saved_objects(client, data_integration, engine):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
-    integration = client.integration(name=get_integration_name())
+    integration = client.integration(data_integration)
     name = generate_new_flow_name()
     table_name = generate_new_flow_name()
     flow_ids_to_delete = set()
@@ -60,7 +66,7 @@ def test_delete_workflow_saved_objects(client):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     flow_ids_to_delete.add(
-        run_flow_test(client, [table], name=name, num_runs=1, delete_flow_after=False).id()
+        run_flow_test(client, [table], engine, name=name, num_runs=1, delete_flow_after=False).id()
     )
 
     ###
@@ -68,7 +74,7 @@ def test_delete_workflow_saved_objects(client):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
 
     flow_ids_to_delete.add(
-        run_flow_test(client, [table], name=name, num_runs=2, delete_flow_after=False).id()
+        run_flow_test(client, [table], engine, name=name, num_runs=2, delete_flow_after=False).id()
     )
 
     ###
@@ -78,7 +84,7 @@ def test_delete_workflow_saved_objects(client):
         flow_id = list(flow_ids_to_delete)[0]
         tables = client.flow(flow_id).list_saved_objects()
 
-        assert table_name in [item.object_name for item in tables[get_integration_name()]]
+        assert table_name in [item.object_name for item in tables[data_integration]]
 
         # Check table is properly created at the integration.
         # Need to poll initially in case still writing table.
@@ -105,13 +111,13 @@ def test_delete_workflow_saved_objects(client):
             delete_flow(client, flow_id)
 
 
-def test_delete_workflow_saved_objects_twice(client):
+def test_delete_workflow_saved_objects_twice(client, data_integration, engine):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
     it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already
     been deleted.
     """
-    integration = client.integration(name=get_integration_name())
+    integration = client.integration(data_integration)
     generate_new_flow_name()
     table_name = generate_new_flow_name()
     flow_ids_to_delete = set()
@@ -123,14 +129,18 @@ def test_delete_workflow_saved_objects_twice(client):
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     # Workflow 1's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(
+        run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id()
+    )
 
     ###
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
 
     # Workflow 2's name not specified, so given a random workflow name.
-    flow_ids_to_delete.add(run_flow_test(client, [table], num_runs=1, delete_flow_after=False).id())
+    flow_ids_to_delete.add(
+        run_flow_test(client, [table], engine, num_runs=1, delete_flow_after=False).id()
+    )
 
     ###
 
@@ -145,11 +155,11 @@ def test_delete_workflow_saved_objects_twice(client):
         check_table_exists(integration, table_name)
 
         tables = client.flow(flow_1_id).list_saved_objects()
-        tables_1 = set([item.object_name for item in tables[get_integration_name()]])
+        tables_1 = set([item.object_name for item in tables[data_integration]])
         assert table_name in tables_1
 
         tables = client.flow(flow_2_id).list_saved_objects()
-        tables_2 = set([item.object_name for item in tables[get_integration_name()]])
+        tables_2 = set([item.object_name for item in tables[data_integration]])
         assert table_name in tables_2
 
         assert tables_1 == tables_2

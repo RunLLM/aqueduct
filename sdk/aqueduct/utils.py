@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 import cloudpickle as pickle
 import multipart
 import numpy as np
+import pkg_resources
 import requests
 from aqueduct.config import (
     AirflowEngineConfig,
@@ -22,9 +23,10 @@ from aqueduct.config import (
     LambdaEngineConfig,
 )
 from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.integration import IntegrationInfo
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.logger import logger
@@ -289,6 +291,7 @@ def _package_files_and_requirements(
     # This is the absolute path to the requirements file we are sending to the backend.
     packaged_requirements_path = os.path.join(dir_path, REQUIREMENTS_FILE)
     if requirements is not None:
+        # The operator has a custom requirements specification.
         assert isinstance(requirements, str) or all(isinstance(req, str) for req in requirements)
 
         if isinstance(requirements, str):
@@ -304,16 +307,16 @@ def _package_files_and_requirements(
             with open(packaged_requirements_path, "x") as f:
                 f.write("\n".join(requirements))
 
-    # If there already exists a requirements.txt in the same directory as the function.
     elif os.path.exists(REQUIREMENTS_FILE):
+        # There exists a workflow-level requirements file (need to reside in the same directory as the function).
         logger().info(
             "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-            % (os.getcwd(), func.__name__)
+            % (func.__name__, os.getcwd())
         )
-        shutil.copy(REQUIREMENTS_FILE, os.path.join(dir_path, REQUIREMENTS_FILE))
+        shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
 
-    # No requirements have been provided, so we do our best to infer.
     else:
+        # No requirements have been provided, so we use `pip freeze` to infer.
         logger().info(
             "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
             % func.__name__
@@ -323,6 +326,8 @@ def _package_files_and_requirements(
 
     # Prune out any blacklisted requirements.
     _filter_out_blacklisted_requirements(packaged_requirements_path)
+
+    _add_cloudpickle_to_requirements(packaged_requirements_path)
 
     os.chdir(current_directory_path)
 
@@ -339,8 +344,26 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
             f.write(line)
 
 
+def _add_cloudpickle_to_requirements(packaged_requirements_path: str) -> None:
+    """
+    Regardless of how we detect dependencies, we must include cloudpickle (with client's version
+    number) as a requirement because the server needs to install the same version of cloudpickle as
+    the client.
+
+    If the user-specified requirements file already contains a cloudpickle entry and the version
+    number matches, the installation process will still succeed. If there is a mismatch, the installation
+    will fail and the user should fix the version number to match the version installed on the client.
+    """
+    with open(packaged_requirements_path, "a") as f:
+        cloudpickle_requirement = (
+            "\ncloudpickle==%s" % pkg_resources.get_distribution("cloudpickle").version
+        )
+        f.write(cloudpickle_requirement)
+
+
 def _infer_requirements() -> List[str]:
-    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
+    """
+    Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
 
     Returns:
         A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
@@ -515,6 +538,8 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.DICT
     elif isinstance(value, tuple):
         return ArtifactType.TUPLE
+    elif isinstance(value, list):
+        return ArtifactType.LIST
     else:
         try:
             pickle.dumps(value)
@@ -577,29 +602,27 @@ def parse_artifact_result_response(response: requests.Response) -> Dict[str, Any
     return result
 
 
-def generate_engine_config(config: Optional[FlowConfig]) -> EngineConfig:
-    """Generates an EngineConfig from the user provided configuration."""
-    if not (config and config.engine):
-        return EngineConfig()
-    elif isinstance(config.engine, AirflowIntegration):
+def generate_engine_config(integration: IntegrationInfo) -> EngineConfig:
+    """Generates an EngineConfig from an integration info object."""
+    if integration.service == ServiceType.AIRFLOW:
         return EngineConfig(
             type=RuntimeType.AIRFLOW,
             airflow_config=AirflowEngineConfig(
-                integration_id=config.engine._metadata.id,
+                integration_id=integration.id,
             ),
         )
-    elif isinstance(config.engine, K8sIntegration):
+    elif integration.service == ServiceType.K8S:
         return EngineConfig(
             type=RuntimeType.K8S,
             k8s_config=K8sEngineConfig(
-                integration_id=config.engine._metadata.id,
+                integration_id=integration.id,
             ),
         )
-    elif isinstance(config.engine, LambdaIntegration):
+    elif integration.service == ServiceType.LAMBDA:
         return EngineConfig(
             type=RuntimeType.LAMBDA,
             lambda_config=LambdaEngineConfig(
-                integration_id=config.engine._metadata.id,
+                integration_id=integration.id,
             ),
         )
     else:
