@@ -138,11 +138,11 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// context we can surface to the user.
 		podInfo, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			return status, WrapInJobError(System, err)
+			return status, wrapInJobError(System, err)
 		}
 
 		if len(podInfo.Status.ContainerStatuses) != 1 {
-			return status, WrapInJobError(
+			return status, wrapInJobError(
 				System,
 				errors.Newf(
 					"Expected job %s to have one container, but instead got %v.",
@@ -154,7 +154,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 
 		containerStatus := podInfo.Status.ContainerStatuses[0]
 		if containerStatus.State.Terminated == nil {
-			return status, WrapInJobError(
+			return status, wrapInJobError(
 				System,
 				errors.Newf(
 					"Container %s should have terminated.", containerStatus.Name,
@@ -163,12 +163,12 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		}
 
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
-			return status, WrapInJobError(
+			return status, wrapInJobError(
 				User,
 				errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."),
 			)
 		}
-		return status, WrapInJobError(
+		return status, wrapInJobError(
 			System,
 			errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason),
 		)

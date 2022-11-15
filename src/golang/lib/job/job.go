@@ -35,7 +35,7 @@ type JobError struct {
 	Code JobErrorCode
 }
 
-func WrapInJobError(code JobErrorCode, err error) error {
+func wrapInJobError(code JobErrorCode, err error) error {
 	if dropboxErr, ok := err.(errors.DropboxError); ok {
 		return &JobError{
 			DropboxError: dropboxErr,
