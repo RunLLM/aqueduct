@@ -54,7 +54,6 @@ type Operator interface {
 	// DB methods, these methods update DB based on current operator's state.
 
 	// InitializeResult initializes the operator in the database.
-	// TODO: document.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult writes the results of this operator execution to the database.

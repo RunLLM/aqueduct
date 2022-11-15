@@ -40,3 +40,32 @@ def client(pytestconfig):
         )
 
     return aqueduct.Client(api_key, server_address)
+
+
+# Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
+@pytest.fixture(autouse=True)
+def enable_by_engine_type(request, client, engine):
+    """When a test is marked with this, it is enabled for a particular ServiceType!
+
+    Eg.
+    @pytest.mark.enable_only_for_engine("Kubernetes")
+    def test_k8s(engine):
+        ...
+    """
+    if request.node.get_closest_marker("enable_only_for_engine_type"):
+        enabled_engine_type = request.node.get_closest_marker("enable_only_for_engine_type").args[0]
+
+        if engine is None:
+            pytest.skip("Skipped. This test only runs on engine type `%s`." % enabled_engine_type)
+            return
+
+        # Get the type of integration that `engine` is, so we know whether to skip.
+        integration_info_by_name = client.list_integrations()
+        if engine not in integration_info_by_name.keys():
+            raise Exception("Server is not connected an integration `%s`." % engine)
+
+        if enabled_engine_type != integration_info_by_name[engine].service:
+            pytest.skip(
+                "Skipped on engine `%s`, since it is not of type `%s`."
+                % (engine, enabled_engine_type)
+            )
