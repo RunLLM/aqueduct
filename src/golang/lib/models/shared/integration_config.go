@@ -3,10 +3,6 @@ package shared
 import (
 	"database/sql/driver"
 
-	"database/sql/driver"
-	"github.com/dropbox/godropbox/errors"
-
-	"github.com/dropbox/godropbox/errors"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
