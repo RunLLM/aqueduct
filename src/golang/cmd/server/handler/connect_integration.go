@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
@@ -627,6 +628,19 @@ func initializeConda(
 			"-y",
 		}
 		_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
+
+		args = []string{
+			"run",
+			"-n",
+			fmt.Sprintf("aqueduct_python%s", pythonVersion),
+			"pip3",
+			"install",
+			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
+		}
+		_, _, err = lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
 		if err != nil {
 			return err
 		}
