@@ -16,10 +16,10 @@ type Notification interface {
 }
 
 type notificationReader interface {
-	// GetByReceiver returns the Workflow with ID.
+	// GetByReceiver returns the Notifications for the user with receiverID.
 	GetByReceiver(ctx context.Context, receiverID uuid.UUID, status shared.Status, DB database.Database) ([]models.Notification, error)
 
-	// ValidateUser returns whether the Notification belongs to userID.
+	// ValidateUser returns whether userID is the receiver of the Notification specified with notificationID.
 	ValidateUser(ctx context.Context, notificationID uuid.UUID, userID uuid.UUID, DB database.Database) (bool, error)
 }
 
