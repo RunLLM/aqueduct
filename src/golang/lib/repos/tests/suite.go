@@ -21,6 +21,7 @@ type TestSuite struct {
 
 	// List of all repos
 	workflow repos.Workflow
+	user     repos.User
 
 	DB database.Database
 }
@@ -39,6 +40,7 @@ func (ts *TestSuite) SetupSuite() {
 
 	// Initialize repos
 	ts.workflow = sqlite.NewWorklowRepo()
+	ts.user = sqlite.NewUserRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {

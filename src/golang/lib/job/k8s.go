@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -67,6 +68,18 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
+
+		if functionSpec.Resources != nil {
+			if functionSpec.Resources.NumCPU != nil {
+				resourceRequest[k8s.PodResourceCPUKey] = strconv.Itoa(*functionSpec.Resources.NumCPU)
+			}
+			if functionSpec.Resources.MemoryMB != nil {
+				// Set the request to be in "M" = Megabytes.
+				resourceRequest[k8s.PodResourceMemoryKey] = fmt.Sprintf("%sM",
+					strconv.Itoa(*functionSpec.Resources.MemoryMB),
+				)
+			}
+		}
 	}
 
 	// Encode job spec to prevent data loss

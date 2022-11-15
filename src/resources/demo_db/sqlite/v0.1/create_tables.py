@@ -38,7 +38,7 @@ def create_housing_table(engine):
     df.to_sql(
         "house_prices",
         con=engine,
-        index=False,
+        index=True,
         if_exists="replace",
     )
 

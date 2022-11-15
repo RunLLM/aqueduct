@@ -45,7 +45,7 @@ export const KubernetesDialog: React.FC<Props> = ({
     };
 
     fetchEnvironment().catch(console.error);
-  }, []);
+  }, [apiKey]);
 
   return (
     <Box sx={{ mt: 2 }}>
