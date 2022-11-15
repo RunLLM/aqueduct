@@ -28,7 +28,6 @@ class FunctionSpec(BaseModel):
     output_metadata_paths: List[str]
     expected_output_artifact_types: List[enums.ArtifactType]
     operator_type: enums.OperatorType
-    resources: Optional[Any]
 
     # This is specific to the check operator. This is left unset by any other function type.
     check_severity: Optional[enums.CheckSeverityLevel]
