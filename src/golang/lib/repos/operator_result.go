@@ -22,18 +22,18 @@ type operatorResultReader interface {
 	// GetBatch returns the OperatorResults with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 
-	// GetByWorkflowDagResultIdAndOperatorId returns the OperatorResult given the operatorID and workflowDAGResultIDs.
-	GetByDAGAndOperator(ctx context.Context, workflowDAGResultIDs, operatorID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
+	// GetByDAGResultAndOperator returns the OperatorResult given the operatorID and workflowDAGResultIDs.
+	GetByDAGResultAndOperator(ctx context.Context, workflowDAGResultIDs, operatorID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
 
-	// GetByDAG returns the OperatorResult given workflowDAGResultIDs.
-	GetByDAG(ctx context.Context, workflowDAGResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
+	// GetByDAGResults returns the OperatorResult given workflowDAGResultIDs.
+	GetByDAGResults(ctx context.Context, workflowDAGResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 }
 
 type operatorResultWriter interface {
 	// Create inserts a new OperatorResult with the specified fields.
 	Create(
 		ctx context.Context,
-		workflowDAGResultID uuid.UUID,
+		dagResultID uuid.UUID,
 		operatorID uuid.UUID,
 		execState *shared.ExecutionState,
 		DB database.Database,
