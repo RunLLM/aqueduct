@@ -74,7 +74,6 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
 				launchGpu = true
 			}
-
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
