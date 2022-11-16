@@ -58,7 +58,7 @@ func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID,
 		WHERE 
 			workflow_dag_result.workflow_dag_id = workflow_dag.id 
 			AND workflow_dag.workflow_id = $1;`,
-		models.DAGResultCols(),
+		models.DAGResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID}
 
@@ -76,7 +76,7 @@ func (*dagResultReader) GetKOffsetByWorkflow(ctx context.Context, workflowID uui
 			AND workflow_dag.workflow_id = $1
 		ORDER BY workflow_dag_result.created_at DESC
 		LIMIT $2, -1;`,
-		models.DAGResultCols(),
+		models.DAGResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID, k}
 
