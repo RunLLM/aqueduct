@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -122,6 +123,24 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	)
 }
 
+func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStatus, error) {
+	if len(pod.Status.ContainerStatuses) != 1 {
+		return nil, errors.Newf(
+			"Expected job %s to have one container, but instead got %v.",
+			name,
+			len(pod.Status.ContainerStatuses),
+		)
+	}
+
+	containerStatus := pod.Status.ContainerStatuses[0]
+	if containerStatus.State.Terminated == nil {
+		return nil, errors.Newf(
+			"Container %s should have terminated.", containerStatus.Name,
+		)
+	}
+	return &containerStatus, nil
+}
+
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
@@ -136,30 +155,14 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 
 		// Fetch more detailed information about the failure, in case there is valuable
 		// context we can surface to the user.
-		podInfo, err := k8s.GetPod(ctx, name, j.k8sClient)
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
 			return status, wrapInJobError(System, err)
 		}
 
-		if len(podInfo.Status.ContainerStatuses) != 1 {
-			return status, wrapInJobError(
-				System,
-				errors.Newf(
-					"Expected job %s to have one container, but instead got %v.",
-					name,
-					len(podInfo.Status.ContainerStatuses),
-				),
-			)
-		}
-
-		containerStatus := podInfo.Status.ContainerStatuses[0]
-		if containerStatus.State.Terminated == nil {
-			return status, wrapInJobError(
-				System,
-				errors.Newf(
-					"Container %s should have terminated.", containerStatus.Name,
-				),
-			)
+		containerStatus, err := containerStatusFromPod(pod, name)
+		if err != nil {
+			return status, wrapInJobError(System, err)
 		}
 
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
@@ -173,6 +176,25 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 			errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason),
 		)
 	} else {
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
+		if err != nil {
+			return shared.FailedExecutionStatus, wrapInJobError(System, err)
+		}
+
+		if pod.Status.Phase == corev1.PodPending {
+			for _, condition := range pod.Status.Conditions {
+				// If the pod is unschedulable, fail the operator immediately with the K8s message (eg. "Insufficient CPU").
+				if condition.Type == corev1.PodScheduled &&
+					condition.Status == corev1.ConditionFalse &&
+					condition.Reason == corev1.PodReasonUnschedulable {
+					return shared.FailedExecutionStatus, wrapInJobError(
+						User,
+						errors.Newf("Pod could not be scheduled on Kubernetes. Reason: %s", condition.Message),
+					)
+				}
+			}
+		}
+
 		status = shared.PendingExecutionStatus
 	}
 
