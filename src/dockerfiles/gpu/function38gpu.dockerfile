@@ -24,5 +24,5 @@ ENV PYTHONUNBUFFERED 1
 
 COPY ./gpu/start-function-executor-gpu.sh /
 
-CMD bash /start-function-executor-gpu.sh py38_env
+CMD ["bash","/start-function-executor-gpu.sh", "py38_env"]
 
