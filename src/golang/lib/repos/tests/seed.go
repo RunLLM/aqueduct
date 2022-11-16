@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/rand"
 	"time"
 
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -119,6 +120,8 @@ func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []m
 	return dags
 }
 
+// seedDAGResult creates count DAGResult records.
+// It also creates a new DAG to associate with the DAGResults created.
 func (ts *TestSuite) seedDAGResult(count int) []models.DAGResult {
 	dags := ts.seedDAG(1)
 	dagIDs := sampleDagIDs(count, dags)
@@ -153,4 +156,42 @@ func (ts *TestSuite) seedDAGResultWithDAG(count int, dagIDs []uuid.UUID) []model
 	}
 
 	return dagResults
+}
+
+// seedDAGEdgeWith creates count DAGEdge records.
+// It creates a new DAG to associate with the DAGEdges.
+// For each DAGEdge, it randomly chooses the fromID, toID, and
+// type of edge (e.g. Operator to Artifact).
+func (ts *TestSuite) seedDAGEdge(count int) []models.DAGEdge {
+	dags := ts.seedDAG(1)
+	return ts.seedDAGEdgeWithDAG(count, dags[0].ID)
+}
+
+// seedDAGEdgeWith creates count DAGEdge records for the DAG specified.
+// For each DAGEdge, it randomly chooses the fromID, toID, and
+// type of edge (e.g. Operator to Artifact).
+func (ts *TestSuite) seedDAGEdgeWithDAG(count int, dagID uuid.UUID) []models.DAGEdge {
+	edges := make([]models.DAGEdge, 0, count)
+
+	for i := 0; i < count; i++ {
+		edgeType := shared.ArtifactToOperatorDAGEdge
+		if rand.Intn(2) > 0 {
+			edgeType = shared.OperatorToArtifactDAGEdge
+		}
+
+		edge, err := ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			edgeType,
+			uuid.New(),
+			uuid.New(),
+			int16(i),
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		edges = append(edges, *edge)
+	}
+
+	return edges
 }
