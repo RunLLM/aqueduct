@@ -137,4 +137,3 @@ def test_basic_get_kubernetes(client, data_integration, engine):
         "positivity",
     ]
     assert output_df.shape[0] == 100
-

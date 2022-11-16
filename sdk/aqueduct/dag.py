@@ -45,9 +45,10 @@ class DAG(BaseModel):
     # Is excluded from json serialization.
     operator_by_name: Dict[str, Operator] = {}
 
-    # The fields below must be set when publishing the workflow
+    # The fields below must be set when publishing the workflow.
     metadata: Metadata
     # Must be set through `set_engine_config()`.
+    # A `None` value means to default Aqueduct EngineConfig.
     engine_config: Optional[EngineConfig] = None
 
     class Config:
