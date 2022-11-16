@@ -11,6 +11,7 @@ from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
 from pydantic import BaseModel, Extra, parse_obj_as
 
+
 class FunctionSpec(BaseModel):
     name: str
     type: Literal[enums.JobType.FUNCTION]
