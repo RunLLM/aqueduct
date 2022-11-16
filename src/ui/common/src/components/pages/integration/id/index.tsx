@@ -92,7 +92,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       })
     );
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, []);
+  }, [dispatch, integrationId, user.apiKey]);
 
   useEffect(() => {
     if (!isLoading(testConnectStatus)) {
@@ -103,7 +103,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       setShowConnectSuccessToast(true);
       dispatch(resetTestConnectStatus());
     }
-  }, [testConnectStatus]);
+  }, [dispatch, testConnectStatus]);
 
   const selectedIntegration = integrations[integrationId];
 
@@ -113,7 +113,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     } else {
       document.title = `Integration Details | Aqueduct`;
     }
-  }, []);
+  }, [selectedIntegration]);
 
   if (!integrations || !selectedIntegration) {
     return null;
@@ -129,9 +129,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       user={user}
     >
       <Box sx={{ paddingBottom: '4px' }}>
-        <Typography variant="h2" gutterBottom component="div">
-          Integration Details
-        </Typography>
         <Box display="flex" flexDirection="row" alignContent="top">
           <DetailIntegrationCard
             integration={selectedIntegration}

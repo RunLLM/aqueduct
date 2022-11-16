@@ -31,6 +31,8 @@ import {
   IntegrationConfig,
   KubernetesConfig,
   LambdaConfig,
+  MariaDbConfig,
+  MongoDBConfig,
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
@@ -44,11 +46,13 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
+import { CondaDialog } from './condaDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { MariaDbDialog } from './mariadbDialog';
+import { MongoDBDialog } from './mongoDbDialog';
 import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
@@ -122,7 +126,15 @@ const IntegrationDialog: React.FC<Props> = ({
       }
       onCloseDialog();
     }
-  }, [connectStatus]);
+  }, [
+    connectStatus,
+    dispatch,
+    migrateStorage,
+    onCloseDialog,
+    onSuccess,
+    showMigrationDialog,
+    user.apiKey,
+  ]);
 
   const dialogHeader = (
     <Box
@@ -188,7 +200,16 @@ const IntegrationDialog: React.FC<Props> = ({
       serviceDialog = (
         <MariaDbDialog
           onUpdateField={setConfigField}
-          value={config as RedshiftConfig}
+          value={config as MariaDbConfig}
+          editMode={editMode}
+        />
+      );
+      break;
+    case 'MongoDB':
+      serviceDialog = (
+        <MongoDBDialog
+          onUpdateField={setConfigField}
+          value={config as MongoDBConfig}
           editMode={editMode}
         />
       );
@@ -216,12 +237,12 @@ const IntegrationDialog: React.FC<Props> = ({
       const gcsConfig = config as GCSConfig;
       // GCS can only be used storage currently
       gcsConfig.use_as_storage = 'true';
-      setMigrateStorage(true);
       serviceDialog = (
         <GCSDialog
           onUpdateField={setConfigField}
           value={config as GCSConfig}
           editMode={editMode}
+          setMigrateStorage={setMigrateStorage}
         />
       );
       break;
@@ -268,6 +289,9 @@ const IntegrationDialog: React.FC<Props> = ({
           editMode={editMode}
         />
       );
+      break;
+    case 'Conda':
+      serviceDialog = <CondaDialog />;
       break;
     default:
       return null;
@@ -362,6 +386,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'Kubernetes':
       return isK8sConfigComplete(config as KubernetesConfig);
+    case 'Conda':
+      return true;
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

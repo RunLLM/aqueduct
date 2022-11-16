@@ -1,39 +1,30 @@
 import os
+from typing import List
 
 import pytest
-import utils
 from aqueduct.dag import DAG, Metadata
 
 import aqueduct
 
-# Usage: add a <flag> in FLAGS which will enable `--{flag}` in test cmd options.
-# The option variable can be accessed through utils.flags during tests.
-# One can also mark test to be triggered only when `--{flag}` is turned on through
-# @pytest.mark.<flag_name>
-FLAGS = []
-
 
 def pytest_addoption(parser):
-    for flag in FLAGS:
-        parser.addoption(f"--{flag}", action="store_true", default=False)
+    # We currently only support a single data integration and compute engine per test suite run.
+    parser.addoption(f"--data", action="store", default="aqueduct_demo")
+    parser.addoption(f"--engine", action="store", default=None)
 
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
-INTEGRATION = "INTEGRATION"
 
 
-@pytest.fixture(autouse=True)
-def fetch_connected_integration_env_variable():
-    utils.integration_name = os.getenv(INTEGRATION)
-    yield
+@pytest.fixture(scope="session")
+def data_integration(pytestconfig):
+    return pytestconfig.getoption("data")
 
 
-@pytest.fixture(autouse=True)
-def fetch_flags(pytestconfig):
-    for flag in FLAGS:
-        utils.flags[flag] = pytestconfig.getoption(flag)
-    yield
+@pytest.fixture(scope="session")
+def engine(pytestconfig):
+    return pytestconfig.getoption("engine")
 
 
 @pytest.fixture(scope="function")
@@ -51,17 +42,30 @@ def client(pytestconfig):
     return aqueduct.Client(api_key, server_address)
 
 
-def pytest_configure(config):
-    for flag in FLAGS:
-        config.addinivalue_line(
-            "markers",
-            f"{flag}: mark test to only run if --{flag} command line flag is supplied",
-        )
+# Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
+@pytest.fixture(autouse=True)
+def enable_by_engine_type(request, client, engine):
+    """When a test is marked with this, it is enabled for a particular ServiceType!
 
+    Eg.
+    @pytest.mark.enable_only_for_engine("Kubernetes")
+    def test_k8s(engine):
+        ...
+    """
+    if request.node.get_closest_marker("enable_only_for_engine_type"):
+        enabled_engine_type = request.node.get_closest_marker("enable_only_for_engine_type").args[0]
 
-# This allows us to skip tests that depend on command line flags, because pytest.mark.skipif() is evaluated
-# before our fixtures are, so we cannot reference fixtures in our test skip condition.
-def pytest_runtest_setup(item):
-    for flag in FLAGS:
-        if flag in item.keywords and not item.config.getoption(f"--{flag}"):
-            pytest.skip(f"need --{flag} option to run this test")
+        if engine is None:
+            pytest.skip("Skipped. This test only runs on engine type `%s`." % enabled_engine_type)
+            return
+
+        # Get the type of integration that `engine` is, so we know whether to skip.
+        integration_info_by_name = client.list_integrations()
+        if engine not in integration_info_by_name.keys():
+            raise Exception("Server is not connected an integration `%s`." % engine)
+
+        if enabled_engine_type != integration_info_by_name[engine].service:
+            pytest.skip(
+                "Skipped on engine `%s`, since it is not of type `%s`."
+                % (engine, enabled_engine_type)
+            )

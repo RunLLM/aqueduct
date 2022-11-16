@@ -34,7 +34,9 @@ class EngineConfig(BaseModel):
     lambda_config: Optional[LambdaEngineConfig]
 
 
+# TODO(...): this is deprecated.
 class FlowConfig(BaseModel):
+
     engine: Optional[Union[AirflowIntegration, K8sIntegration, LambdaIntegration]]
     k_latest_runs: int = -1
 

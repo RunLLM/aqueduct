@@ -1,6 +1,5 @@
 import pytest
 from aqueduct.error import AqueductError, InvalidUserArgumentException
-from utils import get_integration_name
 
 import aqueduct
 from aqueduct import op
@@ -20,8 +19,8 @@ TIP_EXTRACT = "We couldn't execute the provided query. Please double check your 
 TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace for fix."
 
 
-def test_handle_relational_query_error(client):
-    db = client.integration(name=get_integration_name())
+def test_handle_relational_query_error(client, data_integration):
+    db = client.integration(data_integration)
 
     try:
         sql_artifact = db.sql(query=BAD_QUERY)
@@ -29,8 +28,8 @@ def test_handle_relational_query_error(client):
         assert TIP_EXTRACT in e.message
 
 
-def test_handle_bad_op_error(client):
-    db = client.integration(name=get_integration_name())
+def test_handle_bad_op_error(client, data_integration):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=GOOD_QUERY)
 
     try:

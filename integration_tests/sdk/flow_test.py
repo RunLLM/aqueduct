@@ -1,9 +1,12 @@
+import uuid
 from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
-from aqueduct.enums import ExecutionStatus
+from aqueduct.enums import ExecutionStatus, ServiceType
 from aqueduct.error import InvalidUserArgumentException
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.integration import IntegrationInfo
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.sentiment.model import sentiment_model
 from test_functions.simple.model import (
@@ -16,40 +19,39 @@ from utils import (
     delete_flow,
     generate_new_flow_name,
     generate_table_name,
-    get_integration_name,
     run_flow_test,
     wait_for_flow_runs,
 )
 
 import aqueduct
-from aqueduct import LoadUpdateMode, check, metric, op
+from aqueduct import FlowConfig, LoadUpdateMode, check, metric, op
 
 
-def test_basic_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_basic_flow(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
 
-    run_flow_test(client, artifacts=[output_artifact])
+    run_flow_test(client, artifacts=[output_artifact], engine=engine)
 
 
-def test_sentiment_flow(client):
+def test_sentiment_flow(client, data_integration, engine):
     """Actually run the full sentiment model (with nltk dependency)."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = sentiment_model(sql_artifact)
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
 
-    run_flow_test(client, artifacts=[output_artifact])
+    run_flow_test(client, artifacts=[output_artifact], engine=engine)
 
 
-def test_complex_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_complex_flow(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -86,6 +88,7 @@ def test_complex_flow(client):
             client,
             name=flow_name,
             artifacts=[output_artifact],
+            engine=engine,
             delete_flow_after=False,
         )
         flow_id = flow.id()
@@ -100,6 +103,7 @@ def test_complex_flow(client):
             client,
             name=flow_name,
             artifacts=[output_artifact],
+            engine=engine,
             checks=[success_check],  # failing_check will no longer be included.
             num_runs=2,
             delete_flow_after=False,
@@ -114,8 +118,8 @@ def test_complex_flow(client):
         delete_flow(client, flow_id)
 
 
-def test_multiple_output_artifacts(client):
-    db = client.integration(name=get_integration_name())
+def test_multiple_output_artifacts(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
@@ -131,11 +135,14 @@ def test_multiple_output_artifacts(client):
     run_flow_test(
         client,
         artifacts=[fn_artifact1, fn_artifact2],
+        engine=engine,
     )
 
 
-def test_publish_with_schedule(client):
-    db = client.integration(name=get_integration_name())
+def test_publish_with_schedule(client, data_integration, engine):
+    db = client.integration(
+        data_integration,
+    )
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -147,6 +154,7 @@ def test_publish_with_schedule(client):
     run_flow_test(
         client,
         artifacts=[output_artifact],
+        engine=engine,
         schedule=aqueduct.hourly(minute=aqueduct.Minute(execute_at.minute)),
         num_runs=2,  # Wait for two runs because registering a workflow always triggers an immediate run first.
     )
@@ -166,9 +174,9 @@ def test_invalid_flow(client):
         )
 
 
-def test_publish_flow_with_same_name(client):
+def test_publish_flow_with_same_name(client, data_integration, engine):
     """Tests flow editing behavior."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
 
@@ -180,6 +188,7 @@ def test_publish_flow_with_same_name(client):
             client,
             artifacts=[output_artifact],
             name=flow_name,
+            engine=engine,
             schedule=aqueduct.daily(),
             delete_flow_after=False,
         )
@@ -191,6 +200,7 @@ def test_publish_flow_with_same_name(client):
             client,
             artifacts=[metric],
             name=flow_name,
+            engine=engine,
             schedule=aqueduct.daily(),
             num_runs=2,
             delete_flow_after=False,
@@ -201,8 +211,8 @@ def test_publish_flow_with_same_name(client):
             delete_flow(client, flow_id)
 
 
-def test_refresh_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_refresh_flow(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -211,6 +221,7 @@ def test_refresh_flow(client):
     flow = client.publish_flow(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
+        engine=engine,
         schedule=aqueduct.hourly(),
     )
 
@@ -228,8 +239,8 @@ def test_refresh_flow(client):
         client.delete_flow(flow.id())
 
 
-def test_get_artifact_from_flow(client):
-    db = client.integration(name=get_integration_name())
+def test_get_artifact_from_flow(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -238,6 +249,7 @@ def test_get_artifact_from_flow(client):
     flow = client.publish_flow(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
+        engine=engine,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -248,8 +260,8 @@ def test_get_artifact_from_flow(client):
         client.delete_flow(flow.id())
 
 
-def test_get_artifact_reuse_for_computation(client):
-    db = client.integration(name=get_integration_name())
+def test_get_artifact_reuse_for_computation(client, data_integration, engine):
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact.save(
@@ -258,6 +270,7 @@ def test_get_artifact_reuse_for_computation(client):
     flow = client.publish_flow(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
+        engine=engine,
     )
     try:
         wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
@@ -268,9 +281,9 @@ def test_get_artifact_reuse_for_computation(client):
         client.delete_flow(flow.id())
 
 
-def test_multiple_flows_with_same_schedule(client):
+def test_multiple_flows_with_same_schedule(client, data_integration, engine):
     try:
-        db = client.integration(name=get_integration_name())
+        db = client.integration(data_integration)
         sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
         output_artifact = dummy_sentiment_model(sql_artifact)
         output_artifact_2 = dummy_model(sql_artifact)
@@ -278,12 +291,14 @@ def test_multiple_flows_with_same_schedule(client):
         flow_1 = client.publish_flow(
             name=generate_new_flow_name(),
             artifacts=output_artifact,
+            engine=engine,
             schedule="* * * * *",
         )
 
         flow_2 = client.publish_flow(
             name=generate_new_flow_name(),
             artifacts=output_artifact_2,
+            engine=engine,
             schedule="* * * * *",
         )
 
@@ -302,8 +317,8 @@ def test_multiple_flows_with_same_schedule(client):
         delete_flow(client, flow_2.id())
 
 
-def test_fetching_historical_flows_uses_old_data(client):
-    db = client.integration(name=get_integration_name())
+def test_fetching_historical_flows_uses_old_data(client, data_integration, engine):
+    db = client.integration(data_integration)
 
     # Write a new table into the demo db.
     flows_to_delete = []
@@ -318,7 +333,7 @@ def test_fetching_historical_flows_uses_old_data(client):
         table = generate_initial_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
         setup_flow = run_flow_test(
-            client, name=setup_flow_name, artifacts=[table], delete_flow_after=False
+            client, name=setup_flow_name, artifacts=[table], engine=engine, delete_flow_after=False
         )
         flows_to_delete.append(setup_flow.id())
 
@@ -330,7 +345,7 @@ def test_fetching_historical_flows_uses_old_data(client):
         output = db.sql("Select * from test_table", name="Test Table Query")
         assert output.get().equals(initial_table)
 
-        flow = run_flow_test(client, artifacts=[output], delete_flow_after=False)
+        flow = run_flow_test(client, artifacts=[output], engine=engine, delete_flow_after=False)
         flows_to_delete.append(flow.id())
 
         # Now, change the data that the new flow relies on, by populating data the same way as the setup flow.
@@ -341,7 +356,12 @@ def test_fetching_historical_flows_uses_old_data(client):
         table = generate_new_table()
         table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
         run_flow_test(
-            client, name=setup_flow_name, artifacts=[table], num_runs=2, delete_flow_after=False
+            client,
+            name=setup_flow_name,
+            artifacts=[table],
+            engine=engine,
+            num_runs=2,
+            delete_flow_after=False,
         )
 
         # Fetching the historical flow and materializing the data will not use the new data
@@ -352,3 +372,64 @@ def test_fetching_historical_flows_uses_old_data(client):
     finally:
         for flow_id in flows_to_delete:
             delete_flow(client, flow_id)
+
+
+def test_flow_with_args(client):
+    str_val = "this is a string"
+    num_val = 1234
+
+    @op
+    def foo_with_args(*args):
+        args_list = list(args)
+        assert args_list == [str_val, num_val]
+        return args_list
+
+    @op
+    def generate_str():
+        return str_val
+
+    @op
+    def generate_num():
+        return num_val
+
+    output = foo_with_args(generate_str(), generate_num())
+    assert output.get() == [str_val, num_val]
+
+    # Implicit parameter creation is disallowed for variable-length parameters.
+    with pytest.raises(InvalidUserArgumentException):
+        foo_with_args(*[str_val, num_val])
+
+
+def test_publish_with_redundant_config_fields(client):
+    """Once the user-facing `FlowConfig` struct is deprecated, we can get rid of this test."""
+
+    @op
+    def noop():
+        return 123
+
+    output = noop()
+
+    # Test redundant engine field.
+    dummy_integration_info = IntegrationInfo(
+        id=uuid.uuid4(),
+        name="dummy",
+        service=ServiceType.LAMBDA,
+        createdAt=123,
+        validated=True,
+    )
+    with pytest.raises(InvalidUserArgumentException):
+        client.publish_flow(
+            generate_new_flow_name(),
+            artifacts=[output],
+            engine="something",
+            config=FlowConfig(engine=AirflowIntegration(dummy_integration_info)),
+        )
+
+    # Test redundant `k_latest_runs` field.
+    with pytest.raises(InvalidUserArgumentException):
+        client.publish_flow(
+            generate_new_flow_name(),
+            artifacts=[output],
+            k_latest_runs=10,
+            config=FlowConfig(k_latest_runs=123),
+        )

@@ -42,15 +42,6 @@ from aqueduct.utils import (
     get_description_for_metric,
     serialize_function,
 )
-from great_expectations.core import ExpectationConfiguration
-from great_expectations.core.batch import RuntimeBatchRequest
-from great_expectations.data_context import BaseDataContext
-from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    DatasourceConfig,
-    FilesystemStoreBackendDefaults,
-)
-from great_expectations.validator.validator import Validator
 from ruamel import yaml
 
 from aqueduct import globals
@@ -203,6 +194,18 @@ class TableArtifact(BaseArtifact):
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
+        # We import on demand since this takes 1-2 seconds, and we don't want to incur that every time
+        # we reference the SDK.
+        from great_expectations.core import ExpectationConfiguration
+        from great_expectations.core.batch import RuntimeBatchRequest
+        from great_expectations.data_context import BaseDataContext
+        from great_expectations.data_context.types.base import (
+            DataContextConfig,
+            DatasourceConfig,
+            FilesystemStoreBackendDefaults,
+        )
+        from great_expectations.validator.validator import Validator
+
         def great_expectations_check_method(table: pd.DataFrame) -> bool:
             data_context_config = DataContextConfig(
                 datasources={
@@ -260,7 +263,11 @@ class TableArtifact(BaseArtifact):
 
         check_name = "ge_table_check: {%s}" % expectation_name
 
-        zip_file = serialize_function(great_expectations_check_method, check_name)
+        zip_file = serialize_function(
+            great_expectations_check_method,
+            check_name,
+            requirements=["pandas", "great-expectations", "ruamel.yaml"],
+        )
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
             granularity=FunctionGranularity.TABLE,
@@ -335,7 +342,7 @@ class TableArtifact(BaseArtifact):
                 table_name,
             )
 
-        zip_file = serialize_function(metric_func, metric_name)
+        zip_file = serialize_function(metric_func, metric_name, requirements=["pandas"])
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -374,7 +381,9 @@ class TableArtifact(BaseArtifact):
 
         metric_name = "num_rows"
         metric_description = "compute number of rows for %s" % table_name
-        zip_file = serialize_function(internal_num_rows_metric, metric_name)
+        zip_file = serialize_function(
+            internal_num_rows_metric, metric_name, requirements=["pandas"]
+        )
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -420,7 +429,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_max_metric, metric_name)
+        zip_file = serialize_function(internal_max_metric, metric_name, requirements=["pandas"])
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -466,7 +475,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_min_metric, metric_name)
+        zip_file = serialize_function(internal_min_metric, metric_name, requirements=["pandas"])
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -512,7 +521,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_mean_metric, metric_name)
+        zip_file = serialize_function(internal_mean_metric, metric_name, requirements=["pandas"])
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,
@@ -560,7 +569,7 @@ class TableArtifact(BaseArtifact):
             column_id,
             table_name,
         )
-        zip_file = serialize_function(internal_std_metric, metric_name)
+        zip_file = serialize_function(internal_std_metric, metric_name, requirements=["pandas"])
 
         function_spec = FunctionSpec(
             type=FunctionType.FILE,

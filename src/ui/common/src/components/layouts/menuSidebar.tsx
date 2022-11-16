@@ -10,7 +10,7 @@ import { Link, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
@@ -115,13 +115,13 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
 
-  useEffect(() => {
+  useCallback(() => {
     setCurrentPage(location.pathname);
 
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  }, []);
+  }, [dispatch, location.pathname, user]);
 
   const pathPrefix = getPathPrefix();
   return (
@@ -193,7 +193,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
       </Box>
 
       <Box style={menuSidebarFooter}>
-        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Documentation" placement="right" arrow>
             <Link href="https://docs.aqueducthq.com" underline="none">
@@ -204,7 +204,7 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             </Link>
           </Tooltip>
         </Box>
-        <Divider sx={{ width: '100%', backgroundColor: 'white' }} />
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
           <Tooltip title="Report Issue" placement="right" arrow>
             <Link href="mailto:support@aqueducthq.com" underline="none">

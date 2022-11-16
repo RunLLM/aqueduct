@@ -1,6 +1,9 @@
 package shared
 
 import (
+	"database/sql/driver"
+
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -25,8 +28,8 @@ type S3IntegrationConfig struct {
 	UseAsStorage      ConfigBool   `json:"use_as_storage"`
 }
 
-// AirflowConfig contains the fields for connecting an Airflow integration.
-type AirflowConfig struct{}
+// AirflowIntegrationConfig contains the fields for connecting an Airflow integration.
+type AirflowIntegrationConfig struct{}
 
 // GCSIntegrationConfig contains the fields for connecting a Google Cloud Storage integration.
 type GCSIntegrationConfig struct {
@@ -62,4 +65,14 @@ func (scb *ConfigBool) UnmarshalJSON(data []byte) error {
 
 	*scb = ConfigBool(b)
 	return nil
+}
+
+type IntegrationConfig map[string]string
+
+func (c *IntegrationConfig) Value() (driver.Value, error) {
+	return utils.ValueJSONB(*c)
+}
+
+func (c *IntegrationConfig) Scan(value interface{}) error {
+	return utils.ScanJSONB(value, c)
 }
