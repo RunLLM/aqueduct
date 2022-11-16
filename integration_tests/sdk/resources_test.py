@@ -110,3 +110,58 @@ def test_custom_memory(client, engine):
         engine=engine,
         expect_success=False,
     )
+
+
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+def test_custom_gpus(client, engine):
+    """Assumption: there is a GPU node in the K8s cluster. Also assumes the 
+    machine executing the test has pytorch installed.
+
+    We run a special operator that checks the availability of GPUs.
+    """
+    import torch
+    # Returns availability of GPU, should be False.
+    @op(requirements=["torch==1.13.0"])
+    def gpu_is_not_available():
+        return torch.cuda.is_available()
+
+    gpu_not_available = gpu_is_not_available.lazy()
+    
+    # Returns availability of GPU, should be True.
+    @op(requirements=["torch==1.13.0"], resources={"gpu_resource_name": "nvidia.com/gpu"})
+    def gpu_is_available():
+        return torch.cuda.is_available()
+
+    gpu_available = gpu_is_available.lazy()
+
+    flows = []
+    try:
+        no_gpu_flow = run_flow_test(
+            client,
+            name=generate_new_flow_name(),
+            artifacts=gpu_not_available,
+            engine=engine,
+            delete_flow_after=False,
+        )
+        flows.append(no_gpu_flow)
+
+        gpu_flow = run_flow_test(
+            client,
+            name=generate_new_flow_name(),
+            artifacts=gpu_available,
+            engine=engine,
+            delete_flow_after=False,
+        )
+        flows.append(gpu_flow)
+
+        assert (
+            no_gpu_flow.latest().artifact("gpu_is_not_available artifact").get() == False
+        )
+        assert (
+            gpu_flow.latest().artifact("gpu_is_available artifact").get()
+            == True
+        )
+
+    finally:
+        for flow in flows:
+            client.delete_flow(flow.id())
