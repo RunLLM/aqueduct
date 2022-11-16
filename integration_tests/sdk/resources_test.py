@@ -109,7 +109,10 @@ def test_custom_memory(client, engine):
     failure_output = fn_expect_failure.lazy()
 
     run_flow_test(
-        client, name=generate_new_flow_name(), artifacts=success_output, engine=engine,
+        client,
+        name=generate_new_flow_name(),
+        artifacts=success_output,
+        engine=engine,
     )
 
     run_flow_test(
@@ -135,7 +138,7 @@ def test_too_much_memory_requested(client, engine):
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
 def test_custom_gpus(client, engine):
-    """Assumption: there is a GPU node in the K8s cluster. Also assumes the 
+    """Assumption: there is a GPU node in the K8s cluster. Also assumes the
     machine executing the test has pytorch installed.
 
     We run a special operator that checks the availability of GPUs.

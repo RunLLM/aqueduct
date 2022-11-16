@@ -378,7 +378,9 @@ def op(
         >>> recommendations.get()
     """
     _type_check_decorator_arguments(
-        description, file_dependencies, requirements,
+        description,
+        file_dependencies,
+        requirements,
     )
     if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
@@ -446,17 +448,23 @@ def op(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts, func_params=inspect.signature(func).parameters,
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.FUNCTION, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
+                type=FunctionType.FILE,
+                granularity=FunctionGranularity.TABLE,
+                file=zip_file,
             )
             return wrap_spec(
-                OperatorSpec(function=function_spec, resources=resource_config,),
+                OperatorSpec(
+                    function=function_spec,
+                    resources=resource_config,
+                ),
                 *artifacts,
                 op_name=name,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],
@@ -563,7 +571,8 @@ def metric(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts, func_params=inspect.signature(func).parameters,
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.METRIC, *artifacts)
@@ -598,7 +607,9 @@ def metric(
         """
 
         @wraps(func)
-        def wrapped(*input_artifacts: BaseArtifact,) -> NumericArtifact:
+        def wrapped(
+            *input_artifacts: BaseArtifact,
+        ) -> NumericArtifact:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
@@ -703,14 +714,17 @@ def check(
             assert isinstance(description, str)
 
             artifacts = _convert_input_arguments_to_parameters(
-                *input_artifacts, func_params=inspect.signature(func).parameters,
+                *input_artifacts,
+                func_params=inspect.signature(func).parameters,
             )
 
             _type_check_decorated_function_arguments(OperatorType.CHECK, *artifacts)
 
             zip_file = serialize_function(func, name, file_dependencies, requirements)
             function_spec = FunctionSpec(
-                type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
+                type=FunctionType.FILE,
+                granularity=FunctionGranularity.TABLE,
+                file=zip_file,
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
 
@@ -734,7 +748,9 @@ def check(
         """
 
         @wraps(func)
-        def wrapped(*input_artifacts: BaseArtifact,) -> BoolArtifact:
+        def wrapped(
+            *input_artifacts: BaseArtifact,
+        ) -> BoolArtifact:
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
