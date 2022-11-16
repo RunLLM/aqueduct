@@ -67,5 +67,5 @@ def enable_by_engine_type(request, client, engine):
         if integration_info_by_name[engine].service not in enabled_engine_types:
             pytest.skip(
                 "Skipped on engine `%s`, since it is not of type `%s`."
-                % (engine, enabled_engine_types)
+                % (engine, ",".join(enabled_engine_types))
             )

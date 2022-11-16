@@ -114,7 +114,7 @@ def test_table_with_non_string_column_name(client):
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
-def test_basic_get_kubernetes(client, data_integration, engine):
+def test_basic_get_by_engine(client, data_integration, engine):
     global_config({"engine": engine})
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
