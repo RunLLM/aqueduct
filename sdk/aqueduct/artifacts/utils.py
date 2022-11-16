@@ -50,7 +50,6 @@ def preview_artifacts(
         dag.set_engine_config(engine_config)
         assert dag.engine_config is not None
 
-    print(dag.engine_config)
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[
