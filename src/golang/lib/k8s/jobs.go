@@ -111,7 +111,7 @@ func GetPod(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (
 	}
 
 	if len(podList.Items) != 1 {
-		return nil, errors.Newf("Expected job %s to have one pod, but instead got %v.", len(podList.Items))
+		return nil, errors.Newf("Expected job %s to have one pod, but instead got %v.", name, len(podList.Items))
 	}
 	return &podList.Items[0], nil
 }
