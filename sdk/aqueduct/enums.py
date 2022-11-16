@@ -71,6 +71,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     K8S = "Kubernetes"
     GCS = "GCS"
     LAMBDA = "Lambda"
+    MONGO_DB = "MongoDB"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -146,6 +147,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     NUMERIC = "numeric"
     DICT = "dictionary"
     TUPLE = "tuple"
+    LIST = "list"
     TABLE = "table"
     JSON = "json"
     BYTES = "bytes"

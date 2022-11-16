@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import { useAqueductConsts } from '../components/hooks/useAqueductConsts';
+import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Integration } from '../utils/integrations';
 
@@ -14,7 +14,6 @@ const initialState: IntegrationState = {
   thunkState: 'IDLE',
 };
 
-const { apiAddress } = useAqueductConsts();
 export const handleLoadIntegrations = createAsyncThunk<
   { [id: string]: Integration },
   { apiKey: string; forceLoad?: boolean },

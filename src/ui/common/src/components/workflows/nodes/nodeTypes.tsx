@@ -11,11 +11,15 @@ import { functionOperatorNodeIcon } from './FunctionOperatorNode';
 import GenericArtifactNode from './GenericArtifactNode';
 import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
 import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
+import ListArtifactNode, { listArtifactNodeIcon } from './ListArtifactNode';
 import MetricOperatorNode from './MetricOperatorNode';
 import { metricOperatorNodeIcon } from './MetricOperatorNode';
 import NumericArtifactNode, {
   numericArtifactNodeIcon,
 } from './NumericArtifactNode';
+import ParameterOperatorNode, {
+  paramOperatorNodeIcon,
+} from './ParameterOperatorNode';
 import StringArtifactNode, {
   stringArtifactNodeIcon,
 } from './StringArtifactNode';
@@ -30,6 +34,7 @@ export const nodeTypes = {
   stringArtifact: StringArtifactNode,
   imageArtifact: ImageArtifactNode,
   dictArtifact: DictArtifactNode,
+  listArtifact: ListArtifactNode,
   genericArtifact: GenericArtifactNode,
   function: FunctionOperatorNode,
 
@@ -39,6 +44,7 @@ export const nodeTypes = {
   loadOp: DatabaseNode,
   metricOp: MetricOperatorNode,
   checkOp: CheckOperatorNode,
+  paramOp: ParameterOperatorNode,
 };
 
 export const nodeTypeToStringLabel = {
@@ -49,6 +55,7 @@ export const nodeTypeToStringLabel = {
   stringArtifact: 'String Artifact',
   imageArtifact: 'Image Artifact',
   dictArtifact: 'Dictionary Artifact',
+  listArtifact: 'List Artifact',
   genericArtifact: 'Generic Artifact',
   // NOTE function and functionOp are the same. Should remove one in the future?
   function: 'Function Operator',
@@ -57,6 +64,7 @@ export const nodeTypeToStringLabel = {
   loadOp: 'Load Operator',
   metricOp: 'Metric Operator',
   checkOp: 'Check Operator',
+  paramOp: 'Parameter',
 };
 
 export const artifactTypeToIconMapping = {
@@ -66,6 +74,7 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Dict]: dictArtifactNodeIcon,
   // TODO: figure out if we should use other icon for tuple
   [ArtifactType.Tuple]: dictArtifactNodeIcon,
+  [ArtifactType.List]: listArtifactNodeIcon,
   [ArtifactType.Table]: tableArtifactNodeIcon,
   [ArtifactType.Json]: jsonArtifactNodeIcon,
   // TODO: figure out what to show for bytes.
@@ -76,6 +85,7 @@ export const artifactTypeToIconMapping = {
 };
 
 export const operatorTypeToIconMapping = {
+  [OperatorType.Param]: paramOperatorNodeIcon,
   [OperatorType.Function]: functionOperatorNodeIcon,
   [OperatorType.Extract]: databaseNodeIcon,
   [OperatorType.Load]: databaseNodeIcon,

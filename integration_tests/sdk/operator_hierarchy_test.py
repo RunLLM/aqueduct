@@ -1,7 +1,6 @@
 import pytest
 from aqueduct.error import InvalidUserActionException
 from constants import SENTIMENT_SQL_QUERY
-from utils import get_integration_name
 
 from aqueduct import check, metric, op
 
@@ -31,9 +30,9 @@ def regular_function(args):
     return "Hello World"
 
 
-def test_check_artifact_restriction(client):
+def test_check_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a check operator cannot be used as an argument to any operator types."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     check_artifact = produce_check_artifact(sql_artifact)
@@ -45,9 +44,9 @@ def test_check_artifact_restriction(client):
         regular_function(check_artifact)
 
 
-def test_metric_artifact_restriction(client):
+def test_metric_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a metric operator cannot be used as an argument to function operator."""
-    db = client.integration(name=get_integration_name())
+    db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
 
     metric_artifact = produce_metric_artifact(sql_artifact)

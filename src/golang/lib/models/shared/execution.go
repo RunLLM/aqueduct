@@ -2,9 +2,20 @@ package shared
 
 import (
 	"database/sql/driver"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/dropbox/godropbox/errors"
 )
+
+// This should mirror all ExecutionStatus
+
+type ExecutionTimestamps struct {
+	RegisteredAt *time.Time `json:"registered_at"`
+	PendingAt    *time.Time `json:"pending_at"`
+	RunningAt    *time.Time `json:"running_at"`
+	FinishedAt   *time.Time `json:"finished_at"`
+}
 
 type ExecutionState struct {
 	UserLogs *Logs           `json:"user_logs"`
@@ -53,5 +64,39 @@ func (n *NullExecutionState) Scan(value interface{}) error {
 	}
 
 	n.ExecutionState, n.IsNull = *logs, false
+	return nil
+}
+
+type ExecutionStatus string
+
+const (
+	// Registered is a special state that indicates a object has been registered
+	// but has no runs yet. This is typically used in workflows.
+	RegisteredExecutionStatus ExecutionStatus = "registered"
+	PendingExecutionStatus    ExecutionStatus = "pending"
+	RunningExecutionStatus    ExecutionStatus = "running"
+	CanceledExecutionStatus   ExecutionStatus = "canceled"
+	FailedExecutionStatus     ExecutionStatus = "failed"
+	SucceededExecutionStatus  ExecutionStatus = "succeeded"
+	UnknownExecutionStatus    ExecutionStatus = "unknown"
+)
+
+type NullExecutionStatus struct {
+	ExecutionStatus
+	IsNull bool
+}
+
+func (n *NullExecutionStatus) Scan(value interface{}) error {
+	if value == nil {
+		n.IsNull = true
+		return nil
+	}
+
+	s, ok := value.(string)
+	if !ok {
+		return errors.New("Type assertion to string failed")
+	}
+
+	n.ExecutionStatus, n.IsNull = ExecutionStatus(s), false
 	return nil
 }

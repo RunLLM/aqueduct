@@ -33,12 +33,13 @@ func (w *standardWriterImpl) CreateOperator(
 	name string,
 	description string,
 	spec *Spec,
+	executionEnvironmentID *uuid.UUID,
 	db database.Database,
 ) (*DBOperator, error) {
-	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn}
+	insertColumns := []string{NameColumn, DescriptionColumn, SpecColumn, ExecutionEnvironmentIDColumn}
 	insertOperatorStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{name, description, spec}
+	args := []interface{}{name, description, spec, executionEnvironmentID}
 
 	var operator DBOperator
 	err := db.Query(ctx, &operator, insertOperatorStmt, args...)

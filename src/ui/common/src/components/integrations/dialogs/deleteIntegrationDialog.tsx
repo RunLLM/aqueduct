@@ -48,7 +48,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
         },
       });
     }
-  }, [deleteIntegrationStatus]);
+  }, [deleteIntegrationStatus, integrationName, navigate]);
 
   const confirmConnect = () => {
     setIsConnecting(true);

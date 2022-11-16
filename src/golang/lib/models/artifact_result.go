@@ -12,10 +12,10 @@ const (
 	ArtifactResultTable = "artifact_result"
 
 	// ArtifactResult table column names
-	ArtifactResultID                  = "id"
-	ArtifactResultWorkflowDAGResultID = "workflow_dag_result_id"
-	ArtifactResultArtifactID          = "artifact_id"
-	ArtifactResultContentPath         = "content_path"
+	ArtifactResultID          = "id"
+	ArtifactResultDAGResultID = "workflow_dag_result_id"
+	ArtifactResultArtifactID  = "artifact_id"
+	ArtifactResultContentPath = "content_path"
 
 	// `Status` is initialized to "PENDING" for each new artifact result.
 	ArtifactResultStatus   = "status"
@@ -27,12 +27,12 @@ const (
 
 // An ArtifactResult maps to the artifact_result table.
 type ArtifactResult struct {
-	ID                  uuid.UUID                 `db:"id" json:"id"`
-	WorkflowDagResultID uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	ArtifactID          uuid.UUID                 `db:"artifact_id" json:"artifact_id"`
-	ContentPath         string                    `db:"content_path" json:"content_path"`
-	ExecState           shared.NullExecutionState `db:"execution_state" json:"execution_state"`
-	Metadata            shared.NullMetadata       `db:"metadata" json:"metadata"`
+	ID          uuid.UUID                         `db:"id" json:"id"`
+	DAGResultID uuid.UUID                         `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactID  uuid.UUID                         `db:"artifact_id" json:"artifact_id"`
+	ContentPath string                            `db:"content_path" json:"content_path"`
+	ExecState   shared.NullExecutionState         `db:"execution_state" json:"execution_state"`
+	Metadata    shared.NullArtifactResultMetadata `db:"metadata" json:"metadata"`
 }
 
 // ArtifactResultCols returns a comma-separated string of all ArtifactResult columns.
@@ -54,7 +54,7 @@ func ArtifactResultColsWithPrefix() string {
 func allArtifactResultCols() []string {
 	return []string{
 		ArtifactResultID,
-		ArtifactResultWorkflowDAGResultID,
+		ArtifactResultDAGResultID,
 		ArtifactResultArtifactID,
 		ArtifactResultContentPath,
 		ArtifactResultStatus,

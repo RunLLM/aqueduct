@@ -3,15 +3,17 @@ package operator
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/google/uuid"
 )
 
 type DBOperator struct {
-	Id          uuid.UUID `db:"id" json:"id"`
-	Name        string    `db:"name" json:"name"`
-	Description string    `db:"description" json:"description"`
-	Spec        Spec      `db:"spec" json:"spec"`
+	Id                     uuid.UUID      `db:"id" json:"id"`
+	Name                   string         `db:"name" json:"name"`
+	Description            string         `db:"description" json:"description"`
+	Spec                   Spec           `db:"spec" json:"spec"`
+	ExecutionEnvironmentID utils.NullUUID `db:"execution_environment_id" json:"execution_environment_id"`
 
 	/* Fields not stored in DB */
 	Inputs  []uuid.UUID `json:"inputs"`
@@ -58,6 +60,7 @@ type Writer interface {
 		name string,
 		description string,
 		spec *Spec,
+		executionEnvironmentID *uuid.UUID,
 		db database.Database,
 	) (*DBOperator, error)
 	UpdateOperator(
