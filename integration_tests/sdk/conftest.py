@@ -56,7 +56,7 @@ def enable_by_engine_type(request, client, engine):
         enabled_engine_types = request.node.get_closest_marker("enable_only_for_engine_type").args
 
         if engine is None:
-            pytest.skip("Skipped. This test only runs on engine type `%s`." % enabled_engine_types)
+            pytest.skip("Skipped. This test only runs on engine type `%s`." % ",".join(enabled_engine_types))
             return
 
         # Get the type of integration that `engine` is, so we know whether to skip.
