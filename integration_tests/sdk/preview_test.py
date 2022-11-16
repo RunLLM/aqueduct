@@ -113,7 +113,7 @@ def test_table_with_non_string_column_name(client):
         bad_return()
 
 
-@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
 def test_basic_get_kubernetes(client, data_integration, engine):
     global_config({"engine": engine})
     db = client.integration(data_integration)
@@ -123,7 +123,11 @@ def test_basic_get_kubernetes(client, data_integration, engine):
     assert sql_df.shape[0] == 100
 
     output_artifact = dummy_sentiment_model(sql_artifact)
-    assert output_artifact._dag.engine_config.type == RuntimeType.K8S
+    integration_info_by_name = client.list_integrations()
+    if integration_info_by_name[engine].service == ServiceType.K8S:
+        assert output_artifact._dag.engine_config.type == RuntimeType.K8S
+    elif integration_info_by_name[engine].service == ServiceType.LAMBDA:
+        assert output_artifact._dag.engine_config.type == RuntimeType.K8S
     output_df = output_artifact.get()
     assert list(output_df) == [
         "hotel_name",
@@ -134,24 +138,3 @@ def test_basic_get_kubernetes(client, data_integration, engine):
     ]
     assert output_df.shape[0] == 100
 
-
-@pytest.mark.enable_only_for_engine_type(ServiceType.LAMBDA)
-def test_basic_get_lambda(client, data_integration, engine):
-    global_config({"engine": engine})
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
-    sql_df = sql_artifact.get()
-    assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
-    assert sql_df.shape[0] == 100
-
-    output_artifact = dummy_sentiment_model(sql_artifact)
-    assert output_artifact._dag.engine_config.type == RuntimeType.LAMBDA
-    output_df = output_artifact.get()
-    assert list(output_df) == [
-        "hotel_name",
-        "review_date",
-        "reviewer_nationality",
-        "review",
-        "positivity",
-    ]
-    assert output_df.shape[0] == 100

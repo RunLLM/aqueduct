@@ -47,7 +47,7 @@ def preview_artifacts(
                     "Not connected to compute integration %s!" % engine
                 )
             engine_config = generate_engine_config(connected_integrations[engine])
-        dag.engine_config = engine_config
+        dag.set_engine_config(engine_config)
         assert dag.engine_config is not None
 
     subgraph = apply_deltas_to_dag(

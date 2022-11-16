@@ -53,10 +53,10 @@ def enable_by_engine_type(request, client, engine):
         ...
     """
     if request.node.get_closest_marker("enable_only_for_engine_type"):
-        enabled_engine_type = request.node.get_closest_marker("enable_only_for_engine_type").args[0]
+        enabled_engine_types = request.node.get_closest_marker("enable_only_for_engine_type").args
 
         if engine is None:
-            pytest.skip("Skipped. This test only runs on engine type `%s`." % enabled_engine_type)
+            pytest.skip("Skipped. This test only runs on engine type `%s`." % enabled_engine_types)
             return
 
         # Get the type of integration that `engine` is, so we know whether to skip.
@@ -64,8 +64,8 @@ def enable_by_engine_type(request, client, engine):
         if engine not in integration_info_by_name.keys():
             raise Exception("Server is not connected an integration `%s`." % engine)
 
-        if enabled_engine_type != integration_info_by_name[engine].service:
+        if integration_info_by_name[engine].service not in enabled_engine_types:
             pytest.skip(
                 "Skipped on engine `%s`, since it is not of type `%s`."
-                % (engine, enabled_engine_type)
-            )
+                % (engine, enabled_engine_types)
+            ) 
