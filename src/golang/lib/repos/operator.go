@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -29,7 +30,7 @@ type operatorReader interface {
 	GetByDAG(ctx context.Context, workflowDAGID uuid.UUID, DB database.Database) ([]models.Operator, error)
 
 	// GetDistinctLoadOperatorsByWorkflow returns the Load Operators in a workflow.
-	GetDistinctLoadOperatorsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.LoadOperator, error)
+	GetDistinctLoadOperatorsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
 
 	// GetLoadOperatorsByWorkflowAndIntegration returns the Operators in a workflow related to an integration.
 	GetLoadOperatorsByWorkflowAndIntegration(ctx context.Context, workflowID uuid.UUID, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error)

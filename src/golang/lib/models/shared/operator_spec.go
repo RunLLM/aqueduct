@@ -17,27 +17,27 @@ import (
 // This file covers all operator specs.
 //
 // To add a new spec:
-// - Add a new enum constant for `Type`
+// - Add a new enum constant for `OperatorType`
 // - Add a new field in specUnion for the new spec struct
 // - Implement 3 additional methods for top level Spec type:
 //  - IsNewType() method to validate the type
 //  - NewType() method to get the value of the type from private `spec` field
 //  - NewSpecFromNewType() method to construct a spec from the new type
 
-type Type string
+type OperatorType string
 
 const (
-	FunctionType     Type = "function"
-	MetricType       Type = "metric"
-	CheckType        Type = "check"
-	ExtractType      Type = "extract"
-	LoadType         Type = "load"
-	ParamType        Type = "param"
-	SystemMetricType Type = "system_metric"
+	FunctionType     OperatorType = "function"
+	MetricType       OperatorType = "metric"
+	CheckType        OperatorType = "check"
+	ExtractType      OperatorType = "extract"
+	LoadType         OperatorType = "load"
+	ParamType        OperatorType = "param"
+	SystemMetricType OperatorType = "system_metric"
 )
 
 type specUnion struct {
-	Type         Type                        `json:"type"`
+	Type         OperatorType                `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
 	Check        *check.Check                `json:"check,omitempty"`
 	Metric       *metric.Metric              `json:"metric,omitempty"`
@@ -86,7 +86,7 @@ func NewSpecFromLoad(l connector.Load) *Spec {
 	}}
 }
 
-func (s Spec) Type() Type {
+func (s Spec) Type() OperatorType {
 	return s.spec.Type
 }
 
