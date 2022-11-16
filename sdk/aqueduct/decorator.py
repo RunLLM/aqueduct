@@ -271,6 +271,7 @@ will be used when running the function."""
 # Supported resource configuration keys, supplied in the `resources` field of the decorators.
 NUM_CPUS_KEY = "num_cpus"
 MEMORY_KEY = "memory"
+GPU_RESOURCE_NAME_KEY = "gpu_resource_name"
 
 
 def _convert_memory_string_to_mbs(memory_str: str) -> int:
@@ -358,6 +359,8 @@ def op(
                 case-insensitive.
 
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
+            "gpu_resource_name" (str):
+                Name of the gpu resource to use (only applicable for Kubernetes engine).
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -389,6 +392,7 @@ def op(
 
         num_cpus = resources.get(NUM_CPUS_KEY)
         memory = resources.get(MEMORY_KEY)
+        gpu_resource_name = resources.get(GPU_RESOURCE_NAME_KEY)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
             raise InvalidUserArgumentException(
@@ -414,7 +418,12 @@ def op(
 
             assert isinstance(memory, int)
 
-        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory)
+        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
+            raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
+
+        resource_config = ResourceConfig(
+            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
+        )
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name

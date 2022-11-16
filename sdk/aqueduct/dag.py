@@ -63,11 +63,13 @@ class DAG(BaseModel):
         allowed_customizable_resources: Dict[str, bool] = {
             "num_cpus": False,
             "memory": False,
+            "gpu_resource_name": False,
         }
         if engine_config.type == RuntimeType.K8S:
             allowed_customizable_resources = {
                 "num_cpus": True,
                 "memory": True,
+                "gpu_resource_name": True,
             }
 
         for op in self.operators.values():
@@ -80,6 +82,14 @@ class DAG(BaseModel):
                 if not allowed_customizable_resources["memory"] and op.spec.resources.memory_mb:
                     raise InvalidUserArgumentException(
                         "Operator `%s` cannot configure the amount of memory, since it is not supported when running on %s."
+                        % (op.name, engine_config.type)
+                    )
+                if (
+                    not allowed_customizable_resources["gpu_resource_name"]
+                    and op.spec.resources.gpu_resource_name
+                ):
+                    raise InvalidUserArgumentException(
+                        "Operator `%s` cannot configure gpus, since it is not supported when running on %s."
                         % (op.name, engine_config.type)
                     )
 
