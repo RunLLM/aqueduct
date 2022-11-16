@@ -378,9 +378,7 @@ def op(
         >>> recommendations.get()
     """
     _type_check_decorator_arguments(
-        description,
-        file_dependencies,
-        requirements,
+        description, file_dependencies, requirements,
     )
     if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
@@ -417,13 +415,13 @@ def op(
                 memory = _convert_memory_string_to_mbs(memory)
 
             assert isinstance(memory, int)
-        
-        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
-            raise InvalidUserArgumentException(
-                "`gpu_resource_name` value must be set to a string."
-            )
 
-        resource_config = ResourceConfig(num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name)
+        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
+            raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
+
+        resource_config = ResourceConfig(
+            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
+        )
 
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
@@ -458,10 +456,7 @@ def op(
                 type=FunctionType.FILE, granularity=FunctionGranularity.TABLE, file=zip_file,
             )
             return wrap_spec(
-                OperatorSpec(
-                    function=function_spec,
-                    resources=resource_config,
-                ),
+                OperatorSpec(function=function_spec, resources=resource_config,),
                 *artifacts,
                 op_name=name,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],

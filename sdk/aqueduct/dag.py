@@ -84,7 +84,10 @@ class DAG(BaseModel):
                         "Operator `%s` cannot configure the amount of memory, since it is not supported when running on %s."
                         % (op.name, engine_config.type)
                     )
-                if not allowed_customizable_resources["gpu_resource_name"] and op.spec.resources.gpu_resource_name:
+                if (
+                    not allowed_customizable_resources["gpu_resource_name"]
+                    and op.spec.resources.gpu_resource_name
+                ):
                     raise InvalidUserArgumentException(
                         "Operator `%s` cannot configure gpus, since it is not supported when running on %s."
                         % (op.name, engine_config.type)
@@ -148,10 +151,7 @@ class DAG(BaseModel):
             operators = [op for op in operators if on_artifact_id in op.inputs]
         return operators
 
-    def list_downstream_operators(
-        self,
-        op_id: uuid.UUID,
-    ) -> List[uuid.UUID]:
+    def list_downstream_operators(self, op_id: uuid.UUID,) -> List[uuid.UUID]:
         """Returns a list of all operators that depend on the given operator. Includes the given operator."""
         downstream_ops = []
 
@@ -298,9 +298,7 @@ class DAG(BaseModel):
             operator.update_serialized_function(serialized_function)
 
     def remove_operator(
-        self,
-        operator_id: uuid.UUID,
-        must_be_type: Optional[OperatorType] = None,
+        self, operator_id: uuid.UUID, must_be_type: Optional[OperatorType] = None,
     ) -> None:
         """Deletes the given operator from the DAG, along with any direct output artifacts.
 
@@ -313,9 +311,7 @@ class DAG(BaseModel):
         self.remove_operators([operator_id], must_be_type)
 
     def remove_operators(
-        self,
-        operator_ids: List[uuid.UUID],
-        must_be_type: Optional[OperatorType] = None,
+        self, operator_ids: List[uuid.UUID], must_be_type: Optional[OperatorType] = None,
     ) -> None:
         """Batch version of `remove_operator()`."""
         for operator_id in operator_ids:
