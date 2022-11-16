@@ -33,8 +33,8 @@ const (
 )
 
 type NotificationAssociation struct {
-	Object Object    `json:"object"`
-	Id     uuid.UUID `json:"id"`
+	Object NotificationObject `json:"object"`
+	Id     uuid.UUID          `json:"id"`
 }
 
 func (association *NotificationAssociation) Value() (driver.Value, error) {

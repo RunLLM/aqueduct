@@ -26,8 +26,8 @@ type Notification struct {
 	ID          uuid.UUID                      `db:"id"`
 	ReceiverID  uuid.UUID                      `db:"receiver_id"`
 	Content     string                         `db:"content"`
-	Status      shared.Status                  `db:"status"`
-	Level       shared.Level                   `db:"level"`
+	Status      shared.NotificationStatus      `db:"status"`
+	Level       shared.NotificationLevel       `db:"level"`
 	Association shared.NotificationAssociation `db:"association"`
 	CreatedAt   time.Time                      `db:"created_at"`
 }
