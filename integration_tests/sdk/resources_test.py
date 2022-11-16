@@ -75,6 +75,18 @@ def test_custom_num_cpus(client, engine):
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+def test_too_many_cpus_requested(client, engine):
+    """Assumption: nodes in the k8s cluster have less then 20 CPUs."""
+
+    @op(requirements=[], resources={"num_cpus": 20})
+    def too_many_cpus():
+        return 123
+
+    output = too_many_cpus.lazy()
+    run_flow_test(client, [output], engine=engine, expect_success=False)
+
+
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
 def test_custom_memory(client, engine):
     """Assumption: nodes in the K8s cluster have more than 200MB of capacity.
 
@@ -110,3 +122,15 @@ def test_custom_memory(client, engine):
         engine=engine,
         expect_success=False,
     )
+
+
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+def test_too_much_memory_requested(client, engine):
+    """Assumption: nodes in the k8s cluster have less then 100GB of memory."""
+
+    @op(requirements=[], resources={"memory": "100GB"})
+    def too_much_memory():
+        return 123
+
+    output = too_much_memory.lazy()
+    run_flow_test(client, [output], engine=engine, expect_success=False)
