@@ -17,12 +17,14 @@ type DAGEdge interface {
 
 type dagEdgeReader interface {
 	// GetArtifactToOperatorByDAG returns all DAGEdges from an Artifact to an Operator for the DAG specified.
+	// The DAGEdges are ordered by idx.
 	GetArtifactToOperatorByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.DAGEdge, error)
 
 	// GetByDAGBatch returns all DAGEdges for the DAGs specified.
 	GetByDAGBatch(ctx context.Context, dagIDs []uuid.UUID, DB database.Database) ([]models.DAGEdge, error)
 
 	// GetOperatorToArtifactByDAG returns all DAGEdges from an Operator to an Artifact for the DAG specified.
+	// The DAGEdges are ordered by idx.
 	GetOperatorToArtifactByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.DAGEdge, error)
 }
 
