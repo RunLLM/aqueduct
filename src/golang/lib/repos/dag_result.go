@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// DAGResult defines all of the database operations that can be performed for a DAGResult.
 type DAGResult interface {
 	dagResultReader
 	dagResultWriter
