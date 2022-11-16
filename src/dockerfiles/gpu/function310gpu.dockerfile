@@ -4,8 +4,6 @@ MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.0.1
 
 USER root
 
-ARG CONDA_ENV
-
 RUN apt-get -y update \
     && apt-get install -y wget \
     && apt-get install -y software-properties-common
@@ -19,12 +17,12 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 # Put conda in path so we can use conda activate
 ENV PATH=$CONDA_DIR/bin:$PATH
 
-COPY ./gpu/${CONDA_ENV}.yml .
-RUN conda env create -f ${CONDA_ENV}.yml 
+COPY ./gpu/py310_env.yml .
+RUN conda env create -f py310_env.yml 
 
 ENV PYTHONUNBUFFERED 1
 
 COPY ./gpu/start-function-executor-gpu.sh /
 
-CMD bash /start-function-executor-gpu.sh py310_env
+CMD ["bash","/start-function-executor-gpu.sh", "py310_env"]
 
