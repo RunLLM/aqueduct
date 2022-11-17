@@ -195,3 +195,20 @@ func (ts *TestSuite) seedDAGEdgeWithDAG(count int, dagID uuid.UUID) []models.DAG
 
 	return edges
 }
+
+// seedWatcher creates a Watcher record. It creates a new Workflow
+// and User to use for the Watcher.
+func (ts *TestSuite) seedWatcher() *models.Watcher {
+	workflows := ts.seedWorkflow(1)
+	workflow := workflows[0]
+
+	watcher, err := ts.watcher.Create(
+		ts.ctx,
+		workflow.ID,
+		workflow.UserID,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	return watcher
+}
