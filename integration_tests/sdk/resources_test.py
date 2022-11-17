@@ -80,6 +80,7 @@ def test_custom_num_cpus(client, engine):
 def test_too_many_cpus_requested(client, engine):
     """Assumption: nodes in the k8s cluster have less then 20 CPUs."""
     global_config({"engine": engine})
+
     @op(requirements=[], resources={"num_cpus": 20})
     def too_many_cpus():
         return 123
@@ -132,6 +133,7 @@ def test_too_much_memory_requested(client, engine):
     """Assumption: nodes in the k8s cluster have less then 100GB of memory."""
 
     global_config({"engine": engine})
+
     @op(requirements=[], resources={"memory": "100GB"})
     def too_much_memory():
         return 123
@@ -148,6 +150,7 @@ def test_custom_gpus(client, engine):
     We run a special operator that checks the availability of GPUs.
     """
     import torch
+
     global_config({"engine": engine})
 
     # Returns availability of GPU, should be False.
