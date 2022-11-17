@@ -38,8 +38,9 @@ const (
 )
 
 type ResourceConfig struct {
-	NumCPU   *int `json:"num_cpus,omitempty"`
-	MemoryMB *int `json:"memory_mb,omitempty"`
+	NumCPU          *int    `json:"num_cpus,omitempty"`
+	MemoryMB        *int    `json:"memory_mb,omitempty"`
+	GPUResourceName *string `json:"gpu_resource_name,omitempty"`
 }
 
 type specUnion struct {

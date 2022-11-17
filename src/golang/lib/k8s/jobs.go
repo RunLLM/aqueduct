@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dropbox/godropbox/errors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -37,6 +38,9 @@ func LaunchJob(
 	// Currently set to 3 days.
 	ttlSeconds := int32(259200)
 
+	// This also means parallelism == 1, and the success of this one pod means the success of the job.
+	numCompletions := int32(1)
+
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -45,10 +49,17 @@ func LaunchJob(
 		Spec: batchv1.JobSpec{
 			BackoffLimit:            &backoffLimit,
 			TTLSecondsAfterFinished: &ttlSeconds,
+			Completions:             &numCompletions,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: namespace,
+
+					// We label each pod with the job name, so we can query for it later (when polling).
+					// This is a valid assumption, only because we spawn one pod per job.
+					Labels: map[string]string{
+						"job-name": name,
+					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -74,7 +85,6 @@ func LaunchJob(
 		// Assign environment variables from secret references
 		job.Spec.Template.Spec.Containers[0].EnvFrom = generateK8sEnvVarFromSecrets(secretEnvVariables)
 	}
-
 	_, err := k8sClient.BatchV1().Jobs(job.ObjectMeta.Namespace).Create(context.Background(), &job, createOptions)
 	if err != nil {
 		return errors.Wrap(err, "Error launching job.")
@@ -82,9 +92,25 @@ func LaunchJob(
 	return nil
 }
 
-func GetJob(name string, k8sClient *kubernetes.Clientset) (*batchv1.Job, error) {
+func GetJob(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (*batchv1.Job, error) {
 	// Currently, all jobs run workflow operators, which should be in the user namespace.
 	namespace := AqueductNamespace
 
-	return k8sClient.BatchV1().Jobs(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	return k8sClient.BatchV1().Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+func GetPod(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (*corev1.Pod, error) {
+	namespace := AqueductNamespace
+
+	podList, err := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("job-name=%s", name),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(podList.Items) != 1 {
+		return nil, errors.Newf("Expected job %s to have one pod, but instead got %v.", name, len(podList.Items))
+	}
+	return &podList.Items[0], nil
 }

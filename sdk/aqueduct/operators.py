@@ -179,6 +179,7 @@ class ResourceConfig(BaseModel):
     # will be thrown at execution time.
     num_cpus: Optional[int]
     memory_mb: Optional[int]
+    gpu_resource_name: Optional[str]
 
 
 class OperatorSpec(BaseModel):
