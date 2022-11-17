@@ -28,20 +28,20 @@ def test_custom_num_cpus(client, engine):
         cpus = cpu_count() if container_cpus < 1 else container_cpus
         return cpus
 
-    global_config({"engine": engine})
+    # global_config({"engine": engine})
     # Returns the default number of CPUs of the K8s cluster. (Currently 2)
     @op(requirements=[])
     def count_default_available_cpus():
         return _count_available_cpus()
 
-    num_default_available_cpus = count_default_available_cpus()
+    num_default_available_cpus = count_default_available_cpus.lazy()
 
     # Returns 4, the custom number of CPUs on the K8s cluster.
     @op(requirements=[], resources={"num_cpus": 4})
     def count_with_custom_available_cpus():
         return _count_available_cpus()
 
-    num_count_available_cpus = count_with_custom_available_cpus()
+    num_count_available_cpus = count_with_custom_available_cpus.lazy()
 
     flows = []
     try:
@@ -79,12 +79,12 @@ def test_custom_num_cpus(client, engine):
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
 def test_too_many_cpus_requested(client, engine):
     """Assumption: nodes in the k8s cluster have less then 20 CPUs."""
-
+    global_config({"engine": engine})
     @op(requirements=[], resources={"num_cpus": 20})
     def too_many_cpus():
         return 123
 
-    output = too_many_cpus.lazy()
+    output = too_many_cpus()
     run_flow_test(client, [output], engine=engine, expect_success=False)
 
 
@@ -131,11 +131,12 @@ def test_custom_memory(client, engine):
 def test_too_much_memory_requested(client, engine):
     """Assumption: nodes in the k8s cluster have less then 100GB of memory."""
 
+    global_config({"engine": engine})
     @op(requirements=[], resources={"memory": "100GB"})
     def too_much_memory():
         return 123
 
-    output = too_much_memory.lazy()
+    output = too_much_memory()
     run_flow_test(client, [output], engine=engine, expect_success=False)
 
 
@@ -147,20 +148,21 @@ def test_custom_gpus(client, engine):
     We run a special operator that checks the availability of GPUs.
     """
     import torch
+    global_config({"engine": engine})
 
     # Returns availability of GPU, should be False.
     @op(requirements=["torch==1.13.0"])
     def gpu_is_not_available():
         return torch.cuda.is_available()
 
-    gpu_not_available = gpu_is_not_available.lazy()
+    gpu_not_available = gpu_is_not_available()
 
     # Returns availability of GPU, should be True.
     @op(requirements=["torch==1.13.0"], resources={"gpu_resource_name": "nvidia.com/gpu"})
     def gpu_is_available():
         return torch.cuda.is_available()
 
-    gpu_available = gpu_is_available.lazy()
+    gpu_available = gpu_is_available()
 
     flows = []
     try:
