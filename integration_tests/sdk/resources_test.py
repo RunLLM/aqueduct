@@ -28,20 +28,20 @@ def test_custom_num_cpus(client, engine):
         cpus = cpu_count() if container_cpus < 1 else container_cpus
         return cpus
 
-    # global_config({"engine": engine})
+    global_config({"engine": engine})
     # Returns the default number of CPUs of the K8s cluster. (Currently 2)
     @op(requirements=[])
     def count_default_available_cpus():
         return _count_available_cpus()
 
-    num_default_available_cpus = count_default_available_cpus.lazy()
+    num_default_available_cpus = count_default_available_cpus()
 
     # Returns 4, the custom number of CPUs on the K8s cluster.
     @op(requirements=[], resources={"num_cpus": 4})
     def count_with_custom_available_cpus():
         return _count_available_cpus()
 
-    num_count_available_cpus = count_with_custom_available_cpus.lazy()
+    num_count_available_cpus = count_with_custom_available_cpus()
 
     flows = []
     try:
