@@ -27,12 +27,12 @@ import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+import ExecutionChip from '../execution/chip';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
-import ExecutionChip from '../execution/chip';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 

@@ -16,7 +16,10 @@ const ExecutionChip: React.FC<Props> = ({ status }) => {
     return <Chip label="Failed" color="error" size="small" />;
   }
 
-  if (status === ExecutionStatus.Pending || status === ExecutionStatus.Running) {
+  if (
+    status === ExecutionStatus.Pending ||
+    status === ExecutionStatus.Running
+  ) {
     return <Chip label="In Progress" color="info" size="small" />;
   }
 
