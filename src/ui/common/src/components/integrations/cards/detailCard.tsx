@@ -9,6 +9,7 @@ import {
 import { LoadingStatus } from '../../../utils/shared';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { CondaCard } from './condaCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
@@ -57,6 +58,9 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       break;
     case 'Lambda':
       serviceCard = <LambdaCard integration={integration} />;
+      break;
+    case 'Conda':
+      serviceCard = <CondaCard integration={integration} />;
       break;
     default:
       serviceCard = null;
