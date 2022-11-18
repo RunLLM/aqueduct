@@ -61,7 +61,7 @@ func serializedFailure(
 
 func serializedRunning(runningAt *time.Time) string {
 	execState := &shared.ExecutionState{
-		Status: shared.SucceededExecutionStatus,
+		Status: shared.RunningExecutionStatus,
 		Timestamps: &shared.ExecutionTimestamps{
 			RunningAt: runningAt,
 		},

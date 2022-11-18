@@ -267,12 +267,20 @@ func ConnectIntegration(
 	}
 
 	if args.Service == integration.Conda {
-		go exec_env.InitializeConda(
-			context.Background(),
-			integrationObject.Id,
-			integrationWriter,
-			db,
-		)
+		go func() {
+			db, err = database.NewDatabase(db.Config())
+			if err != nil {
+				log.Errorf("Error creating DB in go routine: %v", err)
+				return
+			}
+
+			exec_env.InitializeConda(
+				context.Background(),
+				integrationObject.Id,
+				integrationWriter,
+				db,
+			)
+		}()
 	}
 
 	return http.StatusOK, nil
