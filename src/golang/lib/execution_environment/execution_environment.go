@@ -9,7 +9,6 @@ import (
 	"time"
 
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/google/uuid"
@@ -168,29 +167,6 @@ func GetExecEnvFromDB(
 	}
 
 	return newFromDBExecutionEnvironment(dbExecEnv), nil
-}
-
-func GetCondaIntegration(
-	ctx context.Context,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
-	db database.Database,
-) (*integration.Integration, error) {
-	integrations, err := integrationReader.GetIntegrationsByServiceAndUser(
-		ctx,
-		integration.Conda,
-		userId,
-		db,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(integrations) == 0 {
-		return nil, nil
-	}
-
-	return &integrations[0], nil
 }
 
 // Best-effort to delete all envs and log any error

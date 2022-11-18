@@ -13,14 +13,12 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -269,9 +267,12 @@ func ConnectIntegration(
 	}
 
 	if args.Service == integration.Conda {
-		if err = initializeConda(integrationObject.Id, integrationWriter, db); err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize Conda environments.")
-		}
+		go exec_env.InitializeConda(
+			context.Background(),
+			integrationObject.Id,
+			integrationWriter,
+			db,
+		)
 	}
 
 	return http.StatusOK, nil
@@ -590,72 +591,4 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
-}
-
-func initializeConda(
-	integrationID uuid.UUID,
-	integrationWriter integration.Writer,
-	db database.Database,
-) error {
-	out, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "info", "--base")
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Conda base path is %s", out)
-
-	_, err = integrationWriter.UpdateIntegration(
-		context.Background(),
-		integrationID,
-		map[string]interface{}{
-			"config": (*collection_utils.Config)(&map[string]string{
-				"conda_path": strings.TrimSpace(out),
-			}),
-		},
-		db,
-	)
-	if err != nil {
-		return err
-	}
-
-	pythonVersions := []string{"3.7", "3.8", "3.9", "3.10"}
-	for _, pythonVersion := range pythonVersions {
-		args := []string{
-			"create",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			fmt.Sprintf("python==%s", pythonVersion),
-			"-y",
-		}
-		_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
-		if err != nil {
-			return err
-		}
-
-		args = []string{
-			"run",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			"pip3",
-			"install",
-			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-		}
-		_, _, err = lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
-		if err != nil {
-			return err
-		}
-	}
-
-	// This is to ensure we can use `conda develop` to update the python path later on.
-	args := []string{
-		"install",
-		"conda-build",
-		"-y",
-	}
-	_, _, err = lib_utils.RunCmd(exec_env.CondaCmdPrefix, args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
