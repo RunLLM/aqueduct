@@ -40,6 +40,9 @@ func (j *lambdaJobManager) Config() Config {
 }
 
 func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+	j.lambdaService.UpdateFunctionConfiguration()
+	j.lambdaService.GetFunctionConfiguration()
+
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -79,7 +82,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		Payload:        payload,
 	}
 
-	_, err = j.lambdaService.Invoke(invokeInput)
+	_, err = j.lambdaService.InvokeWithContext(ctx, invokeInput)
 	if err != nil {
 		return errors.Wrap(err, "Unable to invoke lambda function.")
 	}
