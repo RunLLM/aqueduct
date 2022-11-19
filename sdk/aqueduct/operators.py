@@ -173,6 +173,11 @@ class ParamSpec(BaseModel):
     serialization_type: SerializationType
 
 
+# https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html
+LAMBDA_MIN_MEMORY_MB = 128
+LAMBDA_MAX_MEMORY_MB = 10240
+
+
 class ResourceConfig(BaseModel):
     # These resources are configured exactly. The user is not given any more
     # or any less. If the requested resources exceeds capacity, an error

@@ -49,7 +49,7 @@ func (j *lambdaJobManager) updateFunctionMemory(
 	functionName string,
 	newMemoryMB *int64,
 ) (*int64, error) {
-	oldLambdaFnConfig, err := j.lambdaService.GetFunctionConfigurationWithContext(
+	prevLambdaFnConfig, err := j.lambdaService.GetFunctionConfigurationWithContext(
 		ctx,
 		&lambda.GetFunctionConfigurationInput{
 			FunctionName: &functionName,
@@ -59,7 +59,7 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		return nil, errors.Wrap(err, "Unable to query Lambda to configure custom memory.")
 	}
 
-	oldMemoryMB := oldLambdaFnConfig.MemorySize
+	oldMemoryMB := prevLambdaFnConfig.MemorySize
 
 	latestLambdaFnConfig, err := j.lambdaService.UpdateFunctionConfigurationWithContext(
 		ctx,
@@ -79,6 +79,11 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		if *latestLambdaFnConfig.LastUpdateStatus == lambda.LastUpdateStatusSuccessful &&
 			*latestLambdaFnConfig.MemorySize == *newMemoryMB {
 			break
+		} else if *latestLambdaFnConfig.LastUpdateStatus == lambda.LastUpdateStatusFailed {
+			return nil, errors.Newf(
+				"Unable to update Lambda with custom memory: %v",
+				*latestLambdaFnConfig.LastUpdateStatusReason,
+			)
 		}
 
 		polledLambdaFnConfig, err := j.lambdaService.GetFunctionConfigurationWithContext(
@@ -96,7 +101,7 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		latestLambdaFnConfig = polledLambdaFnConfig
 
 		if time.Since(start) > updateFunctionMemoryTimeout {
-			return nil, errors.New("Unable to update Lambda function with custom memory. THe operator timed out.")
+			return nil, errors.New("Unable to update Lambda function with custom memory. The operator timed out.")
 		}
 		time.Sleep(2 * time.Second)
 	}
@@ -111,7 +116,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 	}
 
 	// If set, we'll need to set the function's memory back to this value after invocation.
-	var oldMemoryMB *int64
+	var previousMemoryMB *int64
 
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -124,7 +129,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.MemoryMB != nil {
 				newMemoryMBInt64 := int64(*functionSpec.Resources.MemoryMB)
-				oldMemoryMB, err = j.updateFunctionMemory(ctx, functionName, &newMemoryMBInt64)
+				previousMemoryMB, err = j.updateFunctionMemory(ctx, functionName, &newMemoryMBInt64)
 				if err != nil {
 					return err
 				}
@@ -152,18 +157,29 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		return errors.Wrap(err, "Unable to marshal request payload.")
 	}
 
+	// Lambda functions with custom memory configurations should be executed synchronously.
+	// This is to prevent such memory configurations from bleeding out to other operators using
+	// the same lambda function, since we reset the memory value on return.
+	// NOTE: this does not provide perfect isolation. It is still possible for operators scheduled
+	// before to race with the memory configuration update, since regular lambda functions are run
+	// asynchronously, and we have no visibility into the AWS's function queue.
+	invocationType := aws.String("Event")
+	if previousMemoryMB != nil {
+		invocationType = aws.String("RequestResponse")
+	}
+
 	invokeInput := &lambda.InvokeInput{
 		FunctionName:   &functionName,
-		InvocationType: aws.String("Event"),
+		InvocationType: invocationType,
 		Payload:        payload,
 	}
 
 	// Resetting memory back to its original value is best-effort.
 	defer func() {
-		if oldMemoryMB != nil {
-			_, err = j.updateFunctionMemory(ctx, functionName, oldMemoryMB)
+		if previousMemoryMB != nil {
+			_, err = j.updateFunctionMemory(ctx, functionName, previousMemoryMB)
 			if err != nil {
-				log.Errorf("Unable to reset function memory back to %v MB: %v", oldMemoryMB, err)
+				log.Errorf("Unable to reset function memory back to %v MB: %v", previousMemoryMB, err)
 			}
 		}
 

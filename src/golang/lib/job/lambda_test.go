@@ -26,6 +26,7 @@ func TestLambdaAPI(t *testing.T) {
 
 	newMemory := int64(300)
 	oldMemory, err := jobManager.updateFunctionMemory(context.Background(), functionName, &newMemory)
+	fmt.Println(err)
 	require.Nil(t, err)
 
 	fmt.Println("OLD MEMORY: ", *oldMemory)

@@ -48,7 +48,7 @@ def enable_by_engine_type(request, client, engine):
     """When a test is marked with this, it is enabled for a particular ServiceType!
 
     Eg.
-    @pytest.mark.enable_only_for_engine("Kubernetes")
+    @pytest.mark.enable_only_for_engine(ServiceType.LAMBDA, ServiceType.K8s)
     def test_k8s(engine):
         ...
     """
