@@ -9,6 +9,7 @@ from aqueduct.error import (
     InternalAqueductError,
     InvalidUserArgumentException,
 )
+from aqueduct.logger import logger
 from aqueduct.operators import (
     LAMBDA_MAX_MEMORY_MB,
     LAMBDA_MIN_MEMORY_MB,
@@ -102,6 +103,9 @@ class DAG(BaseModel):
                             "AWS Lambda method must be configured with at most %d MB of memory, but got a request for %d."
                             % (LAMBDA_MIN_MEMORY_MB, op.spec.resources.memory_mb)
                         )
+                    logger().warning(
+                        "Customizing memory for a AWS Lambda operator will add about a minute to its runtime, per operator."
+                    )
 
                 if (
                     not allowed_customizable_resources["gpu_resource_name"]
