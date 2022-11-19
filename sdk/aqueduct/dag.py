@@ -10,10 +10,12 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.operators import (
+    LAMBDA_MAX_MEMORY_MB,
+    LAMBDA_MIN_MEMORY_MB,
     Operator,
     OperatorSpec,
     get_operator_type,
-    get_operator_type_from_spec, LAMBDA_MIN_MEMORY_MB, LAMBDA_MAX_MEMORY_MB,
+    get_operator_type_from_spec,
 )
 from pydantic import BaseModel
 

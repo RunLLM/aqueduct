@@ -1,12 +1,11 @@
 from os import cpu_count
 
 import pytest
-from aqueduct import global_config
 from aqueduct.enums import ServiceType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import generate_new_flow_name, run_flow_test
 
-from aqueduct import op
+from aqueduct import global_config, op
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
@@ -169,9 +168,6 @@ def test_too_much_memory_requested_lambda(client, engine):
 
     with pytest.raises(InvalidUserArgumentException):
         run_flow_test(client, [output], engine=engine)
-
-
-# TODO: pause EC2
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)

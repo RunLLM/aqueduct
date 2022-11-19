@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultLambdaFunctionExtractPath = "/tmp/app/function/"
-	updateFunctionMemoryTimeout      = 1 * time.Minute // TODO: make 3 minutes
+	updateFunctionMemoryTimeout      = 2 * time.Minute
 )
 
 type lambdaJobManager struct {
@@ -42,8 +42,7 @@ func (j *lambdaJobManager) Config() Config {
 	return j.conf
 }
 
-// Updates the amount of memory available to the give function. Returns the old amount of memory,
-// which was overwritten.
+// Updates the amount of memory available to the give function. Returns the previous memory setting, in MB.
 func (j *lambdaJobManager) updateFunctionMemory(
 	ctx context.Context,
 	functionName string,
@@ -59,7 +58,7 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		return nil, errors.Wrap(err, "Unable to query Lambda to configure custom memory.")
 	}
 
-	oldMemoryMB := prevLambdaFnConfig.MemorySize
+	prevMemoryMB := prevLambdaFnConfig.MemorySize
 
 	latestLambdaFnConfig, err := j.lambdaService.UpdateFunctionConfigurationWithContext(
 		ctx,
@@ -106,7 +105,7 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		time.Sleep(2 * time.Second)
 	}
 
-	return oldMemoryMB, nil
+	return prevMemoryMB, nil
 }
 
 func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) error {
@@ -115,7 +114,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		return errors.Wrap(err, "Unable to launch job.")
 	}
 
-	// If set, we'll need to set the function's memory back to this value after invocation.
+	// If set, we'll need to reset the function's memory back to this value after invocation.
 	var previousMemoryMB *int64
 
 	if spec.Type() == FunctionJobType {
@@ -159,10 +158,10 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 
 	// Lambda functions with custom memory configurations should be executed synchronously.
 	// This is to prevent such memory configurations from bleeding out to other operators using
-	// the same lambda function, since we reset the memory value on return.
+	// the same lambda function. We reset the memory configuration at the very end of this function.
 	// NOTE: this does not provide perfect isolation. It is still possible for operators scheduled
 	// before to race with the memory configuration update, since regular lambda functions are run
-	// asynchronously, and we have no visibility into the AWS's function queue.
+	// asynchronously, and we have no visibility into the AWS's event queue.
 	invocationType := aws.String("Event")
 	if previousMemoryMB != nil {
 		invocationType = aws.String("RequestResponse")
@@ -182,7 +181,6 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 				log.Errorf("Unable to reset function memory back to %v MB: %v", previousMemoryMB, err)
 			}
 		}
-
 	}()
 
 	_, err = j.lambdaService.InvokeWithContext(ctx, invokeInput)
