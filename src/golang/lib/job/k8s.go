@@ -69,16 +69,15 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		if !ok {
 			return ErrInvalidJobSpec
 		}
+
+		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
+
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.GPUResourceName != nil {
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
 				launchGpu = true
 			}
-		}
 
-		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
-
-		if functionSpec.Resources != nil {
 			if functionSpec.Resources.NumCPU != nil {
 				resourceRequest[k8s.PodResourceCPUKey] = strconv.Itoa(*functionSpec.Resources.NumCPU)
 			}

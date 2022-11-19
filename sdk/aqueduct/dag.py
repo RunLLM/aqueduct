@@ -72,6 +72,8 @@ class DAG(BaseModel):
                 "memory": True,
                 "gpu_resource_name": True,
             }
+        elif engine_config.type == RuntimeType.LAMBDA:
+            allowed_customizable_resources["memory"] = True
 
         for op in self.operators.values():
             if op.spec.resources is not None:

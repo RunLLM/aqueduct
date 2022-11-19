@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -12,10 +13,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
 	defaultLambdaFunctionExtractPath = "/tmp/app/function/"
+	updateFunctionMemoryTimeout      = 1 * time.Minute // TODO: make 3 minutes
+
+	// Lambda returns timestamps in ISO8601.
+	lambdaTimeLayout = "2006-01-02T15:04:05.000+0000"
 )
 
 type lambdaJobManager struct {
@@ -39,9 +45,77 @@ func (j *lambdaJobManager) Config() Config {
 	return j.conf
 }
 
+// Updates the amount of memory available to the give function. Returns the old amount of memory,
+// which was overwritten.
+func (j *lambdaJobManager) updateFunctionMemory(
+	ctx context.Context,
+	functionName string,
+	newMemoryMB *int64,
+) (*int64, error) {
+	oldLambdaFnConfig, err := j.lambdaService.GetFunctionConfigurationWithContext(
+		ctx,
+		&lambda.GetFunctionConfigurationInput{
+			FunctionName: &functionName,
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to query Lambda to configure custom memory.")
+	}
+
+	oldMemoryMB := oldLambdaFnConfig.MemorySize
+
+	latestLambdaFnConfig, err := j.lambdaService.UpdateFunctionConfigurationWithContext(
+		ctx,
+		&lambda.UpdateFunctionConfigurationInput{
+			FunctionName: &functionName,
+			MemorySize:   newMemoryMB,
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to update Lambda function with custom memory.")
+	}
+
+	// Wait for at most a few minutes for the configuration to update.
+	start := time.Now()
+	for {
+		// Check if memory has been updated yet.
+		if *latestLambdaFnConfig.LastUpdateStatus == lambda.LastUpdateStatusSuccessful &&
+			*latestLambdaFnConfig.MemorySize == *newMemoryMB {
+			log.Errorf("Breaking here!")
+			break
+		}
+
+		polledLambdaFnConfig, err := j.lambdaService.GetFunctionConfigurationWithContext(
+			ctx,
+			&lambda.GetFunctionConfigurationInput{
+				FunctionName: &functionName,
+			},
+		)
+		if err != nil {
+			// Ignore the error, keep polling until we hit the timeout.
+			log.Errorf("Error when polling Lambda for function configuration: %v", err)
+			continue
+		}
+
+		latestLambdaFnConfig = polledLambdaFnConfig
+
+		if time.Since(start) > updateFunctionMemoryTimeout {
+			return nil, errors.New("Unable to update Lambda function with custom memory. THe operator timed out.")
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	return oldMemoryMB, nil
+}
+
 func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) error {
-	j.lambdaService.UpdateFunctionConfiguration()
-	j.lambdaService.GetFunctionConfiguration()
+	functionName, err := mapJobTypeToLambdaFunction(spec)
+	if err != nil {
+		return errors.Wrap(err, "Unable to launch job.")
+	}
+
+	// If set, we'll need to set the function's memory back to this value after invocation.
+	var oldMemoryMB *int64
 
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -50,7 +124,18 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		}
 
 		functionSpec.FunctionExtractPath = defaultLambdaFunctionExtractPath
+
+		if functionSpec.Resources != nil {
+			if functionSpec.Resources.MemoryMB != nil {
+				newMemoryMBInt64 := int64(*functionSpec.Resources.MemoryMB)
+				oldMemoryMB, err = j.updateFunctionMemory(ctx, functionName, &newMemoryMBInt64)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
+
 	storageConfig, err := spec.GetStorageConfig()
 	if err != nil {
 		return errors.Wrap(err, "Spec unexpectedly has no storage config.")
@@ -71,16 +156,22 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		return errors.Wrap(err, "Unable to marshal request payload.")
 	}
 
-	functionName, err := mapJobTypeToLambdaFunction(spec)
-	if err != nil {
-		return errors.Wrap(err, "Unable to launch job.")
-	}
-
+	// TODO: Should this be synchronous if the invocation type is
 	invokeInput := &lambda.InvokeInput{
 		FunctionName:   &functionName,
-		InvocationType: aws.String("Event"),
+		InvocationType: aws.String("RequestResponse"), // TODO: toggle this back to Event on the job manager.
 		Payload:        payload,
 	}
+
+	defer func() {
+		if oldMemoryMB != nil {
+			_, err = j.updateFunctionMemory(ctx, functionName, oldMemoryMB)
+			if err != nil {
+				log.Errorf("Unable to reset function memory back to %v MB: %v", oldMemoryMB, err)
+			}
+		}
+
+	}()
 
 	_, err = j.lambdaService.InvokeWithContext(ctx, invokeInput)
 	if err != nil {
