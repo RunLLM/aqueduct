@@ -19,9 +19,6 @@ import (
 const (
 	defaultLambdaFunctionExtractPath = "/tmp/app/function/"
 	updateFunctionMemoryTimeout      = 1 * time.Minute // TODO: make 3 minutes
-
-	// Lambda returns timestamps in ISO8601.
-	lambdaTimeLayout = "2006-01-02T15:04:05.000+0000"
 )
 
 type lambdaJobManager struct {
@@ -81,7 +78,6 @@ func (j *lambdaJobManager) updateFunctionMemory(
 		// Check if memory has been updated yet.
 		if *latestLambdaFnConfig.LastUpdateStatus == lambda.LastUpdateStatusSuccessful &&
 			*latestLambdaFnConfig.MemorySize == *newMemoryMB {
-			log.Errorf("Breaking here!")
 			break
 		}
 
@@ -156,13 +152,13 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		return errors.Wrap(err, "Unable to marshal request payload.")
 	}
 
-	// TODO: Should this be synchronous if the invocation type is
 	invokeInput := &lambda.InvokeInput{
 		FunctionName:   &functionName,
-		InvocationType: aws.String("RequestResponse"), // TODO: toggle this back to Event on the job manager.
+		InvocationType: aws.String("Event"),
 		Payload:        payload,
 	}
 
+	// Resetting memory back to its original value is best-effort.
 	defer func() {
 		if oldMemoryMB != nil {
 			_, err = j.updateFunctionMemory(ctx, functionName, oldMemoryMB)

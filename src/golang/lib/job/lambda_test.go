@@ -11,7 +11,7 @@ import (
 )
 
 func TestLambdaAPI(t *testing.T) {
-	//t.Skip( " ERROR MESSAGE" ) // TODO:
+	t.Skip("This is not really a unit test since it relies on AWS Lambda. Can be manually unskipped.")
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -27,5 +27,6 @@ func TestLambdaAPI(t *testing.T) {
 	newMemory := int64(300)
 	oldMemory, err := jobManager.updateFunctionMemory(context.Background(), functionName, &newMemory)
 	require.Nil(t, err)
+
 	fmt.Println("OLD MEMORY: ", *oldMemory)
 }
