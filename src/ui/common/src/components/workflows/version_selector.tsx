@@ -9,7 +9,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,11 +81,6 @@ export const VersionSelector: React.FC = () => {
     });
   };
 
-  let menuItems = getMenuItems();
-  useEffect(() => {
-    menuItems = getMenuItems();
-  }, [results]);
-
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <FormControl sx={{ minWidth: 120 }} size="small">
@@ -95,7 +90,7 @@ export const VersionSelector: React.FC = () => {
           autoWidth
           value={selectedResultIdx}
         >
-          {menuItems}
+          {getMenuItems()}
         </Select>
       </FormControl>
     </Box>
