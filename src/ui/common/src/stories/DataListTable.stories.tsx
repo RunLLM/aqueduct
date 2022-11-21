@@ -1,11 +1,11 @@
-import { Box, Link } from '@mui/material';
+import { Box } from '@mui/material';
 import React from 'react';
 
-import CheckItem from '../components/pages/workflows/components/CheckItem';
+import CheckItem, { CheckPreview } from '../components/pages/workflows/components/CheckItem';
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
-import WorkflowNameItem from '../components/pages/workflows/components/WorkflowNameItem';
+import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import WorkflowTable, {
   WorkflowTableData,
 } from '../components/tables/WorkflowTable';
@@ -13,7 +13,7 @@ import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
 
 export const DataListTable: React.FC = () => {
-  const checkPreviews = [
+  const checkPreviews: CheckPreview[] = [
     {
       checkId: '1',
       name: 'min_churn',
@@ -70,15 +70,6 @@ export const DataListTable: React.FC = () => {
 
   const metricsList = <MetricItem metrics={metricsShort} />;
 
-  interface WorkflowLinkProps {
-    title: string;
-    url: string;
-  }
-
-  const WorkflowLink: React.FC<WorkflowLinkProps> = ({ url, title }) => {
-    return <Link href={url}>{title}</Link>;
-  };
-
   // TODO: Change this type to something more generic.
   // Also make this change in WorkflowsTable, I think we can just use Data here if we add JSX.element to Data's union type.
   const mockData: WorkflowTableData = {
@@ -95,56 +86,116 @@ export const DataListTable: React.FC = () => {
     },
     data: [
       {
-        // WorkflowNameItem and DataNameItem should be consolidated into one component.
-        name: (
-          <WorkflowNameItem
-            name="churn_model"
-            status={ExecutionStatus.Succeeded}
-          />
-        ),
+        name: {
+          name: 'churn_model',
+          url: '/data',
+          status: ExecutionStatus.Succeeded
+        },
         created_at: '11/1/2022 2:00PM',
-        workflow: <WorkflowLink title="train_churn_model" url="/workflows" />,
+        workflow: {
+          name: 'train_churn_model',
+          url: '/workflows',
+          status: ExecutionStatus.Running
+        },
         type: 'sklearn.linear, Linear Regression',
-        metrics: metricsList,
-        checks: checkTableItem,
+        metrics: metricsShort,
+        checks: checkPreviews,
       },
       {
-        name: (
-          <WorkflowNameItem
-            name="predict_churn_dataset"
-            status={ExecutionStatus.Running}
-          />
-        ),
+        name: {
+          name: 'predict_churn_dataset',
+          url: '/workflows',
+          status: ExecutionStatus.Running
+        },
         created_at: '11/1/2022 2:00PM',
-        workflow: (
-          <WorkflowLink title="monthly_churn_prediction" url="/workflows" />
-        ),
+        workflow: {
+          name: 'monthly_churn_prediction',
+          url: '/workflows',
+          status: ExecutionStatus.Succeeded,
+        },
         type: 'pandas.DataFrame',
-        metrics: metricsList,
-        checks: checkTableItem,
+        metrics: metricsShort,
+        checks: checkPreviews,
       },
       {
-        name: (
-          <WorkflowNameItem
-            name="label_classifier"
-            status={ExecutionStatus.Pending}
-          />
-        ),
+        name: {
+          name: 'label_classifier',
+          url: '/data',
+          status: ExecutionStatus.Pending
+        },
         created_at: '11/1/2022 2:00PM',
-        workflow: (
-          <WorkflowLink title="label_classifier_workflow" url="/workflows" />
-        ),
+        workflow: {
+          name: 'label_classifier_workflow',
+          url: '/workflows',
+          status: ExecutionStatus.Registered
+        },
         type: 'parquet',
-        metrics: metricsList,
-        checks: checkTableItem,
+        metrics: metricsShort,
+        checks: checkPreviews,
       },
     ],
+    meta: [
+      {
+        name: 'churn_model',
+        created_at: '11/1/2022 2:00PM',
+        workflow: "train_churn_model",
+        type: 'sklearn.linear, Linear Regression',
+        metrics: metricsShort,
+        checks: checkPreviews,
+      },
+      {
+        name: "predict_churn_dataset",
+        created_at: '11/1/2022 2:00PM',
+        workflow: "monthly_churn_prediction",
+        type: 'pandas.DataFrame',
+        metrics: metricsShort,
+        checks: checkPreviews,
+      },
+      {
+        name: "label_classifier",
+        created_at: '11/1/2022 2:00PM',
+        workflow: "label_classifier_workflow",
+        type: 'parquet',
+        metrics: metricsShort,
+        checks: checkPreviews,
+      },
+    ],
+  };
+
+  const onGetColumnValue = (row, column) => {
+    let value = row[column.name];
+
+    switch (column.name) {
+      case 'workflow':
+      case 'name':
+        const { name, url, status } = value;
+        value = <ExecutionStatusLink name={name} url={url} status={status} />
+        break;
+      case 'type':
+      case 'created_at':
+        value = row[column.name];
+        break;
+      case 'metrics': {
+        value = <MetricItem metrics={value} />;
+        break;
+      }
+      case 'checks': {
+        value = <CheckItem checks={value} />;
+        break;
+      }
+      default: {
+        value = row[column.name];
+        break;
+      }
+    }
+
+    return value;
   };
 
   // TODO: Rename "WorkflowTable" to something more generic.
   return (
     <Box>
-      <WorkflowTable data={mockData} />
+      <WorkflowTable data={mockData} searchEnabled={true} onGetColumnValue={onGetColumnValue} />
     </Box>
   );
 };
