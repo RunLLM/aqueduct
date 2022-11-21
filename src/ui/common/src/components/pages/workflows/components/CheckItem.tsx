@@ -44,7 +44,7 @@ const canceledIcon = (
   </Box>
 );
 
-interface CheckPreview {
+export interface CheckPreview {
   checkId: string;
   name: string;
   status: ExecutionStatus;
