@@ -7,14 +7,14 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import * as React from 'react';
 
 import { DataSchema } from '../../utils/data';
 import { CheckPreview } from '../pages/workflows/components/CheckItem';
-import { MetricPreview } from '../pages/workflows/components/MetricItem';
 import { ExecutionStatusLinkProps } from '../pages/workflows/components/ExecutionStatusLink';
+import { MetricPreview } from '../pages/workflows/components/MetricItem';
 
 export type WorkflowTableElement = string | number | boolean | JSX.Element;
 
@@ -23,8 +23,14 @@ export type WorkflowTableRow = {
 };
 
 export type WorkflowTableRowData = {
-  [key: string]: string | number | boolean | CheckPreview[] | MetricPreview[] | ExecutionStatusLinkProps;
-}
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | CheckPreview[]
+    | MetricPreview[]
+    | ExecutionStatusLinkProps;
+};
 
 export interface WorkflowTableData {
   schema?: DataSchema;
@@ -38,13 +44,17 @@ export interface WorkflowsTableProps {
   onGetColumnValue?: (row, column) => WorkflowTableElement;
 }
 
-export const WorkflowTable: React.FC<WorkflowsTableProps> = ({ data, onGetColumnValue, searchEnabled = false }) => {
+export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
+  data,
+  onGetColumnValue,
+  searchEnabled = false,
+}) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterColumn, setFilterColumn] = React.useState('name');
 
-  let rows = data.data;
+  const rows = data.data;
   const columns = data.schema.fields;
 
   let filteredRows = [];
@@ -57,7 +67,7 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({ data, onGetColumn
       console.log('rowItem: ', rowItem);
       const name = rowItem.name as string;
       return name.toLowerCase().includes(searchQuery.toLowerCase());
-    })
+    });
   }
 
   console.log('filteredRows: ', filteredRows);
@@ -94,7 +104,13 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({ data, onGetColumn
 
   return (
     <>
-      <TextField value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} id="outlined-basic" label="Search" variant="outlined" />
+      <TextField
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        id="outlined-basic"
+        label="Search"
+        variant="outlined"
+      />
       <Paper sx={{ overflow: 'hidden' }}>
         <TableContainer>
           <Table stickyHeader aria-label="sticky table">
@@ -111,7 +127,10 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({ data, onGetColumn
                         minWidth: '80px',
                       }}
                       onClick={() => {
-                        console.log('tableColumn clicked colIndex: ', columnIndex);
+                        console.log(
+                          'tableColumn clicked colIndex: ',
+                          columnIndex
+                        );
                         console.log('tableColumn clicked column: ', column);
                       }}
                     >
