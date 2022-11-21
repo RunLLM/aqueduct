@@ -17,6 +17,18 @@ def generate_table_name() -> str:
     return "test_table_" + uuid.uuid4().hex[:24]
 
 
+def publish_flow(
+    client: aqueduct.Client,
+    artifacts: List[BaseArtifact],
+    metrics: Optional[List[BaseArtifact]] = None,
+    checks: Optional[List[BaseArtifact]] = None,
+    schedule: str = "",
+):
+
+    # TODO: register with context that will best-effort delete afterwards.
+    pass
+
+
 def run_flow_test(
     client: aqueduct.Client,
     artifacts: List[BaseArtifact],

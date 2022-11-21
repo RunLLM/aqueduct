@@ -45,7 +45,7 @@ def client(pytestconfig):
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
 @pytest.fixture(autouse=True)
 def enable_by_engine_type(request, client, engine):
-    """When a test is marked with this, it is enabled for a particular ServiceType!
+    """When a test is marked with this, it is enabled for particular ServiceType(s)!
 
     Eg.
     @pytest.mark.enable_only_for_engine(ServiceType.LAMBDA, ServiceType.K8s)
@@ -71,3 +71,15 @@ def enable_by_engine_type(request, client, engine):
                 "Skipped on engine `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
             )
+
+
+# TODO: describe
+flow_names_by_test = {}
+
+
+@pytest.fixture(autouse=True)
+def flow_cleanup(request):
+    yield
+
+    test_name = (request.node.name)
+    flow_id = flow_name_by_test.get(test_name)
