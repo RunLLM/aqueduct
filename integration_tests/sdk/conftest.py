@@ -1,16 +1,25 @@
 import os
-from typing import List
+import uuid
 
 import pytest
 from aqueduct.dag import DAG, Metadata
 
 import aqueduct
+from utils import delete_flow, flow_name_to_id
 
 
 def pytest_addoption(parser):
     # We currently only support a single data integration and compute engine per test suite run.
     parser.addoption(f"--data", action="store", default="aqueduct_demo")
     parser.addoption(f"--engine", action="store", default=None)
+    parser.addoption(f"--keep_flows", action="store_true", default=False)
+
+
+def pytest_configure(config):
+    """This is just to prevent warnings around our custom markers. eg. `pytest.mark.enable_only_for_engine`."""
+    config.addinivalue_line(
+        "markers", "enable_only_for_engine_type: runs the test only for the supplied engines."
+    )
 
 
 API_KEY_ENV_NAME = "API_KEY"
@@ -73,13 +82,20 @@ def enable_by_engine_type(request, client, engine):
             )
 
 
-# TODO: describe
-flow_names_by_test = {}
+@pytest.fixture(scope="function")
+def flow_name(client, request, pytestconfig):
+    """TODO: handles the registration and teardown of flow objects."""
+    flow_names = []
 
+    def get_new_flow_name():
+        flow_name = "test_" + uuid.uuid4().hex
+        flow_names.append(flow_name)
+        return flow_name
 
-@pytest.fixture(autouse=True)
-def flow_cleanup(request):
-    yield
+    def cleanup_flows():
+        if not pytestconfig.getoption("keep_flows"):
+            for flow_name in flow_names:
+                delete_flow(client, flow_name_to_id[flow_name])
 
-    test_name = (request.node.name)
-    flow_id = flow_name_by_test.get(test_name)
+    request.addfinalizer(cleanup_flows)
+    return get_new_flow_name

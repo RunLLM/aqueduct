@@ -327,7 +327,7 @@ class Client:
 
         The default execution engine of the flow is Aqueduct. In order to specify which
         execution engine the flow will be running on, use "config" parameter. Eg:
-        >>> flow = client.publish_flow(
+        >>> flow = client.publish_flow_test(
         >>>     name="k8s_example",
         >>>     artifacts=[output],
         >>>     engine="k8s_integration",

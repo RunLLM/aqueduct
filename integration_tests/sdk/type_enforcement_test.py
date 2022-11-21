@@ -26,7 +26,7 @@ def test_flow_fails_on_unexpected_type_output(client, engine):
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
         )
     finally:
         client.delete_flow(flow.id())
@@ -46,7 +46,7 @@ def test_flow_fails_on_unexpected_type_output_for_lazy(client, engine):
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
         )
     finally:
         client.delete_flow(flow.id())

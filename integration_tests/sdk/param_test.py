@@ -203,7 +203,7 @@ def test_trigger_flow_with_different_param(client, data_integration, engine):
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
         )
 
         # Verify the parameters were configured as expected.
@@ -249,7 +249,7 @@ def test_trigger_flow_with_different_sql_param(client, data_integration, engine)
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
         )
 
         # Verify the parameters were configured as expected.
@@ -409,7 +409,7 @@ def test_parameter_type_changes(client, engine):
         wait_for_flow_runs(
             client,
             flow_id,
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.FAILED],
         )
     finally:
         delete_flow(client, flow_id)

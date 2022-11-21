@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, Any
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.enums import ExecutionStatus
@@ -9,6 +9,11 @@ import aqueduct
 from aqueduct import Flow
 
 
+# TODO(...): because we don't have a way to deleting a flow by name yet.
+flow_name_to_id: Dict[str, uuid.UUID] = {}
+
+
+# TODO: remove this
 def generate_new_flow_name() -> str:
     return "test_" + uuid.uuid4().hex
 
@@ -17,16 +22,63 @@ def generate_table_name() -> str:
     return "test_table_" + uuid.uuid4().hex[:24]
 
 
-def publish_flow(
+def publish_flow_test(
     client: aqueduct.Client,
-    artifacts: List[BaseArtifact],
+    name: Optional[str],
+    artifacts: Union[BaseArtifact, List[BaseArtifact]],
+    engine: str,
+    expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
     schedule: str = "",
-):
+    flow: Optional[Flow] = None,
+) -> Flow:
+    """
+    TODO:
+    `expected_status` can be supplied as either a single status or a list of them, depending on how many
+    flow runs we want to wait for.
+    What is flow for?
+    """
+    assert (name or flow) and not (name and flow), "Either a new flow name or a previous flow must be supplied, but not both!"
 
-    # TODO: register with context that will best-effort delete afterwards.
-    pass
+    num_prev_runs = len(flow.list_runs()) if flow is not None else 0
+    flow = client.publish_flow(
+        name=name,
+        artifacts=artifacts,
+        metrics=metrics,
+        checks=checks,
+        schedule=schedule,
+        engine=engine,
+    )
+    print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
+
+    # Necessary so that the flow is cleaned up at the end of the test.
+    flow_name_to_id[name] = flow.id()
+
+    wait_for_flow_runs(
+        client,
+        flow.id(),
+        num_prev_runs=num_prev_runs,
+        expected_statuses=[expected_status] if isinstance(expected_status, ExecutionStatus) else expected_status,
+    )
+    return flow
+
+
+def trigger_flow_test(
+    client: aqueduct.Client,
+    flow: Flow,
+    expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+    parameters: Optional[Dict[str, Any]] = None,
+):
+    num_prev_runs = len(flow.list_runs())
+    client.trigger(flow.id(), parameters=parameters)
+
+    wait_for_flow_runs(
+        client,
+        flow.id(),
+        num_prev_runs=num_prev_runs,
+        expected_statuses=[expected_status] if isinstance(expected_status, ExecutionStatus) else expected_status,
+    )
 
 
 def run_flow_test(
@@ -63,7 +115,7 @@ def run_flow_test(
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[expect_status] * num_runs,
+            expected_statuses=[expect_status] * num_runs,
         )
     finally:
         if delete_flow_after:
@@ -71,11 +123,13 @@ def run_flow_test(
     return flow
 
 
+# TODO: make this private.
 def wait_for_flow_runs(
     client: aqueduct.Client,
     flow_id: uuid.UUID,
-    expect_statuses: List[ExecutionStatus],
-) -> int:
+    expected_statuses: List[ExecutionStatus],
+    num_prev_runs: int = 0,
+) -> None:
     """
     Returns only when the specified flow has run at least len(expect_statuses) times.
     Each status expectation corresponds to a single flow run.
@@ -83,7 +137,7 @@ def wait_for_flow_runs(
     Returns:
         The number of runs this flow has performed.
     """
-    timeout = 500
+    timeout = 300
     poll_threshold = 1
     begin = time.time()
 
@@ -95,11 +149,12 @@ def wait_for_flow_runs(
         if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
             continue
 
-        # A flow has been successfully published if it makes at least one workflow run, and
-        # all its workflow runs have executed successfully.
         flow = client.flow(flow_id)
-        flow_runs = flow.list_runs()
-        if len(flow_runs) == 0:
+
+        # Last run is prepended to this list. We need to reverse it in order to compare with expected statuses,
+        # which is sorted in chronologically ascending order.
+        flow_runs = list(reversed(flow.list_runs()))[num_prev_runs:]
+        if len(flow_runs) < len(expected_statuses):
             continue
 
         statuses = [flow_run["status"] for flow_run in flow_runs]
@@ -108,11 +163,7 @@ def wait_for_flow_runs(
         if any(status == ExecutionStatus.PENDING for status in statuses):
             continue
 
-        if len(flow_runs) < len(expect_statuses):
-            continue
-
-        # Need to reverse one of the lists for comparison, because the last run is always prepended in the backend response.
-        expect_status_strs = [status.value for status in reversed(expect_statuses)]
+        expect_status_strs = [status.value for status in expected_statuses]
         assert statuses == expect_status_strs, (
             "Unexpected workflow run status(es). In reverse chronological order, expected %s, got %s. "
             % (expect_status_strs, statuses)
@@ -122,8 +173,7 @@ def wait_for_flow_runs(
             "Workflow %s was created and ran successfully at least %s times!"
             % (flow_id, len(flow_runs))
         )
-        return len(flow_runs)
-    return -1
+        return
 
 
 def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:

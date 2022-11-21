@@ -20,14 +20,14 @@ from utils import (
     generate_new_flow_name,
     generate_table_name,
     run_flow_test,
-    wait_for_flow_runs,
+    wait_for_flow_runs, publish_flow_test,
 )
 
 import aqueduct
 from aqueduct import FlowConfig, LoadUpdateMode, check, metric, op
 
 
-def test_basic_flow(client, data_integration, engine):
+def test_basic_flow(client, flow_name, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
@@ -35,10 +35,15 @@ def test_basic_flow(client, data_integration, engine):
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
 
-    run_flow_test(client, artifacts=[output_artifact], engine=engine)
+    publish_flow_test(
+        client,
+        flow_name(),
+        output_artifact,
+        engine=engine,
+    )
 
 
-def test_sentiment_flow(client, data_integration, engine):
+def test_sentiment_flow(client, flow_name, data_integration, engine):
     """Actually run the full sentiment model (with nltk dependency)."""
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
@@ -47,10 +52,15 @@ def test_sentiment_flow(client, data_integration, engine):
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
 
-    run_flow_test(client, artifacts=[output_artifact], engine=engine)
+    publish_flow_test(
+        client,
+        flow_name(),
+        output_artifact,
+        engine=engine,
+    )
 
 
-def test_complex_flow(client, data_integration, engine):
+def test_complex_flow(client, flow_name, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
@@ -75,47 +85,37 @@ def test_complex_flow(client, data_integration, engine):
 
     success_check = successful_check(output_artifact)
     _ = failing_check(output_artifact)
-    dummy_metric = dummy_metric(output_artifact)
+    _ = dummy_metric(output_artifact)
 
-    # Test that publish_flow can implicitly and explicitly include metrics and checks.
-    flow_name = generate_new_flow_name()
+    # Test that metrics and checks can be implicitly included, and that a non-error check
+    # failing does not fail the flow.
+    flow = publish_flow_test(
+        client,
+        flow_name(),
+        output_artifact,
+        engine=engine,
+    )
 
-    flow_id = None
-    try:
-        # Test that metrics and checks can be implicitly included, and that a non-error check
-        # failing does not fail the flow.
-        flow = run_flow_test(
-            client,
-            name=flow_name,
-            artifacts=[output_artifact],
-            engine=engine,
-            delete_flow_after=False,
-        )
-        flow_id = flow.id()
+    # Metrics and checks should have been computed.
+    flow_run = flow.latest()
+    assert flow_run.artifact("dummy_metric artifact") is not None
+    assert flow_run.artifact("successful_check artifact") is not None
+    assert flow_run.artifact("failing_check artifact") is not None
 
-        # Metrics and checks should have been computed.
-        flow_run = flow.latest()
-        assert flow_run.artifact("dummy_metric artifact") is not None
-        assert flow_run.artifact("successful_check artifact") is not None
-        assert flow_run.artifact("failing_check artifact") is not None
+    flow = publish_flow_test(
+        client,
+        None,  # `flow` supplied instead.
+        output_artifact,
+        engine=engine,
+        checks=[success_check],  # failing_check will no longer be included.
+        flow=flow,
+    )
 
-        flow = run_flow_test(
-            client,
-            name=flow_name,
-            artifacts=[output_artifact],
-            engine=engine,
-            checks=[success_check],  # failing_check will no longer be included.
-            num_runs=2,
-            delete_flow_after=False,
-        )
-
-        # Only the explicitly defined metrics and checks should have been included in this second run.
-        flow_run = flow.latest()
-        assert flow_run.artifact("dummy_metric artifact") is not None
-        assert flow_run.artifact("successful_check artifact") is not None
-        assert flow_run.artifact("failing_check artifact") is None
-    finally:
-        delete_flow(client, flow_id)
+    # Only the explicitly defined metrics and checks should have been included in this second run.
+    flow_run = flow.latest()
+    assert flow_run.artifact("dummy_metric artifact") is not None
+    assert flow_run.artifact("successful_check artifact") is not None
+    assert flow_run.artifact("failing_check artifact") is None
 
 
 def test_multiple_output_artifacts(client, data_integration, engine):
@@ -162,13 +162,13 @@ def test_publish_with_schedule(client, data_integration, engine):
 
 def test_invalid_flow(client):
     with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
+        client.publish_flow_test(
             name=generate_new_flow_name(),
             artifacts=[],
         )
 
     with pytest.raises(Exception):
-        client.publish_flow(
+        client.publish_flow_test(
             name=generate_new_flow_name(),
             artifacts=["123"],
         )
@@ -218,7 +218,7 @@ def test_refresh_flow(client, data_integration, engine):
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
-    flow = client.publish_flow(
+    flow = client.publish_flow_test(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
         engine=engine,
@@ -228,12 +228,12 @@ def test_refresh_flow(client, data_integration, engine):
     # Wait for the first run, then refresh the workflow and verify that it runs at least
     # one more time.
     try:
-        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
+        wait_for_flow_runs(client, flow.id(), expected_statuses=[ExecutionStatus.SUCCEEDED])
         client.trigger(flow.id())
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
         )
     finally:
         client.delete_flow(flow.id())
@@ -246,13 +246,13 @@ def test_get_artifact_from_flow(client, data_integration, engine):
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
-    flow = client.publish_flow(
+    flow = client.publish_flow_test(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
         engine=engine,
     )
     try:
-        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
+        wait_for_flow_runs(client, flow.id(), expected_statuses=[ExecutionStatus.SUCCEEDED])
         artifact_return = flow.latest().artifact(output_artifact.name())
         assert artifact_return.name() == output_artifact.name()
         assert artifact_return.get().equals(output_artifact.get())
@@ -267,13 +267,13 @@ def test_get_artifact_reuse_for_computation(client, data_integration, engine):
     output_artifact.save(
         config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
     )
-    flow = client.publish_flow(
+    flow = client.publish_flow_test(
         name=generate_new_flow_name(),
         artifacts=output_artifact,
         engine=engine,
     )
     try:
-        wait_for_flow_runs(client, flow.id(), expect_statuses=[ExecutionStatus.SUCCEEDED])
+        wait_for_flow_runs(client, flow.id(), expected_statuses=[ExecutionStatus.SUCCEEDED])
         artifact_return = flow.latest().artifact(output_artifact.name())
         with pytest.raises(Exception):
             output_artifact = dummy_sentiment_model(artifact_return)
@@ -288,14 +288,14 @@ def test_multiple_flows_with_same_schedule(client, data_integration, engine):
         output_artifact = dummy_sentiment_model(sql_artifact)
         output_artifact_2 = dummy_model(sql_artifact)
 
-        flow_1 = client.publish_flow(
+        flow_1 = client.publish_flow_test(
             name=generate_new_flow_name(),
             artifacts=output_artifact,
             engine=engine,
             schedule="* * * * *",
         )
 
-        flow_2 = client.publish_flow(
+        flow_2 = client.publish_flow_test(
             name=generate_new_flow_name(),
             artifacts=output_artifact_2,
             engine=engine,
@@ -305,12 +305,12 @@ def test_multiple_flows_with_same_schedule(client, data_integration, engine):
         wait_for_flow_runs(
             client,
             flow_1.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
         )
         wait_for_flow_runs(
             client,
             flow_2.id(),
-            expect_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+            expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
         )
     finally:
         delete_flow(client, flow_1.id())
@@ -418,7 +418,7 @@ def test_publish_with_redundant_config_fields(client):
         validated=True,
     )
     with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
+        client.publish_flow_test(
             generate_new_flow_name(),
             artifacts=[output],
             engine="something",
@@ -427,7 +427,7 @@ def test_publish_with_redundant_config_fields(client):
 
     # Test redundant `k_latest_runs` field.
     with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
+        client.publish_flow_test(
             generate_new_flow_name(),
             artifacts=[output],
             k_latest_runs=10,
