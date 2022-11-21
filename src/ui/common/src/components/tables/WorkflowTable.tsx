@@ -52,23 +52,42 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [filterColumn, setFilterColumn] = React.useState('name');
+  const [searchColumn, setSearchColumn] = React.useState('name');
 
   let rows = data.data;
   let columns = data.schema.fields;
 
   let filteredRows = [];
-  //let filteredColumns = columns;
 
   if (searchQuery.length > 0) {
     filteredRows = data.data.filter((rowItem, index) => {
-      // filter rows by name, which is our default filter column.
-      // rowItem.meta.name.toLowercase().includes(searchQuery)
-      const name = rowItem.name.name as string;
-      return name.toLowerCase().includes(searchQuery.toLowerCase());
+      return shouldInclude(rowItem, searchQuery, searchColumn);
     });
 
     rows = filteredRows;
+  }
+
+  const shouldInclude = (rowItem, searchQuery, searchColumn): boolean => {
+    // TODO: Allow users to pass in a function as a prop to support custom search by column.
+    // Since table cells can contain complex objects, this implementation is up to the caller.
+    // Otherwise, we default to using 'name' as the field to conduct the search on.
+
+    // filter rows by name, which is our default filter column.
+    // rowItem.meta.name.toLowercase().includes(searchQuery)
+    let shouldInclude = false;
+    switch (searchColumn) {
+      case 'name': {
+        const name = rowItem.name.name as string;
+        shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+      // TODO: Create function to make this filtering more generic.l
+      default: {
+        const name = rowItem.name.name as string;
+        shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+    }
+
+    return shouldInclude;
   }
 
   const handleChangePage = (event: unknown, newPage: number) => {
