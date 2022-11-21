@@ -1,8 +1,8 @@
 import { Box, Link, Typography } from '@mui/material';
 import React from 'react';
 
-import { StatusIndicator } from '../../../workflows/workflowStatus';
 import ExecutionStatus from '../../../../utils/shared';
+import { StatusIndicator } from '../../../workflows/workflowStatus';
 
 export interface ExecutionStatusLinkProps {
   name: string;
@@ -13,7 +13,7 @@ export interface ExecutionStatusLinkProps {
 export const ExecutionStatusLink: React.FC<ExecutionStatusLinkProps> = ({
   name,
   status,
-  url
+  url,
 }) => {
   return (
     <Box display="flex" alignItems="left">

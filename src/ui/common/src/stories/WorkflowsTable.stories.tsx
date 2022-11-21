@@ -1,12 +1,14 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import CheckItem, { CheckPreview } from '../components/pages/workflows/components/CheckItem';
+import CheckItem, {
+  CheckPreview,
+} from '../components/pages/workflows/components/CheckItem';
 import EngineItem from '../components/pages/workflows/components/EngineItem';
+import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
-import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import WorkflowTable, {
   WorkflowTableData,
 } from '../components/tables/WorkflowTable';
@@ -61,37 +63,12 @@ export const WorkflowsTable: React.FC = () => {
     },
   ];
 
-  const checkTableItem = <CheckItem checks={checkPreviews} />;
-
   const metricsShort: MetricPreview[] = [
     { metricId: '1', name: 'avg_churn', value: '10' },
     { metricId: '2', name: 'sentiment', value: '100.5' },
     { metricId: '3', name: 'revenue_lost', value: '$20M' },
     { metricId: '4', name: 'more_metrics', value: '$500' },
   ];
-
-  const metricsList = <MetricItem metrics={metricsShort} />;
-
-  const airflowEngine = (
-    <EngineItem
-      engineName="airflow"
-      engineIconUrl={SupportedIntegrations['Airflow'].logo}
-    />
-  );
-
-  const lambdaEngine = (
-    <EngineItem
-      engineName="lambda"
-      engineIconUrl={SupportedIntegrations['Lambda'].logo}
-    />
-  );
-
-  const kubernetesEngine = (
-    <EngineItem
-      engineName="kubernetes"
-      engineIconUrl={SupportedIntegrations['Kubernetes'].logo}
-    />
-  );
 
   const mockData: WorkflowTableData = {
     schema: {
@@ -115,7 +92,7 @@ export const WorkflowsTable: React.FC = () => {
         //engine: airflowEngine,
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo
+          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -124,13 +101,13 @@ export const WorkflowsTable: React.FC = () => {
         name: {
           name: 'wine_ratings',
           url: '/workflows',
-          status: ExecutionStatus.Succeeded
+          status: ExecutionStatus.Succeeded,
         },
         last_run: '11/1/2022 2:00PM',
         //engine: lambdaEngine,
         engine: {
           engineName: 'lambda',
-          engineIconUrl: SupportedIntegrations['Lambda'].logo
+          engineIconUrl: SupportedIntegrations['Lambda'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -144,7 +121,7 @@ export const WorkflowsTable: React.FC = () => {
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo
+          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -153,12 +130,12 @@ export const WorkflowsTable: React.FC = () => {
         name: {
           name: 'mpg_regressor',
           url: '/workflows',
-          status: ExecutionStatus.Canceled
+          status: ExecutionStatus.Canceled,
         },
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'lambda',
-          engineIconUrl: SupportedIntegrations['Lambda'].logo
+          engineIconUrl: SupportedIntegrations['Lambda'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -167,12 +144,12 @@ export const WorkflowsTable: React.FC = () => {
         name: {
           name: 'house_price_prediction',
           url: '/workflows',
-          status: ExecutionStatus.Registered
+          status: ExecutionStatus.Registered,
         },
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo
+          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -187,30 +164,30 @@ export const WorkflowsTable: React.FC = () => {
         checks: checkPreviews,
       },
       {
-        name: "wine_ratings",
+        name: 'wine_ratings',
         last_run: '11/1/2022 2:00PM',
-        engine: "lambda",
+        engine: 'lambda',
         metrics: metricsShort,
         checks: checkPreviews,
       },
       {
-        name: "diabetes_classifier",
+        name: 'diabetes_classifier',
         last_run: '11/1/2022 2:00PM',
-        engine: "kubernetes",
+        engine: 'kubernetes',
         metrics: metricsShort,
         checks: checkPreviews,
       },
       {
-        name: "mpg_regressor",
+        name: 'mpg_regressor',
         last_run: '11/1/2022 2:00PM',
-        engine: "lambda",
+        engine: 'lambda',
         metrics: metricsShort,
         checks: checkPreviews,
       },
       {
-        name: "house_price_prediction",
+        name: 'house_price_prediction',
         last_run: '11/1/2022 2:00PM',
-        engine: "kubernetes",
+        engine: 'kubernetes',
         metrics: metricsShort,
         checks: checkPreviews,
       },
@@ -223,14 +200,16 @@ export const WorkflowsTable: React.FC = () => {
     switch (column.name) {
       case 'name':
         const { name, url, status } = value;
-        value = <ExecutionStatusLink name={name} url={url} status={status} />
+        value = <ExecutionStatusLink name={name} url={url} status={status} />;
         break;
       case 'last_run':
         value = row[column.name];
         break;
       case 'engine': {
         const { engineName, engineIconUrl } = value;
-        value = <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />;
+        value = (
+          <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+        );
         break;
       }
       case 'metrics': {
@@ -252,7 +231,11 @@ export const WorkflowsTable: React.FC = () => {
 
   return (
     <Box>
-      <WorkflowTable data={mockData} searchEnabled={true} onGetColumnValue={onGetColumnValue} />
+      <WorkflowTable
+        data={mockData}
+        searchEnabled={true}
+        onGetColumnValue={onGetColumnValue}
+      />
     </Box>
   );
 };
