@@ -24,12 +24,12 @@ export type WorkflowTableRow = {
 
 export type WorkflowTableRowData = {
   [key: string]:
-    | string
-    | number
-    | boolean
-    | CheckPreview[]
-    | MetricPreview[]
-    | ExecutionStatusLinkProps;
+  | string
+  | number
+  | boolean
+  | CheckPreview[]
+  | MetricPreview[]
+  | ExecutionStatusLinkProps;
 };
 
 export interface WorkflowTableData {
@@ -54,23 +54,22 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterColumn, setFilterColumn] = React.useState('name');
 
-  const rows = data.data;
-  const columns = data.schema.fields;
+  let rows = data.data;
+  let columns = data.schema.fields;
 
   let filteredRows = [];
   //let filteredColumns = columns;
 
   if (searchQuery.length > 0) {
-    filteredRows = data.meta.filter((rowItem, index) => {
+    filteredRows = data.data.filter((rowItem, index) => {
       // filter rows by name, which is our default filter column.
       // rowItem.meta.name.toLowercase().includes(searchQuery)
-      console.log('rowItem: ', rowItem);
-      const name = rowItem.name as string;
+      const name = rowItem.name.name as string;
       return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }
 
-  console.log('filteredRows: ', filteredRows);
+    rows = filteredRows;
+  }
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -93,12 +92,7 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
       return onGetColumnValue(row, column);
     }
 
-    console.log('getColumnValue row: ', row);
-    console.log('getColumnValue column: ', column);
-
     const value = row[column.name];
-    console.log('getColumnValue: ', value);
-
     return value;
   };
 
