@@ -379,6 +379,9 @@ class Client:
         Returns:
             A flow object handle to be used to fetch information about this productionized flow.
         """
+        if not isinstance(name, str) or name == "":
+            raise InvalidUserArgumentException("A non-empty string must be supplied for the flow's name.")
+
         if config is not None:
             logger().warning(
                 "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."

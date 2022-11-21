@@ -24,14 +24,14 @@ def generate_table_name() -> str:
 
 def publish_flow_test(
     client: aqueduct.Client,
-    name: Optional[str],
+    name: str,
     artifacts: Union[BaseArtifact, List[BaseArtifact]],
     engine: str,
     expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
     schedule: str = "",
-    flow: Optional[Flow] = None,
+    existing_flow: Optional[Flow] = None,
 ) -> Flow:
     """
     TODO:
@@ -39,9 +39,7 @@ def publish_flow_test(
     flow runs we want to wait for.
     What is flow for?
     """
-    assert (name or flow) and not (name and flow), "Either a new flow name or a previous flow must be supplied, but not both!"
-
-    num_prev_runs = len(flow.list_runs()) if flow is not None else 0
+    num_prev_runs = len(existing_flow.list_runs()) if existing_flow is not None else 0
     flow = client.publish_flow(
         name=name,
         artifacts=artifacts,

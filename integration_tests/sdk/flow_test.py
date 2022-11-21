@@ -89,9 +89,10 @@ def test_complex_flow(client, flow_name, data_integration, engine):
 
     # Test that metrics and checks can be implicitly included, and that a non-error check
     # failing does not fail the flow.
+    name = flow_name()
     flow = publish_flow_test(
         client,
-        flow_name(),
+        name,
         output_artifact,
         engine=engine,
     )
@@ -104,11 +105,11 @@ def test_complex_flow(client, flow_name, data_integration, engine):
 
     flow = publish_flow_test(
         client,
-        None,  # `flow` supplied instead.
+        name,
         output_artifact,
         engine=engine,
         checks=[success_check],  # failing_check will no longer be included.
-        flow=flow,
+        existing_flow=flow,
     )
 
     # Only the explicitly defined metrics and checks should have been included in this second run.
