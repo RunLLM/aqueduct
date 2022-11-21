@@ -1,11 +1,13 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import CheckItem, { CheckPreview } from '../components/pages/workflows/components/CheckItem';
+import CheckItem, {
+  CheckPreview,
+} from '../components/pages/workflows/components/CheckItem';
+import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
-import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import WorkflowTable, {
   WorkflowTableData,
 } from '../components/tables/WorkflowTable';
@@ -59,16 +61,12 @@ export const DataListTable: React.FC = () => {
     },
   ];
 
-  const checkTableItem = <CheckItem checks={checkPreviews} />;
-
   const metricsShort: MetricPreview[] = [
     { metricId: '1', name: 'avg_churn', value: '10' },
     { metricId: '2', name: 'sentiment', value: '100.5' },
     { metricId: '3', name: 'revenue_lost', value: '$20M' },
     { metricId: '4', name: 'more_metrics', value: '$500' },
   ];
-
-  const metricsList = <MetricItem metrics={metricsShort} />;
 
   // TODO: Change this type to something more generic.
   // Also make this change in WorkflowsTable, I think we can just use Data here if we add JSX.element to Data's union type.
@@ -89,13 +87,13 @@ export const DataListTable: React.FC = () => {
         name: {
           name: 'churn_model',
           url: '/data',
-          status: ExecutionStatus.Succeeded
+          status: ExecutionStatus.Succeeded,
         },
         created_at: '11/1/2022 2:00PM',
         workflow: {
           name: 'train_churn_model',
           url: '/workflows',
-          status: ExecutionStatus.Running
+          status: ExecutionStatus.Running,
         },
         type: 'sklearn.linear, Linear Regression',
         metrics: metricsShort,
@@ -105,7 +103,7 @@ export const DataListTable: React.FC = () => {
         name: {
           name: 'predict_churn_dataset',
           url: '/workflows',
-          status: ExecutionStatus.Running
+          status: ExecutionStatus.Running,
         },
         created_at: '11/1/2022 2:00PM',
         workflow: {
@@ -121,13 +119,13 @@ export const DataListTable: React.FC = () => {
         name: {
           name: 'label_classifier',
           url: '/data',
-          status: ExecutionStatus.Pending
+          status: ExecutionStatus.Pending,
         },
         created_at: '11/1/2022 2:00PM',
         workflow: {
           name: 'label_classifier_workflow',
           url: '/workflows',
-          status: ExecutionStatus.Registered
+          status: ExecutionStatus.Registered,
         },
         type: 'parquet',
         metrics: metricsShort,
@@ -138,23 +136,23 @@ export const DataListTable: React.FC = () => {
       {
         name: 'churn_model',
         created_at: '11/1/2022 2:00PM',
-        workflow: "train_churn_model",
+        workflow: 'train_churn_model',
         type: 'sklearn.linear, Linear Regression',
         metrics: metricsShort,
         checks: checkPreviews,
       },
       {
-        name: "predict_churn_dataset",
+        name: 'predict_churn_dataset',
         created_at: '11/1/2022 2:00PM',
-        workflow: "monthly_churn_prediction",
+        workflow: 'monthly_churn_prediction',
         type: 'pandas.DataFrame',
         metrics: metricsShort,
         checks: checkPreviews,
       },
       {
-        name: "label_classifier",
+        name: 'label_classifier',
         created_at: '11/1/2022 2:00PM',
-        workflow: "label_classifier_workflow",
+        workflow: 'label_classifier_workflow',
         type: 'parquet',
         metrics: metricsShort,
         checks: checkPreviews,
@@ -169,7 +167,7 @@ export const DataListTable: React.FC = () => {
       case 'workflow':
       case 'name':
         const { name, url, status } = value;
-        value = <ExecutionStatusLink name={name} url={url} status={status} />
+        value = <ExecutionStatusLink name={name} url={url} status={status} />;
         break;
       case 'type':
       case 'created_at':
@@ -195,7 +193,11 @@ export const DataListTable: React.FC = () => {
   // TODO: Rename "WorkflowTable" to something more generic.
   return (
     <Box>
-      <WorkflowTable data={mockData} searchEnabled={true} onGetColumnValue={onGetColumnValue} />
+      <WorkflowTable
+        data={mockData}
+        searchEnabled={true}
+        onGetColumnValue={onGetColumnValue}
+      />
     </Box>
   );
 };
