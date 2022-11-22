@@ -32,6 +32,7 @@ def publish_flow_test(
     checks: Optional[List[BaseArtifact]] = None,
     schedule: str = "",
     existing_flow: Optional[Flow] = None,
+    should_block: bool = True
 ) -> Flow:
     """
     TODO:
@@ -39,6 +40,8 @@ def publish_flow_test(
     flow runs we want to wait for.
     What is flow for?
     """
+    assert isinstance(name, str)
+
     num_prev_runs = len(existing_flow.list_runs()) if existing_flow is not None else 0
     flow = client.publish_flow(
         name=name,
@@ -53,12 +56,13 @@ def publish_flow_test(
     # Necessary so that the flow is cleaned up at the end of the test.
     flow_name_to_id[name] = flow.id()
 
-    wait_for_flow_runs(
-        client,
-        flow.id(),
-        num_prev_runs=num_prev_runs,
-        expected_statuses=[expected_status] if isinstance(expected_status, ExecutionStatus) else expected_status,
-    )
+    if should_block:
+        wait_for_flow_runs(
+            client,
+            flow.id(),
+            num_prev_runs=num_prev_runs,
+            expected_statuses=[expected_status] if isinstance(expected_status, ExecutionStatus) else expected_status,
+        )
     return flow
 
 
@@ -121,7 +125,7 @@ def run_flow_test(
     return flow
 
 
-# TODO: make this private.
+# TODO: make this private. Or put a warning about using this.
 def wait_for_flow_runs(
     client: aqueduct.Client,
     flow_id: uuid.UUID,

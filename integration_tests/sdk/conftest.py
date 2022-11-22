@@ -12,7 +12,7 @@ def pytest_addoption(parser):
     # We currently only support a single data integration and compute engine per test suite run.
     parser.addoption(f"--data", action="store", default="aqueduct_demo")
     parser.addoption(f"--engine", action="store", default=None)
-    parser.addoption(f"--keep_flows", action="store_true", default=False)
+    parser.addoption(f"--keep-flows", action="store_true", default=False)
 
 
 def pytest_configure(config):
