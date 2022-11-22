@@ -27,14 +27,14 @@ const (
 type NotificationObject string
 
 const (
-	WorkflowObject          NotificationObject = "workflow"
-	WorkflowDagResultObject NotificationObject = "workflow_dag_result"
-	OrganizationObject      NotificationObject = "organization"
+	WorkflowObject     NotificationObject = "workflow"
+	DAGResultObject    NotificationObject = "workflow_dag_result"
+	OrganizationObject NotificationObject = "organization"
 )
 
 type NotificationAssociation struct {
 	Object NotificationObject `json:"object"`
-	Id     uuid.UUID          `json:"id"`
+	ID     uuid.UUID          `json:"id"`
 }
 
 func (association *NotificationAssociation) Value() (driver.Value, error) {
