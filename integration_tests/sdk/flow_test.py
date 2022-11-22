@@ -159,7 +159,7 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
         schedule=aqueduct.hourly(minute=aqueduct.Minute(execute_at.minute)),
 
         # Wait for two runs because registering a workflow always triggers an immediate run first.
-        expected_status=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+        expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
     )
 
 

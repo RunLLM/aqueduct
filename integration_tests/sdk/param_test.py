@@ -278,7 +278,7 @@ def test_materializing_failed_artifact(client, flow_name, engine):
         output,
         name=flow_name(),
         engine=engine,
-        expected_status=ExecutionStatus.FAILED,
+        expected_statuses=ExecutionStatus.FAILED,
     )
     artifact = flow.latest().artifact(name="fail_fn artifact")
     assert isinstance(artifact, GenericArtifact)

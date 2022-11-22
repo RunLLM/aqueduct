@@ -26,7 +26,7 @@ def publish_flow_test(
     client: aqueduct.Client,
     artifacts: Union[BaseArtifact, List[BaseArtifact]],
     engine: str,
-    expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+    expected_statuses: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
     name: Optional[str] = None,
     existing_flow: Optional[Flow] = None,
     metrics: Optional[List[BaseArtifact]] = None,
@@ -65,7 +65,7 @@ def publish_flow_test(
             client,
             flow.id(),
             num_prev_runs=num_prev_runs,
-            expected_statuses=[expected_status] if isinstance(expected_status, ExecutionStatus) else expected_status,
+            expected_statuses=[expected_statuses] if isinstance(expected_statuses, ExecutionStatus) else expected_statuses,
         )
     return flow
 
