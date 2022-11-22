@@ -15,6 +15,40 @@ var (
 	ErrPollJobTimeout          = errors.New("Reached timeout waiting for the job to finish.")
 )
 
+// These error codes come from our JobManagers when they fail to properly guide
+// their a job through its proper lifecycle. Errors surfaced this way are propagated
+// outside the python executor context. Their meaning is consistent across all
+// types of JobManagers.
+type JobErrorCode int
+
+const (
+	// Indicates an unknown system issue that we cannot recover from.
+	System JobErrorCode = 0
+
+	// Indicates that the issue was the user's fault, and to surface the error message
+	// to the user.
+	User = 1
+)
+
+type JobError struct {
+	errors.DropboxError
+	Code JobErrorCode
+}
+
+func wrapInJobError(code JobErrorCode, err error) error {
+	if dropboxErr, ok := err.(errors.DropboxError); ok {
+		return &JobError{
+			DropboxError: dropboxErr,
+			Code:         code,
+		}
+	}
+
+	return &JobError{
+		DropboxError: errors.New(err.Error()),
+		Code:         code,
+	}
+}
+
 type JobManager interface {
 	Config() Config
 	Launch(ctx context.Context, name string, spec Spec) error

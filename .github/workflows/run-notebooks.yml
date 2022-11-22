@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8.10'
+          python-version: '3.8'
 
       - name: Set up GOPATH variable
         run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV

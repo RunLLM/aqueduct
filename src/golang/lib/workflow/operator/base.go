@@ -69,7 +69,7 @@ func (bo *baseOperator) ID() uuid.UUID {
 // A catch-all for execution states that are the system's fault.
 // Logs an internal message so that we can debug.
 func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionState {
-	log.Errorf("Execution had system failure: %s. %v", logMsg, err)
+	log.Errorf("Execution had system failure: %s %v", logMsg, err)
 
 	failureType := shared.SystemFailure
 	return &shared.ExecutionState{
@@ -78,6 +78,23 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 		Error: &shared.Error{
 			Context: fmt.Sprintf("%v", err),
 			Tip:     shared.TipUnknownInternalError,
+		},
+	}
+}
+
+func jobManagerUserFailureExecState(err *job.JobError, logMsg string) *shared.ExecutionState {
+	log.Errorf("Job execution had a user-facing issue: %s %v", logMsg, err)
+
+	failureType := shared.UserFatalFailure
+	return &shared.ExecutionState{
+		Status:      shared.FailedExecutionStatus,
+		FailureType: &failureType,
+
+		// We only need to surface the user-facing message back the user,
+		// since the stack trace is within our own code.
+		Error: &shared.Error{
+			Context: "",
+			Tip:     err.GetMessage(),
 		},
 	}
 }
@@ -233,8 +250,15 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
 		} else {
-			// This is just an internal polling error state.
-			execState := unknownSystemFailureExecState(err, "Unable to poll job manager.")
+			var execState *shared.ExecutionState
+
+			// Catch any errors here that originate from within the JobManager, outside of the
+			// python execution context, and that need a better user-facing message (eg. OOM issues).
+			if jobErr := err.(*job.JobError); jobErr != nil && jobErr.Code == job.User {
+				execState = jobManagerUserFailureExecState(jobErr, "Job manager failed due to user error.")
+			} else {
+				execState = unknownSystemFailureExecState(err, "Unable to poll job manager.")
+			}
 			bo.updateExecState(execState)
 			return bo.ExecState(), nil
 		}
@@ -382,5 +406,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
+		Resources:                   bfo.dbOperator.Spec.Resources(),
 	}
 }

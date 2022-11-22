@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import Any, List, Optional
 
 try:
     from typing import Literal
@@ -32,6 +32,9 @@ class FunctionSpec(BaseModel):
 
     # This is specific to the check operator. This is left unset by any other function type.
     check_severity: Optional[enums.CheckSeverityLevel]
+
+    # This is always unset - it is only here because we forbid extra fields.
+    resources: Optional[Any]
 
     class Config:
         extra = Extra.forbid
