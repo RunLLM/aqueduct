@@ -1,14 +1,14 @@
-import { Alert, Snackbar, Typography, Link } from '@mui/material';
+import { Alert, Link, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import style from '../../styles/markdown.module.css';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { Card } from '../layouts/card';
 import WorkflowStatus from './workflowStatus';
-import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 
 type Props = {
   workflow: ListWorkflowSummary;
