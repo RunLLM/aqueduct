@@ -91,7 +91,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       workflow.selectedResult !== undefined &&
       !urlSearchParams.workflowDagResultId
     ) {
-      navigate(`?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`);
+      navigate(
+        `?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`,
+        { replace: true }
+      );
     }
   }, [workflow.selectedResult, urlSearchParams, navigate]);
 
