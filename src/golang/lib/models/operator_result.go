@@ -26,7 +26,7 @@ const (
 type OperatorResult struct {
 	Id          uuid.UUID                 `db:"id" json:"id"`
 	DAGResultID uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	OperatorID uuid.UUID                 `db:"operator_id" json:"operator_id"`
+	OperatorID  uuid.UUID                 `db:"operator_id" json:"operator_id"`
 	ExecState   shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 
