@@ -2,7 +2,6 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -22,31 +21,13 @@ type Props = {
 };
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
-  const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
   const [filterText, setFilterText] = useState<string>('');
 
-  const onBackPressed = () => {
-    //navigate('/', { replace: true });
-    console.log('back pressed ...');
-  };
-
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
   }, []);
-
-  // useEffect(() => {
-  //   window.addEventListener('popstate', () => {
-  //     onBackPressed();
-  //   });
-
-  //   return () => {
-  //     window.removeEventListener('popstate', () => {
-  //       onBackPressed();
-  //     });
-  //   }
-  // }, [navigate]);
 
   useEffect(() => {
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
