@@ -2,7 +2,7 @@ import { Alert, Link, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 import style from '../../styles/markdown.module.css';
 import { getPathPrefix } from '../../utils/getPathPrefix';
@@ -15,7 +15,6 @@ type Props = {
 };
 
 const WorkflowCard: React.FC<Props> = ({ workflow }) => {
-  const navigate = useNavigate();
   const toastMessage = `This workflow has not been run yet. You can inspect it once it's been run.`;
   const [showInfoToast, setShowInfoToast] = useState(false);
   const handleInfoToastClose = () => {
@@ -78,9 +77,6 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
         color="inherit"
         to={`${getPathPrefix()}/workflow/${workflow.id}`}
         component={RouterLink}
-        onClick={() => {
-          navigate(`${getPathPrefix()}/workflow/${workflow.id}`);
-        }}
       >
         {cardContent}
       </Link>
