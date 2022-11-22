@@ -12,6 +12,29 @@ const (
 	testOrgID = "aqueduct-test"
 )
 
+// seedArtifact creates count artifact records.
+func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
+	artifacts := make([]models.Artifact, 0, count)
+
+	for i := 0; i < count; i++ {
+		name := randString(10)
+		description := randString(15)
+		artifactType := randArtifactType()
+		artifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
+		require.Nil(ts.T(), err)
+
+		artifacts = append(artifacts, *artifact)
+	}
+
+	return artifacts
+}
+
+// seedArtifactWithContext creates an artifact record in the context.
+func (ts *TestSuite) seedArtifactWithContext() []models.Artifact {
+	workflows := seedDAGEdgeWithDAG(1)
+	artifacts := seedArtifact(1)
+}
+
 // seedUser creates count user records.
 func (ts *TestSuite) seedUser(count int) []models.User {
 	users := make([]models.User, 0, count)

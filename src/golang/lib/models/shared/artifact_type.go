@@ -16,6 +16,20 @@ const (
 	PicklableArtifact ArtifactType = "picklable"
 )
 
+var ArtifactTypes = []ArtifactType{
+	UntypedArtifact,
+	StringArtifact,
+	BoolArtifact,
+	NumericArtifact,
+	DictArtifact,
+	TupleArtifact,
+	TableArtifact,
+	JsonArtifact,
+	BytesArtifact,
+	ImageArtifact,
+	PicklableArtifact,
+}
+
 // `IsCompact` indicates if the value is 'small' enough to pass around in-memory.
 // Otherwise, the value may not fit memory and should be passed around as storage pointers
 // This is typically used for request / response handling.

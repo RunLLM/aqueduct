@@ -3,14 +3,13 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -60,7 +59,7 @@ func (*artifactReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB databas
 func (*artifactReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error) {
 	// Gets all artifacts that are a node with an incoming (id in `to_id`) or outgoing edge
 	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
-	getArtifactsByWorkflowDagIdQuery := fmt.Sprintf(
+	query := fmt.Sprintf(
 		`SELECT %s FROM artifact WHERE id IN
 		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
 		UNION 
@@ -106,7 +105,7 @@ func (*artifactWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Dat
 	return deleteArtifactResults(ctx, DB, []uuid.UUID{ID})
 }
 
-func (*artifactWriter) DeleteBatch(ctx context.Context, ID uuid.UUID, DB database.Database) error {
+func (*artifactWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error {
 	return deleteArtifactResults(ctx, DB, IDs)
 }
 
@@ -115,7 +114,7 @@ func (*artifactWriter) Update(
 	ID uuid.UUID,
 	changes map[string]interface{},
 	DB database.Database,
-) (*models.Workflow, error) {
+) (*models.Artifact, error) {
 	var artifact models.Artifact
 	err := utils.UpdateRecordToDest(
 		ctx,
@@ -130,13 +129,13 @@ func (*artifactWriter) Update(
 	return &artifact, err
 }
 
-func getArtifacts(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
+func getArtifacts(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Artifact, error) {
 	var artifacts []models.Artifact
 	err := DB.Query(ctx, &artifacts, query, args...)
 	return artifacts, err
 }
 
-func getArtifact(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Workflow, error) {
+func getArtifact(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Artifact, error) {
 	artifacts, err := getArtifacts(ctx, DB, query, args...)
 	if err != nil {
 		return nil, err

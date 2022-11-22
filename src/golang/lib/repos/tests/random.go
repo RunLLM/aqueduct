@@ -4,8 +4,14 @@ import (
 	"math/rand"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
+
+// randArtifactType generates a random artifact type.
+func randArtifactType() shared.ArtifactType {
+	return shared.ArtifactTypes[rand.Intn(len(shared.ArtifactTypes))]
+}
 
 // randAPIKey generates a random API key.
 func randAPIKey() string {
