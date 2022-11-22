@@ -6,8 +6,10 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -47,23 +49,24 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	ArtifactReader    artifact.Reader
-	IntegrationReader integration.Reader
-	OperatorReader    operator.Reader
-	WorkflowReader    workflow.Reader
+	ArtifactReader             artifact.Reader
+	IntegrationReader          integration.Reader
+	OperatorReader             operator.Reader
+	WorkflowReader             workflow.Reader
+	ExecutionEnvironmentReader db_exec_env.Reader
 
-	ArtifactWriter        artifact.Writer
-	OperatorWriter        operator.Writer
-	WorkflowWriter        workflow.Writer
-	WorkflowDagWriter     workflow_dag.Writer
-	WorkflowDagEdgeWriter workflow_dag_edge.Writer
-	WorkflowWatcherWriter workflow_watcher.Writer
+	ArtifactWriter             artifact.Writer
+	OperatorWriter             operator.Writer
+	WorkflowWriter             workflow.Writer
+	WorkflowDagWriter          workflow_dag.Writer
+	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
+	WorkflowWatcherWriter      workflow_watcher.Writer
+	ExecutionEnvironmentWriter db_exec_env.Writer
 }
 
 type registerWorkflowArgs struct {
 	*aq_context.AqContext
-	dbWorkflowDag            *workflow_dag.DBWorkflowDag
-	operatorIdToFileContents map[uuid.UUID][]byte
+	dagSummary *request.DagSummary
 
 	// Whether this is a registering a new workflow or updating an existing one.
 	isUpdate bool
@@ -137,24 +140,47 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	}
 
 	return &registerWorkflowArgs{
-		AqContext:                aqContext,
-		dbWorkflowDag:            dagSummary.Dag,
-		operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
-		isUpdate:                 isUpdate,
+		AqContext:  aqContext,
+		dagSummary: dagSummary,
+		isUpdate:   isUpdate,
 	}, http.StatusOK, nil
 }
 
 func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*registerWorkflowArgs)
+	dbWorkflowDag := args.dagSummary.Dag
+	fileContentsByOperatorID := args.dagSummary.FileContentsByOperatorUUID
 
 	emptyResp := registerWorkflowResponse{}
 
 	if _, err := operator_utils.UploadOperatorFiles(
 		ctx,
-		args.dbWorkflowDag,
-		args.operatorIdToFileContents,
+		dbWorkflowDag,
+		fileContentsByOperatorID,
 	); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
+
+	execEnvByOpId, status, err := setupExecEnv(
+		ctx,
+		args.Id,
+		args.dagSummary,
+		h.IntegrationReader,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, status, err
+	}
+
+	for opId, op := range args.dagSummary.Dag.Operators {
+		if env, ok := execEnvByOpId[opId]; ok {
+			// Note: this is the canotical way to assign a struct field of a map
+			// https://stackoverflow.com/questions/42605337/cannot-assign-to-struct-field-in-a-map
+			op.ExecutionEnvironmentID = db_type.NullUUID{UUID: env.Id}
+			dbWorkflowDag.Operators[opId] = op
+		}
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -165,7 +191,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.dbWorkflowDag,
+		dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -180,7 +206,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.dbWorkflowDag.Metadata.Id = workflowId
+	args.dagSummary.Dag.Metadata.Id = workflowId
 
 	if args.isUpdate {
 		// If we're updating an existing workflow, first update the metadata.
@@ -188,10 +214,10 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			ctx,
 			txn,
 			workflowId,
-			args.dbWorkflowDag.Metadata.Name,
-			args.dbWorkflowDag.Metadata.Description,
-			&args.dbWorkflowDag.Metadata.Schedule,
-			&args.dbWorkflowDag.Metadata.RetentionPolicy,
+			dbWorkflowDag.Metadata.Name,
+			dbWorkflowDag.Metadata.Description,
+			&dbWorkflowDag.Metadata.Schedule,
+			&dbWorkflowDag.Metadata.RetentionPolicy,
 		)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
@@ -199,13 +225,13 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	} else {
 		// We should create cron jobs for newly created, non-manually triggered workflows.
-		if string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule) != "" {
+		if string(dbWorkflowDag.Metadata.Schedule.CronSchedule) != "" {
 
 			err = h.Engine.ScheduleWorkflow(
 				ctx,
 				workflowId,
-				shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
-				string(args.dbWorkflowDag.Metadata.Schedule.CronSchedule),
+				shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
+				string(dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
 
 			if err != nil {
@@ -227,7 +253,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		workflowId,
-		shared_utils.AppendPrefix(args.dbWorkflowDag.Metadata.Id.String()),
+		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
 		timeConfig,
 		nil, /* parameters */
 	)
