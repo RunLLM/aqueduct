@@ -127,6 +127,16 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.MemoryMB != nil {
+				// Resetting memory back to its original value is best-effort.
+				defer func() {
+					if previousMemoryMB != nil {
+						_, err = j.updateFunctionMemory(ctx, functionName, previousMemoryMB)
+						if err != nil {
+							log.Errorf("Unable to reset function memory back to %v MB: %v", previousMemoryMB, err)
+						}
+					}
+				}()
+
 				newMemoryMBInt64 := int64(*functionSpec.Resources.MemoryMB)
 				previousMemoryMB, err = j.updateFunctionMemory(ctx, functionName, &newMemoryMBInt64)
 				if err != nil {
@@ -172,16 +182,6 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 		InvocationType: invocationType,
 		Payload:        payload,
 	}
-
-	// Resetting memory back to its original value is best-effort.
-	defer func() {
-		if previousMemoryMB != nil {
-			_, err = j.updateFunctionMemory(ctx, functionName, previousMemoryMB)
-			if err != nil {
-				log.Errorf("Unable to reset function memory back to %v MB: %v", previousMemoryMB, err)
-			}
-		}
-	}()
 
 	_, err = j.lambdaService.InvokeWithContext(ctx, invokeInput)
 	if err != nil {
