@@ -24,14 +24,14 @@ def generate_table_name() -> str:
 
 def publish_flow_test(
     client: aqueduct.Client,
-    name: str,
     artifacts: Union[BaseArtifact, List[BaseArtifact]],
     engine: str,
     expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+    name: Optional[str] = None,
+    existing_flow: Optional[Flow] = None,
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
     schedule: str = "",
-    existing_flow: Optional[Flow] = None,
     should_block: bool = True
 ) -> Flow:
     """
@@ -40,7 +40,11 @@ def publish_flow_test(
     flow runs we want to wait for.
     What is flow for?
     """
-    assert isinstance(name, str)
+    assert name or existing_flow and not (name and existing_flow), "Either `name` or `existing_flow` can be set, but not both."
+
+    if existing_flow is not None:
+        name = existing_flow.name()
+    assert isinstance(name, str), "Flow name must be string, not %s type." % type(name)
 
     num_prev_runs = len(existing_flow.list_runs()) if existing_flow is not None else 0
     flow = client.publish_flow(
@@ -71,7 +75,7 @@ def trigger_flow_test(
     flow: Flow,
     expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
     parameters: Optional[Dict[str, Any]] = None,
-):
+) -> None:
     num_prev_runs = len(flow.list_runs())
     client.trigger(flow.id(), parameters=parameters)
 
@@ -83,6 +87,7 @@ def trigger_flow_test(
     )
 
 
+# TODO: remove
 def run_flow_test(
     client: aqueduct.Client,
     artifacts: List[BaseArtifact],

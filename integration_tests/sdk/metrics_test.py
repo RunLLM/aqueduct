@@ -46,7 +46,7 @@ def test_register_metric(client, flow_name, data_integration, engine):
     metric_artifact = constant_metric(sql_artifact)
     publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[sql_artifact, metric_artifact],
         engine=engine,
     )
@@ -75,7 +75,7 @@ def test_metric_mixed_inputs(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         metric_output,
+        name=flow_name(),
         engine=engine,
     )

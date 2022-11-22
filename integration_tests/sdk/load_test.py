@@ -11,11 +11,10 @@ def test_list_saved_objects(client, flow_name, data_integration, engine):
     table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.REPLACE))
 
     # This will create the table.
-    name = flow_name()
     flow = publish_flow_test(
         client,
-        name,
-        table,
+        name=flow_name(),
+        artifacts=table,
         engine=engine,
     )
 
@@ -23,30 +22,27 @@ def test_list_saved_objects(client, flow_name, data_integration, engine):
     table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
     publish_flow_test(
         client,
-        name,
-        table,
-        engine=engine,
         existing_flow=flow,
+        artifacts=table,
+        engine=engine,
     )
 
     # Redundant append mode change.
     table.save(integration.config(table="table_1", update_mode=LoadUpdateMode.APPEND))
     publish_flow_test(
         client,
-        name,
-        table,
-        engine=engine,
         existing_flow=flow,
+        artifacts=table,
+        engine=engine,
     )
 
     # Create a different table from the same artifact.
     table.save(integration.config(table="table_2", update_mode=LoadUpdateMode.REPLACE))
     publish_flow_test(
         client,
-        name,
-        table,
-        engine=engine,
         existing_flow=flow,
+        artifacts=table,
+        engine=engine,
     )
 
     data = client.flow(flow.id()).list_saved_objects()
@@ -84,7 +80,7 @@ def test_multiple_artifacts_saved_to_same_integration(client, flow_name, data_in
 
     flow = publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[table_1, table_2],
         engine=engine,
     )
@@ -121,7 +117,7 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         review_copied,
+        name=flow_name(),
         engine=engine,
     )

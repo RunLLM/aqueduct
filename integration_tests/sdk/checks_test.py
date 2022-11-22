@@ -41,8 +41,8 @@ def test_check_on_table(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         check_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -58,8 +58,8 @@ def test_check_on_metric(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         check_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -78,8 +78,8 @@ def test_check_on_multiple_mixed_inputs(client, flow_name, data_integration, eng
 
     publish_flow_test(
         client,
-        flow_name(),
         check_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -186,8 +186,8 @@ def test_check_with_series_output(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
-        [sql_artifact, passed, failed],
+        name=flow_name(),
+        artifacts=[sql_artifact, passed, failed],
         engine=engine,
     )
 
@@ -209,7 +209,7 @@ def test_check_failure_with_varying_severity(client, flow_name, data_integration
 
     publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[sql_artifact, nonblocking_check],
         engine=engine,
     )

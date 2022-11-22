@@ -1,6 +1,6 @@
 import pytest
 from aqueduct.error import AqueductError
-from utils import run_flow_test, publish_flow_test
+from utils import publish_flow_test
 
 from aqueduct import op
 
@@ -29,7 +29,7 @@ def test_multiple_outputs(client, flow_name, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[str_output, int_output],
         engine=engine,
     )

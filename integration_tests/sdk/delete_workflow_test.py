@@ -5,9 +5,7 @@ from utils import (
     check_flow_doesnt_exist,
     check_table_doesnt_exist,
     check_table_exists,
-    delete_flow,
-    generate_new_flow_name,
-    run_flow_test, generate_table_name, publish_flow_test,
+    generate_table_name, publish_flow_test,
 )
 
 from aqueduct import LoadUpdateMode
@@ -23,8 +21,8 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
     flow = publish_flow_test(
         client,
-        flow_name(),
         table,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -43,22 +41,20 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 def test_delete_workflow_saved_objects(client, flow_name, data_integration, engine):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     integration = client.integration(data_integration)
-    name = flow_name()
     table_name = generate_table_name()
     table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.REPLACE))
 
     flow = publish_flow_test(
         client,
-        name,
         table,
+        name=flow_name(),
         engine=engine,
     )
 
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
     flow = publish_flow_test(
         client,
-        name,
         table,
         engine=engine,
         existing_flow=flow,
@@ -101,8 +97,8 @@ def test_delete_workflow_saved_objects_twice(client, flow_name, data_integration
     # Workflow 1's name not specified, so given a random workflow name.
     flow1 = publish_flow_test(
         client,
-        flow_name(),
         table,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -110,8 +106,8 @@ def test_delete_workflow_saved_objects_twice(client, flow_name, data_integration
     table.save(integration.config(table=table_name, update_mode=LoadUpdateMode.APPEND))
     flow2 = publish_flow_test(
         client,
-        flow_name(),
         table,
+        name=flow_name(),
         engine=engine,
     )
 

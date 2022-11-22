@@ -37,8 +37,8 @@ def test_basic_flow(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -54,8 +54,8 @@ def test_sentiment_flow(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -89,11 +89,10 @@ def test_complex_flow(client, flow_name, data_integration, engine):
 
     # Test that metrics and checks can be implicitly included, and that a non-error check
     # failing does not fail the flow.
-    name = flow_name()
     flow = publish_flow_test(
         client,
-        name,
         output_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -105,11 +104,10 @@ def test_complex_flow(client, flow_name, data_integration, engine):
 
     flow = publish_flow_test(
         client,
-        name,
         output_artifact,
+        existing_flow=flow,
         engine=engine,
         checks=[success_check],  # failing_check will no longer be included.
-        existing_flow=flow,
     )
 
     # Only the explicitly defined metrics and checks should have been included in this second run.
@@ -135,7 +133,7 @@ def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
 
     publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[fn_artifact1, fn_artifact2],
         engine=engine,
     )
@@ -155,7 +153,7 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
     execute_at = datetime.now() + timedelta(minutes=1)
     publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=[output_artifact],
         engine=engine,
         schedule=aqueduct.hourly(minute=aqueduct.Minute(execute_at.minute)),
@@ -188,8 +186,8 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
     name = flow_name()
     flow = publish_flow_test(
         client,
-        name,
-        output_artifact,
+        name=name,
+        artifacts=output_artifact,
         engine=engine,
         schedule=aqueduct.daily(),
     )
@@ -199,8 +197,8 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
 
     publish_flow_test(
         client,
-        name,
         metric,
+        name=name,
         engine=engine,
         schedule=aqueduct.daily(),
         existing_flow=flow,
@@ -217,8 +215,8 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
 
     flow = publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
         schedule=aqueduct.hourly(),
     )
@@ -240,8 +238,8 @@ def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
 
     flow = publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -259,8 +257,8 @@ def test_get_artifact_reuse_for_computation(client, flow_name, data_integration,
     )
     flow = publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
     )
 
@@ -277,8 +275,8 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
 
     flow_1 = publish_flow_test(
         client,
-        flow_name(),
         output_artifact,
+        name=flow_name(),
         engine=engine,
         schedule="* * * * *",
         should_block=False,
@@ -286,8 +284,8 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
 
     flow_2 = publish_flow_test(
         client,
-        flow_name(),
         output_artifact_2,
+        name=flow_name(),
         engine=engine,
         schedule="* * * * *",
         should_block=False,
@@ -315,13 +313,12 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
     def generate_initial_table():
         return initial_table
 
-    setup_flow_name = flow_name()
     table = generate_initial_table()
     table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
 
     setup_flow = publish_flow_test(
         client,
-        setup_flow_name,
+        name=flow_name(),
         artifacts=table,
         engine=engine,
     )
@@ -336,7 +333,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
 
     flow = publish_flow_test(
         client,
-        flow_name(),
+        name=flow_name(),
         artifacts=output,
         engine=engine,
     )
@@ -350,10 +347,9 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
     table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
     publish_flow_test(
         client,
-        setup_flow_name,
         artifacts=table,
-        engine=engine,
         existing_flow=setup_flow,
+        engine=engine,
     )
 
     # Fetching the historical flow and materializing the data will not use the new data
