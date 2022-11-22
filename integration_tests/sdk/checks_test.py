@@ -4,7 +4,7 @@ from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUser
 from constants import CHURN_SQL_QUERY, SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_sentiment_model
 from test_metrics.constant.model import constant_metric
-from utils import run_flow_test, publish_flow_test
+from utils import publish_flow_test
 
 from aqueduct import CheckSeverity, check
 

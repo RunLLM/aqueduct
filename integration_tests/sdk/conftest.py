@@ -1,11 +1,10 @@
 import os
-import uuid
 
 import pytest
 from aqueduct.dag import DAG, Metadata
+from utils import delete_flow, flow_name_to_id, generate_new_flow_name
 
 import aqueduct
-from utils import delete_flow, flow_name_to_id
 
 
 def pytest_addoption(parser):
@@ -45,7 +44,7 @@ def client(pytestconfig):
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
     if api_key is None or server_address is None:
         raise Exception(
-            "Test Setup Error: api_key and server_address must be set as environmental variables."
+            "Test Setup Error: api_key and server_address must bbe set as environmental variables."
         )
 
     return aqueduct.Client(api_key, server_address)
@@ -84,11 +83,19 @@ def enable_by_engine_type(request, client, engine):
 
 @pytest.fixture(scope="function")
 def flow_name(client, request, pytestconfig):
-    """TODO: handles the registration and teardown of flow objects."""
+    """Any flows created by this fixture will be automatically cleaned up at test teardown.
+
+    Note that it returns a method, so it must be used like:
+
+    ```
+    def test_foo(flow_name):
+        publish_flow(name=flow_name(), ...)
+    ```
+    """
     flow_names = []
 
     def get_new_flow_name():
-        flow_name = "test_" + uuid.uuid4().hex
+        flow_name = generate_new_flow_name()
         flow_names.append(flow_name)
         return flow_name
 

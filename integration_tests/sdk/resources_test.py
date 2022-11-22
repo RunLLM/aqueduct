@@ -1,10 +1,11 @@
 from os import cpu_count
 
 import pytest
-from aqueduct.enums import ServiceType, ExecutionStatus
+from aqueduct.enums import ExecutionStatus, ServiceType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
-from aqueduct import global_config, op
 from utils import publish_flow_test
+
+from aqueduct import global_config, op
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
@@ -61,12 +62,9 @@ def test_custom_num_cpus(client, flow_name, engine):
         delete_flow_after=False,
     )
 
+    assert default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
     assert (
-        default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
-    )
-    assert (
-        custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get()
-        == 6
+        custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get() == 6
     )
 
 
@@ -83,7 +81,9 @@ def test_too_many_cpus_requested(client, flow_name, engine):
         too_many_cpus()
     output = too_many_cpus.lazy()
 
-    publish_flow_test(client, output, name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED)
+    publish_flow_test(
+        client, output, name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED
+    )
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
@@ -140,7 +140,9 @@ def test_too_much_memory_requested_K8s(client, flow_name, engine):
         _ = too_much_memory()
     output = too_much_memory.lazy()
 
-    publish_flow_test(client, [output], name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED)
+    publish_flow_test(
+        client, [output], name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED
+    )
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.LAMBDA)

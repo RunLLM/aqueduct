@@ -20,7 +20,12 @@ def test_flow_fails_on_unexpected_type_output(client, flow_name, engine):
     output = output_different_types(type_toggle)
 
     flow = publish_flow_test(client, name=flow_name(), artifacts=output, engine=engine)
-    trigger_flow_test(client, flow, parameters={"output_type_toggle": False}, expected_status=ExecutionStatus.FAILED)
+    trigger_flow_test(
+        client,
+        flow,
+        parameters={"output_type_toggle": False},
+        expected_status=ExecutionStatus.FAILED,
+    )
 
 
 def test_flow_fails_on_unexpected_type_output_for_lazy(client, flow_name, engine):
@@ -32,7 +37,12 @@ def test_flow_fails_on_unexpected_type_output_for_lazy(client, flow_name, engine
     flow = publish_flow_test(client, name=flow_name(), artifacts=[output], engine=engine)
 
     # Because we are violating our inferred types, this will fail!
-    trigger_flow_test(client, flow, parameters={"output_type_toggle": False}, expected_status=ExecutionStatus.FAILED)
+    trigger_flow_test(
+        client,
+        flow,
+        parameters={"output_type_toggle": False},
+        expected_status=ExecutionStatus.FAILED,
+    )
 
 
 def test_preview_artifact_backfilled_with_wrong_type(client):

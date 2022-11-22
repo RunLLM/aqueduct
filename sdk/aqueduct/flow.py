@@ -13,7 +13,12 @@ from .enums import ArtifactType, OperatorType
 from .flow_run import FlowRun
 from .logger import logger
 from .operators import OperatorSpec, ParamSpec
-from .responses import SavedObjectUpdate, WorkflowDagResponse, WorkflowDagResultResponse, GetWorkflowResponse
+from .responses import (
+    GetWorkflowResponse,
+    SavedObjectUpdate,
+    WorkflowDagResponse,
+    WorkflowDagResultResponse,
+)
 from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
@@ -47,6 +52,7 @@ class Flow:
         resp = self._get_workflow_resp()
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        assert latest_workflow_dag.metadata.name is not None
         return latest_workflow_dag.metadata.name
 
     def list_runs(self, limit: int = 10) -> List[Dict[str, str]]:

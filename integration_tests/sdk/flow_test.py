@@ -16,11 +16,11 @@ from test_functions.simple.model import (
 )
 from test_metrics.constant.model import constant_metric
 from utils import (
-    delete_flow,
     generate_new_flow_name,
     generate_table_name,
-    run_flow_test,
-    wait_for_flow_runs, publish_flow_test, trigger_flow_test,
+    publish_flow_test,
+    trigger_flow_test,
+    wait_for_flow_runs,
 )
 
 import aqueduct
@@ -157,7 +157,6 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
         artifacts=[output_artifact],
         engine=engine,
         schedule=aqueduct.hourly(minute=aqueduct.Minute(execute_at.minute)),
-
         # Wait for two runs because registering a workflow always triggers an immediate run first.
         expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
     )

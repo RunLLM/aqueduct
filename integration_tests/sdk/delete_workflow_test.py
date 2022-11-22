@@ -5,7 +5,8 @@ from utils import (
     check_flow_doesnt_exist,
     check_table_doesnt_exist,
     check_table_exists,
-    generate_table_name, publish_flow_test,
+    generate_table_name,
+    publish_flow_test,
 )
 
 from aqueduct import LoadUpdateMode

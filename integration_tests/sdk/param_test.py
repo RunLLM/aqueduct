@@ -163,7 +163,6 @@ def test_edit_param_for_flow(client, flow_name, data_integration, engine):
     assert param_artifact.get() == new_row_to_add
 
 
-
 @metric
 def add_numbers(sql, num1, num2):
     if not isinstance(num1, int) or not isinstance(num2, int):
@@ -178,7 +177,6 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
     num1 = client.create_param(name="num1", default=5)
     num2 = client.create_param(name="num2", default=5)
     output = add_numbers(sql_artifact, num1, num2)
-
 
     flow = publish_flow_test(
         client,
@@ -380,4 +378,9 @@ def test_parameter_type_changes(client, flow_name, engine):
     )
 
     # TODO(ENG-1684): we should not allow the user to trigger successfully with the wrong type.
-    trigger_flow_test(client, flow, expected_status=ExecutionStatus.FAILED, parameters={"number": "This is a string"})
+    trigger_flow_test(
+        client,
+        flow,
+        expected_status=ExecutionStatus.FAILED,
+        parameters={"number": "This is a string"},
+    )

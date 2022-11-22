@@ -1,5 +1,5 @@
 from constants import SHORT_SENTIMENT_SQL_QUERY
-from utils import delete_flow, generate_new_flow_name, run_flow_test, publish_flow_test
+from utils import delete_flow, generate_new_flow_name, publish_flow_test
 
 from aqueduct import LoadUpdateMode, op
 
@@ -96,8 +96,7 @@ def test_multiple_artifacts_saved_to_same_integration(client, flow_name, data_in
     integration_name = list(data.keys())[0]
     assert len(data[integration_name]) == 2
     assert (
-        set([(item.object_name, item.update_mode) for item in data[integration_name]])
-        == data_set
+        set([(item.object_name, item.update_mode) for item in data[integration_name]]) == data_set
     )
 
 
