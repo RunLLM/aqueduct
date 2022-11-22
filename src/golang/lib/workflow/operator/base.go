@@ -105,6 +105,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	}
 
 	bo.updateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})
+
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
 		outputArtifactSignatures := make([]uuid.UUID, 0, len(bo.outputs))

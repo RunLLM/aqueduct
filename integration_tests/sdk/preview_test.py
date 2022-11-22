@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
+from aqueduct.enums import RuntimeType, ServiceType
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
-from aqueduct.enums import ServiceType, RuntimeType
-from aqueduct import global_config
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.file_dependency_model import (
     model_with_file_dependency,
@@ -17,7 +16,7 @@ from test_functions.simple.model import (
     dummy_sentiment_model_multiple_input,
 )
 
-from aqueduct import op
+from aqueduct import global_config, op
 
 
 def test_basic_get(client, data_integration):
