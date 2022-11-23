@@ -135,13 +135,18 @@ func WriteWorkflowDagToDatabase(
 		}
 
 		dbOperatorId := id
+		var envId *uuid.UUID = nil
+		if !operator.ExecutionEnvironmentID.IsNull {
+			envId = &operator.ExecutionEnvironmentID.UUID
+		}
+
 		if !exists {
 			dbOperator, err := operatorWriter.CreateOperator(
 				ctx,
 				operator.Name,
 				operator.Description,
 				&operator.Spec,
-				&operator.ExecutionEnvironmentID.UUID,
+				envId,
 				db,
 			)
 			if err != nil {
