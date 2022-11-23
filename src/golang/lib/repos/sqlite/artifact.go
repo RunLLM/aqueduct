@@ -6,8 +6,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -151,7 +152,6 @@ func getArtifact(ctx context.Context, DB database.Database, query string, args .
 
 	return &artifacts[0], nil
 }
-
 
 func deleteArtifactResults(ctx context.Context, DB database.Database, IDs []uuid.UUID) error {
 	if len(IDs) == 0 {
