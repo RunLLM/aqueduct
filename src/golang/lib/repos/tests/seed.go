@@ -1,6 +1,10 @@
 package tests
 
 import (
+	"math/rand"
+	"time"
+
+	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -29,10 +33,48 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 	return artifacts
 }
 
-// seedArtifactWithContext creates an artifact record in the context.
-func (ts *TestSuite) seedArtifactWithContext() []models.Artifact {
-	workflows := seedDAGEdgeWithDAG(1)
+// seedArtifactWithContext creates an artifact record in the context of a newly created workflow DAG.
+func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.workflow, models.users) {
 	artifacts := seedArtifact(1)
+	artifact := artifacts[0]
+
+
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+
+	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
+	dagID := dags[0].ID
+
+	edges := make([]models.DAGEdge, 0, 1)
+	artifactID := artifact[0]
+	operatorID := uuid.New()
+	edgeType := shared.ArtifactToOperatorDAGEdge
+	edge, err := ts.dagEdge.Create(
+		ts.ctx,
+		dagID,
+		edgeType,
+		artifactID,
+		operatorID,
+		int16(i),
+		ts.DB,
+	)
+	if rand.Intn(2) > 0 {
+		edgeType = shared.OperatorToArtifactDAGEdge
+
+		edge, err := ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			edgeType,
+			operatorID,
+			artifactID,
+			int16(i),
+			ts.DB,
+		)
+	}
+	return artifact, dag, workflows[0], users[0]
 }
 
 // seedUser creates count user records.
@@ -93,4 +135,124 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 	}
 
 	return workflows
+}
+
+// seedDAG creates count DAG records.
+// It also creates a new Workflow to associate with the DAG.
+func (ts *TestSuite) seedDAG(count int) []models.DAG {
+	workflows := ts.seedWorkflow(1)
+	workflowIDs := sampleWorkflowIDs(count, workflows)
+	return ts.seedDAGWithWorkflow(count, workflowIDs)
+}
+
+// seedDAGWithWorkflow creates count DAG records. It uses workflowIDs as the Workflow
+// associated with each DAG.
+func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []models.DAG {
+	require.Len(ts.T(), workflowIDs, count)
+
+	dags := make([]models.DAG, 0, count)
+
+	for i := 0; i < count; i++ {
+		workflowID := workflowIDs[i]
+		storageConfig := &shared.StorageConfig{
+			Type: shared.S3StorageType,
+			S3Config: &shared.S3Config{
+				Region: "us-east-2",
+				Bucket: "test",
+			},
+		}
+		engineConfig := &shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
+			AqueductConfig: &shared.AqueductConfig{},
+		}
+
+		dag, err := ts.dag.Create(
+			ts.ctx,
+			workflowID,
+			storageConfig,
+			engineConfig,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		dags = append(dags, *dag)
+	}
+
+	return dags
+}
+
+// seedDAGResult creates count DAGResult records.
+// It also creates a new DAG to associate with the DAGResults created.
+func (ts *TestSuite) seedDAGResult(count int) []models.DAGResult {
+	dags := ts.seedDAG(1)
+	dagIDs := sampleDagIDs(count, dags)
+	return ts.seedDAGResultWithDAG(count, dagIDs)
+}
+
+// seedDAGResultWithDAG creates count DAGResult records. It uses dagIDs as the
+// DAG associated with each DAGResult.
+func (ts *TestSuite) seedDAGResultWithDAG(count int, dagIDs []uuid.UUID) []models.DAGResult {
+	require.Len(ts.T(), dagIDs, count)
+
+	dagResults := make([]models.DAGResult, 0, count)
+
+	for i := 0; i < count; i++ {
+		now := time.Now()
+		execState := &col_shared.ExecutionState{
+			Status: col_shared.PendingExecutionStatus,
+			Timestamps: &col_shared.ExecutionTimestamps{
+				PendingAt: &now,
+			},
+		}
+
+		dagResult, err := ts.dagResult.Create(
+			ts.ctx,
+			dagIDs[i],
+			execState,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		dagResults = append(dagResults, *dagResult)
+	}
+
+	return dagResults
+}
+
+// seedDAGEdgeWith creates count DAGEdge records.
+// It creates a new DAG to associate with the DAGEdges.
+// For each DAGEdge, it randomly chooses the fromID, toID, and
+// type of edge (e.g. Operator to Artifact).
+func (ts *TestSuite) seedDAGEdge(count int) []models.DAGEdge {
+	dags := ts.seedDAG(1)
+	return ts.seedDAGEdgeWithDAG(count, dags[0].ID)
+}
+
+// seedDAGEdgeWith creates count DAGEdge records for the DAG specified.
+// For each DAGEdge, it randomly chooses the fromID, toID, and
+// type of edge (e.g. Operator to Artifact).
+func (ts *TestSuite) seedDAGEdgeWithDAG(count int, dagID uuid.UUID) []models.DAGEdge {
+	edges := make([]models.DAGEdge, 0, count)
+
+	for i := 0; i < count; i++ {
+		edgeType := shared.ArtifactToOperatorDAGEdge
+		if rand.Intn(2) > 0 {
+			edgeType = shared.OperatorToArtifactDAGEdge
+		}
+
+		edge, err := ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			edgeType,
+			uuid.New(),
+			uuid.New(),
+			int16(i),
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		edges = append(edges, *edge)
+	}
+
+	return edges
 }

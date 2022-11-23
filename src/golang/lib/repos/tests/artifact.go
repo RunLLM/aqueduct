@@ -42,28 +42,23 @@ func (ts *TestSuite) TestArtifact_GetBatch() {
 }
 
 func (ts *TestSuite) TestArtifact_GetByDAG() {
-	artifacts := ts.seedArtifact(1)
-	expectedArtifact := artifacts[0]
+	expectedArtifact, dag, _, _ := ts.seedArtifactInWorkflow()
 
-	/////
-	actualArtifact, err := ts.artifact.GetByDAG(ts.ctx, expectedArtifact.dagID, ts.DB)
+	actualArtifact, err := ts.artifact.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqual(ts.T(), expectedArtifact, actualArtifact)
 }
 
 func (ts *TestSuite) TestArtifact_ValidateOrg() {
-	// artifacts := ts.seedArtifact(1)
-	// expectedArtifact := artifacts[0]
+	expectedArtifact, _, _, user := ts.seedArtifactInWorkflow()
 
-	// orgID := 
+	createdByOrg, createdByOrgErr := ts.artifact.ValidateOrg(ts.ctx, expectedArtifact.ID, user.orgID, ts.DB)
+	require.Nil(ts.T(), createdByOrgErr)
+	require.True(ts.T(), createdByOrg)
 
-	// createdByOrg, createdByOrgErr := ts.artifact.ValidateOrg(ts.ctx, expectedArtifact.ID, orgID, ts.DB)
-	// require.Nil(ts.T(), shouldExistErr)
-	// require.True(ts.T(), shouldExist)
-
-	// notCreatedByOrg, notCreatedByOrgErr := ts.artifact.Exists(ts.ctx, uuid.New(), ts.DB)
-	// require.Nil(ts.T(), shoudlNotExistErr)
-	// require.False(ts.T(), shoudlNotExist)
+	notCreatedByOrg, notCreatedByOrgErr := ts.artifact.ValidateOrg(ts.ctx, expectedArtifact.ID, randString(15), ts.DB)
+	require.Nil(ts.T(), notCreatedByOrgErr)
+	require.False(ts.T(), notCreatedByOrg)
 }
 
 
