@@ -44,7 +44,7 @@ def client(pytestconfig):
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
     if api_key is None or server_address is None:
         raise Exception(
-            "Test Setup Error: api_key and server_address must bbe set as environmental variables."
+            "Test Setup Error: api_key and server_address must be set as environmental variables."
         )
 
     return aqueduct.Client(api_key, server_address)
