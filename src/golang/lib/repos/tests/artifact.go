@@ -25,7 +25,7 @@ func (ts *TestSuite) TestArtifact_Get() {
 
 	actualArtifact, err := ts.artifact.Get(ts.ctx, expectedArtifact.ID, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), actualArtifact, expectedArtifact)
+	requireDeepEqual(ts.T(), expectedArtifact, *actualArtifact)
 }
 
 func (ts *TestSuite) TestArtifact_GetBatch() {
@@ -46,13 +46,13 @@ func (ts *TestSuite) TestArtifact_GetByDAG() {
 
 	actualArtifact, err := ts.artifact.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedArtifact, actualArtifact)
+	requireDeepEqual(ts.T(), []models.Artifact{expectedArtifact}, actualArtifact)
 }
 
 func (ts *TestSuite) TestArtifact_ValidateOrg() {
 	expectedArtifact, _, _, user := ts.seedArtifactInWorkflow()
 
-	createdByOrg, createdByOrgErr := ts.artifact.ValidateOrg(ts.ctx, expectedArtifact.ID, user.orgID, ts.DB)
+	createdByOrg, createdByOrgErr := ts.artifact.ValidateOrg(ts.ctx, expectedArtifact.ID, user.OrgID, ts.DB)
 	require.Nil(ts.T(), createdByOrgErr)
 	require.True(ts.T(), createdByOrg)
 
@@ -60,7 +60,6 @@ func (ts *TestSuite) TestArtifact_ValidateOrg() {
 	require.Nil(ts.T(), notCreatedByOrgErr)
 	require.False(ts.T(), notCreatedByOrg)
 }
-
 
 func (ts *TestSuite) TestArtifact_Create() {
 	name := randString(10)
@@ -84,7 +83,7 @@ func (ts *TestSuite) TestArtifact_Create() {
 
 func (ts *TestSuite) TestArtifact_Update() {
 	artifacts := ts.seedArtifact(1)
-	expectedArtifact := artifacts[0]
+	artifact := artifacts[0]
 
 	name := randString(10)
 	description := randString(15)
@@ -120,6 +119,6 @@ func (ts *TestSuite) TestArtifact_DeleteBatch() {
 		IDs = append(IDs, artifact.ID)
 	}
 	
-	err := ts.artifact.Delete(ts.ctx, IDs, ts.DB)
+	err := ts.artifact.DeleteBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
 }

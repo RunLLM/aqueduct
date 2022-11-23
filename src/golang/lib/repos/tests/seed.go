@@ -34,9 +34,8 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 }
 
 // seedArtifactWithContext creates an artifact record in the context of a newly created workflow DAG.
-func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.workflow, models.users) {
-	artifacts := seedArtifact(1)
-	artifact := artifacts[0]
+func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.Workflow, models.User) {
+	artifacts := ts.seedArtifact(1)
 
 
 	users := ts.seedUser(1)
@@ -47,34 +46,30 @@ func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, mode
 
 	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
 	dagID := dags[0].ID
-
-	edges := make([]models.DAGEdge, 0, 1)
-	artifactID := artifact[0]
+	artifactID := artifacts[0].ID
 	operatorID := uuid.New()
-	edgeType := shared.ArtifactToOperatorDAGEdge
-	edge, err := ts.dagEdge.Create(
+
+	_, _ = ts.dagEdge.Create(
 		ts.ctx,
 		dagID,
-		edgeType,
+		shared.ArtifactToOperatorDAGEdge,
 		artifactID,
 		operatorID,
-		int16(i),
+		0,
 		ts.DB,
 	)
 	if rand.Intn(2) > 0 {
-		edgeType = shared.OperatorToArtifactDAGEdge
-
-		edge, err := ts.dagEdge.Create(
+		_, _ = ts.dagEdge.Create(
 			ts.ctx,
 			dagID,
-			edgeType,
+			shared.OperatorToArtifactDAGEdge,
 			operatorID,
 			artifactID,
-			int16(i),
+			0,
 			ts.DB,
 		)
 	}
-	return artifact, dag, workflows[0], users[0]
+	return artifacts[0], dags[0], workflows[0], users[0]
 }
 
 // seedUser creates count user records.
