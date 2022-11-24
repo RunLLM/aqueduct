@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
