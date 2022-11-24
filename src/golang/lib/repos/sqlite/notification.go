@@ -2,13 +2,14 @@ package sqlite
 
 import (
 	"context"
-	"time"
 	"fmt"
+	"fmt"
+	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -50,7 +51,6 @@ func (*notificationReader) ValidateUser(ctx context.Context, notificationID uuid
 	}
 
 	return count.Count == 1, nil
-
 }
 
 func (*notificationWriter) Create(
@@ -79,11 +79,11 @@ func (*notificationWriter) Create(
 
 	args := []interface{}{
 		ID,
-		receiverID, 
-		content, 
-		shared.UnreadNotificationStatus, 
-		level, 
-		association, 
+		receiverID,
+		content,
+		shared.UnreadNotificationStatus,
+		level,
+		association,
 		time.Now(),
 	}
 	return getNotification(ctx, DB, query, args...)
