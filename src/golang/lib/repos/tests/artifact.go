@@ -36,9 +36,9 @@ func (ts *TestSuite) TestArtifact_GetBatch() {
 		IDs = append(IDs, expectedArtifact.ID)
 	}
 
-	actualArtifact, err := ts.artifact.GetBatch(ts.ctx, IDs, ts.DB)
+	actualArtifacts, err := ts.artifact.GetBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqualArtifacts(ts.T(), expectedArtifacts, actualArtifact)
+	requireDeepEqualArtifacts(ts.T(), expectedArtifacts, actualArtifacts)
 }
 
 func (ts *TestSuite) TestArtifact_GetByDAG() {
