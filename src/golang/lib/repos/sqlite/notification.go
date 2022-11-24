@@ -2,7 +2,7 @@ package sqlite
 
 import (
 	"context"
-	"crypto/rand"
+	"time"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -30,7 +30,7 @@ func NewNotificationRepo() repos.Notification {
 	}
 }
 
-func (*notificationReader) GetByReceiver(ctx context.Context, receiverID uuid.UUID, status shared.NotificationStatus, DB database.Database) ([]models.Notification, error) {
+func (*notificationReader) GetByReceiverAndStatus(ctx context.Context, receiverID uuid.UUID, status shared.NotificationStatus, DB database.Database) ([]models.Notification, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM notification WHERE receiver_id = $1 AND status = $2;`,
 		models.NotificationCols(),
@@ -44,7 +44,7 @@ func (*notificationReader) ValidateUser(ctx context.Context, notificationID uuid
 	query := `SELECT COUNT(*) AS count FROM notification WHERE id = $1 AND receiver_id = $2;`
 	var count utils.CountResult
 
-	err := db.Query(ctx, &count, query, notificationId, userId)
+	err := DB.Query(ctx, &count, query, notificationID, userID)
 	if err != nil {
 		return false, err
 	}
@@ -58,7 +58,7 @@ func (*notificationWriter) Create(
 	receiverID uuid.UUID,
 	content string,
 	level shared.NotificationLevel,
-	association shared.NotificationAssociation,
+	association *shared.NotificationAssociation,
 	DB database.Database,
 ) (*models.Notification, error) {
 	cols := []string{
@@ -81,25 +81,24 @@ func (*notificationWriter) Create(
 		ID,
 		receiverID, 
 		content, 
-		shared.UnreadStatus, 
+		shared.UnreadNotificationStatus, 
 		level, 
 		association, 
 		time.Now(),
 	}
 	return getNotification(ctx, DB, query, args...)
-	
 }
 
 func (*notificationWriter) Update(ctx context.Context, ID uuid.UUID, status shared.NotificationStatus, DB database.Database) (*models.Notification, error) {
 	changedColumns := map[string]interface{}{
-		StatusColumn: status,
+		models.NotificationStatus: status,
 	}
-	return updateNotification(ctx, id, changedColumns, db)
+	return updateNotification(ctx, ID, changedColumns, DB)
 }
 
 func updateNotification(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Notification, error) {
 	var notification models.Notification
-	err := utils.UpdateRecordToDest(ctx, &notification, changes, models.NotificationTable, moddels.NotificationID, ID, model.NotificationCols(), DB)
+	err := utils.UpdateRecordToDest(ctx, &notification, changes, models.NotificationTable, models.NotificationID, ID, models.NotificationCols(), DB)
 	return &notification, err
 }
 
@@ -120,7 +119,7 @@ func getNotification(ctx context.Context, DB database.Database, query string, ar
 	}
 
 	if len(notifications) != 1 {
-		return nil, errors.Newf("Expected 1 artifact but got %v", len(artifacts))
+		return nil, errors.Newf("Expected 1 notification but got %v", len(notifications))
 	}
 
 	return &notifications[0], nil

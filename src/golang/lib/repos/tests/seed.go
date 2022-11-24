@@ -19,10 +19,10 @@ func (ts *TestSuite) seedNotification(count int) []models.Notification {
 	for i := 0; i < count; i++ {
 		receiverID := uuid.New()
 		content := randString(10)
-		level := shared.SuccessLevel
+		level := shared.SuccessNotificationLevel
 		association := &shared.NotificationAssociation{
 			Object: shared.OrganizationNotificationObject,
-			Id: uuid.New(),
+			ID: uuid.New(),
 		}
 		notification, err := ts.notification.Create(ts.ctx, receiverID, content, level, association, ts.DB)
 		require.Nil(ts.T(), err)
