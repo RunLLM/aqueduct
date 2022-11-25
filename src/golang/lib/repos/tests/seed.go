@@ -11,9 +11,6 @@ const (
 	// Defaults used for seeding database records
 	testOrgID = "aqueduct-test"
 	testIntegrationService = shared.DemoDbIntegrationName
-	testIntegrationConfig = {
-		"integrationConfigKey": "integrationConfigValue",
-	}
 )
 
 // seedIntegration creates count integration records.
@@ -22,6 +19,9 @@ func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
+		config := {
+			randString(10): randString(10),
+		}
 		validated := true
 		integration, err := ts.integration.Create(ts.ctx, testOrgID, testIntegrationService, name, testIntegrationConfig, validated, ts.DB)
 		require.Nil(ts.T(), err)

@@ -25,139 +25,153 @@ func (ts *TestSuite) TestIntegration_GetBatch() {
 
 	actualIntegrations, err := ts.integration.GetBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqualArtifacts(ts.T(), expectedIntegrations, actualIntegrations)
+	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByConfigField() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	integrations := ts.seedIntegration(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
-	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	for _, expectedIntegration := range integrations {
+		// Because config is a random key-value string pair, assume no duplicates.
+		for key, value := range expectedIntegration.config {
+			actualIntegrations, err := ts.integration.GetByConfigField(ts.ctx, key, value, ts.DB)
+			require.Equal(len(actualIntegrations), 1)
+			actualIntegration := actualIntegrations[0]
+			integrationValue, ok := actualIntegration.config[key]
+			require.True(ok)
+			require.Equal(value, integrationValue)
+			requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
+		}
+	}
 }
 
 func (ts *TestSuite) TestIntegration_GetByNameAndUser() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	integrations := ts.seedIntegration(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualIntegrations, err := ts.user.GetByNameAndUser(ts.ctx, expectedIntegrations[0].Name, expectedIntegrations[0].UserID, expectedIntegrations[0].OrgID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.Equal(len(actualIntegrations), 3)
+	requireDeepEqual(ts.T(), expectedIntegration, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByOrg() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedIntegrations := ts.seedIntegration(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualIntegrations, err := ts.user.GetByOrg(ts.ctx, expectedIntegrations[0].OrgID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.Equal(len(actualIntegrations), 3)
+	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByServiceAndUser() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedIntegrations := ts.seedIntegration(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualIntegrations, err := ts.user.GetByServiceAndUser(ts.ctx, expectedIntegrations[0].Service, expectedIntegrations[0].UserID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.Equal(len(actualIntegrations), 3)
+	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByUser() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedIntegrations := ts.seedIntegration(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualIntegrations, err := ts.user.GetByUser(ts.ctx, expectedIntegrations[0].OrgID, expectedIntegrations[0].UserID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.Equal(ts.T(), len(actualIntegrations), 3)
+	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_ValidateOwnership() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	integrations := ts.seedIntegration(1)
+	expectedIntegration := integrations[0]
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	valid, err := ts.user.ValidateOwnership(ts.ctx, expectedIntegration.ID, expectedIntegration.OrgID, expectedIntegration.UserID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.True(ts.T(), valid)
 }
 
 func (ts *TestSuite) TestIntegration_Create() {
-	apiKey := randAPIKey()
+	name := randString(10)
+	config := {
+		randString(10): randString(10),
+	}
+	valid := true
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	expectedIntegration := &models.Integration{
+		OrgID: testOrgID,
+		Service: testIntegrationService,
+		Name: name,
+		Config: config,
+		Validated: valid,
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.Service, expectedIntegration.Name, expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
+	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
 
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	expectedIntegration.ID = actualIntegration.ID
+	expectedIntegration.CreatedAt = actualIntegration.CreatedAt
+	requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
 }
 
 func (ts *TestSuite) TestIntegration_CreateForUser() {
-	apiKey := randAPIKey()
+	userID := uuid.New()
+	name := randString(10)
+	config := {
+		randString(10): randString(10),
+	}
+	valid := true
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	expectedIntegration := &models.Integration{
+		UserID: userID,
+		OrgID: testOrgID,
+		Service: testIntegrationService,
+		Name: name,
+		Config: config,
+		Validated: valid,
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.UserID, expectedIntegration.Service, expectedIntegration.Name, expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
+	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
 
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	expectedIntegration.ID = actualIntegration.ID
+	expectedIntegration.CreatedAt = actualIntegration.CreatedAt
+	requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
 }
 
-func (ts *TestSuite) TestIntegration_Delete() {
-	apiKey := randAPIKey()
+func (ts *TestSuite) TestIntegration_Delete() {	
+	integrations := ts.seedIntegration(1)
+	integration := integrations[0]
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
-	}
-
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	err := ts.integration.Delete(ts.ctx, integration.ID, ts.DB)
 	require.Nil(ts.T(), err)
-
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
-
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
 }
 
-func (ts *TestSuite) TestIntegration_Update() {
-	apiKey := randAPIKey()
+func (ts *TestSuite) TestIntegration_Update() {	
+	integrations := ts.seedIntegration(1)
+	integration := integrations[0]
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	name := randString(10)
+	config := {
+		randString(10): randString(10),
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	changes := map[string]interface{}{
+		models.IntegrationName: name,
+		models.IntegrationConfig: config,
+	}
+
+	newIntegration, err := ts.integration.Update(ts.ctx, integration.ID, changes, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
-
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	requireDeepEqual(ts.T(), name, newIntegration.Name)
+	requireDeepEqual(ts.T(), config, newIntegration.Description)
 }
