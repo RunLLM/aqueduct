@@ -142,8 +142,19 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	emptyResp := ConnectIntegrationResponse{}
 
+	statusCode, err := ValidatePrerequisites(
+		ctx,
+		args.Service,
+		args.Id,
+		h.IntegrationReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, statusCode, err
+	}
+
 	// Validate integration config
-	statusCode, err := ValidateConfig(
+	statusCode, err = ValidateConfig(
 		ctx,
 		args.RequestId,
 		args.Config,
@@ -586,6 +597,31 @@ func validateLambdaConfig(
 ) (int, error) {
 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func ValidatePrerequisites(
+	ctx context.Context,
+	svc integration.Service,
+	userId uuid.UUID,
+	integrationReader integration.Reader,
+	db database.Database,
+) (int, error) {
+	if svc == integration.Conda {
+		condaIntegration, _, err := exec_env.CondaConnectionState(
+			ctx, userId, integrationReader, db,
+		)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
+		}
+
+		if condaIntegration != nil {
+			return http.StatusBadRequest, errors.New("You already have a conda integration connected.")
+		}
+
+		return http.StatusOK, nil
 	}
 
 	return http.StatusOK, nil
