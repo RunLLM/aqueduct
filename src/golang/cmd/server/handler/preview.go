@@ -276,7 +276,7 @@ func setupExecEnv(
 
 	if condaConnectionState.Status != shared.SucceededExecutionStatus {
 		return nil, http.StatusBadRequest, errors.New(
-			"We are still creating conda enviroments. This may take a few minutes.",
+			"We are still creating conda environments. This may take a few minutes.",
 		)
 	}
 
