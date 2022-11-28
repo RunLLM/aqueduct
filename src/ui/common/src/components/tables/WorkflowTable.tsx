@@ -1,3 +1,5 @@
+import { faSearch, faX } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -10,6 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
+import { theme } from '../../styles/theme/theme';
 
 import { DataSchema } from '../../utils/data';
 import { CheckPreview } from '../pages/workflows/components/CheckItem';
@@ -52,20 +55,13 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchQuery, setSearchQuery] = React.useState('');
+  // TODO: Add dropdown to select which column to search the table on.
   const [searchColumn, setSearchColumn] = React.useState('name');
 
   let rows = data.data;
   let columns = data.schema.fields;
 
   let filteredRows = [];
-
-  if (searchQuery.length > 0) {
-    filteredRows = data.data.filter((rowItem, index) => {
-      return shouldInclude(rowItem, searchQuery, searchColumn);
-    });
-
-    rows = filteredRows;
-  }
 
   const shouldInclude = (rowItem, searchQuery, searchColumn): boolean => {
     // TODO: Allow users to pass in a function as a prop to support custom search by column.
@@ -115,14 +111,34 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
     return value;
   };
 
+  if (searchQuery.length > 0) {
+    filteredRows = data.data.filter((rowItem, index) => {
+      return shouldInclude(rowItem, searchQuery, searchColumn);
+    });
+
+    rows = filteredRows;
+  }
+
   return (
     <>
       <TextField
+        placeholder="search"
         value={searchQuery}
         onChange={(event) => setSearchQuery(event.target.value)}
         id="outlined-basic"
-        label="Search"
         variant="outlined"
+        InputProps={{
+          startAdornment: (
+            <Box marginRight="8px">
+              <FontAwesomeIcon icon={faSearch} color={theme.palette.gray[700]} />
+            </Box>
+          ),
+          endAdornment: (
+            <Box marginLeft="8px" onClick={() => { setSearchQuery('') }}>
+              <FontAwesomeIcon icon={faX} color={theme.palette.black} />
+            </Box>
+          )
+        }}
       />
       <Paper sx={{ overflow: 'hidden' }}>
         <TableContainer>
