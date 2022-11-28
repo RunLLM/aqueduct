@@ -2,15 +2,15 @@ package sqlite
 
 import (
 	"context"
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	models_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
-	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
-	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -64,7 +64,7 @@ func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string
 	// which matches https://www.sqlite.org/json1.html .
 	// We parametrize the extracted field_name and field_value
 	// to prevent injection.
-	args := []interface{}{"$."+fieldName, fieldValue}
+	args := []interface{}{"$." + fieldName, fieldValue}
 
 	return getIntegrations(ctx, DB, query, args...)
 }
@@ -97,7 +97,7 @@ func (*integrationReader) GetByServiceAndUser(ctx context.Context, service share
 }
 
 func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID models_utils.NullUUID, DB database.Database) ([]models.Integration, error) {
-	if (userID.IsNull) {
+	if userID.IsNull {
 		query := fmt.Sprintf(
 			`SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
 			models.IntegrationCols(),
