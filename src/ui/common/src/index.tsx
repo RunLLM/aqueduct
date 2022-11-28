@@ -359,7 +359,6 @@ export {
   sideSheetSwitcher,
   SnowflakeCard,
   SnowflakeDialog,
-  SqlServerCard,
   StatusChip as Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
