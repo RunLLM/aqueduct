@@ -16,14 +16,14 @@ const (
 // seedIntegration creates count integration records.
 func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 	integrations := make([]models.Integration, 0, count)
+	users := ts.seedUser(1)
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := {
-			randString(10): randString(10),
-		}
+		config := make(shared.IntegrationConfig)
+		config[randString(10)] = randString(10)
 		validated := true
-		integration, err := ts.integration.Create(ts.ctx, testOrgID, testIntegrationService, name, testIntegrationConfig, validated, ts.DB)
+		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, users[0].ID, testIntegrationService, name, &config, validated, ts.DB)
 		require.Nil(ts.T(), err)
 
 		integrations = append(integrations, *integration)

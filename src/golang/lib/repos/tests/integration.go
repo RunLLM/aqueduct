@@ -2,6 +2,8 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -10,7 +12,7 @@ func (ts *TestSuite) TestIntegration_Get() {
 	integrations := ts.seedIntegration(1)
 	expectedIntegration := &integrations[0]
 
-	actualIntegration, err := ts.user.Get(ts.ctx, expectedUser.ID, ts.DB)
+	actualIntegration, err := ts.integration.Get(ts.ctx, expectedIntegration.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
 }
@@ -33,55 +35,56 @@ func (ts *TestSuite) TestIntegration_GetByConfigField() {
 
 	for _, expectedIntegration := range integrations {
 		// Because config is a random key-value string pair, assume no duplicates.
-		for key, value := range expectedIntegration.config {
+		for key, value := range expectedIntegration.Config {
 			actualIntegrations, err := ts.integration.GetByConfigField(ts.ctx, key, value, ts.DB)
-			require.Equal(len(actualIntegrations), 1)
+			require.Nil(ts.T(), err)
+			require.Equal(ts.T(), 1, len(actualIntegrations))
 			actualIntegration := actualIntegrations[0]
-			integrationValue, ok := actualIntegration.config[key]
-			require.True(ok)
-			require.Equal(value, integrationValue)
+			integrationValue, ok := actualIntegration.Config[key]
+			require.True(ts.T(), ok)
+			require.Equal(ts.T(), value, integrationValue)
 			requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
 		}
 	}
 }
 
 func (ts *TestSuite) TestIntegration_GetByNameAndUser() {
-	integrations := ts.seedIntegration(3)
+	expectedIntegrations := ts.seedIntegration(3)
 
-	actualIntegrations, err := ts.user.GetByNameAndUser(ts.ctx, expectedIntegrations[0].Name, expectedIntegrations[0].UserID, expectedIntegrations[0].OrgID, ts.DB)
+	actualIntegrations, err := ts.integration.GetByNameAndUser(ts.ctx, expectedIntegrations[0].Name, expectedIntegrations[0].UserID.UUID, expectedIntegrations[0].OrgID, ts.DB)
 
 	require.Nil(ts.T(), err)
-	require.Equal(len(actualIntegrations), 3)
-	requireDeepEqual(ts.T(), expectedIntegration, actualIntegrations)
+	// Name should be unique since each name is a randomly-generated string. 
+	require.Equal(ts.T(), 1, len(actualIntegrations))
+	requireDeepEqual(ts.T(), expectedIntegrations[0:1], actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByOrg() {
-	expectedIntegrations := ts.seedIntegration(3)
+	_ = ts.seedIntegration(3)
 
-	actualIntegrations, err := ts.user.GetByOrg(ts.ctx, expectedIntegrations[0].OrgID, ts.DB)
+	actualIntegrations, err := ts.integration.GetByOrg(ts.ctx, testOrgID, ts.DB)
 
 	require.Nil(ts.T(), err)
-	require.Equal(len(actualIntegrations), 3)
-	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
+	require.Equal(ts.T(), 0, len(actualIntegrations))
 }
 
 func (ts *TestSuite) TestIntegration_GetByServiceAndUser() {
 	expectedIntegrations := ts.seedIntegration(3)
 
-	actualIntegrations, err := ts.user.GetByServiceAndUser(ts.ctx, expectedIntegrations[0].Service, expectedIntegrations[0].UserID, ts.DB)
+	actualIntegrations, err := ts.integration.GetByServiceAndUser(ts.ctx, expectedIntegrations[0].Service, expectedIntegrations[0].UserID.UUID, ts.DB)
 
 	require.Nil(ts.T(), err)
-	require.Equal(len(actualIntegrations), 3)
+	require.Equal(ts.T(), 3, len(actualIntegrations))
 	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
 func (ts *TestSuite) TestIntegration_GetByUser() {
 	expectedIntegrations := ts.seedIntegration(3)
 
-	actualIntegrations, err := ts.user.GetByUser(ts.ctx, expectedIntegrations[0].OrgID, expectedIntegrations[0].UserID, ts.DB)
+	actualIntegrations, err := ts.integration.GetByUser(ts.ctx, expectedIntegrations[0].OrgID, expectedIntegrations[0].UserID, ts.DB)
 
 	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), len(actualIntegrations), 3)
+	require.Equal(ts.T(), 3, len(actualIntegrations))
 	requireDeepEqualIntegrations(ts.T(), expectedIntegrations, actualIntegrations)
 }
 
@@ -89,7 +92,7 @@ func (ts *TestSuite) TestIntegration_ValidateOwnership() {
 	integrations := ts.seedIntegration(1)
 	expectedIntegration := integrations[0]
 
-	valid, err := ts.user.ValidateOwnership(ts.ctx, expectedIntegration.ID, expectedIntegration.OrgID, expectedIntegration.UserID, ts.DB)
+	valid, err := ts.integration.ValidateOwnership(ts.ctx, expectedIntegration.ID, expectedIntegration.OrgID, expectedIntegration.UserID, ts.DB)
 
 	require.Nil(ts.T(), err)
 	require.True(ts.T(), valid)
@@ -97,20 +100,22 @@ func (ts *TestSuite) TestIntegration_ValidateOwnership() {
 
 func (ts *TestSuite) TestIntegration_Create() {
 	name := randString(10)
-	config := {
-		randString(10): randString(10),
-	}
+	config := make(shared.IntegrationConfig)
+	config[randString(10)] = randString(10)
 	valid := true
 
 	expectedIntegration := &models.Integration{
 		OrgID: testOrgID,
+		UserID: utils.NullUUID{
+			IsNull: true,
+		},
 		Service: testIntegrationService,
 		Name: name,
 		Config: config,
 		Validated: valid,
 	}
 
-	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.Service, expectedIntegration.Name, expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
+	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.Service, expectedIntegration.Name, &expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
@@ -121,11 +126,13 @@ func (ts *TestSuite) TestIntegration_Create() {
 }
 
 func (ts *TestSuite) TestIntegration_CreateForUser() {
-	userID := uuid.New()
-	name := randString(10)
-	config := {
-		randString(10): randString(10),
+	userID := utils.NullUUID{
+		UUID: uuid.New(),
+		IsNull: false,
 	}
+	name := randString(10)
+	config := make(shared.IntegrationConfig)
+	config[randString(10)] = randString(10)
 	valid := true
 
 	expectedIntegration := &models.Integration{
@@ -137,7 +144,7 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 		Validated: valid,
 	}
 
-	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.UserID, expectedIntegration.Service, expectedIntegration.Name, expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
+	actualIntegration, err := ts.integration.CreateForUser(ts.ctx, expectedIntegration.OrgID, expectedIntegration.UserID.UUID, expectedIntegration.Service, expectedIntegration.Name, &expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
@@ -160,18 +167,17 @@ func (ts *TestSuite) TestIntegration_Update() {
 	integration := integrations[0]
 
 	name := randString(10)
-	config := {
-		randString(10): randString(10),
-	}
+	config := make(shared.IntegrationConfig)
+	config[randString(10)] = randString(10)
 
 	changes := map[string]interface{}{
 		models.IntegrationName: name,
-		models.IntegrationConfig: config,
+		models.IntegrationConfig: &config,
 	}
 
 	newIntegration, err := ts.integration.Update(ts.ctx, integration.ID, changes, ts.DB)
 	require.Nil(ts.T(), err)
 
 	requireDeepEqual(ts.T(), name, newIntegration.Name)
-	requireDeepEqual(ts.T(), config, newIntegration.Description)
+	requireDeepEqual(ts.T(), config, newIntegration.Config)
 }

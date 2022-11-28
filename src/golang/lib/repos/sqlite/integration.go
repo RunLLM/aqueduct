@@ -2,10 +2,13 @@ package sqlite
 
 import (
 	"context"
-	"crypto/rand"
+	"time"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	models_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -52,10 +55,17 @@ func (*integrationReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB data
 
 func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Integration, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM app_user WHERE api_key = $1;`,
+		"SELECT %s FROM integration WHERE json_extract(config, $1) = $2;",
 		models.IntegrationCols(),
 	)
-	args := []interface{}{apiKey}
+
+	// The full 'where' condition becomes
+	// `json_extract(config, '$.field_name') = 'field_value'`
+	// which matches https://www.sqlite.org/json1.html .
+	// We parametrize the extracted field_name and field_value
+	// to prevent injection.
+	args := []interface{}{"$."+fieldName, fieldValue}
+
 	return getIntegrations(ctx, DB, query, args...)
 }
 
@@ -70,7 +80,7 @@ func (*integrationReader) GetByNameAndUser(ctx context.Context, integrationName 
 
 func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Integration, error) {
 	query := fmt.Sprintf(
-		`"SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
+		`SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
 		models.IntegrationCols(),
 	)
 	args := []interface{}{orgId}
@@ -86,23 +96,34 @@ func (*integrationReader) GetByServiceAndUser(ctx context.Context, service share
 	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
-	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
-		models.IntegrationCols(),
-	)
-	args := []interface{}{orgID, userID}
-	return getIntegrations(ctx, DB, query, args...)
+func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID models_utils.NullUUID, DB database.Database) ([]models.Integration, error) {
+	if (userID.IsNull) {
+		query := fmt.Sprintf(
+			`SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
+			models.IntegrationCols(),
+		)
+		args := []interface{}{orgID}
+		return getIntegrations(ctx, DB, query, args...)
+	} else {
+		query := fmt.Sprintf(
+			`SELECT %s FROM integration WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
+			models.IntegrationCols(),
+		)
+		args := []interface{}{orgID, userID.UUID}
+		return getIntegrations(ctx, DB, query, args...)
+	}
 }
 
-func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
+func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID models_utils.NullUUID, DB database.Database) (bool, error) {
 	var count utils.CountResult
 
-	integrationObject, err := integrationReader.Get(
-		ctx,
-		integrationID,
-		DB,
+	query := fmt.Sprintf(
+		`SELECT %s FROM integration WHERE id = $1;`,
+		models.IntegrationCols(),
 	)
+	args := []interface{}{integrationID}
+
+	integrationObject, err := getIntegration(ctx, DB, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -114,9 +135,15 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 		if err != nil {
 			return false, err
 		}
+	} else if !userID.IsNull {
+		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
+		err := DB.Query(ctx, &count, query, integrationID, userID.UUID)
+		if err != nil {
+			return false, err
+		}
 	} else {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND organization_id = $2;`
-		err := DB.Query(ctx, &count, query, integrationID, organizationID)
+		err := DB.Query(ctx, &count, query, integrationID, orgID)
 		if err != nil {
 			return false, err
 		}
@@ -204,8 +231,7 @@ func (*integrationWriter) CreateForUser(
 
 func (*integrationWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
 	query := `DELETE FROM integration WHERE id = $1;`
-	return db.Execute(ctx, query, ID)
-
+	return DB.Execute(ctx, query, ID)
 }
 
 func (*integrationWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Integration, error) {

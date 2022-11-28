@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
 
@@ -35,10 +36,10 @@ type integrationReader interface {
 	GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
 
 	// GetByUser returns the Integrations by the user with the ID userID in the organization with the ID orgID.
-	GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
+	GetByUser(ctx context.Context, orgID string, userID utils.NullUUID, DB database.Database) ([]models.Integration, error)
 
 	// ValidateOwnership checks whether the integration is owned by the user if the integration is of type userOnly otherwise, checks whether the integration is owned by the organizaion orgID.
-	ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error)
+	ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID utils.NullUUID, DB database.Database) (bool, error)
 }
 
 type integrationWriter interface {
