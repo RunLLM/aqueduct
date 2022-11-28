@@ -80,7 +80,7 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
         const name = rowItem.name.name as string;
         shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
       }
-      // TODO: Create function to make this filtering more generic.l
+      // TODO: Create function to make this filtering more generic.
       default: {
         const name = rowItem.name.name as string;
         shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
