@@ -27,8 +27,8 @@ type EngineConfig struct {
 type AqueductConfig struct{}
 
 type AirflowConfig struct {
-	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
-	DagId         string    `json:"dag_id"  yaml:"dag_id"`
+	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	DagID         string    `json:"dag_id"  yaml:"dag_id"`
 	// MatchesAirflow indicates whether this DAG matches the current DAG registered with Airflow
 	MatchesAirflow             bool                 `json:"matches_airflow"  yaml:"matches_airflow"`
 	OperatorToTask             map[uuid.UUID]string `json:"operator_to_task"  yaml:"operator_to_task"`
@@ -38,11 +38,11 @@ type AirflowConfig struct {
 }
 
 type K8sConfig struct {
-	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 type LambdaConfig struct {
-	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 func (e *EngineConfig) Scan(value interface{}) error {
