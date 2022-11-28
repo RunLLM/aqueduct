@@ -41,3 +41,13 @@ func sampleUserIDs(n int, users []models.User) []uuid.UUID {
 	}
 	return sampleIDs(n, userIDs)
 }
+
+// sampleWorkflowIDs randomly samples workflows n times with replacement,
+// and returns the ID of selected Workflows.
+func sampleWorkflowIDs(n int, workflows []models.Workflow) []uuid.UUID {
+	workflowIDs := make([]uuid.UUID, 0, len(workflows))
+	for _, workflow := range workflows {
+		workflowIDs = append(workflowIDs, workflow.ID)
+	}
+	return sampleIDs(n, workflowIDs)
+}
