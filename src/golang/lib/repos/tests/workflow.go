@@ -98,8 +98,8 @@ func (ts *TestSuite) TestWorkflow_Create() {
 
 	require.NotEqual(ts.T(), uuid.Nil, actualWorkflow.ID)
 
-	actualWorkflow.ID = expectedWorkflow.ID
-	actualWorkflow.CreatedAt = expectedWorkflow.CreatedAt
+	expectedWorkflow.ID = actualWorkflow.ID
+	expectedWorkflow.CreatedAt = actualWorkflow.CreatedAt
 	requireDeepEqual(ts.T(), expectedWorkflow, actualWorkflow)
 }
 

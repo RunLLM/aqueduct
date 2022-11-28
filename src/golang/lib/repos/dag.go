@@ -27,15 +27,18 @@ type dagReader interface {
 	GetByArtifactResultBatch(ctx context.Context, artifactResultIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.DAG, error)
 
 	// GetByDAGResults returns the DAG used to create the DAGResult specified.
+	// It returns a database.ErrNoRows if no rows are found.
 	GetByDAGResult(ctx context.Context, dagResultID uuid.UUID, DB database.Database) (*models.DAG, error)
 
 	// GetByOperator returns the DAG that the specified Operator belongs to.
-	GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database)
+	// It returns a database.ErrNoRows if no rows are found.
+	GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database) (*models.DAG, error)
 
 	// GetByWorkflow returns all DAGs for the Workflow specified.
 	GetByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.DAG, error)
 
 	// GetLatestByWorkflow returns the latest DAG for the Workflow specified.
+	// It returns a database.ErrNoRows if no rows are found.
 	GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) (*models.DAG, error)
 }
 
@@ -56,5 +59,5 @@ type dagWriter interface {
 	DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
 
 	// Update applies changes to the DAG with ID. It returns the updated DAG.
-	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database)
+	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.DAG, error)
 }
