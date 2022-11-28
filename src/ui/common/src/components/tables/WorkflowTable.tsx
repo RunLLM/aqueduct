@@ -121,25 +121,28 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
 
   return (
     <>
-      <TextField
-        placeholder="search"
-        value={searchQuery}
-        onChange={(event) => setSearchQuery(event.target.value)}
-        id="outlined-basic"
-        variant="outlined"
-        InputProps={{
-          startAdornment: (
-            <Box marginRight="8px">
-              <FontAwesomeIcon icon={faSearch} color={theme.palette.gray[700]} />
-            </Box>
-          ),
-          endAdornment: (
-            <Box marginLeft="8px" onClick={() => { setSearchQuery('') }}>
-              <FontAwesomeIcon icon={faX} color={theme.palette.black} />
-            </Box>
-          )
-        }}
-      />
+      <Box marginBottom="8px">
+        <TextField
+          placeholder="Search by name ..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          id="outlined-basic"
+          variant="outlined"
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <Box marginRight="8px">
+                <FontAwesomeIcon icon={faSearch} color={theme.palette.gray[600]} />
+              </Box>
+            ),
+            endAdornment: (
+              <Box marginLeft="8px" color={theme.palette.gray[600]} sx={{ '&:hover': { cursor: 'pointer', color: theme.palette.black } }} onClick={() => { setSearchQuery('') }}>
+                <FontAwesomeIcon icon={faX} />
+              </Box>
+            )
+          }}
+        />
+      </Box>
       <Paper sx={{ overflow: 'hidden' }}>
         <TableContainer>
           <Table stickyHeader aria-label="sticky table">
