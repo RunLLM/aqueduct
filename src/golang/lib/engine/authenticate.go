@@ -3,6 +3,8 @@ package engine
 import (
 	"context"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -32,6 +34,8 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
+	errGroup := new(errgroup.Group)
+
 	functionsToShip := [10]lambda_utils.LambdaFunctionType{
 		lambda_utils.FunctionExecutor37Type,
 		lambda_utils.FunctionExecutor38Type,
@@ -46,10 +50,15 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	for _, functionType := range functionsToShip {
-		err := lambda_utils.CreateLambdaFunction(functionType, lambdaConf.RoleArn)
-		if err != nil {
-			return errors.Wrap(err, "Unable to Create Lambda Function")
-		}
+		lambdaFunctionType := functionType
+		errGroup.Go(func() error {
+			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
+		})
 	}
+
+	if err := errGroup.Wait(); err != nil {
+		return errors.Wrap(err, "Unable to Create Lambda Function.")
+	}
+
 	return nil
 }
