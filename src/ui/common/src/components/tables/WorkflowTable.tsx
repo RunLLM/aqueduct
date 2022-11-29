@@ -156,13 +156,10 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                 {columns.map((column, columnIndex) => {
                   return (
                     <TableCell
+                      padding="none"
+                      sx={{ borderRight: columnIndex < columns.length - 1 ? '1px solid rgba(224, 224, 224, 1);' : 'none' }}
                       key={`table-header-col-${columnIndex}`}
                       align={'left'}
-                      sx={{
-                        //backgroundColor: 'blue.900',
-                        //color: 'white',
-                        minWidth: '80px',
-                      }}
                       onClick={() => {
                         console.log(
                           'tableColumn clicked colIndex: ',
@@ -171,13 +168,13 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                         console.log('tableColumn clicked column: ', column);
                       }}
                     >
-                      <Box flexDirection="column">
+                      <Box flexDirection="column" padding="8px">
                         <Typography
                           variant="body1"
                           sx={{
                             textTransform: 'capitalize',
                             fontSize: '16px',
-                            fontWeight: 'bold'
+                            fontWeight: 400
                           }}
                         >
                           {column.name}
@@ -204,8 +201,11 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                           <TableCell
                             key={`table-col-${columnIndex}`}
                             align={'left'}
+                            padding="none"
                           >
-                            {getColumnValue(row, column)}
+                            <Box padding="8px">
+                              {getColumnValue(row, column)}
+                            </Box>
                           </TableCell>
                         );
                       })}
