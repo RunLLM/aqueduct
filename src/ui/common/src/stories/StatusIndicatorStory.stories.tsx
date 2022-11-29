@@ -10,32 +10,21 @@ interface StatusIndicatorStoryProps {
   label: string;
 }
 
-const StatusIndicatorDisplay: React.FC<StatusIndicatorStoryProps> = ({
-  status,
-  label,
-}) => {
-  return (
-    <Box display="flex">
-      <StatusIndicator status={status} />
-      <Typography variant="body1" sx={{ marginLeft: '8px' }}>
-        {label}
-      </Typography>
-    </Box>
-  );
-};
-
 export default {
   title: 'Status Indicator',
-  component: StatusIndicatorDisplay,
+  component: StatusIndicator,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {
-    //backgroundColor: { control: 'color' },
-  },
-} as ComponentMeta<typeof StatusIndicatorDisplay>;
+  argTypes: {},
+} as ComponentMeta<typeof StatusIndicator>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof StatusIndicatorDisplay> = (args) => (
-  <StatusIndicatorDisplay {...args} />
+const Template: ComponentStory<typeof StatusIndicator> = (args: StatusIndicatorStoryProps) => (
+  <Box display="flex">
+    <StatusIndicator {...args} />
+    <Typography variant="body1" sx={{ marginLeft: '8px' }}>
+      {args.label}
+    </Typography>
+  </Box>
 );
 
 export const CanceledStatusIndicator = Template.bind({});
@@ -72,4 +61,10 @@ export const SucceededStatusIndicator = Template.bind({});
 SucceededStatusIndicator.args = {
   status: ExecutionStatus.Succeeded,
   label: 'Succeeded',
+};
+
+export const UnknownStatusIndicator = Template.bind({});
+UnknownStatusIndicator.args = {
+  status: ExecutionStatus.Unknown,
+  label: 'Unknown',
 };
