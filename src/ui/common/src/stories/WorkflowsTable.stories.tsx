@@ -64,10 +64,10 @@ export const WorkflowsTable: React.FC = () => {
   ];
 
   const metricsShort: MetricPreview[] = [
-    { metricId: '1', name: 'avg_churn', value: '10' },
-    { metricId: '2', name: 'sentiment', value: '100.5' },
-    { metricId: '3', name: 'revenue_lost', value: '$20M' },
-    { metricId: '4', name: 'more_metrics', value: '$500' },
+    { metricId: '1', name: 'avg_churn', value: '10', status: ExecutionStatus.Failed },
+    { metricId: '2', name: 'sentiment', value: '100.5', status: ExecutionStatus.Succeeded },
+    { metricId: '3', name: 'revenue_lost', value: '$20M', status: ExecutionStatus.Succeeded },
+    { metricId: '4', name: 'more_metrics', value: '$500', status: ExecutionStatus.Succeeded },
   ];
 
   const mockData: WorkflowTableData = {

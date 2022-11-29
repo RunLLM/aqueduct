@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import CheckItem, {
@@ -62,10 +62,11 @@ export const DataListTable: React.FC = () => {
   ];
 
   const metricsShort: MetricPreview[] = [
-    { metricId: '1', name: 'avg_churn', value: '10' },
-    { metricId: '2', name: 'sentiment', value: '100.5' },
-    { metricId: '3', name: 'revenue_lost', value: '$20M' },
-    { metricId: '4', name: 'more_metrics', value: '$500' },
+    { metricId: '1', name: 'avg_churn', value: '10', status: ExecutionStatus.Succeeded },
+    { metricId: '2', name: 'sentiment', value: '100.5', status: ExecutionStatus.Failed },
+    { metricId: '3', name: 'revenue_lost', value: '$20M', status: ExecutionStatus.Succeeded },
+    { metricId: '4', name: 'more_metrics', value: '$500', status: ExecutionStatus.Succeeded },
+    { metricId: '5', name: 'more_metrics', value: '$500', status: ExecutionStatus.Succeeded },
   ];
 
   // TODO: Change this type to something more generic.
@@ -163,13 +164,14 @@ export const DataListTable: React.FC = () => {
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];
 
+    console.log('column: ', column.name);
+
     switch (column.name) {
       case 'workflow':
       case 'name':
         const { name, url, status } = value;
         value = <ExecutionStatusLink name={name} url={url} status={status} />;
         break;
-      case 'type':
       case 'created_at':
         value = row[column.name];
         break;
@@ -179,6 +181,11 @@ export const DataListTable: React.FC = () => {
       }
       case 'checks': {
         value = <CheckItem checks={value} />;
+        break;
+      }
+      case 'type': {
+        console.log('inside dataTable onGetColumnValue')
+        value = <Typography fontFamily="monospace">{row[column.name]}</Typography>
         break;
       }
       default: {
