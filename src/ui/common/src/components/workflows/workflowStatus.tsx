@@ -1,3 +1,4 @@
+import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import React from 'react';
@@ -9,43 +10,11 @@ type Props = {
   status: ExecutionStatus;
 };
 
-export const StatusChip: React.FC<Props> = ({ status }) => {
-  const statusIcons = [];
-  const runStatus = status.toLowerCase();
-
-  if (runStatus === ExecutionStatus.Succeeded) {
-    statusIcons.push(<Chip label="Succeeded" color="success" size="small" />);
-  } else if (runStatus === ExecutionStatus.Failed) {
-    statusIcons.push(<Chip label="Failed" color="error" size="small" />);
-  } else if (runStatus === ExecutionStatus.Pending) {
-    statusIcons.push(<Chip label="In Progress" color="info" size="small" />);
-  } else if (runStatus === ExecutionStatus.Canceled) {
-    statusIcons.push(<Chip label="Canceled" color="default" size="small" />);
-  } else if (runStatus === ExecutionStatus.Registered) {
-    statusIcons.push(<Chip label="Pending" color="info" size="small" />);
-  }
-
-  return (
-    <Box sx={{ alignItems: 'center' }}>
-      {statusIcons.map((icon, idx) => (
-        <Box mr={1} key={idx}>
-          {icon}
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
-export default StatusChip;
-
-/*
-Smaller status indicator component that is just a circle with a color
-*/
-export const StatusIndicator: React.FC<Props> = ({ status }) => {
-  let backgroundColor = theme.palette.Success;
+export const getExecutionStatusColor = (status: ExecutionStatus): string => {
+  let backgroundColor = theme.palette.Primary;
   switch (status) {
     case ExecutionStatus.Canceled:
-      backgroundColor = theme.palette.Primary;
+      backgroundColor = theme.palette.Default;
       break;
     case ExecutionStatus.Failed:
       backgroundColor = theme.palette.Error;
@@ -54,30 +23,98 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
       backgroundColor = theme.palette.Info;
       break;
     case ExecutionStatus.Registered:
-      // TODO: Figure out color to use for Registered.
-      backgroundColor = theme.palette.Info;
+      backgroundColor = theme.palette.Registered;
       break;
     case ExecutionStatus.Running:
-      // TODO: Figure out color to use for running
-      backgroundColor = theme.palette.Info;
+      backgroundColor = theme.palette.Running;
       break;
     case ExecutionStatus.Succeeded:
       backgroundColor = theme.palette.Success;
       break;
     case ExecutionStatus.Unknown:
+    default:
       backgroundColor = theme.palette.gray[400];
       break;
   }
 
+  return backgroundColor;
+}
+
+export const getExecutionStatusLabel = (status: ExecutionStatus): string => {
+  let labelText = "Succeeded";
+  switch (status) {
+    case ExecutionStatus.Canceled:
+      labelText = "Canceled";
+      break;
+    case ExecutionStatus.Failed:
+      labelText = "Failed";
+      break;
+    case ExecutionStatus.Pending:
+      labelText = "Pending";
+      break;
+    case ExecutionStatus.Registered:
+      labelText = "Registered";
+      break;
+    case ExecutionStatus.Running:
+      labelText = "Running";
+      break;
+    case ExecutionStatus.Succeeded:
+      labelText = "Succeeded";
+      break;
+    case ExecutionStatus.Unknown:
+      labelText = "Unknown";
+      break;
+    default:
+      labelText = "Unknown";
+      break;
+  }
+
+  return labelText;
+}
+
+export const StatusChip: React.FC<Props> = ({ status }) => {
+  const statusIcons = [];
+
+  const getStatusChipTextColor = (status: ExecutionStatus): string => {
+    let textColor = theme.palette.black;
+    switch (status) {
+      case ExecutionStatus.Canceled:
+      case ExecutionStatus.Unknown:
+      case ExecutionStatus.Running:
+        textColor = theme.palette.black;
+        break;
+      default:
+        textColor = theme.palette.white;
+        break;
+    }
+
+    return textColor;
+  }
+
+  statusIcons.push();
+
   return (
-    <Box
-      sx={{
-        width: '8px',
-        height: '8px',
-        backgroundColor,
-        borderRadius: 999,
-        alignSelf: 'center',
-      }}
-    />
+    <Chip label={getExecutionStatusLabel(status)} sx={{ backgroundColor: getExecutionStatusColor(status), color: getStatusChipTextColor(status) }} size="small" />
+  );
+};
+
+export default StatusChip;
+
+/**
+ - Smaller status indicator component that is just a circle with a background color.
+**/
+export const StatusIndicator: React.FC<Props> = ({ status }) => {
+  return (
+    <Tooltip title={getExecutionStatusLabel(status)} placement="top" arrow>
+      <Box
+        sx={{
+          width: '12px',
+          height: '12px',
+          backgroundColor: getExecutionStatusColor(status),
+          borderRadius: 999,
+          alignSelf: 'center',
+        }}
+      />
+    </Tooltip>
   );
 };

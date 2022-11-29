@@ -18,9 +18,9 @@ const Template: ComponentStory<typeof StatusChip> = (args) => (
   <StatusChip {...args} />
 );
 
-export const SucceededStatusChip = Template.bind({});
-SucceededStatusChip.args = {
-  status: ExecutionStatus.Succeeded,
+export const CanceledStatusChip = Template.bind({});
+CanceledStatusChip.args = {
+  status: ExecutionStatus.Canceled,
 };
 
 export const FailedStatusChip = Template.bind({});
@@ -33,18 +33,22 @@ PendingStatusChip.args = {
   status: ExecutionStatus.Pending,
 };
 
-export const CanceledStatusChip = Template.bind({});
-CanceledStatusChip.args = {
-  status: ExecutionStatus.Canceled,
-};
-
 export const RegisteredStatusChip = Template.bind({});
 RegisteredStatusChip.args = {
   status: ExecutionStatus.Registered,
 };
 
-// TODO: Add ExecutionStatus.Running state to the StatusChip component.
-// export const RunningStatusChip = Template.bind({});
-// RunningStatusChip.args = {
-//     status: ExecutionStatus.Running,
-// };
+export const RunningStatusChip = Template.bind({});
+RunningStatusChip.args = {
+  status: ExecutionStatus.Running,
+};
+
+export const SucceededStatusChip = Template.bind({});
+SucceededStatusChip.args = {
+  status: ExecutionStatus.Succeeded,
+};
+
+export const UnknownStatusChip = Template.bind({});
+UnknownStatusChip.args = {
+  status: ExecutionStatus.Unknown,
+};
