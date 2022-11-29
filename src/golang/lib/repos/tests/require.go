@@ -63,3 +63,25 @@ func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
 		requireDeepEqual(t, expectedDAG, foundDAG)
 	}
 }
+
+// requireDeepEqualDAGResults asserts that the expected and actual lists
+// of DAGResults containt the same elements.
+func requireDeepEqualDAGResults(t *testing.T, expected, actual []models.DAGResult) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedDAGResult := range expected {
+		found := false
+		var foundDAGResult models.DAGResult
+
+		for _, actualDAGResult := range actual {
+			if expectedDAGResult.ID == actualDAGResult.ID {
+				found = true
+				foundDAGResult = actualDAGResult
+				break
+			}
+		}
+
+		require.True(t, found, "Unable to find DAGResult: %v", expectedDAGResult)
+		requireDeepEqual(t, expectedDAGResult, foundDAGResult)
+	}
+}

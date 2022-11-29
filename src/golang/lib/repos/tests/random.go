@@ -51,3 +51,13 @@ func sampleWorkflowIDs(n int, workflows []models.Workflow) []uuid.UUID {
 	}
 	return sampleIDs(n, workflowIDs)
 }
+
+// sampleDagIDs randomly samples dags n times with replacement,
+// and returns the ID of selected DAGs.
+func sampleDagIDs(n int, dags []models.DAG) []uuid.UUID {
+	dagIDs := make([]uuid.UUID, 0, len(dags))
+	for _, dag := range dags {
+		dagIDs = append(dagIDs, dag.ID)
+	}
+	return sampleIDs(n, dagIDs)
+}
