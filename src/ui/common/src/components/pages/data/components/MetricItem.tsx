@@ -1,3 +1,6 @@
+// TODO: Remove this component, and use the one that's in workflows list
+
+
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';

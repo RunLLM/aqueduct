@@ -20,8 +20,8 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   const [expanded, setExpanded] = useState(false);
   const metricList = [];
   let metricsToShow = metrics.length;
-  if (!expanded && metrics.length > 3) {
-    metricsToShow = 3;
+  if (!expanded && metrics.length > 1) {
+    metricsToShow = 1;
   }
 
   for (let i = 0; i < metricsToShow; i++) {
@@ -63,7 +63,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   const showMore = (
     <Box>
       <Typography variant="body1" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show More ...
+        Show More ({metrics.length - metricsToShow}) ...
       </Typography>
     </Box>
   );

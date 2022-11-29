@@ -6,7 +6,7 @@ import {
   faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
@@ -15,33 +15,43 @@ import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus from '../../../../utils/shared';
 
 const errorIcon = (
-  <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
-    <FontAwesomeIcon icon={faCircleExclamation} />
-  </Box>
+  <Tooltip title="Error" placement="top" arrow>
+    <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+      <FontAwesomeIcon icon={faCircleExclamation} />
+    </Box>
+  </Tooltip>
 );
 
 const warningIcon = (
-  <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
-    <FontAwesomeIcon icon={faTriangleExclamation} />
-  </Box>
+  <Tooltip title="Warning" placement="top" arrow>
+    <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
+      <FontAwesomeIcon icon={faTriangleExclamation} />
+    </Box>
+  </Tooltip>
 );
 
 const successIcon = (
-  <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
-    <FontAwesomeIcon icon={faCircleCheck} />
-  </Box>
+  <Tooltip title="Success" placement="top" arrow>
+    <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
+      <FontAwesomeIcon icon={faCircleCheck} />
+    </Box>
+  </Tooltip>
 );
 
 const unknownIcon = (
-  <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
-    <FontAwesomeIcon icon={faQuestionCircle} />
-  </Box>
+  <Tooltip title="Unknown" placement="top" arrow>
+    <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
+      <FontAwesomeIcon icon={faQuestionCircle} />
+    </Box>
+  </Tooltip>
 );
 
 const canceledIcon = (
-  <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
-    <FontAwesomeIcon icon={faCircleXmark} />
-  </Box>
+  <Tooltip title="Canceled" placement="top" arrow>
+    <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
+      <FontAwesomeIcon icon={faCircleXmark} />
+    </Box>
+  </Tooltip>
 );
 
 export interface CheckPreview {
@@ -63,8 +73,8 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
   const checksList = [];
   let checksToShow = checks.length;
 
-  if (!expanded && checks.length > 3) {
-    checksToShow = 3;
+  if (!expanded && checks.length > 1) {
+    checksToShow = 1;
   }
 
   for (let i = 0; i < checksToShow; i++) {
@@ -124,7 +134,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
   const showMore = (
     <Box>
       <Typography variant="body1" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show More ...
+        Show More ({checks.length - 1}) ...
       </Typography>
     </Box>
   );

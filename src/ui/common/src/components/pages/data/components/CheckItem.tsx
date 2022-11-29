@@ -1,3 +1,5 @@
+// TODO: Remove this component, and use the one that's in workflows list
+
 import {
   faCircleCheck,
   faCircleExclamation,
