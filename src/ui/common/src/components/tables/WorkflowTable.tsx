@@ -170,9 +170,10 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                         <Typography
                           variant="body1"
                           sx={{
-                            textTransform: 'none',
-                            fontFamily: 'monospace',
+                            textTransform: 'capitalize',
+                            fontFamily: 'serif',
                             fontSize: '16px',
+                            fontWeight: 'bold'
                           }}
                         >
                           {column.name}
