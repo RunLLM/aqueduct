@@ -4,6 +4,7 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
+import ExecutionStatus from '../../../../utils/shared';
 
 import { theme } from '../../../../styles/theme/theme';
 
@@ -13,6 +14,7 @@ export interface MetricPreview {
   metricId: string;
   name: string;
   value: string;
+  status: ExecutionStatus;
 }
 
 interface MetricItemProps {

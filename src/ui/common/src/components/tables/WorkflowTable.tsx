@@ -121,28 +121,33 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
 
   return (
     <>
-      <Box marginBottom="8px">
-        <TextField
-          placeholder="Search by name ..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          id="outlined-basic"
-          variant="outlined"
-          fullWidth
-          InputProps={{
-            startAdornment: (
-              <Box marginRight="8px">
-                <FontAwesomeIcon icon={faSearch} color={theme.palette.gray[600]} />
-              </Box>
-            ),
-            endAdornment: (
-              <Box marginLeft="8px" color={theme.palette.gray[600]} sx={{ '&:hover': { cursor: 'pointer', color: theme.palette.black } }} onClick={() => { setSearchQuery('') }}>
-                <FontAwesomeIcon icon={faX} />
-              </Box>
-            )
-          }}
-        />
-      </Box>
+      {
+        searchEnabled && (
+          <Box marginBottom="8px">
+            <TextField
+              placeholder="Search by name ..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              id="outlined-basic"
+              variant="outlined"
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <Box marginRight="8px">
+                    <FontAwesomeIcon icon={faSearch} color={theme.palette.gray[600]} />
+                  </Box>
+                ),
+                endAdornment: (
+                  <Box marginLeft="8px" color={theme.palette.gray[600]} sx={{ '&:hover': { cursor: 'pointer', color: theme.palette.black } }} onClick={() => { setSearchQuery('') }}>
+                    <FontAwesomeIcon icon={faX} />
+                  </Box>
+                )
+              }}
+            />
+          </Box>
+        )
+      }
+
       <Paper sx={{ overflow: 'hidden' }}>
         <TableContainer>
           <Table stickyHeader aria-label="sticky table">
@@ -154,8 +159,8 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                       key={`table-header-col-${columnIndex}`}
                       align={'left'}
                       sx={{
-                        backgroundColor: 'blue.900',
-                        color: 'white',
+                        //backgroundColor: 'blue.900',
+                        //color: 'white',
                         minWidth: '80px',
                       }}
                       onClick={() => {
@@ -171,7 +176,6 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                           variant="body1"
                           sx={{
                             textTransform: 'capitalize',
-                            fontFamily: 'serif',
                             fontSize: '16px',
                             fontWeight: 'bold'
                           }}
