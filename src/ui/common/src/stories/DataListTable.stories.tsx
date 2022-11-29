@@ -35,7 +35,6 @@ export const DataListTable: React.FC = () => {
     {
       checkId: '3',
       name: 'avg_churn_check',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Pending,
       level: CheckLevel.Warning,
       value: null,
@@ -44,7 +43,6 @@ export const DataListTable: React.FC = () => {
     {
       checkId: '4',
       name: 'warning_test',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Succeeded,
       level: CheckLevel.Warning,
       value: 'False',
@@ -53,7 +51,6 @@ export const DataListTable: React.FC = () => {
     {
       checkId: '5',
       name: 'canceled_test',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Canceled,
       level: CheckLevel.Warning,
       value: 'False',
@@ -189,8 +186,6 @@ export const DataListTable: React.FC = () => {
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];
 
-    console.log('column: ', column.name);
-
     switch (column.name) {
       case 'workflow':
       case 'name':
@@ -209,7 +204,6 @@ export const DataListTable: React.FC = () => {
         break;
       }
       case 'type': {
-        console.log('inside dataTable onGetColumnValue');
         value = (
           <Typography fontFamily="monospace">{row[column.name]}</Typography>
         );
