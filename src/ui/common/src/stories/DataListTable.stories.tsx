@@ -62,11 +62,36 @@ export const DataListTable: React.FC = () => {
   ];
 
   const metricsShort: MetricPreview[] = [
-    { metricId: '1', name: 'avg_churn', value: '10', status: ExecutionStatus.Succeeded },
-    { metricId: '2', name: 'sentiment', value: '100.5', status: ExecutionStatus.Failed },
-    { metricId: '3', name: 'revenue_lost', value: '$20M', status: ExecutionStatus.Succeeded },
-    { metricId: '4', name: 'more_metrics', value: '$500', status: ExecutionStatus.Succeeded },
-    { metricId: '5', name: 'more_metrics', value: '$500', status: ExecutionStatus.Succeeded },
+    {
+      metricId: '1',
+      name: 'avg_churn',
+      value: '10',
+      status: ExecutionStatus.Succeeded,
+    },
+    {
+      metricId: '2',
+      name: 'sentiment',
+      value: '100.5',
+      status: ExecutionStatus.Failed,
+    },
+    {
+      metricId: '3',
+      name: 'revenue_lost',
+      value: '$20M',
+      status: ExecutionStatus.Succeeded,
+    },
+    {
+      metricId: '4',
+      name: 'more_metrics',
+      value: '$500',
+      status: ExecutionStatus.Succeeded,
+    },
+    {
+      metricId: '5',
+      name: 'more_metrics',
+      value: '$500',
+      status: ExecutionStatus.Succeeded,
+    },
   ];
 
   // TODO: Change this type to something more generic.
@@ -184,8 +209,10 @@ export const DataListTable: React.FC = () => {
         break;
       }
       case 'type': {
-        console.log('inside dataTable onGetColumnValue')
-        value = <Typography fontFamily="monospace">{row[column.name]}</Typography>
+        console.log('inside dataTable onGetColumnValue');
+        value = (
+          <Typography fontFamily="monospace">{row[column.name]}</Typography>
+        );
         break;
       }
       default: {

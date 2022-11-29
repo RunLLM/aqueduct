@@ -1,12 +1,11 @@
 // TODO: Remove this component, and use the one that's in workflows list
 
-
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
-import ExecutionStatus from '../../../../utils/shared';
 
 import { theme } from '../../../../styles/theme/theme';
+import ExecutionStatus from '../../../../utils/shared';
 
 export interface MetricPreview {
   // used to fetch additional metrics and information to be shown in table.

@@ -1,11 +1,11 @@
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
-import ExecutionStatus from '../../../../utils/shared';
 
 import { theme } from '../../../../styles/theme/theme';
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ExecutionStatus from '../../../../utils/shared';
 
 export interface MetricPreview {
   // used to fetch additional metrics and information to be shown in table.
@@ -39,17 +39,15 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
           {metrics[i].name}
         </Typography>
-        {
-          metrics[i].status === ExecutionStatus.Failed ? (
-            <Tooltip title="Error" placement="top" arrow>
-              <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
-                <FontAwesomeIcon icon={faCircleExclamation} />
-              </Box>
-            </Tooltip>
-          ) : (
-            <Typography variant="body1">{metrics[i].value}</Typography>
-          )
-        }
+        {metrics[i].status === ExecutionStatus.Failed ? (
+          <Tooltip title="Error" placement="top" arrow>
+            <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+              <FontAwesomeIcon icon={faCircleExclamation} />
+            </Box>
+          </Tooltip>
+        ) : (
+          <Typography variant="body1">{metrics[i].value}</Typography>
+        )}
       </Box>
     );
   }

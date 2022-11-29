@@ -38,39 +38,39 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
   }
 
   return backgroundColor;
-}
+};
 
 export const getExecutionStatusLabel = (status: ExecutionStatus): string => {
-  let labelText = "Succeeded";
+  let labelText = 'Succeeded';
   switch (status) {
     case ExecutionStatus.Canceled:
-      labelText = "Canceled";
+      labelText = 'Canceled';
       break;
     case ExecutionStatus.Failed:
-      labelText = "Failed";
+      labelText = 'Failed';
       break;
     case ExecutionStatus.Pending:
-      labelText = "Pending";
+      labelText = 'Pending';
       break;
     case ExecutionStatus.Registered:
-      labelText = "Registered";
+      labelText = 'Registered';
       break;
     case ExecutionStatus.Running:
-      labelText = "Running";
+      labelText = 'Running';
       break;
     case ExecutionStatus.Succeeded:
-      labelText = "Succeeded";
+      labelText = 'Succeeded';
       break;
     case ExecutionStatus.Unknown:
-      labelText = "Unknown";
+      labelText = 'Unknown';
       break;
     default:
-      labelText = "Unknown";
+      labelText = 'Unknown';
       break;
   }
 
   return labelText;
-}
+};
 
 export const StatusChip: React.FC<Props> = ({ status }) => {
   const statusIcons = [];
@@ -89,12 +89,19 @@ export const StatusChip: React.FC<Props> = ({ status }) => {
     }
 
     return textColor;
-  }
+  };
 
   statusIcons.push();
 
   return (
-    <Chip label={getExecutionStatusLabel(status)} sx={{ backgroundColor: getExecutionStatusColor(status), color: getStatusChipTextColor(status) }} size="small" />
+    <Chip
+      label={getExecutionStatusLabel(status)}
+      sx={{
+        backgroundColor: getExecutionStatusColor(status),
+        color: getStatusChipTextColor(status),
+      }}
+      size="small"
+    />
   );
 };
 
