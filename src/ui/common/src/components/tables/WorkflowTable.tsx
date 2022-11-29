@@ -178,13 +178,6 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                       }}
                       key={`table-header-col-${columnIndex}`}
                       align={'left'}
-                      onClick={() => {
-                        console.log(
-                          'tableColumn clicked colIndex: ',
-                          columnIndex
-                        );
-                        console.log('tableColumn clicked column: ', column);
-                      }}
                     >
                       <Box flexDirection="column" padding="8px">
                         <Typography

@@ -5,15 +5,11 @@ import { StatusChip } from '../components/workflows/workflowStatus';
 import ExecutionStatus from '../utils/shared';
 
 export default {
-  title: 'Status Chip',
+  title: 'Components/Status Chip',
   component: StatusChip,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {
-    //backgroundColor: { control: 'color' },
-  },
+  argTypes: {},
 } as ComponentMeta<typeof StatusChip>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 const Template: ComponentStory<typeof StatusChip> = (args) => (
   <StatusChip {...args} />
 );

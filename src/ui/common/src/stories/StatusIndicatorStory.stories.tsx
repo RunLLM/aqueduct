@@ -6,18 +6,22 @@ import { StatusIndicator } from '../components/workflows/workflowStatus';
 import ExecutionStatus from '../utils/shared';
 
 interface StatusIndicatorStoryProps {
+  /**
+   * Execution status to render
+   */
   status: ExecutionStatus;
+  /**
+   * Label for execution status
+   */
   label: string;
 }
 
 export default {
-  title: 'Status Indicator',
+  title: 'Components/Status Indicator',
   component: StatusIndicator,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
 } as ComponentMeta<typeof StatusIndicator>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 const Template: ComponentStory<typeof StatusIndicator> = (
   args: StatusIndicatorStoryProps
 ) => (

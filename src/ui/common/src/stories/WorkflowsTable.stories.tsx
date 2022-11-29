@@ -37,7 +37,6 @@ export const WorkflowsTable: React.FC = () => {
     {
       checkId: '3',
       name: 'avg_churn_check',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Pending,
       level: CheckLevel.Warning,
       value: null,
@@ -46,7 +45,6 @@ export const WorkflowsTable: React.FC = () => {
     {
       checkId: '4',
       name: 'warning_test',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Succeeded,
       level: CheckLevel.Warning,
       value: 'False',
@@ -55,7 +53,6 @@ export const WorkflowsTable: React.FC = () => {
     {
       checkId: '5',
       name: 'canceled_test',
-      // TODO: Come up with coherent color scheme for all of these different status levels.
       status: ExecutionStatus.Canceled,
       level: CheckLevel.Warning,
       value: 'False',
@@ -124,7 +121,6 @@ export const WorkflowsTable: React.FC = () => {
           status: ExecutionStatus.Succeeded,
         },
         last_run: '11/1/2022 2:00PM',
-        //engine: lambdaEngine,
         engine: {
           engineName: 'lambda',
           engineIconUrl: SupportedIntegrations['Lambda'].logo,

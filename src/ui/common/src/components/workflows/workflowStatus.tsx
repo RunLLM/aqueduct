@@ -7,6 +7,9 @@ import { theme } from '../../styles/theme/theme';
 import ExecutionStatus from '../../utils/shared';
 
 type Props = {
+  /**
+   * Execution status to render.
+   */
   status: ExecutionStatus;
 };
 
@@ -72,6 +75,9 @@ export const getExecutionStatusLabel = (status: ExecutionStatus): string => {
   return labelText;
 };
 
+/**
+ * Chip component representing an execution status.
+ **/
 export const StatusChip: React.FC<Props> = ({ status }) => {
   const statusIcons = [];
 
@@ -108,8 +114,8 @@ export const StatusChip: React.FC<Props> = ({ status }) => {
 export default StatusChip;
 
 /**
- - Smaller status indicator component that is just a circle with a background color.
-**/
+ * Smaller status indicator component that is just a circle with a background color.
+ **/
 export const StatusIndicator: React.FC<Props> = ({ status }) => {
   return (
     <Tooltip title={getExecutionStatusLabel(status)} placement="top" arrow>
