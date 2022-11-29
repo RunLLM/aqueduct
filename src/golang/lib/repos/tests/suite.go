@@ -21,6 +21,7 @@ type TestSuite struct {
 
 	// List of all repos
 	dag       repos.DAG
+	dagEdge   repos.DAGEdge
 	dagResult repos.DAGResult
 	workflow  repos.Workflow
 	user      repos.User
@@ -42,6 +43,7 @@ func (ts *TestSuite) SetupSuite() {
 
 	// Initialize repos
 	ts.dag = sqlite.NewDAGRepo()
+	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
