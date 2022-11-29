@@ -5,7 +5,7 @@ Released on November 29, 2022.
 
 ### Key Features
 * Enables operators running on Kubernetes to access GPUs and set RAM and CPU
-    requirements. Not that using a GPU requires your Kubernetes cluster to
+    requirements. Note that using a GPU requires your Kubernetes cluster to
     already have GPU machines attached. See [our
     documentation](https://docs.aqueducthq.com/operators/configuring-resource-constraints) for more details.
 ```python
@@ -13,8 +13,9 @@ Released on November 29, 2022.
 def my_operator_with_many_resources():
   return 1
 ```
-* Similarly, functions running on AWS Lambda can have CPU and memory
-    requirements set using the syntax above; AWS Lambda does not support GPUs.
+* Similarly, functions running on AWS Lambda can have memory requirement
+    set using the syntax above; AWS Lambda does not support setting CPU requirement
+    and it does not support GPUs.
 
 ### Enhancements
 * Enables operator previews to execute using different integrations, including
