@@ -3,12 +3,13 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
+// DAGResult defines all of the database operations that can be performed for a DAGResult.
 type DAGResult interface {
 	dagResultReader
 	dagResultWriter
@@ -32,6 +33,8 @@ type dagResultReader interface {
 
 type dagResultWriter interface {
 	// Creates inserts a new DAGResult with the specified fields.
+	// It returns an ErrInvalidPendingTimestamp if execState.Timestamps.PendingAt is
+	// not set, since that value is used for DAGResult.CreatedAt.
 	Create(
 		ctx context.Context,
 		dagID uuid.UUID,

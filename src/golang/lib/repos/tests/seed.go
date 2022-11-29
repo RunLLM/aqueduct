@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -114,4 +116,40 @@ func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []m
 	}
 
 	return dags
+}
+
+func (ts *TestSuite) seedDAGResult(count int) []models.DAGResult {
+	dags := ts.seedDAG(1)
+	dagIDs := sampleDagIDs(count, dags)
+	return ts.seedDAGResultWithDAG(count, dagIDs)
+}
+
+// seedDAGResultWithDAG creates count DAGResult records. It uses dagIDs as the
+// DAG associated with each DAGResult.
+func (ts *TestSuite) seedDAGResultWithDAG(count int, dagIDs []uuid.UUID) []models.DAGResult {
+	require.Len(ts.T(), dagIDs, count)
+
+	dagResults := make([]models.DAGResult, 0, count)
+
+	for i := 0; i < count; i++ {
+		now := time.Now()
+		execState := &shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
+				PendingAt: &now,
+			},
+		}
+
+		dagResult, err := ts.dagResult.Create(
+			ts.ctx,
+			dagIDs[i],
+			execState,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		dagResults = append(dagResults, *dagResult)
+	}
+
+	return dagResults
 }

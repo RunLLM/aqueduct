@@ -238,7 +238,7 @@ func getDAG(ctx context.Context, DB database.Database, query string, args ...int
 	}
 
 	if len(dags) != 1 {
-		return nil, errors.Newf("Expected 1 workflow but got %v", len(dags))
+		return nil, errors.Newf("Expected 1 DAG but got %v", len(dags))
 	}
 
 	return &dags[0], nil
