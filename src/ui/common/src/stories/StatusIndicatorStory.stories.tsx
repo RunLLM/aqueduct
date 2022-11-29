@@ -18,7 +18,9 @@ export default {
 } as ComponentMeta<typeof StatusIndicator>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof StatusIndicator> = (args: StatusIndicatorStoryProps) => (
+const Template: ComponentStory<typeof StatusIndicator> = (
+  args: StatusIndicatorStoryProps
+) => (
   <Box display="flex">
     <StatusIndicator {...args} />
     <Typography variant="body1" sx={{ marginLeft: '8px' }}>
