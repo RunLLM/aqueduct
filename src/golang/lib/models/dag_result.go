@@ -20,6 +20,7 @@ const (
 	DAGResultExecState = "execution_state"
 )
 
+// A DAGResult maps to the workflow_dag_result table.
 type DAGResult struct {
 	ID     uuid.UUID              `db:"id" json:"id"`
 	DagID  uuid.UUID              `db:"workflow_dag_id" json:"workflow_dag_id"`
