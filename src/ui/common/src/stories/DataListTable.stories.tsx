@@ -97,7 +97,7 @@ export const DataListTable: React.FC = () => {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
-        { name: 'created_at', type: 'varchar' },
+        { name: 'created_at', displayName: 'Created At', type: 'varchar' },
         { name: 'workflow', type: 'varchar' },
         { name: 'type', type: 'varchar' },
         { name: 'metrics', type: 'varchar' },
