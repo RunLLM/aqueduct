@@ -15,7 +15,7 @@ import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus from '../../../../utils/shared';
 
 const errorIcon = (
-  <Tooltip title="Error" placement="top" arrow>
+  <Tooltip title="Error" placement="bottom" arrow>
     <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
       <FontAwesomeIcon icon={faCircleExclamation} />
     </Box>
@@ -23,7 +23,7 @@ const errorIcon = (
 );
 
 const warningIcon = (
-  <Tooltip title="Warning" placement="top" arrow>
+  <Tooltip title="Warning" placement="bottom" arrow>
     <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
       <FontAwesomeIcon icon={faTriangleExclamation} />
     </Box>
@@ -31,7 +31,7 @@ const warningIcon = (
 );
 
 const successIcon = (
-  <Tooltip title="Success" placement="top" arrow>
+  <Tooltip title="Success" placement="bottom" arrow>
     <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
       <FontAwesomeIcon icon={faCircleCheck} />
     </Box>
@@ -39,7 +39,7 @@ const successIcon = (
 );
 
 const unknownIcon = (
-  <Tooltip title="Unknown" placement="top" arrow>
+  <Tooltip title="Unknown" placement="bottom" arrow>
     <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
       <FontAwesomeIcon icon={faQuestionCircle} />
     </Box>
@@ -47,7 +47,7 @@ const unknownIcon = (
 );
 
 const canceledIcon = (
-  <Tooltip title="Canceled" placement="top" arrow>
+  <Tooltip title="Canceled" placement="bottom" arrow>
     <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
       <FontAwesomeIcon icon={faCircleXmark} />
     </Box>

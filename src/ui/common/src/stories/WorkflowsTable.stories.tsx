@@ -91,7 +91,7 @@ export const WorkflowsTable: React.FC = () => {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
-        { name: 'last_run', type: 'varchar' },
+        { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
         { name: 'engine', type: 'varchar' },
         { name: 'metrics', type: 'varchar' },
         { name: 'checks', type: 'varchar' },

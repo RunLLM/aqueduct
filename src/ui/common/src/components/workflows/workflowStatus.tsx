@@ -118,7 +118,7 @@ export default StatusChip;
  **/
 export const StatusIndicator: React.FC<Props> = ({ status }) => {
   return (
-    <Tooltip title={getExecutionStatusLabel(status)} placement="top" arrow>
+    <Tooltip title={getExecutionStatusLabel(status)} placement="bottom" arrow>
       <Box
         sx={{
           width: '12px',
