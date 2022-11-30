@@ -618,7 +618,10 @@ func ValidatePrerequisites(
 		}
 
 		if condaIntegration != nil {
-			return http.StatusBadRequest, errors.New("You already have a conda integration connected.")
+			return http.StatusBadRequest, errors.Newf(
+				"You already have conda integration %s connected.",
+				condaIntegration.Name,
+			)
 		}
 
 		return http.StatusOK, nil
