@@ -2,57 +2,24 @@ package utils
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
-
-func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig, key string) {
-	CleanupStorageFiles(ctx, storageConfig, []string{key})
-}
-
-func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfig, keys []string) {
-	for _, key := range keys {
-		err := storage.NewStorage(storageConfig).Delete(ctx, key)
-		if err != nil {
-			log.Errorf("Unable to clean up storage file with key: %s. %v. \n %s", key, err, errors.New("").GetStack())
-		}
-	}
-}
-
-func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
-	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
-	return err != storage.ErrObjectDoesNotExist
-}
-
-func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
-	// Read data from storage and deserialize payload to `container`
-	serializedPayload, err := storage.NewStorage(storageConfig).Get(ctx, path)
-	if err != nil {
-		return errors.Wrap(err, "Unable to get object from storage")
-	}
-
-	err = json.Unmarshal(serializedPayload, container)
-	if err != nil {
-		return errors.Wrap(err, "Unable to unmarshal json payload to container")
-	}
-
-	return nil
-}
 
 func WriteWorkflowDagToDatabase(
 	ctx context.Context,
@@ -395,35 +362,102 @@ func CreateWorkflowDagResult(
 	)
 }
 
-func UpdateWorkflowDagResultMetadata(
+// UpdateDAGResultMetadata updates the status and execution state of the
+// specified DAGResult. It also creates the relevant notification(s).
+func UpdateDAGResultMetadata(
 	ctx context.Context,
-	workflowDagResultId uuid.UUID,
+	dagResultID uuid.UUID,
 	execState *shared.ExecutionState,
-	workflowDagResultWriter workflow_dag_result.Writer,
+	dagResultRepo repos.DAGResult,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
-	userReader user.Reader,
-	db database.Database,
-) {
+	DB database.Database,
+) error {
+	txn, err := DB.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	changes := map[string]interface{}{
-		workflow_dag_result.StatusColumn:    execState.Status,
-		workflow_dag_result.ExecStateColumn: execState,
+		models.DAGResultStatus:    execState.Status,
+		models.DAGResultExecState: execState,
 	}
 
-	_, err := workflowDagResultWriter.UpdateWorkflowDagResult(
+	dagResult, err := dagResultRepo.Update(
 		ctx,
-		workflowDagResultId,
+		dagResultID,
 		changes,
-		workflowReader,
-		notificationWriter,
-		userReader,
-		db,
+		txn,
 	)
 	if err != nil {
-		log.WithFields(
-			log.Fields{
-				"changes": changes,
-			},
-		).Errorf("Unable to update workflow dag result metadata: %v", err)
+		return err
 	}
+
+	if err := createDAGResultNotification(
+		ctx,
+		dagResult,
+		notificationWriter,
+		workflowReader,
+		txn,
+	); err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func createDAGResultNotification(
+	ctx context.Context,
+	dagResult *models.DAGResult,
+	notificationWriter notification.Writer,
+	workflowReader workflow.Reader,
+	DB database.Database,
+) error {
+	status := dagResult.Status
+	if status != mdl_shared.SucceededExecutionStatus &&
+		status != mdl_shared.FailedExecutionStatus {
+		// Do not create notifications for DAGResults still in progress
+		return nil
+	}
+
+	workflow, err := workflowReader.GetWorkflowByWorkflowDagId(
+		ctx,
+		dagResult.DagID,
+		DB,
+	)
+	if err != nil {
+		return err
+	}
+
+	notificationLevel := notification.SuccessLevel
+	notificationContent := fmt.Sprintf(
+		"Workflow %s has succeeded!",
+		workflow.Name,
+	)
+	if status == mdl_shared.FailedExecutionStatus {
+		notificationLevel = notification.ErrorLevel
+		notificationContent = fmt.Sprintf(
+			"Workflow %s has failed.",
+			workflow.Name,
+		)
+	}
+
+	notificationAssociation := notification.NotificationAssociation{
+		Object: notification.WorkflowDagResultObject,
+		Id:     dagResult.ID,
+	}
+
+	// TODO: Create notification for all watchers
+	// Right now there is only 1 User in the system for only 1 notification
+	// needs to be created
+	_, err = notificationWriter.CreateNotification(
+		ctx,
+		workflow.UserId,
+		notificationContent,
+		notificationLevel,
+		notificationAssociation,
+		DB,
+	)
+	return err
 }

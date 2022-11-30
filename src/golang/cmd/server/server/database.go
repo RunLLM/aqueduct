@@ -23,7 +23,8 @@ import (
 )
 
 type Repos struct {
-	UserRepo repos.User
+	DAGResultRepo repos.DAGResult
+	UserRepo      repos.User
 }
 
 type Readers struct {
@@ -267,8 +268,8 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	}
 }
 
-func GetEngineRepos(repos *Repos) *engine.EngineRepos {
-	return &engine.EngineRepos{
-		UserRepo: repos.UserRepo,
+func GetEngineRepos(repos *Repos) *engine.Repos {
+	return &engine.Repos{
+		DAGResultRepo: repos.DAGResultRepo,
 	}
 }

@@ -78,8 +78,9 @@ type EngineWriters struct {
 	NotificationWriter      notification.Writer
 }
 
-type EngineRepos struct {
-	UserRepo repos.User
+// Repos contains the repos needed by the Engine
+type Repos struct {
+	DAGResultRepo repos.DAGResult
 }
 
 type aqEngine struct {
@@ -95,7 +96,7 @@ type aqEngine struct {
 	// Readers and Writers needed for workflow management
 	*EngineReaders
 	*EngineWriters
-	*EngineRepos
+	*Repos
 }
 
 type workflowRunMetadata struct {
@@ -128,7 +129,7 @@ func NewAqEngine(
 	aqPath string,
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
-	engineRepos *EngineRepos,
+	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
@@ -141,7 +142,7 @@ func NewAqEngine(
 		AqPath:              aqPath,
 		EngineReaders:       engineReaders,
 		EngineWriters:       engineWriters,
-		EngineRepos:         engineRepos,
+		Repos:               repos,
 	}, nil
 }
 
@@ -223,14 +224,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 			execState.Timestamps.FinishedAt = &now
 		}
 
-		workflow_utils.UpdateWorkflowDagResultMetadata(
+		workflow_utils.UpdateDAGResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
 			execState,
-			eng.WorkflowDagResultWriter,
+			eng.DAGResultRepo,
 			eng.WorkflowReader,
 			eng.NotificationWriter,
-			eng.UserReader,
 			eng.Database,
 		)
 	}()
