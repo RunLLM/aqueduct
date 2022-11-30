@@ -214,6 +214,12 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
                             key={`table-col-${columnIndex}`}
                             align={'left'}
                             padding="none"
+                            sx={{
+                              borderRight:
+                                columnIndex < columns.length - 1
+                                  ? '1px solid rgba(224, 224, 224, 1);'
+                                  : 'none',
+                            }}
                           >
                             <Box padding="8px">
                               {getColumnValue(row, column)}
