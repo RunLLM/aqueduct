@@ -58,7 +58,6 @@ func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
 				break
 			}
 		}
-
 		require.True(t, found, "Unable to find DAG: %v", expectedDAG)
 		requireDeepEqual(t, expectedDAG, foundDAG)
 	}

@@ -7,8 +7,8 @@ import (
 )
 
 func (ts *TestSuite) TestArtifactResult_Get() {
-	artifact_results := ts.seedArtifactResult(1)
-	expectedArtifactResult := &artifact_results[0]
+	artifactResults, _, _, _ := ts.seedArtifactResult(1)
+	expectedArtifactResult := &artifactResults[0]
 
 	actualArtifactResult, err := ts.artifact_result.Get(ts.ctx, expectedArtifactResult.ID, ts.DB)
 	require.Nil(ts.T(), err)
@@ -16,7 +16,7 @@ func (ts *TestSuite) TestArtifactResult_Get() {
 }
 
 func (ts *TestSuite) TestArtifactResult_GetBatch() {
-	expectedArtifactResults := ts.seedArtifactResult(3)
+	expectedArtifactResults, _, _, _  := ts.seedArtifactResult(3)
 
 	IDs := make([]uuid.UUID, 0, len(expectedArtifactResults))
 	for _, expectedArtifactResult := range expectedArtifactResults {
@@ -29,138 +29,154 @@ func (ts *TestSuite) TestArtifactResult_GetBatch() {
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifact() {
-	artifact_results := ts.seedArtifactResult(3)
-	// Seeded with uuid.New() for each artifactID so should only have 1 result per artifact.
-	expectedArtifactResults := &artifact_results[0]
+	expectedArtifactResults, _, _, _  := ts.seedArtifactResult(3)
 
-	actualArtifactResults, err := ts.artifact_result.GetByArtifact(ts.ctx, expectedArtifactResults.ArtifactID, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByArtifact(ts.ctx, expectedArtifactResults[0].ArtifactID, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), []model.ArtifactResult{expectedArtifactResults}, actualArtifactResults)
+	// All artifact_results for the same artifact when created with seedArtifactResult. 
+	require.Equal(ts.T(), 3, len(actualArtifactResults))
+	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifactAndWorkflow() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedArtifactResults, artifact, _, workflow  := ts.seedArtifactResult(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByArtifactAndWorkflow(ts.ctx, workflow.ID, artifact.Name, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	// All artifact_results for the same artifact when created with seedArtifactResult. 
+	require.Equal(ts.T(), 3, len(actualArtifactResults))
+	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifactAndDAGResult() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedArtifactResults, _, dag, _  := ts.seedArtifactResult(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByArtifactAndDAGResult(ts.ctx, dag.ID, expectedArtifactResults[0].ID, ts.DB)
+
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	// All artifact_results for the same artifact when created with seedArtifactResult. 
+	require.Equal(ts.T(), 3, len(actualArtifactResults))
+	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByDAGResults() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	seedA = 3
+	expectedArtifactResultsA, _, dagA, _  := ts.seedArtifactResult(seedA)
+	seedB = 3
+	// Generate artifact results for different DAG
+	expectedArtifactResultsB, _, dagB, _  := ts.seedArtifactResult(seedB)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualArtifactResultsA, err := ts.artifact_result.GetByDAGResults(ts.ctx, []uuid.UUID{dagA.ID}, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	require.Equal(ts.T(), seedA, len(actualArtifactResultsA))
+	requireDeepEqual(ts.T(), expectedArtifactResultsA, actualArtifactResultsA)
+
+	actualArtifactResultsBoth, err := ts.artifact_result.GetByDAGResults(ts.ctx, []uuid.UUID{dagA.ID, dagB.ID}, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), seedA + seedB, len(actualArtifactResultsBoth))
+	requireDeepEqual(ts.T(), append(expectedArtifactResultsA, expectedArtifactResultsB...), actualArtifactResultsBoth)
 }
 
 func (ts *TestSuite) TestArtifactResult_Create() {
-	apiKey := randAPIKey()
-
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	expectedArtifactResult := &models.ArtifactResult{
+		DAGResultID: uuid.New(),
+		ArtifactID: uuid.New(),
+		ContentPath: randString(10),
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	actualArtifactResult, err := ts.artifact_result.Create(ts.ctx, expectedArtifactResult.DAGResultID, expectedArtifactResult.ArtifactID, expectedArtifactResult.ContentPath, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
+	require.NotEqual(ts.T(), uuid.Nil, actualArtifactResult.ID)
 
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	expectedArtifactResult.ID = actualArtifactResult.ID
+
+	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
 
 func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
-	apiKey := randAPIKey()
+	schema := make([]map[string]string)
+	schema[randString(10)] := randString(10)
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	systemMetrics := make([]map[string]string)
+	systemMetrics[randString(10)] := randString(10)
+
+	expectedArtifactResult := &models.ArtifactResult{
+		DAGResultID: uuid.New(),
+		ArtifactID: uuid.New(),
+		ContentPath: randString(10),
+		ExecState: &shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout:randString(10),
+				StdErr:randString(10),
+			},
+			Status: shared.CanceledExecutionStatus,
+		},
+		Metadata: &shared.ArtifactResultMetadata{
+			Schema: schema,
+			SystemMetrics: systemMetrics,
+			SerializationType: shared.StringSerialization,
+			ArtifactType: shared.UntypedArtifact,
+		},
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	actualArtifactResult, err := ts.artifact_result.CreateWithExecStateAndMetadata(ts.ctx, expectedArtifactResult.DAGResultID, expectedArtifactResult.ArtifactID, expectedArtifactResult.ContentPath, expectedArtifactResult.ExecState, expectedArtifactResult.Metadata, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
+	require.NotEqual(ts.T(), uuid.Nil, actualArtifactResult.ID)
 
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	expectedArtifactResult.ID = actualArtifactResult.ID
+
+	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
 
 func (ts *TestSuite) TestArtifactResult_Delete() {
-	apiKey := randAPIKey()
+	artifactResults, _, _, _ := ts.seedArtifactResult(1)
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
-	}
-
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	err := ts.artifact_result.Delete(ts.ctx, artifactResults[0].ID, ts.DB)
 	require.Nil(ts.T(), err)
-
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
-
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
 }
 
-func (ts *TestSuite) TestArtifactResult_DeleteBatch() {
-	apiKey := randAPIKey()
+func (ts *TestSuite) TestArtifactResult_DeleteBatch() {	
+	artifactResults, _, _, _ := ts.seedArtifactResult(3)
+	IDs := []uuid.UUID{artifactResults[0].ID, artifactResults[1].ID, artifactResults[2].ID}
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
-	}
-
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	err := ts.dag.DeleteBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
-
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
-
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
 }
 
-func (ts *TestSuite) TestArtifactResult_Update() {
-	apiKey := randAPIKey()
+func (ts *TestSuite) TestArtifactResult_Update() {	
+	artifactResults, _, _, _ := ts.seedArtifactResult(1)
+	expectedArtifactResult := &artifactResults[0]
 
-	expectedUser := &models.User{
-		APIKey: apiKey,
+	contentPath := randString(10)
+	execState := &shared.ExecutionState{
+		UserLogs: &shared.Logs{
+			Stdout:randString(10),
+			StdErr:randString(10),
+		},
+		Status: shared.UnknownExecutionStatus,
+	}
+	metadata := &shared.ArtifactResultMetadata{
+		Schema: schema,
+		SystemMetrics: systemMetrics,
+		SerializationType: shared.StringSerialization,
+		ArtifactType: shared.JsonArtifact,
 	}
 
-	actualUser, err := ts.user.Create(ts.ctx, testOrgID, apiKey, ts.DB)
+	changes := map[string]interface{}{
+		models.ArtifactResultContentPath: contentPath,
+		models.ArtifactResultExecState: execState,
+		models.ArtifactResultMetadata: metadata,
+	}
+
+	actualArtifactResult, err := ts.artifact_result.Update(ts.ctx, expectedArtifactResult.ID, changes, ts.DB)
 	require.Nil(ts.T(), err)
 
-	require.NotEqual(ts.T(), uuid.Nil, actualUser.ID)
+	expectedArtifactResult.ContentPath = contentPath
+	expectedArtifactResult.ExecState = execState
+	expectedArtifactResult.Metadata = metadata
 
-	expectedUser.ID = actualUser.ID
-	expectedUser.Email = actualUser.Email
-	expectedUser.OrgID = actualUser.OrgID
-	expectedUser.Role = actualUser.Role
-	expectedUser.Auth0ID = actualUser.Auth0ID
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }

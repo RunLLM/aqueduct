@@ -29,7 +29,7 @@ type artifactReader interface {
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
 	// ValidateOrg returns whether the Artifact was created by a user in orgID.
-	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
 
 type artifactWriter interface {

@@ -15,6 +15,62 @@ const (
 	testOrgID = "aqueduct-test"
 )
 
+// seedArtifact creates count artifact records.
+func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
+	artifacts := make([]models.Artifact, 0, count)
+
+	for i := 0; i < count; i++ {
+		name := randString(10)
+		description := randString(15)
+		artifactType := randArtifactType()
+		artifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
+		require.Nil(ts.T(), err)
+
+		artifacts = append(artifacts, *artifact)
+	}
+
+	return artifacts
+}
+
+// seedArtifactWithContext creates an artifact record in the context of a newly created workflow DAG.
+func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.Workflow, models.User) {
+	artifacts := ts.seedArtifact(1)
+
+
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+
+	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
+	dagID := dags[0].ID
+	artifactID := artifacts[0].ID
+	operatorID := uuid.New()
+
+	_, _ = ts.dagEdge.Create(
+		ts.ctx,
+		dagID,
+		shared.ArtifactToOperatorDAGEdge,
+		artifactID,
+		operatorID,
+		0,
+		ts.DB,
+	)
+	if rand.Intn(2) > 0 {
+		_, _ = ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			shared.OperatorToArtifactDAGEdge,
+			operatorID,
+			artifactID,
+			0,
+			ts.DB,
+		)
+	}
+	return artifacts[0], dags[0], workflows[0], users[0]
+}
+
 // seedUser creates count user records.
 func (ts *TestSuite) seedUser(count int) []models.User {
 	users := make([]models.User, 0, count)
@@ -214,23 +270,18 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 
 // seedArtifactResult creates a workflow with 1 DAG and count artifact_result records
 // belonging to the same workflow DAG.
-func (ts *TestSuite) seedArtifactResult(count int) []models.ArtifactResult {
-	artifact_results := make([]models.ArtifactResult, 0, count)
-	
-	workflows := ts.seedWorkflow(1)
-	workflowIDs := sampleWorkflowIDs(1, workflows)
-	DAGs := ts.seedDAGWithWorkflow(1, workflowIDs)
-	DAG := DAGs[0]
+func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, models.Artifact, models.DAG, models.Workflow) {
+	artifactResults := make([]models.ArtifactResult, 0, count)
+
+	artifact, dag, workflow, _ := seedArtifactInWorkflow()
 
 	for i := 0; i < count; i++ {
-		dagResultID := uuid.New()
-		artifactID := uuid.New()
 		contentPath := randString(10)
-		artifact_result, err := ts.artifact_result.Create(ts.ctx, DAG.ID, artifactID, contentPath, ts.DB)
+		artifactResult, err := ts.artifact_result.Create(ts.ctx, dag.ID, artifact.ID, contentPath, ts.DB)
 		require.Nil(ts.T(), err)
 
-		artifact_results = append(artifact_results, *artifact_result)
+		artifactResults = append(artifactResults, *artifactResult)
 	}
 
-	return artifact_results
+	return artifactResults, artifact, dag, workflow
 }

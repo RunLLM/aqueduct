@@ -51,6 +51,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.artifact_result = sqlite.NewArtifactResultRepo()
+	ts.artifact = sqlite.NewArtifactRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {
