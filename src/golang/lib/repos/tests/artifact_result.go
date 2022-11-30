@@ -7,30 +7,35 @@ import (
 )
 
 func (ts *TestSuite) TestArtifactResult_Get() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	artifact_results := ts.seedArtifactResult(1)
+	expectedArtifactResult := &artifact_results[0]
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualArtifactResult, err := ts.artifact_result.Get(ts.ctx, expectedArtifactResult.ID, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetBatch() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	expectedArtifactResults := ts.seedArtifactResult(3)
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	IDs := make([]uuid.UUID, 0, len(expectedArtifactResults))
+	for _, expectedArtifactResult := range expectedArtifactResults {
+		IDs = append(IDs, expectedArtifactResult.ID)
+	}
+
+	actualArtifactResults, err := ts.artifact_result.GetBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	requireDeepEqualArtifacts(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifact() {
-	users := ts.seedUser(1)
-	expectedUser := &users[0]
+	artifact_results := ts.seedArtifactResult(3)
+	// Seeded with uuid.New() for each artifactID so should only have 1 result per artifact.
+	expectedArtifactResults := &artifact_results[0]
 
-	actualUser, err := ts.user.GetByAPIKey(ts.ctx, expectedUser.APIKey, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByArtifact(ts.ctx, expectedArtifactResults.ArtifactID, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedUser, actualUser)
+	requireDeepEqual(ts.T(), []model.ArtifactResult{expectedArtifactResults}, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifactAndWorkflow() {

@@ -94,6 +94,8 @@ const initialState: WorkflowState = {
   artifactResults: {},
   operatorResults: {},
   watcherAuthIds: [],
+  selectedDag: undefined,
+  selectedResult: undefined,
   selectedDagPosition: {
     loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
     result: { nodes: [], edges: [] },
@@ -472,6 +474,7 @@ export const workflowSlice = createSlice({
   name: 'workflowReducer',
   initialState,
   reducers: {
+    resetState: () => initialState,
     selectResultIdx: (state, { payload }: PayloadAction<number>) => {
       state.artifactResults = {};
       state.operatorResults = {};
@@ -661,5 +664,5 @@ export const workflowSlice = createSlice({
   },
 });
 
-export const { selectResultIdx } = workflowSlice.actions;
+export const { resetState, selectResultIdx } = workflowSlice.actions;
 export default workflowSlice.reducer;
