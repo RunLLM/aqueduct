@@ -27,12 +27,12 @@ export type WorkflowTableRow = {
 
 export type WorkflowTableRowData = {
   [key: string]:
-  | string
-  | number
-  | boolean
-  | CheckPreview[]
-  | MetricPreview[]
-  | ExecutionStatusLinkProps;
+    | string
+    | number
+    | boolean
+    | CheckPreview[]
+    | MetricPreview[]
+    | ExecutionStatusLinkProps;
 };
 
 export interface WorkflowTableData {
@@ -167,7 +167,9 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
             <TableHead>
               <TableRow>
                 {columns.map((column, columnIndex) => {
-                  let columnName = column.displayName ? column.displayName : column.name;
+                  const columnName = column.displayName
+                    ? column.displayName
+                    : column.name;
                   return (
                     <TableCell
                       padding="none"

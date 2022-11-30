@@ -18,7 +18,7 @@ export type DataColumn = {
    */
   name: string;
   /**
-   * Used to show an alternate text in column header. 
+   * Used to show an alternate text in column header.
    * e.g. colum named created_at but we wish to render as Created At
    */
   displayName?: string;
