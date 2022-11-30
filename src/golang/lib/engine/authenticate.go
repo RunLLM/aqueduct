@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -54,6 +55,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		errGroup.Go(func() error {
 			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
 		})
+		time.Sleep(3 * time.Second)
 	}
 
 	if err := errGroup.Wait(); err != nil {
