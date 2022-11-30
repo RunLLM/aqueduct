@@ -85,36 +85,28 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const dagName = workflow.selectedDag?.metadata?.name;
 
   useEffect(() => {
-    console.log('location: ', location);
-  }, [location]);
-
-  useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${dagName} | Aqueduct`;
     }
-  }, [workflow.selectedDag]);
+  }, [workflow.selectedDag, dagName]);
 
   const resetWorkflowState = () => {
-    console.log('resetWorkflowState()');
     dispatch(resetState());
   };
 
   useEffect(() => {
     window.onpopstate = () => {
-      console.log('inside onpopstate');
       resetWorkflowState();
     };
 
-    dispatch(resetState());
+    resetWorkflowState();
   }, []);
 
   useEffect(() => {
-    console.log('navigate value: ', navigate);
     if (
       workflow.selectedResult !== undefined &&
       !urlSearchParams.workflowDagResultId
     ) {
-      console.log('navigating with url params');
       navigate(
         `?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`,
         { replace: true }
@@ -341,8 +333,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -389,8 +380,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -409,8 +399,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -429,8 +418,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}
@@ -456,12 +444,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       ]}
       user={user}
       onBreadCrumbClicked={() => {
-        console.log('onBreadcrumbclicked');
-        dispatch(resetState());
+        resetWorkflowState();
       }}
       onSidebarItemClicked={() => {
-        console.log('onSidebarItemClicked');
-        dispatch(resetState());
+        resetWorkflowState();
       }}
     >
       <Box
