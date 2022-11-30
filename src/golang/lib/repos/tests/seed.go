@@ -15,23 +15,6 @@ const (
 	testOrgID = "aqueduct-test"
 )
 
-// seedArtifactResult creates count artifact_result records.
-func (ts *TestSuite) seedArtifactResult(count int) []models.ArtifactResult {
-	artifact_results := make([]models.ArtifactResult, 0, count)
-
-	for i := 0; i < count; i++ {
-		dagResultID := uuid.New()
-		artifactID := uuid.New()
-		contentPath := randString(10)
-		artifact_result, err := ts.artifact_result.Create(ts.ctx, dagResultID, artifactID, contentPath, ts.DB)
-		require.Nil(ts.T(), err)
-
-		artifact_results = append(artifact_results, *artifact_result)
-	}
-
-	return artifact_results
-}
-
 // seedUser creates count user records.
 func (ts *TestSuite) seedUser(count int) []models.User {
 	users := make([]models.User, 0, count)
@@ -227,4 +210,27 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 	require.Nil(ts.T(), err)
 
 	return watcher
+}
+
+// seedArtifactResult creates a workflow with 1 DAG and count artifact_result records
+// belonging to the same workflow DAG.
+func (ts *TestSuite) seedArtifactResult(count int) []models.ArtifactResult {
+	artifact_results := make([]models.ArtifactResult, 0, count)
+	
+	workflows := ts.seedWorkflow(1)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+	DAGs := ts.seedDAGWithWorkflow(1, workflowIDs)
+	DAG := DAGs[0]
+
+	for i := 0; i < count; i++ {
+		dagResultID := uuid.New()
+		artifactID := uuid.New()
+		contentPath := randString(10)
+		artifact_result, err := ts.artifact_result.Create(ts.ctx, DAG.ID, artifactID, contentPath, ts.DB)
+		require.Nil(ts.T(), err)
+
+		artifact_results = append(artifact_results, *artifact_result)
+	}
+
+	return artifact_results
 }
