@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
@@ -22,13 +22,11 @@ const (
 
 // A DAGResult maps to the workflow_dag_result table.
 type DAGResult struct {
-	ID    uuid.UUID `db:"id" json:"id"`
-	DagID uuid.UUID `db:"workflow_dag_id" json:"workflow_dag_id"`
-	// TODO: Refactor once Operator refactor is merged
+	ID     uuid.UUID              `db:"id" json:"id"`
+	DagID  uuid.UUID              `db:"workflow_dag_id" json:"workflow_dag_id"`
 	Status shared.ExecutionStatus `db:"status" json:"status"`
 	// TODO ENG-1701: deprecate `CreatedAt` field.
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
-	// TODO: Refactor once Operator refactor is merged
+	CreatedAt time.Time                 `db:"created_at" json:"created_at"`
 	ExecState shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 

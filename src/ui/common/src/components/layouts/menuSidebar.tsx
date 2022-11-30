@@ -39,6 +39,7 @@ export type SidebarButtonProps = {
   text: string;
   selected?: boolean;
   numUpdates?: number;
+  onClick?: () => void;
 };
 
 const BUTTON_STYLE_OVERRIDE = {
@@ -57,9 +58,11 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
   text,
   numUpdates = 0,
   selected = false,
+  onClick,
 }) => {
   return (
     <Button
+      onClick={onClick}
       sx={{
         ...BUTTON_STYLE_OVERRIDE,
         bg: 'blue.800',
@@ -110,7 +113,10 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
  * is pinned on the left-hand side of every page in our UI, and it includes
  * quick links to core abstractions in our system (workflows, integrations, etc).
  */
-const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
+const MenuSidebar: React.FC<{
+  user: UserProfile;
+  onSidebarItemClicked?: (name: string) => void;
+}> = ({ user, onSidebarItemClicked }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
@@ -131,6 +137,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
         underline="none"
         style={menuSidebarLogoLink}
         component={RouterLink}
+        onClick={() => {
+          if (onSidebarItemClicked) {
+            onSidebarItemClicked('home');
+          }
+        }}
       >
         <img
           src={
@@ -150,6 +161,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             component={RouterLink}
           >
             <SidebarButton
+              onClick={() => {
+                if (onSidebarItemClicked) {
+                  onSidebarItemClicked('workflows');
+                }
+              }}
               icon={
                 <FontAwesomeIcon style={menuSidebarIcon} icon={faShareNodes} />
               }
@@ -167,6 +183,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             component={RouterLink}
           >
             <SidebarButton
+              onClick={() => {
+                if (onSidebarItemClicked) {
+                  onSidebarItemClicked('integrations');
+                }
+              }}
               icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
               text=""
               selected={currentPage === '/integrations'}
@@ -182,6 +203,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
             component={RouterLink}
           >
             <SidebarButton
+              onClick={() => {
+                if (onSidebarItemClicked) {
+                  onSidebarItemClicked('data');
+                }
+              }}
               icon={
                 <FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />
               }
@@ -198,6 +224,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           <Tooltip title="Documentation" placement="right" arrow>
             <Link href="https://docs.aqueducthq.com" underline="none">
               <SidebarButton
+                onClick={() => {
+                  if (onSidebarItemClicked) {
+                    onSidebarItemClicked('documentation');
+                  }
+                }}
                 icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faBook} />}
                 text=""
               />
@@ -209,6 +240,11 @@ const MenuSidebar: React.FC<{ user: UserProfile }> = ({ user }) => {
           <Tooltip title="Report Issue" placement="right" arrow>
             <Link href="mailto:support@aqueducthq.com" underline="none">
               <SidebarButton
+                onClick={() => {
+                  if (onSidebarItemClicked) {
+                    onSidebarItemClicked('report_issue');
+                  }
+                }}
                 icon={
                   <FontAwesomeIcon style={menuSidebarIcon} icon={faMessage} />
                 }

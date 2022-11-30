@@ -9,10 +9,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-const (
-	TestFilePath = "src/"
-)
-
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	conf, err := ParseK8sConfig(authConf)

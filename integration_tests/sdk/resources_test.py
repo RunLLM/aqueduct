@@ -1,15 +1,15 @@
 from os import cpu_count
 
 import pytest
-from aqueduct import global_config
-from aqueduct.enums import ServiceType
-from utils import generate_new_flow_name, run_flow_test
+from aqueduct.enums import ExecutionStatus, ServiceType
+from aqueduct.error import AqueductError, InvalidUserArgumentException
+from utils import publish_flow_test
 
-from aqueduct import op
+from aqueduct import global_config, op
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_custom_num_cpus(client, engine):
+def test_custom_num_cpus(client, flow_name, engine):
     """Assumption: nodes in the K8s cluster have more than 4 CPUs.
 
     We run a special operator that checks the number of CPUs that are available.
@@ -29,12 +29,14 @@ def test_custom_num_cpus(client, engine):
         return cpus
 
     global_config({"engine": engine})
+
     # Returns the default number of CPUs of the K8s cluster. (Currently 2)
     @op(requirements=[])
     def count_default_available_cpus():
         return _count_available_cpus()
 
     num_default_available_cpus = count_default_available_cpus()
+    assert num_default_available_cpus.get() == 2
 
     # Returns 4, the custom number of CPUs on the K8s cluster.
     @op(requirements=[], resources={"num_cpus": 4})
@@ -42,42 +44,32 @@ def test_custom_num_cpus(client, engine):
         return _count_available_cpus()
 
     num_count_available_cpus = count_with_custom_available_cpus()
+    assert num_count_available_cpus.get() == 4
 
-    flows = []
-    try:
-        default_cpus_flow = run_flow_test(
-            client,
-            name=generate_new_flow_name(),
-            artifacts=num_default_available_cpus,
-            engine=engine,
-            delete_flow_after=False,
-        )
-        flows.append(default_cpus_flow)
+    default_cpus_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=num_default_available_cpus,
+        engine=engine,
+        delete_flow_after=False,
+    )
 
-        custom_cpus_flow = run_flow_test(
-            client,
-            name=generate_new_flow_name(),
-            artifacts=num_count_available_cpus,
-            engine=engine,
-            delete_flow_after=False,
-        )
-        flows.append(custom_cpus_flow)
+    custom_cpus_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=num_count_available_cpus,
+        engine=engine,
+        delete_flow_after=False,
+    )
 
-        assert (
-            default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
-        )
-        assert (
-            custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get()
-            == 6
-        )
-
-    finally:
-        for flow in flows:
-            client.delete_flow(flow.id())
+    assert default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
+    assert (
+        custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get() == 6
+    )
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_too_many_cpus_requested(client, engine):
+def test_too_many_cpus_requested(client, flow_name, engine):
     """Assumption: nodes in the k8s cluster have less then 20 CPUs."""
     global_config({"engine": engine})
 
@@ -85,12 +77,17 @@ def test_too_many_cpus_requested(client, engine):
     def too_many_cpus():
         return 123
 
-    output = too_many_cpus()
-    run_flow_test(client, [output], engine=engine, expect_success=False)
+    with pytest.raises(AqueductError):
+        too_many_cpus()
+    output = too_many_cpus.lazy()
+
+    publish_flow_test(
+        client, output, name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED
+    )
 
 
-@pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_custom_memory(client, engine):
+@pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
+def test_custom_memory(client, flow_name, engine):
     """Assumption: nodes in the K8s cluster have more than 200MB of capacity.
 
     Customize our memory to be 200MB. We will run two different methods, one that allocates less than
@@ -110,40 +107,64 @@ def test_custom_memory(client, engine):
         output = bytearray(1000 * 1000 * 100 * 4)
         return output
 
-    failure_output = fn_expect_failure()
+    with pytest.raises(AqueductError):
+        fn_expect_failure()
+    failure_output = fn_expect_failure.lazy()
 
-    run_flow_test(
+    publish_flow_test(
         client,
-        name=generate_new_flow_name(),
+        name=flow_name(),
         artifacts=success_output,
         engine=engine,
     )
 
-    run_flow_test(
+    publish_flow_test(
         client,
-        name=generate_new_flow_name(),
+        name=flow_name,
         artifacts=failure_output,
         engine=engine,
-        expect_success=False,
+        expected_statuses=ExecutionStatus.FAILED,
     )
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_too_much_memory_requested(client, engine):
+def test_too_much_memory_requested_K8s(client, flow_name, engine):
     """Assumption: nodes in the k8s cluster have less then 100GB of memory."""
-
     global_config({"engine": engine})
 
     @op(requirements=[], resources={"memory": "100GB"})
     def too_much_memory():
         return 123
 
-    output = too_much_memory()
-    run_flow_test(client, [output], engine=engine, expect_success=False)
+    with pytest.raises(AqueductError):
+        _ = too_much_memory()
+    output = too_much_memory.lazy()
+
+    publish_flow_test(
+        client, [output], name=flow_name(), engine=engine, expected_statuses=ExecutionStatus.FAILED
+    )
+
+
+@pytest.mark.enable_only_for_engine_type(ServiceType.LAMBDA)
+def test_too_much_memory_requested_lambda(client, flow_name, engine):
+    """Lambda does not allow you to allocate more than 10,240MB of memory."""
+    global_config({"engine": engine})
+
+    @op(requirements=[], resources={"memory": 11000})
+    def too_much_memory():
+        return 123
+
+    with pytest.raises(InvalidUserArgumentException):
+        _ = too_much_memory()
+
+    output = too_much_memory.lazy()
+
+    with pytest.raises(InvalidUserArgumentException):
+        publish_flow_test(client, name=flow_name(), artifacts=[output], engine=engine)
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
-def test_custom_gpus(client, engine):
+def test_custom_gpus(client, flow_name, engine):
     """Assumption: there is a GPU node in the K8s cluster. Also assumes the
     machine executing the test has pytorch installed.
 
@@ -167,29 +188,19 @@ def test_custom_gpus(client, engine):
 
     gpu_available = gpu_is_available()
 
-    flows = []
-    try:
-        no_gpu_flow = run_flow_test(
-            client,
-            name=generate_new_flow_name(),
-            artifacts=gpu_not_available,
-            engine=engine,
-            delete_flow_after=False,
-        )
-        flows.append(no_gpu_flow)
+    no_gpu_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=gpu_not_available,
+        engine=engine,
+    )
 
-        gpu_flow = run_flow_test(
-            client,
-            name=generate_new_flow_name(),
-            artifacts=gpu_available,
-            engine=engine,
-            delete_flow_after=False,
-        )
-        flows.append(gpu_flow)
+    gpu_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=gpu_available,
+        engine=engine,
+    )
 
-        assert no_gpu_flow.latest().artifact("gpu_is_not_available artifact").get() == False
-        assert gpu_flow.latest().artifact("gpu_is_available artifact").get() == True
-
-    finally:
-        for flow in flows:
-            client.delete_flow(flow.id())
+    assert not no_gpu_flow.latest().artifact("gpu_is_not_available artifact").get()
+    assert gpu_flow.latest().artifact("gpu_is_available artifact").get()

@@ -3,9 +3,8 @@ package tests
 import (
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -77,8 +76,8 @@ func (ts *TestSuite) TestDAGResult_Create() {
 		ExecState: shared.NullExecutionState{
 			IsNull: false,
 			ExecutionState: shared.ExecutionState{
-				Status: col_shared.PendingExecutionStatus,
-				Timestamps: &col_shared.ExecutionTimestamps{
+				Status: shared.PendingExecutionStatus,
+				Timestamps: &shared.ExecutionTimestamps{
 					PendingAt: &now,
 				},
 			},

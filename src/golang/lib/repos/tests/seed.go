@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"time"
 
-	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -193,9 +192,9 @@ func (ts *TestSuite) seedDAGResultWithDAG(count int, dagIDs []uuid.UUID) []model
 
 	for i := 0; i < count; i++ {
 		now := time.Now()
-		execState := &col_shared.ExecutionState{
-			Status: col_shared.PendingExecutionStatus,
-			Timestamps: &col_shared.ExecutionTimestamps{
+		execState := &shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
 				PendingAt: &now,
 			},
 		}
@@ -250,4 +249,21 @@ func (ts *TestSuite) seedDAGEdgeWithDAG(count int, dagID uuid.UUID) []models.DAG
 	}
 
 	return edges
+}
+
+// seedWatcher creates a Watcher record. It creates a new Workflow
+// and User to use for the Watcher.
+func (ts *TestSuite) seedWatcher() *models.Watcher {
+	workflows := ts.seedWorkflow(1)
+	workflow := workflows[0]
+
+	watcher, err := ts.watcher.Create(
+		ts.ctx,
+		workflow.ID,
+		workflow.UserID,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	return watcher
 }

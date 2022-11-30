@@ -23,9 +23,9 @@ type TestSuite struct {
 	dag       repos.DAG
 	dagEdge   repos.DAGEdge
 	dagResult repos.DAGResult
+	watcher   repos.Watcher
 	workflow  repos.Workflow
 	user      repos.User
-	artifact     repos.Artifact
 
 	DB database.Database
 }
@@ -46,6 +46,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dag = sqlite.NewDAGRepo()
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
+	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.artifact = sqlite.NewArtifactRepo()

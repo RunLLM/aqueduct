@@ -42,27 +42,6 @@ func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow)
 	}
 }
 
-// requireDeepEqualArtifacts asserts that the expected and actual lists
-// of Artifact containt the same elements.
-func requireDeepEqualArtifacts(t *testing.T, expected, actual []models.Artifact) {
-	require.Equal(t, len(expected), len(actual))
-
-	for _, expectedArtifact := range expected {
-		found := false
-		var foundArtifact models.Artifact
-
-		for _, actualArtifact := range actual {
-			if expectedArtifact.ID == actualArtifact.ID {
-				found = true
-				foundArtifact = actualArtifact
-				break
-			}
-		}
-		require.True(t, found, "Unable to find Artifact: %v", expectedArtifact)
-		requireDeepEqual(t, expectedArtifact, foundArtifact)
-	}
-}
-
 // requireDeepEqualDAGs asserts that the expected and actual lists of DAGs
 // containt the same elements.
 func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
