@@ -102,11 +102,11 @@ func (*artifactWriter) Create(
 }
 
 func (*artifactWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
-	return deleteArtifactResults(ctx, DB, []uuid.UUID{ID})
+	return deleteArtifacts(ctx, DB, []uuid.UUID{ID})
 }
 
 func (*artifactWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error {
-	return deleteArtifactResults(ctx, DB, IDs)
+	return deleteArtifacts(ctx, DB, IDs)
 }
 
 func (*artifactWriter) Update(
@@ -152,7 +152,7 @@ func getArtifact(ctx context.Context, DB database.Database, query string, args .
 	return &artifacts[0], nil
 }
 
-func deleteArtifactResults(ctx context.Context, DB database.Database, IDs []uuid.UUID) error {
+func deleteArtifacts(ctx context.Context, DB database.Database, IDs []uuid.UUID) error {
 	if len(IDs) == 0 {
 		return nil
 	}
