@@ -224,7 +224,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			execState.Timestamps.FinishedAt = &now
 		}
 
-		workflow_utils.UpdateDAGResultMetadata(
+		if updateErr := workflow_utils.UpdateDAGResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
 			execState,
@@ -232,7 +232,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 			eng.WorkflowReader,
 			eng.NotificationWriter,
 			eng.Database,
-		)
+		); updateErr != nil {
+			log.Errorf("Unable to update DAGResult metadata for %v", dbWorkflowDagResult.Id)
+		}
 	}()
 
 	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
