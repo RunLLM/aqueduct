@@ -23,6 +23,7 @@ type TestSuite struct {
 	dag      repos.DAG
 	workflow repos.Workflow
 	user     repos.User
+	artifact_result     repos.ArtifactResult
 
 	DB database.Database
 }
@@ -43,6 +44,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dag = sqlite.NewDAGRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
+	ts.artifact_result = sqlite.NewArtifactResultRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {
