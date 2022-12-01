@@ -319,7 +319,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
   },
   ['Spark']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/spark_logo.png',
     activated: true,
     category: IntegrationCategories.DATA
   }
