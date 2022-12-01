@@ -279,7 +279,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opIds = append(opIds, op.Id)
 	}
 
-	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsMapByOperatorIds(
+	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsMapByOperatorIDs(
 		ctx,
 		opIds,
 		eng.ExecutionEnvironmentReader,
