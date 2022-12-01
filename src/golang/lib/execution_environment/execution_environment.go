@@ -249,7 +249,7 @@ func newFromDBExecutionEnvironment(
 	}
 }
 
-func GetExecutionEnvironmentsMapByOperatorIds(
+func GetExecutionEnvironmentsMapByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	envReader db_exec_env.Reader,
@@ -339,4 +339,68 @@ func CreateMissingAndSyncExistingEnvs(
 	}
 
 	return results, nil
+}
+
+func GetUnusedExecutionEnvironmentIDs(
+	ctx context.Context,
+	envReader db_exec_env.Reader,
+	db database.Database,
+) ([]uuid.UUID, error) {
+	dbEnvs, err := envReader.GetUnusedExecutionEnvironments(
+		ctx, db,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]uuid.UUID, 0, len(dbEnvs))
+	for _, dbEnv := range dbEnvs {
+		results = append(results, dbEnv.Id)
+	}
+
+	return results, nil
+}
+
+// CleanupUnusedEnvironments is asynchronously executed in a Go routine in a best-effort
+// fashion, so we log the errors instead of returning them.
+func CleanupUnusedEnvironments(
+	ctx context.Context,
+	envReader db_exec_env.Reader,
+	envWriter db_exec_env.Writer,
+	db database.Database,
+) {
+	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
+	if err != nil {
+		log.Errorf("Error getting unused execution environments: %v", err)
+		return
+	}
+
+	var errIDs []uuid.UUID
+	var deletedIDs []uuid.UUID
+
+	for _, envID := range envIDs {
+		envName := fmt.Sprintf("%s_%s", "aqueduct", envID.String())
+		deleteArgs := []string{
+			"env",
+			"remove",
+			"-n",
+			envName,
+		}
+
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+		if err != nil {
+			errIDs = append(errIDs, envID)
+		} else {
+			deletedIDs = append(deletedIDs, envID)
+		}
+	}
+
+	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
+	if err != nil {
+		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
+	}
+
+	if len(errIDs) != 0 {
+		log.Errorf("Error garbage collecting Conda environments: %v", errIDs)
+	}
 }
