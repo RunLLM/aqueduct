@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +26,7 @@ func (ts *TestSuite) TestArtifactResult_GetBatch() {
 
 	actualArtifactResults, err := ts.artifact_result.GetBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
-	requireDeepEqualArtifacts(ts.T(), expectedArtifactResults, actualArtifactResults)
+	requireDeepEqualArtifactResults(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifact() {
@@ -61,9 +62,9 @@ func (ts *TestSuite) TestArtifactResult_GetByArtifactAndDAGResult() {
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByDAGResults() {
-	seedA = 3
+	seedA := 3
 	expectedArtifactResultsA, _, dagA, _  := ts.seedArtifactResult(seedA)
-	seedB = 3
+	seedB := 3
 	// Generate artifact results for different DAG
 	expectedArtifactResultsB, _, dagB, _  := ts.seedArtifactResult(seedB)
 
@@ -96,32 +97,38 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 }
 
 func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
-	schema := make([]map[string]string)
-	schema[randString(10)] := randString(10)
+	schema := make([]map[string]string, 1)
+	schema[0][randString(10)] = randString(10)
 
-	systemMetrics := make([]map[string]string)
-	systemMetrics[randString(10)] := randString(10)
+	systemMetrics := make(map[string]string)
+	systemMetrics[randString(10)] = randString(10)
 
 	expectedArtifactResult := &models.ArtifactResult{
 		DAGResultID: uuid.New(),
 		ArtifactID: uuid.New(),
 		ContentPath: randString(10),
-		ExecState: &shared.ExecutionState{
-			UserLogs: &shared.Logs{
-				Stdout:randString(10),
-				StdErr:randString(10),
+		ExecState: shared.NullExecutionState{
+			ExecutionState: shared.ExecutionState{ 
+				UserLogs: &shared.Logs{
+					Stdout:randString(10),
+					StdErr:randString(10),
+				},
+				Status: shared.CanceledExecutionStatus,
 			},
-			Status: shared.CanceledExecutionStatus,
+			IsNull: false,
 		},
-		Metadata: &shared.ArtifactResultMetadata{
-			Schema: schema,
-			SystemMetrics: systemMetrics,
-			SerializationType: shared.StringSerialization,
-			ArtifactType: shared.UntypedArtifact,
+		Metadata: shared.NullArtifactResultMetadata{
+			ArtifactResultMetadata: shared.ArtifactResultMetadata{
+				Schema: schema,
+				SystemMetrics: systemMetrics,
+				SerializationType: shared.StringSerialization,
+				ArtifactType: shared.UntypedArtifact,
+			},
+			IsNull: false,
 		},
 	}
 
-	actualArtifactResult, err := ts.artifact_result.CreateWithExecStateAndMetadata(ts.ctx, expectedArtifactResult.DAGResultID, expectedArtifactResult.ArtifactID, expectedArtifactResult.ContentPath, expectedArtifactResult.ExecState, expectedArtifactResult.Metadata, ts.DB)
+	actualArtifactResult, err := ts.artifact_result.CreateWithExecStateAndMetadata(ts.ctx, expectedArtifactResult.DAGResultID, expectedArtifactResult.ArtifactID, expectedArtifactResult.ContentPath, &expectedArtifactResult.ExecState.ExecutionState, &expectedArtifactResult.Metadata.ArtifactResultMetadata, ts.DB)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualArtifactResult.ID)
@@ -151,18 +158,31 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 	expectedArtifactResult := &artifactResults[0]
 
 	contentPath := randString(10)
-	execState := &shared.ExecutionState{
-		UserLogs: &shared.Logs{
-			Stdout:randString(10),
-			StdErr:randString(10),
+
+	schema := make([]map[string]string, 1)
+	schema[0][randString(10)] = randString(10)
+
+	systemMetrics := make(map[string]string)
+	systemMetrics[randString(10)] = randString(10)
+
+	execState := shared.NullExecutionState{
+		ExecutionState: shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout:randString(10),
+				StdErr:randString(10),
+			},
+			Status: shared.UnknownExecutionStatus,
 		},
-		Status: shared.UnknownExecutionStatus,
+		IsNull: false,
 	}
-	metadata := &shared.ArtifactResultMetadata{
-		Schema: schema,
-		SystemMetrics: systemMetrics,
-		SerializationType: shared.StringSerialization,
-		ArtifactType: shared.JsonArtifact,
+	metadata := shared.NullArtifactResultMetadata{
+		ArtifactResultMetadata: shared.ArtifactResultMetadata{
+			Schema: schema,
+			SystemMetrics: systemMetrics,
+			SerializationType: shared.StringSerialization,
+			ArtifactType: shared.JsonArtifact,
+		},
+		IsNull: false,
 	}
 
 	changes := map[string]interface{}{

@@ -2,12 +2,13 @@ package sqlite
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -55,7 +56,7 @@ func (*artifactResultReader) GetByArtifact(ctx context.Context, artifactID uuid.
 		`SELECT %s FROM artifact_result WHERE artifact_id = $1;`,
 		models.ArtifactResultCols(),
 	)
-	args := []interface{}{artifactId}
+	args := []interface{}{artifactID}
 	return getArtifactResults(ctx, DB, query, args...)
 }
 
@@ -73,7 +74,7 @@ func (*artifactResultReader) GetByArtifactAndWorkflow(ctx context.Context, workf
 		AND artifact_result.artifact_id = artifact.id;`,
 		models.ArtifactResultCols(),
 	)
-	args := []interface{}{workflowId, name}
+	args := []interface{}{workflowID, artifactName}
 	return getArtifactResults(ctx, DB, query, args...)
 }
 
@@ -90,7 +91,7 @@ func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs [
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact_result WHERE workflow_dag_result_id IN (%s);`,
 		models.ArtifactResultCols(),
-		stmt_preparers.GenerateArgsList(len(workflowDagResultIds), 1),
+		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
 

@@ -36,7 +36,6 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.Workflow, models.User) {
 	artifacts := ts.seedArtifact(1)
 
-
 	users := ts.seedUser(1)
 	userIDs := sampleUserIDs(1, users)
 
@@ -273,7 +272,7 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, models.Artifact, models.DAG, models.Workflow) {
 	artifactResults := make([]models.ArtifactResult, 0, count)
 
-	artifact, dag, workflow, _ := seedArtifactInWorkflow()
+	artifact, dag, workflow, _ := ts.seedArtifactInWorkflow()
 
 	for i := 0; i < count; i++ {
 		contentPath := randString(10)

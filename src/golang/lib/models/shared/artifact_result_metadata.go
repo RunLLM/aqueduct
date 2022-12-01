@@ -2,7 +2,6 @@ package shared
 
 import (
 	"database/sql/driver"
-
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
