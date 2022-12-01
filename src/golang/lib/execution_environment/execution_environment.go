@@ -301,15 +301,22 @@ func GetUnusedExecutionEnvironmentIDs(
 	return results, nil
 }
 
+// CleanupUnusedEnvironments is asynchronously executed in a Go routine in a best-effort
+// fashion, so we log the errors instead of returning them.
 func CleanupUnusedEnvironments(
 	ctx context.Context,
 	envReader db_exec_env.Reader,
+	envWriter db_exec_env.Writer,
 	db database.Database,
-) error {
+) {
 	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
 	if err != nil {
-		return err
+		log.Errorf("Error getting unused execution environments: %v", err)
+		return
 	}
+
+	var errIDs []uuid.UUID
+	var deletedIDs []uuid.UUID
 
 	for _, envID := range envIDs {
 		envName := fmt.Sprintf("%s_%s", "aqueduct", envID.String())
@@ -322,9 +329,18 @@ func CleanupUnusedEnvironments(
 
 		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
 		if err != nil {
-			return err
+			errIDs = append(errIDs, envID)
+		} else {
+			deletedIDs = append(deletedIDs, envID)
 		}
 	}
 
-	return nil
+	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
+	if err != nil {
+		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
+	}
+
+	if len(errIDs) != 0 {
+		log.Errorf("Error garbage collecting Conda environments: %v", errIDs)
+	}
 }

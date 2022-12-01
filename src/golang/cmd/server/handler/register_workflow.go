@@ -289,14 +289,12 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			return
 		}
 
-		err = exec_env.CleanupUnusedEnvironments(
+		exec_env.CleanupUnusedEnvironments(
 			context.Background(),
 			h.ExecutionEnvironmentReader,
+			h.ExecutionEnvironmentWriter,
 			db,
 		)
-		if err != nil {
-			log.Errorf("Error garbage collecting unused Conda environment: %v", err)
-		}
 	}()
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
