@@ -2,11 +2,13 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { SupportedIntegrations } from '../../../utils/integrations';
+import { WorkflowTableData, WorkflowTable, WorkflowTableRow } from '../../../components/tables/WorkflowTable';
 
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { LoadingStatusEnum } from '../../../utils/shared';
+import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import { ListWorkflowSummary } from '../../../utils/workflows';
 import { CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
@@ -14,6 +16,11 @@ import { BreadcrumbLink } from '../../layouts/NavBar';
 import { filteredList, SearchBar } from '../../Search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
+import { CheckLevel } from '../../../utils/operators';
+import CheckItem, { CheckPreview } from './components/CheckItem';
+import MetricItem, { MetricPreview } from './components/MetricItem';
+import EngineItem from './components/EngineItem';
+import ExecutionStatusLink from './components/ExecutionStatusLink';
 
 type Props = {
   user: UserProfile;
@@ -74,11 +81,168 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     noItemsMessage
   );
 
+  console.log('allWorkflows: ', allWorkflows);
+  const workflows = allWorkflows.workflows;
+
+  const metricsShort: MetricPreview[] = [
+    {
+      metricId: '1',
+      name: 'avg_churn',
+      value: '10',
+      status: ExecutionStatus.Failed,
+    },
+    {
+      metricId: '2',
+      name: 'sentiment',
+      value: '100.5',
+      status: ExecutionStatus.Succeeded,
+    },
+    {
+      metricId: '3',
+      name: 'revenue_lost',
+      value: '$20M',
+      status: ExecutionStatus.Succeeded,
+    },
+    {
+      metricId: '4',
+      name: 'more_metrics',
+      value: '$500',
+      status: ExecutionStatus.Succeeded,
+    },
+  ];
+
+  const checkPreviews: CheckPreview[] = [
+    {
+      checkId: '1',
+      name: 'min_churn',
+      status: ExecutionStatus.Succeeded,
+      level: CheckLevel.Error,
+      value: 'True',
+      timestamp: new Date().toLocaleString(),
+    },
+    {
+      checkId: '2',
+      name: 'max_churn',
+      status: ExecutionStatus.Failed,
+      level: CheckLevel.Error,
+      value: 'True',
+      timestamp: new Date().toLocaleString(),
+    },
+    {
+      checkId: '3',
+      name: 'avg_churn_check',
+      status: ExecutionStatus.Pending,
+      level: CheckLevel.Warning,
+      value: null,
+      timestamp: new Date().toLocaleString(),
+    },
+    {
+      checkId: '4',
+      name: 'warning_test',
+      status: ExecutionStatus.Succeeded,
+      level: CheckLevel.Warning,
+      value: 'False',
+      timestamp: new Date().toLocaleString(),
+    },
+    {
+      checkId: '5',
+      name: 'canceled_test',
+      status: ExecutionStatus.Canceled,
+      level: CheckLevel.Warning,
+      value: 'False',
+      timestamp: new Date().toLocaleString(),
+    },
+  ];
+
+  const workflowElements: WorkflowTableRow[] = workflows.map((value) => {
+    console.log('engine: ', value.engine);
+    const engineName = value.engine[0].toUpperCase() + value.engine.substring(1);
+    console.log('engineName: ', engineName);
+
+    const engineIconUrl = SupportedIntegrations[value.engine[0].toUpperCase() + value.engine.substring(1)].logo;
+    console.log('iconUrl: ', engineIconUrl);
+
+    const workflowTableRow: WorkflowTableRow = {
+      name: {
+        name: value.name,
+        url: `/workflow/${value.id}`,
+      },
+      last_run: value.last_run_at,
+      engine: {
+        engineName: value.engine,
+        engineIconUrl: SupportedIntegrations[value.engine[0].toUpperCase() + value.engine.substring(1)].logo
+      },
+      metrics: metricsShort,
+      checks: checkPreviews
+    };
+
+    return workflowTableRow;
+  });
+
+  const workflowTableData: WorkflowTableData = {
+    schema: {
+      fields: [
+        { name: 'name', type: 'varchar' },
+        { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
+        { name: 'engine', type: 'varchar' },
+        { name: 'metrics', type: 'varchar' },
+        { name: 'checks', type: 'varchar' },
+      ],
+      pandas_version: '1.5.1',
+    },
+    data: workflowElements,
+    meta: [],
+  };
+
+  console.log('workflowTableData: ', workflowTableData);
+
+  const onGetColumnValue = (row, column) => {
+    let value = row[column.name];
+
+    switch (column.name) {
+      case 'name':
+        const { name, url, status } = value;
+        value = <ExecutionStatusLink name={name} url={url} status={status} />;
+        break;
+      case 'last_run':
+        value = row[column.name];
+        break;
+      case 'engine': {
+        const { engineName, engineIconUrl } = value;
+        value = (
+          <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+        );
+        break;
+      }
+      case 'metrics': {
+        value = <MetricItem metrics={value} />;
+        break;
+      }
+      case 'checks': {
+        value = <CheckItem checks={value} />;
+        break;
+      }
+      default: {
+        value = row[column.name];
+        break;
+      }
+    }
+
+    return value;
+  };
+
   return (
     <Layout
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
+      <Box>
+        <WorkflowTable
+          data={workflowTableData}
+          searchEnabled={true}
+          onGetColumnValue={onGetColumnValue}
+        />
+      </Box>
       <Box>
         {allWorkflows.workflows.length >= 1 && (
           <Box marginLeft={CardPadding}>
