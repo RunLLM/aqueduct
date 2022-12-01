@@ -8,12 +8,20 @@ import (
 	"sort"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
+
+var pythonVersions = [...]string{
+	"3.7",
+	"3.8",
+	"3.9",
+	"3.10",
+}
 
 type ExecutionEnvironment struct {
 	// TODO: Double check if the json tags can be removed.
@@ -140,17 +148,21 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 	return nil
 }
 
-// DeleteEnv deletes the Conda environment if it exists.
-func (e *ExecutionEnvironment) DeleteEnv() error {
-	deleteArgs := []string{
+func deleteCondaEnv(name string) error {
+	args := []string{
 		"env",
 		"remove",
 		"-n",
-		e.Name(),
+		name,
 	}
 
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
 	return err
+}
+
+// DeleteEnv deletes the Conda environment if it exists.
+func (e *ExecutionEnvironment) DeleteEnv() error {
+	return deleteCondaEnv(e.Name())
 }
 
 // GetExecEnvFromDB returns an exec env object from DB by its hash.
@@ -167,6 +179,54 @@ func GetExecEnvFromDB(
 	}
 
 	return newFromDBExecutionEnvironment(dbExecEnv), nil
+}
+
+func baseEnvNameByVersion(pythonVersion string) string {
+	return fmt.Sprintf("aqueduct_python%s", pythonVersion)
+}
+
+// createBaseEnvs creates base environments given the base conda path.
+func createBaseEnvs(condaBasePath string) error {
+	for _, pythonVersion := range pythonVersions {
+		envName := baseEnvNameByVersion(pythonVersion)
+		args := []string{
+			"create",
+			"-n",
+			envName,
+			fmt.Sprintf("python==%s", pythonVersion),
+			"-y",
+		}
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
+
+		args = []string{
+			"run",
+			"-n",
+			envName,
+			"pip3",
+			"install",
+			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
+		}
+		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func DeleteBaseEnvs() error {
+	for _, pythonVersion := range pythonVersions {
+		err := deleteCondaEnv(baseEnvNameByVersion(pythonVersion))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Best-effort to delete all envs and log any error

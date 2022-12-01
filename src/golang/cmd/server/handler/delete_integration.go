@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -89,8 +90,12 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 
 func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*deleteIntegrationArgs)
-
 	emptyResp := deleteIntegrationResponse{}
+
+	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, args.integrationId, h.Database)
+	if err != nil {
+		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "failed to retrieve the given integration.")
+	}
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
@@ -103,7 +108,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
 
-	if err := h.Vault.Delete(ctx, args.integrationId.String()); err != nil {
+	if err := cleanUpIntegration(ctx, integrationObject, h.Vault); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
 
@@ -112,4 +117,25 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	return emptyResp, http.StatusOK, nil
+}
+
+// cleanUpIntegration deletes any side effects of an integration
+// in Aqueduct system, other than DB records.
+// For example, credentials stored in vault or base conda environments
+// created.
+func cleanUpIntegration(
+	ctx context.Context,
+	integrationObject *integration.Integration,
+	vaultObject vault.Vault,
+) error {
+	err := vaultObject.Delete(ctx, integrationObject.Id.String())
+	if err != nil {
+		return err
+	}
+
+	if integrationObject.Service == integration.Conda {
+		return exec_env.DeleteBaseEnvs()
+	}
+
+	return nil
 }

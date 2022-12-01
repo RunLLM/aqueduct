@@ -3,11 +3,9 @@ package execution_environment
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -150,54 +148,20 @@ func InitializeConda(
 	condaPath := strings.TrimSpace(out)
 	log.Infof("Conda base path is %s", condaPath)
 
-	pythonVersions := []string{"3.7", "3.8", "3.9", "3.10"}
-	for _, pythonVersion := range pythonVersions {
-		args := []string{
-			"create",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			fmt.Sprintf("python==%s", pythonVersion),
-			"-y",
-		}
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
-		if err != nil {
-			updateFailure(
-				ctx,
-				out,
-				err.Error(),
-				condaPath,
-				&now,
-				integrationID,
-				integrationWriter,
-				db,
-			)
+	err = createBaseEnvs(condaPath)
+	if err != nil {
+		updateFailure(
+			ctx,
+			out,
+			err.Error(),
+			condaPath,
+			&now,
+			integrationID,
+			integrationWriter,
+			db,
+		)
 
-			return
-		}
-
-		args = []string{
-			"run",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			"pip3",
-			"install",
-			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-		}
-		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
-		if err != nil {
-			updateFailure(
-				ctx,
-				out,
-				err.Error(),
-				condaPath,
-				&now,
-				integrationID,
-				integrationWriter,
-				db,
-			)
-
-			return
-		}
+		return
 	}
 
 	// This is to ensure we can use `conda develop` to update the python path later on.
