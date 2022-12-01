@@ -36,7 +36,6 @@ type Readers struct {
 	WorkflowReader             workflow.Reader
 	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
-	WorkflowWatcherReader      workflow_watcher.Reader
 	WorkflowDagResultReader    workflow_dag_result.Reader
 	SchemaVersionReader        schema_version.Reader
 	CustomReader               queries.Reader
@@ -111,11 +110,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	workflowWatcherReader, err := workflow_watcher.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	workflowDagResultReader, err := workflow_dag_result.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -146,7 +140,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		WorkflowReader:             workflowReader,
 		WorkflowDagReader:          workflowDagReader,
 		WorkflowDagEdgeReader:      workflowDagEdgeReader,
-		WorkflowWatcherReader:      workflowWatcherReader,
 		WorkflowDagResultReader:    workflowDagResultReader,
 		SchemaVersionReader:        schemaVersionReader,
 		CustomReader:               queriesReader,
