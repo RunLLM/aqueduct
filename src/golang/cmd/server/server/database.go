@@ -62,7 +62,8 @@ type Writers struct {
 
 func CreateRepos() *Repos {
 	return &Repos{
-		UserRepo: sqlite.NewUserRepo(),
+		DAGResultRepo: sqlite.NewDAGResultRepo(),
+		UserRepo:      sqlite.NewUserRepo(),
 	}
 }
 
