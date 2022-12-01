@@ -29,11 +29,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			RestartServer: s.Restart,
 		},
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
-			Database:          s.Database,
-			Vault:             s.Vault,
-			OperatorReader:    s.OperatorReader,
-			IntegrationReader: s.IntegrationReader,
-			IntegrationWriter: s.IntegrationWriter,
+			Database:                   s.Database,
+			Vault:                      s.Vault,
+			OperatorReader:             s.OperatorReader,
+			IntegrationReader:          s.IntegrationReader,
+			IntegrationWriter:          s.IntegrationWriter,
+			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
+			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,

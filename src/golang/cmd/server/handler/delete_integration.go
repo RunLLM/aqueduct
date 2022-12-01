@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -35,11 +36,13 @@ type deleteIntegrationResponse struct{}
 type DeleteIntegrationHandler struct {
 	PostHandler
 
-	Database          database.Database
-	Vault             vault.Vault
-	OperatorReader    operator.Reader
-	IntegrationReader integration.Reader
-	IntegrationWriter integration.Writer
+	Database                   database.Database
+	Vault                      vault.Vault
+	OperatorReader             operator.Reader
+	IntegrationReader          integration.Reader
+	IntegrationWriter          integration.Writer
+	ExecutionEnvironmentReader db_exec_env.Reader
+	ExecutionEnvironmentWriter db_exec_env.Writer
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -108,7 +111,14 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
 
-	if err := cleanUpIntegration(ctx, integrationObject, h.Vault); err != nil {
+	if err := cleanUpIntegration(
+		ctx,
+		integrationObject,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		h.Vault,
+		h.Database,
+	); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
 
@@ -126,16 +136,22 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *integration.Integration,
+	execEnvReader db_exec_env.Reader,
+	execEnvWriter db_exec_env.Writer,
 	vaultObject vault.Vault,
+	db database.Database,
 ) error {
-	err := vaultObject.Delete(ctx, integrationObject.Id.String())
-	if err != nil {
-		return err
-	}
-
 	if integrationObject.Service == integration.Conda {
+		// Best effort to clean up
+		err := exec_env.CleanupUnusedEnvironments(
+			ctx, execEnvReader, execEnvWriter, db,
+		)
+		if err != nil {
+			return err
+		}
+
 		return exec_env.DeleteBaseEnvs()
 	}
 
-	return nil
+	return vaultObject.Delete(ctx, integrationObject.Id.String())
 }

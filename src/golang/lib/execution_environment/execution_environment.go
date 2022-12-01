@@ -12,6 +12,7 @@ import (
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -368,11 +369,10 @@ func CleanupUnusedEnvironments(
 	envReader db_exec_env.Reader,
 	envWriter db_exec_env.Writer,
 	db database.Database,
-) {
+) error {
 	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
 	if err != nil {
-		log.Errorf("Error getting unused execution environments: %v", err)
-		return
+		return errors.Wrap(err, "Error getting unused env IDs.")
 	}
 
 	var errIDs []uuid.UUID
@@ -397,10 +397,12 @@ func CleanupUnusedEnvironments(
 
 	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
 	if err != nil {
-		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
+		return err
 	}
 
 	if len(errIDs) != 0 {
-		log.Errorf("Error garbage collecting Conda environments: %v", errIDs)
+		return errors.Newf("Error garbage collecting Conda environments: %v", errIDs)
 	}
+
+	return nil
 }

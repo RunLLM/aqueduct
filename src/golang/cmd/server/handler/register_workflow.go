@@ -289,12 +289,15 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			return
 		}
 
-		exec_env.CleanupUnusedEnvironments(
+		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
 			h.ExecutionEnvironmentReader,
 			h.ExecutionEnvironmentWriter,
 			db,
 		)
+		if err != nil {
+			log.Errorf("Error deleting unused execution environments: %v", err)
+		}
 	}()
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
