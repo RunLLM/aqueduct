@@ -293,7 +293,7 @@ func GetUnusedExecutionEnvironmentIDs(
 		return nil, err
 	}
 
-	results := make([]uuid.UUID, len(dbEnvs))
+	results := make([]uuid.UUID, 0, len(dbEnvs))
 	for _, dbEnv := range dbEnvs {
 		results = append(results, dbEnv.Id)
 	}
