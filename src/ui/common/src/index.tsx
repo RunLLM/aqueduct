@@ -11,13 +11,12 @@ import { IntegrationCard } from './components/integrations/cards/card';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
 import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
-import { SparkCard } from './components/integrations/cards/sparkCard';
-import { SparkDialog } from './components/integrations/dialogs/sparkDialog';
 import { MySqlCard } from './components/integrations/cards/mysqlCard';
 import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
+import { SparkCard } from './components/integrations/cards/sparkCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
@@ -34,6 +33,7 @@ import { PostgresDialog } from './components/integrations/dialogs/postgresDialog
 import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog';
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
+import { SparkDialog } from './components/integrations/dialogs/sparkDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
 import MenuSidebar, {
@@ -359,10 +359,10 @@ export {
   setWorkflowStatusBarOpenState,
   // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
-  SparkCard,
-  SparkDialog,
   SnowflakeCard,
   SnowflakeDialog,
+  SparkCard,
+  SparkDialog,
   Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
