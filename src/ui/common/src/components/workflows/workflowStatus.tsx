@@ -1,3 +1,5 @@
+import { faClock, faClockFour, faListOl, faSpinner, faCircleCheck, faCircleQuestion, faX, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -17,7 +19,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
   let backgroundColor = theme.palette.Primary;
   switch (status) {
     case ExecutionStatus.Canceled:
-      backgroundColor = theme.palette.Default;
+      backgroundColor = theme.palette.gray[600];
       break;
     case ExecutionStatus.Failed:
       backgroundColor = theme.palette.Error;
@@ -36,7 +38,8 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
       break;
     case ExecutionStatus.Unknown:
     default:
-      backgroundColor = theme.palette.gray[400];
+      // TODO: Make theme.palette.gray[600] be the same as theme.palette.Default in theme.tsx
+      backgroundColor = theme.palette.gray[600];
       break;
   }
 
@@ -117,17 +120,143 @@ export default StatusChip;
  * Smaller status indicator component that is just a circle with a background color.
  **/
 export const StatusIndicator: React.FC<Props> = ({ status }) => {
+  const getIcon = (status: ExecutionStatus) => {
+    let indicator = null;
+    switch (status) {
+      case ExecutionStatus.Running:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faSpinner} color={'black'} />
+          </Box>
+        );
+        break;
+
+      case ExecutionStatus.Canceled:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faX} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+      case ExecutionStatus.Pending:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faClockFour} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+
+      case ExecutionStatus.Registered:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faListOl} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+
+      case ExecutionStatus.Succeeded:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faCircleCheck} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+
+      case ExecutionStatus.Unknown:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faCircleQuestion} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+
+      case ExecutionStatus.Failed:
+        indicator = (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignSelf: 'center',
+            }}
+          >
+            <FontAwesomeIcon icon={faCircleExclamation} color={getExecutionStatusColor(status)} />
+          </Box>
+        );
+        break;
+
+      default:
+        // No icon, just show a color
+        indicator = (
+          <Box
+            sx={{
+              height: '100%',
+              width: '100%',
+              backgroundColor: getExecutionStatusColor(status),
+              borderRadius: 999,
+            }}
+          />
+        );
+        break;
+    }
+
+    return indicator;
+  };
+
   return (
     <Tooltip title={getExecutionStatusLabel(status)} placement="bottom" arrow>
       <Box
         sx={{
           width: '12px',
           height: '12px',
-          backgroundColor: getExecutionStatusColor(status),
-          borderRadius: 999,
+          alignItems: 'center',
           alignSelf: 'center',
         }}
-      />
+      >
+        {getIcon(status)}
+      </Box>
     </Tooltip>
   );
 };
