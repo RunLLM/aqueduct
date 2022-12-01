@@ -148,6 +148,12 @@ export type LambdaConfig = {
   role_arn: string;
 };
 
+export type SparkConfig = {
+  master: string;
+  app_name: string;
+  driver_host: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -164,7 +170,8 @@ export type IntegrationConfig =
   | AqueductDemoConfig
   | AirflowConfig
   | KubernetesConfig
-  | LambdaConfig;
+  | LambdaConfig
+  | SparkConfig;
 
 export type Service =
   | 'Postgres'
@@ -184,7 +191,8 @@ export type Service =
   | 'Lambda'
   | 'Google Sheets'
   | 'MongoDB'
-  | 'Conda';
+  | 'Conda'
+  | 'Spark';
 
 export type Info = {
   logo: string;
@@ -229,88 +237,98 @@ export async function addTable(
   }
 }
 
+const IntegrationCategories = {
+  DATA: 'data',
+  COMPUTE: 'compute'
+};
+
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/440px-Postgresql_elephant.svg.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['Snowflake']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/51-513957_periscope-data-partners-snowflake-computing-logo.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['Redshift']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/amazon-redshift.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['BigQuery']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-bigquery-logo-1.svg',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['MySQL']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mysql.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['MariaDB']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mariadb.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['S3']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/s3.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['GCS']: {
     logo: 'https://spiral-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/google-cloud-storage.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['Aqueduct Demo']: {
     logo: '/assets/aqueduct.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['SQLite']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite-square-icon-256x256.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['Athena']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/athena.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
   ['Airflow']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/airflow.png',
     activated: true,
-    category: 'compute',
+    category: IntegrationCategories.COMPUTE,
   },
   ['Kubernetes']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/kubernetes.png',
     activated: true,
-    category: 'compute',
+    category: IntegrationCategories.COMPUTE,
   },
   ['Lambda']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
     activated: true,
-    category: 'compute',
+    category: IntegrationCategories.COMPUTE,
   },
   ['MongoDB']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/mongo.png',
     activated: true,
-    category: 'data',
+    category: IntegrationCategories.DATA,
   },
+  ['Spark']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/Lambda.png',
+    activated: true,
+    category: IntegrationCategories.DATA
+  }
   // TODO: enable this once we release conda
   /*
   ['Conda']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/conda.png',
     activated: true,
-    category: 'compute',
+    category: IntegrationCategories.COMPUTE,
   },
   */
 };

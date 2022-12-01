@@ -39,6 +39,7 @@ import {
   S3Config,
   Service,
   SnowflakeConfig,
+  SparkConfig,
   SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
@@ -58,6 +59,7 @@ import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import { SnowflakeDialog } from './snowflakeDialog';
+import { SparkDialog } from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
@@ -293,6 +295,9 @@ const IntegrationDialog: React.FC<Props> = ({
     case 'Conda':
       serviceDialog = <CondaDialog />;
       break;
+    case 'Spark':
+      serviceDialog = <SparkDialog onUpdateField={setConfigField} value={config as SparkConfig} editMode={editMode} />;
+      break;
     default:
       return null;
   }
@@ -300,21 +305,21 @@ const IntegrationDialog: React.FC<Props> = ({
   const onConfirmDialog = () => {
     editMode
       ? dispatch(
-          handleEditIntegration({
-            apiKey: user.apiKey,
-            integrationId: integrationToEdit.id,
-            name: name,
-            config: config,
-          })
-        )
+        handleEditIntegration({
+          apiKey: user.apiKey,
+          integrationId: integrationToEdit.id,
+          name: name,
+          config: config,
+        })
+      )
       : dispatch(
-          handleConnectToNewIntegration({
-            apiKey: user.apiKey,
-            service: service,
-            name: name,
-            config: config,
-          })
-        );
+        handleConnectToNewIntegration({
+          apiKey: user.apiKey,
+          service: service,
+          name: name,
+          config: config,
+        })
+      );
   };
 
   const nameInput = (
@@ -338,9 +343,8 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${
-              numWorkflows === 1 ? 'workflow' : 'workflows'
-            }.`}
+            {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
+              }.`}
           </Alert>
         )}
         {nameInput}

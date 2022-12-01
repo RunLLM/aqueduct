@@ -11,6 +11,8 @@ import { IntegrationCard } from './components/integrations/cards/card';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
 import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
+import { SparkCard } from './components/integrations/cards/sparkCard';
+import { SparkDialog } from './components/integrations/dialogs/sparkDialog';
 import { MySqlCard } from './components/integrations/cards/mysqlCard';
 import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
@@ -357,6 +359,8 @@ export {
   setWorkflowStatusBarOpenState,
   // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
+  SparkCard,
+  SparkDialog,
   SnowflakeCard,
   SnowflakeDialog,
   Status,

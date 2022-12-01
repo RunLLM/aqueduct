@@ -23,6 +23,7 @@ import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SnowflakeCard } from './snowflakeCard';
+import { SparkCard } from './sparkCard';
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -43,9 +44,8 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
       <Link
         underline="none"
         color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
-          dataPreviewInfo.artifact_id
-        }`}
+        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${dataPreviewInfo.artifact_id
+          }`}
         component={RouterLink}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -130,6 +130,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Lambda':
       serviceCard = <LambdaCard integration={integration} />;
+      break;
+    case 'Spark':
+      serviceCard = <SparkCard integration={integration} />;
       break;
     default:
       serviceCard = null;
