@@ -13,13 +13,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -62,8 +62,9 @@ type RegisterWorkflowHandler struct {
 	WorkflowWriter             workflow.Writer
 	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
-	WorkflowWatcherWriter      workflow_watcher.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
+
+	WatcherRepo repos.Watcher
 }
 
 type registerWorkflowArgs struct {
@@ -272,9 +273,9 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 
 		_, _, err = (&WatchWorkflowHandler{
-			Database:              h.Database,
-			WorkflowReader:        h.WorkflowReader,
-			WorkflowWatcherWriter: h.WorkflowWatcherWriter,
+			Database:       h.Database,
+			WorkflowReader: h.WorkflowReader,
+			WatcherRepo:    h.WatcherRepo,
 		}).Perform(ctx, watchWorkflowArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")

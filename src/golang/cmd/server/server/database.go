@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -24,6 +23,7 @@ import (
 type Repos struct {
 	DAGResultRepo repos.DAGResult
 	UserRepo      repos.User
+	WatcherRepo   repos.Watcher
 }
 
 type Readers struct {
@@ -52,7 +52,6 @@ type Writers struct {
 	WorkflowWriter             workflow.Writer
 	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
-	WorkflowWatcherWriter      workflow_watcher.Writer
 	WorkflowDagResultWriter    workflow_dag_result.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
@@ -61,6 +60,7 @@ func CreateRepos() *Repos {
 	return &Repos{
 		DAGResultRepo: sqlite.NewDAGResultRepo(),
 		UserRepo:      sqlite.NewUserRepo(),
+		WatcherRepo:   sqlite.NewWatcherRepo(),
 	}
 }
 
@@ -193,11 +193,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	workflowWatcherWriter, err := workflow_watcher.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	workflowDagResultWriter, err := workflow_dag_result.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -218,7 +213,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		WorkflowWriter:             workflowWriter,
 		WorkflowDagWriter:          workflowDagWriter,
 		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
-		WorkflowWatcherWriter:      workflowWatcherWriter,
 		WorkflowDagResultWriter:    workflowDagResultWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
@@ -245,7 +239,6 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 		WorkflowDagWriter:       writers.WorkflowDagWriter,
 		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
 		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
-		WorkflowWatcherWriter:   writers.WorkflowWatcherWriter,
 		OperatorWriter:          writers.OperatorWriter,
 		OperatorResultWriter:    writers.OperatorResultWriter,
 		ArtifactWriter:          writers.ArtifactWriter,
@@ -257,5 +250,6 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 func GetEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
 		DAGResultRepo: repos.DAGResultRepo,
+		WatcherRepo:   repos.WatcherRepo,
 	}
 }

@@ -47,6 +47,7 @@ type Writers struct {
 
 type Repos struct {
 	DAGResultRepo repos.DAGResult
+	WatcherRepo   repos.Watcher
 }
 
 func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
@@ -182,6 +183,7 @@ func createWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 func createRepos() *Repos {
 	return &Repos{
 		DAGResultRepo: sqlite.NewDAGResultRepo(),
+		WatcherRepo:   sqlite.NewWatcherRepo(),
 	}
 }
 
@@ -206,7 +208,6 @@ func getEngineWriters(writers *Writers) *engine.EngineWriters {
 		WorkflowDagWriter:       writers.WorkflowDagWriter,
 		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
 		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
-		WorkflowWatcherWriter:   writers.WorkflowWatcherWriter,
 		OperatorWriter:          writers.OperatorWriter,
 		OperatorResultWriter:    writers.OperatorResultWriter,
 		ArtifactWriter:          writers.ArtifactWriter,
@@ -218,5 +219,6 @@ func getEngineWriters(writers *Writers) *engine.EngineWriters {
 func getEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
 		DAGResultRepo: repos.DAGResultRepo,
+		WatcherRepo:   repos.WatcherRepo,
 	}
 }

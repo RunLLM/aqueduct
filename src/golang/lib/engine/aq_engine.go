@@ -20,7 +20,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
@@ -68,7 +67,6 @@ type EngineWriters struct {
 	WorkflowDagWriter       workflow_dag.Writer
 	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
 	WorkflowDagResultWriter workflow_dag_result.Writer
-	WorkflowWatcherWriter   workflow_watcher.Writer
 	OperatorWriter          operator_db.Writer
 	OperatorResultWriter    operator_result.Writer
 	ArtifactWriter          artifact_db.Writer
@@ -79,6 +77,7 @@ type EngineWriters struct {
 // Repos contains the repos needed by the Engine
 type Repos struct {
 	DAGResultRepo repos.DAGResult
+	WatcherRepo   repos.Watcher
 }
 
 type aqEngine struct {
@@ -577,7 +576,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	// Start deleting database records.
-	err = eng.WorkflowWatcherWriter.DeleteWorkflowWatcherByWorkflowId(ctx, workflowObject.Id, txn)
+	err = eng.WatcherRepo.DeleteByWorkflow(ctx, workflowId, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
 	}
