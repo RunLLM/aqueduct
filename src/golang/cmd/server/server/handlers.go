@@ -222,6 +222,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagWriter:          s.WorkflowDagWriter,
 			WorkflowDagEdgeWriter:      s.WorkflowDagEdgeWriter,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
+
+			WatcherRepo: s.WatcherRepo,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
 			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{
@@ -240,6 +242,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				WorkflowWriter:        s.WorkflowWriter,
 				WorkflowDagWriter:     s.WorkflowDagWriter,
 				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
+
+				WatcherRepo: s.WatcherRepo,
 			},
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
