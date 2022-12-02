@@ -152,6 +152,7 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
           </Box>
         );
         break;
+      case ExecutionStatus.Registered:
       case ExecutionStatus.Pending:
         indicator = (
           <Box
@@ -166,21 +167,20 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
           </Box>
         );
         break;
-
-      case ExecutionStatus.Registered:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon icon={faListOl} color={getExecutionStatusColor(status)} />
-          </Box>
-        );
-        break;
+      // case ExecutionStatus.Registered:
+      //   indicator = (
+      //     <Box
+      //       sx={{
+      //         width: '100%',
+      //         height: '100%',
+      //         display: 'flex',
+      //         alignSelf: 'center',
+      //       }}
+      //     >
+      //       <FontAwesomeIcon icon={faListOl} color={getExecutionStatusColor(status)} />
+      //     </Box>
+      //   );
+      //   break;
 
       case ExecutionStatus.Succeeded:
         indicator = (
