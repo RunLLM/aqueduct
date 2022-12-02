@@ -17,6 +17,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -26,6 +27,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/register
@@ -278,6 +280,25 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
 		}
 	}
+
+	// Check unused Conda environments and garbage collect them.
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
+
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.ExecutionEnvironmentReader,
+			h.ExecutionEnvironmentWriter,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
 
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
 }
