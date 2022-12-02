@@ -8,9 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// randArtifactType generates a random artifact type.
-func randArtifactType() shared.ArtifactType {
-	artifactTypes := []shared.ArtifactType{
+var (
+	artifactTypes = []shared.ArtifactType{
 		shared.UntypedArtifact,
 		shared.StringArtifact,
 		shared.BoolArtifact,
@@ -23,6 +22,10 @@ func randArtifactType() shared.ArtifactType {
 		shared.ImageArtifact,
 		shared.PicklableArtifact,
 	}
+)
+
+// randArtifactType generates a random artifact type.
+func randArtifactType() shared.ArtifactType {
 	return artifactTypes[rand.Intn(len(artifactTypes))]
 }
 
