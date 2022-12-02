@@ -55,6 +55,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return null;
   }
 
+  // TODO: Deprecate this card and searchbar.
   const displayFilteredWorkflows = (workflow) => {
     return (
       <Box my={2}>
@@ -155,22 +156,19 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   ];
 
   const workflowElements: WorkflowTableRow[] = workflows.map((value) => {
-    console.log('engine: ', value.engine);
     const engineName = value.engine[0].toUpperCase() + value.engine.substring(1);
-    console.log('engineName: ', engineName);
-
     const engineIconUrl = SupportedIntegrations[value.engine[0].toUpperCase() + value.engine.substring(1)].logo;
-    console.log('iconUrl: ', engineIconUrl);
-
     const workflowTableRow: WorkflowTableRow = {
       name: {
         name: value.name,
         url: `/workflow/${value.id}`,
+        status: value.status,
       },
-      last_run: value.last_run_at,
+      // TODO: Figur out correct way to render this date string
+      last_run: new Date(value.last_run_at * 1000).toLocaleString(),
       engine: {
-        engineName: value.engine,
-        engineIconUrl: SupportedIntegrations[value.engine[0].toUpperCase() + value.engine.substring(1)].logo
+        engineName: engineName,
+        engineIconUrl: engineIconUrl,
       },
       metrics: metricsShort,
       checks: checkPreviews
