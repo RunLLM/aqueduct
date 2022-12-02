@@ -47,36 +47,27 @@ func (ts *TestSuite) TestArtifactResult_GetByArtifactAndWorkflow() {
 	require.Nil(ts.T(), err)
 	// All artifact_results for the same artifact when created with seedArtifactResult. 
 	require.Equal(ts.T(), 3, len(actualArtifactResults))
-	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
+	requireDeepEqualArtifactResults(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByArtifactAndDAGResult() {
-	expectedArtifactResults, _, dag, _  := ts.seedArtifactResult(3)
+	expectedArtifactResults, artifact, dag, _  := ts.seedArtifactResult(3)
 
-	actualArtifactResults, err := ts.artifact_result.GetByArtifactAndDAGResult(ts.ctx, dag.ID, expectedArtifactResults[0].ID, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByArtifactAndDAGResult(ts.ctx, dag.ID, artifact.ID, ts.DB)
 
 	require.Nil(ts.T(), err)
 	// All artifact_results for the same artifact when created with seedArtifactResult. 
 	require.Equal(ts.T(), 3, len(actualArtifactResults))
-	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
+	requireDeepEqualArtifactResults(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_GetByDAGResults() {
-	seedA := 3
-	expectedArtifactResultsA, _, dagA, _  := ts.seedArtifactResult(seedA)
-	seedB := 3
-	// Generate artifact results for different DAG
-	expectedArtifactResultsB, _, dagB, _  := ts.seedArtifactResult(seedB)
+	expectedArtifactResults, _, dag, _  := ts.seedArtifactResult(3)
 
-	actualArtifactResultsA, err := ts.artifact_result.GetByDAGResults(ts.ctx, []uuid.UUID{dagA.ID}, ts.DB)
+	actualArtifactResults, err := ts.artifact_result.GetByDAGResults(ts.ctx, []uuid.UUID{dag.ID}, ts.DB)
 	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), seedA, len(actualArtifactResultsA))
-	requireDeepEqual(ts.T(), expectedArtifactResultsA, actualArtifactResultsA)
-
-	actualArtifactResultsBoth, err := ts.artifact_result.GetByDAGResults(ts.ctx, []uuid.UUID{dagA.ID, dagB.ID}, ts.DB)
-	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), seedA + seedB, len(actualArtifactResultsBoth))
-	requireDeepEqual(ts.T(), append(expectedArtifactResultsA, expectedArtifactResultsB...), actualArtifactResultsBoth)
+	require.Equal(ts.T(), 3, len(actualArtifactResults))
+	requireDeepEqualArtifactResults(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
 func (ts *TestSuite) TestArtifactResult_Create() {
@@ -105,6 +96,7 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 
 func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
 	schema := make([]map[string]string, 1)
+	schema[0] = make(map[string]string)
 	schema[0][randString(10)] = randString(10)
 
 	systemMetrics := make(map[string]string)
@@ -114,6 +106,7 @@ func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
 		DAGResultID: uuid.New(),
 		ArtifactID: uuid.New(),
 		ContentPath: randString(10),
+		Status: shared.CanceledExecutionStatus,
 		ExecState: shared.NullExecutionState{
 			ExecutionState: shared.ExecutionState{ 
 				UserLogs: &shared.Logs{
@@ -167,6 +160,7 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 	contentPath := randString(10)
 
 	schema := make([]map[string]string, 1)
+	schema[0] = make(map[string]string)
 	schema[0][randString(10)] = randString(10)
 
 	systemMetrics := make(map[string]string)
@@ -194,8 +188,8 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 
 	changes := map[string]interface{}{
 		models.ArtifactResultContentPath: contentPath,
-		models.ArtifactResultExecState: execState,
-		models.ArtifactResultMetadata: metadata,
+		models.ArtifactResultExecState: &execState,
+		models.ArtifactResultMetadata: &metadata,
 	}
 
 	actualArtifactResult, err := ts.artifact_result.Update(ts.ctx, expectedArtifactResult.ID, changes, ts.DB)

@@ -72,7 +72,7 @@ func (*artifactResultReader) GetByArtifactAndWorkflow(ctx context.Context, workf
 		)
 		AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
 		AND artifact_result.artifact_id = artifact.id;`,
-		models.ArtifactResultCols(),
+		models.ArtifactResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID, artifactName}
 	return getArtifactResults(ctx, DB, query, args...)
@@ -90,7 +90,7 @@ func (*artifactResultReader) GetByArtifactAndDAGResult(ctx context.Context, dagR
 func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) { 
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact_result WHERE workflow_dag_result_id IN (%s);`,
-		models.ArtifactResultCols(),
+		models.ArtifactResultColsWithPrefix(),
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
@@ -183,7 +183,7 @@ func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes m
 		models.ArtifactResultTable,
 		models.ArtifactResultID,
 		ID,
-		models.ArtifactCols(),
+		models.ArtifactResultCols(),
 		DB,
 	)
 	return &artifact_result, err
