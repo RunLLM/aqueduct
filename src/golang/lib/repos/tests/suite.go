@@ -25,6 +25,7 @@ type TestSuite struct {
 	dagResult repos.DAGResult
 	watcher   repos.Watcher
 	workflow  repos.Workflow
+	artifact      repos.Artifact
 	user      repos.User
 
 	DB database.Database
@@ -49,6 +50,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
 	ts.user = sqlite.NewUserRepo()
+	ts.artifact = sqlite.NewArtifactRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {
