@@ -12,7 +12,7 @@ import Plot from 'react-plotly.js';
 
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
-import { Data, DataSchema } from '../../../../utils/data';
+import { Data, DataSchema, TableRow } from '../../../../utils/data';
 import ExecutionStatus, {
   isFailed,
   isInitial,
@@ -62,10 +62,10 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       }
     ),
   };
-
+  const dataSortedByLatest = historicalData.data.sort((x,y) => ((Date.parse(y["timestamp"] as string)) - Date.parse(x["timestamp"] as string)));
   const dataToPlot = historicalData.data.filter(
     (x) => !!x['timestamp'] && !!x['value']
-  );
+  ).sort((x,y) => (Date.parse(x["timestamp"] as string)) - (Date.parse(y["timestamp"] as string)));
   const timestamps = dataToPlot.map((x) => x['timestamp']);
   const values = dataToPlot.map((x) => x['value']);
 
@@ -106,7 +106,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         <Typography variant="h6" fontWeight="normal">
           History
         </Typography>
-        {historicalData.data.map((entry, index) => {
+        {dataSortedByLatest.map((entry, index) => {
           let backgroundColor, hoverColor, icon;
           if (entry.status === ExecutionStatus.Succeeded) {
             backgroundColor = theme.palette.green[100];
