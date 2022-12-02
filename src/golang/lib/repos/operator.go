@@ -45,7 +45,12 @@ type operatorReader interface {
 	) ([]models.Operator, error)
 
 	// GetLoadOPsByIntegration returns the Operators related to an integration.
-	GetLoadOPsByIntegration(ctx context.Context, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error)
+	GetLoadOPsByIntegration(
+		ctx context.Context,
+		integrationID uuid.UUID,
+		objectName string,
+		DB database.Database,
+	) ([]models.Operator, error)
 
 	// ValidateOrg returns whether the Operator was created by the specified organization.
 	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
