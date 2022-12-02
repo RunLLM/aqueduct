@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -43,7 +44,7 @@ func (*artifactResultReader) Get(ctx context.Context, ID uuid.UUID, DB database.
 func (*artifactResultReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact_result WHERE id IN (%s);`,
-		models.ArtifactResultCols(),		
+		models.ArtifactResultCols(),
 		stmt_preparers.GenerateArgsList(len(IDs), 1),
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
@@ -87,7 +88,7 @@ func (*artifactResultReader) GetByArtifactAndDAGResult(ctx context.Context, dagR
 	return getArtifactResults(ctx, DB, query, args...)
 }
 
-func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) { 
+func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact_result WHERE workflow_dag_result_id IN (%s);`,
 		models.ArtifactResultColsWithPrefix(),
@@ -170,7 +171,7 @@ func (*artifactResultWriter) Delete(ctx context.Context, ID uuid.UUID, DB databa
 	return deleteArtifactResults(ctx, DB, []uuid.UUID{ID})
 }
 
-func (*artifactResultWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error { 
+func (*artifactResultWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error {
 	return deleteArtifactResults(ctx, DB, IDs)
 }
 
