@@ -4,6 +4,9 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -48,7 +51,7 @@ func (ts *TestSuite) seedNotification(count int) []models.Notification {
 		level := shared.SuccessNotificationLevel
 		association := &shared.NotificationAssociation{
 			Object: shared.OrgNotificationObject,
-			ID: uuid.New(),
+			ID:     uuid.New(),
 		}
 		notification, err := ts.notification.Create(ts.ctx, receiverID, content, level, association, ts.DB)
 		require.Nil(ts.T(), err)
@@ -58,7 +61,7 @@ func (ts *TestSuite) seedNotification(count int) []models.Notification {
 
 	return notifications
 }
-	
+
 // seedArtifact creates count artifact records.
 func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 	artifacts := make([]models.Artifact, 0, count)
@@ -292,6 +295,107 @@ func (ts *TestSuite) seedDAGEdgeWithDAG(count int, dagID uuid.UUID) []models.DAG
 	}
 
 	return edges
+}
+
+// seedOperator creates count Operator records.
+// It does not create any other records and only creates Function Operators.
+func (ts *TestSuite) seedOperator(count int) []models.Operator {
+	operators := make([]models.Operator, 0, count)
+
+	for i := 0; i < count; i++ {
+		spec := shared.NewSpecFromFunction(
+			function.Function{},
+		)
+
+		operator, err := ts.operator.Create(
+			ts.ctx,
+			randString(10),
+			randString(15),
+			spec,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		operators = append(operators, *operator)
+	}
+
+	return operators
+}
+
+// seedOperatorWithDAG creates count Operator records of Type opType.
+// The supported options are Function, Extract, and Load.
+// It creates a DAGEdge for each Operator to associate it with the specified DAG.
+// The DAGEdge type is randomly chosen and does not connect to an actual Artifact.
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType shared.OperatorType) []models.Operator {
+	operators := make([]models.Operator, 0, count)
+
+	// A fake Artifact is used for all of the DAGEdges
+	artifactID := uuid.New()
+
+	for i := 0; i < count; i++ {
+		var spec *shared.Spec
+		switch opType {
+		case shared.FunctionType:
+			spec = shared.NewSpecFromFunction(
+				function.Function{},
+			)
+		case shared.ExtractType:
+			spec = shared.NewSpecFromExtract(
+				connector.Extract{
+					Service:       integration.Postgres,
+					IntegrationId: uuid.New(),
+					Parameters:    &connector.PostgresExtractParams{},
+				},
+			)
+		case shared.LoadType:
+			spec = shared.NewSpecFromLoad(
+				connector.Load{
+					Service:       integration.Postgres,
+					IntegrationId: uuid.New(),
+					Parameters: &connector.PostgresLoadParams{
+						RelationalDBLoadParams: connector.RelationalDBLoadParams{
+							Table:      randString(10),
+							UpdateMode: "replace",
+						},
+					},
+				},
+			)
+		default:
+			ts.Fail("Seeding an Operator of type %v is not supported", opType)
+		}
+
+		operator, err := ts.operator.Create(
+			ts.ctx,
+			randString(10),
+			randString(15),
+			spec,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		operators = append(operators, *operator)
+
+		edgeType := shared.ArtifactToOperatorDAGEdge
+		fromID, toID := artifactID, operator.ID
+		if rand.Intn(2) > 0 {
+			// Randomly change the direction of the DAGEdge
+			edgeType = shared.OperatorToArtifactDAGEdge
+			fromID, toID = toID, fromID
+		}
+
+		_, err = ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			edgeType,
+			fromID,
+			toID,
+			int16(i),
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+	}
+
+	return operators
 }
 
 // seedWatcher creates a Watcher record. It creates a new Workflow

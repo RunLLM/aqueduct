@@ -26,20 +26,34 @@ type operatorReader interface {
 	// GetBatch returns the Operators with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error)
 
-	// GetByDAG returns the Operators in a workflow DAG.
-	GetByDAG(ctx context.Context, workflowDAGID uuid.UUID, DB database.Database) ([]models.Operator, error)
+	// GetByDAG returns the Operators in the specified DAG.
+	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Operator, error)
 
-	// GetDistinctLoadOperatorsByWorkflow returns the Load Operators in a workflow.
-	GetDistinctLoadOperatorsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
+	// GetDistinctLoadOPsByWorkflow returns the distinct Load Operators in a workflow.
+	// Load Operators are distinct if they have a unique combination of
+	// the integration they are saving an Artifact to, the name of the object (i.e. table)
+	// the Artifact is being saved to, and the update mode used to save the Artifact.
+	GetDistinctLoadOPsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
 
-	// GetLoadOperatorsByWorkflowAndIntegration returns the Operators in a workflow related to an integration.
-	GetLoadOperatorsByWorkflowAndIntegration(ctx context.Context, workflowID uuid.UUID, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error)
+	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Integration.
+	GetLoadOPsByWorkflowAndIntegration(
+		ctx context.Context,
+		workflowID uuid.UUID,
+		integrationID uuid.UUID,
+		objectName string,
+		DB database.Database,
+	) ([]models.Operator, error)
 
-	// GetLoadOperatorsByIntegration returns the Operators related to an integration.
-	GetLoadOperatorsByIntegration(ctx context.Context, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error)
+	// GetLoadOPsByIntegration returns the Operators related to an integration.
+	GetLoadOPsByIntegration(
+		ctx context.Context,
+		integrationID uuid.UUID,
+		objectName string,
+		DB database.Database,
+	) ([]models.Operator, error)
 
 	// ValidateOrg returns whether the Operator was created by the specified organization.
-	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
 
 type operatorWriter interface {
