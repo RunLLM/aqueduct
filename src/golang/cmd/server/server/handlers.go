@@ -247,14 +247,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 				WatcherRepo: s.WatcherRepo,
 			},
-			WorkflowDagReader:       s.WorkflowDagReader,
-			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
-			WorkflowDagResultReader: s.WorkflowDagResultReader,
+			WorkflowDagReader:     s.WorkflowDagReader,
+			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
-			WorkflowDagResultWriter: s.WorkflowDagResultWriter,
-			OperatorResultWriter:    s.OperatorResultWriter,
-			ArtifactResultWriter:    s.ArtifactResultWriter,
-			NotificationWriter:      s.NotificationWriter,
+			OperatorResultWriter: s.OperatorResultWriter,
+			ArtifactResultWriter: s.ArtifactResultWriter,
+			NotificationWriter:   s.NotificationWriter,
+
+			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database: s.Database,
