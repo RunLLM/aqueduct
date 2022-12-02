@@ -34,7 +34,6 @@ export type ListWorkflowSummary = {
   last_run_at: number;
   status: ExecutionStatus;
   engine: string;
-  watcher_auth0_id: string[];
 };
 
 export type WorkflowDagResultSummary = {
