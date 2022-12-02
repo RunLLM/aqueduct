@@ -64,7 +64,11 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     ),
   };
 
-  const dataSortedByLatest = historicalData.data.sort((x,y) => ((Date.parse(y["timestamp"] as string)) - Date.parse(x["timestamp"] as string)));
+  const dataSortedByLatest = historicalData.data.sort(
+    (x, y) =>
+      Date.parse(y['timestamp'] as string) -
+      Date.parse(x['timestamp'] as string)
+  );
 
   return (
     <Box mt="32px">
