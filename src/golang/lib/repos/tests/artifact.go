@@ -19,7 +19,7 @@ func (ts *TestSuite) TestArtifact_Exists() {
 	require.False(ts.T(), shoudlNotExist)
 }
 
-func (ts *TestSuite) TestArtifact_Get() {	
+func (ts *TestSuite) TestArtifact_Get() {
 	artifacts := ts.seedArtifact(1)
 	expectedArtifact := artifacts[0]
 
@@ -67,9 +67,9 @@ func (ts *TestSuite) TestArtifact_Create() {
 	artifactType := randArtifactType()
 
 	expectedArtifact := &models.Artifact{
-		Name: name,
+		Name:        name,
 		Description: description,
-		Type: artifactType,
+		Type:        artifactType,
 	}
 
 	actualArtifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
@@ -90,9 +90,9 @@ func (ts *TestSuite) TestArtifact_Update() {
 	artifactType := randArtifactType()
 
 	changes := map[string]interface{}{
-		models.ArtifactName: name,
+		models.ArtifactName:        name,
 		models.ArtifactDescription: description,
-		models.ArtifactType: artifactType,
+		models.ArtifactType:        artifactType,
 	}
 
 	newArtifact, err := ts.artifact.Update(ts.ctx, artifact.ID, changes, ts.DB)
@@ -118,7 +118,7 @@ func (ts *TestSuite) TestArtifact_DeleteBatch() {
 	for _, artifact := range artifacts {
 		IDs = append(IDs, artifact.ID)
 	}
-	
+
 	err := ts.artifact.DeleteBatch(ts.ctx, IDs, ts.DB)
 	require.Nil(ts.T(), err)
 }

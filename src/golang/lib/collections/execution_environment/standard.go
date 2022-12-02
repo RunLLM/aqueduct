@@ -155,7 +155,7 @@ func (w *standardWriterImpl) DeleteExecutionEnvironments(
 	}
 
 	deleteStmt := fmt.Sprintf(
-		"DELETE FROM execution_environments WHERE id IN (%s);",
+		"DELETE FROM execution_environment WHERE id IN (%s);",
 		stmt_preparers.GenerateArgsList(len(ids), 1),
 	)
 

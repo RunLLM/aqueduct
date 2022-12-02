@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
@@ -98,17 +97,17 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"-y",
 	}
 
-	start := time.Now()
 	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs...)
 	if err != nil {
 		return err
 	}
-	duration := time.Since(start)
-	log.Infof("conda creation took %d seconds", duration.Seconds())
 
-	forkEnvPath := fmt.Sprintf("%s/envs/aqueduct_python%s/lib/python%s/site-packages", e.CondaPath, e.PythonVersion, e.PythonVersion)
-	log.Infof("forkEnvPath is %s", forkEnvPath)
-
+	forkEnvPath := fmt.Sprintf(
+		"%s/envs/aqueduct_python%s/lib/python%s/site-packages",
+		e.CondaPath,
+		e.PythonVersion,
+		e.PythonVersion,
+	)
 	forkArgs := []string{
 		"develop",
 		"-n",
@@ -116,17 +115,9 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		forkEnvPath,
 	}
 
-	start = time.Now()
 	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs...)
 	if err != nil {
 		return err
-	}
-	duration = time.Since(start)
-	log.Infof("conda fork took %d seconds", duration.Seconds())
-
-	log.Info("Printing dependencies...")
-	for _, d := range e.Dependencies {
-		fmt.Println(d)
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.
@@ -138,13 +129,10 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"install",
 	}, e.Dependencies...)
 
-	start = time.Now()
 	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs...)
 	if err != nil {
 		return err
 	}
-	duration = time.Since(start)
-	log.Infof("conda dep install took %d seconds", duration.Seconds())
 
 	return nil
 }

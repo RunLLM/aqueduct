@@ -117,7 +117,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		h.ExecutionEnvironmentReader,
 		h.ExecutionEnvironmentWriter,
 		h.Vault,
-		h.Database,
+		txn,
 	); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
