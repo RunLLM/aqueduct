@@ -9,6 +9,7 @@ import {
 import { LoadingStatus } from '../../../utils/shared';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { CondaCard } from './condaCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
@@ -58,6 +59,9 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
     case 'Lambda':
       serviceCard = <LambdaCard integration={integration} />;
       break;
+    case 'Conda':
+      serviceCard = <CondaCard integration={integration} />;
+      break;
     default:
       serviceCard = null;
   }
@@ -69,7 +73,7 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
   ) {
     createdOnText = (
       <Typography variant="body2">
-        <strong>Created On: </strong>
+        <strong>Connected On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
     );
@@ -88,14 +92,12 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
           src={SupportedIntegrations[integration.service].logo}
         />
         <Box sx={{ ml: 3 }}>
-          <Box display="flex" flexDirection="row">
+          <Box display="flex" flexDirection="row" marginBottom={1}>
             <Typography sx={{ fontFamily: 'Monospace' }} variant="h4">
               {integration.name}
             </Typography>
           </Box>
-
-          {createdOnText}
-
+          <Box marginBottom={1}>{createdOnText}</Box>
           {serviceCard}
         </Box>
       </Box>

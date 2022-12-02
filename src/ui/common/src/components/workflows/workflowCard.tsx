@@ -7,8 +7,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import style from '../../styles/markdown.module.css';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
+import ExecutionChip from '../execution/chip';
 import { Card } from '../layouts/card';
-import WorkflowStatus from './workflowStatus';
 
 type Props = {
   workflow: ListWorkflowSummary;
@@ -50,7 +50,7 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
           </Typography>
         </Box>
         <Box marginLeft={1}>
-          <WorkflowStatus status={workflow.status} />
+          <ExecutionChip status={workflow.status} />
         </Box>
       </Box>
 

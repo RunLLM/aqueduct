@@ -5,10 +5,12 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -34,11 +36,13 @@ type deleteIntegrationResponse struct{}
 type DeleteIntegrationHandler struct {
 	PostHandler
 
-	Database          database.Database
-	Vault             vault.Vault
-	OperatorReader    operator.Reader
-	IntegrationReader integration.Reader
-	IntegrationWriter integration.Writer
+	Database                   database.Database
+	Vault                      vault.Vault
+	OperatorReader             operator.Reader
+	IntegrationReader          integration.Reader
+	IntegrationWriter          integration.Writer
+	ExecutionEnvironmentReader db_exec_env.Reader
+	ExecutionEnvironmentWriter db_exec_env.Writer
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -89,8 +93,12 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 
 func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*deleteIntegrationArgs)
-
 	emptyResp := deleteIntegrationResponse{}
+
+	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, args.integrationId, h.Database)
+	if err != nil {
+		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "failed to retrieve the given integration.")
+	}
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
@@ -103,7 +111,14 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
 
-	if err := h.Vault.Delete(ctx, args.integrationId.String()); err != nil {
+	if err := cleanUpIntegration(
+		ctx,
+		integrationObject,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		h.Vault,
+		txn,
+	); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
 	}
 
@@ -112,4 +127,31 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	return emptyResp, http.StatusOK, nil
+}
+
+// cleanUpIntegration deletes any side effects of an integration
+// in Aqueduct system, other than DB records.
+// For example, credentials stored in vault or base conda environments
+// created.
+func cleanUpIntegration(
+	ctx context.Context,
+	integrationObject *integration.Integration,
+	execEnvReader db_exec_env.Reader,
+	execEnvWriter db_exec_env.Writer,
+	vaultObject vault.Vault,
+	db database.Database,
+) error {
+	if integrationObject.Service == integration.Conda {
+		// Best effort to clean up
+		err := exec_env.CleanupUnusedEnvironments(
+			ctx, execEnvReader, execEnvWriter, db,
+		)
+		if err != nil {
+			return err
+		}
+
+		return exec_env.DeleteBaseEnvs()
+	}
+
+	return vaultObject.Delete(ctx, integrationObject.Id.String())
 }

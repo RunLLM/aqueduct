@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -52,7 +53,10 @@ func ParseDagSummaryFromRequest(
 	}
 
 	fileContents := make(map[uuid.UUID][]byte, len(workflowDag.Operators))
-	for _, op := range workflowDag.Operators {
+	for opId, op := range workflowDag.Operators {
+		op.ExecutionEnvironmentID = utils.NullUUID{IsNull: true}
+		workflowDag.Operators[opId] = op
+
 		program, status, err := extractOperatorContentsFromRequest(
 			r,
 			&op,

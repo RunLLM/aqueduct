@@ -36,7 +36,6 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.Workflow, models.User) {
 	artifacts := ts.seedArtifact(1)
 
-
 	users := ts.seedUser(1)
 	userIDs := sampleUserIDs(1, users)
 

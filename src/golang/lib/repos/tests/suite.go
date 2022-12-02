@@ -25,7 +25,7 @@ type TestSuite struct {
 	dagResult repos.DAGResult
 	watcher   repos.Watcher
 	workflow  repos.Workflow
-	artifact      repos.Artifact
+	artifact  repos.Artifact
 	user      repos.User
 
 	DB database.Database
