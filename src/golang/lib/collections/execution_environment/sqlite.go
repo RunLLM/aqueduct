@@ -26,7 +26,8 @@ func newSqliteWriter() Writer {
 
 func (w *sqliteWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash uuid.UUID,
+	spec *Spec,
+	hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	insertColumns := []string{

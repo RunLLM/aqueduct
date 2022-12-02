@@ -189,6 +189,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		}
 
 		if functionSpec.ExecEnv != nil {
+			log.Info("!!!!!!using conda to run operator!!!!!!")
 			cmd = exec.Command(
 				"conda",
 				"run",

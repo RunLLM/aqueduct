@@ -27,12 +27,12 @@ import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+import ExecutionChip from '../execution/chip';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
-import Status from './workflowStatus';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -321,7 +321,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         }}
       >
         <Box sx={{ flex: 1 }}>
-          <Status status={workflow.dagResults[0].status} />
+          <ExecutionChip status={workflow.dagResults[0].status} />
 
           <Typography
             variant="h4"

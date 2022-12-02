@@ -274,6 +274,21 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
+	opIds := make([]uuid.UUID, 0, len(dbWorkflowDag.Operators))
+	for _, op := range dbWorkflowDag.Operators {
+		opIds = append(opIds, op.Id)
+	}
+
+	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsMapByOperatorIDs(
+		ctx,
+		opIds,
+		eng.ExecutionEnvironmentReader,
+		eng.Database,
+	)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dbWorkflowDagResult.Id,
@@ -288,6 +303,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
+		execEnvsByOpId,
 		operator.Publish,
 		eng.Database,
 	)
@@ -342,6 +358,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 func (eng *aqEngine) PreviewWorkflow(
 	ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
 	// previewing workflows always happens using the ProcessJobManager
@@ -369,6 +386,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
+		execEnvByOperatorId,
 		operator.Preview,
 		eng.Database,
 	)
