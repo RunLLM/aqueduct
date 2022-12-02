@@ -1,5 +1,5 @@
 .DEFAULT_GOAL = all
-VERSION = 0.1.4
+VERSION = 0.1.5
 
 # By default, turn off the Makefile practice of printing each command before
 # you run it.
@@ -129,6 +129,20 @@ publish-lambda:
 	docker push aqueducthq/lambda-postgres-connector:$(VERSION)
 	docker push aqueducthq/lambda-s3-connector:$(VERSION)
 	docker push aqueducthq/lambda-snowflake-connector:$(VERSION)
+
+# Building GPU Images
+
+build-function-gpu:
+	docker build . -t aqueducthq/function37gpu:$(VERSION) -f gpu/function37gpu.dockerfile
+	docker build . -t aqueducthq/function38gpu:$(VERSION) -f gpu/function38gpu.dockerfile
+	docker build . -t aqueducthq/function39gpu:$(VERSION) -f gpu/function39gpu.dockerfile
+	docker build . -t aqueducthq/function310gpu:$(VERSION) -f gpu/function310gpu.dockerfile
+
+publish-gpu:
+	docker push aqueducthq/function37gpu:$(VERSION)
+	docker push aqueducthq/function38gpu:$(VERSION)
+	docker push aqueducthq/function39gpu:$(VERSION)
+	docker push aqueducthq/function310gpu:$(VERSION)
 
 .PHONY:
 

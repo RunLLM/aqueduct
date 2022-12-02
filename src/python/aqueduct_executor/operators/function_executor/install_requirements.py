@@ -2,6 +2,7 @@ import argparse
 import base64
 import subprocess
 import sys
+from typing import Optional
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.utils import utils
@@ -10,10 +11,33 @@ from aqueduct_executor.operators.utils.execution import ExecFailureException, Ex
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 
-def install_missing_packages(missing_path: str, spec: FunctionSpec) -> None:
-    install_output = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-r", missing_path], capture_output=True, text=True
-    )
+def install_missing_packages(
+    missing_path: str, spec: FunctionSpec, conda_env: Optional[str]
+) -> None:
+
+    if conda_env:
+        install_output = subprocess.run(
+            [
+                "conda",
+                "run",
+                "-n",
+                conda_env,
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-r",
+                missing_path,
+            ],
+            capture_output=True,
+            text=True,
+        )
+    else:
+        install_output = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", missing_path],
+            capture_output=True,
+            text=True,
+        )
 
     if install_output.returncode != 0:
         exception = ExecFailureException(
@@ -32,7 +56,13 @@ caused the installation error.",
         sys.exit(1)
 
 
-def run(local_path: str, requirements_path: str, missing_path: str, spec: FunctionSpec) -> None:
+def run(
+    local_path: str,
+    requirements_path: str,
+    missing_path: str,
+    spec: FunctionSpec,
+    conda_env: Optional[str] = None,
+) -> None:
     with open(local_path, "r") as f:
         local_req = set(f.read().split("\n"))
 
@@ -48,7 +78,7 @@ def run(local_path: str, requirements_path: str, missing_path: str, spec: Functi
     if len(missing) > 0:
         with open(missing_path, "w") as f:
             f.write("\n".join(missing))
-        install_missing_packages(missing_path, spec)
+        install_missing_packages(missing_path, spec, conda_env)
 
 
 if __name__ == "__main__":
@@ -57,9 +87,10 @@ if __name__ == "__main__":
     parser.add_argument("--requirements_path", required=True)
     parser.add_argument("--missing_path", required=True)
     parser.add_argument("--spec", required=True)
+    parser.add_argument("--conda_env")
     args = parser.parse_args()
 
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
-    run(args.local_path, args.requirements_path, args.missing_path, spec)
+    run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)

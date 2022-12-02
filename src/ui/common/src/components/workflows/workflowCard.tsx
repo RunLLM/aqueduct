@@ -1,8 +1,8 @@
-import { Alert, Snackbar, Typography } from '@mui/material';
+import { Alert, Link, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Link as RouterLink } from 'react-router-dom';
 
 import style from '../../styles/markdown.module.css';
 import { getPathPrefix } from '../../utils/getPathPrefix';
@@ -75,7 +75,8 @@ const WorkflowCard: React.FC<Props> = ({ workflow }) => {
       <Link
         underline="none"
         color="inherit"
-        href={`${getPathPrefix()}/workflow/${workflow.id}`}
+        to={`${getPathPrefix()}/workflow/${workflow.id}`}
+        component={RouterLink}
       >
         {cardContent}
       </Link>

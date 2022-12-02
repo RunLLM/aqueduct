@@ -70,7 +70,6 @@ export type WorkflowState = {
   savedObjectDeletion: SavedObjectDeletionResult;
   dags: { [id: string]: WorkflowDag };
   dagResults: WorkflowDagResultSummary[];
-  watcherAuthIds: string[];
 
   selectedResult?: WorkflowDagResultSummary;
   selectedDag?: WorkflowDag;
@@ -93,7 +92,8 @@ const initialState: WorkflowState = {
   dagResults: [],
   artifactResults: {},
   operatorResults: {},
-  watcherAuthIds: [],
+  selectedDag: undefined,
+  selectedResult: undefined,
   selectedDagPosition: {
     loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
     result: { nodes: [], edges: [] },
@@ -472,6 +472,7 @@ export const workflowSlice = createSlice({
   name: 'workflowReducer',
   initialState,
   reducers: {
+    resetState: () => initialState,
     selectResultIdx: (state, { payload }: PayloadAction<number>) => {
       state.artifactResults = {};
       state.operatorResults = {};
@@ -616,7 +617,6 @@ export const workflowSlice = createSlice({
       (state, { payload }: PayloadAction<GetWorkflowResponse>) => {
         state.dags = payload.workflow_dags;
         state.dagResults = payload.workflow_dag_results;
-        state.watcherAuthIds = payload.watcherAuthIds;
 
         state.artifactResults = {};
         state.operatorResults = {};
@@ -661,5 +661,5 @@ export const workflowSlice = createSlice({
   },
 });
 
-export const { selectResultIdx } = workflowSlice.actions;
+export const { resetState, selectResultIdx } = workflowSlice.actions;
 export default workflowSlice.reducer;

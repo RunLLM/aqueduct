@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/dropbox/godropbox/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -28,12 +29,12 @@ type k8sJobManager struct {
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8sClient")
 	}
 
 	err = k8s.CreateNamespaces(k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8s Namespaces")
 	}
 
 	secretsMap := map[string]string{}
@@ -41,7 +42,7 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
 	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sJobManager")
+		return nil, errors.Wrap(err, "Error while creating K8s Secrets")
 	}
 
 	return &k8sJobManager{
@@ -55,10 +56,12 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+	launchGpu := false
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
 	}
+
 	environmentVariables := map[string]string{}
 
 	if spec.Type() == FunctionJobType {
@@ -70,6 +73,11 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
 
 		if functionSpec.Resources != nil {
+			if functionSpec.Resources.GPUResourceName != nil {
+				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
+				launchGpu = true
+			}
+
 			if functionSpec.Resources.NumCPU != nil {
 				resourceRequest[k8s.PodResourceCPUKey] = strconv.Itoa(*functionSpec.Resources.NumCPU)
 			}
@@ -106,7 +114,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		}
 	}
 
-	containerRepo, err := mapJobTypeToDockerImage(spec)
+	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
 	if err != nil {
 		return err
 	}
@@ -122,19 +130,78 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	)
 }
 
+func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStatus, error) {
+	if len(pod.Status.ContainerStatuses) != 1 {
+		return nil, errors.Newf(
+			"Expected job %s to have one container, but instead got %v.",
+			name,
+			len(pod.Status.ContainerStatuses),
+		)
+	}
+
+	containerStatus := pod.Status.ContainerStatuses[0]
+	if containerStatus.State.Terminated == nil {
+		return nil, errors.Newf(
+			"Container %s should have terminated.", containerStatus.Name,
+		)
+	}
+	return &containerStatus, nil
+}
+
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
-	job, err := k8s.GetJob(name, j.k8sClient)
+	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, ErrJobNotExist
 	}
 
 	var status shared.ExecutionStatus
-
 	if job.Status.Succeeded == 1 {
 		status = shared.SucceededExecutionStatus
 	} else if job.Status.Failed == 1 {
 		status = shared.FailedExecutionStatus
+
+		// Fetch more detailed information about the failure, in case there is valuable
+		// context we can surface to the user.
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
+		if err != nil {
+			return status, wrapInJobError(System, err)
+		}
+
+		containerStatus, err := containerStatusFromPod(pod, name)
+		if err != nil {
+			return status, wrapInJobError(System, err)
+		}
+
+		if containerStatus.State.Terminated.Reason == "OOMKilled" {
+			return status, wrapInJobError(
+				User,
+				errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."),
+			)
+		}
+		return status, wrapInJobError(
+			System,
+			errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason),
+		)
 	} else {
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
+		if err != nil {
+			return shared.FailedExecutionStatus, wrapInJobError(System, err)
+		}
+
+		if pod.Status.Phase == corev1.PodPending {
+			for _, condition := range pod.Status.Conditions {
+				// If the pod is unschedulable, fail the operator immediately with the K8s message (eg. "Insufficient CPU").
+				if condition.Type == corev1.PodScheduled &&
+					condition.Status == corev1.ConditionFalse &&
+					condition.Reason == corev1.PodReasonUnschedulable {
+					return shared.FailedExecutionStatus, wrapInJobError(
+						User,
+						errors.Newf("Pod could not be scheduled on Kubernetes. Reason: %s", condition.Message),
+					)
+				}
+			}
+		}
+
 		status = shared.PendingExecutionStatus
 	}
 
@@ -158,7 +225,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(spec Spec) (string, error) {
+func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -169,18 +236,34 @@ func mapJobTypeToDockerImage(spec Spec) (string, error) {
 		if err != nil {
 			return "", errors.New("Unable to determine Python Version.")
 		}
-		switch pythonVersion {
-		case function.PythonVersion37:
-			return Function37DockerImage, nil
-		case function.PythonVersion38:
-			return Function38DockerImage, nil
-		case function.PythonVersion39:
-			return Function39DockerImage, nil
-		case function.PythonVersion310:
-			return Function310DockerImage, nil
-		default:
-			return "", errors.New("Unable to determine Python Version.")
+		if launchGpu {
+			switch pythonVersion {
+			case function.PythonVersion37:
+				return GpuFunction37DockerImage, nil
+			case function.PythonVersion38:
+				return GpuFunction38DockerImage, nil
+			case function.PythonVersion39:
+				return GpuFunction39DockerImage, nil
+			case function.PythonVersion310:
+				return GpuFunction310DockerImage, nil
+			default:
+				return "", errors.New("Unable to determine Python Version.")
+			}
+		} else {
+			switch pythonVersion {
+			case function.PythonVersion37:
+				return Function37DockerImage, nil
+			case function.PythonVersion38:
+				return Function38DockerImage, nil
+			case function.PythonVersion39:
+				return Function39DockerImage, nil
+			case function.PythonVersion310:
+				return Function310DockerImage, nil
+			default:
+				return "", errors.New("Unable to determine Python Version.")
+			}
 		}
+
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
 		return mapIntegrationServiceToDockerImage(authenticateSpec.ConnectorName)

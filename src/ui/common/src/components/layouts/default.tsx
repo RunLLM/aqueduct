@@ -16,12 +16,19 @@ type Props = {
   user: UserProfile;
   children: React.ReactElement | React.ReactElement[];
   breadcrumbs: BreadcrumbLink[];
+  /**
+   * Function to be called when breadcrumbs are clicked. Useful for doing cleanup on navigation.
+   */
+  onBreadCrumbClicked?: (name: string) => void;
+  onSidebarItemClicked?: (name: string) => void;
 };
 
 export const DefaultLayout: React.FC<Props> = ({
   user,
   children,
   breadcrumbs,
+  onBreadCrumbClicked = null,
+  onSidebarItemClicked = null,
 }) => {
   return (
     <Box
@@ -33,8 +40,12 @@ export const DefaultLayout: React.FC<Props> = ({
       }}
     >
       <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
-        <MenuSidebar user={user} />
-        <NavBar user={user} breadcrumbs={breadcrumbs} />
+        <MenuSidebar user={user} onSidebarItemClicked={onSidebarItemClicked} />
+        <NavBar
+          user={user}
+          breadcrumbs={breadcrumbs}
+          onBreadCrumbClicked={onBreadCrumbClicked}
+        />
         {/* Pad top for breadcrumbs (64px). */}
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
         <Box

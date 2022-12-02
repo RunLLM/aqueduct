@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.config import EngineConfig
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType
-from aqueduct.error import InvalidArtifactTypeException
+from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
 from aqueduct.responses import ArtifactResult
 from aqueduct.serialization import deserialize
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils import generate_engine_config, infer_artifact_type
 
 from aqueduct import globals
 
@@ -35,6 +36,20 @@ def preview_artifacts(
     Returns a list of artifacts, each corresponding to one of the provided `target_artifact_ids`, in
     the same order.
     """
+    if globals.__GLOBAL_CONFIG__.engine is not None:
+        engine = globals.__GLOBAL_CONFIG__.engine
+        if engine is None:
+            engine_config = EngineConfig()
+        else:
+            connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+            if engine not in connected_integrations.keys():
+                raise InvalidIntegrationException(
+                    "Not connected to compute integration %s!" % engine
+                )
+            engine_config = generate_engine_config(connected_integrations[engine])
+        dag.set_engine_config(engine_config)
+        assert dag.engine_config is not None
+
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[

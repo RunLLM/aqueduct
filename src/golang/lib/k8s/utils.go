@@ -27,6 +27,16 @@ func generateK8sEnvVarAndResourceReq(environmentVariables *map[string]string, re
 		corev1.ResourceCPU:    resource.MustParse((*resourceRequests)["cpu"]),
 		corev1.ResourceMemory: resource.MustParse((*resourceRequests)["memory"]),
 	}
+	if gpuName, ok := (*resourceRequests)[GPUResourceName]; ok {
+		switch gpuName {
+		case "nvidia.com/gpu":
+			resourceList["nvidia.com/gpu"] = resource.MustParse(DefaultGPULimit)
+		case "amd.com/gpu":
+			resourceList["amd.com/gpu"] = resource.MustParse(DefaultGPULimit)
+		default:
+			resourceList["nvidia.com/gpu"] = resource.MustParse(DefaultGPULimit)
+		}
+	}
 
 	resourceRequirements := corev1.ResourceRequirements{
 		Limits:   resourceList,
