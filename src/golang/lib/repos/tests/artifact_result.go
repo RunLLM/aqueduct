@@ -84,6 +84,13 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 		DAGResultID: uuid.New(),
 		ArtifactID: uuid.New(),
 		ContentPath: randString(10),
+		Status: shared.PendingExecutionStatus,
+		ExecState: shared.NullExecutionState{
+			IsNull: true,
+		},
+		Metadata: shared.NullArtifactResultMetadata{
+			IsNull: true,
+		},
 	}
 
 	actualArtifactResult, err := ts.artifact_result.Create(ts.ctx, expectedArtifactResult.DAGResultID, expectedArtifactResult.ArtifactID, expectedArtifactResult.ContentPath, ts.DB)
