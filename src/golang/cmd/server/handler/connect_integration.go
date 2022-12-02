@@ -624,6 +624,13 @@ func ValidatePrerequisites(
 			)
 		}
 
+		if err = exec_env.ValidateCondaDevelop(); err != nil {
+			return http.StatusBadRequest, errors.Wrap(
+				err,
+				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
+			)
+		}
+
 		return http.StatusOK, nil
 	}
 
