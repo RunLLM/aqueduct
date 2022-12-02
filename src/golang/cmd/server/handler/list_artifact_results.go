@@ -8,9 +8,10 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/dropbox/godropbox/errors"
@@ -45,7 +46,8 @@ type ListArtifactResultsHandler struct {
 	Database             database.Database
 	ArtifactReader       db_artifact.Reader
 	ArtifactResultReader artifact_result.Reader
-	WorkflowDagReader    workflow_dag.Reader
+
+	DAGRepo repos.DAG
 }
 
 func (*ListArtifactResultsHandler) Name() string {
@@ -103,21 +105,21 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 		resultIds = append(resultIds, result.Id)
 	}
 
-	dbDagByResultId, err := h.WorkflowDagReader.GetWorkflowDagsMapByArtifactResultIds(ctx, resultIds, h.Database)
+	artfResultToDAG, err := h.DAGRepo.GetByArtifactResultBatch(ctx, resultIds, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve workflow dags.")
 	}
 
 	// maps from db dag Ids
-	dbDagByDagId := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagByResultId))
-	artfResultByDagId := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagByResultId))
+	dbDagByDagId := make(map[uuid.UUID]models.DAG, len(artfResultToDAG))
+	artfResultByDagId := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(artfResultToDAG))
 	for _, artfResult := range results {
-		if dbDag, ok := dbDagByResultId[artfResult.Id]; ok {
-			if _, okDagsMap := dbDagByDagId[dbDag.Id]; !okDagsMap {
-				dbDagByDagId[dbDag.Id] = dbDag
+		if dbDag, ok := artfResultToDAG[artfResult.Id]; ok {
+			if _, okDagsMap := dbDagByDagId[dbDag.ID]; !okDagsMap {
+				dbDagByDagId[dbDag.ID] = dbDag
 			}
 
-			artfResultByDagId[dbDag.Id] = append(artfResultByDagId[dbDag.Id], artfResult)
+			artfResultByDagId[dbDag.ID] = append(artfResultByDagId[dbDag.ID], artfResult)
 		} else {
 			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.Id)
 		}

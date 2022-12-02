@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -34,7 +33,6 @@ type Readers struct {
 	OperatorReader             operator.Reader
 	OperatorResultReader       operator_result.Reader
 	WorkflowReader             workflow.Reader
-	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
 	SchemaVersionReader        schema_version.Reader
 	CustomReader               queries.Reader
@@ -49,13 +47,13 @@ type Writers struct {
 	OperatorWriter             operator.Writer
 	OperatorResultWriter       operator_result.Writer
 	WorkflowWriter             workflow.Writer
-	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
 
 func CreateRepos() *Repos {
 	return &Repos{
+		DAGRepo:       sqlite.NewDAGRepo(),
 		DAGResultRepo: sqlite.NewDAGResultRepo(),
 		UserRepo:      sqlite.NewUserRepo(),
 		WatcherRepo:   sqlite.NewWatcherRepo(),
@@ -98,11 +96,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	workflowDagReader, err := workflow_dag.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	workflowDagEdgeReader, err := workflow_dag_edge.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -131,7 +124,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		OperatorReader:             operatorReader,
 		OperatorResultReader:       operatorResultReader,
 		WorkflowReader:             workflowReader,
-		WorkflowDagReader:          workflowDagReader,
 		WorkflowDagEdgeReader:      workflowDagEdgeReader,
 		SchemaVersionReader:        schemaVersionReader,
 		CustomReader:               queriesReader,
@@ -175,11 +167,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	workflowDagWriter, err := workflow_dag.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	workflowDagEdgeWriter, err := workflow_dag_edge.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -198,7 +185,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		OperatorWriter:             operatorWriter,
 		OperatorResultWriter:       operatorResultWriter,
 		WorkflowWriter:             workflowWriter,
-		WorkflowDagWriter:          workflowDagWriter,
 		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
@@ -207,7 +193,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
 		WorkflowReader:             readers.WorkflowReader,
-		WorkflowDagReader:          readers.WorkflowDagReader,
 		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
@@ -221,7 +206,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
 		WorkflowWriter:        writers.WorkflowWriter,
-		WorkflowDagWriter:     writers.WorkflowDagWriter,
 		WorkflowDagEdgeWriter: writers.WorkflowDagEdgeWriter,
 		OperatorWriter:        writers.OperatorWriter,
 		OperatorResultWriter:  writers.OperatorResultWriter,

@@ -32,10 +32,11 @@ func (s *AqServer) triggerMissedCronJobs(
 			WorkflowReader:        s.WorkflowReader,
 			Engine:                s.AqEngine,
 			Vault:                 s.Vault,
-			WorkflowDagReader:     s.WorkflowDagReader,
 			OperatorReader:        s.OperatorReader,
 			ArtifactReader:        s.ArtifactReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
+
+			DAGRepo: s.DAGRepo,
 		}).Perform(
 			ctx,
 			&handler.RefreshWorkflowArgs{

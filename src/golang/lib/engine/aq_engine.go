@@ -17,13 +17,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -51,7 +51,6 @@ type AqueductTimeConfig struct {
 
 type EngineReaders struct {
 	WorkflowReader             workflow.Reader
-	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
@@ -63,7 +62,6 @@ type EngineReaders struct {
 
 type EngineWriters struct {
 	WorkflowWriter        workflow.Writer
-	WorkflowDagWriter     workflow_dag.Writer
 	WorkflowDagEdgeWriter workflow_dag_edge.Writer
 	OperatorWriter        operator_db.Writer
 	OperatorResultWriter  operator_result.Writer
@@ -74,6 +72,7 @@ type EngineWriters struct {
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 	WatcherRepo   repos.Watcher
 }
@@ -178,11 +177,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dbWorkflowDag, err := workflow_utils.ReadLatestDAGFromDatabase(
+	dbDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowId,
 		eng.WorkflowReader,
-		eng.WorkflowDagReader,
+		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.ArtifactReader,
 		eng.WorkflowDagEdgeReader,
@@ -202,7 +201,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	dagResult, err := eng.DAGResultRepo.Create(
 		ctx,
-		dbWorkflowDag.Id,
+		dbDAG.ID,
 		execState,
 		eng.Database,
 	)
@@ -232,19 +231,18 @@ func (eng *aqEngine) ExecuteWorkflow(
 		}
 	}()
 
-	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
+	githubClient, err := eng.GithubManager.GetClient(ctx, dbDAG.Metadata.UserId)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
 	}
 
-	dbWorkflowDag, err = workflow_utils.UpdateWorkflowDagToLatest(
+	dbDAG, err = workflow_utils.UpdateWorkflowDagToLatest(
 		ctx,
 		githubClient,
-		dbWorkflowDag,
+		dbDAG,
 		eng.WorkflowReader,
 		eng.WorkflowWriter,
-		eng.WorkflowDagReader,
-		eng.WorkflowDagWriter,
+		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.OperatorWriter,
 		eng.WorkflowDagEdgeReader,
@@ -259,17 +257,25 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	// Overwrite the parameter specs for all custom parameters defined by the user.
 	for name, param := range parameters {
-		op := dbWorkflowDag.GetOperatorByName(name)
+		var op *operator_db.DBOperator
+		for _, dagOp := range dbDAG.Operators {
+			if dagOp.Name == name {
+				op = &dagOp
+				break
+			}
+		}
+
 		if op == nil {
 			continue
 		}
+
 		if !op.Spec.IsParam() {
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
-		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = param.Val
-		dbWorkflowDag.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
+		dbDAG.Operators[op.Id].Spec.Param().Val = param.Val
+		dbDAG.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
 	}
-	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
+	engineConfig, err := generateJobManagerConfig(ctx, dbDAG, eng.AqPath, eng.Vault)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate JobManagerConfig.")
 	}
@@ -279,8 +285,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
-	opIds := make([]uuid.UUID, 0, len(dbWorkflowDag.Operators))
-	for _, op := range dbWorkflowDag.Operators {
+	opIds := make([]uuid.UUID, 0, len(dbDAG.Operators))
+	for _, op := range dbDAG.Operators {
 		opIds = append(opIds, op.Id)
 	}
 
@@ -297,7 +303,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagResult.ID,
-		dbWorkflowDag,
+		dbDAG,
 		eng.OperatorResultWriter,
 		eng.ArtifactWriter,
 		eng.ArtifactResultWriter,
@@ -360,13 +366,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 func (eng *aqEngine) PreviewWorkflow(
 	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dbDAG *models.DAG,
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
 	jobManagerConfig, err := generateJobManagerConfig(
 		ctx,
-		dbWorkflowDag,
+		dbDAG,
 		eng.AqPath,
 		eng.Vault,
 	)
@@ -384,7 +390,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
-		dbWorkflowDag,
+		dbDAG,
 		eng.OperatorResultWriter,
 		eng.ArtifactWriter,
 		eng.ArtifactResultWriter,
@@ -484,14 +490,14 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	}
 
-	workflowDagsToDelete, err := eng.WorkflowDagReader.GetWorkflowDagsByWorkflowId(ctx, workflowObject.Id, txn)
-	if err != nil || len(workflowDagsToDelete) == 0 {
+	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflowObject.Id, txn)
+	if err != nil || len(dagsToDelete) == 0 {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	}
 
-	workflowDagIds := make([]uuid.UUID, 0, len(workflowDagsToDelete))
-	for _, workflowDag := range workflowDagsToDelete {
-		workflowDagIds = append(workflowDagIds, workflowDag.Id)
+	dagIDs := make([]uuid.UUID, 0, len(dagsToDelete))
+	for _, dag := range dagsToDelete {
+		dagIDs = append(dagIDs, dag.ID)
 	}
 
 	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObject.Id, txn)
@@ -504,7 +510,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagResultIDs = append(dagResultIDs, dagResult.ID)
 	}
 
-	workflowDagEdgesToDelete, err := eng.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
+	workflowDagEdgesToDelete, err := eng.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
 	}
@@ -592,7 +598,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	}
 
-	err = eng.WorkflowDagEdgeWriter.DeleteEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
+	err = eng.WorkflowDagEdgeWriter.DeleteEdgesByWorkflowDagIds(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
 	}
@@ -607,7 +613,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifacts.")
 	}
 
-	err = eng.WorkflowDagWriter.DeleteWorkflowDags(ctx, workflowDagIds, txn)
+	err = eng.DAGRepo.DeleteBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
 	}
@@ -635,8 +641,8 @@ func (eng *aqEngine) DeleteWorkflow(
 
 	// Note: for now we assume all workflow dags have the same storage config.
 	// This assumption will stay true until we allow users to configure custom storage config to store stuff.
-	storageConfig := workflowDagsToDelete[0].StorageConfig
-	for _, workflowDag := range workflowDagsToDelete {
+	storageConfig := dagsToDelete[0].StorageConfig
+	for _, workflowDag := range dagsToDelete {
 		if !reflect.DeepEqual(workflowDag.StorageConfig, storageConfig) {
 			return errors.New("Workflow Dags have mismatching storage config.")
 		}

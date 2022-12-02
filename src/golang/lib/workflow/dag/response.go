@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -53,19 +52,19 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	dagResult *models.DAGResult,
 	dbOperatorResults []operator_result.OperatorResult,
 	dbArtifactResults []artifact_result.ArtifactResult,
 	contents map[string]string,
 ) *ResultResponse {
 	metadataResponse := MetadataResponse{
-		DagId:         dbWorkflowDag.Id,
-		DagCreatedAt:  dbWorkflowDag.CreatedAt,
-		StorageConfig: dbWorkflowDag.StorageConfig,
-		EngineConfig:  dbWorkflowDag.EngineConfig,
+		DagId:         dag.ID,
+		DagCreatedAt:  dag.CreatedAt,
+		StorageConfig: dag.StorageConfig,
+		EngineConfig:  dag.EngineConfig,
 
-		WorkflowId: dbWorkflowDag.WorkflowId,
+		WorkflowId: dag.WorkflowID,
 	}
 
 	rawResultResponse := RawResultResponse{
@@ -78,8 +77,8 @@ func NewResultResponseFromDbObjects(
 		rawResultResponse.ExecState = &execStateVal
 	}
 
-	if dbWorkflowDag.Metadata != nil {
-		wfMetadata := dbWorkflowDag.Metadata
+	if dag.Metadata != nil {
+		wfMetadata := dag.Metadata
 		metadataResponse.WorkflowCreatedAt = wfMetadata.CreatedAt
 		metadataResponse.UserId = wfMetadata.UserId
 		metadataResponse.Name = wfMetadata.Name
@@ -88,20 +87,20 @@ func NewResultResponseFromDbObjects(
 		metadataResponse.RetentionPolicy = wfMetadata.RetentionPolicy
 	}
 
-	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse, len(dbWorkflowDag.Operators))
-	artifactsResponse := make(map[uuid.UUID]artifact.ResultResponse, len(dbWorkflowDag.Artifacts))
-	artifactToUpstreamOpId := make(map[uuid.UUID]uuid.UUID, len(dbWorkflowDag.Artifacts))
-	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dbWorkflowDag.Artifacts))
+	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse, len(dag.Operators))
+	artifactsResponse := make(map[uuid.UUID]artifact.ResultResponse, len(dag.Artifacts))
+	artifactToUpstreamOpId := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
+	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
 
 	for _, opResult := range dbOperatorResults {
-		if op, ok := dbWorkflowDag.Operators[opResult.OperatorId]; ok {
+		if op, ok := dag.Operators[opResult.OperatorId]; ok {
 			opResultResponse := operator.NewResultResponseFromDbObjects(&op, &opResult)
 			operatorsResponse[op.Id] = *opResultResponse
 		}
 	}
 
 	// Handle operators without results and update artifact maps
-	for id, op := range dbWorkflowDag.Operators {
+	for id, op := range dag.Operators {
 		if _, ok := operatorsResponse[id]; !ok {
 			operatorsResponse[id] = *(operator.NewResultResponseFromDbObjects(&op, nil))
 		}
@@ -116,7 +115,7 @@ func NewResultResponseFromDbObjects(
 	}
 
 	for _, artfResult := range dbArtifactResults {
-		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+		if artf, ok := dag.Artifacts[artfResult.ArtifactId]; ok {
 			content, ok := contents[artfResult.ContentPath]
 			var contentPtr *string = nil
 			if ok {
@@ -135,7 +134,7 @@ func NewResultResponseFromDbObjects(
 	}
 
 	// Handle artifacts without results
-	for id, artf := range dbWorkflowDag.Artifacts {
+	for id, artf := range dag.Artifacts {
 		if _, ok := artifactsResponse[id]; !ok {
 			artifactsResponse[id] = *(artifact.NewResultResponseFromDbObjects(
 				&artf,

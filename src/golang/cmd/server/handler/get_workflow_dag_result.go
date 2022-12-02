@@ -10,10 +10,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -49,9 +49,9 @@ type GetWorkflowDagResultHandler struct {
 	OperatorReader        operator.Reader
 	OperatorResultReader  operator_result.Reader
 	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 }
 
@@ -102,7 +102,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 
 	emptyResp := dag.ResultResponse{}
 
-	dbWorkflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
+	dbDAG, err := h.DAGRepo.GetByDAGResult(
 		ctx,
 		args.dagResultID,
 		h.Database,
@@ -112,11 +112,11 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 	}
 
 	// Read dag structure
-	constructedDag, err := workflow_utils.ReadDAGFromDatabase(
+	constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 		ctx,
-		dbWorkflowDag.Id,
+		dbDAG.ID,
 		h.WorkflowReader,
-		h.WorkflowDagReader,
+		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,
@@ -149,13 +149,13 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact results.")
 	}
 
-	contents, err := getArtifactContents(ctx, constructedDag, artifactResults)
+	contents, err := getArtifactContents(ctx, constructedDAG, artifactResults)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact contents.")
 	}
 
 	return dag.NewResultResponseFromDbObjects(
-		constructedDag,
+		constructedDAG,
 		dagResult,
 		operatorResults,
 		artifactResults,
@@ -169,13 +169,13 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 // excluded from the map.
 func getArtifactContents(
 	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	dbArtifactResults []artifact_result.ArtifactResult,
 ) (map[string]string, error) {
 	contents := make(map[string]string, len(dbArtifactResults))
-	storageObj := storage.NewStorage(&dbWorkflowDag.StorageConfig)
+	storageObj := storage.NewStorage(&dag.StorageConfig)
 	for _, artfResult := range dbArtifactResults {
-		if artf, ok := dbWorkflowDag.Artifacts[artfResult.ArtifactId]; ok {
+		if artf, ok := dag.Artifacts[artfResult.ArtifactId]; ok {
 			// These artifacts has small content size and we can safely include them all in response.
 			if artf.Type.IsCompact() {
 				path := artfResult.ContentPath

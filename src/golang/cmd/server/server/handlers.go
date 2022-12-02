@@ -21,7 +21,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactResultReader: s.ArtifactResultReader,
 			OperatorReader:       s.OperatorReader,
 			IntegrationReader:    s.IntegrationReader,
-			WorkflowDagWriter:    s.WorkflowDagWriter,
 			IntegrationWriter:    s.IntegrationWriter,
 
 			DAGRepo: s.DAGRepo,
@@ -102,13 +101,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactReader:        s.ArtifactReader,
 			OperatorReader:        s.OperatorReader,
 			WorkflowReader:        s.WorkflowReader,
-			WorkflowDagReader:     s.WorkflowDagReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
-			WorkflowDagWriter:    s.WorkflowDagWriter,
 			OperatorResultWriter: s.OperatorResultWriter,
 			ArtifactResultWriter: s.ArtifactResultWriter,
 
+			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
@@ -118,16 +116,17 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorReader:        s.OperatorReader,
 			OperatorResultReader:  s.OperatorResultReader,
 			WorkflowReader:        s.WorkflowReader,
-			WorkflowDagReader:     s.WorkflowDagReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
+			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.ListArtifactResultsRoute: &handler.ListArtifactResultsHandler{
 			Database:             s.Database,
 			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
-			WorkflowDagReader:    s.WorkflowDagReader,
+
+			DAGRepo: s.DAGRepo,
 		},
 		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
 			Database:          s.Database,
@@ -202,10 +201,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:    s.Vault,
 
 			WorkflowReader:        s.WorkflowReader,
-			WorkflowDagReader:     s.WorkflowDagReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 			OperatorReader:        s.OperatorReader,
 			ArtifactReader:        s.ArtifactReader,
+
+			DAGRepo: s.DAGRepo,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,

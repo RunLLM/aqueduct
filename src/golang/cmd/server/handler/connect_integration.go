@@ -20,7 +20,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -65,7 +64,6 @@ type ConnectIntegrationHandler struct {
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	IntegrationReader    integration.Reader
-	WorkflowDagWriter    workflow_dag.Writer
 	IntegrationWriter    integration.Writer
 
 	DAGRepo repos.DAG
@@ -213,7 +211,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				args.Config,
 				args.OrgID,
 				h.DAGRepo,
-				h.WorkflowDagWriter,
 				h.ArtifactReader,
 				h.ArtifactResultReader,
 				h.OperatorReader,
@@ -438,7 +435,6 @@ func setIntegrationAsStorage(
 	conf auth.Config,
 	orgID string,
 	dagRepo repos.DAG,
-	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
@@ -483,7 +479,6 @@ func setIntegrationAsStorage(
 		storageConfig,
 		orgID,
 		dagRepo,
-		dagWriter,
 		artifactReader,
 		artifactResultReader,
 		operatorReader,

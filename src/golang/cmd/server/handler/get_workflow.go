@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -65,10 +64,8 @@ type GetWorkflowHandler struct {
 	ArtifactReader        artifact.Reader
 	OperatorReader        operator.Reader
 	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
-	WorkflowDagWriter    workflow_dag.Writer
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
 

@@ -3,7 +3,7 @@ package airflow
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 )
@@ -11,12 +11,12 @@ import (
 // TriggerWorkflow invokves a new Airflow DAGRun for `dag`.
 func TriggerWorkflow(
 	ctx context.Context,
-	dbDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	vault vault.Vault,
 ) error {
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dbDag.EngineConfig.AirflowConfig.IntegrationId,
+		dag.EngineConfig.AirflowConfig.IntegrationId,
 		vault,
 	)
 	if err != nil {
@@ -28,5 +28,5 @@ func TriggerWorkflow(
 		return err
 	}
 
-	return cli.triggerDAGRun(dbDag.EngineConfig.AirflowConfig.DagId)
+	return cli.triggerDAGRun(dag.EngineConfig.AirflowConfig.DagId)
 }
