@@ -53,7 +53,6 @@ type EngineReaders struct {
 	WorkflowReader             workflow.Reader
 	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
-	WorkflowDagResultReader    workflow_dag_result.Reader
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
 	ArtifactReader             artifact_db.Reader
@@ -498,14 +497,14 @@ func (eng *aqEngine) DeleteWorkflow(
 		workflowDagIds = append(workflowDagIds, workflowDag.Id)
 	}
 
-	workflowDagResultsToDelete, err := eng.WorkflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, workflowObject.Id, txn)
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObject.Id, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
 
-	workflowDagResultIds := make([]uuid.UUID, 0, len(workflowDagResultsToDelete))
-	for _, workflowDagResult := range workflowDagResultsToDelete {
-		workflowDagResultIds = append(workflowDagResultIds, workflowDagResult.Id)
+	dagResultIDs := make([]uuid.UUID, 0, len(dagResultsToDelete))
+	for _, dagResult := range dagResultsToDelete {
+		dagResultIDs = append(dagResultIDs, dagResult.ID)
 	}
 
 	workflowDagEdgesToDelete, err := eng.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
@@ -549,7 +548,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 	operatorResultsToDelete, err := eng.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
@@ -563,7 +562,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 	artifactResultsToDelete, err := eng.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
@@ -591,7 +590,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	}
 
-	err = eng.WorkflowDagResultWriter.DeleteWorkflowDagResults(ctx, workflowDagResultIds, txn)
+	err = eng.WorkflowDagResultWriter.DeleteWorkflowDagResults(ctx, dagResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	}

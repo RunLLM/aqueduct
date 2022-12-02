@@ -36,7 +36,6 @@ type Readers struct {
 	WorkflowReader             workflow.Reader
 	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
-	WorkflowDagResultReader    workflow_dag_result.Reader
 	SchemaVersionReader        schema_version.Reader
 	CustomReader               queries.Reader
 	ExecutionEnvironmentReader exec_env.Reader
@@ -110,11 +109,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	workflowDagResultReader, err := workflow_dag_result.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionReader, err := schema_version.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -140,7 +134,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		WorkflowReader:             workflowReader,
 		WorkflowDagReader:          workflowDagReader,
 		WorkflowDagEdgeReader:      workflowDagEdgeReader,
-		WorkflowDagResultReader:    workflowDagResultReader,
 		SchemaVersionReader:        schemaVersionReader,
 		CustomReader:               queriesReader,
 		ExecutionEnvironmentReader: execEnvReader,
@@ -223,7 +216,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 		WorkflowReader:             readers.WorkflowReader,
 		WorkflowDagReader:          readers.WorkflowDagReader,
 		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader:    readers.WorkflowDagResultReader,
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
 		ArtifactReader:             readers.ArtifactReader,

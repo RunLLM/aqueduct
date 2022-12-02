@@ -192,7 +192,6 @@ func getEngineReaders(readers *Readers) *engine.EngineReaders {
 		WorkflowReader:             readers.WorkflowReader,
 		WorkflowDagReader:          readers.WorkflowDagReader,
 		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader:    readers.WorkflowDagResultReader,
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
 		ArtifactReader:             readers.ArtifactReader,

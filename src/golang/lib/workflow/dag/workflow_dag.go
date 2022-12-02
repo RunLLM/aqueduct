@@ -65,7 +65,6 @@ type workflowDagImpl struct {
 	opToInputArtifacts  map[uuid.UUID][]uuid.UUID
 	artifactToOps       map[uuid.UUID][]uuid.UUID
 
-	resultWriter       workflow_dag_result.Writer
 	workflowReader     workflow.Reader
 	notificationWriter notification.Writer
 	db                 database.Database
@@ -303,7 +302,6 @@ func NewWorkflowDag(
 		opToInputArtifacts:  opToInputArtifactIDs,
 		artifactToOps:       artifactIDToOpIDs,
 
-		resultWriter:       dagResultWriter,
 		workflowReader:     workflowReader,
 		notificationWriter: notificationWriter,
 		db:                 db,
