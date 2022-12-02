@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -74,13 +75,13 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		UserID:      user.ID,
 		Name:        randString(10),
 		Description: randString(20),
-		Schedule: shared.Schedule{
-			Trigger:              shared.PeriodicUpdateTrigger,
+		Schedule: workflow.Schedule{
+			Trigger:              workflow.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		},
-		RetentionPolicy: shared.RetentionPolicy{
+		RetentionPolicy: workflow.RetentionPolicy{
 			KLatestRuns: 10,
 		},
 	}

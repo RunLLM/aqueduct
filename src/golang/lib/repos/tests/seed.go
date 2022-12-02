@@ -5,6 +5,7 @@ import (
 	"time"
 
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -146,13 +147,13 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 		userID := userIDs[i]
 		name := randString(10)
 		description := randString(15)
-		schedule := &shared.Schedule{
-			Trigger:              shared.PeriodicUpdateTrigger,
+		schedule := &workflow.Schedule{
+			Trigger:              workflow.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		}
-		retentionPolicy := &shared.RetentionPolicy{
+		retentionPolicy := &workflow.RetentionPolicy{
 			KLatestRuns: 10,
 		}
 

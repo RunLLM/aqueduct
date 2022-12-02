@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -150,8 +150,8 @@ func (*workflowWriter) Create(
 	userID uuid.UUID,
 	name string,
 	description string,
-	schedule *shared.Schedule,
-	retentionPolicy *shared.RetentionPolicy,
+	schedule *workflow.Schedule,
+	retentionPolicy *workflow.RetentionPolicy,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{

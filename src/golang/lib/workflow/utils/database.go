@@ -26,8 +26,7 @@ import (
 func WriteDAGToDatabase(
 	ctx context.Context,
 	dag *models.DAG,
-	workflowReader workflow.Reader,
-	workflowWriter workflow.Writer,
+	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
@@ -36,15 +35,15 @@ func WriteDAGToDatabase(
 	artifactWriter artifact.Writer,
 	DB database.Database,
 ) (uuid.UUID, error) {
-	exists, err := workflowReader.Exists(ctx, dag.WorkflowID, DB)
+	exists, err := workflowRepo.Exists(ctx, dag.WorkflowID, DB)
 	if err != nil {
 		return uuid.Nil, errors.Wrap(err, "Unable to check if the workflow already exists.")
 	}
 
 	if !exists {
-		workflow, err := workflowWriter.CreateWorkflow(
+		workflow, err := workflowRepo.Create(
 			ctx,
-			dag.Metadata.UserId,
+			dag.Metadata.UserID,
 			dag.Metadata.Name,
 			dag.Metadata.Description,
 			&dag.Metadata.Schedule,
@@ -56,7 +55,7 @@ func WriteDAGToDatabase(
 		}
 
 		// Sets WorkflowID
-		dag.WorkflowID = workflow.Id
+		dag.WorkflowID = workflow.ID
 	}
 
 	newDAG, err := dagRepo.Create(
@@ -167,7 +166,7 @@ func WriteDAGToDatabase(
 func ReadDAGFromDatabase(
 	ctx context.Context,
 	dagID uuid.UUID,
-	workflowReader workflow.Reader,
+	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
@@ -179,12 +178,12 @@ func ReadDAGFromDatabase(
 		return nil, errors.Wrap(err, "Unable to read workflow dag from the database.")
 	}
 
-	dbWorkflow, err := workflowReader.GetWorkflow(ctx, dag.WorkflowID, DB)
+	workflow, err := workflowRepo.Get(ctx, dag.WorkflowID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow from the database.")
 	}
 
-	dag.Metadata = dbWorkflow
+	dag.Metadata = workflow
 
 	dag.Operators = make(map[uuid.UUID]operator.DBOperator)
 	dag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
@@ -253,7 +252,7 @@ func ReadDAGFromDatabase(
 func ReadLatestDAGFromDatabase(
 	ctx context.Context,
 	workflowID uuid.UUID,
-	workflowReader workflow.Reader,
+	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
@@ -268,7 +267,7 @@ func ReadLatestDAGFromDatabase(
 	return ReadDAGFromDatabase(
 		ctx,
 		dag.ID,
-		workflowReader,
+		workflowRepo,
 		dagRepo,
 		operatorReader,
 		artifactReader,
@@ -287,8 +286,7 @@ func UpdateWorkflowDagToLatest(
 	ctx context.Context,
 	githubClient github.Client,
 	dag *models.DAG,
-	workflowReader workflow.Reader,
-	workflowWriter workflow.Writer,
+	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
@@ -330,8 +328,7 @@ func UpdateWorkflowDagToLatest(
 	workflowID, err := WriteDAGToDatabase(
 		ctx,
 		dag,
-		workflowReader,
-		workflowWriter,
+		workflowRepo,
 		dagRepo,
 		operatorReader,
 		operatorWriter,
@@ -347,7 +344,7 @@ func UpdateWorkflowDagToLatest(
 	return ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
-		workflowReader,
+		workflowRepo,
 		dagRepo,
 		operatorReader,
 		artifactReader,
