@@ -296,7 +296,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			db,
 		)
 		if err != nil {
-			log.Errorf("Error deleting unused execution environments: %v", err)
+			log.Errorf("%v", err)
 		}
 	}()
 

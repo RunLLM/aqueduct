@@ -610,7 +610,7 @@ func ValidatePrerequisites(
 	db database.Database,
 ) (int, error) {
 	if svc == integration.Conda {
-		condaIntegration, _, err := exec_env.CondaConnectionState(
+		condaIntegration, err := exec_env.GetCondaIntegration(
 			ctx, userId, integrationReader, db,
 		)
 		if err != nil {
