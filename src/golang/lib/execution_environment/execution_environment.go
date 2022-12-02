@@ -303,7 +303,7 @@ func GetUnusedExecutionEnvironmentIDs(
 }
 
 // CleanupUnusedEnvironments is executed in a best-effort fashion, and we log all the errors within
-// the function and return an error object signaling whether there is at least one error occured.
+// the function and return an error object signaling whether there is at least one error occurred.
 func CleanupUnusedEnvironments(
 	ctx context.Context,
 	envReader db_exec_env.Reader,
@@ -344,7 +344,7 @@ func CleanupUnusedEnvironments(
 	}
 
 	if hasError {
-		return errors.New("An internal error occured within the cleanup function. Please see the server log for more information.")
+		return errors.New("An internal error occurred within the cleanup function. Please see the server log for more information.")
 	}
 
 	return nil
