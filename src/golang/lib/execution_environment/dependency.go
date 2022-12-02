@@ -20,7 +20,7 @@ var (
 	ErrRequirementsFileMissing = errors.New("Requirement file is missing.")
 )
 
-func InferDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, error) {
+func ExtractDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(zipball), int64(len(zipball)))
 	if err != nil {
 		return nil, err

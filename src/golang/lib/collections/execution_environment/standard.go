@@ -187,7 +187,7 @@ func (r *standardReaderImpl) GetUnusedExecutionEnvironments(
 					workflow.id = workflow_dag.workflow_id 
 				GROUP BY 
 					workflow.id
-			);
+			)
 	),
 	active_execution_environment AS
 	(
