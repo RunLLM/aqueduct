@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -72,11 +71,10 @@ type getArtifactResultResponse struct {
 type GetArtifactResultHandler struct {
 	GetHandler
 
-	Database                database.Database
-	ArtifactReader          artifact.Reader
-	ArtifactResultReader    artifact_result.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	Database             database.Database
+	ArtifactReader       artifact.Reader
+	ArtifactResultReader artifact_result.Reader
+	WorkflowDagReader    workflow_dag.Reader
 
 	DAGResultRepo repos.DAGResult
 }
