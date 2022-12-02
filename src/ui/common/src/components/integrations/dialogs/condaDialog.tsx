@@ -20,8 +20,8 @@ export const CondaDialog: React.FC = ({}) => {
         >
           conda build
         </Link>{' '}
-        installed. Once connected, Aqueduct will use conda environments to
-        run new workflows.
+        installed. Once connected, Aqueduct will use conda environments to run
+        new workflows.
       </Typography>
     </Box>
   );
