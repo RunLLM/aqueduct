@@ -3,14 +3,13 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -61,24 +60,34 @@ func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB databas
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetByDAG(ctx context.Context, workflowDAGID uuid.UUID, DB database.Database) ([]models.Operator, error) {
+func (*operatorReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Operator, error) {
 	// Gets all operators that are a node with an incoming (id in `to_id`) or outgoing edge
 	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
 	query := fmt.Sprintf(
 		`SELECT %s FROM operator WHERE id IN
-		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
-		UNION 
-		SELECT to_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s')`,
+		(
+			SELECT from_id 
+			FROM workflow_dag_edge 
+			WHERE workflow_dag_id = $1 AND type = '%s' 
+			UNION 
+			SELECT to_id 
+			FROM workflow_dag_edge 
+			WHERE workflow_dag_id = $1 AND type = '%s'
+		)`,
 		models.OperatorCols(),
-		workflow_dag_edge.OperatorToArtifactType,
-		workflow_dag_edge.ArtifactToOperatorType,
+		shared.OperatorToArtifactDAGEdge,
+		shared.ArtifactToOperatorDAGEdge,
 	)
-	args := []interface{}{workflowDAGID}
+	args := []interface{}{dagID}
 
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetDistinctLoadOperatorsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error) {
+func (*operatorReader) GetDistinctLoadOPsByWorkflow(
+	ctx context.Context,
+	workflowID uuid.UUID,
+	DB database.Database,
+) ([]views.LoadOperator, error) {
 	// Get all unique load operator (defined as a unique combination of integration,
 	// table, and update mode) that has an edge (in `from_id` or `to_id`) in a DAG
 	// belonging to the specified workflow in order of when the operator was last modified.
@@ -113,73 +122,67 @@ func (*operatorReader) GetDistinctLoadOperatorsByWorkflow(ctx context.Context, w
 
 	args := []interface{}{workflowID}
 
-	var loadOperators []views.LoadOperator
-	err := DB.Query(ctx, &loadOperators, query, args...)
+	var operators []views.LoadOperator
+	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
 }
 
-func (*operatorReader) GetLoadOperatorsByWorkflowAndIntegration(ctx context.Context, workflowID uuid.UUID, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error) {
-	type resultRow struct {
-		ID            uuid.UUID            `db:"id"`
-		WorkflowID    uuid.UUID            `db:"workflow_id"`
-		CreatedAt     time.Time            `db:"created_at"`
-		StorageConfig shared.StorageConfig `db:"storage_config"`
-		EngineConfig  shared.EngineConfig  `db:"engine_config"`
-		ArtfResultID  uuid.UUID            `db:"artf_result_id"`
-	}
-
+func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
+	ctx context.Context,
+	workflowID uuid.UUID,
+	integrationID uuid.UUID,
+	objectName string,
+	DB database.Database,
+) ([]models.Operator, error) {
+	// Get all load operators where table=objectName & integration_id=integrationId
+	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
+	// workflow.
 	query := fmt.Sprintf(`
-		SELECT 
-			DISTINCT artifact_result.id as artf_result_id, %s
-		FROM 
-			workflow_dag, workflow_dag_edge, workflow_dag_result, artifact_result
-		WHERE 
-			workflow_dag_edge.workflow_dag_id = workflow_dag.id
-			AND (
-				workflow_dag_edge.from_id = artifact_result.artifact_id
-				OR 
-				workflow_dag_edge.to_id = artifact_result.artifact_id
-			)
-			AND artifact_result.id IN (%s);`,
-		models.DAGCols(),
-		stmt_preparers.GenerateArgsList(len(artifactResultIDs), 1),
+	SELECT %s
+	FROM operator
+	WHERE
+		json_extract(spec, '$.type') = '%s' AND 
+		json_extract(spec, '$.load.parameters.table')=$1 AND
+		json_extract(spec, '$.load.integration_id')=$2 AND
+		EXISTS 
+		(
+			SELECT 1 
+			FROM 
+				workflow_dag_edge, workflow_dag 
+			WHERE 
+			( 
+				workflow_dag_edge.from_id = operator.id OR 
+				workflow_dag_edge.to_id = operator.id 
+			) AND 
+			workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
+			workflow_dag.workflow_id = $4
+		);`,
+		models.OperatorCols(),
+		shared.LoadType,
 	)
 
-	args := stmt_preparers.CastIdsListToInterfaceList(artifactResultIDs)
-
-	var results []resultRow
-	err := DB.Query(ctx, &results, query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	resultMap := make(map[uuid.UUID]models.DAG, len(results))
-	for _, row := range results {
-		resultMap[row.ArtfResultID] = models.DAG{
-			ID:            row.ID,
-			WorkflowID:    row.WorkflowID,
-			CreatedAt:     row.CreatedAt,
-			StorageConfig: row.StorageConfig,
-			EngineConfig:  row.EngineConfig,
-		}
-	}
-
-	return resultMap, nil
+	return getOperators(ctx, DB, query)
 }
 
-func (*operatorReader) GetLoadOperatorsByIntegration(ctx context.Context, integrationID uuid.UUID, objectName string, DB database.Database) ([]models.Operator, error) {
+func (*operatorReader) GetLoadOPsByIntegration(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	objectName string,
+	DB database.Database,
+) ([]models.Operator, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM operator
-		WHERE json_extract(spec, '$.load.integration_id') = $1
-		OR json_extract(spec, '$.extract.integration_id') = $2`,
-		models.DAGCols(),
+		WHERE 
+			json_extract(spec, '$.load.integration_id') = $1
+			OR json_extract(spec, '$.extract.integration_id') = $2`,
+		models.OperatorCols(),
 	)
-	args := []interface{}{workflowID}
+	args := []interface{}{integrationID, integrationID}
 
-	return getDAGs(ctx, DB, query, args...)
+	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error) {
+func (*operatorReader) ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error) {
 	return utils.ValidateNodeOwnership(ctx, orgID, operatorId, DB)
 }
 
@@ -221,7 +224,12 @@ func (*operatorWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB data
 	return deleteOperators(ctx, DB, IDs)
 }
 
-func (*operatorWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Operator, error) {
+func (*operatorWriter) Update(
+	ctx context.Context,
+	ID uuid.UUID,
+	changes map[string]interface{},
+	DB database.Database,
+) (*models.Operator, error) {
 	var operator models.Operator
 	err := utils.UpdateRecordToDest(
 		ctx,
@@ -238,7 +246,7 @@ func (*operatorWriter) Update(ctx context.Context, ID uuid.UUID, changes map[str
 
 func getOperators(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Operator, error) {
 	var operators []models.Operator
-	err := DB.Query(ctx, &dags, query, args...)
+	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
 }
 
