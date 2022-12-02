@@ -236,26 +236,26 @@ func (h *PreviewHandler) setupExecEnv(
 	ctx context.Context,
 	args *previewArgs,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
-	condaIntegration, condaConnectionState, err := exec_env.CondaConnectionState(
-		ctx, args.Id, h.IntegrationReader, h.Database,
-	)
-
-	dagSummary := args.DagSummary
-
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, args.Id, h.IntegrationReader, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting Conda integration.")
 	}
 
 	// For now, do nothing if conda is not connected.
-	if condaConnectionState == nil {
+	if condaIntegration == nil {
 		return nil, http.StatusOK, nil
 	}
 
+	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
+	}
+
 	if condaConnectionState.Status == shared.FailedExecutionStatus {
-		errMsg := "Failed to create conda environments."
+		errMsg := "Failed to create Conda environments."
 		if condaConnectionState.Error != nil {
 			errMsg = fmt.Sprintf(
-				"Failed to create conda environments: %s. %s.",
+				"Failed to create Conda environments: %s. %s.",
 				condaConnectionState.Error.Context,
 				condaConnectionState.Error.Tip,
 			)
@@ -266,17 +266,18 @@ func (h *PreviewHandler) setupExecEnv(
 
 	if condaConnectionState.Status != shared.SucceededExecutionStatus {
 		return nil, http.StatusBadRequest, errors.New(
-			"We are still creating conda environments. This may take a few minutes.",
+			"We are still creating Conda environments. This may take a few minutes.",
 		)
 	}
 
+	dagSummary := args.DagSummary
 	rawEnvByOperator := make(
 		map[uuid.UUID]exec_env.ExecutionEnvironment,
 		len(dagSummary.FileContentsByOperatorUUID),
 	)
 
 	for opId, zipball := range dagSummary.FileContentsByOperatorUUID {
-		rawEnv, err := exec_env.InferDependenciesFromZipFile(zipball)
+		rawEnv, err := exec_env.ExtractDependenciesFromZipFile(zipball)
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
