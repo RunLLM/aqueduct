@@ -22,6 +22,10 @@ type Reader interface {
 		opIDs []uuid.UUID,
 		db database.Database,
 	) (map[uuid.UUID]DBExecutionEnvironment, error)
+	GetUnusedExecutionEnvironments(
+		ctx context.Context,
+		db database.Database,
+	) ([]DBExecutionEnvironment, error)
 }
 
 type Writer interface {

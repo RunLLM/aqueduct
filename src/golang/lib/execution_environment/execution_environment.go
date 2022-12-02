@@ -6,21 +6,30 @@ import (
 	"encoding/gob"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
-const condaCmdPrefix = "conda"
+var pythonVersions = [...]string{
+	"3.7",
+	"3.8",
+	"3.9",
+	"3.10",
+}
 
 type ExecutionEnvironment struct {
+	// TODO: Double check if the json tags can be removed.
 	Id            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
+	CondaPath     string    `json:"-"`
 }
 
 func (e *ExecutionEnvironment) CreateDBRecord(
@@ -80,7 +89,7 @@ func (e *ExecutionEnvironment) Name() string {
 }
 
 func (e *ExecutionEnvironment) CreateEnv() error {
-	// First, we create a Conda env with the env object's Python version.
+	// First, we create a conda env with the env object's Python version.
 	createArgs := []string{
 		"create",
 		"-n",
@@ -89,45 +98,72 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"-y",
 	}
 
-	err := runCmd(condaCmdPrefix, createArgs...)
+	start := time.Now()
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs...)
 	if err != nil {
 		return err
 	}
+	duration := time.Since(start)
+	log.Infof("conda creation took %d seconds", duration.Seconds())
 
+	forkEnvPath := fmt.Sprintf("%s/envs/aqueduct_python%s/lib/python%s/site-packages", e.CondaPath, e.PythonVersion, e.PythonVersion)
+	log.Infof("forkEnvPath is %s", forkEnvPath)
+
+	forkArgs := []string{
+		"develop",
+		"-n",
+		e.Name(),
+		forkEnvPath,
+	}
+
+	start = time.Now()
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs...)
+	if err != nil {
+		return err
+	}
+	duration = time.Since(start)
+	log.Infof("conda fork took %d seconds", duration.Seconds())
+
+	log.Info("Printing dependencies...")
 	for _, d := range e.Dependencies {
 		fmt.Println(d)
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.
-	// We manually add the aqueduct-ml package because the env sent from
-	// the client may not contain this required package.
 	installArgs := append([]string{
 		"run",
 		"-n",
 		e.Name(),
 		"pip3",
 		"install",
-		fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
 	}, e.Dependencies...)
 
-	err = runCmd(condaCmdPrefix, installArgs...)
+	start = time.Now()
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs...)
 	if err != nil {
 		return err
 	}
+	duration = time.Since(start)
+	log.Infof("conda dep install took %d seconds", duration.Seconds())
 
 	return nil
 }
 
-// DeleteEnv deletes the Conda environment if it exists.
-func (e *ExecutionEnvironment) DeleteEnv() error {
-	deleteArgs := []string{
+func deleteCondaEnv(name string) error {
+	args := []string{
 		"env",
 		"remove",
 		"-n",
-		e.Name(),
+		name,
 	}
 
-	return runCmd(condaCmdPrefix, deleteArgs...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	return err
+}
+
+// DeleteEnv deletes the Conda environment if it exists.
+func (e *ExecutionEnvironment) DeleteEnv() error {
+	return deleteCondaEnv(e.Name())
 }
 
 // GetExecEnvFromDB returns an exec env object from DB by its hash.
@@ -146,23 +182,52 @@ func GetExecEnvFromDB(
 	return newFromDBExecutionEnvironment(dbExecEnv), nil
 }
 
-func IsCondaConnected(
-	ctx context.Context,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
-	db database.Database,
-) (bool, error) {
-	integrations, err := integrationReader.GetIntegrationsByServiceAndUser(
-		ctx,
-		integration.Conda,
-		userId,
-		db,
-	)
-	if err != nil {
-		return false, err
+func baseEnvNameByVersion(pythonVersion string) string {
+	return fmt.Sprintf("aqueduct_python%s", pythonVersion)
+}
+
+// createBaseEnvs creates base python environments.
+func createBaseEnvs() error {
+	for _, pythonVersion := range pythonVersions {
+		envName := baseEnvNameByVersion(pythonVersion)
+		args := []string{
+			"create",
+			"-n",
+			envName,
+			fmt.Sprintf("python==%s", pythonVersion),
+			"-y",
+		}
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
+
+		args = []string{
+			"run",
+			"-n",
+			envName,
+			"pip3",
+			"install",
+			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
+		}
+		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
+		if err != nil {
+			return err
+		}
 	}
 
-	return len(integrations) > 0, nil
+	return nil
+}
+
+func DeleteBaseEnvs() error {
+	for _, pythonVersion := range pythonVersions {
+		err := deleteCondaEnv(baseEnvNameByVersion(pythonVersion))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Best-effort to delete all envs and log any error
@@ -185,7 +250,7 @@ func newFromDBExecutionEnvironment(
 	}
 }
 
-func GetExecutionEnvironmentsMapByOperatorIds(
+func GetExecutionEnvironmentsMapByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	envReader db_exec_env.Reader,
@@ -275,4 +340,72 @@ func CreateMissingAndSyncExistingEnvs(
 	}
 
 	return results, nil
+}
+
+func GetUnusedExecutionEnvironmentIDs(
+	ctx context.Context,
+	envReader db_exec_env.Reader,
+	db database.Database,
+) ([]uuid.UUID, error) {
+	dbEnvs, err := envReader.GetUnusedExecutionEnvironments(
+		ctx, db,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]uuid.UUID, 0, len(dbEnvs))
+	for _, dbEnv := range dbEnvs {
+		results = append(results, dbEnv.Id)
+	}
+
+	return results, nil
+}
+
+// CleanupUnusedEnvironments is executed in a best-effort fashion, and we log all the errors within
+// the function and return an error object signaling whether there is at least one error occurred.
+func CleanupUnusedEnvironments(
+	ctx context.Context,
+	envReader db_exec_env.Reader,
+	envWriter db_exec_env.Writer,
+	db database.Database,
+) error {
+	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
+	if err != nil {
+		log.Errorf("Error getting unused execution environments: %v", err)
+		return err
+	}
+
+	var deletedIDs []uuid.UUID
+	hasError := false
+
+	for _, envID := range envIDs {
+		envName := fmt.Sprintf("%s_%s", "aqueduct", envID.String())
+		deleteArgs := []string{
+			"env",
+			"remove",
+			"-n",
+			envName,
+		}
+
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+		if err != nil {
+			hasError = true
+			log.Errorf("Error garbage collecting Conda environment %s: %v", envID, err)
+		} else {
+			deletedIDs = append(deletedIDs, envID)
+		}
+	}
+
+	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
+	if err != nil {
+		hasError = true
+		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
+	}
+
+	if hasError {
+		return errors.New("An internal error occurred within the cleanup function. Please see the server log for more information.")
+	}
+
+	return nil
 }

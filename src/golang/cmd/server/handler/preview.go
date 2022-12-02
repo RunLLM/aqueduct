@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 
@@ -185,9 +186,17 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	execEnvByOpId, err := h.setupExecEnv(ctx, args)
+	execEnvByOpId, status, err := setupExecEnv(
+		ctx,
+		args.Id,
+		args.DagSummary,
+		h.IntegrationReader,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		h.Database,
+	)
 	if err != nil {
-		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error setting up python environments.")
+		return errorRespPtr, status, err
 	}
 
 	timeConfig := &engine.AqueductTimeConfig{
@@ -231,23 +240,47 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}, statusCode, nil
 }
 
-func (h *PreviewHandler) setupExecEnv(
+func setupExecEnv(
 	ctx context.Context,
-	args *previewArgs,
-) (map[uuid.UUID]exec_env.ExecutionEnvironment, error) {
-	condaConnected, err := exec_env.IsCondaConnected(
-		ctx, args.Id, h.IntegrationReader, h.Database,
-	)
-
-	dagSummary := args.DagSummary
-
+	userId uuid.UUID,
+	dagSummary *request.DagSummary,
+	integrationReader integration.Reader,
+	execEnvReader db_exec_env.Reader,
+	execEnvWriter db_exec_env.Writer,
+	db database.Database,
+) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userId, integrationReader, db)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to verify if conda is connected.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
 	}
 
 	// For now, do nothing if conda is not connected.
-	if !condaConnected {
-		return nil, nil
+	if condaIntegration == nil {
+		return nil, http.StatusOK, nil
+	}
+
+	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
+	}
+
+	if condaConnectionState.Status == shared.FailedExecutionStatus {
+		errMsg := "Failed to create conda environments."
+		if condaConnectionState.Error != nil {
+			errMsg = fmt.Sprintf(
+				"Failed to create conda environments: %s. %s.",
+				condaConnectionState.Error.Context,
+				condaConnectionState.Error.Tip,
+			)
+		}
+
+		return nil, http.StatusInternalServerError, errors.New(errMsg)
+	}
+
+	if condaConnectionState.Status != shared.SucceededExecutionStatus {
+		return nil, http.StatusBadRequest, errors.New(
+			"We are still creating base conda environments. This may take a few minutes.",
+		)
 	}
 
 	rawEnvByOperator := make(
@@ -258,34 +291,36 @@ func (h *PreviewHandler) setupExecEnv(
 	for opId, zipball := range dagSummary.FileContentsByOperatorUUID {
 		rawEnv, err := exec_env.ExtractDependenciesFromZipFile(zipball)
 		if err != nil {
-			return nil, err
+			return nil, http.StatusInternalServerError, err
 		}
+
+		rawEnv.CondaPath = condaIntegration.Config[exec_env.CondaPathKey]
 
 		rawEnvByOperator[opId] = *rawEnv
 	}
 
-	txn, err := h.Database.BeginTx(ctx)
+	txn, err := db.BeginTx(ctx)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	envByOperator, err := exec_env.CreateMissingAndSyncExistingEnvs(
 		ctx,
-		h.ExecutionEnvironmentReader,
-		h.ExecutionEnvironmentWriter,
+		execEnvReader,
+		execEnvWriter,
 		rawEnvByOperator,
 		txn,
 	)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
-	return envByOperator, nil
+	return envByOperator, http.StatusOK, nil
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {
