@@ -210,9 +210,10 @@ func GetExecutionEnvironmentsMapByOperatorIds(
 	return results, nil
 }
 
-// CreateMissingAndSyncExistingEnvs env %s: %vistingEnvs` keep argerrsync with DB.
-// In other words, it creates new db rows for missing envs
-// and fetch existing ones.
+// CreateMissingAndSyncExistingEnvs keeps the given environment map in-sync with DB.
+//
+// Given a env map of any UUID key (in practice the key is typically operator ID),
+// it creates new db rows for missing envs.
 //
 // Returns a map with the original key, mapped to the synced
 // env object from the DB rows.
@@ -223,9 +224,8 @@ func CreateMissingAndSyncExistingEnvs(
 	envs map[uuid.UUID]ExecutionEnvironment,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	// visitedResults is an envHash to boolean mapping
-	// to track already visited envHash. This helps reduce
-	// the number of DB access.
+	// visitedResults tracks already visited env.
+	// This helps reduce the number of DB access.
 	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
 	addedEnvs := make([]ExecutionEnvironment, 0, len(envs))
 	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
