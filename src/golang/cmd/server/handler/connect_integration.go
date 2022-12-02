@@ -602,6 +602,8 @@ func validateLambdaConfig(
 	return http.StatusOK, nil
 }
 
+// ValidatePrerequisites is currently only relevant to conda integration, but we can extend this to
+// validate other integrations in the future.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc integration.Service,
