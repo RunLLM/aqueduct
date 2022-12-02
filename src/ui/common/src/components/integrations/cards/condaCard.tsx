@@ -3,7 +3,7 @@ import React from 'react';
 
 import { CondaConfig, Integration } from '../../../utils/integrations';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
-import ExecutionChip from '../../execution/chip';
+import CondaConnectionStatus from '../conda/condaConnectionStatus';
 
 type Props = {
   integration: Integration;
@@ -17,7 +17,7 @@ export const CondaCard: React.FC<Props> = ({ integration }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <ExecutionChip status={execState.status} />
+      <CondaConnectionStatus state={execState} />
     </Box>
   );
 };
