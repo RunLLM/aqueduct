@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -48,7 +47,6 @@ type GetWorkflowDagResultHandler struct {
 	ArtifactResultReader  artifact_result.Reader
 	OperatorReader        operator.Reader
 	OperatorResultReader  operator_result.Reader
-	WorkflowReader        workflow.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
 	DAGRepo       repos.DAG
@@ -116,7 +114,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 	constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 		ctx,
 		dbDAG.ID,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,

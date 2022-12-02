@@ -5,10 +5,8 @@ import (
 
 	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -63,10 +61,6 @@ type workflowDagImpl struct {
 	opToOutputArtifacts map[uuid.UUID][]uuid.UUID
 	opToInputArtifacts  map[uuid.UUID][]uuid.UUID
 	artifactToOps       map[uuid.UUID][]uuid.UUID
-
-	workflowReader     workflow.Reader
-	notificationWriter notification.Writer
-	db                 database.Database
 }
 
 // Assumption: all dag's start with operators.
@@ -161,14 +155,12 @@ func NewWorkflowDag(
 	opResultWriter operator_result.Writer,
 	artifactWriter db_artifact.Writer,
 	artifactResultWriter artifact_result.Writer,
-	workflowReader workflow.Reader,
-	notificationWriter notification.Writer,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
 	execEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
 	opExecMode operator.ExecutionMode,
-	db database.Database,
+	DB database.Database,
 ) (WorkflowDag, error) {
 	dbArtifacts := dag.Artifacts
 	dbOperators := dag.Operators
@@ -225,7 +217,7 @@ func NewWorkflowDag(
 			artifactResultWriter,
 			&dag.StorageConfig,
 			artifactCacheManager,
-			db,
+			DB,
 		)
 		if err != nil {
 			return nil, err
@@ -283,7 +275,7 @@ func NewWorkflowDag(
 			artifactCacheManager,
 			opExecMode,
 			execEnvPtr,
-			db,
+			DB,
 		)
 		if err != nil {
 			return nil, err
@@ -299,10 +291,6 @@ func NewWorkflowDag(
 		opToOutputArtifacts: opToOutputArtifactIDs,
 		opToInputArtifacts:  opToInputArtifactIDs,
 		artifactToOps:       artifactIDToOpIDs,
-
-		workflowReader:     workflowReader,
-		notificationWriter: notificationWriter,
-		db:                 db,
 	}, nil
 }
 

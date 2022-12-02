@@ -47,7 +47,6 @@ type Writers struct {
 	ArtifactResultWriter       artifact_result.Writer
 	OperatorWriter             operator.Writer
 	OperatorResultWriter       operator_result.Writer
-	WorkflowWriter             workflow.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
@@ -164,11 +163,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	workflowWriter, err := workflow.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	workflowDagEdgeWriter, err := workflow_dag_edge.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -186,7 +180,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		ArtifactResultWriter:       artifactResultWriter,
 		OperatorWriter:             operatorWriter,
 		OperatorResultWriter:       operatorResultWriter,
-		WorkflowWriter:             workflowWriter,
 		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
@@ -194,7 +187,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 
 func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
-		WorkflowReader:             readers.WorkflowReader,
 		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
@@ -207,7 +199,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 
 func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
-		WorkflowWriter:        writers.WorkflowWriter,
 		WorkflowDagEdgeWriter: writers.WorkflowDagEdgeWriter,
 		OperatorWriter:        writers.OperatorWriter,
 		OperatorResultWriter:  writers.OperatorResultWriter,
@@ -222,5 +213,6 @@ func GetEngineRepos(repos *Repos) *engine.Repos {
 		DAGRepo:       repos.DAGRepo,
 		DAGResultRepo: repos.DAGResultRepo,
 		WatcherRepo:   repos.WatcherRepo,
+		WorkflowRepo:  repos.WorkflowRepo,
 	}
 }

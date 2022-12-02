@@ -26,13 +26,13 @@ func (ex *WorkflowRetentionExecutor) Run(ctx context.Context) error {
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
-	workflowObjects, err := ex.WorkflowReader.GetAllWorkflows(ctx, txn)
+	workflows, err := ex.WorkflowRepo.List(ctx, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	}
 
-	for _, workflowObject := range workflowObjects {
-		err = ex.cleanupOldWorkflows(ctx, txn, workflowObject.Id, workflowObject.RetentionPolicy.KLatestRuns)
+	for _, workflow := range workflows {
+		err = ex.cleanupOldWorkflows(ctx, txn, workflow.ID, workflow.RetentionPolicy.KLatestRuns)
 		if err != nil {
 			return err
 		}

@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -360,7 +359,7 @@ func UpdateDAGResultMetadata(
 	dagResultID uuid.UUID,
 	execState *mdl_shared.ExecutionState,
 	dagResultRepo repos.DAGResult,
-	workflowReader workflow.Reader,
+	workflowRepo repos.Workflow,
 	notificationWriter notification.Writer,
 	DB database.Database,
 ) error {
@@ -389,7 +388,7 @@ func UpdateDAGResultMetadata(
 		ctx,
 		dagResult,
 		notificationWriter,
-		workflowReader,
+		workflowRepo,
 		txn,
 	); err != nil {
 		return err
@@ -402,7 +401,7 @@ func createDAGResultNotification(
 	ctx context.Context,
 	dagResult *models.DAGResult,
 	notificationWriter notification.Writer,
-	workflowReader workflow.Reader,
+	workflowRepo repos.Workflow,
 	DB database.Database,
 ) error {
 	status := dagResult.Status
@@ -412,7 +411,7 @@ func createDAGResultNotification(
 		return nil
 	}
 
-	workflow, err := workflowReader.GetWorkflowByWorkflowDagId(
+	workflow, err := workflowRepo.GetByDAG(
 		ctx,
 		dagResult.DagID,
 		DB,
@@ -444,7 +443,7 @@ func createDAGResultNotification(
 	// needs to be created
 	_, err = notificationWriter.CreateNotification(
 		ctx,
-		workflow.UserId,
+		workflow.UserID,
 		notificationContent,
 		notificationLevel,
 		notificationAssociation,

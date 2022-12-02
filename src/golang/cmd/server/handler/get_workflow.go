@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -61,10 +60,8 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader artifact.Reader
-	OperatorReader operator.Reader
-	// TODO: Replace this with repos.Workflow after DAG replacement
-	WorkflowReader        workflow.Reader
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
 	OperatorResultWriter operator_result.Writer
@@ -118,7 +115,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 	latestDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.workflowID,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
@@ -134,7 +131,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		if err := airflow.SyncDAGs(
 			ctx,
 			[]uuid.UUID{latestDAG.ID},
-			h.WorkflowReader,
+			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
@@ -163,7 +160,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 			ctx,
 			dbDAG.ID,
-			h.WorkflowReader,
+			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,

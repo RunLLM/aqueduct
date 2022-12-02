@@ -50,7 +50,6 @@ type AqueductTimeConfig struct {
 }
 
 type EngineReaders struct {
-	WorkflowReader             workflow.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
@@ -61,7 +60,6 @@ type EngineReaders struct {
 }
 
 type EngineWriters struct {
-	WorkflowWriter        workflow.Writer
 	WorkflowDagEdgeWriter workflow_dag_edge.Writer
 	OperatorWriter        operator_db.Writer
 	OperatorResultWriter  operator_result.Writer
@@ -75,6 +73,7 @@ type Repos struct {
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 	WatcherRepo   repos.Watcher
+	WorkflowRepo  repos.Workflow
 }
 
 type aqEngine struct {
@@ -173,14 +172,14 @@ func (eng *aqEngine) ScheduleWorkflow(
 
 func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
 	dbDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
-		workflowId,
-		eng.WorkflowReader,
+		workflowID,
+		eng.WorkflowRepo,
 		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.ArtifactReader,
@@ -223,7 +222,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			dagResult.ID,
 			execState,
 			eng.DAGResultRepo,
-			eng.WorkflowReader,
+			eng.WorkflowRepo,
 			eng.NotificationWriter,
 			eng.Database,
 		); updateErr != nil {
@@ -231,7 +230,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		}
 	}()
 
-	githubClient, err := eng.GithubManager.GetClient(ctx, dbDAG.Metadata.UserId)
+	githubClient, err := eng.GithubManager.GetClient(ctx, dbDAG.Metadata.UserID)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
 	}
@@ -240,8 +239,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		ctx,
 		githubClient,
 		dbDAG,
-		eng.WorkflowReader,
-		eng.WorkflowWriter,
+		eng.WorkflowRepo,
 		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.OperatorWriter,
@@ -307,8 +305,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorResultWriter,
 		eng.ArtifactWriter,
 		eng.ArtifactResultWriter,
-		eng.WorkflowReader,
-		eng.NotificationWriter,
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
@@ -394,8 +390,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.OperatorResultWriter,
 		eng.ArtifactWriter,
 		eng.ArtifactResultWriter,
-		eng.WorkflowReader,
-		eng.NotificationWriter,
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
@@ -476,7 +470,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 func (eng *aqEngine) DeleteWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 ) error {
 	txn, err := eng.Database.BeginTx(ctx)
 	if err != nil {
@@ -485,12 +479,12 @@ func (eng *aqEngine) DeleteWorkflow(
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
-	workflowObject, err := eng.WorkflowReader.GetWorkflow(ctx, workflowId, txn)
+	workflow, err := eng.WorkflowRepo.Get(ctx, workflowID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	}
 
-	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflowObject.Id, txn)
+	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflow.ID, txn)
 	if err != nil || len(dagsToDelete) == 0 {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	}
@@ -500,7 +494,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObject.Id, txn)
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflow.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
@@ -578,7 +572,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	// Start deleting database records.
-	err = eng.WatcherRepo.DeleteByWorkflow(ctx, workflowId, txn)
+	err = eng.WatcherRepo.DeleteByWorkflow(ctx, workflowID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
 	}
@@ -618,7 +612,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
 	}
 
-	err = eng.WorkflowWriter.DeleteWorkflow(ctx, workflowObject.Id, txn)
+	err = eng.WorkflowRepo.Delete(ctx, workflow.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow.")
 	}
@@ -651,8 +645,8 @@ func (eng *aqEngine) DeleteWorkflow(
 	workflow_utils.CleanupStorageFiles(ctx, &storageConfig, storagePaths)
 
 	// Delete the cron job if it had one.
-	if workflowObject.Schedule.CronSchedule != "" {
-		cronjobName := shared_utils.AppendPrefix(workflowObject.Id.String())
+	if workflow.Schedule.CronSchedule != "" {
+		cronjobName := shared_utils.AppendPrefix(workflow.ID.String())
 		err = eng.CronjobManager.DeleteCronJob(ctx, cronjobName)
 		if err != nil {
 			return errors.Wrap(err, "Failed to delete workflow's cronjob.")
@@ -664,7 +658,7 @@ func (eng *aqEngine) DeleteWorkflow(
 func (eng *aqEngine) EditWorkflow(
 	ctx context.Context,
 	txn database.Database,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	workflowName string,
 	workflowDescription string,
 	schedule *workflow.Schedule,
@@ -672,27 +666,27 @@ func (eng *aqEngine) EditWorkflow(
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
-		changes["name"] = workflowName
+		changes[models.WorkflowName] = workflowName
 	}
 
 	if workflowDescription != "" {
-		changes["description"] = workflowDescription
+		changes[models.WorkflowDescription] = workflowDescription
 	}
 
 	if retentionPolicy != nil {
-		changes["retention_policy"] = retentionPolicy
+		changes[models.WorkflowRetentionPolicy] = retentionPolicy
 	}
 
 	if schedule.Trigger != "" {
-		cronjobName := shared_utils.AppendPrefix(workflowId.String())
-		err := eng.updateWorkflowSchedule(ctx, workflowId, cronjobName, schedule)
+		cronjobName := shared_utils.AppendPrefix(workflowID.String())
+		err := eng.updateWorkflowSchedule(ctx, workflowID, cronjobName, schedule)
 		if err != nil {
 			return errors.Wrap(err, "Unable to update workflow schedule.")
 		}
-		changes["schedule"] = schedule
+		changes[models.WorkflowSchedule] = schedule
 	}
 
-	_, err := eng.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, txn)
+	_, err := eng.WorkflowRepo.Update(ctx, workflowID, changes, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update workflow.")
 	}

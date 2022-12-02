@@ -45,6 +45,18 @@ func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	return getWorkflow(ctx, DB, query, args...)
 }
 
+func (*workflowReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) (*models.Workflow, error) {
+	query := fmt.Sprintf(`
+		SELECT %s FROM workflow, workflow_dag 
+		WHERE workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag.id = $1;`,
+		models.WorkflowCols(),
+	)
+	args := []interface{}{dagID}
+
+	return getWorkflow(ctx, DB, query, args...)
+}
+
 func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM workflow WHERE user_id = $1 and name = $2;`,
@@ -161,7 +173,7 @@ func (*workflowWriter) Create(
 		models.WorkflowDescription,
 		models.WorkflowSchedule,
 		models.WorkflowCreatedAt,
-		models.WorkflowRetention,
+		models.WorkflowRetentionPolicy,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 

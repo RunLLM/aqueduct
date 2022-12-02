@@ -103,7 +103,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			ArtifactReader:        s.ArtifactReader,
 			OperatorReader:        s.OperatorReader,
-			WorkflowReader:        s.WorkflowReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
 			OperatorResultWriter: s.OperatorResultWriter,
@@ -119,7 +118,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactResultReader:  s.ArtifactResultReader,
 			OperatorReader:        s.OperatorReader,
 			OperatorResultReader:  s.OperatorResultReader,
-			WorkflowReader:        s.WorkflowReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
 			DAGRepo:       s.DAGRepo,
@@ -158,7 +156,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			CustomReader:          s.CustomReader,
 			ArtifactWriter:        s.ArtifactWriter,
 			OperatorWriter:        s.OperatorWriter,
-			WorkflowWriter:        s.WorkflowWriter,
 			WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 			OperatorResultWriter:  s.OperatorResultWriter,
 			ArtifactResultWriter:  s.ArtifactResultWriter,
@@ -166,6 +163,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
+			WorkflowRepo:  s.WorkflowRepo,
 		},
 		routes.PreviewTableRoute: &handler.PreviewTableHandler{
 			Database:          s.Database,
@@ -205,12 +203,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Engine:   s.AqEngine,
 			Vault:    s.Vault,
 
-			WorkflowReader:        s.WorkflowReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 			OperatorReader:        s.OperatorReader,
 			ArtifactReader:        s.ArtifactReader,
 
-			DAGRepo: s.DAGRepo,
+			DAGRepo:      s.DAGRepo,
+			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,
@@ -222,17 +220,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactReader:             s.ArtifactReader,
 			IntegrationReader:          s.IntegrationReader,
 			OperatorReader:             s.OperatorReader,
-			WorkflowReader:             s.WorkflowReader,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 
 			ArtifactWriter:             s.ArtifactWriter,
 			OperatorWriter:             s.OperatorWriter,
-			WorkflowWriter:             s.WorkflowWriter,
 			WorkflowDagEdgeWriter:      s.WorkflowDagEdgeWriter,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
-			DAGRepo:     s.DAGRepo,
-			WatcherRepo: s.WatcherRepo,
+			DAGRepo:      s.DAGRepo,
+			WatcherRepo:  s.WatcherRepo,
+			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
 			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{
@@ -244,15 +241,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				ArtifactReader:    s.ArtifactReader,
 				IntegrationReader: s.IntegrationReader,
 				OperatorReader:    s.OperatorReader,
-				WorkflowReader:    s.WorkflowReader,
 
 				ArtifactWriter:        s.ArtifactWriter,
 				OperatorWriter:        s.OperatorWriter,
-				WorkflowWriter:        s.WorkflowWriter,
 				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 
-				DAGRepo:     s.DAGRepo,
-				WatcherRepo: s.WatcherRepo,
+				DAGRepo:      s.DAGRepo,
+				WatcherRepo:  s.WatcherRepo,
+				WorkflowRepo: s.WorkflowRepo,
 			},
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 

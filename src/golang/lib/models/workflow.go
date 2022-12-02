@@ -13,13 +13,13 @@ const (
 	WorkflowTable = "workflow"
 
 	// Workflow column names
-	WorkflowID          = "id"
-	WorkflowUserID      = "user_id"
-	WorkflowName        = "name"
-	WorkflowDescription = "description"
-	WorkflowSchedule    = "schedule"
-	WorkflowCreatedAt   = "created_at"
-	WorkflowRetention   = "retention_policy"
+	WorkflowID              = "id"
+	WorkflowUserID          = "user_id"
+	WorkflowName            = "name"
+	WorkflowDescription     = "description"
+	WorkflowSchedule        = "schedule"
+	WorkflowCreatedAt       = "created_at"
+	WorkflowRetentionPolicy = "retention_policy"
 )
 
 // A Workflow maps to the workflow table.
@@ -57,6 +57,6 @@ func allWorkflowCols() []string {
 		WorkflowDescription,
 		WorkflowSchedule,
 		WorkflowCreatedAt,
-		WorkflowRetention,
+		WorkflowRetentionPolicy,
 	}
 }
