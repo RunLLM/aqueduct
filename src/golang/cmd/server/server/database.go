@@ -13,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -51,7 +50,6 @@ type Writers struct {
 	WorkflowWriter             workflow.Writer
 	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
-	WorkflowDagResultWriter    workflow_dag_result.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
 
@@ -186,11 +184,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	workflowDagResultWriter, err := workflow_dag_result.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvWriter, err := exec_env.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -206,7 +199,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		WorkflowWriter:             workflowWriter,
 		WorkflowDagWriter:          workflowDagWriter,
 		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
-		WorkflowDagResultWriter:    workflowDagResultWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
 }
@@ -227,15 +219,14 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 
 func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
-		WorkflowWriter:          writers.WorkflowWriter,
-		WorkflowDagWriter:       writers.WorkflowDagWriter,
-		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
-		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
-		OperatorWriter:          writers.OperatorWriter,
-		OperatorResultWriter:    writers.OperatorResultWriter,
-		ArtifactWriter:          writers.ArtifactWriter,
-		ArtifactResultWriter:    writers.ArtifactResultWriter,
-		NotificationWriter:      writers.NotificationWriter,
+		WorkflowWriter:        writers.WorkflowWriter,
+		WorkflowDagWriter:     writers.WorkflowDagWriter,
+		WorkflowDagEdgeWriter: writers.WorkflowDagEdgeWriter,
+		OperatorWriter:        writers.OperatorWriter,
+		OperatorResultWriter:  writers.OperatorResultWriter,
+		ArtifactWriter:        writers.ArtifactWriter,
+		ArtifactResultWriter:  writers.ArtifactResultWriter,
+		NotificationWriter:    writers.NotificationWriter,
 	}
 }
 

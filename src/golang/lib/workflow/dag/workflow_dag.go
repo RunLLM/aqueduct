@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -159,7 +158,6 @@ func NewWorkflowDag(
 	ctx context.Context,
 	workflowDagResultID uuid.UUID,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	dagResultWriter workflow_dag_result.Writer,
 	opResultWriter operator_result.Writer,
 	artifactWriter db_artifact.Writer,
 	artifactResultWriter artifact_result.Writer,

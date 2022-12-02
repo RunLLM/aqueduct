@@ -7,11 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -347,27 +345,12 @@ func UpdateWorkflowDagToLatest(
 	)
 }
 
-func CreateWorkflowDagResult(
-	ctx context.Context,
-	workflowDagId uuid.UUID,
-	execState *shared.ExecutionState,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	db database.Database,
-) (*workflow_dag_result.WorkflowDagResult, error) {
-	return workflowDagResultWriter.CreateWorkflowDagResult(
-		ctx,
-		workflowDagId,
-		execState,
-		db,
-	)
-}
-
 // UpdateDAGResultMetadata updates the status and execution state of the
 // specified DAGResult. It also creates the relevant notification(s).
 func UpdateDAGResultMetadata(
 	ctx context.Context,
 	dagResultID uuid.UUID,
-	execState *shared.ExecutionState,
+	execState *mdl_shared.ExecutionState,
 	dagResultRepo repos.DAGResult,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
