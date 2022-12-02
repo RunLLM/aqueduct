@@ -80,7 +80,7 @@ func (e *ExecutionEnvironment) Name() string {
 }
 
 func (e *ExecutionEnvironment) CreateEnv() error {
-	// First, we create a Conda env with the env object's Python version.
+	// First, we create a conda env with the env object's Python version.
 	createArgs := []string{
 		"create",
 		"-n",
@@ -95,7 +95,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		return err
 	}
 	duration := time.Since(start)
-	log.Infof("Conda creation took %d seconds", duration.Seconds())
+	log.Infof("conda creation took %d seconds", duration.Seconds())
 
 	forkEnvPath := fmt.Sprintf("%s/envs/aqueduct_python%s/lib/python%s/site-packages", e.CondaPath, e.PythonVersion, e.PythonVersion)
 	log.Infof("forkEnvPath is %s", forkEnvPath)
@@ -113,7 +113,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		return err
 	}
 	duration = time.Since(start)
-	log.Infof("Conda fork took %d seconds", duration.Seconds())
+	log.Infof("conda fork took %d seconds", duration.Seconds())
 
 	log.Info("Printing dependencies...")
 	for _, d := range e.Dependencies {
@@ -135,7 +135,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		return err
 	}
 	duration = time.Since(start)
-	log.Infof("Conda dep install took %d seconds", duration.Seconds())
+	log.Infof("conda dep install took %d seconds", duration.Seconds())
 
 	return nil
 }

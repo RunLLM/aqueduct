@@ -238,7 +238,7 @@ func (h *PreviewHandler) setupExecEnv(
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
 	condaIntegration, err := exec_env.GetCondaIntegration(ctx, args.Id, h.IntegrationReader, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting Conda integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
 	}
 
 	// For now, do nothing if conda is not connected.
@@ -252,10 +252,10 @@ func (h *PreviewHandler) setupExecEnv(
 	}
 
 	if condaConnectionState.Status == shared.FailedExecutionStatus {
-		errMsg := "Failed to create Conda environments."
+		errMsg := "Failed to create conda environments."
 		if condaConnectionState.Error != nil {
 			errMsg = fmt.Sprintf(
-				"Failed to create Conda environments: %s. %s.",
+				"Failed to create conda environments: %s. %s.",
 				condaConnectionState.Error.Context,
 				condaConnectionState.Error.Tip,
 			)
@@ -266,7 +266,7 @@ func (h *PreviewHandler) setupExecEnv(
 
 	if condaConnectionState.Status != shared.SucceededExecutionStatus {
 		return nil, http.StatusBadRequest, errors.New(
-			"We are still creating Conda environments. This may take a few minutes.",
+			"We are still creating base conda environments. This may take a few minutes.",
 		)
 	}
 

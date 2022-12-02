@@ -105,7 +105,7 @@ func updateOnFailure(
 		db,
 	)
 	if err != nil {
-		log.Errorf("Failed to update Conda integration: %v", err)
+		log.Errorf("Failed to update conda integration: %v", err)
 	}
 }
 
@@ -127,7 +127,7 @@ func InitializeConda(
 		db,
 	)
 	if err != nil {
-		log.Errorf("Failed to update Conda integration: %v", err)
+		log.Errorf("Failed to update conda integration: %v", err)
 		return
 	}
 
@@ -234,7 +234,7 @@ func InitializeConda(
 	)
 
 	if err != nil {
-		log.Errorf("Failed to update Conda integration: ")
+		log.Errorf("Failed to update conda integration: ")
 	}
 }
 
