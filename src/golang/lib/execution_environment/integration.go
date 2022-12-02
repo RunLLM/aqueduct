@@ -3,11 +3,9 @@ package execution_environment
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -109,6 +107,16 @@ func updateOnFailure(
 	}
 }
 
+func ValidateCondaDevelop() error {
+	// This is to ensure we can use `conda develop` to update the python path later on.
+	args := []string{
+		"develop",
+		"--help",
+	}
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	return err
+}
+
 func InitializeConda(
 	ctx context.Context,
 	integrationID uuid.UUID,
@@ -149,63 +157,7 @@ func InitializeConda(
 
 	condaPath := strings.TrimSpace(out)
 
-	pythonVersions := []string{"3.7", "3.8", "3.9", "3.10"}
-	for _, pythonVersion := range pythonVersions {
-		args := []string{
-			"create",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			fmt.Sprintf("python==%s", pythonVersion),
-			"-y",
-		}
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
-		if err != nil {
-			updateOnFailure(
-				ctx,
-				out,
-				err.Error(),
-				condaPath,
-				&now,
-				integrationID,
-				integrationWriter,
-				db,
-			)
-
-			return
-		}
-
-		args = []string{
-			"run",
-			"-n",
-			fmt.Sprintf("aqueduct_python%s", pythonVersion),
-			"pip3",
-			"install",
-			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-		}
-		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
-		if err != nil {
-			updateOnFailure(
-				ctx,
-				out,
-				err.Error(),
-				condaPath,
-				&now,
-				integrationID,
-				integrationWriter,
-				db,
-			)
-
-			return
-		}
-	}
-
-	// This is to ensure we can use `conda develop` to update the python path later on.
-	args := []string{
-		"install",
-		"conda-build",
-		"-y",
-	}
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
+	err = createBaseEnvs()
 	if err != nil {
 		updateOnFailure(
 			ctx,
