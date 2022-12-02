@@ -10,7 +10,20 @@ import (
 
 // randArtifactType generates a random artifact type.
 func randArtifactType() shared.ArtifactType {
-	return shared.ArtifactTypes[rand.Intn(len(shared.ArtifactTypes))]
+	artifactTypes := []shared.ArtifactType{
+		shared.UntypedArtifact,
+		shared.StringArtifact,
+		shared.BoolArtifact,
+		shared.NumericArtifact,
+		shared.DictArtifact,
+		shared.TupleArtifact,
+		shared.TableArtifact,
+		shared.JsonArtifact,
+		shared.BytesArtifact,
+		shared.ImageArtifact,
+		shared.PicklableArtifact,
+	}
+	return artifactTypes[rand.Intn(len(artifactTypes))]
 }
 
 // randAPIKey generates a random API key.

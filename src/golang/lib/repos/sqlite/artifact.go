@@ -61,9 +61,13 @@ func (*artifactReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 	// (id in `from_id`) in the `workflow_dag_edge` for the specified DAG.
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact WHERE id IN
-		(SELECT from_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s' 
-		UNION 
-		SELECT to_id FROM workflow_dag_edge WHERE workflow_dag_id = $1 AND type = '%s')`,
+			(
+				SELECT from_id FROM workflow_dag_edge 
+					WHERE workflow_dag_id = $1 AND type = '%s' 
+			UNION 
+				SELECT to_id FROM workflow_dag_edge 
+					WHERE workflow_dag_id = $1 AND type = '%s'
+			)`,
 		models.ArtifactCols(),
 		workflow_dag_edge.ArtifactToOperatorType,
 		workflow_dag_edge.OperatorToArtifactType,
