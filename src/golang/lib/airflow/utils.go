@@ -8,7 +8,6 @@ import (
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
-
 	"github.com/dropbox/godropbox/errors"
 )
 
