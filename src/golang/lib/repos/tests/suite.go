@@ -20,9 +20,9 @@ type TestSuite struct {
 	ctx context.Context
 
 	// List of all repos
-	workflow repos.Workflow
-	user     repos.User
 	notification repos.Notification
+	user     repos.User
+	workflow repos.Workflow
 
 	DB database.Database
 }
@@ -40,9 +40,9 @@ func (ts *TestSuite) SetupSuite() {
 	ts.DB = DB
 
 	// Initialize repos
-	ts.workflow = sqlite.NewWorklowRepo()
-	ts.user = sqlite.NewUserRepo()
 	ts.notification = sqlite.NewNotificationRepo()
+	ts.user = sqlite.NewUserRepo()
+	ts.workflow = sqlite.NewWorklowRepo()
 
 
 	// Init database schema

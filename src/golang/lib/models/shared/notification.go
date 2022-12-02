@@ -27,9 +27,9 @@ const (
 type NotificationObject string
 
 const (
-	WorkflowNotificationObject     NotificationObject = "workflow"
-	DAGResultNotificationObject    NotificationObject = "workflow_dag_result"
-	OrganizationNotificationObject NotificationObject = "organization"
+	WorkflowNotificationObject  NotificationObject = "workflow"
+	DAGResultNotificationObject NotificationObject = "workflow_dag_result"
+	OrgNotificationObject       NotificationObject = "organization"
 )
 
 type NotificationAssociation struct {

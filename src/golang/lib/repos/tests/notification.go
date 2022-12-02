@@ -31,11 +31,12 @@ func (ts *TestSuite) TestNotification_ValidateUser() {
 }
 
 func (ts *TestSuite) TestNotification_Create() {
-	receiverID := uuid.New()
+	users := ts.seedUser(1)
+	receiverID := users[0].ID
 	content := randString(10)
 	level := shared.SuccessNotificationLevel
 	association := &shared.NotificationAssociation{
-		Object: shared.OrganizationNotificationObject,
+		Object: shared.OrgNotificationObject,
 		ID: uuid.New(),
 	}
 	expectedNotification := &models.Notification{

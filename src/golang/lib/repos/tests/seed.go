@@ -12,16 +12,17 @@ const (
 	testOrgID = "aqueduct-test"
 )
 
-// seedNotification creates count notification records.
+// seedNotification creates count notification records for a generated user.
 func (ts *TestSuite) seedNotification(count int) []models.Notification {
 	notifications := make([]models.Notification, 0, count)
+	users := ts.seedUser(1)
+	receiverID := users[0].ID
 
 	for i := 0; i < count; i++ {
-		receiverID := uuid.New()
 		content := randString(10)
 		level := shared.SuccessNotificationLevel
 		association := &shared.NotificationAssociation{
-			Object: shared.OrganizationNotificationObject,
+			Object: shared.OrgNotificationObject,
 			ID: uuid.New(),
 		}
 		notification, err := ts.notification.Create(ts.ctx, receiverID, content, level, association, ts.DB)
