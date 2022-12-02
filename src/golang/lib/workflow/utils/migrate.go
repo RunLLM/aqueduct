@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func MigrateStorageAndVault(
 	oldConf *shared.StorageConfig,
 	newConf *shared.StorageConfig,
 	orgID string,
-	dagReader workflow_dag.Reader,
+	dagRepo repos.DAG,
 	dagWriter workflow_dag.Writer,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
@@ -55,7 +56,7 @@ func MigrateStorageAndVault(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	dags, err := dagReader.ListWorkflowDags(ctx, txn)
+	dags, err := dagRepo.List(ctx, txn)
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func MigrateStorageAndVault(
 		}
 
 		// Migrate all of the artifact result content for this DAG
-		artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.Id, txn)
+		artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.ID, txn)
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func MigrateStorageAndVault(
 		}
 
 		// Migrate all operator code for this DAG
-		operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.Id, txn)
+		operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.ID, txn)
 		if err != nil {
 			return err
 		}
@@ -130,7 +131,7 @@ func MigrateStorageAndVault(
 		// Update the storage config for the DAG
 		if _, err := dagWriter.UpdateWorkflowDag(
 			ctx,
-			dag.Id,
+			dag.ID,
 			map[string]interface{}{
 				workflow_dag.StorageConfigColumn: newConf,
 			},

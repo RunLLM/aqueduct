@@ -7,7 +7,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +32,7 @@ type DAG struct {
 	EngineConfig  shared.EngineConfig  `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
-	Metadata *Workflow `json:"metadata"`
+	Metadata *workflow.Workflow `json:"metadata"`
 	// TODO: Refactor once Operator and Artifact models are merged
 	Operators map[uuid.UUID]operator.DBOperator `json:"operators,omitempty"`
 	Artifacts map[uuid.UUID]artifact.DBArtifact `json:"artifacts,omitempty"`

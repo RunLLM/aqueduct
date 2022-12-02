@@ -13,9 +13,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -52,9 +52,10 @@ type exportFunctionResponse struct {
 type ExportFunctionHandler struct {
 	GetHandler
 
-	Database          database.Database
-	OperatorReader    operator.Reader
-	WorkflowDagReader workflow_dag.Reader
+	Database       database.Database
+	OperatorReader operator.Reader
+
+	DAGRepo repos.DAG
 }
 
 func (*ExportFunctionHandler) Name() string {
@@ -124,19 +125,19 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	// Retrieve the workflow dag id to get the storage config information.
-	workflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByOperatorId(ctx, operatorObject.Id, h.Database)
+	dags, err := h.DAGRepo.GetByOperator(ctx, operatorObject.Id, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while retrieving workflow dags from the database.")
 	}
 
-	if len(workflowDags) == 0 {
+	if len(dags) == 0 {
 		return emptyResp, http.StatusInternalServerError, errors.New("Could not find workflow that contains this operator.")
 	}
 
 	// Note: for now we assume all workflow dags have the same storage config.
 	// This assumption will stay true until we allow users to configure custom storage config to store stuff.
-	storageConfig := workflowDags[0].StorageConfig
-	for _, workflowDag := range workflowDags {
+	storageConfig := dags[0].StorageConfig
+	for _, workflowDag := range dags {
 		if workflowDag.StorageConfig != storageConfig {
 			return emptyResp, http.StatusInternalServerError, errors.New("Workflow Dags have mismatching storage config.")
 		}

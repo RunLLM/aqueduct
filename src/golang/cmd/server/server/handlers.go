@@ -17,13 +17,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			WorkflowDagReader:    s.WorkflowDagReader,
 			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 			OperatorReader:       s.OperatorReader,
 			IntegrationReader:    s.IntegrationReader,
 			WorkflowDagWriter:    s.WorkflowDagWriter,
 			IntegrationWriter:    s.IntegrationWriter,
+
+			DAGRepo: s.DAGRepo,
 
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,
@@ -63,9 +64,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Engine:         s.AqEngine,
 		},
 		routes.ExportFunctionRoute: &handler.ExportFunctionHandler{
-			Database:          s.Database,
-			OperatorReader:    s.OperatorReader,
-			WorkflowDagReader: s.WorkflowDagReader,
+			Database:       s.Database,
+			OperatorReader: s.OperatorReader,
+
+			DAGRepo: s.DAGRepo,
 		},
 		routes.GetArtifactResultRoute: &handler.GetArtifactResultHandler{
 			Database:             s.Database,

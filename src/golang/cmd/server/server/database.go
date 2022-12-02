@@ -20,6 +20,7 @@ import (
 )
 
 type Repos struct {
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 	UserRepo      repos.User
 	WatcherRepo   repos.Watcher
