@@ -239,7 +239,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Aqueduct']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-light/1x/logo_light_blue.png',
     activated: false,
-    category: 'compute'
+    category: 'compute',
   },
   ['Postgres']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/440px-Postgresql_elephant.svg.png',

@@ -2,12 +2,17 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { SupportedIntegrations } from '../../../utils/integrations';
-import { WorkflowTableData, WorkflowTable, WorkflowTableRow } from '../../../components/tables/WorkflowTable';
 
+import {
+  WorkflowTable,
+  WorkflowTableData,
+  WorkflowTableRow,
+} from '../../../components/tables/WorkflowTable';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
+import { SupportedIntegrations } from '../../../utils/integrations';
+import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import { ListWorkflowSummary } from '../../../utils/workflows';
 import { CardPadding } from '../../layouts/card';
@@ -16,11 +21,10 @@ import { BreadcrumbLink } from '../../layouts/NavBar';
 import { filteredList, SearchBar } from '../../Search';
 import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
-import { CheckLevel } from '../../../utils/operators';
 import CheckItem, { CheckPreview } from './components/CheckItem';
-import MetricItem, { MetricPreview } from './components/MetricItem';
 import EngineItem from './components/EngineItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
+import MetricItem, { MetricPreview } from './components/MetricItem';
 
 type Props = {
   user: UserProfile;
@@ -156,8 +160,12 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   ];
 
   const workflowElements: WorkflowTableRow[] = workflows.map((value) => {
-    const engineName = value.engine[0].toUpperCase() + value.engine.substring(1);
-    const engineIconUrl = SupportedIntegrations[value.engine[0].toUpperCase() + value.engine.substring(1)].logo;
+    const engineName =
+      value.engine[0].toUpperCase() + value.engine.substring(1);
+    const engineIconUrl =
+      SupportedIntegrations[
+        value.engine[0].toUpperCase() + value.engine.substring(1)
+      ].logo;
     const workflowTableRow: WorkflowTableRow = {
       name: {
         name: value.name,
@@ -171,7 +179,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         engineIconUrl: engineIconUrl,
       },
       metrics: metricsShort,
-      checks: checkPreviews
+      checks: checkPreviews,
     };
 
     return workflowTableRow;
