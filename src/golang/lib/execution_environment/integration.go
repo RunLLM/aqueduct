@@ -107,6 +107,16 @@ func updateFailure(
 	}
 }
 
+func ValidateCondaDevelop() error {
+	// This is to ensure we can use `conda develop` to update the python path later on.
+	args := []string{
+		"develop",
+		"--help",
+	}
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	return err
+}
+
 func InitializeConda(
 	ctx context.Context,
 	integrationID uuid.UUID,
@@ -149,28 +159,6 @@ func InitializeConda(
 	log.Infof("Conda base path is %s", condaPath)
 
 	err = createBaseEnvs(condaPath)
-	if err != nil {
-		updateFailure(
-			ctx,
-			out,
-			err.Error(),
-			condaPath,
-			&now,
-			integrationID,
-			integrationWriter,
-			db,
-		)
-
-		return
-	}
-
-	// This is to ensure we can use `conda develop` to update the python path later on.
-	args := []string{
-		"install",
-		"conda-build",
-		"-y",
-	}
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
 	if err != nil {
 		updateFailure(
 			ctx,
