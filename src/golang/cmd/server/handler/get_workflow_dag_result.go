@@ -112,7 +112,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 	}
 
 	// Read dag structure
-	constructedDag, err := workflow_utils.ReadWorkflowDagFromDatabase(
+	constructedDag, err := workflow_utils.ReadDAGFromDatabase(
 		ctx,
 		dbWorkflowDag.Id,
 		h.WorkflowReader,

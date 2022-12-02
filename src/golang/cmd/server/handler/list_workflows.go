@@ -13,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -53,19 +52,18 @@ type ListWorkflowsHandler struct {
 	ArtifactReader        artifact.Reader
 	OperatorReader        operator.Reader
 	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 	CustomReader          queries.Reader
 
 	ArtifactWriter        artifact.Writer
 	OperatorWriter        operator.Writer
 	WorkflowWriter        workflow.Writer
-	WorkflowDagWriter     workflow_dag.Writer
 	WorkflowDagEdgeWriter workflow_dag_edge.Writer
 	OperatorResultWriter  operator_result.Writer
 	ArtifactResultWriter  artifact_result.Writer
 	NotificationWriter    notification.Writer
 
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 }
 
@@ -151,16 +149,15 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
 	}
 
-	if err := airflow.SyncWorkflowDags(
+	if err := airflow.SyncDAGs(
 		ctx,
 		airflowWorkflowDagUUIDs,
 		h.WorkflowReader,
-		h.WorkflowDagReader,
+		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,
 		h.DAGResultRepo,
-		h.WorkflowDagWriter,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,
 		h.Vault,

@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -60,10 +59,10 @@ type RegisterWorkflowHandler struct {
 	ArtifactWriter             artifact.Writer
 	OperatorWriter             operator.Writer
 	WorkflowWriter             workflow.Writer
-	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
+	DAGRepo     repos.DAG
 	WatcherRepo repos.Watcher
 }
 
@@ -129,7 +128,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	isUpdate := collidingWorkflow != nil
 	if isUpdate {
 		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
-		dagSummary.Dag.WorkflowId = collidingWorkflow.Id
+		dagSummary.Dag.WorkflowID = collidingWorkflow.Id
 	}
 
 	if err := dag_utils.Validate(
@@ -192,12 +191,12 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	workflowId, err := utils.WriteWorkflowDagToDatabase(
+	workflowId, err := utils.WriteDAGToDatabase(
 		ctx,
 		dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
-		h.WorkflowDagWriter,
+		h.DAGRepo,
 		h.OperatorReader,
 		h.OperatorWriter,
 		h.WorkflowDagEdgeWriter,

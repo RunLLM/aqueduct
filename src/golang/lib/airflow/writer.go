@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -21,7 +20,7 @@ import (
 
 func createDAGResult(
 	ctx context.Context,
-	dbDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	run *airflow.DAGRun,
 	dagResultRepo repos.DAGResult,
 	DB database.Database,
@@ -35,7 +34,7 @@ func createDAGResult(
 
 	return dagResultRepo.Create(
 		ctx,
-		dbDag.Id,
+		dag.ID,
 		&mdl_shared.ExecutionState{
 			Status: dagStatus,
 			Timestamps: &mdl_shared.ExecutionTimestamps{
@@ -51,23 +50,23 @@ func createDAGResult(
 func createOperatorResult(
 	ctx context.Context,
 	dagRunId string,
-	dbDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	dbOp *operator.DBOperator,
 	execStatus shared.ExecutionStatus,
 	workflowDagResultId uuid.UUID,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
-	db database.Database,
+	DB database.Database,
 ) error {
 	// Read Operator metadata to determine ExecutionState
-	metadataPathPrefix, ok := dbDag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[dbOp.Id]
+	metadataPathPrefix, ok := dag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[dbOp.Id]
 	if !ok {
 		return errors.Newf("Unable to find metadata path for operator %v", dbOp.Id)
 	}
 	metadataPath := getOperatorMetadataPath(metadataPathPrefix, dagRunId)
 
 	// Use combination of the Airflow Task State and operator metadata to determine execution state
-	execState := getOperatorExecState(ctx, execStatus, &dbDag.StorageConfig, metadataPath)
+	execState := getOperatorExecState(ctx, execStatus, &dag.StorageConfig, metadataPath)
 
 	// Insert OperatorResult
 	_, err := operatorResultWriter.InsertOperatorResult(
@@ -75,7 +74,7 @@ func createOperatorResult(
 		workflowDagResultId,
 		dbOp.Id,
 		execState,
-		db,
+		DB,
 	)
 	if err != nil {
 		return err
@@ -86,12 +85,12 @@ func createOperatorResult(
 		if err := createArtifactResult(
 			ctx,
 			dagRunId,
-			dbDag,
+			dag,
 			workflowDagResultId,
 			artifactId,
 			execState,
 			artifactResultWriter,
-			db,
+			DB,
 		); err != nil {
 			return err
 		}
@@ -103,25 +102,25 @@ func createOperatorResult(
 func createArtifactResult(
 	ctx context.Context,
 	dagRunId string,
-	dbDag *workflow_dag.DBWorkflowDag,
-	workflowDagResultId uuid.UUID,
-	artifactId uuid.UUID,
+	dag *models.DAG,
+	dagResultID uuid.UUID,
+	artifactID uuid.UUID,
 	execState *shared.ExecutionState,
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 ) error {
 	// Read Artifact metadata
-	metadataPathPrefix, ok := dbDag.EngineConfig.AirflowConfig.ArtifactMetadataPathPrefix[artifactId]
+	metadataPathPrefix, ok := dag.EngineConfig.AirflowConfig.ArtifactMetadataPathPrefix[artifactID]
 	if !ok {
-		return errors.Newf("Unable to find metadata path for artifact %v", artifactId)
+		return errors.Newf("Unable to find metadata path for artifact %v", artifactID)
 	}
 	metadataPath := getArtifactMetadataPath(metadataPathPrefix, dagRunId)
 
 	var metadata artifact_result.Metadata
-	if utils.ObjectExistsInStorage(ctx, &dbDag.StorageConfig, metadataPath) {
+	if utils.ObjectExistsInStorage(ctx, &dag.StorageConfig, metadataPath) {
 		if err := utils.ReadFromStorage(
 			ctx,
-			&dbDag.StorageConfig,
+			&dag.StorageConfig,
 			metadataPath,
 			&metadata,
 		); err != nil {
@@ -129,16 +128,16 @@ func createArtifactResult(
 		}
 	}
 
-	contentPathPrefix, ok := dbDag.EngineConfig.AirflowConfig.ArtifactContentPathPrefix[artifactId]
+	contentPathPrefix, ok := dag.EngineConfig.AirflowConfig.ArtifactContentPathPrefix[artifactID]
 	if !ok {
-		return errors.Newf("Unable to find content path for artifact %v", artifactId)
+		return errors.Newf("Unable to find content path for artifact %v", artifactID)
 	}
 	contentPath := getArtifactContentPath(contentPathPrefix, dagRunId)
 
 	_, err := artifactResultWriter.InsertArtifactResult(
 		ctx,
-		workflowDagResultId,
-		artifactId,
+		dagResultID,
+		artifactID,
 		contentPath,
 		execState,
 		&metadata,

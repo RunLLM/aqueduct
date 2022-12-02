@@ -73,8 +73,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:             s.Database,
 			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
-			WorkflowDagReader:    s.WorkflowDagReader,
 
+			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.GetArtifactVersionsRoute: &handler.GetArtifactVersionsHandler{
@@ -150,18 +150,17 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactReader:        s.ArtifactReader,
 			OperatorReader:        s.OperatorReader,
 			WorkflowReader:        s.WorkflowReader,
-			WorkflowDagReader:     s.WorkflowDagReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 			CustomReader:          s.CustomReader,
 			ArtifactWriter:        s.ArtifactWriter,
 			OperatorWriter:        s.OperatorWriter,
 			WorkflowWriter:        s.WorkflowWriter,
-			WorkflowDagWriter:     s.WorkflowDagWriter,
 			WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 			OperatorResultWriter:  s.OperatorResultWriter,
 			ArtifactResultWriter:  s.ArtifactResultWriter,
 			NotificationWriter:    s.NotificationWriter,
 
+			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.PreviewTableRoute: &handler.PreviewTableHandler{
@@ -224,10 +223,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactWriter:             s.ArtifactWriter,
 			OperatorWriter:             s.OperatorWriter,
 			WorkflowWriter:             s.WorkflowWriter,
-			WorkflowDagWriter:          s.WorkflowDagWriter,
 			WorkflowDagEdgeWriter:      s.WorkflowDagEdgeWriter,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
+			DAGRepo:     s.DAGRepo,
 			WatcherRepo: s.WatcherRepo,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
@@ -245,12 +244,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				ArtifactWriter:        s.ArtifactWriter,
 				OperatorWriter:        s.OperatorWriter,
 				WorkflowWriter:        s.WorkflowWriter,
-				WorkflowDagWriter:     s.WorkflowDagWriter,
 				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 
+				DAGRepo:     s.DAGRepo,
 				WatcherRepo: s.WatcherRepo,
 			},
-			WorkflowDagReader:     s.WorkflowDagReader,
 			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
 
 			OperatorResultWriter: s.OperatorResultWriter,

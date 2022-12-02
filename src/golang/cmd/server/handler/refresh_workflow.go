@@ -105,7 +105,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	emptyResp := struct{}{}
 
-	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+	dag, err := utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.WorkflowId,
 		h.WorkflowReader,

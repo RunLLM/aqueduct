@@ -178,7 +178,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
+	dbWorkflowDag, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowId,
 		eng.WorkflowReader,

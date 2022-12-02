@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -19,25 +18,29 @@ import (
 	"github.com/google/uuid"
 )
 
-func WriteWorkflowDagToDatabase(
+// WriteDAGToDatabase writes dag to the database along with all of its
+// Operators, Artifacts, and DAGEdges. If the Workflow that dag is associated
+// with does not exists, it also creates a new Workflow.
+// It MODIFIES dag by initializing dag.ID and dag.WorkflowID (if a new Workflow)
+// was created. It return the ID of the Workflow associated with dag.
+func WriteDAGToDatabase(
 	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
-	workflowDagWriter workflow_dag.Writer,
+	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
 	workflowDagEdgeWriter workflow_dag_edge.Writer,
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
-	db database.Database,
+	DB database.Database,
 ) (uuid.UUID, error) {
-	exists, err := workflowReader.Exists(ctx, dag.WorkflowId, db)
+	exists, err := workflowReader.Exists(ctx, dag.WorkflowID, DB)
 	if err != nil {
 		return uuid.Nil, errors.Wrap(err, "Unable to check if the workflow already exists.")
 	}
 
-	workflowId := dag.WorkflowId
 	if !exists {
 		workflow, err := workflowWriter.CreateWorkflow(
 			ctx,
@@ -46,30 +49,34 @@ func WriteWorkflowDagToDatabase(
 			dag.Metadata.Description,
 			&dag.Metadata.Schedule,
 			&dag.Metadata.RetentionPolicy,
-			db,
+			DB,
 		)
 		if err != nil {
 			return uuid.Nil, errors.Wrap(err, "Unable to create workflow in the database.")
 		}
-		workflowId = workflow.Id
+
+		// Sets WorkflowID
+		dag.WorkflowID = workflow.Id
 	}
 
-	workflowDag, err := workflowDagWriter.CreateWorkflowDag(
+	newDAG, err := dagRepo.Create(
 		ctx,
-		workflowId,
+		dag.WorkflowID,
 		&dag.StorageConfig,
 		&dag.EngineConfig,
-		db,
+		DB,
 	)
 	if err != nil {
 		return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag in the database.")
 	}
-	dag.Id = workflowDag.Id
+
+	// Sets ID
+	dag.ID = newDAG.ID
 
 	localArtifactIdToDbArtifactId := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
 
 	for id, artifact := range dag.Artifacts {
-		exists, err := artifactReader.Exists(ctx, id, db)
+		exists, err := artifactReader.Exists(ctx, id, DB)
 		if err != nil {
 			return uuid.Nil, errors.Wrap(err, "Unable to check if artifact exists in database.")
 		}
@@ -81,7 +88,7 @@ func WriteWorkflowDagToDatabase(
 				artifact.Name,
 				artifact.Description,
 				artifact.Type,
-				db,
+				DB,
 			)
 			if err != nil {
 				return uuid.Nil, errors.Wrap(err, "Unable to create artifact in the database.")
@@ -94,7 +101,7 @@ func WriteWorkflowDagToDatabase(
 	}
 
 	for id, operator := range dag.Operators {
-		exists, err := operatorReader.Exists(ctx, id, db)
+		exists, err := operatorReader.Exists(ctx, id, DB)
 		if err != nil {
 			return uuid.Nil, errors.Wrap(err, "Unable to check if operator exists in database.")
 		}
@@ -112,7 +119,7 @@ func WriteWorkflowDagToDatabase(
 				operator.Description,
 				&operator.Spec,
 				envId,
-				db,
+				DB,
 			)
 			if err != nil {
 				return uuid.Nil, errors.Wrap(err, "Unable to create operator in the database.")
@@ -124,12 +131,12 @@ func WriteWorkflowDagToDatabase(
 		for i, artifactId := range operator.Inputs {
 			_, err = workflowDagEdgeWriter.CreateWorkflowDagEdge(
 				ctx,
-				workflowDag.Id,
+				newDAG.ID,
 				workflow_dag_edge.ArtifactToOperatorType,
 				localArtifactIdToDbArtifactId[artifactId],
 				dbOperatorId,
 				int16(i), // idx
-				db,
+				DB,
 			)
 			if err != nil {
 				return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag edge in the database.")
@@ -139,12 +146,12 @@ func WriteWorkflowDagToDatabase(
 		for i, artifactId := range operator.Outputs {
 			_, err = workflowDagEdgeWriter.CreateWorkflowDagEdge(
 				ctx,
-				workflowDag.Id,
+				newDAG.ID,
 				workflow_dag_edge.OperatorToArtifactType,
 				dbOperatorId,
 				localArtifactIdToDbArtifactId[artifactId],
 				int16(i), // idx
-				db,
+				DB,
 			)
 			if err != nil {
 				return uuid.Nil, errors.Wrap(err, "Unable to create workflow dag edge in the database.")
@@ -152,36 +159,38 @@ func WriteWorkflowDagToDatabase(
 		}
 	}
 
-	return workflowId, nil
+	return dag.WorkflowID, nil
 }
 
-func ReadWorkflowDagFromDatabase(
+// ReadDAGFromDatabase returns the specified DAG after initializing all
+// of its persistent AND in-memory fields by making the appropriate database reads.
+func ReadDAGFromDatabase(
 	ctx context.Context,
-	workflowDagId uuid.UUID,
+	dagID uuid.UUID,
 	workflowReader workflow.Reader,
-	workflowDagReader workflow_dag.Reader,
+	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
-	db database.Database,
-) (*workflow_dag.DBWorkflowDag, error) {
-	workflowDag, err := workflowDagReader.GetWorkflowDag(ctx, workflowDagId, db)
+	DB database.Database,
+) (*models.DAG, error) {
+	dag, err := dagRepo.Get(ctx, dagID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow dag from the database.")
 	}
 
-	dbWorkflow, err := workflowReader.GetWorkflow(ctx, workflowDag.WorkflowId, db)
+	dbWorkflow, err := workflowReader.GetWorkflow(ctx, dag.WorkflowID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read workflow from the database.")
 	}
 
-	workflowDag.Metadata = dbWorkflow
+	dag.Metadata = dbWorkflow
 
-	workflowDag.Operators = make(map[uuid.UUID]operator.DBOperator)
-	workflowDag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
+	dag.Operators = make(map[uuid.UUID]operator.DBOperator)
+	dag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
 
 	// Populate nodes for operators and artifacts.
-	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, workflowDag.Id, db)
+	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read operators from the database.")
 	}
@@ -194,74 +203,77 @@ func ReadWorkflowDagFromDatabase(
 		if op.Outputs == nil {
 			op.Outputs = []uuid.UUID{}
 		}
-		workflowDag.Operators[op.Id] = op
+		dag.Operators[op.Id] = op
 	}
 
-	artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, workflowDag.Id, db)
+	artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read artifacts from the database.")
 	}
 
 	for _, artifact := range artifacts {
-		workflowDag.Artifacts[artifact.Id] = artifact
+		dag.Artifacts[artifact.Id] = artifact
 	}
 
 	// Populate edges for operators and artifacts.
-	operatorToArtifactEdges, err := workflowDagEdgeReader.GetOperatorToArtifactEdges(ctx, workflowDag.Id, db)
+	operatorToArtifactEdges, err := workflowDagEdgeReader.GetOperatorToArtifactEdges(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read operator to artifact edges from the database.")
 	}
 
 	for _, edge := range operatorToArtifactEdges {
-		if operator, ok := workflowDag.Operators[edge.FromId]; ok {
+		if operator, ok := dag.Operators[edge.FromId]; ok {
 			operator.Outputs = append(operator.Outputs, edge.ToId)
-			workflowDag.Operators[edge.FromId] = operator
+			dag.Operators[edge.FromId] = operator
 		} else {
 			return nil, errors.Wrap(err, "Found a dag edge with an orphaned operator id.")
 		}
 	}
 
-	artifactToOperatorEdges, err := workflowDagEdgeReader.GetArtifactToOperatorEdges(ctx, workflowDag.Id, db)
+	artifactToOperatorEdges, err := workflowDagEdgeReader.GetArtifactToOperatorEdges(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read artifact to operator edges from the database.")
 	}
 
 	for _, edge := range artifactToOperatorEdges {
-		if operator, ok := workflowDag.Operators[edge.ToId]; ok {
+		if operator, ok := dag.Operators[edge.ToId]; ok {
 			operator.Inputs = append(operator.Inputs, edge.FromId)
-			workflowDag.Operators[edge.ToId] = operator
+			dag.Operators[edge.ToId] = operator
 		} else {
 			return nil, errors.Wrap(err, "Found a dag edge with an orphaned operator id.")
 		}
 	}
 
-	return workflowDag, nil
+	return dag, nil
 }
 
-func ReadLatestWorkflowDagFromDatabase(
+// ReadLatestDAGFromDatabase returns the latest DAG of the specified Workflow
+// after initializing all of its persistent AND in-memory fields by making the
+// appropriate database reads.
+func ReadLatestDAGFromDatabase(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	workflowReader workflow.Reader,
-	workflowDagReader workflow_dag.Reader,
+	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
-	db database.Database,
-) (*workflow_dag.DBWorkflowDag, error) {
-	workflowDag, err := workflowDagReader.GetLatestWorkflowDag(ctx, workflowId, db)
+	DB database.Database,
+) (*models.DAG, error) {
+	dag, err := dagRepo.GetLatestByWorkflow(ctx, workflowID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read the latest workflow dag from the database.")
 	}
 
-	return ReadWorkflowDagFromDatabase(
+	return ReadDAGFromDatabase(
 		ctx,
-		workflowDag.Id,
+		dag.ID,
 		workflowReader,
-		workflowDagReader,
+		dagRepo,
 		operatorReader,
 		artifactReader,
 		workflowDagEdgeReader,
-		db,
+		DB,
 	)
 }
 
@@ -274,26 +286,25 @@ func ReadLatestWorkflowDagFromDatabase(
 func UpdateWorkflowDagToLatest(
 	ctx context.Context,
 	githubClient github.Client,
-	workflowDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	workflowReader workflow.Reader,
 	workflowWriter workflow.Writer,
-	workflowDagReader workflow_dag.Reader,
-	workflowDagWriter workflow_dag.Writer,
+	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
 	workflowDagEdgeWriter workflow_dag_edge.Writer,
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
-	db database.Database,
-) (*workflow_dag.DBWorkflowDag, error) {
-	operatorsToReplace := make([]operator.DBOperator, 0, len(workflowDag.Operators))
-	for _, op := range workflowDag.Operators {
+	DB database.Database,
+) (*models.DAG, error) {
+	operatorsToReplace := make([]operator.DBOperator, 0, len(dag.Operators))
+	for _, op := range dag.Operators {
 		opUpdated, err := github.PullOperator(
 			ctx,
 			githubClient,
 			&op.Spec,
-			&workflowDag.StorageConfig,
+			&dag.StorageConfig,
 		)
 		if err != nil {
 			return nil, err
@@ -306,42 +317,42 @@ func UpdateWorkflowDagToLatest(
 
 	// Not updated
 	if len(operatorsToReplace) == 0 {
-		return workflowDag, nil
+		return dag, nil
 	}
 
 	// Update workflowDag object together with the data model.
 	for _, op := range operatorsToReplace {
-		delete(workflowDag.Operators, op.Id)
+		delete(dag.Operators, op.Id)
 		op.Id = uuid.New()
-		workflowDag.Operators[op.Id] = op
+		dag.Operators[op.Id] = op
 	}
 
-	workflowId, err := WriteWorkflowDagToDatabase(
+	workflowID, err := WriteDAGToDatabase(
 		ctx,
-		workflowDag,
+		dag,
 		workflowReader,
 		workflowWriter,
-		workflowDagWriter,
+		dagRepo,
 		operatorReader,
 		operatorWriter,
 		workflowDagEdgeWriter,
 		artifactReader,
 		artifactWriter,
-		db,
+		DB,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return ReadLatestWorkflowDagFromDatabase(
+	return ReadLatestDAGFromDatabase(
 		ctx,
-		workflowId,
+		workflowID,
 		workflowReader,
-		workflowDagReader,
+		dagRepo,
 		operatorReader,
 		artifactReader,
 		workflowDagEdgeReader,
-		db,
+		DB,
 	)
 }
 

@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -43,7 +44,7 @@ type getWorkflowArgs struct {
 
 type getWorkflowResponse struct {
 	// a map of workflow dags keyed by their IDs
-	WorkflowDags map[uuid.UUID]*workflow_dag.DBWorkflowDag `json:"workflow_dags"`
+	DAGs map[uuid.UUID]*models.DAG `json:"workflow_dags"`
 	// a list of dag results. Each result's `workflow_dag_id` field correspond to the
 	WorkflowDagResults []workflowDagResult `json:"workflow_dag_results"`
 }
@@ -71,6 +72,7 @@ type GetWorkflowHandler struct {
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
 
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 }
 
@@ -114,11 +116,11 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	emptyResp := getWorkflowResponse{}
 
-	latestWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
+	latestDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.workflowID,
 		h.WorkflowReader,
-		h.WorkflowDagReader,
+		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,
@@ -128,18 +130,17 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	if latestWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+	if latestDAG.EngineConfig.Type == shared.AirflowEngineType {
 		// Airflow workflows need to be synced
-		if err := airflow.SyncWorkflowDags(
+		if err := airflow.SyncDAGs(
 			ctx,
-			[]uuid.UUID{latestWorkflowDag.Id},
+			[]uuid.UUID{latestDAG.ID},
 			h.WorkflowReader,
-			h.WorkflowDagReader,
+			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
 			h.WorkflowDagEdgeReader,
 			h.DAGResultRepo,
-			h.WorkflowDagWriter,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
 			h.Vault,
@@ -149,7 +150,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		}
 	}
 
-	dbWorkflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByWorkflowId(
+	dbDAGs, err := h.DAGRepo.GetByWorkflow(
 		ctx,
 		args.workflowID,
 		h.Database,
@@ -158,13 +159,13 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	workflowDags := make(map[uuid.UUID]*workflow_dag.DBWorkflowDag, len(dbWorkflowDags))
-	for _, dbWorkflowDag := range dbWorkflowDags {
-		constructedDag, err := workflow_utils.ReadWorkflowDagFromDatabase(
+	dags := make(map[uuid.UUID]*models.DAG, len(dbDAGs))
+	for _, dbDAG := range dbDAGs {
+		constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 			ctx,
-			dbWorkflowDag.Id,
+			dbDAG.ID,
 			h.WorkflowReader,
-			h.WorkflowDagReader,
+			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
 			h.WorkflowDagEdgeReader,
@@ -174,14 +175,14 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 		}
 
-		if dbWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+		if dbDAG.EngineConfig.Type == shared.AirflowEngineType {
 			// TODO: ENG-1714
 			// This is a hack for the UI where the `matches_airflow` field
 			// for Airflow workflows is set to the value of the latest DAG
-			constructedDag.EngineConfig.AirflowConfig.MatchesAirflow = latestWorkflowDag.EngineConfig.AirflowConfig.MatchesAirflow
+			constructedDAG.EngineConfig.AirflowConfig.MatchesAirflow = latestDAG.EngineConfig.AirflowConfig.MatchesAirflow
 		}
 
-		workflowDags[dbWorkflowDag.Id] = constructedDag
+		dags[dbDAG.ID] = constructedDAG
 	}
 
 	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
@@ -200,7 +201,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 	}
 
 	return getWorkflowResponse{
-		WorkflowDags:       workflowDags,
+		DAGs:               dags,
 		WorkflowDagResults: workflowDagResults,
 	}, http.StatusOK, nil
 }
