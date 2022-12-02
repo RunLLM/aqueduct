@@ -144,7 +144,8 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 		models.ArtifactResultArtifactID,
 		models.ArtifactResultContentPath,
 		models.ArtifactResultStatus,
-		models.ArtifactResultStatus,
+		models.ArtifactResultMetadata,
+		models.ArtifactResultExecState,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
@@ -158,7 +159,9 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 		dagResultID,
 		artifactID,
 		contentPath,
-		shared.PendingExecutionStatus,
+		execState.Status,
+		metadata,
+		execState,
 	}
 	return getArtifactResult(ctx, DB, query, args...)
 }
