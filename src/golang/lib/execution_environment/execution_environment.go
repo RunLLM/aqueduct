@@ -395,7 +395,7 @@ func CleanupUnusedEnvironments(
 		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
 		if err != nil {
 			hasError = true
-			log.Errorf("Error garbage collecting Conda environment %s: %v", envID, err)
+			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
 		} else {
 			deletedIDs = append(deletedIDs, envID)
 		}
@@ -404,7 +404,7 @@ func CleanupUnusedEnvironments(
 	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
 	if err != nil {
 		hasError = true
-		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
+		log.Errorf("Error deleting database records of unused conda environments: %v", err)
 	}
 
 	if hasError {
