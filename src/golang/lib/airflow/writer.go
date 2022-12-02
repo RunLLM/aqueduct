@@ -10,39 +10,41 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
-func createWorkflowDagResult(
+func createDAGResult(
 	ctx context.Context,
 	dbDag *workflow_dag.DBWorkflowDag,
 	run *airflow.DAGRun,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	db database.Database,
-) (*workflow_dag_result.WorkflowDagResult, error) {
-	workflowDagStatus := mapDagStateToStatus(*run.State)
-	if workflowDagStatus != shared.SucceededExecutionStatus &&
-		workflowDagStatus != shared.FailedExecutionStatus {
+	dagResultRepo repos.DAGResult,
+	DB database.Database,
+) (*models.DAGResult, error) {
+	dagStatus := mapDagStateToStatus(*run.State)
+	if dagStatus != mdl_shared.SucceededExecutionStatus &&
+		dagStatus != mdl_shared.FailedExecutionStatus {
 		// Do not create WorkflowDagResult for Airflow DAG runs that have not finished
 		return nil, errors.New("Cannot create WorkflowDagResult for in progress Airflow DAG Run.")
 	}
 
-	return workflowDagResultWriter.CreateWorkflowDagResult(
+	return dagResultRepo.Create(
 		ctx,
 		dbDag.Id,
-		&shared.ExecutionState{
-			Status: workflowDagStatus,
-			Timestamps: &shared.ExecutionTimestamps{
+		&mdl_shared.ExecutionState{
+			Status: dagStatus,
+			Timestamps: &mdl_shared.ExecutionTimestamps{
 				PendingAt:  run.StartDate.Get(),
 				RunningAt:  run.StartDate.Get(),
 				FinishedAt: run.EndDate.Get(),
 			},
 		},
-		db,
+		DB,
 	)
 }
 

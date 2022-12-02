@@ -14,9 +14,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -38,7 +38,7 @@ import (
 
 type getWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowId uuid.UUID
+	workflowID uuid.UUID
 }
 
 type getWorkflowResponse struct {
@@ -61,17 +61,17 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader          artifact.Reader
-	OperatorReader          operator.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	OperatorResultWriter    operator_result.Writer
-	ArtifactResultWriter    artifact_result.Writer
+	WorkflowDagWriter    workflow_dag.Writer
+	OperatorResultWriter operator_result.Writer
+	ArtifactResultWriter artifact_result.Writer
+
+	DAGResultRepo repos.DAGResult
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -105,7 +105,7 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	return &getWorkflowArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		workflowID: workflowId,
 	}, http.StatusOK, nil
 }
 
@@ -116,7 +116,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	latestWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
 		ctx,
-		args.workflowId,
+		args.workflowID,
 		h.WorkflowReader,
 		h.WorkflowDagReader,
 		h.OperatorReader,
@@ -138,9 +138,8 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			h.OperatorReader,
 			h.ArtifactReader,
 			h.WorkflowDagEdgeReader,
-			h.WorkflowDagResultReader,
+			h.DAGResultRepo,
 			h.WorkflowDagWriter,
-			h.WorkflowDagResultWriter,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
 			h.Vault,
@@ -152,7 +151,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	dbWorkflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByWorkflowId(
 		ctx,
-		args.workflowId,
+		args.workflowID,
 		h.Database,
 	)
 	if err != nil {
@@ -185,22 +184,18 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		workflowDags[dbWorkflowDag.Id] = constructedDag
 	}
 
-	dbWorkflowDagResults, err := h.WorkflowDagResultReader.GetWorkflowDagResultsByWorkflowId(
-		ctx,
-		args.workflowId,
-		h.Database,
-	)
+	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	workflowDagResults := make([]workflowDagResult, 0, len(dbWorkflowDagResults))
-	for _, dbWorkflowDagResult := range dbWorkflowDagResults {
+	workflowDagResults := make([]workflowDagResult, 0, len(dagResults))
+	for _, dagResult := range dagResults {
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
-			Id:            dbWorkflowDagResult.Id,
-			CreatedAt:     dbWorkflowDagResult.CreatedAt.Unix(),
-			Status:        dbWorkflowDagResult.Status,
-			WorkflowDagId: dbWorkflowDagResult.WorkflowDagId,
+			Id:            dagResult.ID,
+			CreatedAt:     dagResult.CreatedAt.Unix(),
+			Status:        shared.ExecutionStatus(dagResult.Status),
+			WorkflowDagId: dagResult.DagID,
 		})
 	}
 
