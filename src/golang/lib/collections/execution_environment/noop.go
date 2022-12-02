@@ -89,3 +89,10 @@ func (w *noopWriterImpl) DeleteExecutionEnvironments(
 ) error {
 	return utils.NoopInterfaceErrorHandling(w.throwError)
 }
+
+func (r *noopReaderImpl) GetUnusedExecutionEnvironments(
+	ctx context.Context,
+	db database.Database,
+) ([]DBExecutionEnvironment, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}

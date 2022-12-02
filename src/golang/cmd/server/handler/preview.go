@@ -186,7 +186,15 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	execEnvByOpId, status, err := h.setupExecEnv(ctx, args)
+	execEnvByOpId, status, err := setupExecEnv(
+		ctx,
+		args.Id,
+		args.DagSummary,
+		h.IntegrationReader,
+		h.ExecutionEnvironmentReader,
+		h.ExecutionEnvironmentWriter,
+		h.Database,
+	)
 	if err != nil {
 		return errorRespPtr, status, err
 	}
@@ -232,11 +240,16 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}, statusCode, nil
 }
 
-func (h *PreviewHandler) setupExecEnv(
+func setupExecEnv(
 	ctx context.Context,
-	args *previewArgs,
+	userId uuid.UUID,
+	dagSummary *request.DagSummary,
+	integrationReader integration.Reader,
+	execEnvReader db_exec_env.Reader,
+	execEnvWriter db_exec_env.Writer,
+	db database.Database,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
-	condaIntegration, err := exec_env.GetCondaIntegration(ctx, args.Id, h.IntegrationReader, h.Database)
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userId, integrationReader, db)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
 	}
@@ -248,14 +261,14 @@ func (h *PreviewHandler) setupExecEnv(
 
 	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve conda connection state.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
 	}
 
 	if condaConnectionState.Status == shared.FailedExecutionStatus {
 		errMsg := "Failed to create conda environments."
 		if condaConnectionState.Error != nil {
 			errMsg = fmt.Sprintf(
-				"Failed to create base conda environments: %s. %s.",
+				"Failed to create conda environments: %s. %s.",
 				condaConnectionState.Error.Context,
 				condaConnectionState.Error.Tip,
 			)
@@ -270,7 +283,6 @@ func (h *PreviewHandler) setupExecEnv(
 		)
 	}
 
-	dagSummary := args.DagSummary
 	rawEnvByOperator := make(
 		map[uuid.UUID]exec_env.ExecutionEnvironment,
 		len(dagSummary.FileContentsByOperatorUUID),
@@ -287,7 +299,7 @@ func (h *PreviewHandler) setupExecEnv(
 		rawEnvByOperator[opId] = *rawEnv
 	}
 
-	txn, err := h.Database.BeginTx(ctx)
+	txn, err := db.BeginTx(ctx)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -295,8 +307,8 @@ func (h *PreviewHandler) setupExecEnv(
 
 	envByOperator, err := exec_env.CreateMissingAndSyncExistingEnvs(
 		ctx,
-		h.ExecutionEnvironmentReader,
-		h.ExecutionEnvironmentWriter,
+		execEnvReader,
+		execEnvWriter,
 		rawEnvByOperator,
 		txn,
 	)

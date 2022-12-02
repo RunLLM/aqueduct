@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/dropbox/godropbox/errors"
@@ -160,4 +161,56 @@ func (w *standardWriterImpl) DeleteExecutionEnvironments(
 
 	args := stmt_preparers.CastIdsListToInterfaceList(ids)
 	return db.Execute(ctx, deleteStmt, args...)
+}
+
+func (r *standardReaderImpl) GetUnusedExecutionEnvironments(
+	ctx context.Context,
+	db database.Database,
+) ([]DBExecutionEnvironment, error) {
+	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
+	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
+	// all operators involved in a workflow DAG.
+	query := fmt.Sprintf(`
+	WITH latest_workflow_dag AS
+	(
+		SELECT 
+			workflow_dag.id 
+		FROM
+			workflow_dag 
+		WHERE 
+			created_at IN (
+				SELECT 
+					MAX(workflow_dag.created_at) 
+				FROM 
+					workflow, workflow_dag 
+				WHERE 
+					workflow.id = workflow_dag.workflow_id 
+				GROUP BY 
+					workflow.id
+			)
+	),
+	active_execution_environment AS
+	(
+		SELECT DISTINCT
+			operator.execution_environment_id AS id
+		FROM 
+			latest_workflow_dag, workflow_dag_edge, operator
+		WHERE
+			latest_workflow_dag.id = workflow_dag_edge.workflow_dag_id 
+			AND 
+			workflow_dag_edge.type = '%s' 
+			AND 
+			workflow_dag_edge.from_id = operator.id
+	)
+	SELECT 
+		%s
+	FROM 
+		execution_environment LEFT JOIN active_execution_environment 
+		ON execution_environment.id = active_execution_environment.id
+	WHERE 
+		active_execution_environment.id IS NULL;`, workflow_dag_edge.OperatorToArtifactType, allColumnsWithPrefix())
+	var results []DBExecutionEnvironment
+
+	err := db.Query(ctx, &results, query)
+	return results, err
 }
