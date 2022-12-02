@@ -1,11 +1,11 @@
 import pytest
 from aqueduct.error import AqueductError
-from utils import run_flow_test
+from utils import publish_flow_test
 
 from aqueduct import op
 
 
-def test_multiple_outputs(client, engine):
+def test_multiple_outputs(client, flow_name, engine):
     @op(num_outputs=2)
     def generate_two_outputs():
         return "hello", 1234
@@ -27,8 +27,11 @@ def test_multiple_outputs(client, engine):
     assert str_output.get() == "hello world."
     assert int_output.get() == 2468
 
-    run_flow_test(
-        client, artifacts=[str_output, int_output], engine=engine, delete_flow_after=False
+    publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=[str_output, int_output],
+        engine=engine,
     )
 
 

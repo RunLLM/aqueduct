@@ -3,7 +3,7 @@ package shared
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type StorageType string
@@ -40,9 +40,9 @@ type GCSConfig struct {
 }
 
 func (s *StorageConfig) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }
 
 func (s *StorageConfig) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
