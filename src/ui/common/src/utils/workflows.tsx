@@ -87,7 +87,6 @@ export function normalizeWorkflowDag(dag: WorkflowDag): WorkflowDag {
 export type GetWorkflowResponse = {
   workflow_dags: { [id: string]: WorkflowDag };
   workflow_dag_results: WorkflowDagResultSummary[];
-  watcherAuthIds: string[];
 };
 
 export type SavedObject = {

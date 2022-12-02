@@ -47,8 +47,6 @@ type getWorkflowResponse struct {
 	WorkflowDags map[uuid.UUID]*workflow_dag.DBWorkflowDag `json:"workflow_dags"`
 	// a list of dag results. Each result's `workflow_dag_id` field correspond to the
 	WorkflowDagResults []workflowDagResult `json:"workflow_dag_results"`
-	// a list of auth0Ids associated with workflow watchers
-	WatcherAuthIds []string `json:"watcherAuthIds"`
 }
 
 type workflowDagResult struct {
@@ -208,19 +206,8 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		})
 	}
 
-	workflowWatcherUsers, err := h.UserReader.GetWatchersByWorkflowId(ctx, args.workflowId, h.Database)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving users watching current workflow.")
-	}
-
-	WatcherAuthIds := []string{}
-	for _, user := range workflowWatcherUsers {
-		WatcherAuthIds = append(WatcherAuthIds, user.Auth0Id)
-	}
-
 	return getWorkflowResponse{
 		WorkflowDags:       workflowDags,
 		WorkflowDagResults: workflowDagResults,
-		WatcherAuthIds:     WatcherAuthIds,
 	}, http.StatusOK, nil
 }
