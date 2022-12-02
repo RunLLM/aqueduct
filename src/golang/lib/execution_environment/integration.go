@@ -42,7 +42,7 @@ func serializedFailure(
 		Status:      shared.FailedExecutionStatus,
 		FailureType: &failureType,
 		UserLogs: &shared.Logs{
-			Stdout: outputs,
+			StdErr: outputs,
 		},
 		Error: &shared.Error{
 			Context: msg,
@@ -81,7 +81,7 @@ func serializedSuccess(runningAt *time.Time) string {
 	return serializeExecStateAndLogFailure(execState)
 }
 
-func updateFailure(
+func updateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
@@ -103,7 +103,7 @@ func updateFailure(
 		db,
 	)
 	if err != nil {
-		log.Errorf("Failed to update conda integration: %v", err)
+		log.Errorf("Failed to update Conda integration: %v", err)
 	}
 }
 
@@ -125,13 +125,13 @@ func InitializeConda(
 		db,
 	)
 	if err != nil {
-		log.Errorf("Failed to update conda integration: %v", err)
+		log.Errorf("Failed to update Conda integration: %v", err)
 		return
 	}
 
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, "info", "--base")
 	if err != nil {
-		updateFailure(
+		updateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -146,11 +146,10 @@ func InitializeConda(
 	}
 
 	condaPath := strings.TrimSpace(out)
-	log.Infof("Conda base path is %s", condaPath)
 
 	err = createBaseEnvs(condaPath)
 	if err != nil {
-		updateFailure(
+		updateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -172,7 +171,7 @@ func InitializeConda(
 	}
 	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
 	if err != nil {
-		updateFailure(
+		updateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -199,11 +198,11 @@ func InitializeConda(
 	)
 
 	if err != nil {
-		log.Errorf("Failed to update conda integration: ")
+		log.Errorf("Failed to update Conda integration: ")
 	}
 }
 
-func getCondaIntegration(
+func GetCondaIntegration(
 	ctx context.Context,
 	userId uuid.UUID,
 	integrationReader integration.Reader,
@@ -226,35 +225,31 @@ func getCondaIntegration(
 	return &integrations[0], nil
 }
 
-// CondaConnectionState shows the current conda connection status
-// if the user is connected to conda. Otherwise, it returns nil.
-func CondaConnectionState(
-	ctx context.Context,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
-	db database.Database,
-) (*integration.Integration, *shared.ExecutionState, error) {
-	integration, err := getCondaIntegration(ctx, userId, integrationReader, db)
-	if err != nil {
-		return nil, nil, err
+// ExtractConnectionState retrieves the current connection state from
+// the given integration object.
+// For non-conda integration, we assume they are always successfully connected
+// since they are created in-sync in `connectIntegration` handler.
+func ExtractConnectionState(
+	integrationObject *integration.Integration,
+) (*shared.ExecutionState, error) {
+	if integrationObject.Service != integration.Conda {
+		return &shared.ExecutionState{
+			Status: shared.SucceededExecutionStatus,
+		}, nil
 	}
 
-	if integration == nil {
-		return nil, nil, nil
-	}
-
-	stateSerialized, ok := integration.Config[ExecStateKey]
+	stateSerialized, ok := integrationObject.Config[ExecStateKey]
 	if !ok {
-		return integration, &shared.ExecutionState{
+		return &shared.ExecutionState{
 			Status: shared.PendingExecutionStatus,
 		}, nil
 	}
 
 	var state shared.ExecutionState
-	err = json.Unmarshal([]byte(stateSerialized), &state)
+	err := json.Unmarshal([]byte(stateSerialized), &state)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return integration, &state, nil
+	return &state, nil
 }
