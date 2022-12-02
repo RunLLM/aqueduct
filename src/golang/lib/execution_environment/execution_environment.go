@@ -11,6 +11,7 @@ import (
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -301,21 +302,22 @@ func GetUnusedExecutionEnvironmentIDs(
 	return results, nil
 }
 
-// CleanupUnusedEnvironments is asynchronously executed in a Go routine in a best-effort
-// fashion, so we log the errors instead of returning them.
+// CleanupUnusedEnvironments is executed in a best-effort fashion, and we log all the errors within
+// the function and return an error object signaling whether there is at least one error occured.
 func CleanupUnusedEnvironments(
 	ctx context.Context,
 	envReader db_exec_env.Reader,
 	envWriter db_exec_env.Writer,
 	db database.Database,
-) {
+) error {
 	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
 	if err != nil {
 		log.Errorf("Error getting unused execution environments: %v", err)
-		return
+		return err
 	}
 
 	var deletedIDs []uuid.UUID
+	hasError := false
 
 	for _, envID := range envIDs {
 		envName := fmt.Sprintf("%s_%s", "aqueduct", envID.String())
@@ -328,6 +330,7 @@ func CleanupUnusedEnvironments(
 
 		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
 		if err != nil {
+			hasError = true
 			log.Errorf("Error garbage collecting Conda environment %s: %v", envID, err)
 		} else {
 			deletedIDs = append(deletedIDs, envID)
@@ -336,6 +339,13 @@ func CleanupUnusedEnvironments(
 
 	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
 	if err != nil {
+		hasError = true
 		log.Errorf("Error deleting database records of unused Conda environments: %v", err)
 	}
+
+	if hasError {
+		return errors.New("An internal error occured within the cleanup function. Please see the server log for more information.")
+	}
+
+	return nil
 }
