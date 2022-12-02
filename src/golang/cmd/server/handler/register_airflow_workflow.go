@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -37,12 +36,11 @@ import (
 type RegisterAirflowWorkflowHandler struct {
 	RegisterWorkflowHandler
 
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
-
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
 	NotificationWriter   notification.Writer
 
+	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 }
 
@@ -143,7 +141,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
+			h.DAGEdgeRepo,
 			h.Database,
 		)
 		if err != nil {
@@ -159,7 +157,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
+			h.DAGEdgeRepo,
 			h.DAGResultRepo,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
@@ -187,7 +185,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		h.DAGRepo,
 		h.OperatorReader,
 		h.OperatorWriter,
-		h.WorkflowDagEdgeWriter,
+		h.DAGEdgeRepo,
 		h.ArtifactReader,
 		h.ArtifactWriter,
 		txn,
@@ -226,7 +224,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		h.DAGEdgeRepo,
 		txn,
 	)
 	if err != nil {

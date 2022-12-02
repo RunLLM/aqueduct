@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -56,10 +55,10 @@ type RegisterWorkflowHandler struct {
 
 	ArtifactWriter             artifact.Writer
 	OperatorWriter             operator.Writer
-	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
 	DAGRepo      repos.DAG
+	DAGEdgeRepo  repos.DAGEdge
 	WatcherRepo  repos.Watcher
 	WorkflowRepo repos.Workflow
 }
@@ -201,7 +200,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		h.DAGRepo,
 		h.OperatorReader,
 		h.OperatorWriter,
-		h.WorkflowDagEdgeWriter,
+		h.DAGEdgeRepo,
 		h.ArtifactReader,
 		h.ArtifactWriter,
 		txn,

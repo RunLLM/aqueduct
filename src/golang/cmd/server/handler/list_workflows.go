@@ -64,6 +64,7 @@ type ListWorkflowsHandler struct {
 	NotificationWriter    notification.Writer
 
 	DAGRepo       repos.DAG
+	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 	WorkflowRepo  repos.Workflow
 }
@@ -157,7 +158,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		h.DAGEdgeRepo,
 		h.DAGResultRepo,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,

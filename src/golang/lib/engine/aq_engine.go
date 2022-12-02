@@ -17,7 +17,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
@@ -50,7 +49,6 @@ type AqueductTimeConfig struct {
 }
 
 type EngineReaders struct {
-	WorkflowDagEdgeReader      workflow_dag_edge.Reader
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
 	ArtifactReader             artifact_db.Reader
@@ -60,17 +58,17 @@ type EngineReaders struct {
 }
 
 type EngineWriters struct {
-	WorkflowDagEdgeWriter workflow_dag_edge.Writer
-	OperatorWriter        operator_db.Writer
-	OperatorResultWriter  operator_result.Writer
-	ArtifactWriter        artifact_db.Writer
-	ArtifactResultWriter  artifact_result.Writer
-	NotificationWriter    notification.Writer
+	OperatorWriter       operator_db.Writer
+	OperatorResultWriter operator_result.Writer
+	ArtifactWriter       artifact_db.Writer
+	ArtifactResultWriter artifact_result.Writer
+	NotificationWriter   notification.Writer
 }
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
 	DAGRepo       repos.DAG
+	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 	WatcherRepo   repos.Watcher
 	WorkflowRepo  repos.Workflow
@@ -183,7 +181,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.ArtifactReader,
-		eng.WorkflowDagEdgeReader,
+		eng.DAGEdgeRepo,
 		eng.Database,
 	)
 	if err != nil {
@@ -243,8 +241,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.DAGRepo,
 		eng.OperatorReader,
 		eng.OperatorWriter,
-		eng.WorkflowDagEdgeReader,
-		eng.WorkflowDagEdgeWriter,
+		eng.DAGEdgeRepo,
 		eng.ArtifactReader,
 		eng.ArtifactWriter,
 		eng.Database,
@@ -504,27 +501,27 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagResultIDs = append(dagResultIDs, dagResult.ID)
 	}
 
-	workflowDagEdgesToDelete, err := eng.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, dagIDs, txn)
+	dagEdgesToDelete, err := eng.DAGEdgeRepo.GetByDAGBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
 	}
 
-	operatorIds := make([]uuid.UUID, 0, len(workflowDagEdgesToDelete))
-	artifactIds := make([]uuid.UUID, 0, len(workflowDagEdgesToDelete))
+	operatorIds := make([]uuid.UUID, 0, len(dagEdgesToDelete))
+	artifactIds := make([]uuid.UUID, 0, len(dagEdgesToDelete))
 
 	operatorIdMap := make(map[uuid.UUID]bool)
 	artifactIdMap := make(map[uuid.UUID]bool)
 
-	for _, workflowDagEdge := range workflowDagEdgesToDelete {
+	for _, dagEdge := range dagEdgesToDelete {
 		var operatorId uuid.UUID
 		var artifactId uuid.UUID
 
-		if workflowDagEdge.Type == workflow_dag_edge.OperatorToArtifactType {
-			operatorId = workflowDagEdge.FromId
-			artifactId = workflowDagEdge.ToId
+		if dagEdge.Type == mdl_shared.OperatorToArtifactDAGEdge {
+			operatorId = dagEdge.FromID
+			artifactId = dagEdge.ToID
 		} else {
-			operatorId = workflowDagEdge.ToId
-			artifactId = workflowDagEdge.FromId
+			operatorId = dagEdge.ToID
+			artifactId = dagEdge.FromID
 		}
 
 		if _, ok := operatorIdMap[operatorId]; !ok {
@@ -592,7 +589,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	}
 
-	err = eng.WorkflowDagEdgeWriter.DeleteEdgesByWorkflowDagIds(ctx, dagIDs, txn)
+	err = eng.DAGEdgeRepo.DeleteByDAGBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
 	}

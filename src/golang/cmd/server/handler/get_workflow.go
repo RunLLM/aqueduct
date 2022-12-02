@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -60,14 +59,14 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader        artifact.Reader
-	OperatorReader        operator.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	ArtifactReader artifact.Reader
+	OperatorReader operator.Reader
 
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
 
 	DAGRepo       repos.DAG
+	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 	WorkflowRepo  repos.Workflow
 }
@@ -119,7 +118,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		h.DAGEdgeRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -135,7 +134,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
+			h.DAGEdgeRepo,
 			h.DAGResultRepo,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
@@ -164,7 +163,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
+			h.DAGEdgeRepo,
 			h.Database,
 		)
 		if err != nil {
