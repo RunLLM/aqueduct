@@ -1,4 +1,11 @@
-import { faClock, faClockFour, faListOl, faSpinner, faCircleCheck, faCircleQuestion, faX, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleCheck,
+  faCircleExclamation,
+  faCircleQuestion,
+  faClockFour,
+  faSpinner,
+  faX,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -148,7 +155,10 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faX} color={getExecutionStatusColor(status)} />
+            <FontAwesomeIcon
+              icon={faX}
+              color={getExecutionStatusColor(status)}
+            />
           </Box>
         );
         break;
@@ -163,7 +173,10 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faClockFour} color={getExecutionStatusColor(status)} />
+            <FontAwesomeIcon
+              icon={faClockFour}
+              color={getExecutionStatusColor(status)}
+            />
           </Box>
         );
         break;
@@ -192,7 +205,10 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faCircleCheck} color={getExecutionStatusColor(status)} />
+            <FontAwesomeIcon
+              icon={faCircleCheck}
+              color={getExecutionStatusColor(status)}
+            />
           </Box>
         );
         break;
@@ -207,7 +223,10 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faCircleQuestion} color={getExecutionStatusColor(status)} />
+            <FontAwesomeIcon
+              icon={faCircleQuestion}
+              color={getExecutionStatusColor(status)}
+            />
           </Box>
         );
         break;
@@ -222,7 +241,10 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faCircleExclamation} color={getExecutionStatusColor(status)} />
+            <FontAwesomeIcon
+              icon={faCircleExclamation}
+              color={getExecutionStatusColor(status)}
+            />
           </Box>
         );
         break;
