@@ -193,6 +193,20 @@ func CreateMissingAndSyncExistingEnvs(
 	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
 	addedEnvs := make([]ExecutionEnvironment, 0, len(envs))
 	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
+	var err error = nil
+	txn, err := db.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// rollback both DB records and conda envs.
+	defer func() {
+		database.TxnRollbackIgnoreErr(ctx, txn)
+		if err != nil {
+			deleteEnvs(addedEnvs)
+		}
+	}()
+
 	for key, env := range envs {
 		hash, err := env.Hash()
 		if err != nil {
@@ -216,13 +230,11 @@ func CreateMissingAndSyncExistingEnvs(
 		if err == database.ErrNoRows {
 			err = env.CreateDBRecord(ctx, envWriter, db)
 			if err != nil {
-				deleteEnvs(addedEnvs)
 				return nil, err
 			}
 
 			err = env.CreateEnv()
 			if err != nil {
-				deleteEnvs(addedEnvs)
 				return nil, err
 			}
 
@@ -240,6 +252,10 @@ func CreateMissingAndSyncExistingEnvs(
 		// Env is not missing
 		visitedResults[hash] = *existingEnv
 		results[key] = *existingEnv
+	}
+
+	if err = txn.Commit(ctx); err != nil {
+		return nil, err
 	}
 
 	return results, nil
