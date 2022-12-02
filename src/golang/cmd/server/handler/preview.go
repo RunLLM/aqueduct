@@ -256,7 +256,7 @@ func (h *PreviewHandler) setupExecEnv(
 	)
 
 	for opId, zipball := range dagSummary.FileContentsByOperatorUUID {
-		rawEnv, err := exec_env.InferDependenciesFromZipFile(zipball)
+		rawEnv, err := exec_env.ExtractDependenciesFromZipFile(zipball)
 		if err != nil {
 			return nil, err
 		}
