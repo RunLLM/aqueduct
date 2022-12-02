@@ -147,7 +147,7 @@ func InitializeConda(
 
 	condaPath := strings.TrimSpace(out)
 
-	err = createBaseEnvs(condaPath)
+	err = createBaseEnvs()
 	if err != nil {
 		updateOnFailure(
 			ctx,

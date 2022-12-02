@@ -186,8 +186,8 @@ func baseEnvNameByVersion(pythonVersion string) string {
 	return fmt.Sprintf("aqueduct_python%s", pythonVersion)
 }
 
-// createBaseEnvs creates base environments given the base conda path.
-func createBaseEnvs(condaBasePath string) error {
+// createBaseEnvs creates base python environments.
+func createBaseEnvs() error {
 	for _, pythonVersion := range pythonVersions {
 		envName := baseEnvNameByVersion(pythonVersion)
 		args := []string{
