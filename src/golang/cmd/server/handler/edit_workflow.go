@@ -10,6 +10,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -29,9 +30,10 @@ import (
 type EditWorkflowHandler struct {
 	PostHandler
 
-	Database       database.Database
-	WorkflowReader workflow.Reader
-	Engine         engine.Engine
+	Database database.Database
+	Engine   engine.Engine
+
+	WorkflowRepo repos.Workflow
 }
 
 type editWorkflowInput struct {
@@ -59,19 +61,19 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	if workflowIdStr == "" {
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	if workflowIDStr == "" {
 		return nil, http.StatusBadRequest, errors.New("No workflow id was specified.")
 	}
 
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -108,7 +110,7 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	}
 
 	return &editWorkflowArgs{
-		workflowId:          workflowId,
+		workflowId:          workflowID,
 		workflowName:        input.WorkflowName,
 		workflowDescription: input.WorkflowDescription,
 		schedule:            input.Schedule,

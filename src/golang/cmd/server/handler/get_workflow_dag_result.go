@@ -53,6 +53,7 @@ type GetWorkflowDagResultHandler struct {
 
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
+	WorkflowRepo  repos.Workflow
 }
 
 func (*GetWorkflowDagResultHandler) Name() string {
@@ -65,21 +66,21 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -92,8 +93,8 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 
 	return &getWorkflowDagResultArgs{
 		AqContext:   aqContext,
-		workflowID:  workflowId,
-		dagResultID: workflowDagResultId,
+		workflowID:  workflowID,
+		dagResultID: dagResultID,
 	}, http.StatusOK, nil
 }
 

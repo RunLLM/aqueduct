@@ -61,8 +61,9 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader        artifact.Reader
-	OperatorReader        operator.Reader
+	ArtifactReader artifact.Reader
+	OperatorReader operator.Reader
+	// TODO: Replace this with repos.Workflow after DAG replacement
 	WorkflowReader        workflow.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
@@ -71,6 +72,7 @@ type GetWorkflowHandler struct {
 
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
+	WorkflowRepo  repos.Workflow
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -83,15 +85,15 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -104,7 +106,7 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	return &getWorkflowArgs{
 		AqContext:  aqContext,
-		workflowID: workflowId,
+		workflowID: workflowID,
 	}, http.StatusOK, nil
 }
 

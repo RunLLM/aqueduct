@@ -29,7 +29,8 @@ type ListNotificationsHandler struct {
 
 	Database           database.Database
 	NotificationReader notification.Reader
-	WorkflowReader     workflow.Reader
+	// TODO: Replace this with repos.Workflow after notification refactor
+	WorkflowReader workflow.Reader
 }
 
 type listNotificationsResponse []notificationResponse

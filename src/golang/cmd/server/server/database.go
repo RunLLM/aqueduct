@@ -23,6 +23,7 @@ type Repos struct {
 	DAGResultRepo repos.DAGResult
 	UserRepo      repos.User
 	WatcherRepo   repos.Watcher
+	WorkflowRepo  repos.Workflow
 }
 
 type Readers struct {
@@ -57,6 +58,7 @@ func CreateRepos() *Repos {
 		DAGResultRepo: sqlite.NewDAGResultRepo(),
 		UserRepo:      sqlite.NewUserRepo(),
 		WatcherRepo:   sqlite.NewWatcherRepo(),
+		WorkflowRepo:  sqlite.NewWorklowRepo(),
 	}
 }
 

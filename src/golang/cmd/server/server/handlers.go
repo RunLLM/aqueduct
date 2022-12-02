@@ -46,9 +46,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			OperatorReader:             s.OperatorReader,
 			IntegrationReader:          s.IntegrationReader,
-			WorkflowReader:             s.WorkflowReader,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
+
+			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:          s.Database,
@@ -58,9 +59,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:             s.Vault,
 		},
 		routes.EditWorkflowRoute: &handler.EditWorkflowHandler{
-			Database:       s.Database,
-			WorkflowReader: s.WorkflowReader,
-			Engine:         s.AqEngine,
+			Database: s.Database,
+			Engine:   s.AqEngine,
+
+			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.ExportFunctionRoute: &handler.ExportFunctionHandler{
 			Database:       s.Database,
@@ -92,7 +94,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
 			Database:       s.Database,
 			OperatorReader: s.OperatorReader,
-			WorkflowReader: s.WorkflowReader,
+
+			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database: s.Database,
@@ -108,6 +111,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
+			WorkflowRepo:  s.WorkflowRepo,
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
 			Database:              s.Database,
@@ -120,6 +124,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
+			WorkflowRepo:  s.WorkflowRepo,
 		},
 		routes.ListArtifactResultsRoute: &handler.ListArtifactResultsHandler{
 			Database:             s.Database,

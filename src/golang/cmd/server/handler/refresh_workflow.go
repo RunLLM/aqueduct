@@ -49,6 +49,7 @@ type RefreshWorkflowHandler struct {
 	Engine   engine.Engine
 	Vault    vault.Vault
 
+	// TODO: Replace with repos.Workflow after DAG refactor
 	WorkflowReader        workflow.Reader
 	OperatorReader        operator.Reader
 	ArtifactReader        artifact.Reader
