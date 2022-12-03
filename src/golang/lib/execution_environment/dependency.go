@@ -3,7 +3,7 @@ package execution_environment
 import (
 	"archive/zip"
 	"bytes"
-	"io/ioutil"
+	"io"
 	"sort"
 	"strings"
 
@@ -38,7 +38,7 @@ func ExtractDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, erro
 				return nil, err
 			}
 
-			buf, err := ioutil.ReadAll(reader)
+			buf, err := io.ReadAll(reader)
 			if err != nil {
 				return nil, err
 			}
