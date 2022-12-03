@@ -43,7 +43,7 @@ func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow)
 }
 
 // requireDeepEqualDAGs asserts that the expected and actual lists of DAGs
-// containt the same elements.
+// contain the same elements.
 func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
 	require.Equal(t, len(expected), len(actual))
 
@@ -64,7 +64,7 @@ func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
 }
 
 // requireDeepEqualArtifact asserts that the expected and actual lists of Artifacts
-// containt the same elements.
+// contain the same elements.
 func requireDeepEqualArtifacts(t *testing.T, expected, actual []models.Artifact) {
 	require.Equal(t, len(expected), len(actual))
 
@@ -85,7 +85,7 @@ func requireDeepEqualArtifacts(t *testing.T, expected, actual []models.Artifact)
 }
 
 // requireDeepEqualDAGResults asserts that the expected and actual lists
-// of DAGResults containt the same elements.
+// of DAGResults contain the same elements.
 func requireDeepEqualDAGResults(t *testing.T, expected, actual []models.DAGResult) {
 	require.Equal(t, len(expected), len(actual))
 
@@ -107,7 +107,7 @@ func requireDeepEqualDAGResults(t *testing.T, expected, actual []models.DAGResul
 }
 
 // requireDeepEqualDAGEdges asserts that the expected and actual lists
-// of DAGEdges containt the same elements.
+// of DAGEdges contain the same elements.
 func requireDeepEqualDAGEdges(t *testing.T, expected, actual []models.DAGEdge) {
 	require.Equal(t, len(expected), len(actual))
 
@@ -128,5 +128,26 @@ func requireDeepEqualDAGEdges(t *testing.T, expected, actual []models.DAGEdge) {
 
 		require.True(t, found, "Unable to find DAGEdge: %v", expectedDAGEdge)
 		requireDeepEqual(t, expectedDAGEdge, foundDAGEdge)
+	}
+}
+
+// requireDeepEqualOperators asserts that the expected and actual lists of
+// Operators contain the same elements.
+func requireDeepEqualOperators(t *testing.T, expected, actual []models.Operator) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperator := range expected {
+		found := false
+		var foundOperator models.Operator
+
+		for _, actualOperator := range actual {
+			if expectedOperator.ID == actualOperator.ID {
+				found = true
+				foundOperator = actualOperator
+				break
+			}
+		}
+		require.True(t, found, "Unable to find Operator: %v", expectedOperator)
+		requireDeepEqual(t, expectedOperator, foundOperator)
 	}
 }
