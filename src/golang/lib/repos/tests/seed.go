@@ -35,6 +35,7 @@ func (ts *TestSuite) seedNotification(count int) []models.Notification {
 	}
 
 	return notifications
+}
 	
 // seedArtifact creates count artifact records.
 func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
@@ -56,7 +57,6 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 // seedArtifactWithContext creates an artifact record in the context of a newly created workflow DAG.
 func (ts *TestSuite) seedArtifactInWorkflow() (models.Artifact, models.DAG, models.Workflow, models.User) {
 	artifacts := ts.seedArtifact(1)
-
 
 	users := ts.seedUser(1)
 	userIDs := sampleUserIDs(1, users)

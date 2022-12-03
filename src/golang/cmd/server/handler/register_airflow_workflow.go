@@ -124,16 +124,17 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 
 	return &registerAirflowWorkflowArgs{
 		registerWorkflowArgs: registerWorkflowArgs{
-			AqContext:                aqContext,
-			dbWorkflowDag:            dagSummary.Dag,
-			operatorIdToFileContents: dagSummary.FileContentsByOperatorUUID,
-			isUpdate:                 isUpdate,
+			AqContext:  aqContext,
+			dagSummary: dagSummary,
+			isUpdate:   isUpdate,
 		},
 	}, http.StatusOK, nil
 }
 
 func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*registerAirflowWorkflowArgs)
+	dbWorkflowDag := args.dagSummary.Dag
+	fileContentsByOperatorID := args.dagSummary.FileContentsByOperatorUUID
 
 	emptyResp := registerAirflowWorkflowResponse{}
 
@@ -141,7 +142,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		// Sync existing Airflow DAGRuns before DAG is updated
 		workflowDag, err := utils.ReadLatestWorkflowDagFromDatabase(
 			ctx,
-			args.dbWorkflowDag.WorkflowId,
+			dbWorkflowDag.WorkflowId,
 			h.WorkflowReader,
 			h.WorkflowDagReader,
 			h.OperatorReader,
@@ -175,7 +176,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		}
 	}
 
-	if _, err := operator_utils.UploadOperatorFiles(ctx, args.dbWorkflowDag, args.operatorIdToFileContents); err != nil {
+	if _, err := operator_utils.UploadOperatorFiles(ctx, dbWorkflowDag, fileContentsByOperatorID); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
@@ -187,7 +188,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	workflowId, err := utils.WriteWorkflowDagToDatabase(
 		ctx,
-		args.dbWorkflowDag,
+		dbWorkflowDag,
 		h.WorkflowReader,
 		h.WorkflowWriter,
 		h.WorkflowDagWriter,
@@ -205,16 +206,16 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 	if args.isUpdate {
 		// Update workflow metadata and schedule if necessary
 		changes := map[string]interface{}{}
-		if args.dbWorkflowDag.Metadata.Name != "" {
-			changes[workflow.NameColumn] = args.dbWorkflowDag.Metadata.Name
+		if dbWorkflowDag.Metadata.Name != "" {
+			changes[workflow.NameColumn] = dbWorkflowDag.Metadata.Name
 		}
 
-		if args.dbWorkflowDag.Metadata.Description != "" {
-			changes[workflow.DescriptionColumn] = args.dbWorkflowDag.Metadata.Description
+		if dbWorkflowDag.Metadata.Description != "" {
+			changes[workflow.DescriptionColumn] = dbWorkflowDag.Metadata.Description
 		}
 
-		if args.dbWorkflowDag.Metadata.Schedule.Trigger != "" {
-			changes[workflow.ScheduleColumn] = &args.dbWorkflowDag.Metadata.Schedule
+		if dbWorkflowDag.Metadata.Schedule.Trigger != "" {
+			changes[workflow.ScheduleColumn] = &dbWorkflowDag.Metadata.Schedule
 		}
 
 		_, err := h.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, txn)
