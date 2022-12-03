@@ -3,6 +3,7 @@ package executor
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -18,16 +19,17 @@ import (
 )
 
 type Readers struct {
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	OperatorReader          operator.Reader
-	ArtifactReader          artifact.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	OperatorResultReader    operator_result.Reader
-	ArtifactResultReader    artifact_result.Reader
+	WorkflowReader             workflow.Reader
+	WorkflowDagReader          workflow_dag.Reader
+	OperatorReader             operator.Reader
+	ArtifactReader             artifact.Reader
+	WorkflowDagEdgeReader      workflow_dag_edge.Reader
+	UserReader                 user.Reader
+	IntegrationReader          integration.Reader
+	WorkflowDagResultReader    workflow_dag_result.Reader
+	OperatorResultReader       operator_result.Reader
+	ArtifactResultReader       artifact_result.Reader
+	ExecutionEnvironmentReader exec_env.Reader
 }
 
 type Writers struct {
@@ -94,17 +96,23 @@ func CreateReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
+	execEnvReader, err := exec_env.NewReader(dbConf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Readers{
-		WorkflowReader:          workflowReader,
-		WorkflowDagReader:       workflowDagReader,
-		OperatorReader:          operatorReader,
-		ArtifactReader:          artifactReader,
-		WorkflowDagEdgeReader:   workflowDagEdgeReader,
-		UserReader:              userReader,
-		IntegrationReader:       integrationReader,
-		WorkflowDagResultReader: workflowDagResultReader,
-		OperatorResultReader:    operatorResultReader,
-		ArtifactResultReader:    artifactResultReader,
+		WorkflowReader:             workflowReader,
+		WorkflowDagReader:          workflowDagReader,
+		OperatorReader:             operatorReader,
+		ArtifactReader:             artifactReader,
+		WorkflowDagEdgeReader:      workflowDagEdgeReader,
+		UserReader:                 userReader,
+		IntegrationReader:          integrationReader,
+		WorkflowDagResultReader:    workflowDagResultReader,
+		OperatorResultReader:       operatorResultReader,
+		ArtifactResultReader:       artifactResultReader,
+		ExecutionEnvironmentReader: execEnvReader,
 	}, nil
 }
 
@@ -175,16 +183,17 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 
 func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
-		WorkflowReader:          readers.WorkflowReader,
-		WorkflowDagReader:       readers.WorkflowDagReader,
-		WorkflowDagEdgeReader:   readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader: readers.WorkflowDagResultReader,
-		OperatorReader:          readers.OperatorReader,
-		OperatorResultReader:    readers.OperatorResultReader,
-		ArtifactReader:          readers.ArtifactReader,
-		ArtifactResultReader:    readers.ArtifactResultReader,
-		UserReader:              readers.UserReader,
-		IntegrationReader:       readers.IntegrationReader,
+		WorkflowReader:             readers.WorkflowReader,
+		WorkflowDagReader:          readers.WorkflowDagReader,
+		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
+		WorkflowDagResultReader:    readers.WorkflowDagResultReader,
+		OperatorReader:             readers.OperatorReader,
+		OperatorResultReader:       readers.OperatorResultReader,
+		ArtifactReader:             readers.ArtifactReader,
+		ArtifactResultReader:       readers.ArtifactResultReader,
+		UserReader:                 readers.UserReader,
+		IntegrationReader:          readers.IntegrationReader,
+		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
 }
 

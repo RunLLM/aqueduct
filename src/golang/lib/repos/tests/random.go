@@ -8,21 +8,19 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	artifactTypes = []shared.ArtifactType{
-		shared.UntypedArtifact,
-		shared.StringArtifact,
-		shared.BoolArtifact,
-		shared.NumericArtifact,
-		shared.DictArtifact,
-		shared.TupleArtifact,
-		shared.TableArtifact,
-		shared.JsonArtifact,
-		shared.BytesArtifact,
-		shared.ImageArtifact,
-		shared.PicklableArtifact,
-	}
-)
+var artifactTypes = []shared.ArtifactType{
+	shared.UntypedArtifact,
+	shared.StringArtifact,
+	shared.BoolArtifact,
+	shared.NumericArtifact,
+	shared.DictArtifact,
+	shared.TupleArtifact,
+	shared.TableArtifact,
+	shared.JsonArtifact,
+	shared.BytesArtifact,
+	shared.ImageArtifact,
+	shared.PicklableArtifact,
+}
 
 // randArtifactType generates a random artifact type.
 func randArtifactType() shared.ArtifactType {

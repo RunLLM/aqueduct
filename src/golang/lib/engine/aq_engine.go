@@ -9,6 +9,7 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -23,7 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -50,16 +51,17 @@ type AqueductTimeConfig struct {
 }
 
 type EngineReaders struct {
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	OperatorReader          operator_db.Reader
-	OperatorResultReader    operator_result.Reader
-	ArtifactReader          artifact_db.Reader
-	ArtifactResultReader    artifact_result.Reader
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
+	WorkflowReader             workflow.Reader
+	WorkflowDagReader          workflow_dag.Reader
+	WorkflowDagEdgeReader      workflow_dag_edge.Reader
+	WorkflowDagResultReader    workflow_dag_result.Reader
+	OperatorReader             operator_db.Reader
+	OperatorResultReader       operator_result.Reader
+	ArtifactReader             artifact_db.Reader
+	ArtifactResultReader       artifact_result.Reader
+	UserReader                 user.Reader
+	IntegrationReader          integration.Reader
+	ExecutionEnvironmentReader db_exec_env.Reader
 }
 
 type EngineWriters struct {
@@ -272,6 +274,21 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
+	opIds := make([]uuid.UUID, 0, len(dbWorkflowDag.Operators))
+	for _, op := range dbWorkflowDag.Operators {
+		opIds = append(opIds, op.Id)
+	}
+
+	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsMapByOperatorIDs(
+		ctx,
+		opIds,
+		eng.ExecutionEnvironmentReader,
+		eng.Database,
+	)
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dbWorkflowDagResult.Id,
@@ -286,6 +303,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
+		execEnvsByOpId,
 		operator.Publish,
 		eng.Database,
 	)
@@ -340,6 +358,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 func (eng *aqEngine) PreviewWorkflow(
 	ctx context.Context,
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
 	jobManagerConfig, err := generateJobManagerConfig(
@@ -373,6 +392,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
+		execEnvByOperatorId,
 		operator.Preview,
 		eng.Database,
 	)
@@ -951,7 +971,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 
 func (eng *aqEngine) InitEnv(
 	ctx context.Context,
-	env *execution_environment.ExecutionEnvironment,
+	env *exec_env.ExecutionEnvironment,
 ) error {
 	return env.CreateEnv()
 }

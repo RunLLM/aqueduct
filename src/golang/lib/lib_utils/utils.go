@@ -1,8 +1,12 @@
 package lib_utils
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -40,4 +44,25 @@ func ParseStatus(st *status.Status) (string, int) {
 	}
 
 	return errorMsg, errorCode
+}
+
+// RunCmd executes command with arg.
+// It returns the stdout, stderr, and an error object that contains an informative message that
+// combines stdout and stderr.
+func RunCmd(command string, arg ...string) (string, string, error) {
+	cmd := exec.Command(command, arg...)
+	cmd.Env = os.Environ()
+
+	var outb, errb bytes.Buffer
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+
+	err := cmd.Run()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
+		log.Errorf(errMsg)
+		return outb.String(), errb.String(), errors.New(errMsg)
+	}
+
+	return outb.String(), errb.String(), nil
 }
