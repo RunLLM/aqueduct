@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	models_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -71,7 +70,7 @@ func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string
 
 func (*integrationReader) GetByNameAndUser(ctx context.Context, integrationName string, userID uuid.UUID, orgID string, DB database.Database) ([]models.Integration, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE name=$1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);`,
+		`SELECT %s FROM integration WHERE name = $1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);`,
 		models.IntegrationCols(),
 	)
 	args := []interface{}{integrationName, orgID, userID}
@@ -96,25 +95,16 @@ func (*integrationReader) GetByServiceAndUser(ctx context.Context, service share
 	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID models_utils.NullUUID, DB database.Database) ([]models.Integration, error) {
-	if userID.IsNull {
-		query := fmt.Sprintf(
-			`SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
-			models.IntegrationCols(),
-		)
-		args := []interface{}{orgID}
-		return getIntegrations(ctx, DB, query, args...)
-	} else {
-		query := fmt.Sprintf(
-			`SELECT %s FROM integration WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
-			models.IntegrationCols(),
-		)
-		args := []interface{}{orgID, userID.UUID}
-		return getIntegrations(ctx, DB, query, args...)
-	}
+func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM integration WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
+		models.IntegrationCols(),
+	)
+	args := []interface{}{orgID, userID}
+	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID models_utils.NullUUID, DB database.Database) (bool, error) {
+func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
 	var count utils.CountResult
 
 	query := fmt.Sprintf(
@@ -132,12 +122,6 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	if userOnly {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
 		err := DB.Query(ctx, &count, query, integrationID, userID)
-		if err != nil {
-			return false, err
-		}
-	} else if !userID.IsNull {
-		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
-		err := DB.Query(ctx, &count, query, integrationID, userID.UUID)
 		if err != nil {
 			return false, err
 		}

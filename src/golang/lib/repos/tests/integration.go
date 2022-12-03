@@ -81,7 +81,7 @@ func (ts *TestSuite) TestIntegration_GetByServiceAndUser() {
 func (ts *TestSuite) TestIntegration_GetByUser() {
 	expectedIntegrations := ts.seedIntegration(3)
 
-	actualIntegrations, err := ts.integration.GetByUser(ts.ctx, expectedIntegrations[0].OrgID, expectedIntegrations[0].UserID, ts.DB)
+	actualIntegrations, err := ts.integration.GetByUser(ts.ctx, expectedIntegrations[0].OrgID, expectedIntegrations[0].UserID.UUID, ts.DB)
 
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 3, len(actualIntegrations))
@@ -92,7 +92,7 @@ func (ts *TestSuite) TestIntegration_ValidateOwnership() {
 	integrations := ts.seedIntegration(1)
 	expectedIntegration := integrations[0]
 
-	valid, err := ts.integration.ValidateOwnership(ts.ctx, expectedIntegration.ID, expectedIntegration.OrgID, expectedIntegration.UserID, ts.DB)
+	valid, err := ts.integration.ValidateOwnership(ts.ctx, expectedIntegration.ID, expectedIntegration.OrgID, expectedIntegration.UserID.UUID, ts.DB)
 
 	require.Nil(ts.T(), err)
 	require.True(ts.T(), valid)
