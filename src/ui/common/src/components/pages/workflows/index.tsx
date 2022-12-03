@@ -22,7 +22,6 @@ type Props = {
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dispatch: AppDispatch = useDispatch();
-
   const [filterText, setFilterText] = useState<string>('');
 
   useEffect(() => {

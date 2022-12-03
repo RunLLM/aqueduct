@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # For now, we want to always perform inference in our periodic tests for additional coverage.
+      - name: Remove the requirements.txt file.
+        working-directory: integration_tests/sdk
+        run: rm requirements.txt
+
       - name: Create the logs directory
         run: mkdir -p logs
 

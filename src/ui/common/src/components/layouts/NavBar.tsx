@@ -67,7 +67,8 @@ export class BreadcrumbLink {
 const NavBar: React.FC<{
   user: UserProfile;
   breadcrumbs: BreadcrumbLink[];
-}> = ({ user, breadcrumbs }) => {
+  onBreadCrumbClicked?: (name: string) => void;
+}> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -130,6 +131,11 @@ const NavBar: React.FC<{
                 color="inherit"
                 to={link.address}
                 component={RouterLink}
+                onClick={() => {
+                  if (onBreadCrumbClicked) {
+                    onBreadCrumbClicked(link.name);
+                  }
+                }}
               >
                 {link.name}
               </Link>

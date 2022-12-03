@@ -7,7 +7,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
-import WorkflowStatus from '../../workflows/workflowStatus';
+import ExecutionChip from '../../execution/chip';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
@@ -63,7 +63,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
               </Typography>
             </Box>
             <Box marginLeft={1}>
-              <WorkflowStatus status={latestVersion.status} />
+              <ExecutionChip status={latestVersion.status} />
             </Box>
           </Box>
           <Box sx={{ fontSize: 1, my: 1 }}>
