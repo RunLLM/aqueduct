@@ -58,9 +58,29 @@ func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
 				break
 			}
 		}
-
 		require.True(t, found, "Unable to find DAG: %v", expectedDAG)
 		requireDeepEqual(t, expectedDAG, foundDAG)
+	}
+}
+
+// requireDeepEqualArtifact asserts that the expected and actual lists of Artifacts
+// containt the same elements.
+func requireDeepEqualArtifacts(t *testing.T, expected, actual []models.Artifact) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedArtifact := range expected {
+		found := false
+		var foundArtifact models.Artifact
+
+		for _, actualArtifact := range actual {
+			if expectedArtifact.ID == actualArtifact.ID {
+				found = true
+				foundArtifact = actualArtifact
+				break
+			}
+		}
+		require.True(t, found, "Unable to find Artifact: %v", expectedArtifact)
+		requireDeepEqual(t, expectedArtifact, foundArtifact)
 	}
 }
 

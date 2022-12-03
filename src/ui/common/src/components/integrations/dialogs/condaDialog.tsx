@@ -11,10 +11,17 @@ export const CondaDialog: React.FC = ({}) => {
           target="_blank"
           href="https://conda.io/projects/conda/en/latest/user-guide/install/index.html"
         >
-          conda installed
-        </Link>
-        . Once connected, aqueduct server will use conda environment to run your
-        future workflows.
+          conda
+        </Link>{' '}
+        and{' '}
+        <Link
+          target="_blank"
+          href="https://conda.io/projects/conda-build/en/latest/install-conda-build.html"
+        >
+          conda build
+        </Link>{' '}
+        installed. Once connected, Aqueduct will use conda environments to run
+        new workflows.
       </Typography>
     </Box>
   );

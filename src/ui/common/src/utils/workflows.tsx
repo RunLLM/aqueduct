@@ -34,7 +34,6 @@ export type ListWorkflowSummary = {
   last_run_at: number;
   status: ExecutionStatus;
   engine: string;
-  watcher_auth0_id: string[];
 };
 
 export type WorkflowDagResultSummary = {
@@ -88,7 +87,6 @@ export function normalizeWorkflowDag(dag: WorkflowDag): WorkflowDag {
 export type GetWorkflowResponse = {
   workflow_dags: { [id: string]: WorkflowDag };
   workflow_dag_results: WorkflowDagResultSummary[];
-  watcherAuthIds: string[];
 };
 
 export type SavedObject = {

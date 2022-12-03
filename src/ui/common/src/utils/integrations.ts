@@ -16,6 +16,11 @@ export type Integration = {
   validated: boolean;
 };
 
+export type CondaConfig = {
+  exec_state: string;
+  conda_path: string;
+};
+
 export type PostgresConfig = {
   host: string;
   port: string;
@@ -164,7 +169,8 @@ export type IntegrationConfig =
   | AqueductDemoConfig
   | AirflowConfig
   | KubernetesConfig
-  | LambdaConfig;
+  | LambdaConfig
+  | CondaConfig;
 
 export type Service =
   | 'Postgres'

@@ -20,13 +20,14 @@ type TestSuite struct {
 	ctx context.Context
 
 	// List of all repos
+	artifact  repos.Artifact
 	dag       repos.DAG
 	dagEdge   repos.DAGEdge
 	dagResult repos.DAGResult
-	watcher   repos.Watcher
-	workflow  repos.Workflow
 	operator  repos.Operator
 	user      repos.User
+	watcher   repos.Watcher
+	workflow  repos.Workflow
 
 	DB database.Database
 }
@@ -44,13 +45,14 @@ func (ts *TestSuite) SetupSuite() {
 	ts.DB = DB
 
 	// Initialize repos
+	ts.artifact = sqlite.NewArtifactRepo()
 	ts.dag = sqlite.NewDAGRepo()
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
-	ts.watcher = sqlite.NewWatcherRepo()
-	ts.workflow = sqlite.NewWorklowRepo()
 	ts.operator = sqlite.NewOperatorwRepo()
 	ts.user = sqlite.NewUserRepo()
+	ts.watcher = sqlite.NewWatcherRepo()
+	ts.workflow = sqlite.NewWorklowRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {
