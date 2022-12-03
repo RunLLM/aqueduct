@@ -276,7 +276,7 @@ func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, mod
 
 	for i := 0; i < count; i++ {
 		contentPath := randString(10)
-		artifactResult, err := ts.artifact_result.Create(ts.ctx, dag.ID, artifact.ID, contentPath, ts.DB)
+		artifactResult, err := ts.artifactResult.Create(ts.ctx, dag.ID, artifact.ID, contentPath, ts.DB)
 		require.Nil(ts.T(), err)
 
 		artifactResults = append(artifactResults, *artifactResult)

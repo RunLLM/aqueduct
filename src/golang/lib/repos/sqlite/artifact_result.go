@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -176,10 +175,10 @@ func (*artifactResultWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, D
 }
 
 func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.ArtifactResult, error) {
-	var artifact_result models.ArtifactResult
+	var artifactResult models.ArtifactResult
 	err := utils.UpdateRecordToDest(
 		ctx,
-		&artifact_result,
+		&artifactResult,
 		changes,
 		models.ArtifactResultTable,
 		models.ArtifactResultID,
@@ -187,7 +186,7 @@ func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes m
 		models.ArtifactResultCols(),
 		DB,
 	)
-	return &artifact_result, err
+	return &artifactResult, err
 }
 
 func deleteArtifactResults(ctx context.Context, DB database.Database, IDs []uuid.UUID) error {
@@ -205,24 +204,24 @@ func deleteArtifactResults(ctx context.Context, DB database.Database, IDs []uuid
 }
 
 func getArtifactResults(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.ArtifactResult, error) {
-	var artifact_results []models.ArtifactResult
-	err := DB.Query(ctx, &artifact_results, query, args...)
-	return artifact_results, err
+	var artifactResults []models.ArtifactResult
+	err := DB.Query(ctx, &artifactResults, query, args...)
+	return artifactResults, err
 }
 
 func getArtifactResult(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.ArtifactResult, error) {
-	artifact_results, err := getArtifactResults(ctx, DB, query, args...)
+	artifactResults, err := getArtifactResults(ctx, DB, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(artifact_results) == 0 {
+	if len(artifactResults) == 0 {
 		return nil, database.ErrNoRows
 	}
 
-	if len(artifact_results) != 1 {
-		return nil, errors.Newf("Expected 1 artifact_result but got %v", len(artifact_results))
+	if len(artifactResults) != 1 {
+		return nil, errors.Newf("Expected 1 artifactResult but got %v", len(artifactResults))
 	}
 
-	return &artifact_results[0], nil
+	return &artifactResults[0], nil
 }

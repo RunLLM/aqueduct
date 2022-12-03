@@ -21,7 +21,7 @@ type TestSuite struct {
 
 	// List of all repos
 	artifact     repos.Artifact
-	artifact_result     repos.ArtifactResult
+	artifactResult     repos.ArtifactResult
 	dag       repos.DAG
 	dagEdge   repos.DAGEdge
 	dagResult repos.DAGResult

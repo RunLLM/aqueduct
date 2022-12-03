@@ -8,11 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-<<<<<<< HEAD
-// randArtifactType generates a random artifact type.
-func randArtifactType() shared.ArtifactType {
-	return shared.ArtifactTypes[rand.Intn(len(shared.ArtifactTypes))]
-=======
 var (
 	artifactTypes = []shared.ArtifactType{
 		shared.UntypedArtifact,
@@ -32,7 +27,6 @@ var (
 // randArtifactType generates a random artifact type.
 func randArtifactType() shared.ArtifactType {
 	return artifactTypes[rand.Intn(len(artifactTypes))]
->>>>>>> fdf3f2e7af23a6f6b02f01f427c4d2c847d7809f
 }
 
 // randAPIKey generates a random API key.
