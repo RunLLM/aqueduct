@@ -166,7 +166,7 @@ func (r *standardReaderImpl) GetOperatorsWithCondaEnv(
 	db database.Database,
 ) ([]DBOperator, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL", allColumns(),
+		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL;", allColumns(),
 	)
 
 	var operators []DBOperator
