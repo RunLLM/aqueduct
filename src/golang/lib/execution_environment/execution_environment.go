@@ -396,7 +396,7 @@ func CleanupUnusedEnvironments(
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
 		} else {
-			envWriter.UpdateExecutionEnvironment(
+			_, err = envWriter.UpdateExecutionEnvironment(
 				ctx,
 				envID,
 				map[string]interface{}{
@@ -404,6 +404,7 @@ func CleanupUnusedEnvironments(
 				},
 				db,
 			)
+			log.Errorf("Error updating the garbage collection column of conda environment %s: %v", envID, err)
 		}
 	}
 
