@@ -380,7 +380,6 @@ func CleanupUnusedEnvironments(
 		return err
 	}
 
-	var deletedIDs []uuid.UUID
 	hasError := false
 
 	for _, envID := range envIDs {
@@ -397,14 +396,15 @@ func CleanupUnusedEnvironments(
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
 		} else {
-			deletedIDs = append(deletedIDs, envID)
+			envWriter.UpdateExecutionEnvironment(
+				ctx,
+				envID,
+				map[string]interface{}{
+					"garbage_collected": true,
+				},
+				db,
+			)
 		}
-	}
-
-	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
-	if err != nil {
-		hasError = true
-		log.Errorf("Error deleting database records of unused conda environments: %v", err)
 	}
 
 	if hasError {

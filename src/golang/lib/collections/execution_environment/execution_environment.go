@@ -8,9 +8,10 @@ import (
 )
 
 type DBExecutionEnvironment struct {
-	Id   uuid.UUID `db:"id"`
-	Spec Spec      `db:"spec"`
-	Hash uuid.UUID `db:"hash"`
+	Id               uuid.UUID `db:"id"`
+	Spec             Spec      `db:"spec"`
+	Hash             uuid.UUID `db:"hash"`
+	GarbageCollected bool      `db:"garbage_collected"`
 }
 
 type Reader interface {

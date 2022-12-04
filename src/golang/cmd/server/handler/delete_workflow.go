@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
@@ -16,6 +17,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -23,6 +25,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -79,9 +82,12 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	IntegrationReader integration.Reader
-	OperatorReader    operator.Reader
-	WorkflowReader    workflow.Reader
+	IntegrationReader          integration.Reader
+	OperatorReader             operator.Reader
+	WorkflowReader             workflow.Reader
+	ExecutionEnvironmentReader db_exec_env.Reader
+
+	ExecutionEnvironmentWriter db_exec_env.Writer
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -199,6 +205,25 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	if err != nil {
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}
+
+	// Check unused conda environments and garbage collect them.
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
+
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.ExecutionEnvironmentReader,
+			h.ExecutionEnvironmentWriter,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
 
 	return resp, http.StatusOK, nil
 }

@@ -208,6 +208,8 @@ func (r *standardReaderImpl) GetUnusedExecutionEnvironments(
 		execution_environment LEFT JOIN active_execution_environment 
 		ON execution_environment.id = active_execution_environment.id
 	WHERE 
+		execution_environment.garbage_collected = FALSE 
+		AND 
 		active_execution_environment.id IS NULL;`, workflow_dag_edge.OperatorToArtifactType, allColumnsWithPrefix())
 	var results []DBExecutionEnvironment
 

@@ -43,9 +43,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			OperatorReader:    s.OperatorReader,
-			IntegrationReader: s.IntegrationReader,
-			WorkflowReader:    s.WorkflowReader,
+			OperatorReader:             s.OperatorReader,
+			IntegrationReader:          s.IntegrationReader,
+			WorkflowReader:             s.WorkflowReader,
+			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
+			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:          s.Database,
