@@ -160,3 +160,16 @@ func (r *standardReaderImpl) ValidateOperatorOwnership(
 ) (bool, error) {
 	return utils.ValidateNodeOwnership(ctx, organizationId, operatorId, db)
 }
+
+func (r *standardReaderImpl) GetOperatorsWithCondaEnv(
+	ctx context.Context,
+	db database.Database,
+) ([]DBOperator, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL", allColumns(),
+	)
+
+	var operators []DBOperator
+	err := db.Query(ctx, &operators, query)
+	return operators, err
+}
