@@ -188,7 +188,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 	execEnvByOpId, status, err := setupExecEnv(
 		ctx,
-		args.Id,
+		args.ID,
 		args.DagSummary,
 		h.IntegrationReader,
 		h.ExecutionEnvironmentReader,

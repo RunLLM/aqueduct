@@ -145,7 +145,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	statusCode, err := ValidatePrerequisites(
 		ctx,
 		args.Service,
-		args.Id,
+		args.ID,
 		h.IntegrationReader,
 		h.Database,
 	)

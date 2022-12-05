@@ -16,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -60,7 +59,6 @@ type EngineReaders struct {
 	OperatorResultReader       operator_result.Reader
 	ArtifactReader             artifact_db.Reader
 	ArtifactResultReader       artifact_result.Reader
-	UserReader                 user.Reader
 	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 }

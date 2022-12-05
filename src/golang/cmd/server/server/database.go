@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -28,7 +27,6 @@ type Repos struct {
 }
 
 type Readers struct {
-	UserReader                 user.Reader
 	IntegrationReader          integration.Reader
 	NotificationReader         notification.Reader
 	ArtifactReader             artifact.Reader
@@ -68,11 +66,6 @@ func CreateRepos() *Repos {
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	userReader, err := user.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	integrationReader, err := integration.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -144,7 +137,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 	}
 
 	return &Readers{
-		UserReader:                 userReader,
 		IntegrationReader:          integrationReader,
 		NotificationReader:         notificationReader,
 		ArtifactReader:             artifactReader,

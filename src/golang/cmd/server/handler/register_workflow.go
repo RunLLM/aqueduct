@@ -165,7 +165,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	execEnvByOpId, status, err := setupExecEnv(
 		ctx,
-		args.Id,
+		args.ID,
 		args.dagSummary,
 		h.IntegrationReader,
 		h.ExecutionEnvironmentReader,
