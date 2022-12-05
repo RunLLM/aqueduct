@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -51,10 +50,7 @@ type ListWorkflowsHandler struct {
 
 	ArtifactReader artifact.Reader
 	OperatorReader operator.Reader
-	// TODO: Remove after watcher refactor
-	WorkflowReader        workflow.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
-	CustomReader          queries.Reader
+	CustomReader   queries.Reader
 
 	ArtifactWriter        artifact.Writer
 	OperatorWriter        operator.Writer
