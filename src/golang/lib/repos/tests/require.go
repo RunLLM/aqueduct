@@ -184,7 +184,7 @@ func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOp
 
 		for _, actualOperator := range actual {
 			if (expectedOperator.OperatorName == actualOperator.OperatorName &&
-				expectedOperator.ModifiedAt == actualOperator.ModifiedAt &&
+				expectedOperator.ModifiedAt.Unix() == actualOperator.ModifiedAt.Unix() &&
 				expectedOperator.IntegrationName == actualOperator.IntegrationName &&
 				expectedOperator.IntegrationID == actualOperator.IntegrationID &&
 				expectedOperator.Service == actualOperator.Service &&

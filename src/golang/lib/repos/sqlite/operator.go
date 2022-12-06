@@ -155,13 +155,14 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 				workflow_dag_edge.to_id = operator.id 
 			) AND 
 			workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-			workflow_dag.workflow_id = $4
+			workflow_dag.workflow_id = $3
 		);`,
 		models.OperatorCols(),
 		shared.LoadType,
 	)
+	args := []interface{}{objectName, integrationID, workflowID}
 
-	return getOperators(ctx, DB, query)
+	return getOperators(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetLoadOPsByIntegration(

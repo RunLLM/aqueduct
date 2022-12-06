@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
@@ -92,26 +93,63 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 }
 
 func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
-	//GetLoadOPsByWorkflowAndIntegration(
-	// 	ctx context.Context,
-	// 	workflowID uuid.UUID,
-	// 	integrationID uuid.UUID,
-	// 	objectName string,
-	// 	DB database.Database,
-	// ) ([]models.Operator, error)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+
+	load := operators[0].Spec.Load()
+	loadParams := load.Parameters
+	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+	require.True(ts.T(), ok)
+	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	require.Nil(ts.T(), err)
+
+	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndIntegration(ts.ctx, dag.WorkflowID, integration.ID, relationalLoad.Table, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualOperators))
+	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
-	//GetLoadOPsByIntegration(
-	// 	ctx context.Context,
-	// 	integrationID uuid.UUID,
-	// 	objectName string,
-	// 	DB database.Database,
-	// ) ([]models.Operator, error)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+
+	load := operators[0].Spec.Load()
+	loadParams := load.Parameters
+	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+	require.True(ts.T(), ok)
+	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	require.Nil(ts.T(), err)
+
+	actualOperators, err := ts.operator.GetLoadOPsByIntegration(ts.ctx, integration.ID, relationalLoad.Table, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualOperators))
+	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_ValidateOrg() {
-	//ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	operator := operators[0]
+
+	valid, validErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, testOrgID, ts.DB)
+	require.Nil(ts.T(), validErr)
+	require.True(ts.T(), valid)
+
+	invalid, invalidErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, randString(10), ts.DB)
+	require.Nil(ts.T(), invalidErr)
+	require.False(ts.T(), invalid)
 
 }
 
