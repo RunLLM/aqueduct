@@ -83,6 +83,7 @@ const NavBar: React.FC<{
           notification.status === NotificationStatus.Unread
       ).length
   );
+  console.log('num unread is', numUnreadNotifications);
 
   const handleUserPopoverClick = (event: React.MouseEvent) => {
     setUserPopoverAnchorEl(event.currentTarget);
@@ -146,13 +147,13 @@ const NavBar: React.FC<{
         <Box sx={{ marginLeft: 'auto' }}>
           <Box
             onClick={handleClick}
-            sx={{ display: 'flex', cursor: 'pointer' }}
+            sx={{ display: 'flex', cursor: 'pointer', alignItems: 'center' }}
           >
             {!!numUnreadNotifications && (
-              <Box className={styles['notification-alert']}>
+              <Box sx={{ width: '20px', height: '20px', backgroundColor: 'red.500', borderRadius: '4px', mr: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Typography
                   variant="body2"
-                  sx={{ fontSize: '12px', fontWeight: 'light', color: 'white' }}
+                  sx={{ fontSize: '12px', color: 'white' }}
                 >
                   {numUnreadNotifications}
                 </Typography>

@@ -1,10 +1,13 @@
 import Box from '@mui/material/Box';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../../stores/store';
+import { handleFetchNotifications } from '../../reducers/notifications';
 
 export const DefaultLayoutMargin = '24px';
 export const SidesheetMargin = '16px';
@@ -30,6 +33,13 @@ export const DefaultLayout: React.FC<Props> = ({
   onBreadCrumbClicked = null,
   onSidebarItemClicked = null,
 }) => {
+  const dispatch: AppDispatch = useDispatch();
+  useEffect(() => {
+    if (user) {
+      dispatch(handleFetchNotifications({ user }));
+    }
+  });
+
   return (
     <Box
       sx={{

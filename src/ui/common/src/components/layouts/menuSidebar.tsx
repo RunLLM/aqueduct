@@ -123,11 +123,7 @@ const MenuSidebar: React.FC<{
 
   useCallback(() => {
     setCurrentPage(location.pathname);
-
-    if (user) {
-      dispatch(handleFetchNotifications({ user }));
-    }
-  }, [dispatch, location.pathname, user]);
+  }, [dispatch, location.pathname]);
 
   const pathPrefix = getPathPrefix();
   return (
