@@ -25,6 +25,7 @@ type TestSuite struct {
 	dagEdge   repos.DAGEdge
 	dagResult repos.DAGResult
 	integration     repos.Integration
+	notification repos.Notification
 	user      repos.User
 	watcher   repos.Watcher
 	workflow  repos.Workflow
@@ -50,10 +51,10 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
 	ts.integration = sqlite.NewIntegrationRepo()
+	ts.notification = sqlite.NewNotificationRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
-	ts.user = sqlite.NewUserRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {

@@ -16,6 +16,7 @@ const (
 	testIntegrationService = shared.DemoDbIntegrationName
 )
 
+<<<<<<< HEAD
 // seedIntegration creates count integration records.
 func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 	integrations := make([]models.Integration, 0, count)
@@ -35,6 +36,30 @@ func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 	return integrations
 }
 
+=======
+// seedNotification creates count notification records for a generated user.
+func (ts *TestSuite) seedNotification(count int) []models.Notification {
+	notifications := make([]models.Notification, 0, count)
+	users := ts.seedUser(1)
+	receiverID := users[0].ID
+
+	for i := 0; i < count; i++ {
+		content := randString(10)
+		level := shared.SuccessNotificationLevel
+		association := &shared.NotificationAssociation{
+			Object: shared.OrgNotificationObject,
+			ID: uuid.New(),
+		}
+		notification, err := ts.notification.Create(ts.ctx, receiverID, content, level, association, ts.DB)
+		require.Nil(ts.T(), err)
+
+		notifications = append(notifications, *notification)
+	}
+
+	return notifications
+}
+	
+>>>>>>> e87d895882866fd184383cd146c512a242210bb6
 // seedArtifact creates count artifact records.
 func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 	artifacts := make([]models.Artifact, 0, count)

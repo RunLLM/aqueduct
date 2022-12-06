@@ -32,21 +32,6 @@ def find_duplicate_operator_by_name(dag: DAG, op: Operator) -> Optional[Operator
     return dag.get_operator(with_name=op.name)
 
 
-def find_duplicate_load_operator(dag: DAG, op: Operator) -> Optional[Operator]:
-    """Load operators are only duplicates if they are loading the same artifact into the same integration."""
-    assert get_operator_type(op) == OperatorType.LOAD
-    assert len(op.inputs) == 1
-
-    artifact_to_load = dag.must_get_artifact(op.inputs[0])
-    existing_load_ops = dag.list_operators(
-        filter_to=[OperatorType.LOAD], on_artifact_id=artifact_to_load.id
-    )
-    for existing_load_op in existing_load_ops:
-        if existing_load_op.name == op.name:
-            return existing_load_op
-    return None
-
-
 class AddOrReplaceOperatorDelta(DAGDelta):
     """Adds an operator and its output artifacts to the DAG.
 
