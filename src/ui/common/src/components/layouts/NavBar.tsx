@@ -83,7 +83,6 @@ const NavBar: React.FC<{
           notification.status === NotificationStatus.Unread
       ).length
   );
-  console.log('num unread is', numUnreadNotifications);
 
   const handleUserPopoverClick = (event: React.MouseEvent) => {
     setUserPopoverAnchorEl(event.currentTarget);
