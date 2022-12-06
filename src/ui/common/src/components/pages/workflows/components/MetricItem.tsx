@@ -23,33 +23,35 @@ interface MetricItemProps {
 const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   const [expanded, setExpanded] = useState(false);
   const metricList = [];
-  let metricsToShow = metrics.length;
-  if (!expanded && metrics.length > 1) {
-    metricsToShow = 1;
-  }
 
-  for (let i = 0; i < metricsToShow; i++) {
-    metricList.push(
-      <Box
-        display="flex"
-        key={metrics[i].metricId}
-        justifyContent="space-between"
-        height="30px"
-      >
-        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-          {metrics[i].name}
-        </Typography>
-        {metrics[i].status === ExecutionStatus.Failed ? (
-          <Tooltip title="Error" placement="bottom" arrow>
-            <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
-              <FontAwesomeIcon icon={faCircleExclamation} />
-            </Box>
-          </Tooltip>
-        ) : (
-          <Typography variant="body1">{metrics[i].value}</Typography>
-        )}
-      </Box>
-    );
+  let metricsToShow = metrics.length;
+  if (metrics.length > 0) {
+    if (!expanded) {
+      metricsToShow = 1;
+    }
+    for (let i = 0; i < metricsToShow; i++) {
+      metricList.push(
+        <Box
+          display="flex"
+          key={metrics[i].metricId}
+          justifyContent="space-between"
+          height="30px"
+        >
+          <Typography variant="body1" sx={{ fontWeight: 400 }}>
+            {metrics[i].name}
+          </Typography>
+          {metrics[i].status === ExecutionStatus.Failed ? (
+            <Tooltip title="Error" placement="bottom" arrow>
+              <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+                <FontAwesomeIcon icon={faCircleExclamation} />
+              </Box>
+            </Tooltip>
+          ) : (
+            <Typography variant="body1">{metrics[i].value}</Typography>
+          )}
+        </Box>
+      );
+    }
   }
 
   const toggleExpanded = () => {
@@ -57,8 +59,8 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   };
 
   const showMoreStyles = {
-    fontWeight: 'bold',
-    color: theme.palette.gray['700'],
+    fontWeight: 500,
+    color: theme.palette.gray['600'],
     cursor: 'pointer',
     '&:hover': { textDecoration: 'underline' },
   };
@@ -66,7 +68,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   // TODO: make into a component to share with checks/metrics list
   const showLess = (
     <Box>
-      <Typography variant="body1" sx={showMoreStyles} onClick={toggleExpanded}>
+      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
         Show Less ...
       </Typography>
     </Box>
@@ -75,7 +77,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   // TODO: make into a component to share with checks/metrics list
   const showMore = (
     <Box>
-      <Typography variant="body1" sx={showMoreStyles} onClick={toggleExpanded}>
+      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
         Show More ({metrics.length - metricsToShow}) ...
       </Typography>
     </Box>
@@ -83,8 +85,17 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
 
   return (
     <Box>
-      {metricList}
-      {expanded ? showLess : showMore}
+      {
+        metrics.length > 0 ? (
+          <>
+            {metricList}
+            {expanded ? showLess : showMore}
+          </>
+        ) : (
+          <Typography variant="body1">No metrics.</Typography>
+        )
+      }
+
     </Box>
   );
 };

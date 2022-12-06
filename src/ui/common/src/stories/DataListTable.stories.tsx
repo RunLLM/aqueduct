@@ -119,7 +119,7 @@ export const DataListTable: React.FC = () => {
           status: ExecutionStatus.Running,
         },
         type: 'sklearn.linear, Linear Regression',
-        metrics: metricsShort,
+        metrics: [],
         checks: checkPreviews,
       },
       {

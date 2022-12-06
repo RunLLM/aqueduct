@@ -32,20 +32,22 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
   const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
   if (dataPreviewInfoVersions.length > 0) {
     let [latestDagResultId, latestVersion] = dataPreviewInfoVersions[0];
+    // Find the latest version
+    // note: could also sort the array and get things that way.
     dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-      if (latestVersion.timestamp < version.timestamp) {
+      if (version.timestamp > latestVersion.timestamp) {
         latestDagResultId = dagResultId;
         latestVersion = version;
       }
     });
+
     const workflowId = dataPreviewInfo.workflow_id;
     return (
       <Link
         underline="none"
         color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
-          dataPreviewInfo.artifact_id
-        }`}
+        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${dataPreviewInfo.artifact_id
+          }`}
         component={RouterLink}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
