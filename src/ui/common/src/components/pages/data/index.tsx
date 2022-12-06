@@ -2,14 +2,19 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import WorkflowTable, { WorkflowTableData } from '../../../components/tables/WorkflowTable';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
+import WorkflowTable, {
+  WorkflowTableData,
+} from '../../../components/tables/WorkflowTable';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { DataPreviewInfo } from '../../../utils/data';
+import getPathPrefix from '../../../utils/getPathPrefix';
+import { CheckLevel } from '../../../utils/operators';
+import ExecutionStatus from '../../../utils/shared';
 import { DataCard } from '../../integrations/cards/card';
 import { Card, CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
@@ -18,9 +23,6 @@ import { LayoutProps } from '../types';
 import CheckItem, { CheckPreview } from '../workflows/components/CheckItem';
 import ExecutionStatusLink from '../workflows/components/ExecutionStatusLink';
 import MetricItem, { MetricPreview } from '../workflows/components/MetricItem';
-import ExecutionStatus from '../../../utils/shared';
-import { CheckLevel } from '../../../utils/operators';
-import getPathPrefix from '../../../utils/getPathPrefix';
 
 type Props = {
   user: UserProfile;
@@ -191,77 +193,86 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   let tableData = [];
 
   if (Object.keys(dataCardsInfo.data.latest_versions).length > 0) {
-    tableData = Object.keys(dataCardsInfo.data.latest_versions).map((version) => {
-      let currentVersion = dataCardsInfo.data.latest_versions[version.toString()];
+    tableData = Object.keys(dataCardsInfo.data.latest_versions).map(
+      (version) => {
+        const currentVersion =
+          dataCardsInfo.data.latest_versions[version.toString()];
 
-      const artifactId = currentVersion.artifact_id;
-      const artifactName = currentVersion.artifact_name;
+        const artifactId = currentVersion.artifact_id;
+        const artifactName = currentVersion.artifact_name;
 
-      // TODO: handle the versions array
-      // The key ofeach object inside the versions map is a dagResultId
-      const dataPreviewInfoVersions = Object.entries(currentVersion.versions);
-      let [latestDagResultId, latestVersion] = dataPreviewInfoVersions.length > 0 ? dataPreviewInfoVersions[0] : null;
+        // TODO: handle the versions array
+        // The key ofeach object inside the versions map is a dagResultId
+        const dataPreviewInfoVersions = Object.entries(currentVersion.versions);
+        let [latestDagResultId, latestVersion] =
+          dataPreviewInfoVersions.length > 0
+            ? dataPreviewInfoVersions[0]
+            : null;
 
-      // Find the latest version
-      // note: could also sort the array and get things that way.
-      dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-        if (version.timestamp > latestVersion.timestamp) {
-          latestDagResultId = dagResultId;
-          latestVersion = version;
+        // Find the latest version
+        // note: could also sort the array and get things that way.
+        dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
+          if (version.timestamp > latestVersion.timestamp) {
+            latestDagResultId = dagResultId;
+            latestVersion = version;
+          }
+        });
+
+        let checks = [];
+        if (latestVersion.checks?.length > 0) {
+          checks = latestVersion.checks.map((check, index) => {
+            // TODO: Figure out where to get the checkLevel from.
+            console.log('check inside loop: ', check);
+            const level = check.metadata.failure_type
+              ? CheckLevel.Warning
+              : CheckLevel.Error;
+            const value =
+              check.metadata.status === 'succeeded' && !check.metadata.error;
+            return {
+              checkId: index,
+              name: check.name,
+              status: check.status,
+              level,
+              value: value ? 'True' : 'False',
+              timestamp: check.metadata.timestamps.finished_at,
+            };
+          });
         }
-      });
 
-      let checks = [];
-      if (latestVersion.checks?.length > 0) {
-        checks = latestVersion.checks.map((check, index) => {
-          // TODO: Figure out where to get the checkLevel from.
-          console.log('check inside loop: ', check);
-          const level = check.metadata.failure_type ? CheckLevel.Warning : CheckLevel.Error;
-          const value = check.metadata.status === 'succeeded' && !check.metadata.error;
-          return {
-            checkId: index,
-            name: check.name,
-            status: check.status,
-            level,
-            value: value ? 'True' : 'False',
-            timestamp: check.metadata.timestamps.finished_at,
-          };
-        })
+        // console.log('CHECKS: ', checks);
+
+        const workflowDagResultId = currentVersion.workflow_dag_result_id;
+        console.log('workflowDagResultId: ', workflowDagResultId);
+
+        const workflowId = currentVersion.workflow_id;
+        console.log('workflowId: ', workflowId);
+
+        const workflowName = currentVersion.workflow_name;
+        console.log('workflowName: ', workflowName);
+
+        // TODO: Normalize and return the data so that we have an array of rows to render in the table.
+        return {
+          name: {
+            name: artifactName,
+            url: `${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${artifactId}`,
+            status: ExecutionStatus.Running,
+          },
+          created_at: new Date(latestVersion.timestamp * 1000).toLocaleString(),
+          workflow: {
+            name: workflowName,
+            url: `${getPathPrefix()}/workflow/${workflowId}`,
+            status: ExecutionStatus.Succeeded,
+          },
+          type: 'pandas.DataFrame',
+          // TODO: handle empty array for metrics and checks
+          //metrics: [],
+          //checks: [],
+          meta: [],
+          metrics: metricsShort,
+          checks: checks,
+        };
       }
-
-      // console.log('CHECKS: ', checks);
-
-      const workflowDagResultId = currentVersion.workflow_dag_result_id;
-      console.log('workflowDagResultId: ', workflowDagResultId);
-
-      const workflowId = currentVersion.workflow_id;
-      console.log('workflowId: ', workflowId);
-
-      const workflowName = currentVersion.workflow_name;
-      console.log('workflowName: ', workflowName);
-
-      // TODO: Normalize and return the data so that we have an array of rows to render in the table.
-      return {
-        name: {
-          name: artifactName,
-          url: `${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${artifactId}`,
-          status: ExecutionStatus.Running,
-        },
-        created_at: new Date(latestVersion.timestamp * 1000).toLocaleString(),
-        workflow: {
-          name: workflowName,
-          url: `${getPathPrefix()}/workflow/${workflowId}`,
-          status: ExecutionStatus.Succeeded,
-        },
-        type: 'pandas.DataFrame',
-        // TODO: handle empty array for metrics and checks
-        //metrics: [],
-        //checks: [],
-        meta: [],
-        metrics: metricsShort,
-        checks: checks,
-      }
-    });
+    );
   }
 
   // TODO: Change this type to something more generic.
@@ -377,7 +388,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   //     </Box>
   //   </Layout>
   // );
-
 
   return (
     <Layout

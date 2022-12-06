@@ -85,17 +85,14 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
 
   return (
     <Box>
-      {
-        metrics.length > 0 ? (
-          <>
-            {metricList}
-            {expanded ? showLess : showMore}
-          </>
-        ) : (
-          <Typography variant="body1">No metrics.</Typography>
-        )
-      }
-
+      {metrics.length > 0 ? (
+        <>
+          {metricList}
+          {expanded ? showLess : showMore}
+        </>
+      ) : (
+        <Typography variant="body1">No metrics.</Typography>
+      )}
     </Box>
   );
 };

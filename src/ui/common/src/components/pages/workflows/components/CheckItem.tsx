@@ -144,16 +144,14 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
 
   return (
     <Box>
-      {
-        checks.length > 0 ? (
-          <>
-            {checksList}
-            {expanded ? showLess : showMore}
-          </>
-        ) : (
-          <Typography variant="body1">No checks.</Typography>
-        )
-      }
+      {checks.length > 0 ? (
+        <>
+          {checksList}
+          {expanded ? showLess : showMore}
+        </>
+      ) : (
+        <Typography variant="body1">No checks.</Typography>
+      )}
     </Box>
   );
 };
