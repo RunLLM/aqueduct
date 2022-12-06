@@ -114,7 +114,8 @@ class BaseArtifact(ABC):
         # We currently do not allow multiple load operators on the same artifact to the same integration.
         # We do allow multiple artifacts to write to the same integration, as well as a single artifact
         # to write to multiple integrations.
-        # Multiple load operations to the same integration, of different artifacts, are deduplicated by name.
+        # Multiple load operations to the same integration, of different artifacts, are guaranteed to
+        # have unique names.
         load_op_name = None
 
         # Replace any existing save operator on this artifact that goes to the same integration.
@@ -127,8 +128,8 @@ class BaseArtifact(ABC):
             if op.spec.load.integration_id == integration_info.id:
                 load_op_name = op.name
 
-        # If the name is not set yet, we know we have to make a new load operator, so deduplicate against
-        # all other loads in the dag.
+        # If the name is not set yet, we know we have to make a new load operator, so bump the
+        # suffix until a unique name is found.
         if load_op_name is None:
             load_op_name = self._dag.get_unclaimed_op_name(
                 prefix="save to %s" % integration_info.name
