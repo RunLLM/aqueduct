@@ -10,7 +10,9 @@ from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
 from aqueduct.integrations.sql_integration import find_parameter_artifacts, find_parameter_names
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     MongoExtractParams,
@@ -129,9 +131,23 @@ class MongoDBCollectionIntegration(Integration):
             return TableArtifact(self._dag, output_artf_id)
 
     def config(self, update_mode: LoadUpdateMode) -> SaveConfig:
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=self._collection_name, update_mode=update_mode),
+        )
+
+    def save(self, artifact: BaseArtifact, update_mode: LoadUpdateMode) -> None:
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=RelationalDBLoadParams(
+                table=self._collection_name, update_mode=update_mode
+            ),
         )
 
 
@@ -163,7 +179,20 @@ class MongoDBIntegration(Integration):
         self._metadata.describe()
 
     def config(self, collection: str, update_mode: LoadUpdateMode) -> SaveConfig:
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=collection, update_mode=update_mode),
+        )
+
+    def save(self, artifact: BaseArtifact, collection: str, update_mode: LoadUpdateMode) -> None:
+        """TODO"""
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=RelationalDBLoadParams(table=collection, update_mode=update_mode),
         )

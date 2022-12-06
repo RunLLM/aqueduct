@@ -121,6 +121,7 @@ UnionLoadParams = Union[
 ]
 
 
+# TODO(ENG-2035) This deprecated and will be removed.
 # Internal class used by SDK to represent the config for loading to an integration.
 class SaveConfig(BaseModel):
     integration_info: IntegrationInfo

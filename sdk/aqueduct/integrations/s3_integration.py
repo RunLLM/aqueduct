@@ -9,6 +9,8 @@ from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     Operator,
@@ -153,9 +155,24 @@ class S3Integration(Integration):
         Returns:
             SaveConfig object to use in Artifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=S3LoadParams(filepath=filepath, format=format),
+        )
+
+    def save(
+        self, artifact: BaseArtifact, filepath: str, format: Optional[S3TableFormat] = None
+    ) -> None:
+        """TODO"""
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=S3LoadParams(filepath=filepath, format=format),
         )
 
     def describe(self) -> None:

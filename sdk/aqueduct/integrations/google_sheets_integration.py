@@ -1,11 +1,14 @@
 from typing import Optional
 
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, GoogleSheetsSaveMode
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
@@ -109,9 +112,26 @@ class GoogleSheetsIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),
+        )
+
+    def save(
+        self,
+        artifact: BaseArtifact,
+        filepath: str,
+        save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
+    ) -> None:
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),
         )
 
     def describe(self) -> None:

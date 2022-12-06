@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 
 import pandas as pd
 from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG
@@ -11,6 +12,8 @@ from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     Operator,
@@ -265,8 +268,7 @@ class RelationalDBIntegration(Integration):
             return TableArtifact(self._dag, sql_output_artifact_id)
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
-        """
-        Configuration for saving to RelationalDB Integration.
+        """Configuration for saving to RelationalDB Integration.
 
         Arguments:
             table:
@@ -277,6 +279,10 @@ class RelationalDBIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
+
         if self._metadata.service == ServiceType.ATHENA:
             raise InvalidUserActionException(
                 "Save operation is not supported for integration type %s."
@@ -286,6 +292,16 @@ class RelationalDBIntegration(Integration):
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),
+        )
+
+    def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode) -> None:
+        """TODO"""
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=RelationalDBLoadParams(table=table_name, update_mode=update_mode),
         )
 
     def describe(self) -> None:

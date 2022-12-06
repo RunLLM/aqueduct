@@ -1,12 +1,15 @@
 import uuid
 from typing import Optional
 
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, SalesforceExtractType
+from aqueduct.enums import ArtifactType, LoadUpdateMode, SalesforceExtractType
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     Operator,
@@ -87,9 +90,22 @@ class SalesforceIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=SalesforceLoadParams(object=object),
+        )
+
+    def save(self, artifact: BaseArtifact, object: str) -> None:
+        """TODO"""
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=SalesforceLoadParams(object=object),
         )
 
     def _add_extract_operation(
