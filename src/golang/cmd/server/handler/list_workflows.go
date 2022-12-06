@@ -48,16 +48,16 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader artifact.Reader
-	OperatorReader operator.Reader
-	CustomReader   queries.Reader
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	CustomReader          queries.Reader
 
-	ArtifactWriter        artifact.Writer
-	OperatorWriter        operator.Writer
-	WorkflowDagEdgeWriter workflow_dag_edge.Writer
-	OperatorResultWriter  operator_result.Writer
-	ArtifactResultWriter  artifact_result.Writer
-	NotificationWriter    notification.Writer
+	ArtifactWriter       artifact.Writer
+	OperatorWriter       operator.Writer
+	OperatorResultWriter operator_result.Writer
+	ArtifactResultWriter artifact_result.Writer
+	NotificationWriter   notification.Writer
 
 	DAGRepo       repos.DAG
 	DAGEdgeRepo   repos.DAGEdge
