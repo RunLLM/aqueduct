@@ -162,7 +162,7 @@ func GetExecEnvFromDB(
 	execEnvReader db_exec_env.Reader,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	dbExecEnv, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
+	dbExecEnv, err := execEnvReader.GetActiveExecutionEnvironmentByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
@@ -238,13 +238,13 @@ func newFromDBExecutionEnvironment(
 	}
 }
 
-func GetExecutionEnvironmentsMapByOperatorIDs(
+func GetActiveExecutionEnvironmentsByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	envReader db_exec_env.Reader,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	dbEnvMap, err := envReader.GetExecutionEnvironmentsMapByOperatorID(
+	dbEnvMap, err := envReader.GetActiveExecutionEnvironmentsByOperatorID(
 		ctx, opIDs, db,
 	)
 	if err != nil {

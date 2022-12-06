@@ -47,9 +47,13 @@ type Reader interface {
 		operatorId uuid.UUID,
 		db database.Database,
 	) (bool, error)
-	GetOperatorsByIntegrationId(
+	GetOperatorsByDataIntegrationId(
 		ctx context.Context,
 		integrationId uuid.UUID,
+		db database.Database,
+	) ([]DBOperator, error)
+	GetOperatorsWithCondaEnv(
+		ctx context.Context,
 		db database.Database,
 	) ([]DBOperator, error)
 }

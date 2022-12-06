@@ -136,9 +136,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowReader:     s.WorkflowReader,
 		},
 		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
-			CustomReader:   s.CustomReader,
+			Database:          s.Database,
+			OperatorReader:    s.OperatorReader,
+			CustomReader:      s.CustomReader,
+			IntegrationReader: s.IntegrationReader,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:                s.Database,
