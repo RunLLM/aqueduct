@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -81,6 +82,40 @@ func (*dagResultReader) GetKOffsetByWorkflow(ctx context.Context, workflowID uui
 	args := []interface{}{workflowID, k}
 
 	return getDAGResults(ctx, DB, query, args...)
+}
+
+func (*dagResultReader) GetWorkflowMetadataBatch(
+	ctx context.Context,
+	IDs []uuid.UUID,
+	DB database.Database,
+) (map[uuid.UUID]views.DAGResultWorkflowMetadata, error) {
+	query := fmt.Sprintf(
+		`SELECT 
+			workflow.id, workflow.name, workflow_dag_result.id AS dag_result_id
+		FROM 
+			workflow, workflow_dag, workflow_dag_result 
+		WHERE 
+			workflow_dag_result.workflow_dag_id = workflow_dag.id 
+			AND workflow.id = workflow_dag.workflow_id 
+			AND workflow_dag_result.id IN (%s);`,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+
+	var workflowMetadata []views.DAGResultWorkflowMetadata
+	if err := DB.Query(ctx, &workflowMetadata, query, args...); err != nil {
+		return nil, err
+	}
+
+	dagResultToWorkflowMetadata := make(
+		map[uuid.UUID]views.DAGResultWorkflowMetadata,
+		len(workflowMetadata),
+	)
+	for _, metadata := range workflowMetadata {
+		dagResultToWorkflowMetadata[metadata.DAGResultID] = metadata
+	}
+
+	return dagResultToWorkflowMetadata, nil
 }
 
 func (*dagResultWriter) Create(

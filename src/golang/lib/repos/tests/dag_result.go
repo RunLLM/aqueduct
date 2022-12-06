@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -64,6 +65,43 @@ func (ts *TestSuite) TestDAGResult_GetKOffsetByWorkflow() {
 	)
 	require.Nil(ts.T(), err)
 	requireDeepEqualDAGResults(ts.T(), expectedDAGResults, actualDAGResults)
+}
+
+func (ts *TestSuite) TestDAGResult_GetWorkflowMetadataBatch() {
+	workflows := ts.seedWorkflow(1)
+	workflow := workflows[0]
+
+	dags := ts.seedDAGWithWorkflow(1, []uuid.UUID{workflow.ID})
+	dag := dags[0]
+
+	dagResults := ts.seedDAGResultWithDAG(2, []uuid.UUID{dag.ID, dag.ID})
+	dagResultA, dagResultB := dagResults[0], dagResults[1]
+
+	expectedMetadata := map[uuid.UUID]views.DAGResultWorkflowMetadata{
+		dagResultA.ID: {
+			WorkflowID:  workflow.ID,
+			Name:        workflow.Name,
+			DAGResultID: dagResultA.ID,
+		},
+		dagResultB.ID: {
+			WorkflowID:  workflow.ID,
+			Name:        workflow.Name,
+			DAGResultID: dagResultB.ID,
+		},
+	}
+
+	actualMetadata, err := ts.dagResult.GetWorkflowMetadataBatch(
+		ts.ctx,
+		[]uuid.UUID{dagResultA.ID, dagResultB.ID},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	for dagResultID, actualWorkflowMetadata := range actualMetadata {
+		expectedWorkflowMetadata, ok := expectedMetadata[dagResultID]
+		require.True(ts.T(), ok)
+		requireDeepEqual(ts.T(), expectedWorkflowMetadata, actualWorkflowMetadata)
+	}
 }
 
 func (ts *TestSuite) TestDAGResult_Create() {

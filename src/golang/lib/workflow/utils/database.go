@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -129,7 +128,7 @@ func WriteDAGToDatabase(
 			_, err = dagEdgeRepo.Create(
 				ctx,
 				newDAG.ID,
-				mdl_shared.ArtifactToOperatorDAGEdge,
+				shared.ArtifactToOperatorDAGEdge,
 				localArtifactIdToDbArtifactId[artifactId],
 				dbOperatorId,
 				int16(i), // idx
@@ -144,7 +143,7 @@ func WriteDAGToDatabase(
 			_, err = dagEdgeRepo.Create(
 				ctx,
 				newDAG.ID,
-				mdl_shared.OperatorToArtifactDAGEdge,
+				shared.OperatorToArtifactDAGEdge,
 				dbOperatorId,
 				localArtifactIdToDbArtifactId[artifactId],
 				int16(i), // idx
@@ -355,10 +354,10 @@ func UpdateWorkflowDagToLatest(
 func UpdateDAGResultMetadata(
 	ctx context.Context,
 	dagResultID uuid.UUID,
-	execState *mdl_shared.ExecutionState,
+	execState *shared.ExecutionState,
 	dagResultRepo repos.DAGResult,
 	workflowRepo repos.Workflow,
-	notificationWriter notification.Writer,
+	notificationRepo repos.Notification,
 	DB database.Database,
 ) error {
 	txn, err := DB.BeginTx(ctx)
@@ -385,7 +384,7 @@ func UpdateDAGResultMetadata(
 	if err := createDAGResultNotification(
 		ctx,
 		dagResult,
-		notificationWriter,
+		notificationRepo,
 		workflowRepo,
 		txn,
 	); err != nil {
@@ -398,13 +397,13 @@ func UpdateDAGResultMetadata(
 func createDAGResultNotification(
 	ctx context.Context,
 	dagResult *models.DAGResult,
-	notificationWriter notification.Writer,
+	notificationRepo repos.Notification,
 	workflowRepo repos.Workflow,
 	DB database.Database,
 ) error {
 	status := dagResult.Status
-	if status != mdl_shared.SucceededExecutionStatus &&
-		status != mdl_shared.FailedExecutionStatus {
+	if status != shared.SucceededExecutionStatus &&
+		status != shared.FailedExecutionStatus {
 		// Do not create notifications for DAGResults still in progress
 		return nil
 	}
@@ -418,28 +417,28 @@ func createDAGResultNotification(
 		return err
 	}
 
-	notificationLevel := notification.SuccessLevel
+	notificationLevel := shared.SuccessNotificationLevel
 	notificationContent := fmt.Sprintf(
 		"Workflow %s has succeeded!",
 		workflow.Name,
 	)
-	if status == mdl_shared.FailedExecutionStatus {
-		notificationLevel = notification.ErrorLevel
+	if status == shared.FailedExecutionStatus {
+		notificationLevel = shared.ErrorNotificationLevel
 		notificationContent = fmt.Sprintf(
 			"Workflow %s has failed.",
 			workflow.Name,
 		)
 	}
 
-	notificationAssociation := notification.NotificationAssociation{
-		Object: notification.WorkflowDagResultObject,
-		Id:     dagResult.ID,
+	notificationAssociation := &shared.NotificationAssociation{
+		Object: shared.DAGResultNotificationObject,
+		ID:     dagResult.ID,
 	}
 
 	// TODO: Create notification for all watchers
 	// Right now there is only 1 User in the system for only 1 notification
 	// needs to be created
-	_, err = notificationWriter.CreateNotification(
+	_, err = notificationRepo.Create(
 		ctx,
 		workflow.UserID,
 		notificationContent,

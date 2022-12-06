@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -27,22 +28,22 @@ import (
 type ListNotificationsHandler struct {
 	GetHandler
 
-	Database           database.Database
-	NotificationReader notification.Reader
-	// TODO: Replace this with repos.Workflow after notification refactor
-	WorkflowReader workflow.Reader
+	Database database.Database
+
+	DAGResultRepo    repos.DAGResult
+	NotificationRepo repos.Notification
 }
 
 type listNotificationsResponse []notificationResponse
 
 type notificationResponse struct {
-	Id               uuid.UUID                             `json:"id"`
-	Content          string                                `json:"content"`
-	Status           notification.Status                   `json:"status"`
-	Level            notification.Level                    `json:"level"`
-	Association      notification.NotificationAssociation  `json:"association"`
-	CreatedAt        int64                                 `json:"createdAt"`
-	WorkflowMetadata workflow.NotificationWorkflowMetadata `json:"workflowMetadata"`
+	ID                        uuid.UUID                       `json:"id"`
+	Content                   string                          `json:"content"`
+	Status                    shared.NotificationStatus       `json:"status"`
+	Level                     shared.NotificationLevel        `json:"level"`
+	Association               shared.NotificationAssociation  `json:"association"`
+	CreatedAt                 int64                           `json:"createdAt"`
+	DAGResultWorkflowMetadata views.DAGResultWorkflowMetadata `json:"workflowMetadata"`
 }
 
 func (*ListNotificationsHandler) Name() string {
@@ -65,24 +66,24 @@ func (h *ListNotificationsHandler) Perform(ctx context.Context, interfaceArgs in
 
 	// For now, we hard-code to retrieve all notifications with 'unread' status.
 	// This API can be extended in future to handle reading notifications with other types, or status.
-	notifications, err := h.NotificationReader.GetNotificationByReceiver(
+	notifications, err := h.NotificationRepo.GetByReceiverAndStatus(
 		ctx,
 		args.ID,
-		notification.UnreadStatus,
+		shared.UnreadNotificationStatus,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to list notifications.")
 	}
 
-	workflowDagResultIds := make([]uuid.UUID, 0, len(notifications))
+	dagResultIDs := make([]uuid.UUID, 0, len(notifications))
 	for _, notification := range notifications {
-		workflowDagResultIds = append(workflowDagResultIds, notification.Association.Id)
+		dagResultIDs = append(dagResultIDs, notification.Association.ID)
 	}
 
-	workflowsMetadataMap := make(map[uuid.UUID]workflow.NotificationWorkflowMetadata)
-	if len(workflowDagResultIds) > 0 {
-		workflowsMetadataMap, err = h.WorkflowReader.GetNotificationWorkflowMetadata(ctx, workflowDagResultIds, h.Database)
+	dagResultToWorkflowMetadata := make(map[uuid.UUID]views.DAGResultWorkflowMetadata, len(dagResultIDs))
+	if len(dagResultIDs) > 0 {
+		dagResultToWorkflowMetadata, err = h.DAGResultRepo.GetWorkflowMetadataBatch(ctx, dagResultIDs, h.Database)
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve workflow info related to workflow dag result.")
 		}
@@ -91,13 +92,13 @@ func (h *ListNotificationsHandler) Perform(ctx context.Context, interfaceArgs in
 	responses := make([]notificationResponse, 0, len(notifications))
 	for _, notificationObject := range notifications {
 		responses = append(responses, notificationResponse{
-			Id:               notificationObject.Id,
-			Content:          notificationObject.Content,
-			Status:           notificationObject.Status,
-			Level:            notificationObject.Level,
-			Association:      notificationObject.Association,
-			CreatedAt:        notificationObject.CreatedAt.Unix(),
-			WorkflowMetadata: workflowsMetadataMap[notificationObject.Association.Id],
+			ID:                        notificationObject.ID,
+			Content:                   notificationObject.Content,
+			Status:                    notificationObject.Status,
+			Level:                     notificationObject.Level,
+			Association:               notificationObject.Association,
+			CreatedAt:                 notificationObject.CreatedAt.Unix(),
+			DAGResultWorkflowMetadata: dagResultToWorkflowMetadata[notificationObject.Association.ID],
 		})
 	}
 

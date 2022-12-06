@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -62,16 +61,16 @@ type EngineWriters struct {
 	OperatorResultWriter operator_result.Writer
 	ArtifactWriter       artifact_db.Writer
 	ArtifactResultWriter artifact_result.Writer
-	NotificationWriter   notification.Writer
 }
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	WatcherRepo   repos.Watcher
-	WorkflowRepo  repos.Workflow
+	DAGRepo          repos.DAG
+	DAGEdgeRepo      repos.DAGEdge
+	DAGResultRepo    repos.DAGResult
+	NotificationRepo repos.Notification
+	WatcherRepo      repos.Watcher
+	WorkflowRepo     repos.Workflow
 }
 
 type aqEngine struct {
@@ -221,7 +220,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			execState,
 			eng.DAGResultRepo,
 			eng.WorkflowRepo,
-			eng.NotificationWriter,
+			eng.NotificationRepo,
 			eng.Database,
 		); updateErr != nil {
 			log.Errorf("Unable to update DAGResult metadata for %v", dagResult.ID)
