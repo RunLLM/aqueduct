@@ -1,10 +1,10 @@
 import os
 
 import pytest
-from aqueduct.dag import DAG, Metadata
 import utils
-from validator import Validator
+from aqueduct.dag import DAG, Metadata
 from utils import delete_flow, flow_name_to_id, generate_new_flow_name
+from validator import Validator
 
 import aqueduct
 

@@ -17,6 +17,7 @@ from test_functions.simple.model import (
 from test_metrics.constant.model import constant_metric
 from utils import (
     generate_new_flow_name,
+    generate_table_name,
     publish_flow_test,
     save,
     trigger_flow_test,
@@ -300,7 +301,8 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return initial_table
 
     table = generate_initial_table()
-    save(db, table, name="test_table")
+    table_name = generate_table_name()
+    save(db, table, name=table_name)
 
     setup_flow = publish_flow_test(
         client,
@@ -314,7 +316,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return df
 
     # Create a new flow that extracts this data.
-    output = db.sql("Select * from test_table", name="Test Table Query")
+    output = db.sql("SELECT * FROM %s" % table_name, name="Test Table Query")
     assert output.get().equals(initial_table)
 
     flow = publish_flow_test(
@@ -330,7 +332,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
 
     table = generate_new_table()
-    save(db, table, name="test_table")
+    save(db, table, name=table_name)
     publish_flow_test(
         client,
         artifacts=table,

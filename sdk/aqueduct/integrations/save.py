@@ -10,13 +10,7 @@ from aqueduct.error import (
 )
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.operators import (
-    LoadSpec,
-    Operator,
-    OperatorSpec,
-    S3LoadParams,
-    UnionLoadParams,
-)
+from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, UnionLoadParams
 from aqueduct.utils import generate_uuid
 
 

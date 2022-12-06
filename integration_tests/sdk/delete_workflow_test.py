@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 from aqueduct.error import InvalidRequestError
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
@@ -84,7 +84,9 @@ def test_delete_workflow_saved_objects(client, flow_name, data_integration, engi
     check_table_doesnt_exist(integration, table_name)
 
 
-def test_delete_workflow_saved_objects_twice(client, flow_name, data_integration, engine, validator):
+def test_delete_workflow_saved_objects_twice(
+    client, flow_name, data_integration, engine, validator
+):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
     it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already

@@ -205,6 +205,7 @@ def save(
     name: Optional[str] = None,
     update_mode: Optional[LoadUpdateMode] = None,
 ):
+    """NOTE: if `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently."""
     assert (
         integration._metadata.service in RelationalDBServices
     ), "Currently, only relational data integrations are supported."
