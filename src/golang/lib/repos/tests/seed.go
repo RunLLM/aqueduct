@@ -308,3 +308,21 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 
 	return watcher
 }
+
+// seedArtifactResult creates a workflow with 1 DAG and count artifact_result records
+// belonging to the same workflow DAG.
+func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, models.Artifact, models.DAG, models.Workflow) {
+	artifactResults := make([]models.ArtifactResult, 0, count)
+
+	artifact, dag, workflow, _ := ts.seedArtifactInWorkflow()
+
+	for i := 0; i < count; i++ {
+		contentPath := randString(10)
+		artifactResult, err := ts.artifactResult.Create(ts.ctx, dag.ID, artifact.ID, contentPath, ts.DB)
+		require.Nil(ts.T(), err)
+
+		artifactResults = append(artifactResults, *artifactResult)
+	}
+
+	return artifactResults, artifact, dag, workflow
+}

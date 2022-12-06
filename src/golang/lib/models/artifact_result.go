@@ -18,6 +18,9 @@ const (
 	ArtifactResultContentPath = "content_path"
 
 	// `Status` is initialized to "PENDING" for each new artifact result.
+	// TODO(ENG-1453): Remove status. This field is redundant now that ExecState exists.
+	// Avoid using status in new code.
+	// Cannot remove it now because CREATE won't work since Status has a NON-NULL constraint.
 	ArtifactResultStatus   = "status"
 	ArtifactResultMetadata = "metadata"
 
@@ -31,6 +34,7 @@ type ArtifactResult struct {
 	DAGResultID uuid.UUID                         `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	ArtifactID  uuid.UUID                         `db:"artifact_id" json:"artifact_id"`
 	ContentPath string                            `db:"content_path" json:"content_path"`
+	Status      shared.ExecutionStatus            `db:"status" json:"status"`
 	ExecState   shared.NullExecutionState         `db:"execution_state" json:"execution_state"`
 	Metadata    shared.NullArtifactResultMetadata `db:"metadata" json:"metadata"`
 }
