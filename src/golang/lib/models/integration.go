@@ -29,7 +29,7 @@ type Integration struct {
 	ID        uuid.UUID                `db:"id" json:"id"`
 	UserID    utils.NullUUID           `db:"user_id" json:"user_id"`
 	OrgID     string                   `db:"organization_id"`
-	Service   integration.Service           `db:"service"`
+	Service   integration.Service      `db:"service"`
 	Name      string                   `db:"name"`
 	Config    shared.IntegrationConfig `db:"config"`
 	CreatedAt time.Time                `db:"created_at"`

@@ -10,7 +10,7 @@ import (
 
 // Load defines the spec for a Load operator.
 type Load struct {
-	Service       Service `json:"service"`
+	Service       integration.Service `json:"service"`
 	IntegrationID uuid.UUID           `json:"integration_id"`
 	Parameters    LoadParams          `json:"parameters"`
 }
