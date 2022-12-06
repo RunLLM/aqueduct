@@ -60,6 +60,7 @@ func requireDeepEqualIntegrations(t *testing.T, expected, actual []models.Integr
 		}
 		require.True(t, found, "Unable to find integration: %v", expectedIntegration)
 		requireDeepEqual(t, expectedIntegration, foundIntegration)
+	}
 }
 
 // requireDeepEqualArtifactResults asserts that the expected and actual lists of ArtifactResults
