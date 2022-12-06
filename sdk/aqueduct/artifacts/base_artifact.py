@@ -57,7 +57,9 @@ class BaseArtifact(ABC):
         pass
 
     def save(self, config: SaveConfig) -> None:
-        """TODO: Configure this artifact to be written to a specific integration after it's computed in a published flow.
+        """DEPRECATED: use integration.save() directly instead!
+        Configure this artifact to be written to a specific integration after it's computed in a published flow.
+
 
         Args:
             config:

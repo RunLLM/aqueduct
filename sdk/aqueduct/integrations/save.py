@@ -24,14 +24,22 @@ def save_artifact(
     integration_info: IntegrationInfo,
     save_params: UnionLoadParams,
 ) -> None:
-    """TODO: Configure this artifact to be written to a specific integration after it's computed in a published flow.
+    """Configures the given artifact to be written to a specific integration after it's computed in a published flow.
 
     TODO(ENG-2035): Move this method into the base integration object.
 
     Args:
-        config:
-            SaveConfig object generated from integration using
-            the <integration>.config(...) method.
+        artifact_id:
+            The artifact who's contents will be saved.
+        artifact_type:
+            The type of the given artifact.
+        dag:
+            The dag object that we will attach the load operator to.
+        integration_info:
+            Config info for the destination integration.
+        save_params:
+            Save configuration info (eg. table name, update mode).
+
     Raises:
         InvalidIntegrationException:
             An error occurred because the requested integration could not be
@@ -39,7 +47,7 @@ def save_artifact(
         InvalidUserActionException:
             An error occurred because you are trying to load non-relational data into a relational integration.
         InvalidUserArgumentException:
-            An error occurred because some necessary fields are missing in the SaveConfig.
+            An error occurred because some necessary fields are missing in the SaveParams.
     """
     integrations_map = global_api_client.list_integrations()
 

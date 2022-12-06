@@ -93,7 +93,7 @@ class GoogleSheetsIntegration(Integration):
         filepath: str,
         save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
     ) -> SaveConfig:
-        """
+        """TODO(ENG-2035): Deprecated and will be removed.
         Configuration for saving to Google Sheets Integration.
 
         Arguments:
@@ -126,6 +126,21 @@ class GoogleSheetsIntegration(Integration):
         filepath: str,
         save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
     ) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into Google Sheets.
+            filepath:
+                The absolute file path to the Google Sheet to save to.
+            save_mode:
+                Defines the semantics of the save. Options are
+                - "overwrite"
+                - "create": Creates a new spreadsheet.
+                            If the spreadsheet doesn't exist, has `overwrite` behavior.
+                - "newsheet": Creates a new sheet in an existing spreadsheet.
+                              If the spreadsheet doesn't exist, has `create` behavior.
+        """
         save_artifact(
             artifact.id(),
             artifact.type(),

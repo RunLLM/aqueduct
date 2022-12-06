@@ -268,7 +268,8 @@ class RelationalDBIntegration(Integration):
             return TableArtifact(self._dag, sql_output_artifact_id)
 
     def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
-        """Configuration for saving to RelationalDB Integration.
+        """TODO(ENG-2035): Deprecated and will be removed.
+        Configuration for saving to RelationalDB Integration.
 
         Arguments:
             table:
@@ -295,7 +296,17 @@ class RelationalDBIntegration(Integration):
         )
 
     def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode) -> None:
-        """TODO"""
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into this sql integration.
+            table_name:
+                The table to save the artifact to.
+            update_mode:
+                Defines the semantics of the save if a table already exists.
+                Options are "replace", "append" (row-wise), or "fail" (if table already exists).
+        """
         save_artifact(
             artifact.id(),
             artifact.type(),

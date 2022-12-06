@@ -81,7 +81,7 @@ class SalesforceIntegration(Integration):
         )
 
     def config(self, object: str) -> SaveConfig:
-        """
+        """TODO(ENG-2035): Deprecated and will be removed.
         Configuration for saving to Salesforce Integration.
 
         Arguments:
@@ -99,7 +99,14 @@ class SalesforceIntegration(Integration):
         )
 
     def save(self, artifact: BaseArtifact, object: str) -> None:
-        """TODO"""
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into Salesforce.
+            object:
+                The name of the Salesforce object to save to.
+        """
         save_artifact(
             artifact.id(),
             artifact.type(),

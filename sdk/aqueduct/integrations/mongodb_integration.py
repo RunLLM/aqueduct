@@ -131,6 +131,7 @@ class MongoDBCollectionIntegration(Integration):
             return TableArtifact(self._dag, output_artf_id)
 
     def config(self, update_mode: LoadUpdateMode) -> SaveConfig:
+        """TODO(ENG-2035): Deprecated and will be removed."""
         logger().warning(
             "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
         )
@@ -140,6 +141,15 @@ class MongoDBCollectionIntegration(Integration):
         )
 
     def save(self, artifact: BaseArtifact, update_mode: LoadUpdateMode) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into this collection.
+            update_mode:
+                Defines the semantics of the save if a table already exists.
+                Options are "replace", "append" (row-wise), or "fail" (if table already exists).
+        """
         save_artifact(
             artifact.id(),
             artifact.type(),
@@ -179,6 +189,7 @@ class MongoDBIntegration(Integration):
         self._metadata.describe()
 
     def config(self, collection: str, update_mode: LoadUpdateMode) -> SaveConfig:
+        """TODO(ENG-2035): Deprecated and will be removed."""
         logger().warning(
             "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
         )
@@ -188,7 +199,17 @@ class MongoDBIntegration(Integration):
         )
 
     def save(self, artifact: BaseArtifact, collection: str, update_mode: LoadUpdateMode) -> None:
-        """TODO"""
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into the given collection.
+            collection:
+                The name of the collection to save to.
+            update_mode:
+                Defines the semantics of the save if a collection already exists.
+                Options are "replace", "append" (row-wise), or "fail" (if table already exists).
+        """
         save_artifact(
             artifact.id(),
             artifact.type(),
