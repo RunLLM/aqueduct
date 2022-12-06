@@ -55,6 +55,7 @@ func requireDeepEqualIntegrations(t *testing.T, expected, actual []models.Integr
 			if expectedIntegration.ID == actualIntegration.ID {
 				found = true
 				foundIntegration = actualIntegration
+				break
 			}
 		}
 		require.True(t, found, "Unable to find integration: %v", expectedIntegration)
