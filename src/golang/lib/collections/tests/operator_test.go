@@ -91,7 +91,7 @@ func TestCreateOperator(t *testing.T) {
 	requireDeepEqual(t, expectedOperator, actualOperator)
 }
 
-func TestGetOperatorsByIntegrationId(t *testing.T) {
+func TestGetOperatorsByDataIntegrationId(t *testing.T) {
 	defer resetDatabase(t)
 
 	integrations := seedIntegration(t, 1)
@@ -120,7 +120,7 @@ func TestGetOperatorsByIntegrationId(t *testing.T) {
 	)
 	require.Nil(t, err)
 
-	actualOperators, err := readers.operatorReader.GetOperatorsByIntegrationId(
+	actualOperators, err := readers.operatorReader.GetOperatorsByDataIntegrationId(
 		context.Background(),
 		integrations[0].Id,
 		db,

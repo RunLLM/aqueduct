@@ -162,7 +162,7 @@ func GetExecEnvFromDB(
 	execEnvReader db_exec_env.Reader,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	dbExecEnv, err := execEnvReader.GetExecutionEnvironmentByHash(ctx, hash, db)
+	dbExecEnv, err := execEnvReader.GetActiveExecutionEnvironmentByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
@@ -238,13 +238,13 @@ func newFromDBExecutionEnvironment(
 	}
 }
 
-func GetExecutionEnvironmentsMapByOperatorIDs(
+func GetActiveExecutionEnvironmentsByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	envReader db_exec_env.Reader,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	dbEnvMap, err := envReader.GetExecutionEnvironmentsMapByOperatorID(
+	dbEnvMap, err := envReader.GetActiveExecutionEnvironmentsByOperatorID(
 		ctx, opIDs, db,
 	)
 	if err != nil {
@@ -380,7 +380,6 @@ func CleanupUnusedEnvironments(
 		return err
 	}
 
-	var deletedIDs []uuid.UUID
 	hasError := false
 
 	for _, envID := range envIDs {
@@ -397,14 +396,16 @@ func CleanupUnusedEnvironments(
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
 		} else {
-			deletedIDs = append(deletedIDs, envID)
+			_, err = envWriter.UpdateExecutionEnvironment(
+				ctx,
+				envID,
+				map[string]interface{}{
+					"garbage_collected": true,
+				},
+				db,
+			)
+			log.Errorf("Error updating the garbage collection column of conda environment %s: %v", envID, err)
 		}
-	}
-
-	err = envWriter.DeleteExecutionEnvironments(ctx, deletedIDs, db)
-	if err != nil {
-		hasError = true
-		log.Errorf("Error deleting database records of unused conda environments: %v", err)
 	}
 
 	if hasError {

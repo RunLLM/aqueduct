@@ -23,6 +23,7 @@ import (
 	_000018 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000018_add_dag_result_exec_state_column"
 	_000019 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000019_add_serialization_type_value_to_param_op"
 	_000020 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000020_add_execution_environment_table"
+	_000021 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000021_add_gc_column_to_env_table"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -149,5 +150,11 @@ func init() {
 		upPostgres: _000020.UpPostgres, upSqlite: _000020.UpSqlite,
 		downPostgres: _000020.DownPostgres,
 		name:         "add execution environment table",
+	}
+
+	registeredMigrations[21] = &migration{
+		upPostgres: _000021.UpPostgres, upSqlite: _000021.UpSqlite,
+		downPostgres: _000021.DownPostgres,
+		name:         "add gc column to the execution environment table",
 	}
 }

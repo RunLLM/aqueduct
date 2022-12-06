@@ -71,13 +71,13 @@ func (r *standardReaderImpl) GetExecutionEnvironments(
 	return results, err
 }
 
-func (r *standardReaderImpl) GetExecutionEnvironmentByHash(
+func (r *standardReaderImpl) GetActiveExecutionEnvironmentByHash(
 	ctx context.Context,
 	hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM execution_environment WHERE hash = $1;",
+		"SELECT %s FROM execution_environment WHERE hash = $1 AND garbage_collected = FALSE;",
 		allColumns(),
 	)
 	var result DBExecutionEnvironment
@@ -86,23 +86,25 @@ func (r *standardReaderImpl) GetExecutionEnvironmentByHash(
 	return &result, err
 }
 
-func (r *standardReaderImpl) GetExecutionEnvironmentsMapByOperatorID(
+func (r *standardReaderImpl) GetActiveExecutionEnvironmentsByOperatorID(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	db database.Database,
 ) (map[uuid.UUID]DBExecutionEnvironment, error) {
 	type resultRow struct {
-		Id         uuid.UUID `db:"id"`
-		OperatorId uuid.UUID `db:"operator_id"`
-		Hash       uuid.UUID `db:"hash"`
-		Spec       Spec      `db:"spec"`
+		Id               uuid.UUID `db:"id"`
+		OperatorId       uuid.UUID `db:"operator_id"`
+		Hash             uuid.UUID `db:"hash"`
+		Spec             Spec      `db:"spec"`
+		GarbageCollected bool      `db:"garbage_collected"`
 	}
 
 	query := fmt.Sprintf(`
 		SELECT operator.id AS operator_id, %s
 		FROM execution_environment, operator
 		WHERE operator.execution_environment_id = execution_environment.id
-		AND operator.id IN (%s);`,
+		AND operator.id IN (%s)
+		AND execution_environment.garbage_collected = FALSE;`,
 		allColumnsWithPrefix(),
 		stmt_preparers.GenerateArgsList(len(opIDs), 1),
 	)
@@ -208,6 +210,8 @@ func (r *standardReaderImpl) GetUnusedExecutionEnvironments(
 		execution_environment LEFT JOIN active_execution_environment 
 		ON execution_environment.id = active_execution_environment.id
 	WHERE 
+		execution_environment.garbage_collected = FALSE 
+		AND 
 		active_execution_environment.id IS NULL;`, workflow_dag_edge.OperatorToArtifactType, allColumnsWithPrefix())
 	var results []DBExecutionEnvironment
 
