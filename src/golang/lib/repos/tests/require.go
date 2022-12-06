@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/stretchr/testify/require"
 )
 
@@ -168,6 +169,33 @@ func requireDeepEqualOperators(t *testing.T, expected, actual []models.Operator)
 			}
 		}
 		require.True(t, found, "Unable to find Operator: %v", expectedOperator)
+		requireDeepEqual(t, expectedOperator, foundOperator)
+	}
+}
+
+// requireDeepEqualLoadOperators asserts that the expected and actual lists of
+// LoadOperators contain the same elements.
+func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOperator) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperator := range expected {
+		found := false
+		var foundOperator views.LoadOperator
+
+		for _, actualOperator := range actual {
+			if (expectedOperator.OperatorName == actualOperator.OperatorName &&
+				expectedOperator.ModifiedAt == actualOperator.ModifiedAt &&
+				expectedOperator.IntegrationName == actualOperator.IntegrationName &&
+				expectedOperator.IntegrationID == actualOperator.IntegrationID &&
+				expectedOperator.Service == actualOperator.Service &&
+				expectedOperator.TableName == actualOperator.TableName &&
+				expectedOperator.UpdateMode == actualOperator.UpdateMode) {
+				found = true
+				foundOperator = actualOperator
+				break
+			}
+		}
+		require.True(t, found, "Unable to find LoadOperator: %v", expectedOperator)
 		requireDeepEqual(t, expectedOperator, foundOperator)
 	}
 }

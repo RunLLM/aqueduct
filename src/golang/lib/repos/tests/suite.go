@@ -51,7 +51,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
 	ts.integration = sqlite.NewIntegrationRepo()
-	ts.operator = sqlite.NewOperatorwRepo()
+	ts.operator = sqlite.NewOperatorRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()

@@ -11,7 +11,7 @@ import (
 // Load defines the spec for a Load operator.
 type Load struct {
 	Service       integration.Service `json:"service"`
-	IntegrationId uuid.UUID           `json:"integration_id"`
+	IntegrationID uuid.UUID           `json:"integration_id"`
 	Parameters    LoadParams          `json:"parameters"`
 }
 
@@ -22,7 +22,7 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 	// Parameters, since it is defined as a *json.RawMessage.
 	var loadAlias struct {
 		Service       integration.Service `json:"service"`
-		IntegrationId uuid.UUID           `json:"integration_id"`
+		IntegrationID uuid.UUID           `json:"integration_id"`
 		Parameters    *json.RawMessage    `json:"parameters"`
 	}
 	if err := json.Unmarshal(data, &loadAlias); err != nil {
@@ -31,7 +31,7 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 
 	// Set fields that were not deferred when unmarshalling
 	l.Service = loadAlias.Service
-	l.IntegrationId = loadAlias.IntegrationId
+	l.IntegrationID = loadAlias.IntegrationID
 
 	// Initialize correct destination struct for this operator's Load.Parameters
 	var params LoadParams

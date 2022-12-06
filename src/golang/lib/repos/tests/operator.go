@@ -2,6 +2,8 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -43,10 +45,12 @@ func (ts *TestSuite) TestOperator_GetBatch() {
 }
 
 func (ts *TestSuite) TestOperator_GetByDAG() {
-	dags := ts.seedDAG(1)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, shared.FunctionType)
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.FunctionType)
 
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
@@ -54,7 +58,37 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 }
 
 func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
-	// TODO: Requires integration tests to be implemented
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+
+	expectedLoadOperators := make([]views.LoadOperator, 0, len(expectedOperators))
+	for _, expectedLoadOperator := range expectedOperators {
+		load := expectedLoadOperator.Spec.Load()
+		loadParams := load.Parameters
+		relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+		require.True(ts.T(), ok)
+		integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+		require.Nil(ts.T(), err)
+					
+		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
+			OperatorName: expectedLoadOperator.Name,
+			ModifiedAt: dag.CreatedAt,
+			IntegrationName: integration.Name,
+			IntegrationID: integration.ID,
+			Service: testIntegrationService,
+			TableName: relationalLoad.Table,
+			UpdateMode: relationalLoad.UpdateMode,
+		})
+	}
+
+	actualOperators, err := ts.operator.GetDistinctLoadOPsByWorkflow(ts.ctx, dag.WorkflowID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 3, len(actualOperators))
+	requireDeepEqualLoadOperators(ts.T(), expectedLoadOperators, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {

@@ -19,23 +19,28 @@ const (
 	testIntegrationService = shared.DemoDbIntegrationName
 )
 
-// seedIntegration creates count integration records.
-func (ts *TestSuite) seedIntegration(count int) []models.Integration {
+// seedIntegration creates count integration records for the given user.
+func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Integration {
 	integrations := make([]models.Integration, 0, count)
-	users := ts.seedUser(1)
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
 		config := make(shared.IntegrationConfig)
 		config[randString(10)] = randString(10)
 		validated := true
-		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, users[0].ID, testIntegrationService, name, &config, validated, ts.DB)
+		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, userID, testIntegrationService, name, &config, validated, ts.DB)
 		require.Nil(ts.T(), err)
 
 		integrations = append(integrations, *integration)
 	}
 
 	return integrations
+}
+
+// seedIntegration creates count integration records and a new user that owns all of them.
+func (ts *TestSuite) seedIntegration(count int) []models.Integration {
+	users := ts.seedUser(1)
+	return ts.seedIntegrationWithUser(count, users[0].ID)
 }
 
 // seedArtifact creates count artifact records.
@@ -157,6 +162,15 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 // It also creates a new Workflow to associate with the DAG.
 func (ts *TestSuite) seedDAG(count int) []models.DAG {
 	workflows := ts.seedWorkflow(1)
+	workflowIDs := sampleWorkflowIDs(count, workflows)
+	return ts.seedDAGWithWorkflow(count, workflowIDs)
+}
+
+// seedDAGWithUser creates count DAG records for the user.
+// It also creates a new Workflow to associate with the DAG.
+func (ts *TestSuite) seedDAGWithUser(count int, user models.User) []models.DAG {
+	userIDs := sampleUserIDs(count, []models.User{user})
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
 	workflowIDs := sampleWorkflowIDs(count, workflows)
 	return ts.seedDAGWithWorkflow(count, workflowIDs)
 }
@@ -302,7 +316,8 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for each Operator to associate it with the specified DAG.
 // The DAGEdge type is randomly chosen and does not connect to an actual Artifact.
-func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType shared.OperatorType) []models.Operator {
+// If a Load function is created, a new integration to load from is created for each operator.
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid.UUID, opType shared.OperatorType) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	// A fake Artifact is used for all of the DAGEdges
@@ -324,10 +339,12 @@ func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType shar
 				},
 			)
 		case shared.LoadType:
+			loadIntegrations := ts.seedIntegrationWithUser(1, userID)
+			loadIntegration := loadIntegrations[0]
 			spec = shared.NewSpecFromLoad(
 				connector.Load{
-					Service:       integration.Postgres,
-					IntegrationId: uuid.New(),
+					Service:       loadIntegration.Service,
+					IntegrationId: loadIntegration.ID,
 					Parameters: &connector.PostgresLoadParams{
 						RelationalDBLoadParams: connector.RelationalDBLoadParams{
 							Table:      randString(10),
@@ -390,3 +407,4 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 
 	return watcher
 }
+
