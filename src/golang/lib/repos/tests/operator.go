@@ -5,6 +5,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -154,27 +155,70 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 }
 
 func (ts *TestSuite) TestOperator_Create() {
-	//Create(
-	// 	ctx context.Context,
-	// 	name string,
-	// 	description string,
-	// 	spec *shared.Spec,
-	// 	DB database.Database,
-	// ) (*models.Operator, error)
-
+	name := randString(10)
+	description := randString(10)
+	spec := shared.NewSpecFromFunction(
+		function.Function{},
+	)
+	expectedOperator := &models.Operator{
+		Name: name,
+		Description: description,
+		Spec: *spec,
+	}
+	actualOperator, err := ts.operator.Create(ts.ctx, name, description, spec, ts.DB)
+	expectedOperator.ID = actualOperator.ID
+	require.Nil(ts.T(), err)
+	requireDeepEqual(ts.T(), expectedOperator, actualOperator)
 }
 
 func (ts *TestSuite) TestOperator_Delete() {
-	//Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
 
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	operator := operators[0]
+
+	err := ts.operator.Delete(ts.ctx, operator.ID, ts.DB)
+	require.Nil(ts.T(), err)
 }
 
 func (ts *TestSuite) TestOperator_DeleteBatch() {
-	//DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
 
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+	IDs := make([]uuid.UUID, 0, len(operators))
+	for _, operator := range operators {
+		IDs = append(IDs, operator.ID)
+	}
+
+	err := ts.operator.DeleteBatch(ts.ctx, IDs, ts.DB)
+	require.Nil(ts.T(), err)
 }
 
 func (ts *TestSuite) TestOperator_Update() {
-	//Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Operator, error)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
 
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	name := randString(10)
+	spec := shared.NewSpecFromFunction(
+		function.Function{},
+	)
+	changes := map[string]interface{}{
+		models.OperatorName:        name,
+		models.OperatorSpec:        spec,
+	}
+
+	newOperator, err := ts.operator.Update(ts.ctx, operators[0].ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	requireDeepEqual(ts.T(), name, newOperator.Name)
+	requireDeepEqual(ts.T(), spec, &newOperator.Spec)
 }
