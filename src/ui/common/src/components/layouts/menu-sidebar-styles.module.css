@@ -78,16 +78,3 @@
   max-height: 24px;
   border-radius: 99999px;
 }
-
-.notification-alert {
-  display: flex;
-  background-color: #d14343; /* red500 */
-  /* All icons in sidebar button are fixed to 24 */
-  min-width: 24px;
-  width: 24px;
-  max-width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  justify-content: center;
-  align-items: center;
-}
