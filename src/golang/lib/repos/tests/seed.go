@@ -16,7 +16,7 @@ import (
 const (
 	// Defaults used for seeding database records
 	testOrgID = "aqueduct-test"
-	testIntegrationService = shared.DemoDbIntegrationName
+	testIntegrationService = integration.AqueductDemo
 )
 
 // seedIntegration creates count integration records for the given user.
