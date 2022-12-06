@@ -10,26 +10,26 @@ import (
 type NotificationLevel string
 
 const (
-	SuccessLevel NotificationLevel = "success"
-	WarningLevel NotificationLevel = "warning"
-	ErrorLevel   NotificationLevel = "error"
-	InfoLevel    NotificationLevel = "info"
-	NeutralLevel NotificationLevel = "neutral"
+	SuccessNotificationLevel NotificationLevel = "success"
+	WarningNotificationLevel NotificationLevel = "warning"
+	ErrorNotificationLevel   NotificationLevel = "error"
+	InfoNotificationLevel    NotificationLevel = "info"
+	NeutralNotificationLevel NotificationLevel = "neutral"
 )
 
 type NotificationStatus string
 
 const (
-	UnreadStatus   NotificationStatus = "unread"
-	ArchivedStatus NotificationStatus = "archived"
+	UnreadNotificationStatus   NotificationStatus = "unread"
+	ArchivedNotificationStatus NotificationStatus = "archived"
 )
 
 type NotificationObject string
 
 const (
-	WorkflowObject     NotificationObject = "workflow"
-	DAGResultObject    NotificationObject = "workflow_dag_result"
-	OrganizationObject NotificationObject = "organization"
+	WorkflowNotificationObject  NotificationObject = "workflow"
+	DAGResultNotificationObject NotificationObject = "workflow_dag_result"
+	OrgNotificationObject       NotificationObject = "organization"
 )
 
 type NotificationAssociation struct {

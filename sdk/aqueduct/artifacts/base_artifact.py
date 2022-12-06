@@ -4,18 +4,21 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    apply_deltas_to_dag,
-    find_duplicate_load_operator,
-)
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, OperatorType
 from aqueduct.error import (
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, SaveConfig
+from aqueduct.operators import (
+    LoadSpec,
+    Operator,
+    OperatorSpec,
+    S3LoadParams,
+    SaveConfig,
+    get_operator_type,
+)
 from aqueduct.utils import generate_uuid
 
 from aqueduct import globals
@@ -108,13 +111,32 @@ class BaseArtifact(ABC):
                     % integration_info.name
                 )
 
-        # We deduplicate load operators based on name (and therefore integration) AND
-        # the input artifact. This allows multiple artifacts to write to the same integration,
-        # as well as a single artifact to write to multiple integrations, all while keeping
-        # the name of the load operator readable.
-        load_op_name = "save to %s" % integration_info.name
+        # We currently do not allow multiple load operators on the same artifact to the same integration.
+        # We do allow multiple artifacts to write to the same integration, as well as a single artifact
+        # to write to multiple integrations.
+        # Multiple load operations to the same integration, of different artifacts, are guaranteed to
+        # have unique names.
+        load_op_name = None
+
+        # Replace any existing save operator on this artifact that goes to the same integration.
+        existing_load_ops = self._dag.list_operators(
+            filter_to=[OperatorType.LOAD],
+            on_artifact_id=self._artifact_id,
+        )
+        for op in existing_load_ops:
+            assert op.spec.load is not None
+            if op.spec.load.integration_id == integration_info.id:
+                load_op_name = op.name
+
+        # If the name is not set yet, we know we have to make a new load operator, so bump the
+        # suffix until a unique name is found.
+        if load_op_name is None:
+            load_op_name = self._dag.get_unclaimed_op_name(
+                prefix="save to %s" % integration_info.name
+            )
 
         # Add the load operator as a terminal node.
+        assert load_op_name is not None
         apply_deltas_to_dag(
             self._dag,
             deltas=[
@@ -133,7 +155,6 @@ class BaseArtifact(ABC):
                         inputs=[self._artifact_id],
                     ),
                     output_artifacts=[],
-                    find_duplicate_fn=find_duplicate_load_operator,
                 ),
             ],
         )
