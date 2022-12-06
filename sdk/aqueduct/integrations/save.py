@@ -1,10 +1,7 @@
 import uuid
 
 from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, OperatorType
 from aqueduct.error import (
     InvalidIntegrationException,
@@ -13,7 +10,14 @@ from aqueduct.error import (
 )
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, UnionLoadParams, get_operator_type
+from aqueduct.operators import (
+    LoadSpec,
+    Operator,
+    OperatorSpec,
+    S3LoadParams,
+    UnionLoadParams,
+    get_operator_type,
+)
 from aqueduct.utils import generate_uuid
 
 
@@ -92,9 +96,7 @@ def save_artifact(
     # If the name is not set yet, we know we have to make a new load operator, so bump the
     # suffix until a unique name is found.
     if load_op_name is None:
-        load_op_name = dag.get_unclaimed_op_name(
-            prefix="save to %s" % integration_info.name
-        )
+        load_op_name = dag.get_unclaimed_op_name(prefix="save to %s" % integration_info.name)
 
     apply_deltas_to_dag(
         dag,
