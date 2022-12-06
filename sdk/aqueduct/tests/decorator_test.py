@@ -4,7 +4,7 @@ import zipfile
 
 import pytest
 from aqueduct.error import InvalidDependencyFilePath, ReservedFileNameException
-from aqueduct.utils import (
+from aqueduct.utils.utils import (
     _package_files_and_requirements,
     delete_zip_folder_and_file,
     serialize_function,

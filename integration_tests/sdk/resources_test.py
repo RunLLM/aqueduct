@@ -1,7 +1,7 @@
 from os import cpu_count
 
 import pytest
-from aqueduct.enums import ExecutionStatus, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from utils import publish_flow_test
 

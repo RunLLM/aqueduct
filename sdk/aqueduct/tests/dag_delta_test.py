@@ -2,16 +2,16 @@ import copy
 import uuid
 from typing import List
 
-from aqueduct.dag import DAG, Metadata
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, SubgraphDAGDelta, apply_deltas_to_dag
-from aqueduct.enums import OperatorType
+from aqueduct.dag.dag import DAG, Metadata
+from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, SubgraphDAGDelta, apply_deltas_to_dag
+from aqueduct.constants.enums import OperatorType
 from aqueduct.tests.utils import (
     _construct_dag,
     _construct_operator,
     default_artifact,
     generate_uuids,
 )
-from aqueduct.utils import generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 
 def test_add_and_replace_operator_delta():

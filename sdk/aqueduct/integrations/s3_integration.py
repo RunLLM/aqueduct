@@ -5,13 +5,14 @@ from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.dag.dag import DAG
+from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
+from aqueduct.integrations.integration import Integration
+from aqueduct.models.integration_info import IntegrationInfo
 from aqueduct.integrations.save import save_artifact
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
     OperatorSpec,
@@ -19,7 +20,7 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 from aqueduct import globals
 

@@ -10,8 +10,8 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import (
+from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionMode,
@@ -20,7 +20,7 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
     MetricSpec,
@@ -28,8 +28,8 @@ from aqueduct.operators import (
     OperatorSpec,
     ResourceConfig,
 )
-from aqueduct.parameter_utils import create_param
-from aqueduct.utils import (
+from aqueduct.dag.parameter_utils import create_param
+from aqueduct.utils.utils import (
     CheckFunction,
     MetricFunction,
     Number,
@@ -39,7 +39,6 @@ from aqueduct.utils import (
     serialize_function,
 )
 
-from aqueduct import dag as dag_module
 from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
@@ -105,7 +104,7 @@ def wrap_spec(
                 % artifact.name
             )
 
-    dag = dag_module.__GLOBAL_DAG__
+    dag = globals.__GLOBAL_DAG__
 
     # Check that all the artifact ids exist in the dag.
     for artifact in input_artifacts:
@@ -235,7 +234,7 @@ def _convert_input_arguments_to_parameters(
         param.kind in disallowed_kinds for param in func_params.values()
     )
 
-    dag = dag_module.__GLOBAL_DAG__
+    dag = globals.__GLOBAL_DAG__
     param_names = list(func_params.keys())
 
     artifacts = list(input_artifacts)

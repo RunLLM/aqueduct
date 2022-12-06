@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 from aqueduct.artifacts import bool_artifact
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
+from aqueduct.dag.dag import DAG
+from aqueduct.dag.dag_deltas import (
     AddOrReplaceOperatorDelta,
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionMode,
@@ -24,8 +24,8 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
-from aqueduct.utils import (
+from aqueduct.models.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
+from aqueduct.utils.utils import (
     Number,
     artifact_name_from_op_name,
     format_header_for_print,

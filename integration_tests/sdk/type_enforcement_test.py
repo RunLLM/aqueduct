@@ -1,7 +1,7 @@
 from typing import Union
 
 import pytest
-from aqueduct.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError
 from utils import publish_flow_test, trigger_flow_test
 

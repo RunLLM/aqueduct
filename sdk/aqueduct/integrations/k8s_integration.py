@@ -1,4 +1,5 @@
-from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.integration import Integration
+from aqueduct.models.integration_info import IntegrationInfo
 
 
 class K8sIntegration(Integration):

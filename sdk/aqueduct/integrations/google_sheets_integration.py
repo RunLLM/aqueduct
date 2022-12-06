@@ -3,13 +3,14 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, GoogleSheetsSaveMode
-from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.dag.dag import DAG
+from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
+from aqueduct.integrations.integration import Integration
+from aqueduct.models.integration_info import IntegrationInfo
 from aqueduct.integrations.save import save_artifact
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
     GoogleSheetsLoadParams,
@@ -17,7 +18,7 @@ from aqueduct.operators import (
     OperatorSpec,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
 class GoogleSheetsIntegration(Integration):

@@ -2,15 +2,15 @@ import uuid
 from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.models.config import EngineConfig
+from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     LAMBDA_MAX_MEMORY_MB,
     LAMBDA_MIN_MEMORY_MB,
     Operator,
@@ -356,7 +356,3 @@ class DAG(BaseModel):
                 del self.artifacts[str(artifact_id)]
             del self.operators[str(op_to_remove.id)]
             del self.operator_by_name[op_to_remove.name]
-
-
-# Initialize a module-level dag object, to be accessed and modified when the user construct the flow.
-__GLOBAL_DAG__ = DAG(metadata=Metadata())

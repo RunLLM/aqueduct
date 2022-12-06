@@ -2,10 +2,8 @@ import io
 import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import cloudpickle as pickle
-import numpy as np
 import pandas as pd
-from aqueduct.serialization import (
+from aqueduct.utils.serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
@@ -28,8 +26,6 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from pandas import DataFrame
-from PIL import Image
 
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"

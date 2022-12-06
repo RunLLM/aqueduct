@@ -9,15 +9,15 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.config import EngineConfig, FlowConfig
-from aqueduct.parameter_utils import create_param
+from aqueduct.models.config import EngineConfig, FlowConfig
+from aqueduct.dag.parameter_utils import create_param
 
-from aqueduct import dag, globals
+from aqueduct import globals
 
 from .artifacts.bool_artifact import BoolArtifact
-from .dag import Metadata
-from .dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
-from .enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
+from aqueduct.dag.dag import Metadata
+from aqueduct.dag.dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
+from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     InvalidIntegrationException,
     InvalidUserActionException,
@@ -27,7 +27,8 @@ from .flow import Flow
 from .github import Github
 from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import Integration, IntegrationInfo
+from .integrations.integration import Integration
+from .models.integration_info import IntegrationInfo
 from .integrations.k8s_integration import K8sIntegration
 from .integrations.lambda_integration import LambdaIntegration
 from .integrations.mongodb_integration import MongoDBIntegration
@@ -35,9 +36,9 @@ from .integrations.s3_integration import S3Integration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .logger import logger
-from .operators import ParamSpec
-from .responses import SavedObjectUpdate
-from .utils import (
+from aqueduct.models.operators import ParamSpec
+from aqueduct.backend.responses import SavedObjectUpdate
+from aqueduct.utils.utils import (
     _infer_requirements,
     construct_param_spec,
     generate_engine_config,
@@ -130,7 +131,7 @@ class Client:
         self._connected_integrations: Dict[
             str, IntegrationInfo
         ] = globals.__GLOBAL_API_CLIENT__.list_integrations()
-        self._dag = dag.__GLOBAL_DAG__
+        self._dag = globals.__GLOBAL_DAG__
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (

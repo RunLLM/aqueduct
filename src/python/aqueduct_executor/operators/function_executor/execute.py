@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils.utils import infer_artifact_type
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR

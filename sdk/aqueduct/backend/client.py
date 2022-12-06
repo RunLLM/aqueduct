@@ -4,18 +4,19 @@ from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import multipart
 import requests
-from aqueduct.dag import DAG
-from aqueduct.enums import ExecutionStatus
+from aqueduct.dag.dag import DAG
+from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.integration import Integration
+from aqueduct.models.integration_info import IntegrationInfo
 from aqueduct.logger import logger
-from aqueduct.operators import Operator, ParamSpec
-from aqueduct.responses import (
+from aqueduct.models.operators import Operator, ParamSpec
+from aqueduct.backend.responses import (
     ArtifactResult,
     DeleteWorkflowResponse,
     GetVersionResponse,
@@ -29,12 +30,12 @@ from aqueduct.responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from aqueduct.serialization import deserialize
-from aqueduct.utils import GITHUB_ISSUE_LINK, indent_multiline_string
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.utils import GITHUB_ISSUE_LINK, indent_multiline_string
 from pkg_resources import parse_version, require
 from requests_toolbelt.multipart import decoder
 
-from aqueduct import utils
+from aqueduct.utils import utils
 
 
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:

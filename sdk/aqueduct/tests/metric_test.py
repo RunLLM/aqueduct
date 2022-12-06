@@ -5,9 +5,9 @@ from unittest.mock import MagicMock
 
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.decorator import check, metric
-from aqueduct.enums import ArtifactType, SerializationType
+from aqueduct.constants.enums import ArtifactType, SerializationType
 from aqueduct.tests.utils import construct_mocked_preview, default_table_artifact
-from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
+from aqueduct.utils.utils import delete_zip_folder_and_file, generate_uuid
 
 from aqueduct import globals
 

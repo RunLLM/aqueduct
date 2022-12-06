@@ -7,11 +7,11 @@ from typing import Any, Dict, Optional, Union
 import numpy as np
 from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.dag import DAG
-from aqueduct.enums import OperatorType
+from aqueduct.dag.dag import DAG
+from aqueduct.constants.enums import OperatorType
 from aqueduct.error import ArtifactNeverComputedException
-from aqueduct.operators import get_operator_type
-from aqueduct.utils import format_header_for_print, get_description_for_check
+from aqueduct.models.operators import get_operator_type
+from aqueduct.utils.utils import format_header_for_print, get_description_for_check
 
 
 class BoolArtifact(BaseArtifact):

@@ -2,8 +2,8 @@ import json
 import uuid
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (
+from aqueduct.dag.dag import DAG, Metadata
+from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     FunctionGranularity,
@@ -16,7 +16,7 @@ from aqueduct.enums import (
     SerializationType,
     ServiceType,
 )
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     ExtractSpec,
     FunctionSpec,
     GoogleSheetsExtractParams,
@@ -31,9 +31,9 @@ from aqueduct.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from aqueduct.backend.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
-from aqueduct.utils import generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 
 def test_artifact_serialization():

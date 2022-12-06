@@ -1,7 +1,7 @@
 import base64
 import json
 
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils.utils import infer_artifact_type
 from aqueduct_executor.migrators.parameter_val_type_inference_000019 import serialize
 from aqueduct_executor.operators.utils.enums import SerializationType
 

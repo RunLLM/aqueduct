@@ -5,14 +5,14 @@ from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.config import EngineConfig
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType
+from aqueduct.models.config import EngineConfig
+from aqueduct.dag.dag import DAG
+from aqueduct.dag.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
+from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
-from aqueduct.responses import ArtifactResult
-from aqueduct.serialization import deserialize
-from aqueduct.utils import generate_engine_config, infer_artifact_type
+from aqueduct.backend.responses import ArtifactResult
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.utils import generate_engine_config, infer_artifact_type
 
 from aqueduct import globals
 

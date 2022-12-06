@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.dag.dag import DAG
+from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.operators import Operator, OperatorSpec
-from aqueduct.utils import construct_param_spec, generate_uuid, infer_artifact_type
+from aqueduct.models.operators import Operator, OperatorSpec
+from aqueduct.utils.utils import construct_param_spec, generate_uuid, infer_artifact_type
 
 
 def create_param(

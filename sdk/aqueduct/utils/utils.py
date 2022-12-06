@@ -15,21 +15,21 @@ import multipart
 import numpy as np
 import pkg_resources
 import requests
-from aqueduct.config import AirflowEngineConfig, EngineConfig, K8sEngineConfig, LambdaEngineConfig
-from aqueduct.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, ServiceType, TriggerType
+from aqueduct.models.config import AirflowEngineConfig, EngineConfig, K8sEngineConfig, LambdaEngineConfig
+from aqueduct.dag.dag import DAG, RetentionPolicy, Schedule
+from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.models.integration_info import IntegrationInfo
 from aqueduct.logger import logger
-from aqueduct.operators import Operator, ParamSpec
-from aqueduct.serialization import (
+from aqueduct.models.operators import Operator, ParamSpec
+from .serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     make_temp_dir,
     serialization_function_mapping,
     serialize_val,
 )
-from aqueduct.templates import op_file_content
+from .templates import op_file_content
 from croniter import croniter
 from pandas import DataFrame
 from PIL import Image

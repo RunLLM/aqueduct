@@ -1,4 +1,3 @@
-import base64
 import io
 import json
 import os
@@ -10,7 +9,7 @@ from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.enums import ArtifactType, SerializationType
+from aqueduct.constants.enums import ArtifactType, SerializationType
 from PIL import Image
 
 DEFAULT_ENCODING = "utf8"

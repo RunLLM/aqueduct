@@ -1,20 +1,20 @@
 from typing import List, Optional, Tuple
 
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     FunctionGranularity,
     FunctionType,
     GithubRepoConfigContentType,
 )
 from aqueduct.error import InvalidGithubQueryError
-from aqueduct.templates import DEFAULT_OP_METHOD_NAME
-from aqueduct.utils import MODEL_FILE_NAME
+from aqueduct.utils.templates import DEFAULT_OP_METHOD_NAME
+from aqueduct.utils.utils import MODEL_FILE_NAME
 
 from aqueduct import globals
 
 from .decorator import OutputArtifactFunction, wrap_spec
-from .operators import (
+from aqueduct.models.operators import (
     EntryPoint,
     FunctionSpec,
     GithubMetadata,

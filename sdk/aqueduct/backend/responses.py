@@ -2,16 +2,16 @@ import uuid
 from typing import Dict, List, Optional
 
 from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import Metadata
-from aqueduct.enums import (
+from aqueduct.dag.dag import Metadata
+from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     FailureType,
     SerializationType,
     ServiceType,
 )
-from aqueduct.operators import Operator
-from aqueduct.utils import human_readable_timestamp
+from aqueduct.models.operators import Operator
+from aqueduct.utils.utils import human_readable_timestamp
 from pydantic import BaseModel
 
 

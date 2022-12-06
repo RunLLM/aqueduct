@@ -5,8 +5,9 @@ from typing import List, Optional
 import pandas as pd
 from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (
+from aqueduct.dag.dag import DAG, Metadata
+from aqueduct import globals
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionStatus,
@@ -17,7 +18,7 @@ from aqueduct.enums import (
     SerializationType,
     ServiceType,
 )
-from aqueduct.operators import (
+from aqueduct.models.operators import (
     CheckSpec,
     ExtractSpec,
     FunctionSpec,
@@ -28,10 +29,8 @@ from aqueduct.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.responses import ArtifactResult, PreviewResponse
-from aqueduct.utils import generate_uuid
-
-from aqueduct import dag as dag_module
+from aqueduct.backend.responses import ArtifactResult, PreviewResponse
+from aqueduct.utils.utils import generate_uuid
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:
@@ -155,12 +154,12 @@ def default_table_artifact(
         inputs=[],
         outputs=[artifact_id],
     )
-    dag_module.__GLOBAL_DAG__ = _construct_dag(
+    globals.__GLOBAL_DAG__ = _construct_dag(
         operators=[op],
         artifacts=[artifact],
     )
     return TableArtifact(
-        dag=dag_module.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame()
+        dag=globals.__GLOBAL_DAG__, artifact_id=artifact_id, content=pd.DataFrame()
     )
 
 
