@@ -16,7 +16,6 @@ from aqueduct.operators import (
     OperatorSpec,
     S3LoadParams,
     UnionLoadParams,
-    get_operator_type,
 )
 from aqueduct.utils import generate_uuid
 
