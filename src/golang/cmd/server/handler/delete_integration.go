@@ -93,6 +93,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		args.integrationId,
 		h.OperatorReader,
 		h.CustomReader,
+		h.IntegrationReader,
 		h.Database,
 	)
 	if err != nil {
@@ -142,12 +143,14 @@ func validateNoActiveWorkflowOnIntegration(
 	id uuid.UUID,
 	operatorReader operator.Reader,
 	customReader queries.Reader,
+	integrationReader integration.Reader,
 	db database.Database,
 ) (int, error) {
 	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
-		CustomReader:   customReader,
-		OperatorReader: operatorReader,
-		Database:       db,
+		CustomReader:      customReader,
+		OperatorReader:    operatorReader,
+		IntegrationReader: integrationReader,
+		Database:          db,
 	}).Perform(ctx, id)
 	if err != nil {
 		return code, errors.Wrap(err, "Error getting operators on this integration.")
