@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/google/uuid"
@@ -34,7 +33,7 @@ type DAG struct {
 	Metadata *Workflow `json:"metadata"`
 	// TODO: Refactor once Operator and Artifact models are merged
 	Operators map[uuid.UUID]operator.DBOperator `json:"operators,omitempty"`
-	Artifacts map[uuid.UUID]artifact.DBArtifact `json:"artifacts,omitempty"`
+	Artifacts map[uuid.UUID]Artifact            `json:"artifacts,omitempty"`
 }
 
 // DAGCols returns a comma-separated string of all DAG columns.

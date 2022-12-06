@@ -17,6 +17,7 @@ import (
 )
 
 type Repos struct {
+	ArtifactRepo     repos.Artifact
 	DAGRepo          repos.DAG
 	DAGEdgeRepo      repos.DAGEdge
 	DAGResultRepo    repos.DAGResult
@@ -28,7 +29,6 @@ type Repos struct {
 
 type Readers struct {
 	IntegrationReader          integration.Reader
-	ArtifactReader             artifact.Reader
 	ArtifactResultReader       artifact_result.Reader
 	OperatorReader             operator.Reader
 	OperatorResultReader       operator_result.Reader
@@ -49,6 +49,7 @@ type Writers struct {
 
 func CreateRepos() *Repos {
 	return &Repos{
+		ArtifactRepo:     sqlite.NewArtifactRepo(),
 		DAGRepo:          sqlite.NewDAGRepo(),
 		DAGEdgeRepo:      sqlite.NewDAGEdgeRepo(),
 		DAGResultRepo:    sqlite.NewDAGResultRepo(),
@@ -61,11 +62,6 @@ func CreateRepos() *Repos {
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 	integrationReader, err := integration.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactReader, err := artifact.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +103,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 
 	return &Readers{
 		IntegrationReader:          integrationReader,
-		ArtifactReader:             artifactReader,
 		ArtifactResultReader:       artifactResultReader,
 		OperatorReader:             operatorReader,
 		OperatorResultReader:       operatorResultReader,
@@ -163,7 +158,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
-		ArtifactReader:             readers.ArtifactReader,
 		ArtifactResultReader:       readers.ArtifactResultReader,
 		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
@@ -174,13 +168,13 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
 		OperatorWriter:       writers.OperatorWriter,
 		OperatorResultWriter: writers.OperatorResultWriter,
-		ArtifactWriter:       writers.ArtifactWriter,
 		ArtifactResultWriter: writers.ArtifactResultWriter,
 	}
 }
 
 func GetEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
+		ArtifactRepo:     repos.ArtifactRepo,
 		DAGRepo:          repos.DAGRepo,
 		DAGEdgeRepo:      repos.DAGEdgeRepo,
 		DAGResultRepo:    repos.DAGResultRepo,

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -28,7 +27,7 @@ func SyncDAGs(
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
-	artifactReader artifact.Reader,
+	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
@@ -45,7 +44,7 @@ func SyncDAGs(
 			workflowRepo,
 			dagRepo,
 			operatorReader,
-			artifactReader,
+			artifactRepo,
 			dagEdgeRepo,
 			DB,
 		)

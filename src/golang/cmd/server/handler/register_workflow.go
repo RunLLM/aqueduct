@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -48,15 +47,14 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	ArtifactReader             artifact.Reader
 	IntegrationReader          integration.Reader
 	OperatorReader             operator.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
-	ArtifactWriter             artifact.Writer
 	OperatorWriter             operator.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
+	ArtifactRepo repos.Artifact
 	DAGRepo      repos.DAG
 	DAGEdgeRepo  repos.DAGEdge
 	WatcherRepo  repos.Watcher
@@ -201,8 +199,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		h.OperatorReader,
 		h.OperatorWriter,
 		h.DAGEdgeRepo,
-		h.ArtifactReader,
-		h.ArtifactWriter,
+		h.ArtifactRepo,
 		txn,
 	)
 	if err != nil {

@@ -137,7 +137,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
-			h.ArtifactReader,
+			h.ArtifactRepo,
 			h.DAGEdgeRepo,
 			h.Database,
 		)
@@ -153,7 +153,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
-			h.ArtifactReader,
+			h.ArtifactRepo,
 			h.DAGEdgeRepo,
 			h.DAGResultRepo,
 			h.OperatorResultWriter,
@@ -183,8 +183,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		h.OperatorReader,
 		h.OperatorWriter,
 		h.DAGEdgeRepo,
-		h.ArtifactReader,
-		h.ArtifactWriter,
+		h.ArtifactRepo,
 		txn,
 	)
 	if err != nil {
@@ -220,7 +219,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
-		h.ArtifactReader,
+		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		txn,
 	)

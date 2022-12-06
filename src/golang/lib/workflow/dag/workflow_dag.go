@@ -3,7 +3,6 @@ package dag
 import (
 	"context"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -11,6 +10,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -153,7 +153,7 @@ func NewWorkflowDag(
 	dagResultID uuid.UUID,
 	dag *models.DAG,
 	opResultWriter operator_result.Writer,
-	artifactWriter db_artifact.Writer,
+	artifactRepo repos.Artifact,
 	artifactResultWriter artifact_result.Writer,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
@@ -186,13 +186,13 @@ func NewWorkflowDag(
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
 	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
+		inputOpID := artifactIDToInputOpID[dbArtifact.ID]
 		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
 		if !ok {
 			return nil, errors.Newf("DAGs cannot currently start with an artifact.")
 		}
 
-		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(
+		artifactIDToExecPaths[dbArtifact.ID] = utils.InitializeExecOutputPaths(
 			opExecMode == operator.Preview,
 			opMetadataPath,
 		)
@@ -210,10 +210,10 @@ func NewWorkflowDag(
 	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dag.Artifacts))
 	for artifactID, dbArtifact := range dag.Artifacts {
 		newArtifact, err := artifact.NewArtifact(
-			artifactIDToSignatures[dbArtifact.Id],
+			artifactIDToSignatures[dbArtifact.ID],
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
-			artifactWriter,
+			artifactRepo,
 			artifactResultWriter,
 			&dag.StorageConfig,
 			artifactCacheManager,
@@ -228,7 +228,7 @@ func NewWorkflowDag(
 	// These artifact <-> operator maps help us remember all dag connections.
 	artifactIDToOpIDs := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactIDToOpIDs[dbArtifact.Id] = make([]uuid.UUID, 0, 1)
+		artifactIDToOpIDs[dbArtifact.ID] = make([]uuid.UUID, 0, 1)
 	}
 	opToInputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
 	opToOutputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))

@@ -17,13 +17,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 			OperatorReader:       s.OperatorReader,
 			IntegrationReader:    s.IntegrationReader,
 			IntegrationWriter:    s.IntegrationWriter,
 
-			DAGRepo: s.DAGRepo,
+			ArtifactRepo: s.ArtifactRepo,
+			DAGRepo:      s.DAGRepo,
 
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,
@@ -72,9 +72,9 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetArtifactResultRoute: &handler.GetArtifactResultHandler{
 			Database:             s.Database,
-			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 
+			ArtifactRepo:  s.ArtifactRepo,
 			DAGRepo:       s.DAGRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
@@ -101,12 +101,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			ArtifactReader: s.ArtifactReader,
 			OperatorReader: s.OperatorReader,
 
 			OperatorResultWriter: s.OperatorResultWriter,
 			ArtifactResultWriter: s.ArtifactResultWriter,
 
+			ArtifactRepo:  s.ArtifactRepo,
 			DAGRepo:       s.DAGRepo,
 			DAGEdgeRepo:   s.DAGEdgeRepo,
 			DAGResultRepo: s.DAGResultRepo,
@@ -114,11 +114,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
 			Database:             s.Database,
-			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 			OperatorReader:       s.OperatorReader,
 			OperatorResultReader: s.OperatorResultReader,
 
+			ArtifactRepo:  s.ArtifactRepo,
 			DAGRepo:       s.DAGRepo,
 			DAGEdgeRepo:   s.DAGEdgeRepo,
 			DAGResultRepo: s.DAGResultRepo,
@@ -126,10 +126,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.ListArtifactResultsRoute: &handler.ListArtifactResultsHandler{
 			Database:             s.Database,
-			ArtifactReader:       s.ArtifactReader,
 			ArtifactResultReader: s.ArtifactResultReader,
 
-			DAGRepo: s.DAGRepo,
+			ArtifactRepo: s.ArtifactRepo,
+			DAGRepo:      s.DAGRepo,
 		},
 		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
 			Database:          s.Database,
@@ -150,14 +150,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:             s.Database,
 			Vault:                s.Vault,
-			ArtifactReader:       s.ArtifactReader,
 			OperatorReader:       s.OperatorReader,
 			CustomReader:         s.CustomReader,
-			ArtifactWriter:       s.ArtifactWriter,
 			OperatorWriter:       s.OperatorWriter,
 			OperatorResultWriter: s.OperatorResultWriter,
 			ArtifactResultWriter: s.ArtifactResultWriter,
 
+			ArtifactRepo:  s.ArtifactRepo,
 			DAGRepo:       s.DAGRepo,
 			DAGEdgeRepo:   s.DAGEdgeRepo,
 			DAGResultRepo: s.DAGResultRepo,
@@ -202,8 +201,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:    s.Vault,
 
 			OperatorReader: s.OperatorReader,
-			ArtifactReader: s.ArtifactReader,
 
+			ArtifactRepo: s.ArtifactRepo,
 			DAGRepo:      s.DAGRepo,
 			DAGEdgeRepo:  s.DAGEdgeRepo,
 			WorkflowRepo: s.WorkflowRepo,
@@ -215,15 +214,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:         s.Vault,
 			Engine:        s.AqEngine,
 
-			ArtifactReader:             s.ArtifactReader,
 			IntegrationReader:          s.IntegrationReader,
 			OperatorReader:             s.OperatorReader,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 
-			ArtifactWriter:             s.ArtifactWriter,
 			OperatorWriter:             s.OperatorWriter,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
+			ArtifactRepo: s.ArtifactRepo,
 			DAGRepo:      s.DAGRepo,
 			DAGEdgeRepo:  s.DAGEdgeRepo,
 			WatcherRepo:  s.WatcherRepo,
@@ -236,13 +234,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				GithubManager: s.GithubManager,
 				Vault:         s.Vault,
 
-				ArtifactReader:    s.ArtifactReader,
 				IntegrationReader: s.IntegrationReader,
 				OperatorReader:    s.OperatorReader,
 
-				ArtifactWriter: s.ArtifactWriter,
 				OperatorWriter: s.OperatorWriter,
 
+				ArtifactRepo: s.ArtifactRepo,
 				DAGRepo:      s.DAGRepo,
 				DAGEdgeRepo:  s.DAGEdgeRepo,
 				WatcherRepo:  s.WatcherRepo,

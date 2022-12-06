@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -44,10 +43,10 @@ type ListArtifactResultsHandler struct {
 	GetHandler
 
 	Database             database.Database
-	ArtifactReader       db_artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 
-	DAGRepo repos.DAG
+	ArtifactRepo repos.Artifact
+	DAGRepo      repos.DAG
 }
 
 func (*ListArtifactResultsHandler) Name() string {
@@ -81,17 +80,17 @@ func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, e
 
 func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listArtifactResultsArgs)
-	artfId := args.ArtifactId
-	wfId := args.WorkflowId
+	artfID := args.ArtifactId
+	wfID := args.WorkflowId
 
 	emptyResponse := listArtifactResultsResponse{}
 
-	artf, err := h.ArtifactReader.GetArtifact(ctx, artfId, h.Database)
+	artf, err := h.ArtifactRepo.Get(ctx, artfID, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact.")
 	}
 
-	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactNameAndWorkflowId(ctx, wfId, artf.Name, h.Database)
+	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactNameAndWorkflowId(ctx, wfID, artf.Name, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -28,8 +27,7 @@ func WriteDAGToDatabase(
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
 	dagEdgeRepo repos.DAGEdge,
-	artifactReader artifact.Reader,
-	artifactWriter artifact.Writer,
+	artifactRepo repos.Artifact,
 	DB database.Database,
 ) (uuid.UUID, error) {
 	exists, err := workflowRepo.Exists(ctx, dag.WorkflowID, DB)
@@ -72,14 +70,14 @@ func WriteDAGToDatabase(
 	localArtifactIdToDbArtifactId := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
 
 	for id, artifact := range dag.Artifacts {
-		exists, err := artifactReader.Exists(ctx, id, DB)
+		exists, err := artifactRepo.Exists(ctx, id, DB)
 		if err != nil {
 			return uuid.Nil, errors.Wrap(err, "Unable to check if artifact exists in database.")
 		}
 
 		dbArtifactId := id
 		if !exists {
-			dbArtifact, err := artifactWriter.CreateArtifact(
+			dbArtifact, err := artifactRepo.Create(
 				ctx,
 				artifact.Name,
 				artifact.Description,
@@ -90,10 +88,10 @@ func WriteDAGToDatabase(
 				return uuid.Nil, errors.Wrap(err, "Unable to create artifact in the database.")
 			}
 
-			dbArtifactId = dbArtifact.Id
+			dbArtifactId = dbArtifact.ID
 		}
 
-		localArtifactIdToDbArtifactId[artifact.Id] = dbArtifactId
+		localArtifactIdToDbArtifactId[artifact.ID] = dbArtifactId
 	}
 
 	for id, operator := range dag.Operators {
@@ -166,7 +164,7 @@ func ReadDAGFromDatabase(
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
-	artifactReader artifact.Reader,
+	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
 ) (*models.DAG, error) {
@@ -183,7 +181,7 @@ func ReadDAGFromDatabase(
 	dag.Metadata = workflow
 
 	dag.Operators = make(map[uuid.UUID]operator.DBOperator)
-	dag.Artifacts = make(map[uuid.UUID]artifact.DBArtifact)
+	dag.Artifacts = make(map[uuid.UUID]models.Artifact)
 
 	// Populate nodes for operators and artifacts.
 	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.ID, DB)
@@ -202,13 +200,13 @@ func ReadDAGFromDatabase(
 		dag.Operators[op.Id] = op
 	}
 
-	artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.ID, DB)
+	artifacts, err := artifactRepo.GetByDAG(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read artifacts from the database.")
 	}
 
 	for _, artifact := range artifacts {
-		dag.Artifacts[artifact.Id] = artifact
+		dag.Artifacts[artifact.ID] = artifact
 	}
 
 	// Populate edges for operators and artifacts.
@@ -252,7 +250,7 @@ func ReadLatestDAGFromDatabase(
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
-	artifactReader artifact.Reader,
+	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
 ) (*models.DAG, error) {
@@ -267,7 +265,7 @@ func ReadLatestDAGFromDatabase(
 		workflowRepo,
 		dagRepo,
 		operatorReader,
-		artifactReader,
+		artifactRepo,
 		dagEdgeRepo,
 		DB,
 	)
@@ -288,8 +286,7 @@ func UpdateWorkflowDagToLatest(
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
 	dagEdgeRepo repos.DAGEdge,
-	artifactReader artifact.Reader,
-	artifactWriter artifact.Writer,
+	artifactRepo repos.Artifact,
 	DB database.Database,
 ) (*models.DAG, error) {
 	operatorsToReplace := make([]operator.DBOperator, 0, len(dag.Operators))
@@ -329,8 +326,7 @@ func UpdateWorkflowDagToLatest(
 		operatorReader,
 		operatorWriter,
 		dagEdgeRepo,
-		artifactReader,
-		artifactWriter,
+		artifactRepo,
 		DB,
 	)
 	if err != nil {
@@ -343,7 +339,7 @@ func UpdateWorkflowDagToLatest(
 		workflowRepo,
 		dagRepo,
 		operatorReader,
-		artifactReader,
+		artifactRepo,
 		dagEdgeRepo,
 		DB,
 	)
