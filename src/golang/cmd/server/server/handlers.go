@@ -31,6 +31,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
 			Database:                   s.Database,
 			Vault:                      s.Vault,
+			CustomReader:               s.CustomReader,
 			OperatorReader:             s.OperatorReader,
 			IntegrationReader:          s.IntegrationReader,
 			IntegrationWriter:          s.IntegrationWriter,
@@ -43,9 +44,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			OperatorReader:    s.OperatorReader,
-			IntegrationReader: s.IntegrationReader,
-			WorkflowReader:    s.WorkflowReader,
+			OperatorReader:             s.OperatorReader,
+			IntegrationReader:          s.IntegrationReader,
+			WorkflowReader:             s.WorkflowReader,
+			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
+			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:          s.Database,
@@ -133,9 +136,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowReader:     s.WorkflowReader,
 		},
 		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
-			CustomReader:   s.CustomReader,
+			Database:          s.Database,
+			OperatorReader:    s.OperatorReader,
+			CustomReader:      s.CustomReader,
+			IntegrationReader: s.IntegrationReader,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:                s.Database,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
@@ -45,9 +46,10 @@ type listOperatorsForIntegrationResponse struct {
 type ListOperatorsForIntegrationHandler struct {
 	GetHandler
 
-	Database       database.Database
-	CustomReader   queries.Reader
-	OperatorReader operator.Reader
+	Database          database.Database
+	CustomReader      queries.Reader
+	OperatorReader    operator.Reader
+	IntegrationReader integration.Reader
 }
 
 func (*ListOperatorsForIntegrationHandler) Name() string {
@@ -67,8 +69,21 @@ func (*ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	integrationId := interfaceArgs.(uuid.UUID)
 
+	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, integrationId, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve integration.")
+	}
+
+	var operators []operator.DBOperator
+
 	// Fetch all operators on this integration.
-	operators, err := h.OperatorReader.GetOperatorsByIntegrationId(ctx, integrationId, h.Database)
+	if integrationObject.Service == integration.Conda {
+		operators, err = h.OperatorReader.GetOperatorsWithCondaEnv(ctx, h.Database)
+	} else {
+		// TODO (ENG-2068): current implementation only works for data integrations.
+		// We should fix this to work against compute integrations as well.
+		operators, err = h.OperatorReader.GetOperatorsByDataIntegrationId(ctx, integrationId, h.Database)
+	}
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}

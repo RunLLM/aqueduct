@@ -25,7 +25,7 @@ func newSqliteWriter() Writer {
 	return &sqliteWriterImpl{standardWriterImpl{}}
 }
 
-func (r *sqliteReaderImpl) GetOperatorsByIntegrationId(
+func (r *sqliteReaderImpl) GetOperatorsByDataIntegrationId(
 	ctx context.Context,
 	integrationId uuid.UUID,
 	db database.Database,

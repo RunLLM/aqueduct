@@ -281,7 +281,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	}
 
-	// Check unused Conda environments and garbage collect them.
+	// Check unused conda environments and garbage collect them.
 	go func() {
 		db, err := database.NewDatabase(h.Database.Config())
 		if err != nil {

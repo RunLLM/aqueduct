@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -38,6 +39,7 @@ type DeleteIntegrationHandler struct {
 
 	Database                   database.Database
 	Vault                      vault.Vault
+	CustomReader               queries.Reader
 	OperatorReader             operator.Reader
 	IntegrationReader          integration.Reader
 	IntegrationWriter          integration.Writer
@@ -76,15 +78,6 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
 	}
 
-	// Fetch all operators on this integration.
-	operators, err := h.OperatorReader.GetOperatorsByIntegrationId(r.Context(), integrationId, h.Database)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
-	}
-	if len(operators) > 0 {
-		return nil, http.StatusBadRequest, errors.New("Unable to delete because the integration is in use.")
-	}
-
 	return &deleteIntegrationArgs{
 		AqContext:     aqContext,
 		integrationId: integrationId,
@@ -94,6 +87,18 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
+
+	code, err := validateNoActiveWorkflowOnIntegration(
+		ctx,
+		args.integrationId,
+		h.OperatorReader,
+		h.CustomReader,
+		h.IntegrationReader,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, code, err
+	}
 
 	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, args.integrationId, h.Database)
 	if err != nil {
@@ -127,6 +132,43 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	return emptyResp, http.StatusOK, nil
+}
+
+// validateNoActiveWorkflowOnIntegration
+// verifies there's no active workflow using the integration given the integration ID.
+// It errors if there's any error occurred and passes if there's indeed no active workflow
+// using that integration.
+func validateNoActiveWorkflowOnIntegration(
+	ctx context.Context,
+	id uuid.UUID,
+	operatorReader operator.Reader,
+	customReader queries.Reader,
+	integrationReader integration.Reader,
+	db database.Database,
+) (int, error) {
+	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
+		CustomReader:      customReader,
+		OperatorReader:    operatorReader,
+		IntegrationReader: integrationReader,
+		Database:          db,
+	}).Perform(ctx, id)
+	if err != nil {
+		return code, errors.Wrap(err, "Error getting operators on this integration.")
+	}
+
+	operatorsOnIntegrationResp, ok := interfaceResp.(listOperatorsForIntegrationResponse)
+	if !ok {
+		return http.StatusInternalServerError, errors.New("Error getting operators on this integration.")
+	}
+
+	operatorsOnIntegration := operatorsOnIntegrationResp.OperatorWithIds
+	for _, opState := range operatorsOnIntegration {
+		if opState.IsActive {
+			return http.StatusBadRequest, errors.New("We cannot delete this integration. There are still active workflows using it.")
+		}
+	}
+
+	return http.StatusOK, nil
 }
 
 // cleanUpIntegration deletes any side effects of an integration

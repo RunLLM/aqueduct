@@ -60,7 +60,7 @@ func (r *postgresReaderImpl) GetLoadOperatorsForWorkflowAndIntegration(
 	return operators, err
 }
 
-func (r *postgresReaderImpl) GetOperatorsByIntegrationId(
+func (r *postgresReaderImpl) GetOperatorsByDataIntegrationId(
 	ctx context.Context,
 	integrationId uuid.UUID,
 	db database.Database,
