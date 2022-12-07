@@ -70,12 +70,12 @@ type getArtifactResultResponse struct {
 type GetArtifactResultHandler struct {
 	GetHandler
 
-	Database             database.Database
-	ArtifactResultReader artifact_result.Reader
+	Database database.Database
 
-	ArtifactRepo  repos.Artifact
-	DAGRepo       repos.DAG
-	DAGResultRepo repos.DAGResult
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGResultRepo      repos.DAGResult
 }
 
 func (*GetArtifactResultHandler) Name() string {
@@ -190,10 +190,10 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	execState := shared.ExecutionState{}
-	dbArtifactResult, err := h.ArtifactResultReader.GetArtifactResultByWorkflowDagResultIdAndArtifactId(
+	dbArtifactResult, err := h.ArtifactResultRepo.GetByArtifactAndDAGResult(
 		ctx,
-		args.dagResultID,
 		args.artifactID,
+		args.dagResultID,
 		h.Database,
 	)
 	if err != nil {

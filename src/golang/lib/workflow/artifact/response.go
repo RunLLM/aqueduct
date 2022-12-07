@@ -45,11 +45,11 @@ type ResultResponse struct {
 }
 
 func NewRawResultResponseFromDbObject(
-	dbArtifactResult *artifact_result.ArtifactResult,
+	dbArtifactResult *models.ArtifactResult,
 	content *string,
 ) *RawResultResponse {
 	resultResp := &RawResultResponse{
-		Id:                dbArtifactResult.Id,
+		Id:                dbArtifactResult.ID,
 		SerializationType: dbArtifactResult.Metadata.SerializationType,
 		ContentPath:       dbArtifactResult.ContentPath,
 		ContentSerialized: content,
@@ -66,7 +66,7 @@ func NewRawResultResponseFromDbObject(
 
 func NewResultResponseFromDbObjects(
 	dbArtifact *models.Artifact,
-	dbArtifactResult *artifact_result.ArtifactResult,
+	dbArtifactResult *models.ArtifactResult,
 	content *string,
 	from uuid.UUID,
 	to []uuid.UUID,

@@ -86,7 +86,7 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(
 		operatorResultIds = append(operatorResultIds, operatorResult.Id)
 	}
 
-	artifactResultsToDelete, err := ex.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
+	artifactResultsToDelete, err := ex.ArtifactResultRepo.GetByDAGResults(
 		ctx,
 		dagResultIDs,
 		txn,
@@ -95,9 +95,9 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving artifact results.")
 	}
 
-	artifactResultIds := make([]uuid.UUID, 0, len(artifactResultsToDelete))
+	artifactResultIDs := make([]uuid.UUID, 0, len(artifactResultsToDelete))
 	for _, artifactResult := range artifactResultsToDelete {
-		artifactResultIds = append(artifactResultIds, artifactResult.Id)
+		artifactResultIDs = append(artifactResultIDs, artifactResult.ID)
 	}
 
 	// Do the deleting
@@ -106,7 +106,7 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(
 		return errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
 	}
 
-	err = ex.ArtifactResultWriter.DeleteArtifactResults(ctx, artifactResultIds, txn)
+	err = ex.ArtifactResultRepo.DeleteBatch(ctx, artifactResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	}

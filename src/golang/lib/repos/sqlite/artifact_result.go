@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -60,7 +61,12 @@ func (*artifactResultReader) GetByArtifact(ctx context.Context, artifactID uuid.
 	return getArtifactResults(ctx, DB, query, args...)
 }
 
-func (*artifactResultReader) GetByArtifactAndWorkflow(ctx context.Context, workflowID uuid.UUID, artifactName string, DB database.Database) ([]models.ArtifactResult, error) {
+func (*artifactResultReader) GetByArtifactNameAndWorkflow(
+	ctx context.Context,
+	artifactName string,
+	workflowID uuid.UUID,
+	DB database.Database,
+) ([]models.ArtifactResult, error) {
 	query := fmt.Sprintf(
 		`SELECT DISTINCT %s FROM artifact_result, artifact, workflow_dag, workflow_dag_edge
 		WHERE workflow_dag.workflow_id = $1
@@ -78,13 +84,20 @@ func (*artifactResultReader) GetByArtifactAndWorkflow(ctx context.Context, workf
 	return getArtifactResults(ctx, DB, query, args...)
 }
 
-func (*artifactResultReader) GetByArtifactAndDAGResult(ctx context.Context, dagResultID uuid.UUID, artifactID uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) {
+func (*artifactResultReader) GetByArtifactAndDAGResult(
+	ctx context.Context,
+	artifactID uuid.UUID,
+	dagResultID uuid.UUID,
+	DB database.Database,
+) (*models.ArtifactResult, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM artifact_result WHERE workflow_dag_result_id = $1 AND artifact_id = $2;`,
+		`SELECT %s 
+		FROM artifact_result 
+		WHERE workflow_dag_result_id = $1 AND artifact_id = $2;`,
 		models.ArtifactResultCols(),
 	)
 	args := []interface{}{dagResultID, artifactID}
-	return getArtifactResults(ctx, DB, query, args...)
+	return getArtifactResult(ctx, DB, query, args...)
 }
 
 func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) {
@@ -135,7 +148,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	artifactID uuid.UUID,
 	contentPath string,
 	execState *shared.ExecutionState,
-	metadata *shared.ArtifactResultMetadata,
+	metadata *artifact_result.Metadata,
 	DB database.Database,
 ) (*models.ArtifactResult, error) {
 	cols := []string{

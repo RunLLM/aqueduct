@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -30,7 +29,7 @@ func MigrateStorageAndVault(
 	orgID string,
 	dagRepo repos.DAG,
 	artifactRepo repos.Artifact,
-	artifactResultReader artifact_result.Reader,
+	artifactResultRepo repos.ArtifactResult,
 	operatorReader operator.Reader,
 	integrationReader integration.Reader,
 	DB database.Database,
@@ -74,7 +73,7 @@ func MigrateStorageAndVault(
 		}
 
 		for _, artifact := range artifacts {
-			artifactResults, err := artifactResultReader.GetArtifactResultsByArtifactId(ctx, artifact.ID, txn)
+			artifactResults, err := artifactResultRepo.GetByArtifact(ctx, artifact.ID, txn)
 			if err != nil {
 				return err
 			}

@@ -50,7 +50,6 @@ type AqueductTimeConfig struct {
 type EngineReaders struct {
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
-	ArtifactResultReader       artifact_result.Reader
 	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 }
@@ -58,18 +57,18 @@ type EngineReaders struct {
 type EngineWriters struct {
 	OperatorWriter       operator_db.Writer
 	OperatorResultWriter operator_result.Writer
-	ArtifactResultWriter artifact_result.Writer
 }
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
-	ArtifactRepo     repos.Artifact
-	DAGRepo          repos.DAG
-	DAGEdgeRepo      repos.DAGEdge
-	DAGResultRepo    repos.DAGResult
-	NotificationRepo repos.Notification
-	WatcherRepo      repos.Watcher
-	WorkflowRepo     repos.Workflow
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	NotificationRepo   repos.Notification
+	WatcherRepo        repos.Watcher
+	WorkflowRepo       repos.Workflow
 }
 
 type aqEngine struct {
@@ -298,7 +297,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dbDAG,
 		eng.OperatorResultWriter,
 		eng.ArtifactRepo,
-		eng.ArtifactResultWriter,
+		eng.ArtifactResultRepo,
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
@@ -383,7 +382,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		dbDAG,
 		eng.OperatorResultWriter,
 		eng.ArtifactRepo,
-		eng.ArtifactResultWriter,
+		eng.ArtifactResultRepo,
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
@@ -551,7 +550,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		operatorResultIds = append(operatorResultIds, operatorResult.Id)
 	}
 
-	artifactResultsToDelete, err := eng.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
+	artifactResultsToDelete, err := eng.ArtifactResultRepo.GetByDAGResults(
 		ctx,
 		dagResultIDs,
 		txn,
@@ -560,9 +559,9 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving artifact results.")
 	}
 
-	artifactResultIds := make([]uuid.UUID, 0, len(artifactResultsToDelete))
+	artifactResultIDs := make([]uuid.UUID, 0, len(artifactResultsToDelete))
 	for _, artifactResult := range artifactResultsToDelete {
-		artifactResultIds = append(artifactResultIds, artifactResult.Id)
+		artifactResultIDs = append(artifactResultIDs, artifactResult.ID)
 	}
 
 	// Start deleting database records.
@@ -576,7 +575,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
 	}
 
-	err = eng.ArtifactResultWriter.DeleteArtifactResults(ctx, artifactResultIds, txn)
+	err = eng.ArtifactResultRepo.DeleteBatch(ctx, artifactResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	}
@@ -616,7 +615,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	// Delete storage files (artifact content and function files)
-	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIds))
+	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
 		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
