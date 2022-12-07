@@ -570,6 +570,11 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
+            if len(input_artifacts) == 0:
+                raise InvalidUserArgumentException(
+                    "Metrics must have an input. Did you forget to call this metric on an artifact?"
+                )
+
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
                 func_params=inspect.signature(func).parameters,
@@ -712,6 +717,11 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if len(input_artifacts) == 0:
+                raise InvalidUserArgumentException(
+                    "Check must have an input. Did you forget to call this check on an artifact?"
+                )
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
