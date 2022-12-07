@@ -56,8 +56,11 @@ type operatorReader interface {
 	// organization's Workflows.
 	GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error)
 
+	// GetRelationBatch returns an OperatorRelation for each Operator in IDs.
+	GetRelationBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorRelation, error)
+
 	// ValidateOrg returns whether the Operator was created by the specified organization.
-	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
 
 type operatorWriter interface {

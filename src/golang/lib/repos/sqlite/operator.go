@@ -217,8 +217,57 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	return specs, err
 }
 
-func (*operatorReader) ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error) {
-	return utils.ValidateNodeOwnership(ctx, orgID, operatorId, DB)
+func (*operatorReader) GetRelationBatch(
+	ctx context.Context,
+	IDs []uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorRelation, error) {
+	// Given a list of `operatorIds`, find all workflow DAGs that has the id in the
+	// `from_id` or `to_id` field.
+	query := fmt.Sprintf(
+		`
+		SELECT
+			workflow.id as workflow_id,
+			workflow_dag.id as workflow_dag_id,
+			workflow_dag_edge.from_id as operator_id
+		FROM
+			workflow,
+			workflow_dag,
+			workflow_dag_edge 
+		WHERE 
+			workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.from_id IN (%s)
+		UNION
+		SELECT
+			workflow.id as workflow_id,
+			workflow_dag.id as workflow_dag_id,
+			workflow_dag_edge.to_id as operator_id
+		FROM
+			workflow,
+			workflow_dag,
+			workflow_dag_edge 
+		WHERE 
+			workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.to_id IN (%s)
+		`,
+		shared.OperatorToArtifactDAGEdge,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+		shared.ArtifactToOperatorDAGEdge,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+
+	var relations []views.OperatorRelation
+	err := DB.Query(ctx, &relations, query, args...)
+	return relations, err
+}
+
+func (*operatorReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
+	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
 }
 
 func (*operatorWriter) Create(

@@ -28,3 +28,11 @@ type LoadOperatorSpec struct {
 	WorkflowID   uuid.UUID     `db:"workflow_id" json:"workflow_id"`
 	Spec         operator.Spec `db:"spec" json:"spec"`
 }
+
+// OperatorRelation is a wrapper around an Operator's ID and the IDs of
+// the Workflow and DAG it is associated to.
+type OperatorRelation struct {
+	WorkflowID uuid.UUID `db:"workflow_id" json:"workflow_id"`
+	DagID      uuid.UUID `db:"workflow_dag_id" json:"workflow_dag_id"`
+	OperatorID uuid.UUID `db:"operator_id" json:"operator_id"`
+}
