@@ -5,9 +5,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/dropbox/godropbox/errors"
@@ -17,26 +17,20 @@ import (
 func CreateTestAccount(
 	ctx context.Context,
 	s *AqServer,
-	auth0Id string,
-	email string,
-	role string,
 	apiKey string,
-	organizationId string,
-) (*user.User, error) {
+	orgID string,
+) (*models.User, error) {
 	// Check if test user already exists
-	testUser, err := s.UserReader.GetUserFromApiKey(context.Background(), apiKey, s.Database)
+	testUser, err := s.UserRepo.GetByAPIKey(ctx, apiKey, s.Database)
 	if err != nil && err != database.ErrNoRows {
 		return nil, errors.Newf("Unable to check if test account exists: %v", err)
 	}
 
 	if err == database.ErrNoRows {
 		// Create a test user to perform actions from SDK.
-		testUser, err = s.UserWriter.CreateUserWithApiKey(
-			context.Background(),
-			email,
-			organizationId,
-			role,
-			auth0Id,
+		testUser, err = s.UserRepo.Create(
+			ctx,
+			orgID,
 			apiKey,
 			s.Database,
 		)
@@ -73,7 +67,7 @@ func CheckBuiltinIntegration(ctx context.Context, s *AqServer, organizationId st
 // user's organization. It returns an error, if any.
 func ConnectBuiltinIntegration(
 	ctx context.Context,
-	userObject *user.User,
+	user *models.User,
 	integrationWriter integration.Writer,
 	db database.Database,
 	vaultObject vault.Vault,
@@ -85,8 +79,8 @@ func ConnectBuiltinIntegration(
 		ctx,
 		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{
-				User:      *userObject,
-				RequestId: uuid.New().String(),
+				User:      *user,
+				RequestID: uuid.New().String(),
 			},
 			Name:     integration.DemoDbIntegrationName,
 			Service:  serviceType,

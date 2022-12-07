@@ -101,7 +101,7 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 	}
 
 	// Save CSV
-	contentPath := fmt.Sprintf("create-table-content-%s", args.RequestId)
+	contentPath := fmt.Sprintf("create-table-content-%s", args.RequestID)
 	csvStorage := storage.NewStorage(args.StorageConfig)
 	if err := csvStorage.Put(ctx, contentPath, args.csv); err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Cannot save CSV.")
@@ -138,7 +138,7 @@ func CreateTable(
 	jobManager job.JobManager,
 ) (int, error) {
 	// Schedule load table job
-	jobMetadataPath := fmt.Sprintf("create-table-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("create-table-%s", args.RequestID)
 
 	jobName := fmt.Sprintf("create-table-operator-%s", uuid.New().String())
 

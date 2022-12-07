@@ -86,8 +86,8 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -120,9 +120,9 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 
-	operatorMetadataPath := fmt.Sprintf("operator-metadata-%s", args.RequestId)
-	artifactMetadataPath := fmt.Sprintf("artifact-metadata-%s", args.RequestId)
-	artifactContentPath := fmt.Sprintf("artifact-content-%s", args.RequestId)
+	operatorMetadataPath := fmt.Sprintf("operator-metadata-%s", args.RequestID)
+	artifactMetadataPath := fmt.Sprintf("artifact-metadata-%s", args.RequestID)
+	artifactContentPath := fmt.Sprintf("artifact-content-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for preview table data

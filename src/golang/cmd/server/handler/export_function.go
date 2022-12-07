@@ -83,7 +83,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	ok, err := h.OperatorReader.ValidateOperatorOwnership(
 		r.Context(),
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		operatorId,
 		h.Database,
 	)

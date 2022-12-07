@@ -97,7 +97,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			ArtifactReader:          s.ArtifactReader,
 			OperatorReader:          s.OperatorReader,
-			UserReader:              s.UserReader,
 			WorkflowReader:          s.WorkflowReader,
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
@@ -114,7 +113,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactResultReader:    s.ArtifactResultReader,
 			OperatorReader:          s.OperatorReader,
 			OperatorResultReader:    s.OperatorResultReader,
-			UserReader:              s.UserReader,
 			WorkflowReader:          s.WorkflowReader,
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
@@ -144,7 +142,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:                s.Database,
 			Vault:                   s.Vault,
-			UserReader:              s.UserReader,
 			ArtifactReader:          s.ArtifactReader,
 			OperatorReader:          s.OperatorReader,
 			WorkflowReader:          s.WorkflowReader,
@@ -249,7 +246,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagReader:       s.WorkflowDagReader,
 			WorkflowDagEdgeReader:   s.WorkflowDagEdgeReader,
 			WorkflowDagResultReader: s.WorkflowDagResultReader,
-			UserReader:              s.UserReader,
 
 			WorkflowDagResultWriter: s.WorkflowDagResultWriter,
 			OperatorResultWriter:    s.OperatorResultWriter,
@@ -257,8 +253,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			NotificationWriter:      s.NotificationWriter,
 		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
-			Database:   s.Database,
-			UserWriter: s.UserWriter,
+			Database: s.Database,
+			UserRepo: s.UserRepo,
 		},
 		routes.TestIntegrationRoute: &handler.TestIntegrationHandler{
 			Database:          s.Database,

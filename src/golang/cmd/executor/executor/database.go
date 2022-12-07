@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -16,6 +15,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 )
 
 type Readers struct {
@@ -24,7 +25,6 @@ type Readers struct {
 	OperatorReader             operator.Reader
 	ArtifactReader             artifact.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
-	UserReader                 user.Reader
 	IntegrationReader          integration.Reader
 	WorkflowDagResultReader    workflow_dag_result.Reader
 	OperatorResultReader       operator_result.Reader
@@ -45,7 +45,11 @@ type Writers struct {
 	NotificationWriter      notification.Writer
 }
 
-func CreateReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
+type Repos struct {
+	DAGResultRepo repos.DAGResult
+}
+
+func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 	workflowReader, err := workflow.NewReader(dbConf)
 	if err != nil {
 		return nil, err
@@ -67,11 +71,6 @@ func CreateReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 	}
 
 	workflowDagEdgeReader, err := workflow_dag_edge.NewReader(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
-	userReader, err := user.NewReader(dbConf)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +106,6 @@ func CreateReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 		OperatorReader:             operatorReader,
 		ArtifactReader:             artifactReader,
 		WorkflowDagEdgeReader:      workflowDagEdgeReader,
-		UserReader:                 userReader,
 		IntegrationReader:          integrationReader,
 		WorkflowDagResultReader:    workflowDagResultReader,
 		OperatorResultReader:       operatorResultReader,
@@ -116,7 +114,7 @@ func CreateReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 	}, nil
 }
 
-func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
+func createWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 	workflowWriter, err := workflow.NewWriter(dbConf)
 	if err != nil {
 		return nil, err
@@ -181,7 +179,13 @@ func CreateWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 	}, nil
 }
 
-func GetEngineReaders(readers *Readers) *engine.EngineReaders {
+func createRepos() *Repos {
+	return &Repos{
+		DAGResultRepo: sqlite.NewDAGResultRepo(),
+	}
+}
+
+func getEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
 		WorkflowReader:             readers.WorkflowReader,
 		WorkflowDagReader:          readers.WorkflowDagReader,
@@ -191,13 +195,12 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 		OperatorResultReader:       readers.OperatorResultReader,
 		ArtifactReader:             readers.ArtifactReader,
 		ArtifactResultReader:       readers.ArtifactResultReader,
-		UserReader:                 readers.UserReader,
 		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
 }
 
-func GetEngineWriters(writers *Writers) *engine.EngineWriters {
+func getEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
 		WorkflowWriter:          writers.WorkflowWriter,
 		WorkflowDagWriter:       writers.WorkflowDagWriter,
@@ -209,5 +212,11 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 		ArtifactWriter:          writers.ArtifactWriter,
 		ArtifactResultWriter:    writers.ArtifactResultWriter,
 		NotificationWriter:      writers.NotificationWriter,
+	}
+}
+
+func getEngineRepos(repos *Repos) *engine.Repos {
+	return &engine.Repos{
+		DAGResultRepo: repos.DAGResultRepo,
 	}
 }

@@ -79,7 +79,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	ok, err := h.OperatorReader.ValidateOperatorOwnership(
 		r.Context(),
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		operatorId,
 		h.Database,
 	)

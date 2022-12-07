@@ -56,7 +56,7 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -77,7 +77,7 @@ func (h *UnwatchWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	response := response.EmptyResponse{}
 
-	err := h.WorkflowWatcherWriter.DeleteWorkflowWatcher(ctx, args.workflowId, args.Id, h.Database)
+	err := h.WorkflowWatcherWriter.DeleteWorkflowWatcher(ctx, args.workflowId, args.ID, h.Database)
 	if err != nil {
 		return response, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while updating the database.")
 	}

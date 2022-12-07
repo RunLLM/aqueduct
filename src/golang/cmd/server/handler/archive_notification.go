@@ -53,7 +53,7 @@ func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int,
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed notification ID.")
 	}
 
-	ok, err := h.NotificationReader.ValidateNotificationOwnership(r.Context(), notificationId, aqContext.Id, h.Database)
+	ok, err := h.NotificationReader.ValidateNotificationOwnership(r.Context(), notificationId, aqContext.ID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during notification ownership validation.")
 	}
@@ -64,7 +64,7 @@ func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int,
 
 	return &archiveNotificationArgs{
 		notificationId: notificationId,
-		userId:         aqContext.Id,
+		userId:         aqContext.ID,
 	}, http.StatusOK, nil
 }
 

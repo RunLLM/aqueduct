@@ -163,8 +163,8 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
 		r.Context(),
 		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -250,7 +250,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		staticConfig,
 		integrationObject.Service,
 		h.JobManager,

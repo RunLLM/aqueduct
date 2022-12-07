@@ -91,7 +91,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		aqContext.Id,
+		aqContext.ID,
 		h.GithubManager,
 		aqContext.StorageConfig,
 	)
@@ -102,8 +102,8 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -165,7 +165,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	execEnvByOpId, status, err := setupExecEnv(
 		ctx,
-		args.Id,
+		args.ID,
 		args.dagSummary,
 		h.IntegrationReader,
 		h.ExecutionEnvironmentReader,

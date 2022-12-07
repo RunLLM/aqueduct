@@ -145,7 +145,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	statusCode, err := ValidatePrerequisites(
 		ctx,
 		args.Service,
-		args.Id,
+		args.ID,
 		h.IntegrationReader,
 		h.Database,
 	)
@@ -156,7 +156,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	// Validate integration config
 	statusCode, err = ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		args.Config,
 		args.Service,
 		h.JobManager,
@@ -209,7 +209,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				context.Background(),
 				args.Service,
 				args.Config,
-				args.OrganizationId,
+				args.OrgID,
 				h.WorkflowDagReader,
 				h.WorkflowDagWriter,
 				h.ArtifactReader,
@@ -244,8 +244,8 @@ func ConnectIntegration(
 		// This is a user-specific integration
 		integrationObject, err = integrationWriter.CreateIntegrationForUser(
 			ctx,
-			args.OrganizationId,
-			args.Id,
+			args.OrgID,
+			args.ID,
 			args.Service,
 			args.Name,
 			(*postgres_utils.Config)(&publicConfig),
@@ -255,7 +255,7 @@ func ConnectIntegration(
 	} else {
 		integrationObject, err = integrationWriter.CreateIntegration(
 			ctx,
-			args.OrganizationId,
+			args.OrgID,
 			args.Service,
 			args.Name,
 			(*postgres_utils.Config)(&publicConfig),

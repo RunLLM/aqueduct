@@ -109,7 +109,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -144,8 +144,8 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		integrationObject, err := h.IntegrationReader.GetIntegrationByNameAndUser(
 			ctx,
 			integrationName,
-			args.AqContext.Id,
-			args.AqContext.OrganizationId,
+			args.AqContext.ID,
+			args.AqContext.OrgID,
 			h.Database,
 		)
 		if err != nil {
@@ -232,10 +232,10 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
 	// Schedule delete written objects job
-	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestID)
 
 	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
-	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
+	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for delete saved objects job metadata

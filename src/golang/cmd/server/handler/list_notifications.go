@@ -66,7 +66,7 @@ func (h *ListNotificationsHandler) Perform(ctx context.Context, interfaceArgs in
 	// This API can be extended in future to handle reading notifications with other types, or status.
 	notifications, err := h.NotificationReader.GetNotificationByReceiver(
 		ctx,
-		args.Id,
+		args.ID,
 		notification.UnreadStatus,
 		h.Database,
 	)

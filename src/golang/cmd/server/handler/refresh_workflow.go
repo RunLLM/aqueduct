@@ -79,7 +79,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {

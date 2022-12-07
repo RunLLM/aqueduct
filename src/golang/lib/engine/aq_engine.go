@@ -16,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
@@ -27,6 +26,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -59,7 +59,6 @@ type EngineReaders struct {
 	OperatorResultReader       operator_result.Reader
 	ArtifactReader             artifact_db.Reader
 	ArtifactResultReader       artifact_result.Reader
-	UserReader                 user.Reader
 	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 }
@@ -77,6 +76,11 @@ type EngineWriters struct {
 	NotificationWriter      notification.Writer
 }
 
+// Repos contains the repos needed by the Engine
+type Repos struct {
+	DAGResultRepo repos.DAGResult
+}
+
 type aqEngine struct {
 	Database       database.Database
 	GithubManager  github.Manager
@@ -90,6 +94,7 @@ type aqEngine struct {
 	// Readers and Writers needed for workflow management
 	*EngineReaders
 	*EngineWriters
+	*Repos
 }
 
 type workflowRunMetadata struct {
@@ -122,6 +127,7 @@ func NewAqEngine(
 	aqPath string,
 	engineReaders *EngineReaders,
 	engineWriters *EngineWriters,
+	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
@@ -134,6 +140,7 @@ func NewAqEngine(
 		AqPath:              aqPath,
 		EngineReaders:       engineReaders,
 		EngineWriters:       engineWriters,
+		Repos:               repos,
 	}, nil
 }
 
@@ -215,16 +222,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 			execState.Timestamps.FinishedAt = &now
 		}
 
-		workflow_utils.UpdateWorkflowDagResultMetadata(
+		if updateErr := workflow_utils.UpdateDAGResultMetadata(
 			ctx,
 			dbWorkflowDagResult.Id,
 			execState,
-			eng.WorkflowDagResultWriter,
+			eng.DAGResultRepo,
 			eng.WorkflowReader,
 			eng.NotificationWriter,
-			eng.UserReader,
 			eng.Database,
-		)
+		); updateErr != nil {
+			log.Errorf("Unable to update DAGResult metadata for %v", dbWorkflowDagResult.Id)
+		}
 	}()
 
 	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
@@ -299,7 +307,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.ArtifactResultWriter,
 		eng.WorkflowReader,
 		eng.NotificationWriter,
-		eng.UserReader,
 		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
@@ -388,7 +395,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.ArtifactResultWriter,
 		eng.WorkflowReader,
 		eng.NotificationWriter,
-		eng.UserReader,
 		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,

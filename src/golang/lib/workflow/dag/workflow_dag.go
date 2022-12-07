@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
@@ -69,7 +68,6 @@ type workflowDagImpl struct {
 	resultWriter       workflow_dag_result.Writer
 	workflowReader     workflow.Reader
 	notificationWriter notification.Writer
-	userReader         user.Reader
 	db                 database.Database
 }
 
@@ -168,7 +166,6 @@ func NewWorkflowDag(
 	artifactResultWriter artifact_result.Writer,
 	workflowReader workflow.Reader,
 	notificationWriter notification.Writer,
-	userReader user.Reader,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
@@ -309,7 +306,6 @@ func NewWorkflowDag(
 		resultWriter:       dagResultWriter,
 		workflowReader:     workflowReader,
 		notificationWriter: notificationWriter,
-		userReader:         userReader,
 		db:                 db,
 	}, nil
 }
