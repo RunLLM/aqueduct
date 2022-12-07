@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -46,17 +45,17 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
-	ArtifactRepo repos.Artifact
-	DAGRepo      repos.DAG
-	DAGEdgeRepo  repos.DAGEdge
-	OperatorRepo repos.Operator
-	WatcherRepo  repos.Watcher
-	WorkflowRepo repos.Workflow
+	ArtifactRepo    repos.Artifact
+	DAGRepo         repos.DAG
+	DAGEdgeRepo     repos.DAGEdge
+	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
+	WatcherRepo     repos.Watcher
+	WorkflowRepo    repos.Workflow
 }
 
 type registerWorkflowArgs struct {
@@ -97,7 +96,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		dagSummary.Dag.Operators,
 		aqContext.OrgID,
 		aqContext.ID,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -165,7 +164,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		ctx,
 		args.ID,
 		args.dagSummary,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.ExecutionEnvironmentReader,
 		h.ExecutionEnvironmentWriter,
 		h.Database,

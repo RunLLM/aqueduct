@@ -11,6 +11,8 @@ import (
 	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -88,19 +90,19 @@ func updateOnFailure(
 	condaPath string,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
-	integrationWriter integration.Writer,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) {
-	_, err := integrationWriter.UpdateIntegration(
+	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			"config": (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
 				CondaPathKey: condaPath,
 				ExecStateKey: serializedFailure(outputs, msg, runningAt),
 			}),
 		},
-		db,
+		DB,
 	)
 	if err != nil {
 		log.Errorf("Failed to update conda integration: %v", err)
@@ -120,19 +122,19 @@ func ValidateCondaDevelop() error {
 func InitializeConda(
 	ctx context.Context,
 	integrationID uuid.UUID,
-	integrationWriter integration.Writer,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) {
 	now := time.Now()
-	_, err := integrationWriter.UpdateIntegration(
+	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			"config": (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
 				ExecStateKey: serializedRunning(&now),
 			}),
 		},
-		db,
+		DB,
 	)
 	if err != nil {
 		log.Errorf("Failed to update conda integration: %v", err)
@@ -148,8 +150,8 @@ func InitializeConda(
 			"", /* condaPath */
 			&now,
 			integrationID,
-			integrationWriter,
-			db,
+			integrationRepo,
+			DB,
 		)
 
 		return
@@ -166,23 +168,23 @@ func InitializeConda(
 			condaPath,
 			&now,
 			integrationID,
-			integrationWriter,
-			db,
+			integrationRepo,
+			DB,
 		)
 
 		return
 	}
 
-	_, err = integrationWriter.UpdateIntegration(
+	_, err = integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			"config": (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
 				CondaPathKey: condaPath,
 				ExecStateKey: serializedSuccess(&now),
 			}),
 		},
-		db,
+		DB,
 	)
 
 	if err != nil {
@@ -192,15 +194,15 @@ func InitializeConda(
 
 func GetCondaIntegration(
 	ctx context.Context,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
-	db database.Database,
-) (*integration.Integration, error) {
-	integrations, err := integrationReader.GetIntegrationsByServiceAndUser(
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) (*models.Integration, error) {
+	integrations, err := integrationRepo.GetByServiceAndUser(
 		ctx,
 		integration.Conda,
-		userId,
-		db,
+		userID,
+		DB,
 	)
 	if err != nil {
 		return nil, err
@@ -218,7 +220,7 @@ func GetCondaIntegration(
 // For non-conda integration, we assume they are always successfully connected
 // since they are created in-sync in `connectIntegration` handler.
 func ExtractConnectionState(
-	integrationObject *integration.Integration,
+	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
 	if integrationObject.Service != integration.Conda {
 		return &shared.ExecutionState{

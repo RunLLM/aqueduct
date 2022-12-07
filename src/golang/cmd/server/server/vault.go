@@ -6,9 +6,9 @@ import (
 	"path"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 )
@@ -18,8 +18,8 @@ import (
 // storage. This operation will only need to happen once.
 func syncVaultWithStorage(
 	vaultObj vault.Vault,
-	integrationReader integration.Reader,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) error {
 	oldVaultPath := path.Join(config.AqueductPath(), "vault")
 	if _, err := os.Stat(oldVaultPath); err != nil {
@@ -49,8 +49,8 @@ func syncVaultWithStorage(
 		oldVault,
 		vaultObj,
 		accountOrganizationId,
-		integrationReader,
-		db,
+		integrationRepo,
+		DB,
 	); err != nil {
 		return err
 	}

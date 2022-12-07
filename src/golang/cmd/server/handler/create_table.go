@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -44,10 +45,11 @@ const (
 type CreateTableHandler struct {
 	PostHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	JobManager        job.JobManager
-	Vault             vault.Vault
+	Database   database.Database
+	JobManager job.JobManager
+	Vault      vault.Vault
+
+	IntegrationRepo repos.Integration
 }
 
 type CreateTableArgs struct {
@@ -91,7 +93,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*CreateTableArgs)
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(
+	integrationObject, err := h.IntegrationRepo.Get(
 		ctx,
 		args.integrationId,
 		h.Database,
@@ -132,7 +134,7 @@ func CreateTable(
 	ctx context.Context,
 	args *CreateTableArgs,
 	contentPath string,
-	integrationObject *integration.Integration,
+	integrationObject *models.Integration,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
@@ -142,7 +144,7 @@ func CreateTable(
 
 	jobName := fmt.Sprintf("create-table-operator-%s", uuid.New().String())
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
 	}

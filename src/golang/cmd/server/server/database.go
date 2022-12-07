@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -19,6 +18,7 @@ type Repos struct {
 	DAGRepo            repos.DAG
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
+	IntegrationRepo    repos.Integration
 	NotificationRepo   repos.Notification
 	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
@@ -28,7 +28,6 @@ type Repos struct {
 }
 
 type Readers struct {
-	IntegrationReader          integration.Reader
 	OperatorReader             operator.Reader
 	WorkflowReader             workflow.Reader
 	SchemaVersionReader        schema_version.Reader
@@ -37,7 +36,6 @@ type Readers struct {
 }
 
 type Writers struct {
-	IntegrationWriter          integration.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
 
@@ -48,6 +46,7 @@ func CreateRepos() *Repos {
 		DAGRepo:            sqlite.NewDAGRepo(),
 		DAGEdgeRepo:        sqlite.NewDAGEdgeRepo(),
 		DAGResultRepo:      sqlite.NewDAGResultRepo(),
+		IntegrationRepo:    sqlite.NewIntegrationRepo(),
 		NotificationRepo:   sqlite.NewNotificationRepo(),
 		OperatorRepo:       sqlite.NewOperatorRepo(),
 		OperatorResultRepo: sqlite.NewOperatorResultRepo(),
@@ -58,11 +57,6 @@ func CreateRepos() *Repos {
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	integrationReader, err := integration.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	operatorReader, err := operator.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -89,7 +83,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 	}
 
 	return &Readers{
-		IntegrationReader:          integrationReader,
 		OperatorReader:             operatorReader,
 		WorkflowReader:             workflowReader,
 		SchemaVersionReader:        schemaVersionReader,
@@ -99,26 +92,18 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 }
 
 func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
-	integrationWriter, err := integration.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvWriter, err := exec_env.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Writers{
-		IntegrationWriter:          integrationWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
 }
 
 func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
-		OperatorReader:             readers.OperatorReader,
-		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
 }

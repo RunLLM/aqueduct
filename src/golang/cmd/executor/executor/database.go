@@ -2,8 +2,6 @@ package executor
 
 import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -11,8 +9,6 @@ import (
 )
 
 type Readers struct {
-	OperatorReader             operator.Reader
-	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader exec_env.Reader
 }
 
@@ -30,24 +26,12 @@ type Repos struct {
 }
 
 func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
-	operatorReader, err := operator.NewReader(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
-	integrationReader, err := integration.NewReader(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvReader, err := exec_env.NewReader(dbConf)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Readers{
-		OperatorReader:             operatorReader,
-		IntegrationReader:          integrationReader,
 		ExecutionEnvironmentReader: execEnvReader,
 	}, nil
 }
@@ -69,8 +53,6 @@ func createRepos() *Repos {
 
 func getEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
-		OperatorReader:             readers.OperatorReader,
-		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
 	}
 }

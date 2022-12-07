@@ -147,7 +147,7 @@ func NewAqServer() *AqServer {
 	}
 
 	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationWriter, s.Database, s.Vault)
+		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database, s.Vault)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)
@@ -198,7 +198,7 @@ func (s *AqServer) Init() error {
 
 	if err := syncVaultWithStorage(
 		vault,
-		s.IntegrationReader,
+		s.IntegrationRepo,
 		s.Database,
 	); err != nil {
 		return err

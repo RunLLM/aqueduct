@@ -74,7 +74,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 		dagSummary.Dag.Operators,
 		aqContext.OrgID,
 		aqContext.ID,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.Database,
 	)
 	if err != nil {

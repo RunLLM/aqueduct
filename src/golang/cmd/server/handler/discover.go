@@ -14,6 +14,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -40,7 +41,7 @@ const (
 
 type discoverArgs struct {
 	*aq_context.AqContext
-	integrationId uuid.UUID
+	integrationID uuid.UUID
 }
 
 type discoverResponse struct {
@@ -50,11 +51,13 @@ type discoverResponse struct {
 type DiscoverHandler struct {
 	GetHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	CustomReader      queries.Reader
-	JobManager        job.JobManager
-	Vault             vault.Vault
+	Database   database.Database
+	JobManager job.JobManager
+	Vault      vault.Vault
+
+	CustomReader queries.Reader
+
+	IntegrationRepo repos.Integration
 }
 
 func (*DiscoverHandler) Name() string {
@@ -67,15 +70,15 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
+	ok, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
-		integrationId,
+		integrationID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
@@ -89,7 +92,7 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 	return &discoverArgs{
 		AqContext:     aqContext,
-		integrationId: integrationId,
+		integrationID: integrationID,
 	}, http.StatusOK, nil
 }
 
@@ -99,9 +102,9 @@ func (h *DiscoverHandler) Perform(
 ) (interface{}, int, error) {
 	args := interfaceArgs.(*discoverArgs)
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(
+	integrationObject, err := h.IntegrationRepo.Get(
 		ctx,
-		args.integrationId,
+		args.integrationID,
 		h.Database,
 	)
 	if err != nil {
@@ -120,7 +123,7 @@ func (h *DiscoverHandler) Perform(
 		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, h.Vault)
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, h.Vault)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
 	}

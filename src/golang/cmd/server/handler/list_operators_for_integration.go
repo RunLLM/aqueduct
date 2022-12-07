@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -50,8 +51,9 @@ type ListOperatorsForIntegrationHandler struct {
 
 	CustomReader queries.Reader
 	// TODO: Replace with repos.Operator once ExecEnv methods are added
-	OperatorReader    operator.Reader
-	IntegrationReader integration.Reader
+	OperatorReader operator.Reader
+
+	IntegrationRepo repos.Integration
 }
 
 func (*ListOperatorsForIntegrationHandler) Name() string {
@@ -59,19 +61,19 @@ func (*ListOperatorsForIntegrationHandler) Name() string {
 }
 
 func (*ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	return integrationId, http.StatusOK, nil
+	return integrationID, http.StatusOK, nil
 }
 
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	integrationId := interfaceArgs.(uuid.UUID)
+	integrationID := interfaceArgs.(uuid.UUID)
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, integrationId, h.Database)
+	integrationObject, err := h.IntegrationRepo.Get(ctx, integrationID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve integration.")
 	}
@@ -84,7 +86,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	} else {
 		// TODO (ENG-2068): current implementation only works for data integrations.
 		// We should fix this to work against compute integrations as well.
-		operators, err = h.OperatorReader.GetOperatorsByDataIntegrationId(ctx, integrationId, h.Database)
+		operators, err = h.OperatorReader.GetOperatorsByDataIntegrationId(ctx, integrationID, h.Database)
 	}
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")

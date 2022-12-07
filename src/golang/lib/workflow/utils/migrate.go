@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -30,7 +29,7 @@ func MigrateStorageAndVault(
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	operatorRepo repos.Operator,
-	integrationReader integration.Reader,
+	integrationRepo repos.Integration,
 	DB database.Database,
 ) error {
 	oldStore := storage.NewStorage(oldConf)
@@ -143,7 +142,7 @@ func MigrateStorageAndVault(
 		oldVault,
 		newVault,
 		orgID,
-		integrationReader,
+		integrationRepo,
 		txn,
 	)
 	if err != nil {
@@ -182,10 +181,10 @@ func MigrateVault(
 	oldVault vault.Vault,
 	newVault vault.Vault,
 	orgID string,
-	integrationReader integration.Reader,
+	integrationRepo repos.Integration,
 	DB database.Database,
 ) ([]string, error) {
-	integrations, err := integrationReader.GetIntegrationsByOrganization(ctx, orgID, DB)
+	integrations, err := integrationRepo.GetByOrg(ctx, orgID, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +194,7 @@ func MigrateVault(
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
 		// The vault key for the credentials is the integration record's ID
-		key := integrationDB.Id.String()
+		key := integrationDB.ID.String()
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {

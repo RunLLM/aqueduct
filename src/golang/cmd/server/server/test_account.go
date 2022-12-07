@@ -8,6 +8,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/dropbox/godropbox/errors"
@@ -42,11 +43,11 @@ func CreateTestAccount(
 	return testUser, nil
 }
 
-func CheckBuiltinIntegration(ctx context.Context, s *AqServer, organizationId string) (bool, error) {
+func CheckBuiltinIntegration(ctx context.Context, s *AqServer, orgID string) (bool, error) {
 	// Check if builtin integration is already connected
-	integrations, err := s.IntegrationReader.GetIntegrationsByOrganization(
+	integrations, err := s.IntegrationRepo.GetByOrg(
 		context.Background(),
-		organizationId,
+		orgID,
 		s.Database,
 	)
 	if err != nil {
@@ -68,7 +69,7 @@ func CheckBuiltinIntegration(ctx context.Context, s *AqServer, organizationId st
 func ConnectBuiltinIntegration(
 	ctx context.Context,
 	user *models.User,
-	integrationWriter integration.Writer,
+	integrationRepo repos.Integration,
 	db database.Database,
 	vaultObject vault.Vault,
 ) error {
@@ -87,7 +88,7 @@ func ConnectBuiltinIntegration(
 			Config:   builtinConfig,
 			UserOnly: false,
 		},
-		integrationWriter,
+		integrationRepo,
 		db,
 		vaultObject,
 	); err != nil {
