@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -75,6 +76,32 @@ func (*artifactReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 	args := []interface{}{dagID}
 
 	return getArtifacts(ctx, DB, query, args...)
+}
+
+func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
+	ctx context.Context,
+	dagIDs []uuid.UUID,
+	operatorIDs []uuid.UUID,
+	DB database.Database,
+) ([]views.ObjectID, error) {
+	// Get all the unique `artifact_id`s with an outgoing edge to an operator specified by `operatorIds`
+	// from workflow DAGs specified by `workflowDagIds`.
+	query := fmt.Sprintf(
+		`SELECT DISTINCT from_id AS artifact_id 
+		FROM workflow_dag_edge 
+		WHERE 
+			workflow_dag_id IN (%s) 
+		 	AND to_id IN (%s);`,
+		stmt_preparers.GenerateArgsList(len(dagIDs), 1),
+		stmt_preparers.GenerateArgsList(len(operatorIDs), len(dagIDs)+1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(dagIDs)
+	args = append(args, stmt_preparers.CastIdsListToInterfaceList(operatorIDs)...)
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	return objectIDs, err
 }
 
 func (*artifactReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -164,6 +165,54 @@ func (*dagReader) GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID,
 	args := []interface{}{workflowID}
 
 	return getDAG(ctx, DB, query, args...)
+}
+
+func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.ObjectID, error) {
+	query := `
+		SELECT workflow_dag.id 
+		FROM workflow_dag 
+		WHERE created_at IN 
+		(
+			SELECT MAX(workflow_dag.created_at) 
+			FROM app_user, workflow, workflow_dag 
+			WHERE 
+				app_user.id = workflow.user_id 
+				AND workflow.id = workflow_dag.workflow_id 
+				AND app_user.organization_id = $1 
+			GROUP BY workflow.id
+		);`
+	args := []interface{}{orgID}
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	return objectIDs, err
+}
+
+func (*dagReader) GetLatestIDsByOrgAndEngine(
+	ctx context.Context,
+	orgID string,
+	engine shared.EngineType,
+	DB database.Database,
+) ([]views.ObjectID, error) {
+	query := `
+		SELECT workflow_dag.id 
+		FROM workflow_dag 
+		WHERE created_at IN 
+		(
+			SELECT MAX(workflow_dag.created_at) 
+			FROM app_user, workflow, workflow_dag 
+			WHERE 
+				app_user.id = workflow.user_id 
+				AND workflow.id = workflow_dag.workflow_id 
+				AND app_user.organization_id = $1 
+				AND json_extract(workflow_dag.engine_config, '$.type') = $2
+		 	GROUP BY workflow.id
+		);`
+	args := []interface{}{orgID, engine}
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	return objectIDs, err
 }
 
 func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG, error) {

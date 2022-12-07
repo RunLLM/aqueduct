@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -40,6 +41,19 @@ type dagReader interface {
 	// GetLatestByWorkflow returns the latest DAG for the Workflow specified.
 	// It returns a database.ErrNoRows if no rows are found.
 	GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) (*models.DAG, error)
+
+	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
+	// the organization specified.
+	GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.ObjectID, error)
+
+	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
+	// the organization specified if the DAG is running on the given engine.
+	GetLatestIDsByOrgAndEngine(
+		ctx context.Context,
+		orgID string,
+		engine shared.EngineType,
+		DB database.Database,
+	) ([]views.ObjectID, error)
 
 	// List returns all DAGs.
 	List(ctx context.Context, DB database.Database) ([]models.DAG, error)
