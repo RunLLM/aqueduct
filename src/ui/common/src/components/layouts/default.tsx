@@ -1,13 +1,13 @@
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
+import { handleFetchNotifications } from '../../reducers/notifications';
+import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../../stores/store';
-import { handleFetchNotifications } from '../../reducers/notifications';
 
 export const DefaultLayoutMargin = '24px';
 export const SidesheetMargin = '16px';

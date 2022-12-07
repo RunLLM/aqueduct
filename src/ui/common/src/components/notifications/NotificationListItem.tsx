@@ -46,10 +46,11 @@ export const NotificationListItem: React.FC<Props> = ({
         <Link
           underline="none"
           color="inherit"
-          href={`${getPathPrefix()}/workflow/${notification.workflowMetadata.id
-            }?workflowDagResultId=${encodeURI(
-              notification.workflowMetadata.dag_result_id
-            )}`}
+          href={`${getPathPrefix()}/workflow/${
+            notification.workflowMetadata.id
+          }?workflowDagResultId=${encodeURI(
+            notification.workflowMetadata.dag_result_id
+          )}`}
         >
           <Typography
             variant="body1"
@@ -92,19 +93,19 @@ export const NotificationListItem: React.FC<Props> = ({
     notifBackground = theme.palette.TableErrorBackground;
   }
   return (
-      <ListItem
-        sx={{
-          borderLeft: `8px solid`,
-          borderColor: borderColor,
-          minWidth: '450px',
-          maxWidth: '450px',
-          '&:hover': {
-            backgroundColor: notifBackground,
-          },
-        }}
-      >
-        {content}
-      </ListItem>
+    <ListItem
+      sx={{
+        borderLeft: `8px solid`,
+        borderColor: borderColor,
+        minWidth: '450px',
+        maxWidth: '450px',
+        '&:hover': {
+          backgroundColor: notifBackground,
+        },
+      }}
+    >
+      {content}
+    </ListItem>
   );
 };
 

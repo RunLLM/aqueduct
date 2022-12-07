@@ -149,7 +149,18 @@ const NavBar: React.FC<{
             sx={{ display: 'flex', cursor: 'pointer', alignItems: 'center' }}
           >
             {!!numUnreadNotifications && (
-              <Box sx={{ width: '20px', height: '20px', backgroundColor: 'red.500', borderRadius: '4px', mr: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  width: '20px',
+                  height: '20px',
+                  backgroundColor: 'red.500',
+                  borderRadius: '4px',
+                  mr: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
                 <Typography
                   variant="body2"
                   sx={{ fontSize: '12px', color: 'white' }}
