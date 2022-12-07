@@ -1,0 +1,27 @@
+name: Database Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/golang/lib/collections/**'
+      - 'src/golang/lib/models/**'
+      - 'src/golang/lib/repos/**'
+
+jobs:
+  test:
+    name: Run Backend Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Turn on GO111MODULE
+        run: go env -w GO111MODULE=on
+
+      - name: Run Tests
+        working-directory: ./src
+        run: make test-database
