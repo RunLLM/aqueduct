@@ -112,8 +112,8 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "List tables request is only allowed for relational databases.")
 	}
 
-	jobMetadataPath := fmt.Sprintf("list-tables-metadata-%s", args.RequestId)
-	jobResultPath := fmt.Sprintf("list-tables-result-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("list-tables-metadata-%s", args.RequestID)
+	jobResultPath := fmt.Sprintf("list-tables-result-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for list tables job metadata

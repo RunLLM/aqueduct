@@ -80,7 +80,7 @@ func ConnectBuiltinIntegration(
 		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,
-				RequestId: uuid.New().String(),
+				RequestID: uuid.New().String(),
 			},
 			Name:     integration.DemoDbIntegrationName,
 			Service:  serviceType,

@@ -88,8 +88,8 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
-	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestId)
-	jobResultPath := fmt.Sprintf("list-objects-result-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestID)
+	jobResultPath := fmt.Sprintf("list-objects-result-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for list objects job metadata

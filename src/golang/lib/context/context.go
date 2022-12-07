@@ -23,7 +23,7 @@ const (
 
 type AqContext struct {
 	models.User
-	RequestId string
+	RequestID string
 	// StorageConfig is a copy of the global storage config as of the creation of this AqContext
 	StorageConfig *shared.StorageConfig
 }
@@ -81,7 +81,7 @@ func ParseAqContext(ctx context.Context) (*AqContext, int, error) {
 			OrgID:   organizationId,
 			Auth0ID: auth0Id,
 		},
-		RequestId:     requestId,
+		RequestID:     requestId,
 		StorageConfig: &storageConfig,
 	}, http.StatusOK, nil
 }

@@ -232,10 +232,10 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
 	// Schedule delete written objects job
-	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestID)
 
 	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
-	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
+	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for delete saved objects job metadata

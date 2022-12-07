@@ -156,7 +156,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	// Validate integration config
 	statusCode, err = ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		args.Config,
 		args.Service,
 		h.JobManager,

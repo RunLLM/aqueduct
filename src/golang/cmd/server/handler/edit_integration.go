@@ -250,7 +250,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		staticConfig,
 		integrationObject.Service,
 		h.JobManager,

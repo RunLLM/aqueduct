@@ -103,7 +103,7 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		config,
 		integrationObject.Service,
 		h.JobManager,
