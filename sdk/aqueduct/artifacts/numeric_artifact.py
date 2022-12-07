@@ -6,15 +6,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 from aqueduct.artifacts import bool_artifact
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag.dag import DAG
-from aqueduct.dag.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -24,7 +17,20 @@ from aqueduct.constants.enums import (
     OperatorType,
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.models.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import (
+    CheckSpec,
+    FunctionSpec,
+    Operator,
+    OperatorSpec,
+    get_operator_type,
+)
+from aqueduct.utils.dag_deltas import (
+    AddOrReplaceOperatorDelta,
+    RemoveCheckOperatorDelta,
+    apply_deltas_to_dag,
+)
 from aqueduct.utils.utils import (
     Number,
     artifact_name_from_op_name,

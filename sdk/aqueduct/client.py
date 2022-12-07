@@ -8,36 +8,36 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.models.config import EngineConfig, FlowConfig
-from aqueduct.dag.parameter_utils import create_param
-
-from aqueduct import globals
-
-from .artifacts.bool_artifact import BoolArtifact
-from aqueduct.dag.dag import Metadata
-from aqueduct.dag.dag_deltas import SubgraphDAGDelta, apply_deltas_to_dag, validate_overwriting_parameters
+from aqueduct.backend.responses import SavedObjectUpdate
 from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
-from .error import (
+from aqueduct.error import (
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from .flow import Flow
-from .github import Github
-from .integrations.airflow_integration import AirflowIntegration
-from .integrations.google_sheets_integration import GoogleSheetsIntegration
-from .integrations.integration import Integration
-from .models.integration_info import IntegrationInfo
-from .integrations.k8s_integration import K8sIntegration
-from .integrations.lambda_integration import LambdaIntegration
-from .integrations.mongodb_integration import MongoDBIntegration
-from .integrations.s3_integration import S3Integration
-from .integrations.salesforce_integration import SalesforceIntegration
-from .integrations.sql_integration import RelationalDBIntegration
-from .logger import logger
+from aqueduct.flow import Flow
+from aqueduct.github import Github
+from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
+from aqueduct.integrations.k8s_integration import K8sIntegration
+from aqueduct.integrations.lambda_integration import LambdaIntegration
+from aqueduct.integrations.mongodb_integration import MongoDBIntegration
+from aqueduct.integrations.s3_integration import S3Integration
+from aqueduct.integrations.salesforce_integration import SalesforceIntegration
+from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.logger import logger
+from aqueduct.models.config import EngineConfig, FlowConfig
+from aqueduct.models.dag import Metadata
+from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
-from aqueduct.backend.responses import SavedObjectUpdate
+from aqueduct.parameter import create_param
+from aqueduct.utils.dag_deltas import (
+    SubgraphDAGDelta,
+    apply_deltas_to_dag,
+    validate_overwriting_parameters,
+)
 from aqueduct.utils.utils import (
     _infer_requirements,
     construct_param_spec,
@@ -48,6 +48,8 @@ from aqueduct.utils.utils import (
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
+
+from aqueduct import globals
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:

@@ -1,8 +1,6 @@
 import uuid
 from typing import Dict, List, Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.models.config import EngineConfig
 from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
@@ -10,6 +8,8 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.config import EngineConfig
 from aqueduct.models.operators import (
     LAMBDA_MAX_MEMORY_MB,
     LAMBDA_MIN_MEMORY_MB,

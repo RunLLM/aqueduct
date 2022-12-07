@@ -1,8 +1,7 @@
 import json
 import uuid
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag.dag import DAG, Metadata
+from aqueduct.backend.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -16,6 +15,8 @@ from aqueduct.constants.enums import (
     SerializationType,
     ServiceType,
 )
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG, Metadata
 from aqueduct.models.operators import (
     ExtractSpec,
     FunctionSpec,
@@ -31,7 +32,6 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.backend.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils.utils import generate_uuid
 

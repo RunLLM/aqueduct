@@ -4,13 +4,10 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
-from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.artifacts.preview import preview_artifacts, to_artifact_class
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -20,6 +17,7 @@ from aqueduct.constants.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
@@ -28,7 +26,8 @@ from aqueduct.models.operators import (
     OperatorSpec,
     ResourceConfig,
 )
-from aqueduct.dag.parameter_utils import create_param
+from aqueduct.parameter import create_param
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import (
     CheckFunction,
     MetricFunction,
@@ -149,7 +148,7 @@ def wrap_spec(
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
-        output_artifacts = artifact_utils.preview_artifacts(dag, output_artifact_ids)
+        output_artifacts = preview_artifacts(dag, output_artifact_ids)
     else:
         # We are in lazy mode.
         output_artifacts = [

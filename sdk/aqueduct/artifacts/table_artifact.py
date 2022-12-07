@@ -6,16 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
-from aqueduct.dag.dag import DAG
-from aqueduct.dag.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -24,7 +16,10 @@ from aqueduct.constants.enums import (
     FunctionType,
     OperatorType,
 )
+from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
@@ -32,6 +27,11 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
     SystemMetricSpec,
+)
+from aqueduct.utils.dag_deltas import (
+    AddOrReplaceOperatorDelta,
+    RemoveCheckOperatorDelta,
+    apply_deltas_to_dag,
 )
 from aqueduct.utils.utils import (
     artifact_name_from_op_name,

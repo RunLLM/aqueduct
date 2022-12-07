@@ -1,8 +1,8 @@
 import uuid
 from typing import Any, List, Tuple
 
-from aqueduct.integrations.integration import Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.models.integration import Integration
 from utils import artifact_id_to_saved_identifier
 
 from aqueduct import Client, Flow, LoadUpdateMode

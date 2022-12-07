@@ -9,9 +9,9 @@ from aqueduct.artifacts import (
     numeric_artifact,
     table_artifact,
 )
-from aqueduct.dag.dag import DAG
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
+from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
 
 from aqueduct import globals

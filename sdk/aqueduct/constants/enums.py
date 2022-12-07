@@ -18,25 +18,6 @@ class MetaEnum(EnumMeta):
         return item in [v.value for v in cast(Iterable[Enum], cls.__members__.values())]
 
 
-class FunctionType(str, Enum, metaclass=MetaEnum):
-    FILE = "file"
-    CODE = "code"
-    GITHUB = "github"
-    BUILTIN = "built_in"
-
-
-class FunctionGranularity(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    ROW = "row"
-
-
-class CheckSeverity(str, Enum, metaclass=MetaEnum):
-    """An ERROR severity will fail the flow."""
-
-    WARNING = "warning"
-    ERROR = "error"
-
-
 class OperatorType(Enum, metaclass=MetaEnum):
     EXTRACT = "extract"
     LOAD = "load"
@@ -47,9 +28,30 @@ class OperatorType(Enum, metaclass=MetaEnum):
     SYSTEM_METRIC = "system_metric"
 
 
-class TriggerType(Enum, metaclass=MetaEnum):
-    MANUAL = "manual"
-    PERIODIC = "periodic"
+class ArtifactType(str, Enum, metaclass=MetaEnum):
+    UNTYPED = "untyped"
+    STRING = "string"
+    BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    LIST = "list"
+    TABLE = "table"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"  # corresponds to PIL.Image.Image type
+    PICKLABLE = "picklable"
+    TF_KERAS = "tensorflow-keras-model"
+
+
+class SerializationType(str, Enum, metaclass=MetaEnum):
+    TABLE = "table"
+    JSON = "json"
+    PICKLE = "pickle"
+    IMAGE = "image"
+    STRING = "string"
+    BYTES = "bytes"
+    TF_KERAS = "tensorflow-keras-model"
 
 
 class ServiceType(str, Enum, metaclass=MetaEnum):
@@ -88,23 +90,6 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     ATHENA = "Athena"
 
 
-class ExecutionStatus(str, Enum, metaclass=MetaEnum):
-    UNKNOWN = "unknown"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    PENDING = "pending"
-    REGISTERED = "registered"
-    CANCELED = "canceled"
-
-
-class FailureType(Enum, metaclass=MetaEnum):
-    SYSTEM = 1
-    USER_FATAL = 2
-    # For failures that don't stop execution.
-    # Eg. check operator with WARNING severity fails.
-    USER_NON_FATAL = 3
-
-
 class SalesforceExtractType(str, Enum, metaclass=MetaEnum):
     SEARCH = "search"
     QUERY = "query"
@@ -128,6 +113,13 @@ class GoogleSheetsSaveMode(str, Enum, metaclass=MetaEnum):
     CREATE = "create"
 
 
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"
+    K8S = "k8s"
+    LAMBDA = "lambda"
+
+
 class GithubRepoConfigContentType(str, Enum, metaclass=MetaEnum):
     """Github repo config (.aqconfig) content type."""
 
@@ -135,45 +127,47 @@ class GithubRepoConfigContentType(str, Enum, metaclass=MetaEnum):
     QUERY = "query"
 
 
-# This is only for displaying the DAG.
-class DisplayNodeType(str, Enum, metaclass=MetaEnum):
-    OPERATOR = "OPERATOR"
-    ARTIFACT = "ARTIFACT"
+class FunctionType(str, Enum, metaclass=MetaEnum):
+    FILE = "file"
+    CODE = "code"
+    GITHUB = "github"
+    BUILTIN = "built_in"
 
 
-class ArtifactType(str, Enum, metaclass=MetaEnum):
-    UNTYPED = "untyped"
-    STRING = "string"
-    BOOL = "boolean"
-    NUMERIC = "numeric"
-    DICT = "dictionary"
-    TUPLE = "tuple"
-    LIST = "list"
+class FunctionGranularity(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
-    JSON = "json"
-    BYTES = "bytes"
-    IMAGE = "image"  # corresponds to PIL.Image.Image type
-    PICKLABLE = "picklable"
-    TF_KERAS = "tensorflow-keras-model"
+    ROW = "row"
 
 
-class SerializationType(str, Enum, metaclass=MetaEnum):
-    TABLE = "table"
-    JSON = "json"
-    PICKLE = "pickle"
-    IMAGE = "image"
-    STRING = "string"
-    BYTES = "bytes"
-    TF_KERAS = "tensorflow-keras-model"
+class CheckSeverity(str, Enum, metaclass=MetaEnum):
+    """An ERROR severity will fail the flow."""
+
+    WARNING = "warning"
+    ERROR = "error"
+
+
+class TriggerType(Enum, metaclass=MetaEnum):
+    MANUAL = "manual"
+    PERIODIC = "periodic"
+
+
+class ExecutionStatus(str, Enum, metaclass=MetaEnum):
+    UNKNOWN = "unknown"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    PENDING = "pending"
+    REGISTERED = "registered"
+    CANCELED = "canceled"
+
+
+class FailureType(Enum, metaclass=MetaEnum):
+    SYSTEM = 1
+    USER_FATAL = 2
+    # For failures that don't stop execution.
+    # Eg. check operator with WARNING severity fails.
+    USER_NON_FATAL = 3
 
 
 class ExecutionMode(str, Enum, metaclass=MetaEnum):
     EAGER = "eager"
     LAZY = "lazy"
-
-
-class RuntimeType(Enum, metaclass=MetaEnum):
-    AQUEDUCT = "aqueduct"
-    AIRFLOW = "airflow"
-    K8S = "k8s"
-    LAMBDA = "lambda"

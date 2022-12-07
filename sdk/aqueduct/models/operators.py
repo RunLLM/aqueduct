@@ -16,7 +16,7 @@ from aqueduct.constants.enums import (
     ServiceType,
 )
 from aqueduct.error import AqueductError
-from aqueduct.models.integration_info import IntegrationInfo
+from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
 

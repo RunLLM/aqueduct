@@ -3,10 +3,8 @@ import uuid
 from typing import List, Optional
 
 import pandas as pd
-from aqueduct.artifacts.metadata import ArtifactMetadata
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag.dag import DAG, Metadata
-from aqueduct import globals
+from aqueduct.backend.responses import ArtifactResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -18,6 +16,8 @@ from aqueduct.constants.enums import (
     SerializationType,
     ServiceType,
 )
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG, Metadata
 from aqueduct.models.operators import (
     CheckSpec,
     ExtractSpec,
@@ -29,8 +29,9 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.backend.responses import ArtifactResult, PreviewResponse
 from aqueduct.utils.utils import generate_uuid
+
+from aqueduct import globals
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:

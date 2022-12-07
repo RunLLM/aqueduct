@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag.dag import DAG
-from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.artifacts.preview import to_artifact_class
 from aqueduct.error import InvalidUserArgumentException
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import construct_param_spec, generate_uuid, infer_artifact_type
 
 

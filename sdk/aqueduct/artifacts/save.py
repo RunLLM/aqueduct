@@ -1,7 +1,5 @@
 import uuid
 
-from aqueduct.dag.dag import DAG
-from aqueduct.dag.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.error import (
     InvalidIntegrationException,
@@ -9,7 +7,8 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
-from aqueduct.models.integration_info import IntegrationInfo
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import (
     LoadSpec,
     Operator,
@@ -17,6 +16,7 @@ from aqueduct.models.operators import (
     S3LoadParams,
     UnionLoadParams,
 )
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 

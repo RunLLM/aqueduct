@@ -4,19 +4,19 @@ import uuid
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Union
 
-from aqueduct.dag.dag import DAG
-from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-
-from aqueduct import globals
-
-from .flow_run import FlowRun
 from aqueduct.backend.responses import (
     GetWorkflowResponse,
     SavedObjectUpdate,
     WorkflowDagResponse,
     WorkflowDagResultResponse,
 )
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
+
+from aqueduct import globals
+
+from .flow_run import FlowRun
 
 
 class Flow:

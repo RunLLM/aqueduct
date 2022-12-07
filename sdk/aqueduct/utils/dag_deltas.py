@@ -3,8 +3,6 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag.dag import DAG
 from aqueduct.constants.enums import OperatorType
 from aqueduct.error import (
     InternalAqueductError,
@@ -12,6 +10,8 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
 from aqueduct.utils.utils import construct_param_spec, infer_artifact_type
 

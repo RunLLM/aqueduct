@@ -1,14 +1,13 @@
 import os
 
 import pytest
-
-import aqueduct.globals
 import utils
-from aqueduct.dag.dag import DAG, Metadata
+from aqueduct.models.dag import DAG, Metadata
 from utils import delete_flow, flow_name_to_id, generate_new_flow_name
 from validator import Validator
 
 import aqueduct
+from aqueduct import globals
 
 
 def pytest_addoption(parser):
@@ -51,7 +50,8 @@ def use_deprecated(pytestconfig):
 def client(pytestconfig):
     # Reset the global dag variable, in case it was dirtied by a previous test,
     # since the dag is a global variable on the aqueduct package.
-    aqueduct.globals.__GLOBAL_DAG__ = DAG(metadata=Metadata())
+    globals.__GLOBAL_DAG__ = DAG(metadata=Metadata())
+
     api_key = os.getenv(API_KEY_ENV_NAME)
     server_address = os.getenv(SERVER_ADDR_ENV_NAME)
     if api_key is None or server_address is None:

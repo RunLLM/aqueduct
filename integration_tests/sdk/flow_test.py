@@ -6,7 +6,8 @@ import pytest
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.models.integration_info import IntegrationInfo
+from aqueduct.models.config import FlowConfig
+from aqueduct.models.integration import IntegrationInfo
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.sentiment.model import sentiment_model
 from test_functions.simple.model import (
@@ -25,7 +26,6 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct.models.config import FlowConfig
 from aqueduct import check, metric, op
 
 

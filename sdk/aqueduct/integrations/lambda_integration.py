@@ -1,5 +1,4 @@
-from aqueduct.integrations.integration import Integration
-from aqueduct.models.integration_info import IntegrationInfo
+from aqueduct.models.integration import Integration, IntegrationInfo
 
 
 class LambdaIntegration(Integration):

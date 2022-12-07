@@ -3,10 +3,10 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.constants.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
+from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices
 
 import aqueduct
-from aqueduct import Flow
+from aqueduct import Flow, LoadUpdateMode
 
 # TODO(ENG-1738): this global dictionary is only maintained because we don't have a way
 #  of deleting flows by name yet. The teardown code has the flow name, but not the flow id,

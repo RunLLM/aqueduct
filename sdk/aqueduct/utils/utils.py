@@ -15,13 +15,29 @@ import multipart
 import numpy as np
 import pkg_resources
 import requests
-from aqueduct.models.config import AirflowEngineConfig, EngineConfig, K8sEngineConfig, LambdaEngineConfig
-from aqueduct.dag.dag import DAG, RetentionPolicy, Schedule
-from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, ServiceType, TriggerType
+from aqueduct.constants.enums import (
+    ArtifactType,
+    OperatorType,
+    RuntimeType,
+    ServiceType,
+    TriggerType,
+)
 from aqueduct.error import *
-from aqueduct.models.integration_info import IntegrationInfo
 from aqueduct.logger import logger
+from aqueduct.models.config import (
+    AirflowEngineConfig,
+    EngineConfig,
+    K8sEngineConfig,
+    LambdaEngineConfig,
+)
+from aqueduct.models.dag import DAG, RetentionPolicy, Schedule
 from aqueduct.models.operators import Operator, ParamSpec
+from croniter import croniter
+from pandas import DataFrame
+from PIL import Image
+from requests_toolbelt.multipart import decoder
+
+from ..models.integration import IntegrationInfo
 from .serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
@@ -30,10 +46,6 @@ from .serialization import (
     serialize_val,
 )
 from .templates import op_file_content
-from croniter import croniter
-from pandas import DataFrame
-from PIL import Image
-from requests_toolbelt.multipart import decoder
 
 GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
