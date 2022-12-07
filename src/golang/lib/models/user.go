@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// This is a test
-
 const (
 	UserTable = "app_user"
 
