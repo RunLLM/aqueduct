@@ -262,9 +262,9 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		}
 
 		_, _, err = (&WatchWorkflowHandler{
-			Database:              h.Database,
-			WorkflowReader:        h.WorkflowReader,
-			WorkflowWatcherWriter: h.WorkflowWatcherWriter,
+			Database:       h.Database,
+			WorkflowReader: h.WorkflowReader,
+			WatcherRepo:    h.WatcherRepo,
 		}).Perform(ctx, watchWorkflowArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
