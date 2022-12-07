@@ -59,7 +59,8 @@ import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
-import { filteredList, SearchBar } from './components/Search';
+// TODO: Remove search bar component.
+import { SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
@@ -246,7 +247,6 @@ export {
   exportCsv,
   exportFunction,
   fetchUser,
-  filteredList,
   formatService,
   FunctionGranularity,
   FunctionOperatorNode,

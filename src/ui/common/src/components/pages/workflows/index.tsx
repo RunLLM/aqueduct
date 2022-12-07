@@ -1,6 +1,6 @@
 import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -14,12 +14,8 @@ import UserProfile from '../../../utils/auth';
 import { SupportedIntegrations } from '../../../utils/integrations';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
-import { ListWorkflowSummary } from '../../../utils/workflows';
-import { CardPadding } from '../../layouts/card';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
-import { filteredList, SearchBar } from '../../Search';
-import WorkflowCard from '../../workflows/workflowCard';
 import { LayoutProps } from '../types';
 import CheckItem, { CheckPreview } from './components/CheckItem';
 import EngineItem from './components/EngineItem';
@@ -33,7 +29,7 @@ type Props = {
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dispatch: AppDispatch = useDispatch();
-  const [filterText, setFilterText] = useState<string>('');
+  //const [filterText, setFilterText] = useState<string>('');
 
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
@@ -47,7 +43,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     (state: RootState) => state.listWorkflowReducer
   );
 
-  const getOptionLabel = (workflow) => workflow.name;
+  //const getOptionLabel = (workflow) => workflow.name;
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
@@ -60,13 +56,21 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   }
 
   // TODO: Deprecate this card and searchbar.
-  const displayFilteredWorkflows = (workflow) => {
-    return (
-      <Box my={2}>
-        <WorkflowCard workflow={workflow} />
-      </Box>
-    );
-  };
+  // const displayFilteredWorkflows = (workflow) => {
+  //   return (
+  //     <Box my={2}>
+  //       <WorkflowCard workflow={workflow} />
+  //     </Box>
+  //   );
+  // };
+
+  // const workflowList = filteredList(
+  //   filterText,
+  //   allWorkflows.workflows,
+  //   getOptionLabel,
+  //   displayFilteredWorkflows,
+  //   noItemsMessage
+  // );
 
   const noItemsMessage = (
     <Typography variant="h5">
@@ -78,17 +82,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
-  const workflowList = filteredList(
-    filterText,
-    allWorkflows.workflows,
-    getOptionLabel,
-    displayFilteredWorkflows,
-    noItemsMessage
-  );
-
-  console.log('allWorkflows: ', allWorkflows);
   const workflows = allWorkflows.workflows;
 
+  // TODO: Remove these once we fetch actual metrics data from the API.
   const metricsShort: MetricPreview[] = [
     {
       metricId: '1',
@@ -116,6 +112,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
   ];
 
+  // TODO: Remove these once we fetch actual checks data from the API
   const checkPreviews: CheckPreview[] = [
     {
       checkId: '1',
@@ -159,6 +156,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
   ];
 
+  /**
+   * Iterate through workflows array and map each element to a WorkflowTableRow object.
+   */
   const workflowElements: WorkflowTableRow[] = workflows.map((value) => {
     const engineName =
       value.engine[0].toUpperCase() + value.engine.substring(1);
@@ -175,9 +175,10 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       // TODO: Figur out correct way to render this date string
       last_run: new Date(value.last_run_at * 1000).toLocaleString(),
       engine: {
-        engineName: engineName,
+        engineName,
         engineIconUrl: engineIconUrl,
       },
+      // TODO: add metrics and checks to response item when getting workflows list.
       metrics: metricsShort,
       checks: checkPreviews,
     };
@@ -197,10 +198,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       pandas_version: '1.5.1',
     },
     data: workflowElements,
-    meta: [],
   };
-
-  console.log('workflowTableData: ', workflowTableData);
 
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];
@@ -242,28 +240,17 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
-      <Box>
-        <WorkflowTable
-          data={workflowTableData}
-          searchEnabled={true}
-          onGetColumnValue={onGetColumnValue}
-        />
-      </Box>
-      <Box>
-        {allWorkflows.workflows.length >= 1 && (
-          <Box marginLeft={CardPadding}>
-            {/* Align searchbar with card text */}
-            <SearchBar
-              options={allWorkflows.workflows}
-              getOptionLabel={(option: ListWorkflowSummary) =>
-                option.name || ''
-              }
-              setSearchTerm={setFilterText}
-            />
-          </Box>
-        )}
-        {workflowList}
-      </Box>
+      {workflowTableData.data.length > 0 ? (
+        <Box>
+          <WorkflowTable
+            data={workflowTableData}
+            searchEnabled={true}
+            onGetColumnValue={onGetColumnValue}
+          />
+        </Box>
+      ) : (
+        <Box>{noItemsMessage}</Box>
+      )}
     </Layout>
   );
 };

@@ -7,9 +7,51 @@ import { useState } from 'react';
 import { theme } from '../../../../styles/theme/theme';
 import ExecutionStatus from '../../../../utils/shared';
 
+interface ShowMoreProps {
+  totalItems: number;
+  numPreviewItems: number;
+  expanded: boolean;
+  onClick: () => void;
+};
+
+const showMoreStyles = {
+  fontWeight: 500,
+  color: theme.palette.gray['600'],
+  cursor: 'pointer',
+  '&:hover': { textDecoration: 'underline' },
+};
+
+export const ShowMore: React.FC<ShowMoreProps> = ({
+  totalItems,
+  numPreviewItems,
+  // move toggleExpanded to click listener attached to show more.
+  expanded,
+  onClick
+}) => {
+  // handle edge case where there is only one metric to show.
+  if (totalItems === 1) {
+    return null;
+  }
+
+  let prompt = `Show More (${totalItems - numPreviewItems}) ...`;
+  if (expanded) {
+    console.log('rendering expanded text');
+    prompt = `Show Less ...`;
+  }
+
+  return (
+    <Box onClick={onClick}>
+      <Typography
+        variant="body2"
+        sx={showMoreStyles}
+      >
+        {prompt}
+      </Typography>
+    </Box>
+  )
+};
+
 export interface MetricPreview {
-  // used to fetch additional metrics and information to be shown in table.
-  // TODO: Consider showing other metric related meta data here.
   metricId: string;
   name: string;
   value?: string;
@@ -21,7 +63,7 @@ interface MetricItemProps {
 }
 
 const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<boolean>(false);
   const metricList = [];
 
   let metricsToShow = metrics.length;
@@ -58,37 +100,17 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
     setExpanded(!expanded);
   };
 
-  const showMoreStyles = {
-    fontWeight: 500,
-    color: theme.palette.gray['600'],
-    cursor: 'pointer',
-    '&:hover': { textDecoration: 'underline' },
-  };
-
-  // TODO: make into a component to share with checks/metrics list
-  const showLess = (
-    <Box>
-      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show Less ...
-      </Typography>
-    </Box>
-  );
-
-  // TODO: make into a component to share with checks/metrics list
-  const showMore = (
-    <Box>
-      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show More ({metrics.length - metricsToShow}) ...
-      </Typography>
-    </Box>
-  );
-
   return (
     <Box>
       {metrics.length > 0 ? (
         <>
           {metricList}
-          {expanded ? showLess : showMore}
+          <ShowMore
+            totalItems={metrics.length}
+            numPreviewItems={metricsToShow}
+            expanded={expanded}
+            onClick={toggleExpanded}
+          />
         </>
       ) : (
         <Typography variant="body1">No metrics.</Typography>

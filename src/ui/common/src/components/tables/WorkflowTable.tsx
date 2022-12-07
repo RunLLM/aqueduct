@@ -25,6 +25,7 @@ export type WorkflowTableRow = {
   [key: string]: WorkflowTableElement;
 };
 
+// TODO: Make sure this type is actually being used. May be something that we can remove
 export type WorkflowTableRowData = {
   [key: string]:
     | string
@@ -38,7 +39,6 @@ export type WorkflowTableRowData = {
 export interface WorkflowTableData {
   schema?: DataSchema;
   data: WorkflowTableRow[];
-  meta: WorkflowTableRowData[];
 }
 
 export interface WorkflowsTableProps {

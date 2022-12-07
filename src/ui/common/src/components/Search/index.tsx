@@ -2,10 +2,8 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   Box,
-  Divider,
   InputAdornment,
   TextField,
-  Typography,
 } from '@mui/material';
 import { Autocomplete } from '@mui/material';
 import match from 'autosuggest-highlight/match';
@@ -95,6 +93,7 @@ export const SearchBar: React.FC<Props> = ({
   );
 };
 
+/*
 export const filteredList = (
   filterText: string,
   allItems: searchObjects[],
@@ -136,3 +135,4 @@ export const filteredList = (
     </Box>
   );
 };
+*/

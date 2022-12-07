@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { theme } from '../../../../styles/theme/theme';
 import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus from '../../../../utils/shared';
+import { ShowMore } from './MetricItem';
 
 const errorIcon = (
   <Tooltip title="Error" placement="bottom" arrow>
@@ -73,7 +74,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
   const checksList = [];
   let checksToShow = checks.length;
 
-  if (checks.length > 1) {
+  if (checks.length > 0) {
     if (!expanded) {
       checksToShow = 1;
     }
@@ -117,37 +118,17 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
     setExpanded(!expanded);
   };
 
-  const showMoreStyles = {
-    fontWeight: 500,
-    color: theme.palette.gray['600'],
-    cursor: 'pointer',
-    '&:hover': { textDecoration: 'underline' },
-  };
-
-  // TODO: make into a component to share with checks/metrics list
-  const showLess = (
-    <Box>
-      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show Less ...
-      </Typography>
-    </Box>
-  );
-
-  // TODO: make into a component to share with checks/metrics list
-  const showMore = (
-    <Box>
-      <Typography variant="body2" sx={showMoreStyles} onClick={toggleExpanded}>
-        Show More ({checks.length - 1}) ...
-      </Typography>
-    </Box>
-  );
-
   return (
     <Box>
       {checks.length > 0 ? (
         <>
           {checksList}
-          {expanded ? showLess : showMore}
+          <ShowMore
+            totalItems={checks.length}
+            numPreviewItems={checksToShow}
+            expanded={expanded}
+            onClick={toggleExpanded}
+          />
         </>
       ) : (
         <Typography variant="body1">No checks.</Typography>
