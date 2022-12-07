@@ -719,7 +719,9 @@ def check(
             assert isinstance(description, str)
 
             if len(input_artifacts) == 0:
-                raise InvalidUserArgumentException("The check has no input.")
+                raise InvalidUserArgumentException(
+                    "Check must have an input. Did you forget to call this check on an artifact?"
+                )
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
