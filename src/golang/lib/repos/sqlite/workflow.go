@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -65,6 +66,47 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	args := []interface{}{ownerID, name}
 
 	return getWorkflow(ctx, DB, query, args...)
+}
+
+func (*workflowReader) GetLastRunByEngine(
+	ctx context.Context,
+	engine shared.EngineType,
+	DB database.Database,
+) ([]views.WorkflowLastRun, error) {
+	query := `
+		SELECT 
+			workflow.id AS workflow_id, 
+			workflow.schedule, 
+			workflow_dag_result.created_at AS last_run_at 
+		FROM 
+			workflow, 
+			workflow_dag, 
+			workflow_dag_result, 
+			(
+				SELECT 
+					workflow.id, 
+					MAX(workflow_dag_result.created_at) AS created_at 
+				FROM 
+					workflow, 
+					workflow_dag, 
+					workflow_dag_result 
+				WHERE 
+					workflow.id = workflow_dag.workflow_id 
+					AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+				GROUP BY workflow.id
+			) AS workflow_latest_run 
+		WHERE 
+			workflow.id = workflow_dag.workflow_id 
+			AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+			AND workflow.id = workflow_latest_run.id 
+			AND workflow_dag_result.created_at = workflow_latest_run.created_at
+			AND json_extract(workflow_dag.engine_config, '$.type') = $1;`
+
+	var lastRuns []views.WorkflowLastRun
+	args := []interface{}{engine}
+
+	err := DB.Query(ctx, &lastRuns, query, args...)
+	return lastRuns, err
 }
 
 func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LatestWorkflowStatus, error) {

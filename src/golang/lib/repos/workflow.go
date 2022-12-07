@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -31,6 +32,10 @@ type workflowReader interface {
 	// GetByOwnerAndName returns the workflow created by ownerID named name.
 	// It returns a database.ErrNoRows if no rows are found.
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
+
+	// GetLastRunByEngine returns a WorkflowLastRun for each Workflow where the latest
+	// DAGResult created is associated with a DAG running on engine.
+	GetLastRunByEngine(ctx context.Context, engine shared.EngineType, DB database.Database) ([]views.WorkflowLastRun, error)
 
 	// GetLatestStatusesByOrg returns the LatestWorkflowStatus for each workflow owned by orgID.
 	GetLatestStatusesByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LatestWorkflowStatus, error)
