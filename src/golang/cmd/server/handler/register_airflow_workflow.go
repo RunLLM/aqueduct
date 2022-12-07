@@ -40,7 +40,6 @@ type RegisterAirflowWorkflowHandler struct {
 	ArtifactResultWriter artifact_result.Writer
 	NotificationWriter   notification.Writer
 
-	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 }
 
