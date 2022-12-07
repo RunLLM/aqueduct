@@ -167,6 +167,46 @@ func (*dagReader) GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID,
 	return getDAG(ctx, DB, query, args...)
 }
 
+func (*dagReader) GetLatestIDByWorkflowBatch(
+	ctx context.Context,
+	workflowIDs []uuid.UUID,
+	DB database.Database,
+) (map[uuid.UUID]uuid.UUID, error) {
+	query := fmt.Sprintf(
+		`
+		SELECT workflow_dag_id, workflow_id 
+		FROM 
+		(
+			SELECT
+				id as workflow_dag_id,
+				workflow_id,
+				MAX(created_at) as created_at
+			FROM workflow_dag
+			WHERE workflow_id IN (%s)
+			GROUP BY workflow_id
+		)`,
+		stmt_preparers.GenerateArgsList(len(workflowIDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(workflowIDs)
+
+	var IDs []struct {
+		DagID      uuid.UUID `db:"workflow_dag_id"`
+		WorkflowID uuid.UUID `db:"workflow_id"`
+	}
+
+	err := DB.Query(ctx, &IDs, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	workflowToDAG := make(map[uuid.UUID]uuid.UUID, len(IDs))
+	for _, item := range IDs {
+		workflowToDAG[item.WorkflowID] = item.DagID
+	}
+
+	return workflowToDAG, nil
+}
+
 func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.ObjectID, error) {
 	query := `
 		SELECT workflow_dag.id 
