@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
@@ -31,7 +30,6 @@ type Readers struct {
 	OperatorReader             operator.Reader
 	WorkflowReader             workflow.Reader
 	SchemaVersionReader        schema_version.Reader
-	CustomReader               queries.Reader
 	ExecutionEnvironmentReader exec_env.Reader
 }
 
@@ -72,11 +70,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	queriesReader, err := queries.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvReader, err := exec_env.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -86,7 +79,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		OperatorReader:             operatorReader,
 		WorkflowReader:             workflowReader,
 		SchemaVersionReader:        schemaVersionReader,
-		CustomReader:               queriesReader,
 		ExecutionEnvironmentReader: execEnvReader,
 	}, nil
 }

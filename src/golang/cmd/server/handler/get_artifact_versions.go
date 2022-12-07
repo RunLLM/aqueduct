@@ -60,6 +60,7 @@ type GetArtifactVersionsHandler struct {
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
 	OperatorRepo       repos.Operator
+	OperatorResultRepo repos.OperatorResult
 }
 
 func (*GetArtifactVersionsHandler) Name() string {
@@ -185,7 +186,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	// We track failed artifact versions and later on issue another query to fetch the
 	// corresponding operator's error message.
 	failedArtifactIdsMap := make(map[uuid.UUID]bool, len(allArtifactIds))
-	failedWorkflowDagResultIds := make([]uuid.UUID, 0, len(artifactResultStatuses))
+	failedDAGResultIDs := make([]uuid.UUID, 0, len(artifactResultStatuses))
 
 	// Create artifact versions and add timestamp and status metadata to it.
 	// We leave the validation test result slice empty for now.
@@ -206,67 +207,71 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 		if artifactResultStatus.Status == shared.FailedExecutionStatus {
 			failedArtifactIdsMap[artifactResultStatus.ArtifactID] = true
-			failedWorkflowDagResultIds = append(failedWorkflowDagResultIds, artifactResultStatus.WorkflowDagResultId)
+			failedDAGResultIDs = append(failedDAGResultIDs, artifactResultStatus.DAGResultID)
 		}
 	}
 
-	failedArtifactIds := make([]uuid.UUID, 0, len(failedArtifactIdsMap))
+	failedArtifactIDs := make([]uuid.UUID, 0, len(failedArtifactIdsMap))
 	for failedArtifactId := range failedArtifactIdsMap {
-		failedArtifactIds = append(failedArtifactIds, failedArtifactId)
+		failedArtifactIDs = append(failedArtifactIDs, failedArtifactId)
 	}
 
-	checkResults, err := h.CustomReader.GetCheckResultsByArtifactIds(ctx, allArtifactIds, h.Database)
+	checkStatuses, err := h.OperatorResultRepo.GetCheckStatusByArtifactBatch(
+		ctx,
+		allArtifactIds,
+		h.Database,
+	)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
 	// We now fill in the check test result. We can join the validation test result with the correct
 	// artifact version by the workflow dag result id.
-	for _, checkResult := range checkResults {
+	for _, checkStatus := range checkStatuses {
 		checkResultObject := CheckResult{
-			Name:     checkResult.Name,
-			Status:   checkResult.Status,
-			Metadata: checkResult.Metadata,
+			Name:     checkStatus.OperatorName.String,
+			Status:   checkStatus.Metadata.Status,
+			Metadata: checkStatus.Metadata,
 		}
 
-		if _, ok := latestVersions[checkResult.ArtifactId]; ok {
-			artifactVersionObject := latestVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId]
+		if _, ok := latestVersions[checkStatus.ArtifactID]; ok {
+			artifactVersionObject := latestVersions[checkStatus.ArtifactID].Versions[checkStatus.DAGResultID]
 			artifactVersionObject.Checks = append(artifactVersionObject.Checks, checkResultObject)
-			latestVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId] = artifactVersionObject
+			latestVersions[checkStatus.ArtifactID].Versions[checkStatus.DAGResultID] = artifactVersionObject
 		} else {
-			artifactVersionObject := historicalVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId]
+			artifactVersionObject := historicalVersions[checkStatus.ArtifactID].Versions[checkStatus.DAGResultID]
 			artifactVersionObject.Checks = append(artifactVersionObject.Checks, checkResultObject)
-			historicalVersions[checkResult.ArtifactId].Versions[checkResult.WorkflowDagResultId] = artifactVersionObject
+			historicalVersions[checkStatus.ArtifactID].Versions[checkStatus.DAGResultID] = artifactVersionObject
 		}
 	}
 
 	// Issue query to fetch error message only when there is at least one failed artifact version.
-	if len(failedArtifactIds) > 0 {
-		failedOperatorResults, err := h.CustomReader.GetOperatorResultsByArtifactIdsAndWorkflowDagResultIds(
+	if len(failedArtifactIDs) > 0 {
+		failedStatuses, err := h.OperatorResultRepo.GetStatusByDAGResultAndArtifactBatch(
 			ctx,
-			failedArtifactIds,
-			failedWorkflowDagResultIds,
+			failedDAGResultIDs,
+			failedArtifactIDs,
 			h.Database,
 		)
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 		}
 
-		for _, failedOperatorResult := range failedOperatorResults {
-			if _, ok := latestVersions[failedOperatorResult.ArtifactId]; ok {
-				artifactVersionObject := latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				if failedOperatorResult.Metadata != nil && failedOperatorResult.Metadata.Error != nil {
-					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+		for _, failedStatus := range failedStatuses {
+			if _, ok := latestVersions[failedStatus.ArtifactID]; ok {
+				artifactVersionObject := latestVersions[failedStatus.ArtifactID].Versions[failedStatus.DAGResultID]
+				if failedStatus.Metadata != nil && failedStatus.Metadata.Error != nil {
+					artifactVersionObject.Error = failedStatus.Metadata.Error.Context
 				}
 
-				latestVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
+				latestVersions[failedStatus.ArtifactID].Versions[failedStatus.DAGResultID] = artifactVersionObject
 			} else {
-				artifactVersionObject := historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId]
-				if failedOperatorResult.Metadata != nil && failedOperatorResult.Metadata.Error != nil {
-					artifactVersionObject.Error = failedOperatorResult.Metadata.Error.Context
+				artifactVersionObject := historicalVersions[failedStatus.ArtifactID].Versions[failedStatus.DAGResultID]
+				if failedStatus.Metadata != nil && failedStatus.Metadata.Error != nil {
+					artifactVersionObject.Error = failedStatus.Metadata.Error.Context
 				}
 
-				historicalVersions[failedOperatorResult.ArtifactId].Versions[failedOperatorResult.WorkflowDagResultId] = artifactVersionObject
+				historicalVersions[failedStatus.ArtifactID].Versions[failedStatus.DAGResultID] = artifactVersionObject
 			}
 		}
 	}

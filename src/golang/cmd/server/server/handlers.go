@@ -80,8 +80,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DAGResultRepo:      s.DAGResultRepo,
 		},
 		routes.GetArtifactVersionsRoute: &handler.GetArtifactVersionsHandler{
-			Database:     s.Database,
-			CustomReader: s.CustomReader,
+			Database: s.Database,
+
+			ArtifactRepo:       s.ArtifactRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
+			DAGRepo:            s.DAGRepo,
+			OperatorRepo:       s.OperatorRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
@@ -150,9 +155,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo:    s.OperatorRepo,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
-			Database:     s.Database,
-			Vault:        s.Vault,
-			CustomReader: s.CustomReader,
+			Database: s.Database,
+			Vault:    s.Vault,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
@@ -185,9 +189,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			CustomReader: s.CustomReader,
-
 			IntegrationRepo: s.IntegrationRepo,
+			OperatorRepo:    s.OperatorRepo,
 		},
 		routes.ListIntegrationObjectsRoute: &handler.ListIntegrationObjectsHandler{
 			Database:   s.Database,

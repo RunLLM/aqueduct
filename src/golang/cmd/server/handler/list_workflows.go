@@ -4,10 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/logging"
@@ -42,9 +40,6 @@ type ListWorkflowsHandler struct {
 
 	Database database.Database
 	Vault    vault.Vault
-
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
-	CustomReader          queries.Reader
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
@@ -121,11 +116,11 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 // syncSelfOrchestratedWorkflows syncs any workflow DAG results for any workflows running on a
 // self-orchestrated engine for the user's organization.
-func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, organizationID string) error {
+func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, orgID string) error {
 	// Sync workflows running on self-orchestrated engines
-	airflowWorkflowDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+	airflowDagIDObjects, err := h.DAGRepo.GetLatestIDsByOrgAndEngine(
 		ctx,
-		organizationID,
+		orgID,
 		shared.AirflowEngineType,
 		h.Database,
 	)
@@ -133,14 +128,14 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		return err
 	}
 
-	airflowWorkflowDagUUIDs := make([]uuid.UUID, 0, len(airflowWorkflowDagIds))
-	for _, workflowDagId := range airflowWorkflowDagIds {
-		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
+	airflowDagIDs := make([]uuid.UUID, 0, len(airflowDagIDObjects))
+	for _, dagID := range airflowDagIDObjects {
+		airflowDagIDs = append(airflowDagIDs, dagID.ID)
 	}
 
 	if err := airflow.SyncDAGs(
 		ctx,
-		airflowWorkflowDagUUIDs,
+		airflowDagIDs,
 		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorRepo,
