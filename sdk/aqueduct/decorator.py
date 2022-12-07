@@ -571,7 +571,7 @@ def metric(
             assert isinstance(description, str)
 
             if len(input_artifacts) == 0:
-                raise InvalidUserArgumentException("The metric has no input.")
+                raise InvalidUserArgumentException("Metrics must have an input. Did you forget to call this metric on an artifact?")
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
