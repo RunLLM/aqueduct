@@ -24,7 +24,8 @@ jobs:
       
       # This empty file is needed for some of the Database schema migration steps.
       - name: Create Empty Config File
-        run: touch /home/runner/.aqueduct/server/config/config.yml
+        run: mkdir -p touch /home/runner/.aqueduct/server/config && 
+          touch /home/runner/.aqueduct/server/config/config.yml
 
       - name: Run Tests
         working-directory: ./src
