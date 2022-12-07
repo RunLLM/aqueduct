@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -49,14 +48,14 @@ type ListWorkflowsHandler struct {
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 	CustomReader          queries.Reader
 
-	OperatorWriter       operator.Writer
-	OperatorResultWriter operator_result.Writer
+	OperatorWriter operator.Writer
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
+	OperatorResultRepo repos.OperatorResult
 	WorkflowRepo       repos.Workflow
 }
 
@@ -151,7 +150,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		h.DAGResultRepo,
-		h.OperatorResultWriter,
+		h.OperatorResultRepo,
 		h.ArtifactResultRepo,
 		h.Vault,
 		h.Database,

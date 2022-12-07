@@ -4,7 +4,6 @@ import (
 	"context"
 
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -151,7 +150,7 @@ func NewWorkflowDag(
 	ctx context.Context,
 	dagResultID uuid.UUID,
 	dag *models.DAG,
-	opResultWriter operator_result.Writer,
+	opResultRepo repos.OperatorResult,
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	jobManager job.JobManager,
@@ -267,7 +266,7 @@ func NewWorkflowDag(
 			outputArtifacts,
 			inputExecPaths,
 			outputExecPaths,
-			opResultWriter,
+			opResultRepo,
 			jobManager,
 			vaultObject,
 			&dag.StorageConfig,
