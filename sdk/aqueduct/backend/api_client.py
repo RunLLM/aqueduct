@@ -9,15 +9,18 @@ from aqueduct.error import (
     AqueductError,
     ClientValidationError,
     InternalAqueductError,
+    InternalServerError,
+    InvalidRequestError,
     NoConnectedIntegrationsException,
+    ResourceNotFoundError,
+    UnprocessableEntityError,
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import Operator, ParamSpec
-from aqueduct.utils import utils
 from aqueduct.utils.serialization import deserialize
-from aqueduct.utils.utils import GITHUB_ISSUE_LINK, indent_multiline_string
+from aqueduct.utils.utils import indent_multiline_string, is_string_valid_uuid
 from pkg_resources import parse_version, require
 from requests_toolbelt.multipart import decoder
 
@@ -35,6 +38,9 @@ from .responses import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from .utils import _parse_artifact_result_response
+
+GITHUB_ISSUE_LINK = "https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D"
 
 
 def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
@@ -162,6 +168,26 @@ class APIClient:
 
     configured = False
 
+    def raise_errors(self, response: requests.Response) -> None:
+        def _extract_err_msg() -> str:
+            resp_json = response.json()
+            if "error" not in resp_json:
+                raise Exception("No 'error' field on response: %s" % json.dumps(resp_json))
+            return str(resp_json["error"])
+
+        if response.status_code == 400:
+            raise InvalidRequestError(_extract_err_msg())
+        if response.status_code == 403:
+            raise ClientValidationError(_extract_err_msg())
+        elif response.status_code == 422:
+            raise UnprocessableEntityError(_extract_err_msg())
+        elif response.status_code == 500:
+            raise InternalServerError(_extract_err_msg())
+        elif response.status_code == 404:
+            raise ResourceNotFoundError(_extract_err_msg())
+        elif response.status_code != 200:
+            raise AqueductError(_extract_err_msg())
+
     def configure(self, api_key: str, aqueduct_address: str) -> None:
         self.api_key = api_key
         self.aqueduct_address = aqueduct_address
@@ -270,7 +296,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.GET_VERSION_ROUTE, use_https=use_https)
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
         return GetVersionResponse(**resp.json()).version
 
     def url_prefix(self) -> str:
@@ -281,7 +307,7 @@ class APIClient:
         url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
         if len(resp.json()) == 0:
             raise NoConnectedIntegrationsException(
                 "Unable to create flow. Must be connected to at least one integration!"
@@ -312,7 +338,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["limit"] = str(limit)
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
@@ -331,7 +357,7 @@ class APIClient:
             if field_name == "metadata":
                 is_metadata_received = True
                 metadata = json.loads(part.content.decode(multipart_data.encoding))
-            elif utils.is_string_valid_uuid(field_name):
+            elif is_string_valid_uuid(field_name):
                 if is_metadata_received:
                     artifact_result_constructor = metadata["artifact_types_metadata"][field_name]
                     artifact_result_constructor["content"] = part.content
@@ -374,7 +400,7 @@ class APIClient:
 
         url = self.construct_full_url(self.PREVIEW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
         preview_resp = self._construct_preview_response(resp)
         _handle_preview_resp(preview_resp, dag)
@@ -387,7 +413,7 @@ class APIClient:
         headers, body, files = self._construct_register_workflow_request(dag)
         url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
         return RegisterWorkflowResponse(**resp.json())
 
@@ -398,7 +424,7 @@ class APIClient:
         headers, body, files = self._construct_register_workflow_request(dag)
         url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
         return RegisterAirflowWorkflowResponse(**resp.json())
 
@@ -437,7 +463,7 @@ class APIClient:
         }
 
         response = requests.post(url, headers=headers, data=body)
-        utils.raise_errors(response)
+        self.raise_errors(response)
 
     def delete_workflow(
         self,
@@ -455,7 +481,7 @@ class APIClient:
             "force": force,
         }
         response = requests.post(url, headers=headers, json=body)
-        utils.raise_errors(response)
+        self.raise_errors(response)
         deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
         return deleteWorkflowResponse
 
@@ -463,7 +489,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
 
@@ -471,7 +497,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
         workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
         return workflow_writes_response
 
@@ -479,7 +505,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.LIST_WORKFLOWS_ROUTE)
         response = requests.get(url, headers=headers)
-        utils.raise_errors(response)
+        self.raise_errors(response)
 
         return [ListWorkflowResponseEntry(**workflow) for workflow in response.json()]
 
@@ -492,9 +518,9 @@ class APIClient:
             self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id)
         )
         resp = requests.get(url, headers=headers)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
-        parsed_response = utils.parse_artifact_result_response(resp)
+        parsed_response = _parse_artifact_result_response(resp)
         execution_status = parsed_response["metadata"]["exec_state"]["status"]
 
         if execution_status != ExecutionStatus.SUCCEEDED:
@@ -529,7 +555,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         data = json.dumps(operator_mapping, sort_keys=False)
         resp = requests.post(url, headers=headers, data=data)
-        utils.raise_errors(resp)
+        self.raise_errors(resp)
 
         resp_json = resp.json()
 

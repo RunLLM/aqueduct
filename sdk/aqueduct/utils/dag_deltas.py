@@ -13,7 +13,9 @@ from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
-from aqueduct.utils.utils import construct_param_spec, infer_artifact_type
+
+from .type_inference import infer_artifact_type
+from .utils import construct_param_spec
 
 
 class DAGDelta(ABC):

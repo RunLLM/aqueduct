@@ -11,12 +11,11 @@ from aqueduct.backend.responses import (
     WorkflowDagResultResponse,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.flow_run import FlowRun
 from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 from aqueduct import globals
-
-from .flow_run import FlowRun
 
 
 class Flow:

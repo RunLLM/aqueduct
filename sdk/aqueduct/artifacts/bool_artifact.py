@@ -9,9 +9,10 @@ from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import OperatorType
 from aqueduct.error import ArtifactNeverComputedException
+from aqueduct.integrations.utils import _get_description_for_check
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import get_operator_type
-from aqueduct.utils.utils import format_header_for_print, get_description_for_check
+from aqueduct.utils.utils import format_header_for_print
 
 
 class BoolArtifact(BaseArtifact):
@@ -94,7 +95,7 @@ class BoolArtifact(BaseArtifact):
 
         readable_dict = super()._describe()
         if get_operator_type(input_operator) is OperatorType.CHECK:
-            general_dict = get_description_for_check(input_operator)
+            general_dict = _get_description_for_check(input_operator)
             # Remove because values already in `readable_dict`
             general_dict.pop("Label")
             general_dict.pop("Granularity")

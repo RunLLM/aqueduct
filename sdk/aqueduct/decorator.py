@@ -6,8 +6,10 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 import numpy as np
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.preview import preview_artifacts, to_artifact_class
+from aqueduct.artifacts.preview import preview_artifacts
+from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -26,17 +28,10 @@ from aqueduct.models.operators import (
     OperatorSpec,
     ResourceConfig,
 )
-from aqueduct.parameter import create_param
+from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import (
-    CheckFunction,
-    MetricFunction,
-    Number,
-    UserFunction,
-    artifact_name_from_op_name,
-    generate_uuid,
-    serialize_function,
-)
+from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
 
@@ -255,7 +250,7 @@ creating a parameter named "%s", but an existing operator or parameter with the 
                     % (arg_name, arg_name)
                 )
 
-            new_artifact = create_param(dag=dag, name=arg_name, default=artifact)
+            new_artifact = create_param_artifact(dag=dag, name=arg_name, default=artifact)
             warnings.warn(
                 """Input to function argument "%s" is not an artifact type. We have implicitly \
 created a parameter named "%s" and your input will be used as its default value. This parameter \

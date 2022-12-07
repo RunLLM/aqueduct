@@ -1,8 +1,9 @@
 import pandas as pd
+from aqueduct.constants.enums import LoadUpdateMode
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import generate_table_name, publish_flow_test, save
 
-from aqueduct import LoadUpdateMode, op
+from aqueduct import op
 
 
 def test_list_saved_objects(client, flow_name, data_integration, engine, validator):

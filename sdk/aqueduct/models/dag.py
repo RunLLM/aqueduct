@@ -8,9 +8,11 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
-from aqueduct.models.artifact import ArtifactMetadata
-from aqueduct.models.config import EngineConfig
-from aqueduct.models.operators import (
+from pydantic import BaseModel
+
+from .artifact import ArtifactMetadata
+from .config import EngineConfig
+from .operators import (
     LAMBDA_MAX_MEMORY_MB,
     LAMBDA_MIN_MEMORY_MB,
     Operator,
@@ -18,7 +20,6 @@ from aqueduct.models.operators import (
     get_operator_type,
     get_operator_type_from_spec,
 )
-from pydantic import BaseModel
 
 
 class Schedule(BaseModel):

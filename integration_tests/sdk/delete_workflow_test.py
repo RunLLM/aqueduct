@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.error import InvalidRequestError
 from constants import SHORT_SENTIMENT_SQL_QUERY
 from utils import (
@@ -10,8 +11,6 @@ from utils import (
     publish_flow_test,
     save,
 )
-
-from aqueduct import LoadUpdateMode
 
 
 def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):

@@ -18,7 +18,9 @@ from aqueduct.models.operators import (
     SaveConfig,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+
+from .utils import _generate_extract_op_name
 
 
 class SalesforceIntegration(Integration):
@@ -125,7 +127,7 @@ class SalesforceIntegration(Integration):
 
         integration_info = self._metadata
 
-        op_name = generate_extract_op_name(self._dag, integration_info.name, name)
+        op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()

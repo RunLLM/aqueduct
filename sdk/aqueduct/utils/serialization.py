@@ -2,15 +2,14 @@ import io
 import json
 import os
 import shutil
-import tempfile
-import uuid
-from pathlib import Path
 from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType, SerializationType
 from PIL import Image
+
+from .function_packaging import _make_temp_dir
 
 DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
@@ -44,33 +43,12 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
-# NOTE: this doesn't really belong in the serialization library, but we don't have a lower layer than this right now -
-# (utils.py imports this file).
-def make_temp_dir() -> str:
-    """
-    Create a unique, temporary directory in the local filesystem and returns the path.
-    """
-    dir_path = None
-    created = False
-    # Try to create the directory. If it already exists, try again with a new name.
-    while not created:
-        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
-        try:
-            os.mkdir(dir_path)
-            created = True
-        except FileExistsError:
-            pass
-
-    assert dir_path is not None
-    return str(dir_path)
-
-
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
 # so we return "Any" type.
 def _read_tf_keras_model(content: bytes) -> Any:
     temp_model_dir = None
     try:
-        temp_model_dir = make_temp_dir()
+        temp_model_dir = _make_temp_dir()
         model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
         with open(model_file_path, "wb") as f:
             f.write(content)
@@ -142,7 +120,7 @@ def _write_json_output(output: Any) -> bytes:
 def _write_tf_keras_model(output: Any) -> bytes:
     temp_model_dir = None
     try:
-        temp_model_dir = make_temp_dir()
+        temp_model_dir = _make_temp_dir()
         model_file_path = os.path.join(temp_model_dir, _TEMP_KERAS_MODEL_NAME)
 
         output.save(model_file_path)

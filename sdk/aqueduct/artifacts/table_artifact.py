@@ -18,6 +18,11 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
+from aqueduct.integrations.utils import (
+    _get_checks_for_op,
+    _get_description_for_check,
+    _get_description_for_metric,
+)
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import (
@@ -33,15 +38,8 @@ from aqueduct.utils.dag_deltas import (
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.utils.utils import (
-    artifact_name_from_op_name,
-    format_header_for_print,
-    generate_uuid,
-    get_checks_for_op,
-    get_description_for_check,
-    get_description_for_metric,
-    serialize_function,
-)
+from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.utils import artifact_name_from_op_name, format_header_for_print, generate_uuid
 from ruamel import yaml
 
 from aqueduct import globals
@@ -695,13 +693,13 @@ class TableArtifact(BaseArtifact):
             on_artifact_id=self._artifact_id,
         )
 
-        check_operators = get_checks_for_op(input_operator, self._dag)
+        check_operators = _get_checks_for_op(input_operator, self._dag)
 
         readable_dict = super()._describe()
         readable_dict.update(
             {
-                "Metrics": [get_description_for_metric(op, self._dag) for op in metric_operators],
-                "Checks": [get_description_for_check(op) for op in check_operators],
+                "Metrics": [_get_description_for_metric(op, self._dag) for op in metric_operators],
+                "Checks": [_get_description_for_check(op) for op in check_operators],
                 "Destinations": [
                     {
                         "Name": op.name,

@@ -9,6 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.responses import SavedObjectUpdate
 from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
@@ -29,23 +30,21 @@ from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
 from aqueduct.models.config import EngineConfig, FlowConfig
-from aqueduct.models.dag import Metadata
+from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
-from aqueduct.parameter import create_param
 from aqueduct.utils.dag_deltas import (
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
+from aqueduct.utils.function_packaging import infer_requirements_from_env
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
-    _infer_requirements,
     construct_param_spec,
     generate_engine_config,
     generate_ui_url,
-    infer_artifact_type,
     parse_user_supplied_id,
-    retention_policy_from_latest_runs,
     schedule_from_cron_string,
 )
 
@@ -93,7 +92,7 @@ def infer_requirements() -> List[str]:
     Returns:
         A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
     """
-    return _infer_requirements()
+    return infer_requirements_from_env()
 
 
 class Client:
@@ -187,7 +186,7 @@ class Client:
         Returns:
             A parameter artifact.
         """
-        return create_param(self._dag, name, default, description)
+        return create_param_artifact(self._dag, name, default, description)
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
@@ -434,13 +433,13 @@ class Client:
             k_latest_runs = k_latest_runs_from_flow_config
 
         if k_latest_runs is None:
-            retention_policy = retention_policy_from_latest_runs(-1)
+            retention_policy = RetentionPolicy(k_latest_runs=-1)
         else:
             if not isinstance(k_latest_runs, int):
                 raise InvalidUserArgumentException(
                     "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
                 )
-            retention_policy = retention_policy_from_latest_runs(k_latest_runs)
+            retention_policy = RetentionPolicy(k_latest_runs=k_latest_runs)
 
         # Set's the execution `engine` if one was provided.
         engine_defined_on_config = config and config.engine

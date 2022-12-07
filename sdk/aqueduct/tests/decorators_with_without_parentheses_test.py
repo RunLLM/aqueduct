@@ -7,7 +7,7 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, SerializationType
 from aqueduct.decorator import check, metric, op
 from aqueduct.tests.utils import construct_mocked_preview, default_table_artifact
-from aqueduct.utils.utils import delete_zip_folder_and_file
+from aqueduct.utils.function_packaging import delete_zip_folder_and_file
 
 from aqueduct import globals
 

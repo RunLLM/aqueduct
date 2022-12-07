@@ -7,6 +7,7 @@ from aqueduct.constants.enums import (
     FunctionType,
     GithubRepoConfigContentType,
 )
+from aqueduct.decorator import OutputArtifactFunction, wrap_spec
 from aqueduct.error import InvalidGithubQueryError
 from aqueduct.models.operators import (
     EntryPoint,
@@ -15,12 +16,9 @@ from aqueduct.models.operators import (
     OperatorSpec,
     RelationalDBExtractParams,
 )
-from aqueduct.utils.templates import DEFAULT_OP_METHOD_NAME
-from aqueduct.utils.utils import MODEL_FILE_NAME
+from aqueduct.utils.function_packaging import DEFAULT_OP_METHOD_NAME, MODEL_FILE_NAME
 
 from aqueduct import globals
-
-from .decorator import OutputArtifactFunction, wrap_spec
 
 
 def _get_operator_name(prefix: str, repo_url: str, branch: str, path: str) -> str:

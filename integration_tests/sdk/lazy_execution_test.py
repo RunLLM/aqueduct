@@ -4,10 +4,11 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 
-from aqueduct import ArtifactType, check, global_config, metric, op
+from aqueduct import check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client, data_integration):
