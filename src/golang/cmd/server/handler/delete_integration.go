@@ -12,6 +12,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -37,14 +38,19 @@ type deleteIntegrationResponse struct{}
 type DeleteIntegrationHandler struct {
 	PostHandler
 
-	Database                   database.Database
-	Vault                      vault.Vault
-	CustomReader               queries.Reader
-	OperatorReader             operator.Reader
-	IntegrationReader          integration.Reader
+	Database database.Database
+	Vault    vault.Vault
+
+	CustomReader      queries.Reader
+	IntegrationReader integration.Reader
+	// TODO: Replace with repos.Operator once ExecEnv methods are added
+	OperatorReader operator.Reader
+
 	IntegrationWriter          integration.Writer
 	ExecutionEnvironmentReader db_exec_env.Reader
 	ExecutionEnvironmentWriter db_exec_env.Writer
+
+	OperatorRepo repos.Operator
 }
 
 func (*DeleteIntegrationHandler) Name() string {

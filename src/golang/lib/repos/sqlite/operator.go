@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -190,7 +191,8 @@ func (*operatorWriter) Create(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *shared.Spec,
+	spec *operator.Spec,
+	executionEnvironmentID *uuid.UUID,
 	DB database.Database,
 ) (*models.Operator, error) {
 	cols := []string{
@@ -198,6 +200,7 @@ func (*operatorWriter) Create(
 		models.OperatorName,
 		models.OperatorDescription,
 		models.OperatorSpec,
+		models.OperatorExecutionEnvironmentID,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.OperatorTable, cols, models.OperatorCols())
 
@@ -211,6 +214,7 @@ func (*operatorWriter) Create(
 		name,
 		description,
 		spec,
+		executionEnvironmentID,
 	}
 
 	return getOperator(ctx, DB, query, args...)

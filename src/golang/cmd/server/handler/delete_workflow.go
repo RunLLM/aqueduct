@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -83,11 +82,11 @@ type DeleteWorkflowHandler struct {
 	Vault      vault.Vault
 
 	IntegrationReader          integration.Reader
-	OperatorReader             operator.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
+	OperatorRepo repos.Operator
 	WorkflowRepo repos.Workflow
 }
 
@@ -159,7 +158,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorReader.GetLoadOperatorsForWorkflowAndIntegration(ctx, args.WorkflowID, nameToId[integrationName], name, h.Database)
+			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(ctx, args.WorkflowID, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}

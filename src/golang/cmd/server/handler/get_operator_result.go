@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -41,10 +40,10 @@ type getOperatorResultArgs struct {
 type GetOperatorResultHandler struct {
 	GetHandler
 
-	Database       database.Database
-	OperatorReader operator.Reader
+	Database database.Database
 
 	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 }
 
@@ -65,22 +64,22 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
-	operatorId, err := uuid.Parse(operatorIdStr)
+	operatorIDStr := chi.URLParam(r, routes.OperatorIdUrlParam)
+	operatorID, err := uuid.Parse(operatorIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed operator ID.")
 	}
 
-	ok, err := h.OperatorReader.ValidateOperatorOwnership(
+	ok, err := h.OperatorRepo.ValidateOrg(
 		r.Context(),
+		operatorID,
 		aqContext.OrgID,
-		operatorId,
 		h.Database,
 	)
 	if err != nil {
@@ -92,8 +91,8 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	return &getOperatorResultArgs{
 		AqContext:   aqContext,
-		dagResultID: workflowDagResultId,
-		operatorID:  operatorId,
+		dagResultID: dagResultID,
+		operatorID:  operatorID,
 	}, http.StatusOK, nil
 }
 
@@ -101,7 +100,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*getOperatorResultArgs)
 
 	emptyResp := GetOperatorResultResponse{}
-	dbOperator, err := h.OperatorReader.GetOperator(ctx, args.operatorID, h.Database)
+	dbOperator, err := h.OperatorRepo.Get(ctx, args.operatorID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator.")
 	}

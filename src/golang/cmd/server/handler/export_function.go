@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -30,7 +29,7 @@ const (
 
 type exportFunctionArgs struct {
 	*aq_context.AqContext
-	operatorId uuid.UUID
+	operatorID uuid.UUID
 	// Whether to export only the user-friendly function code
 	userFriendly bool
 }
@@ -52,10 +51,10 @@ type exportFunctionResponse struct {
 type ExportFunctionHandler struct {
 	GetHandler
 
-	Database       database.Database
-	OperatorReader operator.Reader
+	Database database.Database
 
-	DAGRepo repos.DAG
+	DAGRepo      repos.DAG
+	OperatorRepo repos.Operator
 }
 
 func (*ExportFunctionHandler) Name() string {
@@ -74,18 +73,18 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, statusCode, errors.Wrap(err, "Error when parsing common args.")
 	}
 
-	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
-	operatorId, err := uuid.Parse(operatorIdStr)
+	operatorIDStr := chi.URLParam(r, routes.OperatorIdUrlParam)
+	operatorID, err := uuid.Parse(operatorIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIdStr)
+		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIDStr)
 	}
 
 	userFriendly := request.ParseExportUserFriendlyFromRequest(r)
 
-	ok, err := h.OperatorReader.ValidateOperatorOwnership(
+	ok, err := h.OperatorRepo.ValidateOrg(
 		r.Context(),
+		operatorID,
 		aqContext.OrgID,
-		operatorId,
 		h.Database,
 	)
 	if err != nil {
@@ -97,7 +96,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	return &exportFunctionArgs{
 		AqContext:    aqContext,
-		operatorId:   operatorId,
+		operatorID:   operatorID,
 		userFriendly: userFriendly,
 	}, http.StatusOK, nil
 }
@@ -107,7 +106,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	emptyResp := exportFunctionResponse{}
 
-	operatorObject, err := h.OperatorReader.GetOperator(ctx, args.operatorId, h.Database)
+	operatorObject, err := h.OperatorRepo.Get(ctx, args.operatorID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get operator from the database.")
 	}
@@ -125,7 +124,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	// Retrieve the workflow dag id to get the storage config information.
-	dags, err := h.DAGRepo.GetByOperator(ctx, operatorObject.Id, h.Database)
+	dags, err := h.DAGRepo.GetByOperator(ctx, operatorObject.ID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while retrieving workflow dags from the database.")
 	}

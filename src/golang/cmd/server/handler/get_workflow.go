@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -56,13 +55,12 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	OperatorReader operator.Reader
-
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 	WorkflowRepo       repos.Workflow
 }
@@ -112,7 +110,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		args.workflowID,
 		h.WorkflowRepo,
 		h.DAGRepo,
-		h.OperatorReader,
+		h.OperatorRepo,
 		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		h.Database,
@@ -128,7 +126,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			[]uuid.UUID{latestDAG.ID},
 			h.WorkflowRepo,
 			h.DAGRepo,
-			h.OperatorReader,
+			h.OperatorRepo,
 			h.ArtifactRepo,
 			h.DAGEdgeRepo,
 			h.DAGResultRepo,
@@ -157,7 +155,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			dbDAG.ID,
 			h.WorkflowRepo,
 			h.DAGRepo,
-			h.OperatorReader,
+			h.OperatorRepo,
 			h.ArtifactRepo,
 			h.DAGEdgeRepo,
 			h.Database,

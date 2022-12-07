@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -67,7 +66,7 @@ func ParseDagSummaryFromRequest(
 		}
 
 		if len(program) > 0 {
-			fileContents[op.Id] = program
+			fileContents[op.ID] = program
 		}
 	}
 
@@ -93,7 +92,7 @@ func ParseDagSummaryFromRequest(
 // For github contents, retrieve zipball for files and update string contents like sql queries.
 func extractOperatorContentsFromRequest(
 	r *http.Request,
-	op *operator.DBOperator,
+	op *models.Operator,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {
@@ -115,7 +114,7 @@ func extractOperatorContentsFromRequest(
 	if fn.Type == function.FileFunctionType {
 		program, err := ExtractHttpPayload(
 			r.Header.Get(routes.ContentTypeHeader),
-			op.Id.String(), // File name should match operator ID
+			op.ID.String(), // File name should match operator ID
 			true,
 			r,
 		)
@@ -124,7 +123,7 @@ func extractOperatorContentsFromRequest(
 				err,
 				fmt.Sprintf(
 					"Required operator file %s doesn't exist.",
-					op.Id.String(),
+					op.ID.String(),
 				),
 			)
 		}

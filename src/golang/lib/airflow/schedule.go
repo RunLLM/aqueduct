@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -79,7 +78,7 @@ func ScheduleWorkflow(
 			artifactIDToExecPaths[outputArtifactID] = &utils.ExecPaths{
 				ArtifactContentPath:  artifactToContentPathPrefix[outputArtifactID],
 				ArtifactMetadataPath: artifactToMetadataPathPrefix[outputArtifactID],
-				OpMetadataPath:       operatorToMetadataPathPrefix[dbOperator.Id],
+				OpMetadataPath:       operatorToMetadataPathPrefix[dbOperator.ID],
 			}
 		}
 	}
@@ -318,14 +317,14 @@ func generateStoragePathPrefixes(ids []uuid.UUID) map[uuid.UUID]string {
 	return paths
 }
 
-func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
+func computeEdges(operators map[uuid.UUID]models.Operator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
 	artifactToSrc := map[uuid.UUID]string{}
 	artifactToDests := map[uuid.UUID][]string{}
 
 	for _, op := range operators {
-		taskId, ok := operatorToTask[op.Id]
+		taskId, ok := operatorToTask[op.ID]
 		if !ok {
-			return nil, errors.Newf("Unable to find task ID for operator %v", op.Id)
+			return nil, errors.Newf("Unable to find task ID for operator %v", op.ID)
 		}
 
 		for _, outputArtifact := range op.Outputs {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -30,7 +29,7 @@ func MigrateStorageAndVault(
 	dagRepo repos.DAG,
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
-	operatorReader operator.Reader,
+	operatorRepo repos.Operator,
 	integrationReader integration.Reader,
 	DB database.Database,
 ) error {
@@ -94,7 +93,7 @@ func MigrateStorageAndVault(
 		}
 
 		// Migrate all operator code for this DAG
-		operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.ID, txn)
+		operators, err := operatorRepo.GetByDAG(ctx, dag.ID, txn)
 		if err != nil {
 			return err
 		}

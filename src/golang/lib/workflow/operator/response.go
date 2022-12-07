@@ -29,13 +29,13 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	dbOperator *operator.DBOperator,
+	dbOperator *models.Operator,
 	dbOperatorResult *models.OperatorResult,
 ) *ResultResponse {
 	// make a value copy of `Spec` field
 	spec := dbOperator.Spec
 	metadata := Response{
-		Id:          dbOperator.Id,
+		Id:          dbOperator.ID,
 		Name:        dbOperator.Name,
 		Description: dbOperator.Description,
 		Spec:        &spec,

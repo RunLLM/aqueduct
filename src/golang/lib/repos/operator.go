@@ -3,9 +3,9 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -62,7 +62,8 @@ type operatorWriter interface {
 		ctx context.Context,
 		name string,
 		description string,
-		spec *shared.Spec,
+		spec *operator.Spec,
+		executionEnvironmentID *uuid.UUID,
 		DB database.Database,
 	) (*models.Operator, error)
 

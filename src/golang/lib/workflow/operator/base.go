@@ -24,7 +24,7 @@ import (
 )
 
 type baseOperator struct {
-	dbOperator *operator.DBOperator
+	dbOperator *models.Operator
 
 	// These fields are set to nil in the preview case.
 	resultRepo repos.OperatorResult
@@ -65,7 +65,7 @@ func (bo *baseOperator) Name() string {
 }
 
 func (bo *baseOperator) ID() uuid.UUID {
-	return bo.dbOperator.Id
+	return bo.dbOperator.ID
 }
 
 // A catch-all for execution states that are the system's fault.

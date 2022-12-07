@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -38,14 +37,14 @@ type getWorkflowDagResultArgs struct {
 type GetWorkflowDagResultHandler struct {
 	GetHandler
 
-	Database       database.Database
-	OperatorReader operator.Reader
+	Database database.Database
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 	WorkflowRepo       repos.Workflow
 }
@@ -112,7 +111,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		dbDAG.ID,
 		h.WorkflowRepo,
 		h.DAGRepo,
-		h.OperatorReader,
+		h.OperatorRepo,
 		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		h.Database,
