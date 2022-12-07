@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 import requests
 import utils
-from aqueduct.globals.api_client import __GLOBAL_API_CLIENT__
 from exec_state import assert_exec_state
 from setup.changing_saves_workflow import setup_changing_saves
 from setup.flow_with_failure import setup_flow_with_failure
@@ -14,6 +13,7 @@ from setup.flow_with_metrics_and_checks import setup_flow_with_metrics_and_check
 from setup.flow_with_sleep import setup_flow_with_sleep
 
 import aqueduct
+from aqueduct import globals
 
 
 class TestBackend:
@@ -67,7 +67,7 @@ class TestBackend:
     def response(cls, endpoint, additional_headers):
         headers = {"api-key": pytest.api_key}
         headers.update(additional_headers)
-        url = __GLOBAL_API_CLIENT__.construct_full_url(endpoint)
+        url = globals.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
         return url, headers
 
     @classmethod

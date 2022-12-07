@@ -3,8 +3,7 @@
 # with a check to enforce the row-count is larger than 0.
 # This workflow is published twice.
 ###
-import aqueduct.constants.enums
-import aqueduct.constants.execution
+from aqueduct.constants.enums import CheckSeverity
 
 import aqueduct
 
@@ -22,7 +21,7 @@ def setup_flow_with_metrics_and_checks(
     def size(df):
         return len(df)
 
-    @aqueduct.check(severity=aqueduct.constants.enums.CheckSeverity.ERROR)
+    @aqueduct.check(severity=CheckSeverity.ERROR)
     def check(size):
         return size > 0
 
