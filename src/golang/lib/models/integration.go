@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
 
@@ -25,7 +26,7 @@ const (
 // A Integration maps to the integration table.
 type Integration struct {
 	ID        uuid.UUID                `db:"id" json:"id"`
-	UserID    uuid.NullUUID            `db:"user_id" json:"user_id"`
+	UserID    utils.NullUUID           `db:"user_id" json:"user_id"`
 	OrgID     string                   `db:"organization_id"`
 	Service   shared.Service           `db:"service"`
 	Name      string                   `db:"name"`
