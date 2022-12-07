@@ -184,6 +184,39 @@ func (*operatorReader) GetLoadOPsByIntegration(
 	return getOperators(ctx, DB, query, args...)
 }
 
+func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error) {
+	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
+	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
+	// that operator (`from_id`s; these artifacts are the objects that will be saved
+	// by the operator to the integration) in the workflows owned by the specified
+	// organization.
+	query := fmt.Sprintf(
+		`SELECT DISTINCT 
+			workflow_dag_edge.from_id AS artifact_id, 
+			artifact.name AS artifact_name, 
+		 	operator.id AS load_operator_id, 
+			workflow.name AS workflow_name, 
+			workflow.id AS workflow_id, operator.spec 
+		 FROM 
+		 	app_user, workflow, workflow_dag, 
+			workflow_dag_edge, operator, artifact
+		 WHERE 
+		 	app_user.id = workflow.user_id 
+			AND workflow.id = workflow_dag.workflow_id 
+			AND workflow_dag.id = workflow_dag_edge.workflow_dag_id 
+			AND workflow_dag_edge.to_id = operator.id 
+			AND artifact.id = workflow_dag_edge.from_id 
+			AND json_extract(operator.spec, '$.type') = '%s' 
+			AND app_user.organization_id = $1;`,
+		operator.LoadType,
+	)
+	args := []interface{}{orgID}
+
+	var specs []views.LoadOperatorSpec
+	err := DB.Query(ctx, &specs, query, args...)
+	return specs, err
+}
+
 func (*operatorReader) ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error) {
 	return utils.ValidateNodeOwnership(ctx, orgID, operatorId, DB)
 }

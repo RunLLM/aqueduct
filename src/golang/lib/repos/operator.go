@@ -52,6 +52,10 @@ type operatorReader interface {
 		DB database.Database,
 	) ([]models.Operator, error)
 
+	// GetLoadOPSpecsByOrg returns a LoadOperatorSpec for each Load Operator in any of the specified
+	// organization's Workflows.
+	GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error)
+
 	// ValidateOrg returns whether the Operator was created by the specified organization.
 	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
