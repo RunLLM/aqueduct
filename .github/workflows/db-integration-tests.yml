@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Run Backend Unit Tests
+    name: Run Database Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,6 +21,10 @@ jobs:
 
       - name: Turn on GO111MODULE
         run: go env -w GO111MODULE=on
+      
+      # This empty file is needed for some of the Database schema migration steps.
+      - name: Create Empty Config File
+        run: touch /home/runner/.aqueduct/server/config/config.yml
 
       - name: Run Tests
         working-directory: ./src
