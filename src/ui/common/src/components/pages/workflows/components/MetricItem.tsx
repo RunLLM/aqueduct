@@ -24,7 +24,6 @@ const showMoreStyles = {
 export const ShowMore: React.FC<ShowMoreProps> = ({
   totalItems,
   numPreviewItems,
-  // move toggleExpanded to click listener attached to show more.
   expanded,
   onClick,
 }) => {
@@ -35,7 +34,6 @@ export const ShowMore: React.FC<ShowMoreProps> = ({
 
   let prompt = `Show More (${totalItems - numPreviewItems}) ...`;
   if (expanded) {
-    console.log('rendering expanded text');
     prompt = `Show Less ...`;
   }
 
