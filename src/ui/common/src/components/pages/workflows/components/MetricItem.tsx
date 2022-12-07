@@ -12,7 +12,7 @@ interface ShowMoreProps {
   numPreviewItems: number;
   expanded: boolean;
   onClick: () => void;
-};
+}
 
 const showMoreStyles = {
   fontWeight: 500,
@@ -26,7 +26,7 @@ export const ShowMore: React.FC<ShowMoreProps> = ({
   numPreviewItems,
   // move toggleExpanded to click listener attached to show more.
   expanded,
-  onClick
+  onClick,
 }) => {
   // handle edge case where there is only one metric to show.
   if (totalItems === 1) {
@@ -41,14 +41,11 @@ export const ShowMore: React.FC<ShowMoreProps> = ({
 
   return (
     <Box onClick={onClick}>
-      <Typography
-        variant="body2"
-        sx={showMoreStyles}
-      >
+      <Typography variant="body2" sx={showMoreStyles}>
         {prompt}
       </Typography>
     </Box>
-  )
+  );
 };
 
 export interface MetricPreview {

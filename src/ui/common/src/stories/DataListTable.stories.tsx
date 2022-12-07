@@ -8,9 +8,9 @@ import ExecutionStatusLink from '../components/pages/workflows/components/Execut
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
-import WorkflowTable, {
-  WorkflowTableData,
-} from '../components/tables/WorkflowTable';
+import PaginatedSearchTable, {
+  PaginatedSearchTableData,
+} from '../components/tables/PaginatedSearchTable';
 import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
 
@@ -93,7 +93,7 @@ export const DataListTable: React.FC = () => {
 
   // TODO: Change this type to something more generic.
   // Also make this change in WorkflowsTable, I think we can just use Data here if we add JSX.element to Data's union type.
-  const mockData: WorkflowTableData = {
+  const mockArtifactList: PaginatedSearchTableData = {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
@@ -218,11 +218,10 @@ export const DataListTable: React.FC = () => {
     return value;
   };
 
-  // TODO: Rename "WorkflowTable" to something more generic.
   return (
     <Box>
-      <WorkflowTable
-        data={mockData}
+      <PaginatedSearchTable
+        data={mockArtifactList}
         searchEnabled={true}
         onGetColumnValue={onGetColumnValue}
       />

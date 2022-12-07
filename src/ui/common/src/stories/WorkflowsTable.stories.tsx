@@ -9,9 +9,9 @@ import ExecutionStatusLink from '../components/pages/workflows/components/Execut
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
-import WorkflowTable, {
-  WorkflowTableData,
-} from '../components/tables/WorkflowTable';
+import PaginatedSearchTable, {
+  PaginatedSearchTableData,
+} from '../components/tables/PaginatedSearchTable';
 import { SupportedIntegrations } from '../utils/integrations';
 import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
@@ -87,7 +87,7 @@ export const WorkflowsTable: React.FC = () => {
     },
   ];
 
-  const mockData: WorkflowTableData = {
+  const mockData: PaginatedSearchTableData = {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
@@ -247,7 +247,7 @@ export const WorkflowsTable: React.FC = () => {
 
   return (
     <Box>
-      <WorkflowTable
+      <PaginatedSearchTable
         data={mockData}
         searchEnabled={true}
         onGetColumnValue={onGetColumnValue}

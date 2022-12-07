@@ -4,9 +4,6 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
-import WorkflowTable, {
-  WorkflowTableData,
-} from '../../../components/tables/WorkflowTable';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -15,6 +12,9 @@ import getPathPrefix from '../../../utils/getPathPrefix';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
+import PaginatedSearchTable, {
+  PaginatedSearchTableData,
+} from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import CheckItem from '../workflows/components/CheckItem';
 import ExecutionStatusLink from '../workflows/components/ExecutionStatusLink';
@@ -181,9 +181,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     );
   }
 
-  // TODO: Change this type to something more generic.
-  // Also make this change in WorkflowsTable, I think we can just use Data here if we add JSX.element to Data's union type.
-  const mockData: WorkflowTableData = {
+  const artifactList: PaginatedSearchTableData = {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
@@ -204,8 +202,8 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       user={user}
     >
       <Box>
-        <WorkflowTable
-          data={mockData}
+        <PaginatedSearchTable
+          data={artifactList}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
         />

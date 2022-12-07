@@ -3,11 +3,6 @@ import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  WorkflowTable,
-  WorkflowTableData,
-  WorkflowTableRow,
-} from '../../../components/tables/WorkflowTable';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
@@ -16,6 +11,11 @@ import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
+import {
+  PaginatedSearchTable,
+  PaginatedSearchTableData,
+  PaginatedSearchTableRow,
+} from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import CheckItem, { CheckPreview } from './components/CheckItem';
 import EngineItem from './components/EngineItem';
@@ -159,14 +159,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   /**
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
    */
-  const workflowElements: WorkflowTableRow[] = workflows.map((value) => {
+  const workflowElements: PaginatedSearchTableRow[] = workflows.map((value) => {
     const engineName =
       value.engine[0].toUpperCase() + value.engine.substring(1);
     const engineIconUrl =
       SupportedIntegrations[
         value.engine[0].toUpperCase() + value.engine.substring(1)
       ].logo;
-    const workflowTableRow: WorkflowTableRow = {
+    const workflowTableRow: PaginatedSearchTableRow = {
       name: {
         name: value.name,
         url: `/workflow/${value.id}`,
@@ -186,7 +186,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return workflowTableRow;
   });
 
-  const workflowTableData: WorkflowTableData = {
+  const workflowTableData: PaginatedSearchTableData = {
     schema: {
       fields: [
         { name: 'name', type: 'varchar' },
@@ -241,13 +241,11 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       user={user}
     >
       {workflowTableData.data.length > 0 ? (
-        <Box>
-          <WorkflowTable
-            data={workflowTableData}
-            searchEnabled={true}
-            onGetColumnValue={onGetColumnValue}
-          />
-        </Box>
+        <PaginatedSearchTable
+          data={workflowTableData}
+          searchEnabled={true}
+          onGetColumnValue={onGetColumnValue}
+        />
       ) : (
         <Box>{noItemsMessage}</Box>
       )}

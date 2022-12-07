@@ -1,10 +1,6 @@
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  Box,
-  InputAdornment,
-  TextField,
-} from '@mui/material';
+import { Box, InputAdornment, TextField } from '@mui/material';
 import { Autocomplete } from '@mui/material';
 import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';

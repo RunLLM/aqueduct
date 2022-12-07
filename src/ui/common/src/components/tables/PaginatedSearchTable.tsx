@@ -15,39 +15,29 @@ import * as React from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { DataSchema } from '../../utils/data';
-import { CheckPreview } from '../pages/workflows/components/CheckItem';
-import { ExecutionStatusLinkProps } from '../pages/workflows/components/ExecutionStatusLink';
-import { MetricPreview } from '../pages/workflows/components/MetricItem';
 
-export type WorkflowTableElement = string | number | boolean | JSX.Element;
+export type PaginatedSearchTableElement =
+  | string
+  | number
+  | boolean
+  | JSX.Element;
 
-export type WorkflowTableRow = {
-  [key: string]: WorkflowTableElement;
+export type PaginatedSearchTableRow = {
+  [key: string]: PaginatedSearchTableElement;
 };
 
-// TODO: Make sure this type is actually being used. May be something that we can remove
-export type WorkflowTableRowData = {
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | CheckPreview[]
-    | MetricPreview[]
-    | ExecutionStatusLinkProps;
-};
-
-export interface WorkflowTableData {
+export interface PaginatedSearchTableData {
   schema?: DataSchema;
-  data: WorkflowTableRow[];
+  data: PaginatedSearchTableRow[];
 }
 
-export interface WorkflowsTableProps {
-  data: WorkflowTableData;
+export interface PaginatedSearchTableProps {
+  data: PaginatedSearchTableData;
   searchEnabled?: boolean;
-  onGetColumnValue?: (row, column) => WorkflowTableElement;
+  onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
 }
 
-export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
+export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   data,
   onGetColumnValue,
   searchEnabled = false,
@@ -69,7 +59,6 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
     // Otherwise, we default to using 'name' as the field to conduct the search on.
 
     // filter rows by name, which is our default filter column.
-    // rowItem.meta.name.toLowercase().includes(searchQuery)
     let shouldInclude = false;
     switch (searchColumn) {
       case 'name': {
@@ -249,4 +238,4 @@ export const WorkflowTable: React.FC<WorkflowsTableProps> = ({
   );
 };
 
-export default WorkflowTable;
+export default PaginatedSearchTable;
