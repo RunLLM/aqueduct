@@ -30,12 +30,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			CustomReader:   s.CustomReader,
 			OperatorReader: s.OperatorReader,
 
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
+			DAGRepo:         s.DAGRepo,
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
 		},
@@ -144,9 +144,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
 			Database:       s.Database,
 			OperatorReader: s.OperatorReader,
-			CustomReader:   s.CustomReader,
 
+			DAGRepo:         s.DAGRepo,
 			IntegrationRepo: s.IntegrationRepo,
+			OperatorRepo:    s.OperatorRepo,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database:     s.Database,

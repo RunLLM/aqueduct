@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -54,8 +54,12 @@ type CheckResult struct {
 type GetArtifactVersionsHandler struct {
 	GetHandler
 
-	Database     database.Database
-	CustomReader queries.Reader
+	Database database.Database
+
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	OperatorRepo       repos.Operator
 }
 
 func (*GetArtifactVersionsHandler) Name() string {
@@ -79,7 +83,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	latestVersions := make(map[uuid.UUID]artifactVersions)
 	historicalVersions := make(map[uuid.UUID]artifactVersions)
 
-	loadStatus, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
+	loadSpecs, err := h.OperatorRepo.GetLoadOPSpecsByOrg(
 		ctx,
 		args.OrgID,
 		h.Database,
@@ -88,7 +92,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	latestWorkflowDagIdObjects, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationId(
+	latestDagIDObjects, err := h.DAGRepo.GetLatestIDsByOrg(
 		ctx,
 		args.OrgID,
 		h.Database,
@@ -97,18 +101,19 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	loadOperatorIds := make([]uuid.UUID, 0, len(loadStatus))
-	latestWorkflowDagIds := make([]uuid.UUID, 0, len(latestWorkflowDagIdObjects))
+	loadOperatorIDs := make([]uuid.UUID, 0, len(loadSpecs))
+	latestDagIDs := make([]uuid.UUID, 0, len(latestDagIDObjects))
 
-	for _, loadOperator := range loadStatus {
-		loadOperatorIds = append(loadOperatorIds, loadOperator.LoadOperatorId)
+	for _, loadOperator := range loadSpecs {
+		loadOperatorIDs = append(loadOperatorIDs, loadOperator.OperatorID)
 	}
 
-	for _, IdObject := range latestWorkflowDagIdObjects {
-		latestWorkflowDagIds = append(latestWorkflowDagIds, IdObject.Id)
+	for _, IdObject := range latestDagIDObjects {
+		latestDagIDs = append(latestDagIDs, IdObject.ID)
 	}
+
 	// Handle the no data case so it doesn't throw an error in GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds
-	if len(latestWorkflowDagIds) == 0 || len(loadOperatorIds) == 0 {
+	if len(latestDagIDs) == 0 || len(loadOperatorIDs) == 0 {
 		return getArtifactVersionsResponse{
 			LatestVersions:     latestVersions,
 			HistoricalVersions: historicalVersions,
@@ -117,62 +122,62 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	// We separate artifacts that belong to the latest workflow DAG from historical artifacts because we
 	// want to show them separately on the UI.
-	artifactIdsFromLatestWorkflowDags, err := h.CustomReader.GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds(
+	artifactIDObjects, err := h.ArtifactRepo.GetIDsByDAGAndDownstreamOPBatch(
 		ctx,
-		loadOperatorIds,
-		latestWorkflowDagIds,
+		latestDagIDs,
+		loadOperatorIDs,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	latestArtifactIds := make(map[uuid.UUID]bool, len(artifactIdsFromLatestWorkflowDags))
-	for _, artifactIdObject := range artifactIdsFromLatestWorkflowDags {
-		latestArtifactIds[artifactIdObject.ArtifactId] = true
+	latestArtifactIDs := make(map[uuid.UUID]bool, len(artifactIDObjects))
+	for _, artifactIDObject := range artifactIDObjects {
+		latestArtifactIDs[artifactIDObject.ID] = true
 	}
 
-	allArtifactIds := make([]uuid.UUID, 0, len(loadOperatorIds))
+	allArtifactIds := make([]uuid.UUID, 0, len(loadOperatorIDs))
 
-	for _, loadOperator := range loadStatus {
-		if _, ok := latestArtifactIds[loadOperator.ArtifactId]; ok {
+	for _, loadOperator := range loadSpecs {
+		if _, ok := latestArtifactIDs[loadOperator.ArtifactID]; ok {
 			// If we reach here, it means this load operator corresponds to an artifact that belongs
 			// to the latest workflow dag of a workflow.
-			if _, ok := latestVersions[loadOperator.ArtifactId]; !ok {
+			if _, ok := latestVersions[loadOperator.ArtifactID]; !ok {
 				// If we reach here, it means `latestVersions` doesn't have the artifact id entry yet,
 				// so we initialize the `artifactVersions` object with the workflow name and an empty
 				// `Versions` map.
-				allArtifactIds = append(allArtifactIds, loadOperator.ArtifactId)
-				latestVersions[loadOperator.ArtifactId] = artifactVersions{
+				allArtifactIds = append(allArtifactIds, loadOperator.ArtifactID)
+				latestVersions[loadOperator.ArtifactID] = artifactVersions{
 					WorkflowName: loadOperator.WorkflowName,
-					WorkflowId:   loadOperator.WorkflowId,
+					WorkflowId:   loadOperator.WorkflowID,
 					ArtifactName: loadOperator.ArtifactName,
-					ArtifactId:   loadOperator.ArtifactId,
+					ArtifactId:   loadOperator.ArtifactID,
 					Versions:     make(map[uuid.UUID]artifactVersion),
 				}
 			}
 
-			artifactVersionsObject := latestVersions[loadOperator.ArtifactId]
+			artifactVersionsObject := latestVersions[loadOperator.ArtifactID]
 			artifactVersionsObject.LoadSpecs = append(artifactVersionsObject.LoadSpecs, *loadOperator.Spec.Load())
 
-			latestVersions[loadOperator.ArtifactId] = artifactVersionsObject
+			latestVersions[loadOperator.ArtifactID] = artifactVersionsObject
 		} else {
-			if _, ok := historicalVersions[loadOperator.ArtifactId]; !ok {
-				allArtifactIds = append(allArtifactIds, loadOperator.ArtifactId)
-				historicalVersions[loadOperator.ArtifactId] = artifactVersions{
+			if _, ok := historicalVersions[loadOperator.ArtifactID]; !ok {
+				allArtifactIds = append(allArtifactIds, loadOperator.ArtifactID)
+				historicalVersions[loadOperator.ArtifactID] = artifactVersions{
 					WorkflowName: loadOperator.WorkflowName,
 					Versions:     make(map[uuid.UUID]artifactVersion),
 				}
 			}
 
-			artifactVersionsObject := historicalVersions[loadOperator.ArtifactId]
+			artifactVersionsObject := historicalVersions[loadOperator.ArtifactID]
 			artifactVersionsObject.LoadSpecs = append(artifactVersionsObject.LoadSpecs, *loadOperator.Spec.Load())
 
-			historicalVersions[loadOperator.ArtifactId] = artifactVersionsObject
+			historicalVersions[loadOperator.ArtifactID] = artifactVersionsObject
 		}
 	}
 
-	artifactResults, err := h.CustomReader.GetArtifactResultsByArtifactIds(ctx, allArtifactIds, h.Database)
+	artifactResultStatuses, err := h.ArtifactResultRepo.GetStatusByArtifactBatch(ctx, allArtifactIds, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
@@ -180,28 +185,28 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	// We track failed artifact versions and later on issue another query to fetch the
 	// corresponding operator's error message.
 	failedArtifactIdsMap := make(map[uuid.UUID]bool, len(allArtifactIds))
-	failedWorkflowDagResultIds := make([]uuid.UUID, 0, len(artifactResults))
+	failedWorkflowDagResultIds := make([]uuid.UUID, 0, len(artifactResultStatuses))
 
 	// Create artifact versions and add timestamp and status metadata to it.
 	// We leave the validation test result slice empty for now.
-	for _, artifactResult := range artifactResults {
-		if _, ok := latestVersions[artifactResult.ArtifactId]; ok {
-			latestVersions[artifactResult.ArtifactId].Versions[artifactResult.WorkflowDagResultId] = artifactVersion{
-				Timestamp: artifactResult.Timestamp.Unix(),
-				Status:    artifactResult.Status,
+	for _, artifactResultStatus := range artifactResultStatuses {
+		if _, ok := latestVersions[artifactResultStatus.ArtifactID]; ok {
+			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
+				Timestamp: artifactResultStatus.Timestamp.Unix(),
+				Status:    artifactResultStatus.Status,
 				Checks:    nil,
 			}
 		} else {
-			historicalVersions[artifactResult.ArtifactId].Versions[artifactResult.WorkflowDagResultId] = artifactVersion{
-				Timestamp: artifactResult.Timestamp.Unix(),
-				Status:    artifactResult.Status,
+			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
+				Timestamp: artifactResultStatus.Timestamp.Unix(),
+				Status:    artifactResultStatus.Status,
 				Checks:    nil,
 			}
 		}
 
-		if artifactResult.Status == shared.FailedExecutionStatus {
-			failedArtifactIdsMap[artifactResult.ArtifactId] = true
-			failedWorkflowDagResultIds = append(failedWorkflowDagResultIds, artifactResult.WorkflowDagResultId)
+		if artifactResultStatus.Status == shared.FailedExecutionStatus {
+			failedArtifactIdsMap[artifactResultStatus.ArtifactID] = true
+			failedWorkflowDagResultIds = append(failedWorkflowDagResultIds, artifactResultStatus.WorkflowDagResultId)
 		}
 	}
 

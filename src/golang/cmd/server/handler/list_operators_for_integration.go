@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -49,11 +48,12 @@ type ListOperatorsForIntegrationHandler struct {
 
 	Database database.Database
 
-	CustomReader queries.Reader
 	// TODO: Replace with repos.Operator once ExecEnv methods are added
 	OperatorReader operator.Reader
 
+	DAGRepo         repos.DAG
 	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
 }
 
 func (*ListOperatorsForIntegrationHandler) Name() string {
@@ -92,29 +92,28 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
 
-	operatorIds := make([]uuid.UUID, 0, len(operators))
-	operatorByIds := make(map[uuid.UUID]operator.DBOperator, len(operators))
+	operatorIDs := make([]uuid.UUID, 0, len(operators))
+	operatorByIDs := make(map[uuid.UUID]operator.DBOperator, len(operators))
 	for _, op := range operators {
-		operatorIds = append(operatorIds, op.Id)
-		operatorByIds[op.Id] = op
+		operatorIDs = append(operatorIDs, op.Id)
+		operatorByIDs[op.Id] = op
 	}
 
 	// Fetch all workflows that owns all fetched operators.
-	// Returned results are {workflow_id, workflow_dag_id, operator_id} struct.
-	ids, err := h.CustomReader.GetWorkflowIdsFromOperatorIds(ctx, operatorIds, h.Database)
+	operatorRelations, err := h.OperatorRepo.GetRelationBatch(ctx, operatorIDs, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}
 
-	workflowIds := make([]uuid.UUID, 0, len(ids))
-	for _, idsItem := range ids {
-		workflowIds = append(workflowIds, idsItem.WorkflowId)
+	workflowIDs := make([]uuid.UUID, 0, len(operatorRelations))
+	for _, operatorRelation := range operatorRelations {
+		workflowIDs = append(workflowIDs, operatorRelation.WorkflowID)
 	}
 
 	// Fetch latest workflow_dag_id for each workflow.
-	workflowIdsToLatestDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsFromWorkflowIds(
+	workflowIdsToLatestDagIds, err := h.DAGRepo.GetLatestIDByWorkflowBatch(
 		ctx,
-		workflowIds,
+		workflowIDs,
 		h.Database,
 	)
 	if err != nil {
@@ -122,23 +121,23 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	}
 
 	// Combine all fetched results
-	results := make([]listOperatorsForIntegrationItem, 0, len(ids))
-	for _, idsItem := range ids {
-		op, ok := operatorByIds[idsItem.OperatorId]
+	results := make([]listOperatorsForIntegrationItem, 0, len(operatorRelations))
+	for _, operatorRelation := range operatorRelations {
+		op, ok := operatorByIDs[operatorRelation.OperatorID]
 		if !ok {
 			return nil, http.StatusInternalServerError, errors.New("Operator id mismatch retrieved operators.")
 		}
 
-		latestDagId, ok := workflowIdsToLatestDagIds[idsItem.WorkflowId]
+		latestDagId, ok := workflowIdsToLatestDagIds[operatorRelation.WorkflowID]
 		if !ok {
 			return nil, http.StatusInternalServerError, errors.New("Workflow id mismatch retrieved workflows.")
 		}
 
-		active := latestDagId == idsItem.WorkflowDagId
+		active := latestDagId == operatorRelation.DagID
 		results = append(results, listOperatorsForIntegrationItem{
 			Operator:      &op,
-			WorkflowId:    idsItem.WorkflowId,
-			WorkflowDagId: idsItem.WorkflowDagId,
+			WorkflowId:    operatorRelation.WorkflowID,
+			WorkflowDagId: operatorRelation.DagID,
 			IsActive:      active,
 		})
 	}
