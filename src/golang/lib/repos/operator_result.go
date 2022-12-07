@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -27,6 +28,16 @@ type operatorResultReader interface {
 
 	// GetByDAGResultBatch returns all OperatorResults for the DAGResults specified.
 	GetByDAGResultBatch(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
+
+	// GetStatusByDAGResultAndArtifactBatch returns an OperatorResultStatus for each
+	// OperatorResult belonging to a DAGResult in dagResultIDs where the OperatorResult
+	// corresponds to an Operator that has an outgoing DAGEdge to an Artifact in artifactIDs.
+	GetStatusByDAGResultAndArtifactBatch(
+		ctx context.Context,
+		dagResultIDs []uuid.UUID,
+		artifactIDs []uuid.UUID,
+		DB database.Database,
+	) ([]views.OperatorResultStatus, error)
 }
 
 type operatorResultWriter interface {

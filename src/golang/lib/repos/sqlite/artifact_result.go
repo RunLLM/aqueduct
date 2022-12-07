@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -109,6 +110,31 @@ func (*artifactResultReader) GetByDAGResults(ctx context.Context, dagResultIDs [
 	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
 
 	return getArtifactResults(ctx, DB, query, args...)
+}
+
+func (*artifactResultReader) GetStatusByArtifactBatch(
+	ctx context.Context,
+	artifactIDs []uuid.UUID,
+	DB database.Database,
+) ([]views.ArtifactResultStatus, error) {
+	query := fmt.Sprintf(
+		`SELECT 
+			artifact_result.artifact_id, 
+			artifact_result.workflow_dag_result_id, 
+			artifact_result.status, 
+			workflow_dag_result.created_at AS timestamp 
+		FROM artifact_result, workflow_dag_result 
+		WHERE 
+			artifact_result.workflow_dag_result_id = workflow_dag_result.id 
+			AND artifact_result.artifact_id IN (%s);`,
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
+
+	var statuses []views.ArtifactResultStatus
+	err := DB.Query(ctx, &statuses, query, args...)
+	return statuses, err
 }
 
 func (*artifactResultWriter) Create(

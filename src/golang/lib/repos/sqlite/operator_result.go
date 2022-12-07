@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -83,6 +84,36 @@ func (*operatorResultReader) GetByDAGResultBatch(
 	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
 
 	return getOperatorResults(ctx, DB, query, args...)
+}
+
+func (*operatorResultReader) GetStatusByDAGResultAndArtifactBatch(
+	ctx context.Context,
+	dagResultIDs []uuid.UUID,
+	artifactIDs []uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorResultStatus, error) {
+	// Get all unique artifact_id, execution_state, workflow_dag_result_id for all `workflow_dag_result_id`s
+	// in `workflowDagResultIds` and `artifact_id`s in `artifactIds`.
+	query := fmt.Sprintf(
+		`SELECT DISTINCT 
+			workflow_dag_edge.to_id AS artifact_id,
+			operator_result.execution_state as metadata,
+			operator_result.workflow_dag_result_id  
+		FROM workflow_dag_edge, operator_result 
+		WHERE 
+			workflow_dag_edge.from_id = operator_result.operator_id 
+			AND workflow_dag_edge.to_id IN (%s) 
+			AND operator_result.workflow_dag_result_id IN (%s);`,
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+		stmt_preparers.GenerateArgsList(len(dagResultIDs), len(artifactIDs)+1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
+	args = append(args, stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)...)
+
+	var statuses []views.OperatorResultStatus
+	err := DB.Query(ctx, &statuses, query, args...)
+	return statuses, err
 }
 
 func (*operatorResultWriter) Create(
