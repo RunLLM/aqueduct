@@ -113,7 +113,7 @@ func (*dagReader) GetByDAGResult(ctx context.Context, dagResultID uuid.UUID, DB 
 		WHERE 
 			workflow_dag.id = workflow_dag_result.workflow_dag_id 
 			AND workflow_dag_result.id = $1;`,
-		models.DAGCols(),
+		models.DAGColsWithPrefix(),
 	)
 	args := []interface{}{dagResultID}
 
