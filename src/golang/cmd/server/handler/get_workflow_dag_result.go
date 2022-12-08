@@ -12,9 +12,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -36,22 +36,23 @@ import (
 
 type getWorkflowDagResultArgs struct {
 	*aq_context.AqContext
-	WorkflowId          uuid.UUID
-	WorkflowDagResultId uuid.UUID
+	workflowID  uuid.UUID
+	dagResultID uuid.UUID
 }
 
 type GetWorkflowDagResultHandler struct {
 	GetHandler
 
-	Database                database.Database
-	ArtifactReader          artifact.Reader
-	ArtifactResultReader    artifact_result.Reader
-	OperatorReader          operator.Reader
-	OperatorResultReader    operator_result.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	Database              database.Database
+	ArtifactReader        artifact.Reader
+	ArtifactResultReader  artifact_result.Reader
+	OperatorReader        operator.Reader
+	OperatorResultReader  operator_result.Reader
+	WorkflowReader        workflow.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
+
+	DAGResultRepo repos.DAGResult
 }
 
 func (*GetWorkflowDagResultHandler) Name() string {
@@ -90,9 +91,9 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 	}
 
 	return &getWorkflowDagResultArgs{
-		AqContext:           aqContext,
-		WorkflowId:          workflowId,
-		WorkflowDagResultId: workflowDagResultId,
+		AqContext:   aqContext,
+		workflowID:  workflowId,
+		dagResultID: workflowDagResultId,
 	}, http.StatusOK, nil
 }
 
@@ -103,7 +104,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 
 	dbWorkflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
 		ctx,
-		args.WorkflowDagResultId,
+		args.dagResultID,
 		h.Database,
 	)
 	if err != nil {
@@ -125,18 +126,14 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
-		ctx,
-		args.WorkflowDagResultId,
-		h.Database,
-	)
+	dagResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
 	operatorResults, err := h.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
 		ctx,
-		[]uuid.UUID{args.WorkflowDagResultId},
+		[]uuid.UUID{args.dagResultID},
 		h.Database,
 	)
 	if err != nil {
@@ -145,7 +142,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 
 	artifactResults, err := h.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
 		ctx,
-		[]uuid.UUID{args.WorkflowDagResultId},
+		[]uuid.UUID{args.dagResultID},
 		h.Database,
 	)
 	if err != nil {
@@ -159,7 +156,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 
 	return dag.NewResultResponseFromDbObjects(
 		constructedDag,
-		dbWorkflowDagResult,
+		dagResult,
 		operatorResults,
 		artifactResults,
 		contents,

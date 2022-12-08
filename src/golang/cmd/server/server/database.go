@@ -13,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -36,7 +35,6 @@ type Readers struct {
 	WorkflowReader             workflow.Reader
 	WorkflowDagReader          workflow_dag.Reader
 	WorkflowDagEdgeReader      workflow_dag_edge.Reader
-	WorkflowDagResultReader    workflow_dag_result.Reader
 	SchemaVersionReader        schema_version.Reader
 	CustomReader               queries.Reader
 	ExecutionEnvironmentReader exec_env.Reader
@@ -52,7 +50,6 @@ type Writers struct {
 	WorkflowWriter             workflow.Writer
 	WorkflowDagWriter          workflow_dag.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
-	WorkflowDagResultWriter    workflow_dag_result.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
 
@@ -110,11 +107,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	workflowDagResultReader, err := workflow_dag_result.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionReader, err := schema_version.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -140,7 +132,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		WorkflowReader:             workflowReader,
 		WorkflowDagReader:          workflowDagReader,
 		WorkflowDagEdgeReader:      workflowDagEdgeReader,
-		WorkflowDagResultReader:    workflowDagResultReader,
 		SchemaVersionReader:        schemaVersionReader,
 		CustomReader:               queriesReader,
 		ExecutionEnvironmentReader: execEnvReader,
@@ -193,11 +184,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	workflowDagResultWriter, err := workflow_dag_result.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvWriter, err := exec_env.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -213,7 +199,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		WorkflowWriter:             workflowWriter,
 		WorkflowDagWriter:          workflowDagWriter,
 		WorkflowDagEdgeWriter:      workflowDagEdgeWriter,
-		WorkflowDagResultWriter:    workflowDagResultWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
 }
@@ -223,7 +208,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 		WorkflowReader:             readers.WorkflowReader,
 		WorkflowDagReader:          readers.WorkflowDagReader,
 		WorkflowDagEdgeReader:      readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader:    readers.WorkflowDagResultReader,
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
 		ArtifactReader:             readers.ArtifactReader,
@@ -235,15 +219,14 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 
 func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
-		WorkflowWriter:          writers.WorkflowWriter,
-		WorkflowDagWriter:       writers.WorkflowDagWriter,
-		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
-		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
-		OperatorWriter:          writers.OperatorWriter,
-		OperatorResultWriter:    writers.OperatorResultWriter,
-		ArtifactWriter:          writers.ArtifactWriter,
-		ArtifactResultWriter:    writers.ArtifactResultWriter,
-		NotificationWriter:      writers.NotificationWriter,
+		WorkflowWriter:        writers.WorkflowWriter,
+		WorkflowDagWriter:     writers.WorkflowDagWriter,
+		WorkflowDagEdgeWriter: writers.WorkflowDagEdgeWriter,
+		OperatorWriter:        writers.OperatorWriter,
+		OperatorResultWriter:  writers.OperatorResultWriter,
+		ArtifactWriter:        writers.ArtifactWriter,
+		ArtifactResultWriter:  writers.ArtifactResultWriter,
+		NotificationWriter:    writers.NotificationWriter,
 	}
 }
 

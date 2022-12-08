@@ -43,28 +43,38 @@ func (ex *WorkflowRetentionExecutor) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(ctx context.Context, txn database.Transaction, workflowObjectId uuid.UUID, kLatestRuns int) error {
+func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(
+	ctx context.Context,
+	txn database.Transaction,
+	workflowObjectID uuid.UUID,
+	kLatestRuns int,
+) error {
 	// If kLatestRuns set to -1, we keep all runs.
 	if kLatestRuns == -1 {
 		return nil
 	}
 
-	workflowDagResults, err := ex.WorkflowDagResultReader.GetKOffsetWorkflowDagResultsByWorkflowId(ctx, workflowObjectId, kLatestRuns, txn)
+	dagResults, err := ex.DAGResultRepo.GetKOffsetByWorkflow(
+		ctx,
+		workflowObjectID,
+		kLatestRuns,
+		txn,
+	)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	}
-	workflowDagResultIds := make([]uuid.UUID, 0, len(workflowDagResults))
-	for _, worklowDagResult := range workflowDagResults {
-		workflowDagResultIds = append(workflowDagResultIds, worklowDagResult.Id)
+	dagResultIDs := make([]uuid.UUID, 0, len(dagResults))
+	for _, dagResult := range dagResults {
+		dagResultIDs = append(dagResultIDs, dagResult.ID)
 	}
 
-	if len(workflowDagResultIds) == 0 {
+	if len(dagResultIDs) == 0 {
 		return nil
 	}
 
 	operatorResultsToDelete, err := ex.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
@@ -78,7 +88,7 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(ctx context.Context, tx
 
 	artifactResultsToDelete, err := ex.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
@@ -101,7 +111,7 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(ctx context.Context, tx
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	}
 
-	err = ex.WorkflowDagResultWriter.DeleteWorkflowDagResults(ctx, workflowDagResultIds, txn)
+	err = ex.DAGResultRepo.DeleteBatch(ctx, dagResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	}

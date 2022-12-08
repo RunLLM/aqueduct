@@ -12,9 +12,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -38,14 +38,14 @@ import (
 type RegisterAirflowWorkflowHandler struct {
 	RegisterWorkflowHandler
 
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	WorkflowDagReader     workflow_dag.Reader
+	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	OperatorResultWriter    operator_result.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	NotificationWriter      notification.Writer
+	OperatorResultWriter operator_result.Writer
+	ArtifactResultWriter artifact_result.Writer
+	NotificationWriter   notification.Writer
+
+	DAGResultRepo repos.DAGResult
 }
 
 type registerAirflowWorkflowArgs struct {
@@ -162,9 +162,8 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.OperatorReader,
 			h.ArtifactReader,
 			h.WorkflowDagEdgeReader,
-			h.WorkflowDagResultReader,
+			h.DAGResultRepo,
 			h.WorkflowDagWriter,
-			h.WorkflowDagResultWriter,
 			h.OperatorResultWriter,
 			h.ArtifactResultWriter,
 			h.Vault,

@@ -12,8 +12,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -32,13 +32,12 @@ func SyncWorkflowDags(
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
 	workflowDagEdgeReader workflow_dag_edge.Reader,
-	workflowDagResultReader workflow_dag_result.Reader,
+	dagResultRepo repos.DAGResult,
 	workflowDagWriter workflow_dag.Writer,
-	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
 	vault vault.Vault,
-	db database.Database,
+	DB database.Database,
 ) error {
 	// Read each workflow dag from the database that needs to be synced
 	dbDags := make([]workflow_dag.DBWorkflowDag, 0, len(workflowDagIds))
@@ -51,7 +50,7 @@ func SyncWorkflowDags(
 			operatorReader,
 			artifactReader,
 			workflowDagEdgeReader,
-			db,
+			DB,
 		)
 		if err != nil {
 			return err
@@ -64,13 +63,12 @@ func SyncWorkflowDags(
 		if err := syncWorkflowDag(
 			ctx,
 			&dbDag,
-			workflowDagResultReader,
+			dagResultRepo,
 			workflowDagWriter,
-			workflowDagResultWriter,
 			operatorResultWriter,
 			artifactResultWriter,
 			vault,
-			db,
+			DB,
 		); err != nil {
 			log.Errorf("Unable to sync with Airflow for WorkflowDag %v: %v", dbDag.Id, err)
 		}
@@ -85,13 +83,12 @@ func SyncWorkflowDags(
 func syncWorkflowDag(
 	ctx context.Context,
 	dbDag *workflow_dag.DBWorkflowDag,
-	workflowDagResultReader workflow_dag_result.Reader,
+	dagResultRepo repos.DAGResult,
 	workflowDagWriter workflow_dag.Writer,
-	workflowDagResultWriter workflow_dag_result.Writer,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
 	vault vault.Vault,
-	db database.Database,
+	DB database.Database,
 ) error {
 	// Read Airflow credentials from vault
 	authConf, err := auth.ReadConfigFromSecret(
@@ -114,7 +111,7 @@ func syncWorkflowDag(
 		cli,
 		dbDag,
 		workflowDagWriter,
-		db,
+		DB,
 	)
 	if err != nil {
 		return err
@@ -131,14 +128,14 @@ func syncWorkflowDag(
 		return err
 	}
 
-	workflowDagResults, err := workflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, dbDag.WorkflowId, db)
+	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dbDag.WorkflowId, DB)
 	if err != nil {
 		return err
 	}
 
-	dagCreatedAtTimes := make([]time.Time, 0, len(workflowDagResults))
-	for _, workflowDagResult := range workflowDagResults {
-		dagCreatedAtTimes = append(dagCreatedAtTimes, workflowDagResult.CreatedAt)
+	dagCreatedAtTimes := make([]time.Time, 0, len(dagResults))
+	for _, dagResult := range dagResults {
+		dagCreatedAtTimes = append(dagCreatedAtTimes, dagResult.CreatedAt)
 	}
 
 	for _, dagRun := range dagRuns {
@@ -165,10 +162,10 @@ func syncWorkflowDag(
 			cli,
 			dbDag,
 			&dagRun,
-			workflowDagResultWriter,
+			dagResultRepo,
 			operatorResultWriter,
 			artifactResultWriter,
-			db,
+			DB,
 		); err != nil {
 			return err
 		}
@@ -185,22 +182,22 @@ func syncWorkflowDagResult(
 	cli *client,
 	dbDag *workflow_dag.DBWorkflowDag,
 	run *airflow.DAGRun,
-	workflowDagResultWriter workflow_dag_result.Writer,
+	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
-	db database.Database,
+	DB database.Database,
 ) error {
-	txn, err := db.BeginTx(ctx)
+	txn, err := DB.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	workflowDagResult, err := createWorkflowDagResult(
+	dagResult, err := createDAGResult(
 		ctx,
 		dbDag,
 		run,
-		workflowDagResultWriter,
+		dagResultRepo,
 		txn,
 	)
 	if err != nil {
@@ -233,7 +230,7 @@ func syncWorkflowDagResult(
 			dbDag,
 			&op,
 			execStatus,
-			workflowDagResult.Id,
+			dagResult.ID,
 			operatorResultWriter,
 			artifactResultWriter,
 			txn,

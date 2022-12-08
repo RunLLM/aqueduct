@@ -8,7 +8,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
@@ -41,7 +42,7 @@ type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'workflow_dag_result' schema.
 	Id uuid.UUID `json:"id"`
 
-	ExecState *shared.ExecutionState `json:"exec_state"`
+	ExecState *mdl_shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
@@ -53,7 +54,7 @@ type ResultResponse struct {
 
 func NewResultResponseFromDbObjects(
 	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	dbWorkflowDagResult *workflow_dag_result.WorkflowDagResult,
+	dagResult *models.DAGResult,
 	dbOperatorResults []operator_result.OperatorResult,
 	dbArtifactResults []artifact_result.ArtifactResult,
 	contents map[string]string,
@@ -68,12 +69,12 @@ func NewResultResponseFromDbObjects(
 	}
 
 	rawResultResponse := RawResultResponse{
-		Id: dbWorkflowDagResult.Id,
+		Id: dagResult.ID,
 	}
 
-	if !dbWorkflowDagResult.ExecState.IsNull {
+	if !dagResult.ExecState.IsNull {
 		// make a value copy of execState
-		execStateVal := dbWorkflowDagResult.ExecState.ExecutionState
+		execStateVal := dagResult.ExecState.ExecutionState
 		rawResultResponse.ExecState = &execStateVal
 	}
 
