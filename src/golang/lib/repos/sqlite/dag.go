@@ -80,7 +80,7 @@ func (*dagReader) GetByArtifactResultBatch(ctx context.Context, artifactResultID
 				workflow_dag_edge.to_id = artifact_result.artifact_id
 			)
 			AND artifact_result.id IN (%s);`,
-		models.DAGCols(),
+		models.DAGColsWithPrefix(),
 		stmt_preparers.GenerateArgsList(len(artifactResultIDs), 1),
 	)
 
