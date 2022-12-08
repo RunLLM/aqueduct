@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -42,11 +41,11 @@ type GetWorkflowDagResultHandler struct {
 	GetHandler
 
 	Database             database.Database
-	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	OperatorResultReader operator_result.Reader
 
+	ArtifactRepo  repos.Artifact
 	DAGRepo       repos.DAG
 	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
@@ -116,7 +115,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
-		h.ArtifactReader,
+		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		h.Database,
 	)

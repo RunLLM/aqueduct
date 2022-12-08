@@ -32,8 +32,8 @@ func (s *AqServer) triggerMissedCronJobs(
 			Engine:         s.AqEngine,
 			Vault:          s.Vault,
 			OperatorReader: s.OperatorReader,
-			ArtifactReader: s.ArtifactReader,
 
+			ArtifactRepo: s.ArtifactRepo,
 			DAGRepo:      s.DAGRepo,
 			DAGEdgeRepo:  s.DAGEdgeRepo,
 			WorkflowRepo: s.WorkflowRepo,

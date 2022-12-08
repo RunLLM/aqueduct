@@ -3,7 +3,6 @@ package dag
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/google/uuid"
@@ -19,37 +18,37 @@ import (
 //						    |
 // extract_1 -> artifact_1 --
 func generateBasicDag(t *testing.T) *models.DAG {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactTwo := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactTwo := models.Artifact{
+		ID: uuid.New(),
 	}
 
 	extractZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactZero.Id},
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
 	extractOne := operator.DBOperator{
 		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactOne.Id},
+		Outputs: []uuid.UUID{artifactOne.ID},
 	}
 
 	functionZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
-		Outputs: []uuid.UUID{artifactTwo.Id},
+		Inputs:  []uuid.UUID{artifactZero.ID, artifactOne.ID},
+		Outputs: []uuid.UUID{artifactTwo.ID},
 	}
 
 	loadZero := operator.DBOperator{
 		Id:     uuid.New(),
-		Inputs: []uuid.UUID{artifactTwo.Id},
+		Inputs: []uuid.UUID{artifactTwo.ID},
 	}
 
 	return &models.DAG{
@@ -59,10 +58,10 @@ func generateBasicDag(t *testing.T) *models.DAG {
 			functionZero.Id: functionZero,
 			loadZero.Id:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{
-			artifactZero.Id: artifactZero,
-			artifactOne.Id:  artifactOne,
-			artifactTwo.Id:  artifactTwo,
+		Artifacts: map[uuid.UUID]models.Artifact{
+			artifactZero.ID: artifactZero,
+			artifactOne.ID:  artifactOne,
+			artifactTwo.ID:  artifactTwo,
 		},
 	}
 }
@@ -77,38 +76,38 @@ func generateBasicDag(t *testing.T) *models.DAG {
 //							|
 // extract_1 -> artifact_1 --
 func generateCyclicDag(t *testing.T) *models.DAG {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactTwo := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactTwo := models.Artifact{
+		ID: uuid.New(),
 	}
 
 	extractZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactTwo.Id},
-		Outputs: []uuid.UUID{artifactZero.Id},
+		Inputs:  []uuid.UUID{artifactTwo.ID},
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
 	extractOne := operator.DBOperator{
 		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactOne.Id},
+		Outputs: []uuid.UUID{artifactOne.ID},
 	}
 
 	functionZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
-		Outputs: []uuid.UUID{artifactTwo.Id},
+		Inputs:  []uuid.UUID{artifactZero.ID, artifactOne.ID},
+		Outputs: []uuid.UUID{artifactTwo.ID},
 	}
 
 	loadZero := operator.DBOperator{
 		Id:     uuid.New(),
-		Inputs: []uuid.UUID{artifactTwo.Id},
+		Inputs: []uuid.UUID{artifactTwo.ID},
 	}
 
 	return &models.DAG{
@@ -118,10 +117,10 @@ func generateCyclicDag(t *testing.T) *models.DAG {
 			functionZero.Id: functionZero,
 			loadZero.Id:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{
-			artifactZero.Id: artifactZero,
-			artifactOne.Id:  artifactOne,
-			artifactTwo.Id:  artifactTwo,
+		Artifacts: map[uuid.UUID]models.Artifact{
+			artifactZero.ID: artifactZero,
+			artifactOne.ID:  artifactOne,
+			artifactTwo.ID:  artifactTwo,
 		},
 	}
 }
@@ -130,20 +129,20 @@ func generateCyclicDag(t *testing.T) *models.DAG {
 // artifact_0 -> validation_0
 func generateUnexecutableOperatorDag(t *testing.T) *models.DAG {
 	validationOpId := uuid.New()
-	artifactId := uuid.New()
+	artifactID := uuid.New()
 
-	artifactObject := artifact.DBArtifact{
-		Id: artifactId,
+	artifactObject := models.Artifact{
+		ID: artifactID,
 	}
 
 	validationOperator := operator.DBOperator{
 		Id:     validationOpId,
-		Inputs: []uuid.UUID{artifactObject.Id},
+		Inputs: []uuid.UUID{artifactObject.ID},
 	}
 
 	return &models.DAG{
 		Operators: map[uuid.UUID]operator.DBOperator{validationOpId: validationOperator},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactId: artifactObject},
+		Artifacts: map[uuid.UUID]models.Artifact{artifactID: artifactObject},
 	}
 }
 
@@ -151,45 +150,45 @@ func generateUnexecutableOperatorDag(t *testing.T) *models.DAG {
 func generateEmptyDag(t *testing.T) *models.DAG {
 	return &models.DAG{
 		Operators: map[uuid.UUID]operator.DBOperator{},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
+		Artifacts: map[uuid.UUID]models.Artifact{},
 	}
 }
 
 // This manually creates a DAG with an unreachable artifract:
 // operator_0 -> artifact_0, artifact_1
 func generateUnreachableArtifactDag(t *testing.T) *models.DAG {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
 	operatorZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactZero.Id},
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
 	return &models.DAG{
 		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactZero.Id: artifactZero, artifactOne.Id: artifactOne},
+		Artifacts: map[uuid.UUID]models.Artifact{artifactZero.ID: artifactZero, artifactOne.ID: artifactOne},
 	}
 }
 
 // This manually creates a DAG with an edge that contains an undefined artifact:
 // operator_0 -> artifact_0, artifact_0 not included in `dags.Artifacts`
 func generateUndefinedArtifactDag(t *testing.T) *models.DAG {
-	artifactId := uuid.New()
+	artifactID := uuid.New()
 
 	operatorZero := operator.DBOperator{
 		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactId},
+		Outputs: []uuid.UUID{artifactID},
 	}
 
 	return &models.DAG{
 		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
+		Artifacts: map[uuid.UUID]models.Artifact{},
 	}
 }
 

@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -16,7 +15,6 @@ import (
 
 type Readers struct {
 	OperatorReader             operator.Reader
-	ArtifactReader             artifact.Reader
 	IntegrationReader          integration.Reader
 	OperatorResultReader       operator_result.Reader
 	ArtifactResultReader       artifact_result.Reader
@@ -27,11 +25,11 @@ type Writers struct {
 	WorkflowWatcherWriter workflow_watcher.Writer
 	OperatorWriter        operator.Writer
 	OperatorResultWriter  operator_result.Writer
-	ArtifactWriter        artifact.Writer
 	ArtifactResultWriter  artifact_result.Writer
 }
 
 type Repos struct {
+	ArtifactRepo     repos.Artifact
 	DAGRepo          repos.DAG
 	DAGEdgeRepo      repos.DAGEdge
 	DAGResultRepo    repos.DAGResult
@@ -42,11 +40,6 @@ type Repos struct {
 
 func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 	operatorReader, err := operator.NewReader(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactReader, err := artifact.NewReader(dbConf)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +66,6 @@ func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
 
 	return &Readers{
 		OperatorReader:             operatorReader,
-		ArtifactReader:             artifactReader,
 		IntegrationReader:          integrationReader,
 		OperatorResultReader:       operatorResultReader,
 		ArtifactResultReader:       artifactResultReader,
@@ -97,11 +89,6 @@ func createWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	artifactWriter, err := artifact.NewWriter(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
 	artifactResultWriter, err := artifact_result.NewWriter(dbConf)
 	if err != nil {
 		return nil, err
@@ -111,13 +98,13 @@ func createWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		WorkflowWatcherWriter: workflowWatcherWriter,
 		OperatorWriter:        operatorWriter,
 		OperatorResultWriter:  operatorResultWriter,
-		ArtifactWriter:        artifactWriter,
 		ArtifactResultWriter:  artifactResultWriter,
 	}, nil
 }
 
 func createRepos() *Repos {
 	return &Repos{
+		ArtifactRepo:     sqlite.NewArtifactRepo(),
 		DAGRepo:          sqlite.NewDAGRepo(),
 		DAGEdgeRepo:      sqlite.NewDAGEdgeRepo(),
 		DAGResultRepo:    sqlite.NewDAGResultRepo(),
@@ -131,7 +118,6 @@ func getEngineReaders(readers *Readers) *engine.EngineReaders {
 	return &engine.EngineReaders{
 		OperatorReader:             readers.OperatorReader,
 		OperatorResultReader:       readers.OperatorResultReader,
-		ArtifactReader:             readers.ArtifactReader,
 		ArtifactResultReader:       readers.ArtifactResultReader,
 		IntegrationReader:          readers.IntegrationReader,
 		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
@@ -142,13 +128,13 @@ func getEngineWriters(writers *Writers) *engine.EngineWriters {
 	return &engine.EngineWriters{
 		OperatorWriter:       writers.OperatorWriter,
 		OperatorResultWriter: writers.OperatorResultWriter,
-		ArtifactWriter:       writers.ArtifactWriter,
 		ArtifactResultWriter: writers.ArtifactResultWriter,
 	}
 }
 
 func getEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
+		ArtifactRepo:     repos.ArtifactRepo,
 		DAGRepo:          repos.DAGRepo,
 		DAGEdgeRepo:      repos.DAGEdgeRepo,
 		DAGResultRepo:    repos.DAGResultRepo,

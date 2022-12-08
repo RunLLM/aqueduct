@@ -126,10 +126,10 @@ func NewResultResponseFromDbObjects(
 				&artf,
 				&artfResult,
 				contentPtr,
-				artifactToUpstreamOpId[artf.Id],
-				artifactToDownstreamOpIds[artf.Id],
+				artifactToUpstreamOpId[artf.ID],
+				artifactToDownstreamOpIds[artf.ID],
 			)
-			artifactsResponse[artf.Id] = *artfResultResponse
+			artifactsResponse[artf.ID] = *artfResultResponse
 		}
 	}
 
@@ -140,8 +140,8 @@ func NewResultResponseFromDbObjects(
 				&artf,
 				nil,
 				nil,
-				artifactToUpstreamOpId[artf.Id],
-				artifactToDownstreamOpIds[artf.Id],
+				artifactToUpstreamOpId[artf.ID],
+				artifactToDownstreamOpIds[artf.ID],
 			))
 		}
 	}

@@ -1,17 +1,18 @@
 package artifact
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
 type Response struct {
-	Id          uuid.UUID     `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Type        artifact.Type `json:"type"`
+	Id          uuid.UUID               `json:"id"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Type        mdl_shared.ArtifactType `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
 
 	// upstream operator ID, must be unique.
@@ -64,14 +65,14 @@ func NewRawResultResponseFromDbObject(
 }
 
 func NewResultResponseFromDbObjects(
-	dbArtifact *artifact.DBArtifact,
+	dbArtifact *models.Artifact,
 	dbArtifactResult *artifact_result.ArtifactResult,
 	content *string,
 	from uuid.UUID,
 	to []uuid.UUID,
 ) *ResultResponse {
 	metadata := Response{
-		Id:          dbArtifact.Id,
+		Id:          dbArtifact.ID,
 		Name:        dbArtifact.Name,
 		Description: dbArtifact.Description,
 		Type:        dbArtifact.Type,

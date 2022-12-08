@@ -71,9 +71,9 @@ type GetArtifactResultHandler struct {
 	GetHandler
 
 	Database             database.Database
-	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 
+	ArtifactRepo  repos.Artifact
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 }
@@ -133,22 +133,22 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	artifactIdStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
-	artifactId, err := uuid.Parse(artifactIdStr)
+	artifactIDStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
+	artifactID, err := uuid.Parse(artifactIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed artifact ID.")
 	}
 
-	ok, err := h.ArtifactReader.ValidateArtifactOwnership(
+	ok, err := h.ArtifactRepo.ValidateOrg(
 		r.Context(),
+		artifactID,
 		aqContext.OrgID,
-		artifactId,
 		h.Database,
 	)
 	if err != nil {
@@ -160,8 +160,8 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	return &getArtifactResultArgs{
 		AqContext:   aqContext,
-		dagResultID: workflowDagResultId,
-		artifactID:  artifactId,
+		dagResultID: dagResultID,
+		artifactID:  artifactID,
 	}, http.StatusOK, nil
 }
 
@@ -184,7 +184,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
-	dbArtifact, err := h.ArtifactReader.GetArtifact(ctx, args.artifactID, h.Database)
+	artifact, err := h.ArtifactRepo.Get(ctx, args.artifactID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
@@ -215,7 +215,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	metadata := artifactResultMetadata{
 		Status:            execState.Status,
 		ExecState:         execState,
-		Name:              dbArtifact.Name,
+		Name:              artifact.Name,
 		ArtifactType:      dbArtifactResult.Metadata.ArtifactType,
 		SerializationType: dbArtifactResult.Metadata.SerializationType,
 	}

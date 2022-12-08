@@ -50,7 +50,6 @@ type AqueductTimeConfig struct {
 type EngineReaders struct {
 	OperatorReader             operator_db.Reader
 	OperatorResultReader       operator_result.Reader
-	ArtifactReader             artifact_db.Reader
 	ArtifactResultReader       artifact_result.Reader
 	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
@@ -59,12 +58,12 @@ type EngineReaders struct {
 type EngineWriters struct {
 	OperatorWriter       operator_db.Writer
 	OperatorResultWriter operator_result.Writer
-	ArtifactWriter       artifact_db.Writer
 	ArtifactResultWriter artifact_result.Writer
 }
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
+	ArtifactRepo     repos.Artifact
 	DAGRepo          repos.DAG
 	DAGEdgeRepo      repos.DAGEdge
 	DAGResultRepo    repos.DAGResult
@@ -179,7 +178,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.WorkflowRepo,
 		eng.DAGRepo,
 		eng.OperatorReader,
-		eng.ArtifactReader,
+		eng.ArtifactRepo,
 		eng.DAGEdgeRepo,
 		eng.Database,
 	)
@@ -241,8 +240,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorReader,
 		eng.OperatorWriter,
 		eng.DAGEdgeRepo,
-		eng.ArtifactReader,
-		eng.ArtifactWriter,
+		eng.ArtifactRepo,
 		eng.Database,
 	)
 	if err != nil {
@@ -299,7 +297,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dagResult.ID,
 		dbDAG,
 		eng.OperatorResultWriter,
-		eng.ArtifactWriter,
+		eng.ArtifactRepo,
 		eng.ArtifactResultWriter,
 		engineJobManager,
 		eng.Vault,
@@ -384,7 +382,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		uuid.Nil, /* workflowDagResultID */
 		dbDAG,
 		eng.OperatorResultWriter,
-		eng.ArtifactWriter,
+		eng.ArtifactRepo,
 		eng.ArtifactResultWriter,
 		jobManager,
 		eng.Vault,
@@ -506,21 +504,21 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	operatorIds := make([]uuid.UUID, 0, len(dagEdgesToDelete))
-	artifactIds := make([]uuid.UUID, 0, len(dagEdgesToDelete))
+	artifactIDs := make([]uuid.UUID, 0, len(dagEdgesToDelete))
 
 	operatorIdMap := make(map[uuid.UUID]bool)
-	artifactIdMap := make(map[uuid.UUID]bool)
+	artifactIDMap := make(map[uuid.UUID]bool)
 
 	for _, dagEdge := range dagEdgesToDelete {
 		var operatorId uuid.UUID
-		var artifactId uuid.UUID
+		var artifactID uuid.UUID
 
 		if dagEdge.Type == mdl_shared.OperatorToArtifactDAGEdge {
 			operatorId = dagEdge.FromID
-			artifactId = dagEdge.ToID
+			artifactID = dagEdge.ToID
 		} else {
 			operatorId = dagEdge.ToID
-			artifactId = dagEdge.FromID
+			artifactID = dagEdge.FromID
 		}
 
 		if _, ok := operatorIdMap[operatorId]; !ok {
@@ -528,9 +526,9 @@ func (eng *aqEngine) DeleteWorkflow(
 			operatorIds = append(operatorIds, operatorId)
 		}
 
-		if _, ok := artifactIdMap[artifactId]; !ok {
-			artifactIdMap[artifactId] = true
-			artifactIds = append(artifactIds, artifactId)
+		if _, ok := artifactIDMap[artifactID]; !ok {
+			artifactIDMap[artifactID] = true
+			artifactIDs = append(artifactIDs, artifactID)
 		}
 	}
 
@@ -598,7 +596,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting operators.")
 	}
 
-	err = eng.ArtifactWriter.DeleteArtifacts(ctx, artifactIds, txn)
+	err = eng.ArtifactRepo.DeleteBatch(ctx, artifactIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifacts.")
 	}

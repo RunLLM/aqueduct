@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -60,13 +59,13 @@ type ConnectIntegrationHandler struct {
 	Vault      vault.Vault
 	JobManager job.JobManager
 
-	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	IntegrationReader    integration.Reader
 	IntegrationWriter    integration.Writer
 
-	DAGRepo repos.DAG
+	ArtifactRepo repos.Artifact
+	DAGRepo      repos.DAG
 
 	PauseServer   func()
 	RestartServer func()
@@ -211,7 +210,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				args.Config,
 				args.OrgID,
 				h.DAGRepo,
-				h.ArtifactReader,
+				h.ArtifactRepo,
 				h.ArtifactResultReader,
 				h.OperatorReader,
 				h.IntegrationReader,
@@ -435,7 +434,7 @@ func setIntegrationAsStorage(
 	conf auth.Config,
 	orgID string,
 	dagRepo repos.DAG,
-	artifactReader artifact.Reader,
+	artifactRepo repos.Artifact,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
 	integrationReader integration.Reader,
@@ -479,7 +478,7 @@ func setIntegrationAsStorage(
 		storageConfig,
 		orgID,
 		dagRepo,
-		artifactReader,
+		artifactRepo,
 		artifactResultReader,
 		operatorReader,
 		integrationReader,
