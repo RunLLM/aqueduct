@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -48,11 +47,11 @@ type GetWorkflowDagResultHandler struct {
 	ArtifactResultReader  artifact_result.Reader
 	OperatorReader        operator.Reader
 	OperatorResultReader  operator_result.Reader
-	WorkflowReader        workflow.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
+	WorkflowRepo  repos.Workflow
 }
 
 func (*GetWorkflowDagResultHandler) Name() string {
@@ -65,21 +64,21 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -92,8 +91,8 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 
 	return &getWorkflowDagResultArgs{
 		AqContext:   aqContext,
-		workflowID:  workflowId,
-		dagResultID: workflowDagResultId,
+		workflowID:  workflowID,
+		dagResultID: dagResultID,
 	}, http.StatusOK, nil
 }
 
@@ -115,7 +114,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 	constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 		ctx,
 		dbDAG.ID,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,

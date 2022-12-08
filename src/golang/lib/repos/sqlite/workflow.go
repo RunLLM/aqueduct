@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -41,6 +41,18 @@ func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 		models.WorkflowCols(),
 	)
 	args := []interface{}{ID}
+
+	return getWorkflow(ctx, DB, query, args...)
+}
+
+func (*workflowReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) (*models.Workflow, error) {
+	query := fmt.Sprintf(`
+		SELECT %s FROM workflow, workflow_dag 
+		WHERE workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag.id = $1;`,
+		models.WorkflowColsWithPrefix(),
+	)
+	args := []interface{}{dagID}
 
 	return getWorkflow(ctx, DB, query, args...)
 }
@@ -150,8 +162,8 @@ func (*workflowWriter) Create(
 	userID uuid.UUID,
 	name string,
 	description string,
-	schedule *shared.Schedule,
-	retentionPolicy *shared.RetentionPolicy,
+	schedule *workflow.Schedule,
+	retentionPolicy *workflow.RetentionPolicy,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
@@ -161,7 +173,7 @@ func (*workflowWriter) Create(
 		models.WorkflowDescription,
 		models.WorkflowSchedule,
 		models.WorkflowCreatedAt,
-		models.WorkflowRetention,
+		models.WorkflowRetentionPolicy,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 

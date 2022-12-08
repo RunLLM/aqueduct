@@ -3,9 +3,9 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -23,6 +23,10 @@ type workflowReader interface {
 	// Get returns the Workflow with ID.
 	// It returns a database.ErrNoRows if no rows are found.
 	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error)
+
+	// GetByDAG returns the Workflow associated with the specified DAG.
+	// It returns a database.ErrNoRows if no rows are found.
+	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) (*models.Workflow, error)
 
 	// GetByOwnerAndName returns the workflow created by ownerID named name.
 	// It returns a database.ErrNoRows if no rows are found.
@@ -45,8 +49,8 @@ type workflowWriter interface {
 		userID uuid.UUID,
 		name string,
 		description string,
-		schedule *shared.Schedule,
-		retentionPolicy *shared.RetentionPolicy,
+		schedule *workflow.Schedule,
+		retentionPolicy *workflow.RetentionPolicy,
 		DB database.Database,
 	) (*models.Workflow, error)
 

@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -63,7 +62,6 @@ type GetWorkflowHandler struct {
 
 	ArtifactReader        artifact.Reader
 	OperatorReader        operator.Reader
-	WorkflowReader        workflow.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
 	OperatorResultWriter operator_result.Writer
@@ -71,6 +69,7 @@ type GetWorkflowHandler struct {
 
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
+	WorkflowRepo  repos.Workflow
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -83,15 +82,15 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -104,7 +103,7 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	return &getWorkflowArgs{
 		AqContext:  aqContext,
-		workflowID: workflowId,
+		workflowID: workflowID,
 	}, http.StatusOK, nil
 }
 
@@ -116,7 +115,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 	latestDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.workflowID,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
@@ -132,7 +131,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		if err := airflow.SyncDAGs(
 			ctx,
 			[]uuid.UUID{latestDAG.ID},
-			h.WorkflowReader,
+			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,
@@ -161,7 +160,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 			ctx,
 			dbDAG.ID,
-			h.WorkflowReader,
+			h.WorkflowRepo,
 			h.DAGRepo,
 			h.OperatorReader,
 			h.ArtifactReader,

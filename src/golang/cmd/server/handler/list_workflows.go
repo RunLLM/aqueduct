@@ -49,15 +49,15 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader        artifact.Reader
-	OperatorReader        operator.Reader
+	ArtifactReader artifact.Reader
+	OperatorReader operator.Reader
+	// TODO: Remove after watcher refactor
 	WorkflowReader        workflow.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 	CustomReader          queries.Reader
 
 	ArtifactWriter        artifact.Writer
 	OperatorWriter        operator.Writer
-	WorkflowWriter        workflow.Writer
 	WorkflowDagEdgeWriter workflow_dag_edge.Writer
 	OperatorResultWriter  operator_result.Writer
 	ArtifactResultWriter  artifact_result.Writer
@@ -65,6 +65,7 @@ type ListWorkflowsHandler struct {
 
 	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
+	WorkflowRepo  repos.Workflow
 }
 
 func (*ListWorkflowsHandler) Name() string {
@@ -90,44 +91,44 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		}
 	}()
 
-	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrgID, h.Database)
+	latestStatuses, err := h.WorkflowRepo.GetLatestStatusesByOrg(ctx, args.OrgID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
 
-	workflowIds := make([]uuid.UUID, 0, len(dbWorkflows))
-	for _, dbWorkflow := range dbWorkflows {
-		workflowIds = append(workflowIds, dbWorkflow.Id)
+	workflowIDs := make([]uuid.UUID, 0, len(latestStatuses))
+	for _, latestStatus := range latestStatuses {
+		workflowIDs = append(workflowIDs, latestStatus.ID)
 	}
 
-	workflows := make([]workflowResponse, 0, len(dbWorkflows))
-	if len(workflowIds) > 0 {
-		for _, dbWorkflow := range dbWorkflows {
+	workflowResponses := make([]workflowResponse, 0, len(latestStatuses))
+	if len(workflowIDs) > 0 {
+		for _, latestStatus := range latestStatuses {
 			response := workflowResponse{
-				Id:          dbWorkflow.Id,
-				Name:        dbWorkflow.Name,
-				Description: dbWorkflow.Description,
-				CreatedAt:   dbWorkflow.CreatedAt.Unix(),
-				Engine:      dbWorkflow.Engine,
+				Id:          latestStatus.ID,
+				Name:        latestStatus.Name,
+				Description: latestStatus.Description,
+				CreatedAt:   latestStatus.CreatedAt.Unix(),
+				Engine:      latestStatus.Engine,
 			}
 
-			if !dbWorkflow.LastRunAt.IsNull {
-				response.LastRunAt = dbWorkflow.LastRunAt.Time.Unix()
+			if !latestStatus.LastRunAt.IsNull {
+				response.LastRunAt = latestStatus.LastRunAt.Time.Unix()
 			}
 
-			if !dbWorkflow.Status.IsNull {
-				response.Status = dbWorkflow.Status.ExecutionStatus
+			if !latestStatus.Status.IsNull {
+				response.Status = latestStatus.Status.ExecutionStatus
 			} else {
 				// There are no workflow runs yet for this workflow, so we simply return
 				// that the workflow has been registered
 				response.Status = shared.RegisteredExecutionStatus
 			}
 
-			workflows = append(workflows, response)
+			workflowResponses = append(workflowResponses, response)
 		}
 	}
 
-	return workflows, http.StatusOK, nil
+	return workflowResponses, http.StatusOK, nil
 }
 
 // syncSelfOrchestratedWorkflows syncs any workflow DAG results for any workflows running on a
@@ -152,7 +153,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 	if err := airflow.SyncDAGs(
 		ctx,
 		airflowWorkflowDagUUIDs,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,

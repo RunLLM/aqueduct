@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -32,10 +31,10 @@ type watchWorkflowArgs struct {
 type WatchWorkflowHandler struct {
 	PostHandler
 
-	Database       database.Database
-	WorkflowReader workflow.Reader
+	Database database.Database
 
-	WatcherRepo repos.Watcher
+	WatcherRepo  repos.Watcher
+	WorkflowRepo repos.Workflow
 }
 
 func (*WatchWorkflowHandler) Name() string {
@@ -48,15 +47,15 @@ func (h *WatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -69,7 +68,7 @@ func (h *WatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error
 
 	return &watchWorkflowArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		workflowId: workflowID,
 	}, http.StatusOK, nil
 }
 

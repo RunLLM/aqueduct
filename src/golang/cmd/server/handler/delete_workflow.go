@@ -13,12 +13,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -54,7 +54,7 @@ type SavedObjectResult struct {
 // k8s resources, Postgres state, and output objects in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
-	WorkflowId     uuid.UUID
+	WorkflowID     uuid.UUID
 	ExternalDelete map[string][]string
 	Force          bool
 }
@@ -84,10 +84,11 @@ type DeleteWorkflowHandler struct {
 
 	IntegrationReader          integration.Reader
 	OperatorReader             operator.Reader
-	WorkflowReader             workflow.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
 	ExecutionEnvironmentWriter db_exec_env.Writer
+
+	WorkflowRepo repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -100,15 +101,15 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, statuscode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -127,7 +128,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	return &deleteWorkflowArgs{
 		AqContext:      aqContext,
-		WorkflowId:     workflowId,
+		WorkflowID:     workflowID,
 		ExternalDelete: input.ExternalDelete,
 		Force:          input.Force,
 	}, http.StatusOK, nil
@@ -158,7 +159,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorReader.GetLoadOperatorsForWorkflowAndIntegration(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			touchedOperators, err := h.OperatorReader.GetLoadOperatorsForWorkflowAndIntegration(ctx, args.WorkflowID, nameToId[integrationName], name, h.Database)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
@@ -201,7 +202,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		resp.SavedObjectDeletionResults = savedObjectDeletionResults
 	}
 
-	err := h.Engine.DeleteWorkflow(ctx, args.WorkflowId)
+	err := h.Engine.DeleteWorkflow(ctx, args.WorkflowID)
 	if err != nil {
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}

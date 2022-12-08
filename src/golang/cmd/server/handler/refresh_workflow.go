@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -49,12 +48,12 @@ type RefreshWorkflowHandler struct {
 	Engine   engine.Engine
 	Vault    vault.Vault
 
-	WorkflowReader        workflow.Reader
 	OperatorReader        operator.Reader
 	ArtifactReader        artifact.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 
-	DAGRepo repos.DAG
+	DAGRepo      repos.DAG
+	WorkflowRepo repos.Workflow
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -67,19 +66,19 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	if workflowIdStr == "" {
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	if workflowIDStr == "" {
 		return nil, http.StatusBadRequest, errors.New("no workflow id was specified")
 	}
 
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
+		workflowID,
 		aqContext.OrgID,
 		h.Database,
 	)
@@ -96,7 +95,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	return &RefreshWorkflowArgs{
-		WorkflowId: workflowId,
+		WorkflowId: workflowID,
 		Parameters: parameters,
 	}, http.StatusOK, nil
 }
@@ -109,7 +108,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 	dag, err := utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.WorkflowId,
-		h.WorkflowReader,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,

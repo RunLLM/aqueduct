@@ -80,7 +80,7 @@ func NewResultResponseFromDbObjects(
 	if dag.Metadata != nil {
 		wfMetadata := dag.Metadata
 		metadataResponse.WorkflowCreatedAt = wfMetadata.CreatedAt
-		metadataResponse.UserId = wfMetadata.UserId
+		metadataResponse.UserId = wfMetadata.UserID
 		metadataResponse.Name = wfMetadata.Name
 		metadataResponse.Description = wfMetadata.Description
 		metadataResponse.Schedule = wfMetadata.Schedule

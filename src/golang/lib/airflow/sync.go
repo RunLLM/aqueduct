@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -27,7 +26,7 @@ import (
 func SyncDAGs(
 	ctx context.Context,
 	dagIDs []uuid.UUID,
-	workflowReader workflow.Reader,
+	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
@@ -44,7 +43,7 @@ func SyncDAGs(
 		dbDag, err := utils.ReadDAGFromDatabase(
 			ctx,
 			dagID,
-			workflowReader,
+			workflowRepo,
 			dagRepo,
 			operatorReader,
 			artifactReader,

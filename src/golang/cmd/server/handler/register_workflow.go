@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -53,17 +52,16 @@ type RegisterWorkflowHandler struct {
 	ArtifactReader             artifact.Reader
 	IntegrationReader          integration.Reader
 	OperatorReader             operator.Reader
-	WorkflowReader             workflow.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
 	ArtifactWriter             artifact.Writer
 	OperatorWriter             operator.Writer
-	WorkflowWriter             workflow.Writer
 	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
-	DAGRepo     repos.DAG
-	WatcherRepo repos.Watcher
+	DAGRepo      repos.DAG
+	WatcherRepo  repos.Watcher
+	WorkflowRepo repos.Workflow
 }
 
 type registerWorkflowArgs struct {
@@ -114,21 +112,26 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the integrations defined in the Dag.")
 	}
 
+	isUpdate := true
 	// If a workflow with the same name already exists for the user, we will treat this as an
 	// update to the workflow instead of creation.
-	collidingWorkflow, err := h.WorkflowReader.GetWorkflowByName(
+	collidingWorkflow, err := h.WorkflowRepo.GetByOwnerAndName(
 		r.Context(),
-		dagSummary.Dag.Metadata.UserId,
+		dagSummary.Dag.Metadata.UserID,
 		dagSummary.Dag.Metadata.Name,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		if err != database.ErrNoRows {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		}
+		// A colliding workflow does not exist, so this is not an update
+		isUpdate = false
 	}
-	isUpdate := collidingWorkflow != nil
+
 	if isUpdate {
 		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
-		dagSummary.Dag.WorkflowID = collidingWorkflow.Id
+		dagSummary.Dag.WorkflowID = collidingWorkflow.ID
 	}
 
 	if err := dag_utils.Validate(
@@ -194,8 +197,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	workflowId, err := utils.WriteDAGToDatabase(
 		ctx,
 		dbWorkflowDag,
-		h.WorkflowReader,
-		h.WorkflowWriter,
+		h.WorkflowRepo,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.OperatorWriter,
@@ -208,7 +210,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.dagSummary.Dag.Metadata.Id = workflowId
+	args.dagSummary.Dag.Metadata.ID = workflowId
 
 	if args.isUpdate {
 		// If we're updating an existing workflow, first update the metadata.
@@ -232,7 +234,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			err = h.Engine.ScheduleWorkflow(
 				ctx,
 				workflowId,
-				shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
+				shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
 				string(dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
 
@@ -255,7 +257,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		workflowId,
-		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
+		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
 		timeConfig,
 		nil, /* parameters */
 	)
@@ -272,9 +274,10 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 
 		_, _, err = (&WatchWorkflowHandler{
-			Database:       h.Database,
-			WorkflowReader: h.WorkflowReader,
-			WatcherRepo:    h.WatcherRepo,
+			Database: h.Database,
+
+			WatcherRepo:  h.WatcherRepo,
+			WorkflowRepo: h.WorkflowRepo,
 		}).Perform(ctx, watchWorkflowArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
