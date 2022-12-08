@@ -50,7 +50,7 @@ func (*workflowReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 		SELECT %s FROM workflow, workflow_dag 
 		WHERE workflow.id = workflow_dag.workflow_id 
 		AND workflow_dag.id = $1;`,
-		models.WorkflowCols(),
+		models.WorkflowColsWithPrefix(),
 	)
 	args := []interface{}{dagID}
 
