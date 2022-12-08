@@ -5,8 +5,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -28,7 +28,7 @@ var (
 )
 
 func Validate(
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 ) error {
 	if len(dag.Operators) == 0 {
 		return ErrNoOperator
@@ -118,7 +118,7 @@ func ValidateDagOperatorIntegrationOwnership(
 	return true, nil
 }
 
-func checkUnexecutableOperator(dag *workflow_dag.DBWorkflowDag) error {
+func checkUnexecutableOperator(dag *models.DAG) error {
 	numOperators := len(dag.Operators)
 	operatorsExecuted := make(map[uuid.UUID]bool, numOperators)
 	for operatorId := range dag.Operators {

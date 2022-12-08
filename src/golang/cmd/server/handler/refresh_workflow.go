@@ -12,12 +12,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -50,10 +50,11 @@ type RefreshWorkflowHandler struct {
 	Vault    vault.Vault
 
 	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
 	OperatorReader        operator.Reader
 	ArtifactReader        artifact.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
+
+	DAGRepo repos.DAG
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -105,11 +106,11 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	emptyResp := struct{}{}
 
-	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+	dag, err := utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.WorkflowId,
 		h.WorkflowReader,
-		h.WorkflowDagReader,
+		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
 		h.WorkflowDagEdgeReader,

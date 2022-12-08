@@ -10,7 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -19,7 +19,7 @@ import (
 const dagKey = "dag"
 
 type DagSummary struct {
-	Dag *workflow_dag.DBWorkflowDag
+	Dag *models.DAG
 
 	// Extract the operator contents from the request body
 	FileContentsByOperatorUUID map[uuid.UUID][]byte
@@ -41,8 +41,8 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Serialized dag object not available")
 	}
 
-	var workflowDag workflow_dag.DBWorkflowDag
-	err = json.Unmarshal(serializedDAGBytes, &workflowDag)
+	var dag models.DAG
+	err = json.Unmarshal(serializedDAGBytes, &dag)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid dag specification.")
 	}
@@ -52,10 +52,10 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	fileContents := make(map[uuid.UUID][]byte, len(workflowDag.Operators))
-	for opId, op := range workflowDag.Operators {
+	fileContents := make(map[uuid.UUID][]byte, len(dag.Operators))
+	for opId, op := range dag.Operators {
 		op.ExecutionEnvironmentID = utils.NullUUID{IsNull: true}
-		workflowDag.Operators[opId] = op
+		dag.Operators[opId] = op
 
 		program, status, err := extractOperatorContentsFromRequest(
 			r,
@@ -71,20 +71,20 @@ func ParseDagSummaryFromRequest(
 		}
 	}
 
-	workflowDag.StorageConfig = *storageConfig
+	dag.StorageConfig = *storageConfig
 
-	workflowDag.Metadata.UserId = userId
+	dag.Metadata.UserId = userId
 
-	if workflowDag.EngineConfig.Type == "" {
+	if dag.EngineConfig.Type == "" {
 		// The default engine config for now is Aqueduct
-		workflowDag.EngineConfig = shared.EngineConfig{
+		dag.EngineConfig = shared.EngineConfig{
 			Type:           shared.AqueductEngineType,
 			AqueductConfig: &shared.AqueductConfig{},
 		}
 	}
 
 	return &DagSummary{
-		Dag:                        &workflowDag,
+		Dag:                        &dag,
 		FileContentsByOperatorUUID: fileContents,
 	}, http.StatusOK, nil
 }

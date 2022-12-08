@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -74,8 +73,8 @@ type GetArtifactResultHandler struct {
 	Database             database.Database
 	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
-	WorkflowDagReader    workflow_dag.Reader
 
+	DAGRepo       repos.DAG
 	DAGResultRepo repos.DAGResult
 }
 
@@ -171,7 +170,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	emptyResp := getArtifactResultResponse{}
 
-	workflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
+	dag, err := h.DAGRepo.GetByDAGResult(
 		ctx,
 		args.dagResultID,
 		h.Database,
@@ -229,7 +228,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		Metadata: &metadata,
 	}
 
-	data, err := storage.NewStorage(&workflowDag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
+	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
 	if err == nil {
 		response.Data = data
 	} else if err != storage.ErrObjectDoesNotExist {

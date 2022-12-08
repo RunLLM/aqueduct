@@ -3,9 +3,9 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
@@ -30,9 +30,9 @@ type dagReader interface {
 	// It returns a database.ErrNoRows if no rows are found.
 	GetByDAGResult(ctx context.Context, dagResultID uuid.UUID, DB database.Database) (*models.DAG, error)
 
-	// GetByOperator returns the DAG that the specified Operator belongs to.
+	// GetByOperator returns all DAGs that the specified Operator belongs to.
 	// It returns a database.ErrNoRows if no rows are found.
-	GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database) (*models.DAG, error)
+	GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database) ([]models.DAG, error)
 
 	// GetByWorkflow returns all DAGs for the Workflow specified.
 	GetByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.DAG, error)
@@ -40,6 +40,9 @@ type dagReader interface {
 	// GetLatestByWorkflow returns the latest DAG for the Workflow specified.
 	// It returns a database.ErrNoRows if no rows are found.
 	GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) (*models.DAG, error)
+
+	// List returns all DAGs.
+	List(ctx context.Context, DB database.Database) ([]models.DAG, error)
 }
 
 type dagWriter interface {

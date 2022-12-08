@@ -9,10 +9,10 @@ import (
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -54,7 +54,7 @@ type WorkflowDag interface {
 }
 
 type workflowDagImpl struct {
-	dbWorkflowDag *workflow_dag.DBWorkflowDag
+	dbDAG *models.DAG
 	// resultID corresponds to the WorkflowDagResult created for the current run of this dag
 	resultID uuid.UUID
 
@@ -156,8 +156,8 @@ func computeArtifactSignatures(
 
 func NewWorkflowDag(
 	ctx context.Context,
-	workflowDagResultID uuid.UUID,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dagResultID uuid.UUID,
+	dag *models.DAG,
 	opResultWriter operator_result.Writer,
 	artifactWriter db_artifact.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -170,8 +170,8 @@ func NewWorkflowDag(
 	opExecMode operator.ExecutionMode,
 	db database.Database,
 ) (WorkflowDag, error) {
-	dbArtifacts := dbWorkflowDag.Artifacts
-	dbOperators := dbWorkflowDag.Operators
+	dbArtifacts := dag.Artifacts
+	dbOperators := dag.Operators
 
 	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
 	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
@@ -214,16 +214,16 @@ func NewWorkflowDag(
 
 	// With all the initial database writes completed (if at all), we can now initialize
 	// the operator and artifact classes. As well as the connections between them.
-	operators := make(map[uuid.UUID]operator.Operator, len(dbWorkflowDag.Operators))
-	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dbWorkflowDag.Artifacts))
-	for artifactID, dbArtifact := range dbWorkflowDag.Artifacts {
+	operators := make(map[uuid.UUID]operator.Operator, len(dag.Operators))
+	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dag.Artifacts))
+	for artifactID, dbArtifact := range dag.Artifacts {
 		newArtifact, err := artifact.NewArtifact(
 			artifactIDToSignatures[dbArtifact.Id],
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
 			artifactWriter,
 			artifactResultWriter,
-			&dbWorkflowDag.StorageConfig,
+			&dag.StorageConfig,
 			artifactCacheManager,
 			db,
 		)
@@ -279,7 +279,7 @@ func NewWorkflowDag(
 			opResultWriter,
 			jobManager,
 			vaultObject,
-			&dbWorkflowDag.StorageConfig,
+			&dag.StorageConfig,
 			artifactCacheManager,
 			opExecMode,
 			execEnvPtr,
@@ -292,8 +292,8 @@ func NewWorkflowDag(
 	}
 
 	return &workflowDagImpl{
-		dbWorkflowDag:       dbWorkflowDag,
-		resultID:            workflowDagResultID,
+		dbDAG:               dag,
+		resultID:            dagResultID,
 		operators:           operators,
 		artifacts:           artifacts,
 		opToOutputArtifacts: opToOutputArtifactIDs,

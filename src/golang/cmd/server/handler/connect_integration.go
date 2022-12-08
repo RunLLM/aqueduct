@@ -20,13 +20,13 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -60,13 +60,13 @@ type ConnectIntegrationHandler struct {
 	Vault      vault.Vault
 	JobManager job.JobManager
 
-	WorkflowDagReader    workflow_dag.Reader
 	ArtifactReader       artifact.Reader
 	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	IntegrationReader    integration.Reader
-	WorkflowDagWriter    workflow_dag.Writer
 	IntegrationWriter    integration.Writer
+
+	DAGRepo repos.DAG
 
 	PauseServer   func()
 	RestartServer func()
@@ -210,8 +210,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				args.Service,
 				args.Config,
 				args.OrgID,
-				h.WorkflowDagReader,
-				h.WorkflowDagWriter,
+				h.DAGRepo,
 				h.ArtifactReader,
 				h.ArtifactResultReader,
 				h.OperatorReader,
@@ -435,8 +434,7 @@ func setIntegrationAsStorage(
 	svc integration.Service,
 	conf auth.Config,
 	orgID string,
-	dagReader workflow_dag.Reader,
-	dagWriter workflow_dag.Writer,
+	dagRepo repos.DAG,
 	artifactReader artifact.Reader,
 	artifactResultReader artifact_result.Reader,
 	operatorReader operator.Reader,
@@ -480,8 +478,7 @@ func setIntegrationAsStorage(
 		&currentStorageConfig,
 		storageConfig,
 		orgID,
-		dagReader,
-		dagWriter,
+		dagRepo,
 		artifactReader,
 		artifactResultReader,
 		operatorReader,

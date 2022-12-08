@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -80,7 +80,7 @@ func (*dagReader) GetByArtifactResultBatch(ctx context.Context, artifactResultID
 				workflow_dag_edge.to_id = artifact_result.artifact_id
 			)
 			AND artifact_result.id IN (%s);`,
-		models.DAGCols(),
+		models.DAGColsWithPrefix(),
 		stmt_preparers.GenerateArgsList(len(artifactResultIDs), 1),
 	)
 
@@ -113,14 +113,14 @@ func (*dagReader) GetByDAGResult(ctx context.Context, dagResultID uuid.UUID, DB 
 		WHERE 
 			workflow_dag.id = workflow_dag_result.workflow_dag_id 
 			AND workflow_dag_result.id = $1;`,
-		models.DAGCols(),
+		models.DAGColsWithPrefix(),
 	)
 	args := []interface{}{dagResultID}
 
 	return getDAG(ctx, DB, query, args...)
 }
 
-func (*dagReader) GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database) (*models.DAG, error) {
+func (*dagReader) GetByOperator(ctx context.Context, operatorID uuid.UUID, DB database.Database) ([]models.DAG, error) {
 	// Get all unique DAGs where there is an edge to or from the Operator with operatorID
 	query := fmt.Sprintf(`
 		SELECT 
@@ -140,7 +140,7 @@ func (*dagReader) GetByOperator(ctx context.Context, operatorID uuid.UUID, DB da
 	)
 	args := []interface{}{operatorID}
 
-	return getDAG(ctx, DB, query, args...)
+	return getDAGs(ctx, DB, query, args...)
 }
 
 func (*dagReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.DAG, error) {
@@ -164,6 +164,15 @@ func (*dagReader) GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID,
 	args := []interface{}{workflowID}
 
 	return getDAG(ctx, DB, query, args...)
+}
+
+func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM workflow_dag;`,
+		models.DAGCols(),
+	)
+
+	return getDAGs(ctx, DB, query)
 }
 
 func (*dagWriter) Create(

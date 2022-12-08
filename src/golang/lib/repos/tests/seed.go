@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -189,16 +190,16 @@ func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []m
 
 	for i := 0; i < count; i++ {
 		workflowID := workflowIDs[i]
-		storageConfig := &shared.StorageConfig{
-			Type: shared.S3StorageType,
-			S3Config: &shared.S3Config{
+		storageConfig := &col_shared.StorageConfig{
+			Type: col_shared.S3StorageType,
+			S3Config: &col_shared.S3Config{
 				Region: "us-east-2",
 				Bucket: "test",
 			},
 		}
-		engineConfig := &shared.EngineConfig{
-			Type:           shared.AqueductEngineType,
-			AqueductConfig: &shared.AqueductConfig{},
+		engineConfig := &col_shared.EngineConfig{
+			Type:           col_shared.AqueductEngineType,
+			AqueductConfig: &col_shared.AqueductConfig{},
 		}
 
 		dag, err := ts.dag.Create(
