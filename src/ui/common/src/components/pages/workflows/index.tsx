@@ -29,7 +29,6 @@ type Props = {
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const dispatch: AppDispatch = useDispatch();
-  //const [filterText, setFilterText] = useState<string>('');
 
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
@@ -43,8 +42,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     (state: RootState) => state.listWorkflowReducer
   );
 
-  //const getOptionLabel = (workflow) => workflow.name;
-
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
   // the workflows snap into place.
@@ -54,23 +51,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   ) {
     return null;
   }
-
-  // TODO: Deprecate this card and searchbar.
-  // const displayFilteredWorkflows = (workflow) => {
-  //   return (
-  //     <Box my={2}>
-  //       <WorkflowCard workflow={workflow} />
-  //     </Box>
-  //   );
-  // };
-
-  // const workflowList = filteredList(
-  //   filterText,
-  //   allWorkflows.workflows,
-  //   getOptionLabel,
-  //   displayFilteredWorkflows,
-  //   noItemsMessage
-  // );
 
   const noItemsMessage = (
     <Typography variant="h5">
