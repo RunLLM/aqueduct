@@ -3,7 +3,6 @@ package tests
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -114,11 +113,11 @@ func (ts *TestSuite) TestWorkflow_Delete() {
 
 func (ts *TestSuite) TestWorkflow_Update() {
 	workflows := ts.seedWorkflow(1)
-	workflow := workflows[0]
+	oldWorkflow := workflows[0]
 
 	newName := "new_workflow_name"
-	newSchedule := shared.Schedule{
-		Trigger:              shared.ManualUpdateTrigger,
+	newSchedule := workflow.Schedule{
+		Trigger:              workflow.ManualUpdateTrigger,
 		CronSchedule:         "0 0 0 0 0",
 		DisableManualTrigger: true,
 		Paused:               true,
@@ -129,7 +128,7 @@ func (ts *TestSuite) TestWorkflow_Update() {
 		models.WorkflowSchedule: &newSchedule,
 	}
 
-	newWorkflow, err := ts.workflow.Update(ts.ctx, workflow.ID, changes, ts.DB)
+	newWorkflow, err := ts.workflow.Update(ts.ctx, oldWorkflow.ID, changes, ts.DB)
 	require.Nil(ts.T(), err)
 
 	requireDeepEqual(ts.T(), newSchedule, newWorkflow.Schedule)
