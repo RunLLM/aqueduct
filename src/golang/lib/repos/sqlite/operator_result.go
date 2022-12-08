@@ -76,7 +76,7 @@ func (*operatorResultReader) GetByDAGResultBatch(
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM operator_result 
-		WHERE workflow_dag_result IN (%s);`,
+		WHERE workflow_dag_result_id IN (%s);`,
 		models.OperatorResultCols(),
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
