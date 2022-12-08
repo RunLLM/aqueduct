@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -31,7 +30,7 @@ func SyncDAGs(
 	dagEdgeRepo repos.DAGEdge,
 	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	vault vault.Vault,
 	DB database.Database,
 ) error {
@@ -62,7 +61,7 @@ func SyncDAGs(
 			dagRepo,
 			dagResultRepo,
 			operatorResultWriter,
-			artifactResultWriter,
+			artifactResultRepo,
 			vault,
 			DB,
 		); err != nil {
@@ -82,7 +81,7 @@ func syncWorkflowDag(
 	dagRepo repos.DAG,
 	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	vault vault.Vault,
 	DB database.Database,
 ) error {
@@ -160,7 +159,7 @@ func syncWorkflowDag(
 			&dagRun,
 			dagResultRepo,
 			operatorResultWriter,
-			artifactResultWriter,
+			artifactResultRepo,
 			DB,
 		); err != nil {
 			return err
@@ -180,7 +179,7 @@ func syncWorkflowDagResult(
 	run *airflow.DAGRun,
 	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	DB database.Database,
 ) error {
 	txn, err := DB.BeginTx(ctx)
@@ -228,7 +227,7 @@ func syncWorkflowDagResult(
 			execStatus,
 			dagResult.ID,
 			operatorResultWriter,
-			artifactResultWriter,
+			artifactResultRepo,
 			txn,
 		); err != nil {
 			return err

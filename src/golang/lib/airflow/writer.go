@@ -55,7 +55,7 @@ func createOperatorResult(
 	execStatus shared.ExecutionStatus,
 	workflowDagResultId uuid.UUID,
 	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	DB database.Database,
 ) error {
 	// Read Operator metadata to determine ExecutionState
@@ -89,7 +89,7 @@ func createOperatorResult(
 			workflowDagResultId,
 			artifactId,
 			execState,
-			artifactResultWriter,
+			artifactResultRepo,
 			DB,
 		); err != nil {
 			return err
@@ -106,8 +106,8 @@ func createArtifactResult(
 	dagResultID uuid.UUID,
 	artifactID uuid.UUID,
 	execState *shared.ExecutionState,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
+	artifactResultRepo repos.ArtifactResult,
+	DB database.Database,
 ) error {
 	// Read Artifact metadata
 	metadataPathPrefix, ok := dag.EngineConfig.AirflowConfig.ArtifactMetadataPathPrefix[artifactID]
@@ -134,14 +134,14 @@ func createArtifactResult(
 	}
 	contentPath := getArtifactContentPath(contentPathPrefix, dagRunId)
 
-	_, err := artifactResultWriter.InsertArtifactResult(
+	_, err := artifactResultRepo.CreateWithExecStateAndMetadata(
 		ctx,
 		dagResultID,
 		artifactID,
 		contentPath,
 		execState,
 		&metadata,
-		db,
+		DB,
 	)
 
 	return err

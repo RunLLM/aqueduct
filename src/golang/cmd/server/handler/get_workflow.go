@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -61,13 +60,13 @@ type GetWorkflowHandler struct {
 	OperatorReader operator.Reader
 
 	OperatorResultWriter operator_result.Writer
-	ArtifactResultWriter artifact_result.Writer
 
-	ArtifactRepo  repos.Artifact
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	WorkflowRepo  repos.Workflow
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	WorkflowRepo       repos.Workflow
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -136,7 +135,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			h.DAGEdgeRepo,
 			h.DAGResultRepo,
 			h.OperatorResultWriter,
-			h.ArtifactResultWriter,
+			h.ArtifactResultRepo,
 			h.Vault,
 			h.Database,
 		); err != nil {

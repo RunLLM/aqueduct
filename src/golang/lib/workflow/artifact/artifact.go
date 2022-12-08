@@ -67,9 +67,9 @@ type ArtifactImpl struct {
 
 	execPaths *utils.ExecPaths
 
-	repo         repos.Artifact
-	resultWriter artifact_result.Writer
-	resultID     uuid.UUID
+	repo       repos.Artifact
+	resultRepo repos.ArtifactResult
+	resultID   uuid.UUID
 
 	// If this is not nil, this artifact should be written to the cache.
 	// An artifact cannot be both cache-aware and persisted.
@@ -85,7 +85,7 @@ func NewArtifact(
 	dbArtifact models.Artifact,
 	execPaths *utils.ExecPaths,
 	artifactRepo repos.Artifact,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	db database.Database,
@@ -102,7 +102,7 @@ func NewArtifact(
 		artifactType:        dbArtifact.Type,
 		execPaths:           execPaths,
 		repo:                artifactRepo,
-		resultWriter:        artifactResultWriter,
+		resultRepo:          artifactResultRepo,
 		resultID:            uuid.Nil,
 		previewCacheManager: previewCacheManager,
 		resultsPersisted:    false,
@@ -138,11 +138,11 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 }
 
 func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
-	if a.resultWriter == nil {
+	if a.resultRepo == nil {
 		return errors.New("Artifact's result writer cannot be nil.")
 	}
 
-	artifactResult, err := a.resultWriter.CreateArtifactResult(
+	artifactResult, err := a.resultRepo.Create(
 		ctx,
 		dagResultID,
 		a.ID(),
@@ -153,7 +153,7 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 		return errors.Wrap(err, "Failed to create artifact result record.")
 	}
 
-	a.resultID = artifactResult.Id
+	a.resultID = artifactResult.ID
 	return nil
 }
 
@@ -162,9 +162,9 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	execState *shared.ExecutionState,
 ) {
 	changes := map[string]interface{}{
-		artifact_result.StatusColumn:    execState.Status,
-		artifact_result.ExecStateColumn: execState,
-		artifact_result.MetadataColumn:  nil,
+		models.ArtifactResultStatus:    execState.Status,
+		models.ArtifactResultExecState: execState,
+		models.ArtifactResultMetadata:  nil,
 	}
 
 	if a.Computed(ctx) {
@@ -179,10 +179,10 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
 			return
 		}
-		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
+		changes[models.ArtifactResultMetadata] = &artifactResultMetadata
 	}
 
-	_, err := a.resultWriter.UpdateArtifactResult(
+	_, err := a.resultRepo.Update(
 		ctx,
 		a.resultID,
 		changes,

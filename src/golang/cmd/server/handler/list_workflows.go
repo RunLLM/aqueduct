@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -52,13 +51,13 @@ type ListWorkflowsHandler struct {
 
 	OperatorWriter       operator.Writer
 	OperatorResultWriter operator_result.Writer
-	ArtifactResultWriter artifact_result.Writer
 
-	ArtifactRepo  repos.Artifact
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	WorkflowRepo  repos.Workflow
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	WorkflowRepo       repos.Workflow
 }
 
 func (*ListWorkflowsHandler) Name() string {
@@ -153,7 +152,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.DAGEdgeRepo,
 		h.DAGResultRepo,
 		h.OperatorResultWriter,
-		h.ArtifactResultWriter,
+		h.ArtifactResultRepo,
 		h.Vault,
 		h.Database,
 	); err != nil {

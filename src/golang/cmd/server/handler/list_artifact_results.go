@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -42,11 +41,11 @@ type listArtifactResultsArgs struct {
 type ListArtifactResultsHandler struct {
 	GetHandler
 
-	Database             database.Database
-	ArtifactResultReader artifact_result.Reader
+	Database database.Database
 
-	ArtifactRepo repos.Artifact
-	DAGRepo      repos.DAG
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
 }
 
 func (*ListArtifactResultsHandler) Name() string {
@@ -90,7 +89,7 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact.")
 	}
 
-	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactNameAndWorkflowId(ctx, wfID, artf.Name, h.Database)
+	results, err := h.ArtifactResultRepo.GetByArtifactNameAndWorkflow(ctx, artf.Name, wfID, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
 	}
@@ -101,7 +100,7 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	resultIds := make([]uuid.UUID, 0, len(results))
 	for _, result := range results {
-		resultIds = append(resultIds, result.Id)
+		resultIds = append(resultIds, result.ID)
 	}
 
 	artfResultToDAG, err := h.DAGRepo.GetByArtifactResultBatch(ctx, resultIds, h.Database)
@@ -111,16 +110,16 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	// maps from db dag Ids
 	dbDagByDagId := make(map[uuid.UUID]models.DAG, len(artfResultToDAG))
-	artfResultByDagId := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(artfResultToDAG))
+	artfResultByDagId := make(map[uuid.UUID][]models.ArtifactResult, len(artfResultToDAG))
 	for _, artfResult := range results {
-		if dbDag, ok := artfResultToDAG[artfResult.Id]; ok {
+		if dbDag, ok := artfResultToDAG[artfResult.ID]; ok {
 			if _, okDagsMap := dbDagByDagId[dbDag.ID]; !okDagsMap {
 				dbDagByDagId[dbDag.ID] = dbDag
 			}
 
 			artfResultByDagId[dbDag.ID] = append(artfResultByDagId[dbDag.ID], artfResult)
 		} else {
-			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.Id)
+			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.ID)
 		}
 	}
 
@@ -137,7 +136,7 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 				if artf.Type.IsCompact() && !artfResult.ExecState.IsNull && artfResult.ExecState.ExecutionState.Terminated() {
 					contentBytes, err := storageObj.Get(ctx, artfResult.ContentPath)
 					if err != nil {
-						return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.Id))
+						return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.ID))
 					}
 
 					contentStr := string(contentBytes)

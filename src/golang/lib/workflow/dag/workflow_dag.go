@@ -3,7 +3,6 @@ package dag
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -154,7 +153,7 @@ func NewWorkflowDag(
 	dag *models.DAG,
 	opResultWriter operator_result.Writer,
 	artifactRepo repos.Artifact,
-	artifactResultWriter artifact_result.Writer,
+	artifactResultRepo repos.ArtifactResult,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
@@ -214,7 +213,7 @@ func NewWorkflowDag(
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
 			artifactRepo,
-			artifactResultWriter,
+			artifactResultRepo,
 			&dag.StorageConfig,
 			artifactCacheManager,
 			DB,

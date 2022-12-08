@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -41,15 +40,15 @@ type GetWorkflowDagResultHandler struct {
 	GetHandler
 
 	Database             database.Database
-	ArtifactResultReader artifact_result.Reader
 	OperatorReader       operator.Reader
 	OperatorResultReader operator_result.Reader
 
-	ArtifactRepo  repos.Artifact
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	WorkflowRepo  repos.Workflow
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	WorkflowRepo       repos.Workflow
 }
 
 func (*GetWorkflowDagResultHandler) Name() string {
@@ -137,7 +136,7 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator results.")
 	}
 
-	artifactResults, err := h.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
+	artifactResults, err := h.ArtifactResultRepo.GetByDAGResults(
 		ctx,
 		[]uuid.UUID{args.dagResultID},
 		h.Database,
@@ -167,12 +166,12 @@ func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs
 func getArtifactContents(
 	ctx context.Context,
 	dag *models.DAG,
-	dbArtifactResults []artifact_result.ArtifactResult,
+	dbArtifactResults []models.ArtifactResult,
 ) (map[string]string, error) {
 	contents := make(map[string]string, len(dbArtifactResults))
 	storageObj := storage.NewStorage(&dag.StorageConfig)
 	for _, artfResult := range dbArtifactResults {
-		if artf, ok := dag.Artifacts[artfResult.ArtifactId]; ok {
+		if artf, ok := dag.Artifacts[artfResult.ArtifactID]; ok {
 			// These artifacts has small content size and we can safely include them all in response.
 			if artf.Type.IsCompact() {
 				path := artfResult.ContentPath
