@@ -112,6 +112,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the integrations defined in the Dag.")
 	}
 
+	isUpdate := true
 	// If a workflow with the same name already exists for the user, we will treat this as an
 	// update to the workflow instead of creation.
 	collidingWorkflow, err := h.WorkflowRepo.GetByOwnerAndName(
@@ -121,9 +122,13 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		if err != database.ErrNoRows {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		}
+		// A colliding workflow does not exist, so this is not an update
+		isUpdate = false
 	}
-	isUpdate := collidingWorkflow != nil
+
 	if isUpdate {
 		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
 		dagSummary.Dag.WorkflowID = collidingWorkflow.ID
