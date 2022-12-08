@@ -27,7 +27,6 @@ import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
-import ExecutionChip from '../execution/chip';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
@@ -112,7 +111,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -331,7 +330,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           >
             {name}
           </Typography>
-        </Box >
+        </Box>
 
         <Box sx={{ mr: 4 }}>
           <Button
@@ -362,7 +361,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             workflowDag={workflowDag}
           />
         </Box>
-      </Box >
+      </Box>
 
       {description && (
         <Typography variant="body1">
@@ -425,7 +424,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           {errorMessage}
         </Alert>
       </Snackbar>
-    </Box >
+    </Box>
   );
 };
 

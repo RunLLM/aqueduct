@@ -349,9 +349,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
   },
   ['Conda']: {
-    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/conda.png',
+    logo: ServiceLogos['Conda'],
     activated: true,
-    category: 'compute',
+    category: IntegrationCategories.COMPUTE,
   },
 };
 
