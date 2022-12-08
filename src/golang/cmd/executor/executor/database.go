@@ -157,6 +157,7 @@ func getEngineWriters(writers *Writers) *engine.EngineWriters {
 func getEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
 		DAGRepo:       repos.DAGRepo,
+		DAGEdgeRepo:   repos.DAGEdgeRepo,
 		DAGResultRepo: repos.DAGResultRepo,
 		WatcherRepo:   repos.WatcherRepo,
 		WorkflowRepo:  repos.WorkflowRepo,
