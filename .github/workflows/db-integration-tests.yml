@@ -1,0 +1,32 @@
+name: Database Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/golang/lib/collections/**'
+      - 'src/golang/lib/models/**'
+      - 'src/golang/lib/repos/**'
+
+jobs:
+  test:
+    name: Run Database Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+
+      - name: Turn on GO111MODULE
+        run: go env -w GO111MODULE=on
+      
+      # This empty file is needed for some of the Database schema migration steps.
+      - name: Create Empty Config File
+        run: mkdir -p touch /home/runner/.aqueduct/server/config && 
+          touch /home/runner/.aqueduct/server/config/config.yml
+
+      - name: Run Tests
+        working-directory: ./src
+        run: make test-database
