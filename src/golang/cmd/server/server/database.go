@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
@@ -18,17 +17,17 @@ import (
 )
 
 type Repos struct {
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	UserRepo      repos.User
-	WatcherRepo   repos.Watcher
-	WorkflowRepo  repos.Workflow
+	DAGRepo          repos.DAG
+	DAGEdgeRepo      repos.DAGEdge
+	DAGResultRepo    repos.DAGResult
+	NotificationRepo repos.Notification
+	UserRepo         repos.User
+	WatcherRepo      repos.Watcher
+	WorkflowRepo     repos.Workflow
 }
 
 type Readers struct {
 	IntegrationReader          integration.Reader
-	NotificationReader         notification.Reader
 	ArtifactReader             artifact.Reader
 	ArtifactResultReader       artifact_result.Reader
 	OperatorReader             operator.Reader
@@ -41,7 +40,6 @@ type Readers struct {
 
 type Writers struct {
 	IntegrationWriter          integration.Writer
-	NotificationWriter         notification.Writer
 	ArtifactWriter             artifact.Writer
 	ArtifactResultWriter       artifact_result.Writer
 	OperatorWriter             operator.Writer
@@ -51,22 +49,18 @@ type Writers struct {
 
 func CreateRepos() *Repos {
 	return &Repos{
-		DAGRepo:       sqlite.NewDAGRepo(),
-		DAGEdgeRepo:   sqlite.NewDAGEdgeRepo(),
-		DAGResultRepo: sqlite.NewDAGResultRepo(),
-		UserRepo:      sqlite.NewUserRepo(),
-		WatcherRepo:   sqlite.NewWatcherRepo(),
-		WorkflowRepo:  sqlite.NewWorklowRepo(),
+		DAGRepo:          sqlite.NewDAGRepo(),
+		DAGEdgeRepo:      sqlite.NewDAGEdgeRepo(),
+		DAGResultRepo:    sqlite.NewDAGResultRepo(),
+		NotificationRepo: sqlite.NewNotificationRepo(),
+		UserRepo:         sqlite.NewUserRepo(),
+		WatcherRepo:      sqlite.NewWatcherRepo(),
+		WorkflowRepo:     sqlite.NewWorklowRepo(),
 	}
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 	integrationReader, err := integration.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	notificationReader, err := notification.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +107,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 
 	return &Readers{
 		IntegrationReader:          integrationReader,
-		NotificationReader:         notificationReader,
 		ArtifactReader:             artifactReader,
 		ArtifactResultReader:       artifactResultReader,
 		OperatorReader:             operatorReader,
@@ -127,11 +120,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 
 func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 	integrationWriter, err := integration.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	notificationWriter, err := notification.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +151,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 
 	return &Writers{
 		IntegrationWriter:          integrationWriter,
-		NotificationWriter:         notificationWriter,
 		ArtifactWriter:             artifactWriter,
 		ArtifactResultWriter:       artifactResultWriter,
 		OperatorWriter:             operatorWriter,
@@ -189,16 +176,16 @@ func GetEngineWriters(writers *Writers) *engine.EngineWriters {
 		OperatorResultWriter: writers.OperatorResultWriter,
 		ArtifactWriter:       writers.ArtifactWriter,
 		ArtifactResultWriter: writers.ArtifactResultWriter,
-		NotificationWriter:   writers.NotificationWriter,
 	}
 }
 
 func GetEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
-		DAGRepo:       repos.DAGRepo,
-		DAGEdgeRepo:   repos.DAGEdgeRepo,
-		DAGResultRepo: repos.DAGResultRepo,
-		WatcherRepo:   repos.WatcherRepo,
-		WorkflowRepo:  repos.WorkflowRepo,
+		DAGRepo:          repos.DAGRepo,
+		DAGEdgeRepo:      repos.DAGEdgeRepo,
+		DAGResultRepo:    repos.DAGResultRepo,
+		NotificationRepo: repos.NotificationRepo,
+		WatcherRepo:      repos.WatcherRepo,
+		WorkflowRepo:     repos.WorkflowRepo,
 	}
 }

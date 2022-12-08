@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -25,14 +26,14 @@ import (
 type ArchiveNotificationHandler struct {
 	PostHandler
 
-	NotificationReader notification.Reader
-	NotificationWriter notification.Writer
-	Database           database.Database
+	Database database.Database
+
+	NotificationRepo repos.Notification
 }
 
 type archiveNotificationArgs struct {
-	notificationId uuid.UUID
-	userId         uuid.UUID
+	notificationID uuid.UUID
+	userID         uuid.UUID
 }
 
 type archiveNotificationResponse struct{}
@@ -47,13 +48,13 @@ func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int,
 		return nil, statuscode, err
 	}
 
-	notificationIdStr := chi.URLParam(r, routes.NotificationIdUrlParam)
-	notificationId, err := uuid.Parse(notificationIdStr)
+	notificationIDStr := chi.URLParam(r, routes.NotificationIdUrlParam)
+	notificationID, err := uuid.Parse(notificationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed notification ID.")
 	}
 
-	ok, err := h.NotificationReader.ValidateNotificationOwnership(r.Context(), notificationId, aqContext.ID, h.Database)
+	ok, err := h.NotificationRepo.ValidateUser(r.Context(), notificationID, aqContext.ID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during notification ownership validation.")
 	}
@@ -63,8 +64,8 @@ func (h *ArchiveNotificationHandler) Prepare(r *http.Request) (interface{}, int,
 	}
 
 	return &archiveNotificationArgs{
-		notificationId: notificationId,
-		userId:         aqContext.ID,
+		notificationID: notificationID,
+		userID:         aqContext.ID,
 	}, http.StatusOK, nil
 }
 
@@ -72,10 +73,10 @@ func (h *ArchiveNotificationHandler) Perform(ctx context.Context, interfaceArgs 
 	args := interfaceArgs.(*archiveNotificationArgs)
 	emptyResp := archiveNotificationResponse{}
 
-	_, err := h.NotificationWriter.UpdateNotificationStatus(
+	_, err := h.NotificationRepo.Update(
 		ctx,
-		args.notificationId,
-		notification.ArchivedStatus,
+		args.notificationID,
+		shared.ArchivedNotificationStatus,
 		h.Database,
 	)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -57,7 +56,6 @@ type ListWorkflowsHandler struct {
 	OperatorWriter       operator.Writer
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
-	NotificationWriter   notification.Writer
 
 	DAGRepo       repos.DAG
 	DAGEdgeRepo   repos.DAGEdge

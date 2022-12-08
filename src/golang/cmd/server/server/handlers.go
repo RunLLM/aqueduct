@@ -8,9 +8,9 @@ import (
 func (s *AqServer) Handlers() map[string]handler.Handler {
 	return map[string]handler.Handler{
 		routes.ArchiveNotificationRoute: &handler.ArchiveNotificationHandler{
-			NotificationReader: s.NotificationReader,
-			NotificationWriter: s.NotificationWriter,
-			Database:           s.Database,
+			Database: s.Database,
+
+			NotificationRepo: s.NotificationRepo,
 		},
 		routes.ConnectIntegrationRoute: &handler.ConnectIntegrationHandler{
 			Database:   s.Database,
@@ -136,9 +136,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationReader: s.IntegrationReader,
 		},
 		routes.ListNotificationsRoute: &handler.ListNotificationsHandler{
-			Database:           s.Database,
-			NotificationReader: s.NotificationReader,
-			WorkflowReader:     s.WorkflowReader,
+			Database: s.Database,
+
+			DAGResultRepo:    s.DAGResultRepo,
+			NotificationRepo: s.NotificationRepo,
 		},
 		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
 			Database:          s.Database,
@@ -156,7 +157,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorWriter:       s.OperatorWriter,
 			OperatorResultWriter: s.OperatorResultWriter,
 			ArtifactResultWriter: s.ArtifactResultWriter,
-			NotificationWriter:   s.NotificationWriter,
 
 			DAGRepo:       s.DAGRepo,
 			DAGEdgeRepo:   s.DAGEdgeRepo,
@@ -250,7 +250,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			},
 			OperatorResultWriter: s.OperatorResultWriter,
 			ArtifactResultWriter: s.ArtifactResultWriter,
-			NotificationWriter:   s.NotificationWriter,
 
 			DAGResultRepo: s.DAGResultRepo,
 		},

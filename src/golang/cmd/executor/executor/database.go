@@ -5,7 +5,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
@@ -30,15 +29,15 @@ type Writers struct {
 	OperatorResultWriter  operator_result.Writer
 	ArtifactWriter        artifact.Writer
 	ArtifactResultWriter  artifact_result.Writer
-	NotificationWriter    notification.Writer
 }
 
 type Repos struct {
-	DAGRepo       repos.DAG
-	DAGEdgeRepo   repos.DAGEdge
-	DAGResultRepo repos.DAGResult
-	WatcherRepo   repos.Watcher
-	WorkflowRepo  repos.Workflow
+	DAGRepo          repos.DAG
+	DAGEdgeRepo      repos.DAGEdge
+	DAGResultRepo    repos.DAGResult
+	NotificationRepo repos.Notification
+	WatcherRepo      repos.Watcher
+	WorkflowRepo     repos.Workflow
 }
 
 func createReaders(dbConf *database.DatabaseConfig) (*Readers, error) {
@@ -108,28 +107,23 @@ func createWriters(dbConf *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	notificationWriter, err := notification.NewWriter(dbConf)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Writers{
 		WorkflowWatcherWriter: workflowWatcherWriter,
 		OperatorWriter:        operatorWriter,
 		OperatorResultWriter:  operatorResultWriter,
 		ArtifactWriter:        artifactWriter,
 		ArtifactResultWriter:  artifactResultWriter,
-		NotificationWriter:    notificationWriter,
 	}, nil
 }
 
 func createRepos() *Repos {
 	return &Repos{
-		DAGRepo:       sqlite.NewDAGRepo(),
-		DAGEdgeRepo:   sqlite.NewDAGEdgeRepo(),
-		DAGResultRepo: sqlite.NewDAGResultRepo(),
-		WatcherRepo:   sqlite.NewWatcherRepo(),
-		WorkflowRepo:  sqlite.NewWorklowRepo(),
+		DAGRepo:          sqlite.NewDAGRepo(),
+		DAGEdgeRepo:      sqlite.NewDAGEdgeRepo(),
+		DAGResultRepo:    sqlite.NewDAGResultRepo(),
+		NotificationRepo: sqlite.NewNotificationRepo(),
+		WatcherRepo:      sqlite.NewWatcherRepo(),
+		WorkflowRepo:     sqlite.NewWorklowRepo(),
 	}
 }
 
@@ -150,16 +144,16 @@ func getEngineWriters(writers *Writers) *engine.EngineWriters {
 		OperatorResultWriter: writers.OperatorResultWriter,
 		ArtifactWriter:       writers.ArtifactWriter,
 		ArtifactResultWriter: writers.ArtifactResultWriter,
-		NotificationWriter:   writers.NotificationWriter,
 	}
 }
 
 func getEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
-		DAGRepo:       repos.DAGRepo,
-		DAGEdgeRepo:   repos.DAGEdgeRepo,
-		DAGResultRepo: repos.DAGResultRepo,
-		WatcherRepo:   repos.WatcherRepo,
-		WorkflowRepo:  repos.WorkflowRepo,
+		DAGRepo:          repos.DAGRepo,
+		DAGEdgeRepo:      repos.DAGEdgeRepo,
+		DAGResultRepo:    repos.DAGResultRepo,
+		NotificationRepo: repos.NotificationRepo,
+		WatcherRepo:      repos.WatcherRepo,
+		WorkflowRepo:     repos.WorkflowRepo,
 	}
 }

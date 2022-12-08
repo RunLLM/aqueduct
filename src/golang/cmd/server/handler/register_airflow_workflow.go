@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -38,7 +37,6 @@ type RegisterAirflowWorkflowHandler struct {
 
 	OperatorResultWriter operator_result.Writer
 	ArtifactResultWriter artifact_result.Writer
-	NotificationWriter   notification.Writer
 
 	DAGResultRepo repos.DAGResult
 }
