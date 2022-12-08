@@ -28,14 +28,14 @@ func (s *AqServer) triggerMissedCronJobs(
 		// This means that the workflow should have been triggered, but it wasn't.
 		// So we manually trigger the workflow here.
 		_, _, err := (&handler.RefreshWorkflowHandler{
-			Database:              s.Database,
-			Engine:                s.AqEngine,
-			Vault:                 s.Vault,
-			OperatorReader:        s.OperatorReader,
-			ArtifactReader:        s.ArtifactReader,
-			WorkflowDagEdgeReader: s.WorkflowDagEdgeReader,
+			Database:       s.Database,
+			Engine:         s.AqEngine,
+			Vault:          s.Vault,
+			OperatorReader: s.OperatorReader,
+			ArtifactReader: s.ArtifactReader,
 
 			DAGRepo:      s.DAGRepo,
+			DAGEdgeRepo:  s.DAGEdgeRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		}).Perform(
 			ctx,
