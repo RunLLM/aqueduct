@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -29,7 +28,7 @@ func WriteDAGToDatabase(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
-	workflowDagEdgeWriter workflow_dag_edge.Writer,
+	dagEdgeRepo repos.DAGEdge,
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
 	DB database.Database,
@@ -127,10 +126,10 @@ func WriteDAGToDatabase(
 		}
 
 		for i, artifactId := range operator.Inputs {
-			_, err = workflowDagEdgeWriter.CreateWorkflowDagEdge(
+			_, err = dagEdgeRepo.Create(
 				ctx,
 				newDAG.ID,
-				workflow_dag_edge.ArtifactToOperatorType,
+				mdl_shared.ArtifactToOperatorDAGEdge,
 				localArtifactIdToDbArtifactId[artifactId],
 				dbOperatorId,
 				int16(i), // idx
@@ -142,10 +141,10 @@ func WriteDAGToDatabase(
 		}
 
 		for i, artifactId := range operator.Outputs {
-			_, err = workflowDagEdgeWriter.CreateWorkflowDagEdge(
+			_, err = dagEdgeRepo.Create(
 				ctx,
 				newDAG.ID,
-				workflow_dag_edge.OperatorToArtifactType,
+				mdl_shared.OperatorToArtifactDAGEdge,
 				dbOperatorId,
 				localArtifactIdToDbArtifactId[artifactId],
 				int16(i), // idx
@@ -169,7 +168,7 @@ func ReadDAGFromDatabase(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
-	workflowDagEdgeReader workflow_dag_edge.Reader,
+	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
 ) (*models.DAG, error) {
 	dag, err := dagRepo.Get(ctx, dagID, DB)
@@ -214,29 +213,29 @@ func ReadDAGFromDatabase(
 	}
 
 	// Populate edges for operators and artifacts.
-	operatorToArtifactEdges, err := workflowDagEdgeReader.GetOperatorToArtifactEdges(ctx, dag.ID, DB)
+	operatorToArtifactEdges, err := dagEdgeRepo.GetOperatorToArtifactByDAG(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read operator to artifact edges from the database.")
 	}
 
 	for _, edge := range operatorToArtifactEdges {
-		if operator, ok := dag.Operators[edge.FromId]; ok {
-			operator.Outputs = append(operator.Outputs, edge.ToId)
-			dag.Operators[edge.FromId] = operator
+		if operator, ok := dag.Operators[edge.FromID]; ok {
+			operator.Outputs = append(operator.Outputs, edge.ToID)
+			dag.Operators[edge.FromID] = operator
 		} else {
 			return nil, errors.Wrap(err, "Found a dag edge with an orphaned operator id.")
 		}
 	}
 
-	artifactToOperatorEdges, err := workflowDagEdgeReader.GetArtifactToOperatorEdges(ctx, dag.ID, DB)
+	artifactToOperatorEdges, err := dagEdgeRepo.GetArtifactToOperatorByDAG(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read artifact to operator edges from the database.")
 	}
 
 	for _, edge := range artifactToOperatorEdges {
-		if operator, ok := dag.Operators[edge.ToId]; ok {
-			operator.Inputs = append(operator.Inputs, edge.FromId)
-			dag.Operators[edge.ToId] = operator
+		if operator, ok := dag.Operators[edge.ToID]; ok {
+			operator.Inputs = append(operator.Inputs, edge.FromID)
+			dag.Operators[edge.ToID] = operator
 		} else {
 			return nil, errors.Wrap(err, "Found a dag edge with an orphaned operator id.")
 		}
@@ -255,7 +254,7 @@ func ReadLatestDAGFromDatabase(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
-	workflowDagEdgeReader workflow_dag_edge.Reader,
+	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
 ) (*models.DAG, error) {
 	dag, err := dagRepo.GetLatestByWorkflow(ctx, workflowID, DB)
@@ -270,7 +269,7 @@ func ReadLatestDAGFromDatabase(
 		dagRepo,
 		operatorReader,
 		artifactReader,
-		workflowDagEdgeReader,
+		dagEdgeRepo,
 		DB,
 	)
 }
@@ -289,8 +288,7 @@ func UpdateWorkflowDagToLatest(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	operatorWriter operator.Writer,
-	workflowDagEdgeReader workflow_dag_edge.Reader,
-	workflowDagEdgeWriter workflow_dag_edge.Writer,
+	dagEdgeRepo repos.DAGEdge,
 	artifactReader artifact.Reader,
 	artifactWriter artifact.Writer,
 	DB database.Database,
@@ -331,7 +329,7 @@ func UpdateWorkflowDagToLatest(
 		dagRepo,
 		operatorReader,
 		operatorWriter,
-		workflowDagEdgeWriter,
+		dagEdgeRepo,
 		artifactReader,
 		artifactWriter,
 		DB,
@@ -347,7 +345,7 @@ func UpdateWorkflowDagToLatest(
 		dagRepo,
 		operatorReader,
 		artifactReader,
-		workflowDagEdgeReader,
+		dagEdgeRepo,
 		DB,
 	)
 }

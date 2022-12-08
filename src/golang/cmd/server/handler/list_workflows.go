@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -49,21 +48,19 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader artifact.Reader
-	OperatorReader operator.Reader
-	// TODO: Remove after watcher refactor
-	WorkflowReader        workflow.Reader
+	ArtifactReader        artifact.Reader
+	OperatorReader        operator.Reader
 	WorkflowDagEdgeReader workflow_dag_edge.Reader
 	CustomReader          queries.Reader
 
-	ArtifactWriter        artifact.Writer
-	OperatorWriter        operator.Writer
-	WorkflowDagEdgeWriter workflow_dag_edge.Writer
-	OperatorResultWriter  operator_result.Writer
-	ArtifactResultWriter  artifact_result.Writer
-	NotificationWriter    notification.Writer
+	ArtifactWriter       artifact.Writer
+	OperatorWriter       operator.Writer
+	OperatorResultWriter operator_result.Writer
+	ArtifactResultWriter artifact_result.Writer
+	NotificationWriter   notification.Writer
 
 	DAGRepo       repos.DAG
+	DAGEdgeRepo   repos.DAGEdge
 	DAGResultRepo repos.DAGResult
 	WorkflowRepo  repos.Workflow
 }
@@ -157,7 +154,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.DAGRepo,
 		h.OperatorReader,
 		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		h.DAGEdgeRepo,
 		h.DAGResultRepo,
 		h.OperatorResultWriter,
 		h.ArtifactResultWriter,

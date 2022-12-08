@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -30,7 +29,7 @@ func SyncDAGs(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
-	workflowDagEdgeReader workflow_dag_edge.Reader,
+	dagEdgeRepo repos.DAGEdge,
 	dagResultRepo repos.DAGResult,
 	operatorResultWriter operator_result.Writer,
 	artifactResultWriter artifact_result.Writer,
@@ -47,7 +46,7 @@ func SyncDAGs(
 			dagRepo,
 			operatorReader,
 			artifactReader,
-			workflowDagEdgeReader,
+			dagEdgeRepo,
 			DB,
 		)
 		if err != nil {
