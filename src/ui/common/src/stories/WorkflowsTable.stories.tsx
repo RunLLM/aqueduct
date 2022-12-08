@@ -12,7 +12,7 @@ import MetricItem, {
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
 } from '../components/tables/PaginatedSearchTable';
-import { SupportedIntegrations } from '../utils/integrations';
+import { ServiceLogos } from '../utils/integrations';
 import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
 
@@ -109,7 +109,7 @@ export const WorkflowsTable: React.FC = () => {
         //engine: airflowEngine,
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
+          engineIconUrl: ServiceLogos['Kubernetes'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -123,7 +123,7 @@ export const WorkflowsTable: React.FC = () => {
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'lambda',
-          engineIconUrl: SupportedIntegrations['Lambda'].logo,
+          engineIconUrl: ServiceLogos['Lambda'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -137,7 +137,7 @@ export const WorkflowsTable: React.FC = () => {
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
+          engineIconUrl: ServiceLogos['Kubernetes'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -151,7 +151,7 @@ export const WorkflowsTable: React.FC = () => {
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'lambda',
-          engineIconUrl: SupportedIntegrations['Lambda'].logo,
+          engineIconUrl: ServiceLogos['Lambda'].logo,
         },
         metrics: metricsShort,
         checks: checkPreviews,
@@ -165,45 +165,8 @@ export const WorkflowsTable: React.FC = () => {
         last_run: '11/1/2022 2:00PM',
         engine: {
           engineName: 'kubernetes',
-          engineIconUrl: SupportedIntegrations['Kubernetes'].logo,
+          engineIconUrl: ServiceLogos['Kubernetes'].logo,
         },
-        metrics: metricsShort,
-        checks: checkPreviews,
-      },
-    ],
-    meta: [
-      {
-        name: 'churn',
-        last_run: '11/1/2022 2:00PM',
-        engine: 'airflow',
-        metrics: metricsShort,
-        checks: checkPreviews,
-      },
-      {
-        name: 'wine_ratings',
-        last_run: '11/1/2022 2:00PM',
-        engine: 'lambda',
-        metrics: metricsShort,
-        checks: checkPreviews,
-      },
-      {
-        name: 'diabetes_classifier',
-        last_run: '11/1/2022 2:00PM',
-        engine: 'kubernetes',
-        metrics: metricsShort,
-        checks: checkPreviews,
-      },
-      {
-        name: 'mpg_regressor',
-        last_run: '11/1/2022 2:00PM',
-        engine: 'lambda',
-        metrics: metricsShort,
-        checks: checkPreviews,
-      },
-      {
-        name: 'house_price_prediction',
-        last_run: '11/1/2022 2:00PM',
-        engine: 'kubernetes',
         metrics: metricsShort,
         checks: checkPreviews,
       },

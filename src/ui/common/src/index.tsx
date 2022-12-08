@@ -161,6 +161,7 @@ import fetchUser from './utils/fetchUser';
 import {
   addTable,
   formatService,
+  ServiceLogos,
   SupportedIntegrations,
 } from './utils/integrations';
 import { dateString } from './utils/metadata';
@@ -343,6 +344,7 @@ export {
   S3Dialog,
   selectNode,
   selectResultIdx,
+  ServiceLogos,
   ServiceType,
   // TODO: Refactor to remove sidesheet state
   setAllSideSheetState,

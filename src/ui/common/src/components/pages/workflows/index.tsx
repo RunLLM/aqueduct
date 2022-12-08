@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { SupportedIntegrations } from '../../../utils/integrations';
+import { ServiceLogos } from '../../../utils/integrations';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
@@ -143,16 +143,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     const engineName =
       value.engine[0].toUpperCase() + value.engine.substring(1);
     const engineIconUrl =
-      SupportedIntegrations[
-        value.engine[0].toUpperCase() + value.engine.substring(1)
-      ].logo;
+      ServiceLogos[value.engine[0].toUpperCase() + value.engine.substring(1)];
     const workflowTableRow: PaginatedSearchTableRow = {
       name: {
         name: value.name,
         url: `/workflow/${value.id}`,
         status: value.status,
       },
-      // TODO: Figur out correct way to render this date string
       last_run: new Date(value.last_run_at * 1000).toLocaleString(),
       engine: {
         engineName,
@@ -193,6 +190,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         break;
       case 'engine': {
         const { engineName, engineIconUrl } = value;
+        console.log('engineName: ', engineName);
+        console.log('engineIconURL: ', engineIconUrl);
         value = (
           <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
         );
