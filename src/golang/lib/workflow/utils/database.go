@@ -254,7 +254,7 @@ func ReadLatestDAGFromDatabase(
 	dagRepo repos.DAG,
 	operatorReader operator.Reader,
 	artifactReader artifact.Reader,
-	dagEdgeReader repos.DAGEdge,
+	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
 ) (*models.DAG, error) {
 	dag, err := dagRepo.GetLatestByWorkflow(ctx, workflowID, DB)
@@ -269,7 +269,7 @@ func ReadLatestDAGFromDatabase(
 		dagRepo,
 		operatorReader,
 		artifactReader,
-		dagEdgeReader,
+		dagEdgeRepo,
 		DB,
 	)
 }
