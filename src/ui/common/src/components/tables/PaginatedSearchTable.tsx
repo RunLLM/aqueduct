@@ -35,12 +35,14 @@ export interface PaginatedSearchTableProps {
   data: PaginatedSearchTableData;
   searchEnabled?: boolean;
   onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
+  onShouldInclude?: (rowItem, searchQuery, searchColumn) => boolean;
 }
 
 export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   data,
   onGetColumnValue,
   searchEnabled = false,
+  onShouldInclude,
 }) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -53,10 +55,22 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
 
   let filteredRows = [];
 
+  /**
+   * Function used to test whether a row should be included in search results.
+   * This function allows for searching over arbitrary columns since it takes in a searchQuery and a column to search through.
+   * To allow for more control at the caller's level, this function calls onShouldInclude if there is a function passed in.
+   * This allows us to do things like search through a row item that is an array (assuming the callback implements the search for the column) for example.
+   * @param rowItem - Row item to test whether or not to include in search results.
+   * @param searchQuery - Query to search check e.g. rowItem[searchColumn] === searchQuery
+   * @param searchColumn - Column inside row item to use for search.
+   * @returns - true or false whether the rowItem[searchColumn] is a match for searchQuery
+   */
   const shouldInclude = (rowItem, searchQuery, searchColumn): boolean => {
-    // TODO: Allow users to pass in a function as a prop to support custom search by column.
     // Since table cells can contain complex objects, this implementation is up to the caller.
-    // Otherwise, we default to using 'name' as the field to conduct the search on.
+    // Otherwise, we default to using 'name' (two fields currently in use by the Workflows list table and Data list tables) as the field to conduct the search on.
+    if (onShouldInclude) {
+      return onShouldInclude(rowItem, searchQuery, searchColumn);
+    }
 
     // filter rows by name, which is our default filter column.
     let shouldInclude = false;
@@ -64,11 +78,12 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
       case 'name': {
         const name = rowItem.name.name as string;
         shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
+        break;
       }
-      // TODO: Create function to make this filtering more generic.
       default: {
-        const name = rowItem.name.name as string;
-        shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
+        // no name column, return true for everything.
+        shouldInclude = true;
+        break;
       }
     }
 
