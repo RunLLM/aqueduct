@@ -27,7 +27,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
   let backgroundColor = theme.palette.Primary;
   switch (status) {
     case ExecutionStatus.Canceled:
-      backgroundColor = theme.palette.gray[600];
+      backgroundColor = theme.palette.Default;
       break;
     case ExecutionStatus.Failed:
       backgroundColor = theme.palette.Error;
@@ -36,7 +36,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
       backgroundColor = theme.palette.Info;
       break;
     case ExecutionStatus.Registered:
-      backgroundColor = theme.palette.Registered;
+      backgroundColor = theme.palette.Default;
       break;
     case ExecutionStatus.Running:
       backgroundColor = theme.palette.Running;
@@ -46,8 +46,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
       break;
     case ExecutionStatus.Unknown:
     default:
-      // TODO: Make theme.palette.gray[600] be the same as theme.palette.Default in theme.tsx
-      backgroundColor = theme.palette.gray[600];
+      backgroundColor = theme.palette.Default;
       break;
   }
 
@@ -95,11 +94,11 @@ export const StatusChip: React.FC<Props> = ({ status }) => {
   const getStatusChipTextColor = (status: ExecutionStatus): string => {
     let textColor = theme.palette.black;
     switch (status) {
-      case ExecutionStatus.Canceled:
       case ExecutionStatus.Unknown:
       case ExecutionStatus.Running:
         textColor = theme.palette.black;
         break;
+      case ExecutionStatus.Canceled:
       default:
         textColor = theme.palette.white;
         break;
