@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -44,6 +44,7 @@ type artifactVersions struct {
 type artifactVersion struct {
 	Timestamp int64                     `json:"timestamp"`
 	Status    shared.ExecutionStatus    `json:"status"`
+	DagStatus shared.ExecutionStatus    `json:"dag_status"`
 	Error     string                    `json:"error"`
 	Checks    []CheckResult             `json:"checks"`
 	Metrics   []artifact.ResultResponse `json:"metrics"`
@@ -63,6 +64,7 @@ type GetArtifactVersionsHandler struct {
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
+	DAGResultRepo      repos.DAGResult
 	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 }
@@ -198,6 +200,21 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatues(
 		return nil, nil, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
+	dagResultIDs := make([]uuid.UUID, 0, len(artifactResultStatuses))
+	for _, artifactResultStatus := range artifactResultStatuses {
+		dagResultIDs = append(dagResultIDs, artifactResultStatus.DAGResultID)
+	}
+
+	dagResults, err := h.DAGResultRepo.GetBatch(ctx, dagResultIDs, h.Database)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dagResultsByID := make(map[uuid.UUID]models.DAGResult, len(dagResults))
+	for _, dagResult := range dagResults {
+		dagResultsByID[dagResult.ID] = dagResult
+	}
+
 	failedArtifactIDsMap := make(map[uuid.UUID]bool, len(allArtifactIDs))
 	failedDAGResultIDs := make([]uuid.UUID, 0, len(artifactResultStatuses))
 
@@ -208,12 +225,14 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatues(
 			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
+				DagStatus: dagResultsByID[artifactResultStatus.DAGResultID].Status,
 				Checks:    nil,
 			}
 		} else {
 			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
+				DagStatus: dagResultsByID[artifactResultStatus.DAGResultID].Status,
 				Checks:    nil,
 			}
 		}
