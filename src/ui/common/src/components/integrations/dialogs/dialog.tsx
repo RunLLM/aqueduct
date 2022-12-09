@@ -305,12 +305,10 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 
   const onConfirmDialog = () => {
-    console.log('onConfirmDialog integrations: ', integrations);
     //check that name is unique before connecting.
     for (let i = 0; i < integrations.length; i++) {
       console.log('integration: ', integrations[i]);
       if (name === integrations[i].name) {
-        console.log('Name is not unique');
         setShouldShowNameError(true);
         return;
       }
