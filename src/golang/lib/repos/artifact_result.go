@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -35,6 +36,10 @@ type artifactResultReader interface {
 
 	// GetByDAGResults returns the ArtifactResult from a workflow DAG result with an ID in the dagResultIDs list.
 	GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
+
+	// GetStatusByArtifactBatch returns an ArtifactResultStatus for each ArtifactResult associated
+	// with an Artifact in artifactIDs.
+	GetStatusByArtifactBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.ArtifactResultStatus, error)
 }
 
 type artifactResultWriter interface {

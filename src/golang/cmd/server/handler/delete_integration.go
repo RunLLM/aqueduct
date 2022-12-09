@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -42,13 +41,13 @@ type DeleteIntegrationHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	CustomReader queries.Reader
 	// TODO: Replace with repos.Operator once ExecEnv methods are added
 	OperatorReader operator.Reader
 
 	ExecutionEnvironmentReader db_exec_env.Reader
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
+	DAGRepo         repos.DAG
 	IntegrationRepo repos.Integration
 	OperatorRepo    repos.Operator
 }
@@ -98,7 +97,8 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		ctx,
 		args.integrationID,
 		h.OperatorReader,
-		h.CustomReader,
+		h.OperatorRepo,
+		h.DAGRepo,
 		h.IntegrationRepo,
 		h.Database,
 	)
@@ -148,15 +148,19 @@ func validateNoActiveWorkflowOnIntegration(
 	ctx context.Context,
 	id uuid.UUID,
 	operatorReader operator.Reader,
-	customReader queries.Reader,
+	operatorRepo repos.Operator,
+	dagRepo repos.DAG,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
 	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
-		CustomReader:    customReader,
-		OperatorReader:  operatorReader,
+		Database: DB,
+
+		OperatorReader: operatorReader,
+
+		DAGRepo:         dagRepo,
 		IntegrationRepo: integrationRepo,
-		Database:        DB,
+		OperatorRepo:    operatorRepo,
 	}).Perform(ctx, id)
 	if err != nil {
 		return code, errors.Wrap(err, "Error getting operators on this integration.")

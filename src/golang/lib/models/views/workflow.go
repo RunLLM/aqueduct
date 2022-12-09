@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
@@ -18,4 +19,12 @@ type LatestWorkflowStatus struct {
 	LastRunAt   utils.NullTime             `db:"last_run_at" json:"last_run_at"`
 	Status      shared.NullExecutionStatus `db:"status" json:"status"`
 	Engine      string                     `db:"engine" json:"engine"`
+}
+
+// WorkflowLastRun is a wrapper around the last run at time for a Workflow
+// and additional metadata.
+type WorkflowLastRun struct {
+	ID        uuid.UUID         `db:"workflow_id" json:"workflow_id"`
+	Schedule  workflow.Schedule `db:"schedule" json:"schedule"`
+	LastRunAt time.Time         `db:"last_run_at" json:"last_run_at"`
 }

@@ -55,7 +55,7 @@ func (s *AqServer) triggerMissedCronJobs(
 // triggers the workflow if the cron triggering did not happen.
 func (s *AqServer) RunMissedCronJobs() error {
 	ctx := context.Background()
-	workflowLastRunResponse, err := s.CustomReader.GetWorkflowLastRunByEngine(
+	wfLastRuns, err := s.WorkflowRepo.GetLastRunByEngine(
 		ctx,
 		shared.AqueductEngineType,
 		s.Database,
@@ -66,16 +66,16 @@ func (s *AqServer) RunMissedCronJobs() error {
 
 	workflowsRan := map[uuid.UUID]bool{}
 
-	for _, workflowLastRun := range workflowLastRunResponse {
-		if workflowLastRun.Schedule.CronSchedule != "" && !workflowLastRun.Schedule.Paused {
+	for _, wfLastRun := range wfLastRuns {
+		if wfLastRun.Schedule.CronSchedule != "" && !wfLastRun.Schedule.Paused {
 			s.triggerMissedCronJobs(
 				ctx,
-				workflowLastRun.WorkflowId,
-				string(workflowLastRun.Schedule.CronSchedule),
-				workflowLastRun.LastRunAt,
+				wfLastRun.ID,
+				string(wfLastRun.Schedule.CronSchedule),
+				wfLastRun.LastRunAt,
 			)
 		}
-		workflowsRan[workflowLastRun.WorkflowId] = true
+		workflowsRan[wfLastRun.ID] = true
 	}
 
 	allWorkflows, err := s.WorkflowReader.GetAllWorkflows(ctx, s.Database)

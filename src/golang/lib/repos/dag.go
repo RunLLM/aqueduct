@@ -41,6 +41,23 @@ type dagReader interface {
 	// It returns a database.ErrNoRows if no rows are found.
 	GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) (*models.DAG, error)
 
+	// GetLatestIDByWorkflowBatch returns a map of each Workflow ID in workflowIDs
+	// to the ID of the latest DAG for that Workflow.
+	GetLatestIDByWorkflowBatch(ctx context.Context, workflowIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]uuid.UUID, error)
+
+	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
+	// the organization specified.
+	GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]uuid.UUID, error)
+
+	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
+	// the organization specified if the DAG is running on the given engine.
+	GetLatestIDsByOrgAndEngine(
+		ctx context.Context,
+		orgID string,
+		engine shared.EngineType,
+		DB database.Database,
+	) ([]uuid.UUID, error)
+
 	// List returns all DAGs.
 	List(ctx context.Context, DB database.Database) ([]models.DAG, error)
 }

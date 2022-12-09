@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
@@ -55,9 +54,8 @@ type DiscoverHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	CustomReader queries.Reader
-
 	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
 }
 
 func (*DiscoverHandler) Name() string {
@@ -175,7 +173,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve table names from storage.")
 	}
 
-	loadOperatorMetadata, err := h.CustomReader.GetLoadOperatorSpecByOrganization(
+	loadOPSpecs, err := h.OperatorRepo.GetLoadOPSpecsByOrg(
 		ctx,
 		args.OrgID,
 		h.Database,
@@ -185,9 +183,9 @@ func (h *DiscoverHandler) Perform(
 	}
 
 	// All user-created tables.
-	userTables := make(map[string]bool, len(loadOperatorMetadata))
-	for _, loadOperator := range loadOperatorMetadata {
-		loadSpec, ok := connector.CastToRelationalDBLoadParams(loadOperator.Spec.Load().Parameters)
+	userTables := make(map[string]bool, len(loadOPSpecs))
+	for _, loadOPSpec := range loadOPSpecs {
+		loadSpec, ok := connector.CastToRelationalDBLoadParams(loadOPSpec.Spec.Load().Parameters)
 		if !ok {
 			return nil, http.StatusInternalServerError, errors.Newf("Cannot load table")
 		}

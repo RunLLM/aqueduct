@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -164,6 +165,112 @@ func (*dagReader) GetLatestByWorkflow(ctx context.Context, workflowID uuid.UUID,
 	args := []interface{}{workflowID}
 
 	return getDAG(ctx, DB, query, args...)
+}
+
+func (*dagReader) GetLatestIDByWorkflowBatch(
+	ctx context.Context,
+	workflowIDs []uuid.UUID,
+	DB database.Database,
+) (map[uuid.UUID]uuid.UUID, error) {
+	query := fmt.Sprintf(
+		`
+		SELECT workflow_dag_id, workflow_id 
+		FROM 
+		(
+			SELECT
+				id as workflow_dag_id,
+				workflow_id,
+				MAX(created_at) as created_at
+			FROM workflow_dag
+			WHERE workflow_id IN (%s)
+			GROUP BY workflow_id
+		)`,
+		stmt_preparers.GenerateArgsList(len(workflowIDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(workflowIDs)
+
+	var IDs []struct {
+		DagID      uuid.UUID `db:"workflow_dag_id"`
+		WorkflowID uuid.UUID `db:"workflow_id"`
+	}
+
+	err := DB.Query(ctx, &IDs, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	workflowToDAG := make(map[uuid.UUID]uuid.UUID, len(IDs))
+	for _, item := range IDs {
+		workflowToDAG[item.WorkflowID] = item.DagID
+	}
+
+	return workflowToDAG, nil
+}
+
+func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]uuid.UUID, error) {
+	query := `
+		SELECT workflow_dag.id 
+		FROM workflow_dag 
+		WHERE created_at IN 
+		(
+			SELECT MAX(workflow_dag.created_at) 
+			FROM app_user, workflow, workflow_dag 
+			WHERE 
+				app_user.id = workflow.user_id 
+				AND workflow.id = workflow_dag.workflow_id 
+				AND app_user.organization_id = $1 
+			GROUP BY workflow.id
+		);`
+	args := []interface{}{orgID}
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
+}
+
+func (*dagReader) GetLatestIDsByOrgAndEngine(
+	ctx context.Context,
+	orgID string,
+	engine shared.EngineType,
+	DB database.Database,
+) ([]uuid.UUID, error) {
+	query := `
+		SELECT workflow_dag.id 
+		FROM workflow_dag 
+		WHERE created_at IN 
+		(
+			SELECT MAX(workflow_dag.created_at) 
+			FROM app_user, workflow, workflow_dag 
+			WHERE 
+				app_user.id = workflow.user_id 
+				AND workflow.id = workflow_dag.workflow_id 
+				AND app_user.organization_id = $1 
+				AND json_extract(workflow_dag.engine_config, '$.type') = $2
+		 	GROUP BY workflow.id
+		);`
+	args := []interface{}{orgID, engine}
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
 }
 
 func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG, error) {
