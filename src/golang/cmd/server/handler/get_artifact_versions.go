@@ -187,15 +187,15 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	// Create artifact versions and add timestamp and status metadata to it.
 	// We leave the validation test result slice empty for now.
 	for _, artifactResultStatus := range artifactResultStatuses {
-		var artifactStatus artifactVersion
+		var artifactVersionObject artifactVersion
 		if artifactResultStatus.Metadata.IsNull {
-			artifactStatus = artifactVersion{
+			artifactVersionObject = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
 				Checks:    nil,
 			}
 		} else {
-			artifactStatus = artifactVersion{
+			artifactVersionObject = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
 				Metadata:  &artifactResultStatus.Metadata.Metadata,
@@ -204,9 +204,9 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		}
 
 		if _, ok := latestVersions[artifactResultStatus.ArtifactID]; ok {
-			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactStatus
+			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersionObject
 		} else {
-			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactStatus
+			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersionObject
 		}
 
 		if artifactResultStatus.Status == shared.FailedExecutionStatus {
