@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
@@ -40,9 +39,6 @@ type DeleteIntegrationHandler struct {
 
 	Database database.Database
 	Vault    vault.Vault
-
-	// TODO: Replace with repos.Operator once ExecEnv methods are added
-	OperatorReader operator.Reader
 
 	ExecutionEnvironmentReader db_exec_env.Reader
 	ExecutionEnvironmentWriter db_exec_env.Writer
@@ -96,7 +92,6 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	code, err := validateNoActiveWorkflowOnIntegration(
 		ctx,
 		args.integrationID,
-		h.OperatorReader,
 		h.OperatorRepo,
 		h.DAGRepo,
 		h.IntegrationRepo,
@@ -147,7 +142,6 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 func validateNoActiveWorkflowOnIntegration(
 	ctx context.Context,
 	id uuid.UUID,
-	operatorReader operator.Reader,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
 	integrationRepo repos.Integration,
@@ -155,8 +149,6 @@ func validateNoActiveWorkflowOnIntegration(
 ) (int, error) {
 	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
 		Database: DB,
-
-		OperatorReader: operatorReader,
 
 		DAGRepo:         dagRepo,
 		IntegrationRepo: integrationRepo,

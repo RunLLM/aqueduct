@@ -128,6 +128,24 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	return operators, err
 }
 
+func (*operatorReader) GetExtractAndLoadOPsByIntegration(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	DB database.Database,
+) ([]models.Operator, error) {
+	query := fmt.Sprintf(
+		`SELECT %s 
+		FROM operator
+		WHERE 
+			json_extract(spec, '$.load.integration_id') = $1
+			OR json_extract(spec, '$.extract.integration_id') = $2`,
+		models.OperatorCols(),
+	)
+	args := []interface{}{integrationID, integrationID}
+
+	return getOperators(ctx, DB, query, args...)
+}
+
 func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -264,6 +282,15 @@ func (*operatorReader) GetRelationBatch(
 	var relations []views.OperatorRelation
 	err := DB.Query(ctx, &relations, query, args...)
 	return relations, err
+}
+
+func (*operatorReader) GetWithExecEnv(ctx context.Context, DB database.Database) ([]models.Operator, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL;",
+		models.OperatorCols(),
+	)
+
+	return getOperators(ctx, DB, query)
 }
 
 func (*operatorReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {

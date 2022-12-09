@@ -6,8 +6,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -33,10 +33,10 @@ import (
 //				 This is the equivalent to whether `workflow_dag_id` is the latest for the `workflow_id`
 
 type listOperatorsForIntegrationItem struct {
-	Operator      *operator.DBOperator `json:"operator"`
-	WorkflowId    uuid.UUID            `json:"workflow_id"`
-	WorkflowDagId uuid.UUID            `json:"workflow_dag_id"`
-	IsActive      bool                 `json:"is_active"`
+	Operator      *models.Operator `json:"operator"`
+	WorkflowId    uuid.UUID        `json:"workflow_id"`
+	WorkflowDagId uuid.UUID        `json:"workflow_dag_id"`
+	IsActive      bool             `json:"is_active"`
 }
 
 type listOperatorsForIntegrationResponse struct {
@@ -47,9 +47,6 @@ type ListOperatorsForIntegrationHandler struct {
 	GetHandler
 
 	Database database.Database
-
-	// TODO: Replace with repos.Operator once ExecEnv methods are added
-	OperatorReader operator.Reader
 
 	DAGRepo         repos.DAG
 	IntegrationRepo repos.Integration
@@ -78,25 +75,25 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	var operators []operator.DBOperator
+	var operators []models.Operator
 
 	// Fetch all operators on this integration.
 	if integrationObject.Service == integration.Conda {
-		operators, err = h.OperatorReader.GetOperatorsWithCondaEnv(ctx, h.Database)
+		operators, err = h.OperatorRepo.GetWithExecEnv(ctx, h.Database)
 	} else {
 		// TODO (ENG-2068): current implementation only works for data integrations.
 		// We should fix this to work against compute integrations as well.
-		operators, err = h.OperatorReader.GetOperatorsByDataIntegrationId(ctx, integrationID, h.Database)
+		operators, err = h.OperatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, h.Database)
 	}
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
 
 	operatorIDs := make([]uuid.UUID, 0, len(operators))
-	operatorByIDs := make(map[uuid.UUID]operator.DBOperator, len(operators))
+	operatorByIDs := make(map[uuid.UUID]models.Operator, len(operators))
 	for _, op := range operators {
-		operatorIDs = append(operatorIDs, op.Id)
-		operatorByIDs[op.Id] = op
+		operatorIDs = append(operatorIDs, op.ID)
+		operatorByIDs[op.ID] = op
 	}
 
 	// Fetch all workflows that owns all fetched operators.
