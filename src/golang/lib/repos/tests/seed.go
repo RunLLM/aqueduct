@@ -529,7 +529,6 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 			if _, ok := createdOperatorNames[opName]; !ok {
 				// create op, artf, and op -> artf edge
 				opType := strings.Split(opName, "_")[0]
-				require.True(ts.T(), ok)
 				spec := extract_spec
 				if opType == string(operator.FunctionType) {
 					spec = fn_spec
@@ -537,7 +536,7 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 					spec = metric_spec
 				} else if opType == string(operator.CheckType) {
 					spec = check_spec
-				} else {
+				} else if opType != string(operator.ExtractType) {
 					require.True(ts.T(), false, "Unsupported operator type.")
 				}
 

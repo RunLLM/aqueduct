@@ -88,8 +88,8 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 	// Get all the unique `artifact_id`s with an outgoing edge to an operator specified by `operatorIds`
 	// from workflow DAGs specified by `workflowDagIds`.
 	query := fmt.Sprintf(
-		`SELECT DISTINCT from_id AS artifact_id 
-		FROM workflow_dag_edge 
+		`SELECT DISTINCT from_id AS id 
+		FROM workflow_dag_edge
 		WHERE 
 			workflow_dag_id IN (%s) 
 		 	AND to_id IN (%s);`,
@@ -126,7 +126,7 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 	query := fmt.Sprintf(
 		`SELECT DISTINCT
 			%s,
-			edge_artf_to_metrics_op.from_id as upstream_id,
+			edge_artf_to_metrics_op.from_id as upstream_id
 		FROM
 			workflow_dag_edge edge_artf_to_metrics_op,
 			workflow_dag_edge edge_metrics_op_to_artf,
@@ -136,7 +136,7 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 			artifact.id = edge_metrics_op_to_artf.to_id
 			AND edge_artf_to_metrics_op.to_id = operator.id 
 			AND edge_metrics_op_to_artf.from_id = operator.id
-			AND operator.type = '%s'
+			AND json_extract(operator.spec, '$.type') = '%s'
 			AND edge_artf_to_metrics_op.from_id IN (%s);`,
 		models.ArtifactColsWithPrefix(),
 		operator.MetricType,

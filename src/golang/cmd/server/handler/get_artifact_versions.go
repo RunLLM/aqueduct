@@ -191,22 +191,19 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatues(
 ) (
 	[]uuid.UUID, // failedArtifactIDs
 	[]uuid.UUID, // failedDAGResultIDs
-	[]uuid.UUID, // allArtifactResultIDs
 	error,
 ) {
 	artifactResultStatuses, err := h.ArtifactResultRepo.GetStatusByArtifactBatch(ctx, allArtifactIDs, h.Database)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "Unable to get artifact versions.")
+		return nil, nil, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
 	failedArtifactIDsMap := make(map[uuid.UUID]bool, len(allArtifactIDs))
 	failedDAGResultIDs := make([]uuid.UUID, 0, len(artifactResultStatuses))
-	allArtifactResultIDs := make([]uuid.UUID, 0, len(artifactResultStatuses))
 
 	// Create artifact versions and add timestamp and status metadata to it.
 	// We leave the validation test result slice empty for now.
 	for _, artifactResultStatus := range artifactResultStatuses {
-		allArtifactResultIDs = append(allArtifactResultIDs, artifactResultStatus.ArtifactResultID)
 		if _, ok := latestVersions[artifactResultStatus.ArtifactID]; ok {
 			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
@@ -232,7 +229,7 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatues(
 		failedArtifactIDs = append(failedArtifactIDs, failedArtifactId)
 	}
 
-	return failedArtifactIDs, failedDAGResultIDs, allArtifactResultIDs, nil
+	return failedArtifactIDs, failedDAGResultIDs, nil
 }
 
 func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
@@ -240,7 +237,6 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 	latestVersions map[uuid.UUID]artifactVersions,
 	historicalVersions map[uuid.UUID]artifactVersions,
 	allArtifactIDs []uuid.UUID,
-	allArtifactResultIDs []uuid.UUID,
 ) error {
 	checkStatuses, err := h.OperatorResultRepo.GetCheckStatusByArtifactBatch(
 		ctx,
@@ -271,11 +267,6 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 		}
 	}
 
-	dagsByArtfResultID, err := h.DAGRepo.GetByArtifactResultBatch(ctx, allArtifactResultIDs, h.Database)
-	if err != nil {
-		return err
-	}
-
 	metricsByUpstreamArtifactID, err := h.ArtifactRepo.GetMetricsByUpstreamArtifactBatch(ctx, allArtifactIDs, h.Database)
 	if err != nil {
 		return err
@@ -295,12 +286,19 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 		return err
 	}
 
+	metricResultsIDs := make([]uuid.UUID, 0, len(metricResults))
 	metricResultsByArtfID := make(map[uuid.UUID][]models.ArtifactResult, len(metricResults))
 	for _, metricResult := range metricResults {
+		metricResultsIDs = append(metricResultsIDs, metricResult.ID)
 		metricResultsByArtfID[metricResult.ArtifactID] = append(
 			metricResultsByArtfID[metricResult.ArtifactID],
 			metricResult,
 		)
+	}
+
+	dagsByMetricResultID, err := h.DAGRepo.GetByArtifactResultBatch(ctx, metricResultsIDs, h.Database)
+	if err != nil {
+		return err
 	}
 
 	for upstreamArtifactID, metrics := range metricsByUpstreamArtifactID {
@@ -312,7 +310,7 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 
 			for _, metricResult := range metricResults {
 				var contentPtr *string = nil
-				dag, ok := dagsByArtfResultID[metricResult.ID]
+				dag, ok := dagsByMetricResultID[metricResult.ID]
 				if ok {
 					storageObj := storage.NewStorage(&dag.StorageConfig)
 					if metric.Type.IsCompact() {
@@ -409,14 +407,14 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	// We track failed artifact versions and later on issue another query to fetch the
 	// corresponding operator's error message.
-	failedArtifactIDs, failedDAGResultIDs, allArtifactResultIDs, err := h.updateVersionsWithArtifactResultStatues(
+	failedArtifactIDs, failedDAGResultIDs, err := h.updateVersionsWithArtifactResultStatues(
 		ctx, latestVersions, historicalVersions, allArtifactIDs,
 	)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, err
 	}
 
-	err = h.updateVersionsWithChecksAndMetrics(ctx, latestVersions, historicalVersions, allArtifactIDs, allArtifactResultIDs)
+	err = h.updateVersionsWithChecksAndMetrics(ctx, latestVersions, historicalVersions, allArtifactIDs)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, err
 	}
