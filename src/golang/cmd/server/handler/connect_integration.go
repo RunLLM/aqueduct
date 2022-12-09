@@ -16,13 +16,14 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -57,12 +58,10 @@ type ConnectIntegrationHandler struct {
 	Vault      vault.Vault
 	JobManager job.JobManager
 
-	IntegrationReader integration.Reader
-	IntegrationWriter integration.Writer
-
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 	DAGRepo            repos.DAG
+	IntegrationRepo    repos.Integration
 	OperatorRepo       repos.Operator
 
 	PauseServer   func()
@@ -143,7 +142,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		ctx,
 		args.Service,
 		args.ID,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -169,7 +168,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, txn, h.Vault); err != nil {
+	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn, h.Vault); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -211,7 +210,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				h.ArtifactRepo,
 				h.ArtifactResultRepo,
 				h.OperatorRepo,
-				h.IntegrationReader,
+				h.IntegrationRepo,
 				h.Database,
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
@@ -227,36 +226,36 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 func ConnectIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
-	integrationWriter integration.Writer,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 	vaultObject vault.Vault,
 ) (int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
-	var integrationObject *integration.Integration
+	var integrationObject *models.Integration
 	var err error
 	if args.UserOnly {
 		// This is a user-specific integration
-		integrationObject, err = integrationWriter.CreateIntegrationForUser(
+		integrationObject, err = integrationRepo.CreateForUser(
 			ctx,
 			args.OrgID,
 			args.ID,
 			args.Service,
 			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
+			(*col_utils.Config)(&publicConfig),
 			true,
-			db,
+			DB,
 		)
 	} else {
-		integrationObject, err = integrationWriter.CreateIntegration(
+		integrationObject, err = integrationRepo.Create(
 			ctx,
 			args.OrgID,
 			args.Service,
 			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
+			(*col_utils.Config)(&publicConfig),
 			true,
-			db,
+			DB,
 		)
 	}
 	if err != nil {
@@ -266,7 +265,7 @@ func ConnectIntegration(
 	// Store config (including confidential information) in vault
 	if err := auth.WriteConfigToSecret(
 		ctx,
-		integrationObject.Id,
+		integrationObject.ID,
 		args.Config,
 		vaultObject,
 	); err != nil {
@@ -275,7 +274,7 @@ func ConnectIntegration(
 
 	if args.Service == integration.Conda {
 		go func() {
-			db, err = database.NewDatabase(db.Config())
+			DB, err = database.NewDatabase(DB.Config())
 			if err != nil {
 				log.Errorf("Error creating DB in go routine: %v", err)
 				return
@@ -283,9 +282,9 @@ func ConnectIntegration(
 
 			exec_env.InitializeConda(
 				context.Background(),
-				integrationObject.Id,
-				integrationWriter,
-				db,
+				integrationObject.ID,
+				integrationRepo,
+				DB,
 			)
 		}()
 	}
@@ -435,7 +434,7 @@ func setIntegrationAsStorage(
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	operatorRepo repos.Operator,
-	integrationReader integration.Reader,
+	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
 	data, err := conf.Marshal()
@@ -479,7 +478,7 @@ func setIntegrationAsStorage(
 		artifactRepo,
 		artifactResultRepo,
 		operatorRepo,
-		integrationReader,
+		integrationRepo,
 		db,
 	); err != nil {
 		return err
@@ -601,13 +600,13 @@ func validateLambdaConfig(
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc integration.Service,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
 	db database.Database,
 ) (int, error) {
 	if svc == integration.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
-			ctx, userId, integrationReader, db,
+			ctx, userID, integrationRepo, db,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")

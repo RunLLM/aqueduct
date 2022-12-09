@@ -81,13 +81,13 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
-	OperatorRepo repos.Operator
-	WorkflowRepo repos.Workflow
+	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
+	WorkflowRepo    repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -139,9 +139,9 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp := deleteWorkflowResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
-	nameToId := make(map[string]uuid.UUID, len(args.ExternalDelete))
+	nameToID := make(map[string]uuid.UUID, len(args.ExternalDelete))
 	for integrationName := range args.ExternalDelete {
-		integrationObject, err := h.IntegrationReader.GetIntegrationByNameAndUser(
+		integrationObject, err := h.IntegrationRepo.GetByNameAndUser(
 			ctx,
 			integrationName,
 			args.AqContext.ID,
@@ -151,7 +151,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		if err != nil {
 			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while getting integration.")
 		}
-		nameToId[integrationName] = integrationObject.Id
+		nameToID[integrationName] = integrationObject.ID
 	}
 
 	// Check objects in list are valid
@@ -161,7 +161,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
 				ctx,
 				args.WorkflowID,
-				nameToId[integrationName],
+				nameToID[integrationName],
 				name,
 				h.Database,
 			)
@@ -200,7 +200,16 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated objects.
 	if objCount > 0 {
-		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, args.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(
+			ctx,
+			args,
+			nameToID,
+			h.Vault,
+			args.StorageConfig,
+			h.JobManager,
+			h.Database,
+			h.IntegrationRepo,
+		)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
@@ -234,7 +243,16 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	return resp, http.StatusOK, nil
 }
 
-func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[string][]SavedObjectResult, int, error) {
+func DeleteSavedObject(
+	ctx context.Context,
+	args *deleteWorkflowArgs,
+	integrationNameToID map[string]uuid.UUID,
+	vaultObject vault.Vault,
+	storageConfig *shared.StorageConfig,
+	jobManager job.JobManager,
+	DB database.Database,
+	integrationRepo repos.Integration,
+) (map[string][]SavedObjectResult, int, error) {
 	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
 	// Schedule delete written objects job
@@ -248,16 +266,16 @@ func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integratio
 		go workflow_utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath, contentPath})
 	}()
 
-	integrationConfigs := make(map[string]auth.Config, len(integrationNameToId))
-	integrationNames := make(map[string]integration.Service, len(integrationNameToId))
+	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))
+	integrationNames := make(map[string]integration.Service, len(integrationNameToID))
 	for integrationName := range args.ExternalDelete {
-		integrationId := integrationNameToId[integrationName]
+		integrationId := integrationNameToID[integrationName]
 		config, err := auth.ReadConfigFromSecret(ctx, integrationId, vaultObject)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationConfigs[integrationName] = config
-		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationId}, db)
+		integrationObjects, err := integrationRepo.GetBatch(ctx, []uuid.UUID{integrationId}, DB)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}

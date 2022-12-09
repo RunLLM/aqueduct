@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -18,8 +19,8 @@ import (
 
 const (
 	// Defaults used for seeding database records
-	testOrgID = "aqueduct-test"
-	testIntegrationService = shared.DemoDbIntegrationName
+	testOrgID              = "aqueduct-test"
+	testIntegrationService = integration.AqueductDemo
 )
 
 // seedIntegration creates count integration records.
@@ -29,10 +30,19 @@ func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := make(shared.IntegrationConfig)
+		config := make(utils.Config)
 		config[randString(10)] = randString(10)
 		validated := true
-		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, users[0].ID, testIntegrationService, name, &config, validated, ts.DB)
+		integration, err := ts.integration.CreateForUser(
+			ts.ctx,
+			testOrgID,
+			users[0].ID,
+			testIntegrationService,
+			name,
+			&config,
+			validated,
+			ts.DB,
+		)
 		require.Nil(ts.T(), err)
 
 		integrations = append(integrations, *integration)

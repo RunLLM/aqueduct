@@ -3,9 +3,9 @@ package dag
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -84,26 +84,26 @@ func Validate(
 func ValidateDagOperatorIntegrationOwnership(
 	ctx context.Context,
 	operators map[uuid.UUID]models.Operator,
-	organizationId string,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
+	orgID string,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
 	DB database.Database,
 ) (bool, error) {
 	for _, operator := range operators {
-		var integrationId uuid.UUID
+		var integrationID uuid.UUID
 		if operator.Spec.IsExtract() {
-			integrationId = operator.Spec.Extract().IntegrationId
+			integrationID = operator.Spec.Extract().IntegrationId
 		} else if operator.Spec.IsLoad() {
-			integrationId = operator.Spec.Load().IntegrationId
+			integrationID = operator.Spec.Load().IntegrationId
 		} else {
 			continue
 		}
 
-		ok, err := integrationReader.ValidateIntegrationOwnership(
+		ok, err := integrationRepo.ValidateOwnership(
 			ctx,
-			integrationId,
-			organizationId,
-			userId,
+			integrationID,
+			orgID,
+			userID,
 			DB,
 		)
 		if err != nil {

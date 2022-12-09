@@ -10,8 +10,6 @@ import (
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -47,8 +45,6 @@ type AqueductTimeConfig struct {
 }
 
 type EngineReaders struct {
-	OperatorReader             operator_db.Reader
-	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 }
 
@@ -522,7 +518,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		}
 	}
 
-	operatorsToDelete, err := eng.OperatorReader.GetOperators(ctx, operatorIDs, txn)
+	operatorsToDelete, err := eng.OperatorRepo.GetBatch(ctx, operatorIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
 	}

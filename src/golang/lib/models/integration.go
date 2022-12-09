@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )
 
@@ -25,14 +26,14 @@ const (
 
 // A Integration maps to the integration table.
 type Integration struct {
-	ID        uuid.UUID                `db:"id" json:"id"`
-	UserID    utils.NullUUID           `db:"user_id" json:"user_id"`
-	OrgID     string                   `db:"organization_id"`
-	Service   shared.Service           `db:"service"`
-	Name      string                   `db:"name"`
-	Config    shared.IntegrationConfig `db:"config"`
-	CreatedAt time.Time                `db:"created_at"`
-	Validated bool                     `db:"validated"`
+	ID        uuid.UUID           `db:"id" json:"id"`
+	UserID    mdl_utils.NullUUID  `db:"user_id" json:"user_id"`
+	OrgID     string              `db:"organization_id"`
+	Service   integration.Service `db:"service"`
+	Name      string              `db:"name"`
+	Config    utils.Config        `db:"config"`
+	CreatedAt time.Time           `db:"created_at"`
+	Validated bool                `db:"validated"`
 }
 
 // IntegrationCols returns a comma-separated string of all Integration columns.
