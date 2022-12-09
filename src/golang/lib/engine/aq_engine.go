@@ -13,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
@@ -49,14 +48,12 @@ type AqueductTimeConfig struct {
 
 type EngineReaders struct {
 	OperatorReader             operator_db.Reader
-	OperatorResultReader       operator_result.Reader
 	IntegrationReader          integration.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 }
 
 type EngineWriters struct {
-	OperatorWriter       operator_db.Writer
-	OperatorResultWriter operator_result.Writer
+	OperatorWriter operator_db.Writer
 }
 
 // Repos contains the repos needed by the Engine
@@ -67,6 +64,7 @@ type Repos struct {
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
 	NotificationRepo   repos.Notification
+	OperatorResultRepo repos.OperatorResult
 	WatcherRepo        repos.Watcher
 	WorkflowRepo       repos.Workflow
 }
@@ -295,7 +293,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		ctx,
 		dagResult.ID,
 		dbDAG,
-		eng.OperatorResultWriter,
+		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
 		engineJobManager,
@@ -380,7 +378,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
 		dbDAG,
-		eng.OperatorResultWriter,
+		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
 		jobManager,
@@ -536,7 +534,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
 	}
 
-	operatorResultsToDelete, err := eng.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
+	operatorResultsToDelete, err := eng.OperatorResultRepo.GetByDAGResultBatch(
 		ctx,
 		dagResultIDs,
 		txn,
@@ -545,9 +543,9 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operator results.")
 	}
 
-	operatorResultIds := make([]uuid.UUID, 0, len(operatorResultsToDelete))
+	operatorResultIDs := make([]uuid.UUID, 0, len(operatorResultsToDelete))
 	for _, operatorResult := range operatorResultsToDelete {
-		operatorResultIds = append(operatorResultIds, operatorResult.Id)
+		operatorResultIDs = append(operatorResultIDs, operatorResult.Id)
 	}
 
 	artifactResultsToDelete, err := eng.ArtifactResultRepo.GetByDAGResults(
@@ -570,7 +568,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
 	}
 
-	err = eng.OperatorResultWriter.DeleteOperatorResults(ctx, operatorResultIds, txn)
+	err = eng.OperatorResultRepo.DeleteBatch(ctx, operatorResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
 	}

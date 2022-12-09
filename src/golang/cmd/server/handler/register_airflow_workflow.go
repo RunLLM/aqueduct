@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -34,10 +33,9 @@ import (
 type RegisterAirflowWorkflowHandler struct {
 	RegisterWorkflowHandler
 
-	OperatorResultWriter operator_result.Writer
-
 	ArtifactResultRepo repos.ArtifactResult
 	DAGResultRepo      repos.DAGResult
+	OperatorResultRepo repos.OperatorResult
 }
 
 type registerAirflowWorkflowArgs struct {
@@ -155,7 +153,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.ArtifactRepo,
 			h.DAGEdgeRepo,
 			h.DAGResultRepo,
-			h.OperatorResultWriter,
+			h.OperatorResultRepo,
 			h.ArtifactResultRepo,
 			h.Vault,
 			h.Database,

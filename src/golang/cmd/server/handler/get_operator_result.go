@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -42,11 +41,11 @@ type getOperatorResultArgs struct {
 type GetOperatorResultHandler struct {
 	GetHandler
 
-	Database             database.Database
-	OperatorReader       operator.Reader
-	OperatorResultReader operator_result.Reader
+	Database       database.Database
+	OperatorReader operator.Reader
 
-	DAGResultRepo repos.DAGResult
+	DAGResultRepo      repos.DAGResult
+	OperatorResultRepo repos.OperatorResult
 }
 
 type GetOperatorResultResponse struct {
@@ -112,7 +111,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
-	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
+	dbOperatorResult, err := h.OperatorResultRepo.GetByDAGResultAndOperator(
 		ctx,
 		args.dagResultID,
 		args.operatorID,
