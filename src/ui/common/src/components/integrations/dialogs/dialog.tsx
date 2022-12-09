@@ -103,6 +103,10 @@ const IntegrationDialog: React.FC<Props> = ({
     (state: RootState) => state.integrationReducer.operators.operators
   );
 
+  const integrations = useSelector((state: RootState) =>
+    Object.values(state.integrationsReducer.integrations)
+  );
+
   const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
@@ -299,10 +303,6 @@ const IntegrationDialog: React.FC<Props> = ({
     default:
       return null;
   }
-
-  const integrations = useSelector((state: RootState) =>
-    Object.values(state.integrationsReducer.integrations)
-  );
 
   const onConfirmDialog = () => {
     //check that name is unique before connecting.
