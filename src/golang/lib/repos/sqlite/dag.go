@@ -207,7 +207,7 @@ func (*dagReader) GetLatestIDByWorkflowBatch(
 	return workflowToDAG, nil
 }
 
-func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.ObjectID, error) {
+func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]uuid.UUID, error) {
 	query := `
 		SELECT workflow_dag.id 
 		FROM workflow_dag 
@@ -225,7 +225,16 @@ func (*dagReader) GetLatestIDsByOrg(ctx context.Context, orgID string, DB databa
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)
-	return objectIDs, err
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
 }
 
 func (*dagReader) GetLatestIDsByOrgAndEngine(
@@ -233,7 +242,7 @@ func (*dagReader) GetLatestIDsByOrgAndEngine(
 	orgID string,
 	engine shared.EngineType,
 	DB database.Database,
-) ([]views.ObjectID, error) {
+) ([]uuid.UUID, error) {
 	query := `
 		SELECT workflow_dag.id 
 		FROM workflow_dag 
@@ -252,7 +261,16 @@ func (*dagReader) GetLatestIDsByOrgAndEngine(
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)
-	return objectIDs, err
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
 }
 
 func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG, error) {

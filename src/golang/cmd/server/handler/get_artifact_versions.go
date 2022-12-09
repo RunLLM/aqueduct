@@ -93,24 +93,18 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	latestDagIDObjects, err := h.DAGRepo.GetLatestIDsByOrg(
+	loadOperatorIDs := make([]uuid.UUID, 0, len(loadSpecs))
+	for _, loadOperator := range loadSpecs {
+		loadOperatorIDs = append(loadOperatorIDs, loadOperator.OperatorID)
+	}
+
+	latestDagIDs, err := h.DAGRepo.GetLatestIDsByOrg(
 		ctx,
 		args.OrgID,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
-	}
-
-	loadOperatorIDs := make([]uuid.UUID, 0, len(loadSpecs))
-	latestDagIDs := make([]uuid.UUID, 0, len(latestDagIDObjects))
-
-	for _, loadOperator := range loadSpecs {
-		loadOperatorIDs = append(loadOperatorIDs, loadOperator.OperatorID)
-	}
-
-	for _, IdObject := range latestDagIDObjects {
-		latestDagIDs = append(latestDagIDs, IdObject.ID)
 	}
 
 	// Handle the no data case so it doesn't throw an error in GetArtifactIdsFromWorkflowDagIdsAndDownstreamOperatorIds
@@ -123,7 +117,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	// We separate artifacts that belong to the latest workflow DAG from historical artifacts because we
 	// want to show them separately on the UI.
-	artifactIDObjects, err := h.ArtifactRepo.GetIDsByDAGAndDownstreamOPBatch(
+	artifactIDs, err := h.ArtifactRepo.GetIDsByDAGAndDownstreamOPBatch(
 		ctx,
 		latestDagIDs,
 		loadOperatorIDs,
@@ -133,9 +127,9 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get artifact versions.")
 	}
 
-	latestArtifactIDs := make(map[uuid.UUID]bool, len(artifactIDObjects))
-	for _, artifactIDObject := range artifactIDObjects {
-		latestArtifactIDs[artifactIDObject.ID] = true
+	latestArtifactIDs := make(map[uuid.UUID]bool, len(artifactIDs))
+	for _, artifactID := range artifactIDs {
+		latestArtifactIDs[artifactID] = true
 	}
 
 	allArtifactIds := make([]uuid.UUID, 0, len(loadOperatorIDs))

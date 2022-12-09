@@ -83,7 +83,7 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 	dagIDs []uuid.UUID,
 	operatorIDs []uuid.UUID,
 	DB database.Database,
-) ([]views.ObjectID, error) {
+) ([]uuid.UUID, error) {
 	// Get all the unique `artifact_id`s with an outgoing edge to an operator specified by `operatorIds`
 	// from workflow DAGs specified by `workflowDagIds`.
 	query := fmt.Sprintf(
@@ -101,7 +101,16 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)
-	return objectIDs, err
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
 }
 
 func (*artifactReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {

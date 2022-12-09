@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -48,7 +47,7 @@ type dagReader interface {
 
 	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
 	// the organization specified.
-	GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.ObjectID, error)
+	GetLatestIDsByOrg(ctx context.Context, orgID string, DB database.Database) ([]uuid.UUID, error)
 
 	// GetLatestIDsByOrg returns the IDs of the latest DAG for all Workflows created by
 	// the organization specified if the DAG is running on the given engine.
@@ -57,7 +56,7 @@ type dagReader interface {
 		orgID string,
 		engine shared.EngineType,
 		DB database.Database,
-	) ([]views.ObjectID, error)
+	) ([]uuid.UUID, error)
 
 	// List returns all DAGs.
 	List(ctx context.Context, DB database.Database) ([]models.DAG, error)

@@ -6,7 +6,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -29,14 +28,14 @@ type artifactReader interface {
 	// GetByDAG returns the Artifacts created by the workflow DAG with ID dagID.
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
-	// GetIDsByDAGAndDownstreamOPBatch returns the ID of all Artifacts belonging to a DAG
+	// GetIDsByDAGAndDownstreamOPBatch returns a list of Artifact IDs belonging to a DAG
 	// in dagIDs if it is connected via a DAGEdge to an operator in operatorIDs.
 	GetIDsByDAGAndDownstreamOPBatch(
 		ctx context.Context,
 		dagIDs []uuid.UUID,
 		operatorIDs []uuid.UUID,
 		DB database.Database,
-	) ([]views.ObjectID, error)
+	) ([]uuid.UUID, error)
 
 	// ValidateOrg returns whether the Artifact was created by a user in orgID.
 	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)

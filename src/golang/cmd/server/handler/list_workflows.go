@@ -118,7 +118,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 // self-orchestrated engine for the user's organization.
 func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, orgID string) error {
 	// Sync workflows running on self-orchestrated engines
-	airflowDagIDObjects, err := h.DAGRepo.GetLatestIDsByOrgAndEngine(
+	airflowDagIDs, err := h.DAGRepo.GetLatestIDsByOrgAndEngine(
 		ctx,
 		orgID,
 		shared.AirflowEngineType,
@@ -126,11 +126,6 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 	)
 	if err != nil {
 		return err
-	}
-
-	airflowDagIDs := make([]uuid.UUID, 0, len(airflowDagIDObjects))
-	for _, dagID := range airflowDagIDObjects {
-		airflowDagIDs = append(airflowDagIDs, dagID.ID)
 	}
 
 	if err := airflow.SyncDAGs(
