@@ -30,8 +30,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			OperatorReader: s.OperatorReader,
-
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
@@ -147,8 +145,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			NotificationRepo: s.NotificationRepo,
 		},
 		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsForIntegrationHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
+			Database: s.Database,
 
 			DAGRepo:         s.DAGRepo,
 			IntegrationRepo: s.IntegrationRepo,
