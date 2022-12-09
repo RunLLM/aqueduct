@@ -55,10 +55,10 @@ type artifactResultMetadata struct {
 	// `status` in the UI.
 	Status            shared.ExecutionStatus            `json:"status"`
 	ExecState         shared.ExecutionState             `json:"exec_state"`
-	Schema            []map[string]string               `json:"schema,omitempty"`
-	SerializationType artifact_result.SerializationType `json:"serialization_type,omitempty"`
-	ArtifactType      artifact.Type                     `json:"artifact_type,omitempty"`
-	PythonType        string                            `json:"python_type,omitempty"`
+	Schema            []map[string]string               `json:"schema"`
+	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	ArtifactType      artifact.Type                     `json:"artifact_type"`
+	PythonType        string                            `json:"python_type"`
 }
 
 type getArtifactResultResponse struct {

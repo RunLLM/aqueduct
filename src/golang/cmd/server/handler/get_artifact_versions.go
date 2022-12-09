@@ -43,7 +43,7 @@ type artifactVersion struct {
 	Timestamp int64                     `json:"timestamp"`
 	Status    shared.ExecutionStatus    `json:"status"`
 	Error     string                    `json:"error"`
-	Metadata  *artifact_result.Metadata `json:"metadata,omitempty"`
+	Metadata  *artifact_result.Metadata `json:"metadata"`
 	Checks    []CheckResult             `json:"checks"`
 }
 
