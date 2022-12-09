@@ -3,7 +3,6 @@ package server
 import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -26,7 +25,6 @@ type Repos struct {
 }
 
 type Readers struct {
-	WorkflowReader             workflow.Reader
 	SchemaVersionReader        schema_version.Reader
 	ExecutionEnvironmentReader exec_env.Reader
 }
@@ -53,11 +51,6 @@ func CreateRepos() *Repos {
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	workflowReader, err := workflow.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionReader, err := schema_version.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
@@ -69,7 +62,6 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 	}
 
 	return &Readers{
-		WorkflowReader:             workflowReader,
 		SchemaVersionReader:        schemaVersionReader,
 		ExecutionEnvironmentReader: execEnvReader,
 	}, nil

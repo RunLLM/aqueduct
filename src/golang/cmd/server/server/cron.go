@@ -78,18 +78,18 @@ func (s *AqServer) RunMissedCronJobs() error {
 		workflowsRan[wfLastRun.ID] = true
 	}
 
-	allWorkflows, err := s.WorkflowReader.GetAllWorkflows(ctx, s.Database)
+	allWorkflows, err := s.WorkflowRepo.List(ctx, s.Database)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get workflows from database.")
 	}
 
 	for _, workflow := range allWorkflows {
-		if _, ok := workflowsRan[workflow.Id]; !ok {
+		if _, ok := workflowsRan[workflow.ID]; !ok {
 			// If we reach here, it means this workflow hasn't produced any run yet.
 			if workflow.Schedule.CronSchedule != "" && !workflow.Schedule.Paused {
 				s.triggerMissedCronJobs(
 					ctx,
-					workflow.Id,
+					workflow.ID,
 					string(workflow.Schedule.CronSchedule),
 					workflow.CreatedAt,
 				)
@@ -101,7 +101,7 @@ func (s *AqServer) RunMissedCronJobs() error {
 }
 
 func (s *AqServer) initializeWorkflowCronJobs(ctx context.Context) error {
-	workflows, err := s.Readers.WorkflowReader.GetAllWorkflows(ctx, s.Database)
+	workflows, err := s.WorkflowRepo.List(ctx, s.Database)
 	if err != nil {
 		return err
 	}
@@ -111,12 +111,12 @@ func (s *AqServer) initializeWorkflowCronJobs(ctx context.Context) error {
 			if wf.Schedule.Paused {
 				wf.Schedule.CronSchedule = ""
 			}
-			name := shared_utils.AppendPrefix(wf.Id.String())
+			name := shared_utils.AppendPrefix(wf.ID.String())
 			period := string(wf.Schedule.CronSchedule)
 
 			err = s.AqEngine.ScheduleWorkflow(
 				ctx,
-				wf.Id,
+				wf.ID,
 				name,
 				period,
 			)
