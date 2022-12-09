@@ -40,6 +40,9 @@ type artifactResultReader interface {
 	// GetStatusByArtifactBatch returns an ArtifactResultStatus for each ArtifactResult associated
 	// with an Artifact in artifactIDs.
 	GetStatusByArtifactBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.ArtifactResultStatus, error)
+
+	// GetByArtifactBatch returns all results whose artifact is among artifactIDs
+	GetByArtifactBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]models.ArtifactResult, error)
 }
 
 type artifactResultWriter interface {

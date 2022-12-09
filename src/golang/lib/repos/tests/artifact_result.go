@@ -41,6 +41,21 @@ func (ts *TestSuite) TestArtifactResult_GetByArtifact() {
 	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
 }
 
+func (ts *TestSuite) TestArtifactResult_GetByArtifactBatch() {
+	expectedArtifactResults, _, _, _ := ts.seedArtifactResult(3)
+
+	actualArtifactResults, err := ts.artifactResult.GetByArtifactBatch(
+		ts.ctx,
+		[]uuid.UUID{expectedArtifactResults[0].ArtifactID},
+		ts.DB,
+	)
+
+	require.Nil(ts.T(), err)
+	// All artifact_results for the same artifact when created with seedArtifactResult.
+	require.Equal(ts.T(), 3, len(actualArtifactResults))
+	requireDeepEqual(ts.T(), expectedArtifactResults, actualArtifactResults)
+}
+
 func (ts *TestSuite) TestArtifactResult_GetByArtifactAndWorkflow() {
 	expectedArtifactResults, artifact, _, workflow := ts.seedArtifactResult(3)
 

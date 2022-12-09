@@ -120,8 +120,10 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 	query := fmt.Sprintf(
 		`SELECT 
 			artifact_result.artifact_id, 
+			artifact_result.id as artifact_result_id,
 			artifact_result.workflow_dag_result_id, 
-			artifact_result.status, 
+			artifact_result.status,
+			artifact_result.content_path,
 			workflow_dag_result.created_at AS timestamp 
 		FROM artifact_result, workflow_dag_result 
 		WHERE 
@@ -135,6 +137,25 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 	var statuses []views.ArtifactResultStatus
 	err := DB.Query(ctx, &statuses, query, args...)
 	return statuses, err
+}
+
+func (*artifactResultReader) GetByArtifactBatch(
+	ctx context.Context,
+	artifactIDs []uuid.UUID,
+	DB database.Database,
+) ([]models.ArtifactResult, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM artifact_result
+		WHERE artifact_result.artifact_id IN (%s);`,
+		models.ArtifactResultCols(),
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
+
+	var results []models.ArtifactResult
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
 }
 
 func (*artifactResultWriter) Create(
