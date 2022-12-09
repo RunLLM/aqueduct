@@ -3,7 +3,6 @@ package tests
 import (
 	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -62,7 +61,7 @@ func (ts *TestSuite) TestIntegration_GetByNameAndUser() {
 	)
 
 	require.Nil(ts.T(), err)
-	requireDeepEqual(ts.T(), expectedIntegration, actualIntegration)
+	requireDeepEqual(ts.T(), expectedIntegration, *actualIntegration)
 }
 
 func (ts *TestSuite) TestIntegration_GetByOrg() {
@@ -173,7 +172,7 @@ func (ts *TestSuite) TestIntegration_Update() {
 	integration := integrations[0]
 
 	name := randString(10)
-	config := make(shared.IntegrationConfig)
+	config := make(col_utils.Config)
 	config[randString(10)] = randString(10)
 
 	changes := map[string]interface{}{

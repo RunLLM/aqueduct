@@ -20,7 +20,7 @@ import (
 const (
 	// Defaults used for seeding database records
 	testOrgID              = "aqueduct-test"
-	testIntegrationService = integration.DemoDbIntegrationName
+	testIntegrationService = integration.AqueductDemo
 )
 
 // seedIntegration creates count integration records.
@@ -33,7 +33,16 @@ func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 		config := make(utils.Config)
 		config[randString(10)] = randString(10)
 		validated := true
-		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, users[0].ID, testIntegrationService, name, &config, validated, ts.DB)
+		integration, err := ts.integration.CreateForUser(
+			ts.ctx,
+			testOrgID,
+			users[0].ID,
+			testIntegrationService,
+			name,
+			&config,
+			validated,
+			ts.DB,
+		)
 		require.Nil(ts.T(), err)
 
 		integrations = append(integrations, *integration)
