@@ -37,6 +37,7 @@ _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
 _METADATA_SERIALIZATION_TYPE_KEY = "serialization_type"
+_METADATA_PYTHON_TYPE_KEY = "python_type"
 
 # The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
 # This will be cleaned up within the serialization logic.
@@ -149,6 +150,7 @@ def write_artifact(
         storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
+    output_metadata[_METADATA_PYTHON_TYPE_KEY] = type(content).__name__
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(DEFAULT_ENCODING))
 
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -39,10 +40,11 @@ type artifactVersions struct {
 }
 
 type artifactVersion struct {
-	Timestamp int64                  `json:"timestamp"`
-	Status    shared.ExecutionStatus `json:"status"`
-	Error     string                 `json:"error"`
-	Checks    []CheckResult          `json:"checks"`
+	Timestamp int64                     `json:"timestamp"`
+	Status    shared.ExecutionStatus    `json:"status"`
+	Error     string                    `json:"error"`
+	Metadata  *artifact_result.Metadata `json:"metadata,omitempty"`
+	Checks    []CheckResult             `json:"checks"`
 }
 
 type CheckResult struct {
@@ -185,18 +187,26 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 	// Create artifact versions and add timestamp and status metadata to it.
 	// We leave the validation test result slice empty for now.
 	for _, artifactResultStatus := range artifactResultStatuses {
-		if _, ok := latestVersions[artifactResultStatus.ArtifactID]; ok {
-			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
+		var artifactStatus artifactVersion
+		if artifactResultStatus.Metadata.IsNull {
+			artifactStatus = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
 				Checks:    nil,
 			}
 		} else {
-			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactVersion{
+			artifactStatus = artifactVersion{
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
+				Metadata:  &artifactResultStatus.Metadata.Metadata,
 				Checks:    nil,
 			}
+		}
+
+		if _, ok := latestVersions[artifactResultStatus.ArtifactID]; ok {
+			latestVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactStatus
+		} else {
+			historicalVersions[artifactResultStatus.ArtifactID].Versions[artifactResultStatus.DAGResultID] = artifactStatus
 		}
 
 		if artifactResultStatus.Status == shared.FailedExecutionStatus {
