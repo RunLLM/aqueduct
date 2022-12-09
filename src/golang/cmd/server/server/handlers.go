@@ -84,11 +84,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
-			Database:             s.Database,
-			OperatorReader:       s.OperatorReader,
-			OperatorResultReader: s.OperatorResultReader,
+			Database:       s.Database,
+			OperatorReader: s.OperatorReader,
 
-			DAGResultRepo: s.DAGResultRepo,
+			DAGResultRepo:      s.DAGResultRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
@@ -103,25 +103,24 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			OperatorReader: s.OperatorReader,
 
-			OperatorResultWriter: s.OperatorResultWriter,
-
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
-			Database:             s.Database,
-			OperatorReader:       s.OperatorReader,
-			OperatorResultReader: s.OperatorResultReader,
+			Database:       s.Database,
+			OperatorReader: s.OperatorReader,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
 		routes.ListArtifactResultsRoute: &handler.ListArtifactResultsHandler{
@@ -148,18 +147,18 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationReader: s.IntegrationReader,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
-			Database:             s.Database,
-			Vault:                s.Vault,
-			OperatorReader:       s.OperatorReader,
-			CustomReader:         s.CustomReader,
-			OperatorWriter:       s.OperatorWriter,
-			OperatorResultWriter: s.OperatorResultWriter,
+			Database:       s.Database,
+			Vault:          s.Vault,
+			OperatorReader: s.OperatorReader,
+			CustomReader:   s.CustomReader,
+			OperatorWriter: s.OperatorWriter,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
 		routes.PreviewTableRoute: &handler.PreviewTableHandler{
@@ -245,10 +244,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				WatcherRepo:  s.WatcherRepo,
 				WorkflowRepo: s.WorkflowRepo,
 			},
-			OperatorResultWriter: s.OperatorResultWriter,
 
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database: s.Database,

@@ -7,7 +7,6 @@ import (
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -53,8 +52,8 @@ func createOperatorResult(
 	dag *models.DAG,
 	dbOp *operator.DBOperator,
 	execStatus shared.ExecutionStatus,
-	workflowDagResultId uuid.UUID,
-	operatorResultWriter operator_result.Writer,
+	dagResultID uuid.UUID,
+	operatorResultRepo repos.OperatorResult,
 	artifactResultRepo repos.ArtifactResult,
 	DB database.Database,
 ) error {
@@ -69,9 +68,9 @@ func createOperatorResult(
 	execState := getOperatorExecState(ctx, execStatus, &dag.StorageConfig, metadataPath)
 
 	// Insert OperatorResult
-	_, err := operatorResultWriter.InsertOperatorResult(
+	_, err := operatorResultRepo.Create(
 		ctx,
-		workflowDagResultId,
+		dagResultID,
 		dbOp.Id,
 		execState,
 		DB,
@@ -86,7 +85,7 @@ func createOperatorResult(
 			ctx,
 			dagRunId,
 			dag,
-			workflowDagResultId,
+			dagResultID,
 			artifactId,
 			execState,
 			artifactResultRepo,

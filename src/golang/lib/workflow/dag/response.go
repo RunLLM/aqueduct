@@ -3,7 +3,6 @@ package dag
 import (
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -53,7 +52,7 @@ type ResultResponse struct {
 func NewResultResponseFromDbObjects(
 	dag *models.DAG,
 	dagResult *models.DAGResult,
-	dbOperatorResults []operator_result.OperatorResult,
+	dbOperatorResults []models.OperatorResult,
 	dbArtifactResults []models.ArtifactResult,
 	contents map[string]string,
 ) *ResultResponse {
@@ -92,7 +91,7 @@ func NewResultResponseFromDbObjects(
 	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
 
 	for _, opResult := range dbOperatorResults {
-		if op, ok := dag.Operators[opResult.OperatorId]; ok {
+		if op, ok := dag.Operators[opResult.OperatorID]; ok {
 			opResultResponse := operator.NewResultResponseFromDbObjects(&op, &opResult)
 			operatorsResponse[op.Id] = *opResultResponse
 		}
