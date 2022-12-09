@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -76,7 +76,7 @@ func (*operatorResultReader) GetByDAGResultBatch(
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM operator_result 
-		WHERE workflow_dag_result IN (%s);`,
+		WHERE workflow_dag_result_id IN (%s);`,
 		models.OperatorResultCols(),
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
