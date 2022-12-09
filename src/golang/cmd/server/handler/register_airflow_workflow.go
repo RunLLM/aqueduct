@@ -6,9 +6,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -190,15 +190,15 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		// Update workflow metadata and schedule if necessary
 		changes := map[string]interface{}{}
 		if dbWorkflowDag.Metadata.Name != "" {
-			changes[workflow.NameColumn] = dbWorkflowDag.Metadata.Name
+			changes[models.WorkflowName] = dbWorkflowDag.Metadata.Name
 		}
 
 		if dbWorkflowDag.Metadata.Description != "" {
-			changes[workflow.DescriptionColumn] = dbWorkflowDag.Metadata.Description
+			changes[models.WorkflowDescription] = dbWorkflowDag.Metadata.Description
 		}
 
 		if dbWorkflowDag.Metadata.Schedule.Trigger != "" {
-			changes[workflow.ScheduleColumn] = &dbWorkflowDag.Metadata.Schedule
+			changes[models.WorkflowSchedule] = &dbWorkflowDag.Metadata.Schedule
 		}
 
 		_, err := h.WorkflowRepo.Update(ctx, workflowID, changes, txn)
