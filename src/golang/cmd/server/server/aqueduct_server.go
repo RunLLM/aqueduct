@@ -211,7 +211,6 @@ func (s *AqServer) Init() error {
 		vault,
 		aqPath,
 		GetEngineReaders(s.Readers),
-		GetEngineWriters(s.Writers),
 		GetEngineRepos(s.Repos),
 	)
 	if err != nil {

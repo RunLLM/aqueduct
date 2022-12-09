@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -24,7 +23,7 @@ func SyncDAGs(
 	dagIDs []uuid.UUID,
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
-	operatorReader operator.Reader,
+	operatorRepo repos.Operator,
 	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	dagResultRepo repos.DAGResult,
@@ -41,7 +40,7 @@ func SyncDAGs(
 			dagID,
 			workflowRepo,
 			dagRepo,
-			operatorReader,
+			operatorRepo,
 			artifactRepo,
 			dagEdgeRepo,
 			DB,
@@ -206,9 +205,9 @@ func syncWorkflowDagResult(
 
 	for _, op := range dag.Operators {
 		// Map Airflow task state to operator execution status
-		taskID, ok := dag.EngineConfig.AirflowConfig.OperatorToTask[op.Id]
+		taskID, ok := dag.EngineConfig.AirflowConfig.OperatorToTask[op.ID]
 		if !ok {
-			return errors.Newf("Unable to determine Airflow task ID for operator %v", op.Id)
+			return errors.Newf("Unable to determine Airflow task ID for operator %v", op.ID)
 		}
 
 		taskState, ok := taskToState[taskID]

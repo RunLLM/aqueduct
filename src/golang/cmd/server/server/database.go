@@ -20,6 +20,7 @@ type Repos struct {
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
 	NotificationRepo   repos.Notification
+	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 	UserRepo           repos.User
 	WatcherRepo        repos.Watcher
@@ -37,7 +38,6 @@ type Readers struct {
 
 type Writers struct {
 	IntegrationWriter          integration.Writer
-	OperatorWriter             operator.Writer
 	ExecutionEnvironmentWriter exec_env.Writer
 }
 
@@ -49,6 +49,7 @@ func CreateRepos() *Repos {
 		DAGEdgeRepo:        sqlite.NewDAGEdgeRepo(),
 		DAGResultRepo:      sqlite.NewDAGResultRepo(),
 		NotificationRepo:   sqlite.NewNotificationRepo(),
+		OperatorRepo:       sqlite.NewOperatorRepo(),
 		OperatorResultRepo: sqlite.NewOperatorResultRepo(),
 		UserRepo:           sqlite.NewUserRepo(),
 		WatcherRepo:        sqlite.NewWatcherRepo(),
@@ -103,11 +104,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 		return nil, err
 	}
 
-	operatorWriter, err := operator.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	execEnvWriter, err := exec_env.NewWriter(dbConfig)
 	if err != nil {
 		return nil, err
@@ -115,7 +111,6 @@ func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
 
 	return &Writers{
 		IntegrationWriter:          integrationWriter,
-		OperatorWriter:             operatorWriter,
 		ExecutionEnvironmentWriter: execEnvWriter,
 	}, nil
 }
@@ -128,12 +123,6 @@ func GetEngineReaders(readers *Readers) *engine.EngineReaders {
 	}
 }
 
-func GetEngineWriters(writers *Writers) *engine.EngineWriters {
-	return &engine.EngineWriters{
-		OperatorWriter: writers.OperatorWriter,
-	}
-}
-
 func GetEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
 		ArtifactRepo:       repos.ArtifactRepo,
@@ -142,6 +131,7 @@ func GetEngineRepos(repos *Repos) *engine.Repos {
 		DAGEdgeRepo:        repos.DAGEdgeRepo,
 		DAGResultRepo:      repos.DAGResultRepo,
 		NotificationRepo:   repos.NotificationRepo,
+		OperatorRepo:       repos.OperatorRepo,
 		OperatorResultRepo: repos.OperatorResultRepo,
 		WatcherRepo:        repos.WatcherRepo,
 		WorkflowRepo:       repos.WorkflowRepo,

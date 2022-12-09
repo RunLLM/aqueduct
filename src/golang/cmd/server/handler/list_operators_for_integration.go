@@ -46,8 +46,10 @@ type listOperatorsForIntegrationResponse struct {
 type ListOperatorsForIntegrationHandler struct {
 	GetHandler
 
-	Database          database.Database
-	CustomReader      queries.Reader
+	Database database.Database
+
+	CustomReader queries.Reader
+	// TODO: Replace with repos.Operator once ExecEnv methods are added
 	OperatorReader    operator.Reader
 	IntegrationReader integration.Reader
 }

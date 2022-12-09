@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -142,8 +143,8 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	FROM operator
 	WHERE
 		json_extract(spec, '$.type') = '%s' AND 
-		json_extract(spec, '$.load.parameters.table')=$1 AND
-		json_extract(spec, '$.load.integration_id')=$2 AND
+		json_extract(spec, '$.load.parameters.table') = $1 AND
+		json_extract(spec, '$.load.integration_id') = $2 AND
 		EXISTS 
 		(
 			SELECT 1 
@@ -155,13 +156,14 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 				workflow_dag_edge.to_id = operator.id 
 			) AND 
 			workflow_dag_edge.workflow_dag_id = workflow_dag.id AND 
-			workflow_dag.workflow_id = $4
+			workflow_dag.workflow_id = $3
 		);`,
 		models.OperatorCols(),
 		shared.LoadType,
 	)
+	args := []interface{}{objectName, integrationID, workflowID}
 
-	return getOperators(ctx, DB, query)
+	return getOperators(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetLoadOPsByIntegration(
@@ -190,7 +192,8 @@ func (*operatorWriter) Create(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *shared.Spec,
+	spec *operator.Spec,
+	executionEnvironmentID *uuid.UUID,
 	DB database.Database,
 ) (*models.Operator, error) {
 	cols := []string{
@@ -198,6 +201,7 @@ func (*operatorWriter) Create(
 		models.OperatorName,
 		models.OperatorDescription,
 		models.OperatorSpec,
+		models.OperatorExecutionEnvironmentID,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.OperatorTable, cols, models.OperatorCols())
 
@@ -211,6 +215,7 @@ func (*operatorWriter) Create(
 		name,
 		description,
 		spec,
+		executionEnvironmentID,
 	}
 
 	return getOperator(ctx, DB, query, args...)

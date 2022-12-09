@@ -52,10 +52,6 @@ type EngineReaders struct {
 	ExecutionEnvironmentReader db_exec_env.Reader
 }
 
-type EngineWriters struct {
-	OperatorWriter operator_db.Writer
-}
-
 // Repos contains the repos needed by the Engine
 type Repos struct {
 	ArtifactRepo       repos.Artifact
@@ -64,6 +60,7 @@ type Repos struct {
 	DAGEdgeRepo        repos.DAGEdge
 	DAGResultRepo      repos.DAGResult
 	NotificationRepo   repos.Notification
+	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 	WatcherRepo        repos.Watcher
 	WorkflowRepo       repos.Workflow
@@ -81,7 +78,6 @@ type aqEngine struct {
 
 	// Readers and Writers needed for workflow management
 	*EngineReaders
-	*EngineWriters
 	*Repos
 }
 
@@ -114,7 +110,6 @@ func NewAqEngine(
 	vault vault.Vault,
 	aqPath string,
 	engineReaders *EngineReaders,
-	engineWriters *EngineWriters,
 	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
@@ -127,7 +122,6 @@ func NewAqEngine(
 		CronjobManager:      cronjobManager,
 		AqPath:              aqPath,
 		EngineReaders:       engineReaders,
-		EngineWriters:       engineWriters,
 		Repos:               repos,
 	}, nil
 }
@@ -174,7 +168,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		workflowID,
 		eng.WorkflowRepo,
 		eng.DAGRepo,
-		eng.OperatorReader,
+		eng.OperatorRepo,
 		eng.ArtifactRepo,
 		eng.DAGEdgeRepo,
 		eng.Database,
@@ -234,8 +228,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dbDAG,
 		eng.WorkflowRepo,
 		eng.DAGRepo,
-		eng.OperatorReader,
-		eng.OperatorWriter,
+		eng.OperatorRepo,
 		eng.DAGEdgeRepo,
 		eng.ArtifactRepo,
 		eng.Database,
@@ -246,7 +239,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	// Overwrite the parameter specs for all custom parameters defined by the user.
 	for name, param := range parameters {
-		var op *operator_db.DBOperator
+		var op *models.Operator
 		for _, dagOp := range dbDAG.Operators {
 			if dagOp.Name == name {
 				op = &dagOp
@@ -261,8 +254,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		if !op.Spec.IsParam() {
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
-		dbDAG.Operators[op.Id].Spec.Param().Val = param.Val
-		dbDAG.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
+		dbDAG.Operators[op.ID].Spec.Param().Val = param.Val
+		dbDAG.Operators[op.ID].Spec.Param().SerializationType = param.SerializationType
 	}
 	engineConfig, err := generateJobManagerConfig(ctx, dbDAG, eng.AqPath, eng.Vault)
 	if err != nil {
@@ -276,7 +269,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	opIds := make([]uuid.UUID, 0, len(dbDAG.Operators))
 	for _, op := range dbDAG.Operators {
-		opIds = append(opIds, op.Id)
+		opIds = append(opIds, op.ID)
 	}
 
 	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
@@ -500,7 +493,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
 	}
 
-	operatorIds := make([]uuid.UUID, 0, len(dagEdgesToDelete))
+	operatorIDs := make([]uuid.UUID, 0, len(dagEdgesToDelete))
 	artifactIDs := make([]uuid.UUID, 0, len(dagEdgesToDelete))
 
 	operatorIdMap := make(map[uuid.UUID]bool)
@@ -520,7 +513,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 		if _, ok := operatorIdMap[operatorId]; !ok {
 			operatorIdMap[operatorId] = true
-			operatorIds = append(operatorIds, operatorId)
+			operatorIDs = append(operatorIDs, operatorId)
 		}
 
 		if _, ok := artifactIDMap[artifactID]; !ok {
@@ -529,7 +522,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		}
 	}
 
-	operatorsToDelete, err := eng.OperatorReader.GetOperators(ctx, operatorIds, txn)
+	operatorsToDelete, err := eng.OperatorReader.GetOperators(ctx, operatorIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
 	}
@@ -588,7 +581,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
 	}
 
-	err = eng.OperatorWriter.DeleteOperators(ctx, operatorIds, txn)
+	err = eng.OperatorRepo.DeleteBatch(ctx, operatorIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting operators.")
 	}
@@ -613,7 +606,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	// Delete storage files (artifact content and function files)
-	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIDs))
+	storagePaths := make([]string, 0, len(operatorIDs)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
 		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)

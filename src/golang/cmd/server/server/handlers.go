@@ -17,26 +17,30 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			OperatorReader:    s.OperatorReader,
 			IntegrationReader: s.IntegrationReader,
 			IntegrationWriter: s.IntegrationWriter,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
+			OperatorRepo:       s.OperatorRepo,
 
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,
 		},
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
-			Database:                   s.Database,
-			Vault:                      s.Vault,
-			CustomReader:               s.CustomReader,
-			OperatorReader:             s.OperatorReader,
-			IntegrationReader:          s.IntegrationReader,
+			Database: s.Database,
+			Vault:    s.Vault,
+
+			CustomReader:      s.CustomReader,
+			IntegrationReader: s.IntegrationReader,
+			OperatorReader:    s.OperatorReader,
+
 			IntegrationWriter:          s.IntegrationWriter,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
+
+			OperatorRepo: s.OperatorRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,
@@ -44,11 +48,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			OperatorReader:             s.OperatorReader,
 			IntegrationReader:          s.IntegrationReader,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
+			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
@@ -65,10 +69,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.ExportFunctionRoute: &handler.ExportFunctionHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
+			Database: s.Database,
 
-			DAGRepo: s.DAGRepo,
+			DAGRepo:      s.DAGRepo,
+			OperatorRepo: s.OperatorRepo,
 		},
 		routes.GetArtifactResultRoute: &handler.GetArtifactResultHandler{
 			Database: s.Database,
@@ -84,42 +88,41 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
+			Database: s.Database,
 
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.GetUserProfileRoute: &handler.GetUserProfileHandler{},
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
+			Database: s.Database,
 
+			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			OperatorReader: s.OperatorReader,
-
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
 		routes.GetWorkflowDagResultRoute: &handler.GetWorkflowDagResultHandler{
-			Database:       s.Database,
-			OperatorReader: s.OperatorReader,
+			Database: s.Database,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
@@ -147,17 +150,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationReader: s.IntegrationReader,
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
-			Database:       s.Database,
-			Vault:          s.Vault,
-			OperatorReader: s.OperatorReader,
-			CustomReader:   s.CustomReader,
-			OperatorWriter: s.OperatorWriter,
+			Database:     s.Database,
+			Vault:        s.Vault,
+			CustomReader: s.CustomReader,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 			DAGEdgeRepo:        s.DAGEdgeRepo,
 			DAGResultRepo:      s.DAGResultRepo,
+			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 			WorkflowRepo:       s.WorkflowRepo,
 		},
@@ -199,11 +201,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Engine:   s.AqEngine,
 			Vault:    s.Vault,
 
-			OperatorReader: s.OperatorReader,
-
 			ArtifactRepo: s.ArtifactRepo,
 			DAGRepo:      s.DAGRepo,
 			DAGEdgeRepo:  s.DAGEdgeRepo,
+			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
@@ -214,15 +215,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Engine:        s.AqEngine,
 
 			IntegrationReader:          s.IntegrationReader,
-			OperatorReader:             s.OperatorReader,
 			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
 
-			OperatorWriter:             s.OperatorWriter,
 			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
 
 			ArtifactRepo: s.ArtifactRepo,
 			DAGRepo:      s.DAGRepo,
 			DAGEdgeRepo:  s.DAGEdgeRepo,
+			OperatorRepo: s.OperatorRepo,
 			WatcherRepo:  s.WatcherRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
@@ -234,13 +234,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				Vault:         s.Vault,
 
 				IntegrationReader: s.IntegrationReader,
-				OperatorReader:    s.OperatorReader,
-
-				OperatorWriter: s.OperatorWriter,
 
 				ArtifactRepo: s.ArtifactRepo,
 				DAGRepo:      s.DAGRepo,
 				DAGEdgeRepo:  s.DAGEdgeRepo,
+				OperatorRepo: s.OperatorRepo,
 				WatcherRepo:  s.WatcherRepo,
 				WorkflowRepo: s.WorkflowRepo,
 			},

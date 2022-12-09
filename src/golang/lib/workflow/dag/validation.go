@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/dropbox/godropbox/errors"
@@ -84,11 +83,11 @@ func Validate(
 
 func ValidateDagOperatorIntegrationOwnership(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.DBOperator,
+	operators map[uuid.UUID]models.Operator,
 	organizationId string,
 	userId uuid.UUID,
 	integrationReader integration.Reader,
-	db database.Database,
+	DB database.Database,
 ) (bool, error) {
 	for _, operator := range operators {
 		var integrationId uuid.UUID
@@ -105,7 +104,7 @@ func ValidateDagOperatorIntegrationOwnership(
 			integrationId,
 			organizationId,
 			userId,
-			db,
+			DB,
 		)
 		if err != nil {
 			return false, err

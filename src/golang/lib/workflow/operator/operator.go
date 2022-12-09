@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -78,7 +79,7 @@ const (
 
 func NewOperator(
 	ctx context.Context,
-	dbOperator operator.DBOperator,
+	dbOperator models.Operator,
 	inputs []artifact.Artifact,
 	outputs []artifact.Artifact,
 	inputExecPaths []*utils.ExecPaths,

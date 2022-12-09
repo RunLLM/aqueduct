@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -24,8 +23,7 @@ func WriteDAGToDatabase(
 	dag *models.DAG,
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
-	operatorReader operator.Reader,
-	operatorWriter operator.Writer,
+	operatorRepo repos.Operator,
 	dagEdgeRepo repos.DAGEdge,
 	artifactRepo repos.Artifact,
 	DB database.Database,
@@ -95,7 +93,7 @@ func WriteDAGToDatabase(
 	}
 
 	for id, operator := range dag.Operators {
-		exists, err := operatorReader.Exists(ctx, id, DB)
+		exists, err := operatorRepo.Exists(ctx, id, DB)
 		if err != nil {
 			return uuid.Nil, errors.Wrap(err, "Unable to check if operator exists in database.")
 		}
@@ -107,7 +105,7 @@ func WriteDAGToDatabase(
 		}
 
 		if !exists {
-			dbOperator, err := operatorWriter.CreateOperator(
+			dbOperator, err := operatorRepo.Create(
 				ctx,
 				operator.Name,
 				operator.Description,
@@ -119,7 +117,7 @@ func WriteDAGToDatabase(
 				return uuid.Nil, errors.Wrap(err, "Unable to create operator in the database.")
 			}
 
-			dbOperatorId = dbOperator.Id
+			dbOperatorId = dbOperator.ID
 		}
 
 		for i, artifactId := range operator.Inputs {
@@ -163,7 +161,7 @@ func ReadDAGFromDatabase(
 	dagID uuid.UUID,
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
-	operatorReader operator.Reader,
+	operatorRepo repos.Operator,
 	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
@@ -180,11 +178,11 @@ func ReadDAGFromDatabase(
 
 	dag.Metadata = workflow
 
-	dag.Operators = make(map[uuid.UUID]operator.DBOperator)
+	dag.Operators = make(map[uuid.UUID]models.Operator)
 	dag.Artifacts = make(map[uuid.UUID]models.Artifact)
 
 	// Populate nodes for operators and artifacts.
-	operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.ID, DB)
+	operators, err := operatorRepo.GetByDAG(ctx, dag.ID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to read operators from the database.")
 	}
@@ -197,7 +195,7 @@ func ReadDAGFromDatabase(
 		if op.Outputs == nil {
 			op.Outputs = []uuid.UUID{}
 		}
-		dag.Operators[op.Id] = op
+		dag.Operators[op.ID] = op
 	}
 
 	artifacts, err := artifactRepo.GetByDAG(ctx, dag.ID, DB)
@@ -249,7 +247,7 @@ func ReadLatestDAGFromDatabase(
 	workflowID uuid.UUID,
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
-	operatorReader operator.Reader,
+	operatorRepo repos.Operator,
 	artifactRepo repos.Artifact,
 	dagEdgeRepo repos.DAGEdge,
 	DB database.Database,
@@ -264,7 +262,7 @@ func ReadLatestDAGFromDatabase(
 		dag.ID,
 		workflowRepo,
 		dagRepo,
-		operatorReader,
+		operatorRepo,
 		artifactRepo,
 		dagEdgeRepo,
 		DB,
@@ -283,13 +281,12 @@ func UpdateWorkflowDagToLatest(
 	dag *models.DAG,
 	workflowRepo repos.Workflow,
 	dagRepo repos.DAG,
-	operatorReader operator.Reader,
-	operatorWriter operator.Writer,
+	operatorRepo repos.Operator,
 	dagEdgeRepo repos.DAGEdge,
 	artifactRepo repos.Artifact,
 	DB database.Database,
 ) (*models.DAG, error) {
-	operatorsToReplace := make([]operator.DBOperator, 0, len(dag.Operators))
+	operatorsToReplace := make([]models.Operator, 0, len(dag.Operators))
 	for _, op := range dag.Operators {
 		opUpdated, err := github.PullOperator(
 			ctx,
@@ -313,9 +310,9 @@ func UpdateWorkflowDagToLatest(
 
 	// Update workflowDag object together with the data model.
 	for _, op := range operatorsToReplace {
-		delete(dag.Operators, op.Id)
-		op.Id = uuid.New()
-		dag.Operators[op.Id] = op
+		delete(dag.Operators, op.ID)
+		op.ID = uuid.New()
+		dag.Operators[op.ID] = op
 	}
 
 	workflowID, err := WriteDAGToDatabase(
@@ -323,8 +320,7 @@ func UpdateWorkflowDagToLatest(
 		dag,
 		workflowRepo,
 		dagRepo,
-		operatorReader,
-		operatorWriter,
+		operatorRepo,
 		dagEdgeRepo,
 		artifactRepo,
 		DB,
@@ -338,7 +334,7 @@ func UpdateWorkflowDagToLatest(
 		workflowID,
 		workflowRepo,
 		dagRepo,
-		operatorReader,
+		operatorRepo,
 		artifactRepo,
 		dagEdgeRepo,
 		DB,

@@ -93,7 +93,7 @@ func NewResultResponseFromDbObjects(
 	for _, opResult := range dbOperatorResults {
 		if op, ok := dag.Operators[opResult.OperatorID]; ok {
 			opResultResponse := operator.NewResultResponseFromDbObjects(&op, &opResult)
-			operatorsResponse[op.Id] = *opResultResponse
+			operatorsResponse[op.ID] = *opResultResponse
 		}
 	}
 
@@ -104,11 +104,11 @@ func NewResultResponseFromDbObjects(
 		}
 
 		for _, id := range op.Outputs {
-			artifactToUpstreamOpId[id] = op.Id
+			artifactToUpstreamOpId[id] = op.ID
 		}
 
 		for _, id := range op.Inputs {
-			artifactToDownstreamOpIds[id] = append(artifactToDownstreamOpIds[id], op.Id)
+			artifactToDownstreamOpIds[id] = append(artifactToDownstreamOpIds[id], op.ID)
 		}
 	}
 

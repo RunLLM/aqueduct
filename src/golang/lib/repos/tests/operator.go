@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -46,7 +46,7 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	dags := ts.seedDAG(1)
 	dag := dags[0]
 
-	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, shared.FunctionType)
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, operator.FunctionType)
 
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)

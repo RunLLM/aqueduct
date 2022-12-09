@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -303,7 +304,7 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	for i := 0; i < count; i++ {
-		spec := shared.NewSpecFromFunction(
+		spec := operator.NewSpecFromFunction(
 			function.Function{},
 		)
 
@@ -312,6 +313,7 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 			randString(10),
 			randString(15),
 			spec,
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -326,29 +328,29 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for each Operator to associate it with the specified DAG.
 // The DAGEdge type is randomly chosen and does not connect to an actual Artifact.
-func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType shared.OperatorType) []models.Operator {
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType operator.Type) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	// A fake Artifact is used for all of the DAGEdges
 	artifactID := uuid.New()
 
 	for i := 0; i < count; i++ {
-		var spec *shared.Spec
+		var spec *operator.Spec
 		switch opType {
-		case shared.FunctionType:
-			spec = shared.NewSpecFromFunction(
+		case operator.FunctionType:
+			spec = operator.NewSpecFromFunction(
 				function.Function{},
 			)
-		case shared.ExtractType:
-			spec = shared.NewSpecFromExtract(
+		case operator.ExtractType:
+			spec = operator.NewSpecFromExtract(
 				connector.Extract{
 					Service:       integration.Postgres,
 					IntegrationId: uuid.New(),
 					Parameters:    &connector.PostgresExtractParams{},
 				},
 			)
-		case shared.LoadType:
-			spec = shared.NewSpecFromLoad(
+		case operator.LoadType:
+			spec = operator.NewSpecFromLoad(
 				connector.Load{
 					Service:       integration.Postgres,
 					IntegrationId: uuid.New(),
@@ -369,6 +371,7 @@ func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType shar
 			randString(10),
 			randString(15),
 			spec,
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)

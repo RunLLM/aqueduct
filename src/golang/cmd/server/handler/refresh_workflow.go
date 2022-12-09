@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -46,11 +45,10 @@ type RefreshWorkflowHandler struct {
 	Engine   engine.Engine
 	Vault    vault.Vault
 
-	OperatorReader operator.Reader
-
 	ArtifactRepo repos.Artifact
 	DAGRepo      repos.DAG
 	DAGEdgeRepo  repos.DAGEdge
+	OperatorRepo repos.Operator
 	WorkflowRepo repos.Workflow
 }
 
@@ -108,7 +106,7 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 		args.WorkflowId,
 		h.WorkflowRepo,
 		h.DAGRepo,
-		h.OperatorReader,
+		h.OperatorRepo,
 		h.ArtifactRepo,
 		h.DAGEdgeRepo,
 		h.Database,

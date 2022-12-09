@@ -67,7 +67,7 @@ type workflowDagImpl struct {
 // by the artifact's original ID.
 // `opIDsByInputArtifact` does not contain entries for terminal artifacts.
 func computeArtifactSignatures(
-	dbOperators map[uuid.UUID]db_operator.DBOperator,
+	dbOperators map[uuid.UUID]models.Operator,
 	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
 	numArtifacts int,
 ) (map[uuid.UUID]uuid.UUID, error) {
@@ -77,7 +77,7 @@ func computeArtifactSignatures(
 	q := make([]uuid.UUID, 0, 1)
 	for _, dbOperator := range dbOperators {
 		if len(dbOperator.Inputs) == 0 {
-			q = append(q, dbOperator.Id)
+			q = append(q, dbOperator.ID)
 		}
 	}
 
@@ -168,16 +168,16 @@ func NewWorkflowDag(
 	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbOperator := range dbOperators {
 		for _, outputArtifactID := range dbOperator.Outputs {
-			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
+			artifactIDToInputOpID[outputArtifactID] = dbOperator.ID
 		}
-		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+		opIDToMetadataPath[dbOperator.ID] = utils.InitializePath(opExecMode == operator.Preview)
 
 		for _, inputArtifactID := range dbOperator.Inputs {
 			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
 			if !ok {
 				opIDs = make([]uuid.UUID, 0, 1)
 			}
-			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
+			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.ID)
 		}
 	}
 

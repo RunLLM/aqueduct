@@ -6,7 +6,6 @@ import (
 
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -50,7 +49,7 @@ func createOperatorResult(
 	ctx context.Context,
 	dagRunId string,
 	dag *models.DAG,
-	dbOp *operator.DBOperator,
+	dbOp *models.Operator,
 	execStatus shared.ExecutionStatus,
 	dagResultID uuid.UUID,
 	operatorResultRepo repos.OperatorResult,
@@ -58,9 +57,9 @@ func createOperatorResult(
 	DB database.Database,
 ) error {
 	// Read Operator metadata to determine ExecutionState
-	metadataPathPrefix, ok := dag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[dbOp.Id]
+	metadataPathPrefix, ok := dag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[dbOp.ID]
 	if !ok {
-		return errors.Newf("Unable to find metadata path for operator %v", dbOp.Id)
+		return errors.Newf("Unable to find metadata path for operator %v", dbOp.ID)
 	}
 	metadataPath := getOperatorMetadataPath(metadataPathPrefix, dagRunId)
 
@@ -71,7 +70,7 @@ func createOperatorResult(
 	_, err := operatorResultRepo.Create(
 		ctx,
 		dagResultID,
-		dbOp.Id,
+		dbOp.ID,
 		execState,
 		DB,
 	)

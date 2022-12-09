@@ -7,14 +7,13 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -48,15 +47,14 @@ type RegisterWorkflowHandler struct {
 	Engine        engine.Engine
 
 	IntegrationReader          integration.Reader
-	OperatorReader             operator.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
-	OperatorWriter             operator.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
 
 	ArtifactRepo repos.Artifact
 	DAGRepo      repos.DAG
 	DAGEdgeRepo  repos.DAGEdge
+	OperatorRepo repos.Operator
 	WatcherRepo  repos.Watcher
 	WorkflowRepo repos.Workflow
 }
@@ -180,7 +178,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		if env, ok := execEnvByOpId[opId]; ok {
 			// Note: this is the canotical way to assign a struct field of a map
 			// https://stackoverflow.com/questions/42605337/cannot-assign-to-struct-field-in-a-map
-			op.ExecutionEnvironmentID = db_type.NullUUID{UUID: env.Id, IsNull: false}
+			op.ExecutionEnvironmentID = mdl_utils.NullUUID{UUID: env.Id, IsNull: false}
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
@@ -196,8 +194,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		dbWorkflowDag,
 		h.WorkflowRepo,
 		h.DAGRepo,
-		h.OperatorReader,
-		h.OperatorWriter,
+		h.OperatorRepo,
 		h.DAGEdgeRepo,
 		h.ArtifactRepo,
 		txn,
