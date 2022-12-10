@@ -20,7 +20,7 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "20"
+SCHEMA_VERSION = "21"
 CHUNK_SIZE = 4096
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
@@ -100,6 +100,41 @@ def update_executable_permissions():
     os.chmod(os.path.join(server_directory, "bin", "server"), 0o755)
     os.chmod(os.path.join(server_directory, "bin", "executor"), 0o755)
     os.chmod(os.path.join(server_directory, "bin", "migrator"), 0o755)
+
+# Retrive all conda environments. This does not need to be 100% accurate
+# as we only care about aqueduct-internal ones.
+#
+# It runs `conda env list` under the hood, and we ignore any error
+# when running the command.
+def get_conda_environments():
+    cmd_result = subprocess.run(['conda', 'env', 'list'], stdout=subprocess.PIPE)
+    if cmd_result.returncode == 0:
+        results = set()
+        for line in cmd_result.stdout.decode().split("\n"):
+            # skip helper message lines like `# conda environments:`
+            if not line.startswith('#'):
+                results.add(line.split(' ')[0])
+        return results
+    # we ignore none-zero exit code and assuming it's due to the command not available.
+    return set()
+
+
+def update_base_conda_environments():
+    conda_envs = get_conda_environments()
+    for py_version in ["3.7", "3.8", "3.9", "3.10"]:
+        env_name = f"aqueduct_python{py_version}"
+        if env_name in conda_envs:
+            print(f"Updating conda environment {env_name}")
+            execute_command([
+                "conda",
+                "run",
+                "-n",
+                env_name,
+                "pip3",
+                "install",
+                "-q", # hide most pip outputs, which is noisy
+                f"aqueduct-ml=={package_version}",
+            ])
 
 
 def _download_file(s3_url, f, prefix=None):
@@ -282,6 +317,7 @@ def update():
     if require_update(server_version_file):
         try:
             update_server_version()
+            update_base_conda_environments()
         except Exception as e:
             print(e)
             if os.path.isfile(server_version_file):

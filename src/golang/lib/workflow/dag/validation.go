@@ -3,10 +3,9 @@ package dag
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -28,7 +27,7 @@ var (
 )
 
 func Validate(
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 ) error {
 	if len(dag.Operators) == 0 {
 		return ErrNoOperator
@@ -84,28 +83,28 @@ func Validate(
 
 func ValidateDagOperatorIntegrationOwnership(
 	ctx context.Context,
-	operators map[uuid.UUID]operator.DBOperator,
-	organizationId string,
-	userId uuid.UUID,
-	integrationReader integration.Reader,
-	db database.Database,
+	operators map[uuid.UUID]models.Operator,
+	orgID string,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) (bool, error) {
 	for _, operator := range operators {
-		var integrationId uuid.UUID
+		var integrationID uuid.UUID
 		if operator.Spec.IsExtract() {
-			integrationId = operator.Spec.Extract().IntegrationId
+			integrationID = operator.Spec.Extract().IntegrationId
 		} else if operator.Spec.IsLoad() {
-			integrationId = operator.Spec.Load().IntegrationId
+			integrationID = operator.Spec.Load().IntegrationId
 		} else {
 			continue
 		}
 
-		ok, err := integrationReader.ValidateIntegrationOwnership(
+		ok, err := integrationRepo.ValidateOwnership(
 			ctx,
-			integrationId,
-			organizationId,
-			userId,
-			db,
+			integrationID,
+			orgID,
+			userID,
+			DB,
 		)
 		if err != nil {
 			return false, err
@@ -118,7 +117,7 @@ func ValidateDagOperatorIntegrationOwnership(
 	return true, nil
 }
 
-func checkUnexecutableOperator(dag *workflow_dag.DBWorkflowDag) error {
+func checkUnexecutableOperator(dag *models.DAG) error {
 	numOperators := len(dag.Operators)
 	operatorsExecuted := make(map[uuid.UUID]bool, numOperators)
 	for operatorId := range dag.Operators {

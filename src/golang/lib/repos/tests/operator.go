@@ -2,8 +2,9 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/google/uuid"
@@ -52,7 +53,7 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.FunctionType)
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.FunctionType)
 
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
@@ -65,7 +66,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
 
 	expectedLoadOperators := make([]views.LoadOperator, 0, len(expectedOperators))
 	for _, expectedLoadOperator := range expectedOperators {
@@ -99,7 +100,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
 
 	load := operators[0].Spec.Load()
 	loadParams := load.Parameters
@@ -120,7 +121,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
 
 	load := operators[0].Spec.Load()
 	loadParams := load.Parameters
@@ -141,7 +142,7 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
 	operator := operators[0]
 
 	valid, validErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, testOrgID, ts.DB)
@@ -157,15 +158,18 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 func (ts *TestSuite) TestOperator_Create() {
 	name := randString(10)
 	description := randString(10)
-	spec := shared.NewSpecFromFunction(
+	spec := operator.NewSpecFromFunction(
 		function.Function{},
 	)
 	expectedOperator := &models.Operator{
 		Name: name,
 		Description: description,
 		Spec: *spec,
+		ExecutionEnvironmentID: utils.NullUUID{
+			IsNull: true,
+		},
 	}
-	actualOperator, err := ts.operator.Create(ts.ctx, name, description, spec, ts.DB)
+	actualOperator, err := ts.operator.Create(ts.ctx, name, description, spec, nil, ts.DB)
 	expectedOperator.ID = actualOperator.ID
 	require.Nil(ts.T(), err)
 	requireDeepEqual(ts.T(), expectedOperator, actualOperator)
@@ -177,7 +181,7 @@ func (ts *TestSuite) TestOperator_Delete() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
 	operator := operators[0]
 
 	err := ts.operator.Delete(ts.ctx, operator.ID, ts.DB)
@@ -190,7 +194,7 @@ func (ts *TestSuite) TestOperator_DeleteBatch() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
 	IDs := make([]uuid.UUID, 0, len(operators))
 	for _, operator := range operators {
 		IDs = append(IDs, operator.ID)
@@ -206,9 +210,9 @@ func (ts *TestSuite) TestOperator_Update() {
 	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, shared.LoadType)
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
 	name := randString(10)
-	spec := shared.NewSpecFromFunction(
+	spec := operator.NewSpecFromFunction(
 		function.Function{},
 	)
 	changes := map[string]interface{}{

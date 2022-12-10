@@ -11,12 +11,12 @@ import (
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -65,12 +65,14 @@ type artifactTypeMetadata struct {
 type PreviewHandler struct {
 	PostHandler
 
-	Database                   database.Database
-	IntegrationReader          integration.Reader
+	Database      database.Database
+	GithubManager github.Manager
+	AqEngine      engine.AqEngine
+
 	ExecutionEnvironmentReader db_exec_env.Reader
 	ExecutionEnvironmentWriter db_exec_env.Writer
-	GithubManager              github.Manager
-	AqEngine                   engine.AqEngine
+
+	IntegrationRepo repos.Integration
 }
 
 func (*PreviewHandler) Name() string {
@@ -135,7 +137,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		aqContext.Id,
+		aqContext.ID,
 		h.GithubManager,
 		aqContext.StorageConfig,
 	)
@@ -146,9 +148,9 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		aqContext.OrganizationId,
-		aqContext.Id,
-		h.IntegrationReader,
+		aqContext.OrgID,
+		aqContext.ID,
+		h.IntegrationRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -188,9 +190,9 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 	execEnvByOpId, status, err := setupExecEnv(
 		ctx,
-		args.Id,
+		args.ID,
 		args.DagSummary,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.ExecutionEnvironmentReader,
 		h.ExecutionEnvironmentWriter,
 		h.Database,
@@ -242,14 +244,14 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 func setupExecEnv(
 	ctx context.Context,
-	userId uuid.UUID,
+	userID uuid.UUID,
 	dagSummary *request.DagSummary,
-	integrationReader integration.Reader,
+	integrationRepo repos.Integration,
 	execEnvReader db_exec_env.Reader,
 	execEnvWriter db_exec_env.Writer,
-	db database.Database,
+	DB database.Database,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
-	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userId, integrationReader, db)
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
 	}
@@ -299,7 +301,7 @@ func setupExecEnv(
 		rawEnvByOperator[opId] = *rawEnv
 	}
 
-	txn, err := db.BeginTx(ctx)
+	txn, err := DB.BeginTx(ctx)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}

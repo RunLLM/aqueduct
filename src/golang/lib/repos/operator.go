@@ -3,9 +3,9 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -35,6 +35,14 @@ type operatorReader interface {
 	// the Artifact is being saved to, and the update mode used to save the Artifact.
 	GetDistinctLoadOPsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
 
+	// GetExtractAndLoadOPsByIntegration returns all Extract and Load Operators
+	// using the Integration specified.
+	GetExtractAndLoadOPsByIntegration(
+		ctx context.Context,
+		integrationID uuid.UUID,
+		DB database.Database,
+	) ([]models.Operator, error)
+
 	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Integration.
 	GetLoadOPsByWorkflowAndIntegration(
 		ctx context.Context,
@@ -52,8 +60,18 @@ type operatorReader interface {
 		DB database.Database,
 	) ([]models.Operator, error)
 
+	// GetLoadOPSpecsByOrg returns a LoadOperatorSpec for each Load Operator in any of the specified
+	// organization's Workflows.
+	GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error)
+
+	// GetRelationBatch returns an OperatorRelation for each Operator in IDs.
+	GetRelationBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorRelation, error)
+
+	// GetWithExecEnv returns all Operators that have a non-NULL ExecutionEnvironmentID.
+	GetWithExecEnv(ctx context.Context, DB database.Database) ([]models.Operator, error)
+
 	// ValidateOrg returns whether the Operator was created by the specified organization.
-	ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
 
 type operatorWriter interface {
@@ -62,7 +80,8 @@ type operatorWriter interface {
 		ctx context.Context,
 		name string,
 		description string,
-		spec *shared.Spec,
+		spec *operator.Spec,
+		executionEnvironmentID *uuid.UUID,
 		DB database.Database,
 	) (*models.Operator, error)
 

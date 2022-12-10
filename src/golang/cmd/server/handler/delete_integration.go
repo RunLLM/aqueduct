@@ -7,10 +7,11 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -28,7 +29,7 @@ import (
 // The `DeleteIntegrationHandler` does a best effort at deleting an integration.
 type deleteIntegrationArgs struct {
 	*aq_context.AqContext
-	integrationId uuid.UUID
+	integrationID uuid.UUID
 }
 
 type deleteIntegrationResponse struct{}
@@ -36,13 +37,15 @@ type deleteIntegrationResponse struct{}
 type DeleteIntegrationHandler struct {
 	PostHandler
 
-	Database                   database.Database
-	Vault                      vault.Vault
-	OperatorReader             operator.Reader
-	IntegrationReader          integration.Reader
-	IntegrationWriter          integration.Writer
+	Database database.Database
+	Vault    vault.Vault
+
 	ExecutionEnvironmentReader db_exec_env.Reader
 	ExecutionEnvironmentWriter db_exec_env.Writer
+
+	DAGRepo         repos.DAG
+	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -55,17 +58,17 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, statuscode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
+	ok, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
-		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		integrationID,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -76,18 +79,9 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
 	}
 
-	// Fetch all operators on this integration.
-	operators, err := h.OperatorReader.GetOperatorsByIntegrationId(r.Context(), integrationId, h.Database)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
-	}
-	if len(operators) > 0 {
-		return nil, http.StatusBadRequest, errors.New("Unable to delete because the integration is in use.")
-	}
-
 	return &deleteIntegrationArgs{
 		AqContext:     aqContext,
-		integrationId: integrationId,
+		integrationID: integrationID,
 	}, http.StatusOK, nil
 }
 
@@ -95,7 +89,19 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, args.integrationId, h.Database)
+	code, err := validateNoActiveWorkflowOnIntegration(
+		ctx,
+		args.integrationID,
+		h.OperatorRepo,
+		h.DAGRepo,
+		h.IntegrationRepo,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, code, err
+	}
+
+	integrationObject, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "failed to retrieve the given integration.")
 	}
@@ -106,7 +112,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	err = h.IntegrationWriter.DeleteIntegration(ctx, args.integrationId, txn)
+	err = h.IntegrationRepo.Delete(ctx, args.integrationID, txn)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
@@ -129,13 +135,51 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	return emptyResp, http.StatusOK, nil
 }
 
+// validateNoActiveWorkflowOnIntegration
+// verifies there's no active workflow using the integration given the integration ID.
+// It errors if there's any error occurred and passes if there's indeed no active workflow
+// using that integration.
+func validateNoActiveWorkflowOnIntegration(
+	ctx context.Context,
+	id uuid.UUID,
+	operatorRepo repos.Operator,
+	dagRepo repos.DAG,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) (int, error) {
+	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
+		Database: DB,
+
+		DAGRepo:         dagRepo,
+		IntegrationRepo: integrationRepo,
+		OperatorRepo:    operatorRepo,
+	}).Perform(ctx, id)
+	if err != nil {
+		return code, errors.Wrap(err, "Error getting operators on this integration.")
+	}
+
+	operatorsOnIntegrationResp, ok := interfaceResp.(listOperatorsForIntegrationResponse)
+	if !ok {
+		return http.StatusInternalServerError, errors.New("Error getting operators on this integration.")
+	}
+
+	operatorsOnIntegration := operatorsOnIntegrationResp.OperatorWithIds
+	for _, opState := range operatorsOnIntegration {
+		if opState.IsActive {
+			return http.StatusBadRequest, errors.New("We cannot delete this integration. There are still active workflows using it.")
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
 // cleanUpIntegration deletes any side effects of an integration
 // in Aqueduct system, other than DB records.
 // For example, credentials stored in vault or base conda environments
 // created.
 func cleanUpIntegration(
 	ctx context.Context,
-	integrationObject *integration.Integration,
+	integrationObject *models.Integration,
 	execEnvReader db_exec_env.Reader,
 	execEnvWriter db_exec_env.Writer,
 	vaultObject vault.Vault,
@@ -153,5 +197,5 @@ func cleanUpIntegration(
 		return exec_env.DeleteBaseEnvs()
 	}
 
-	return vaultObject.Delete(ctx, integrationObject.Id.String())
+	return vaultObject.Delete(ctx, integrationObject.ID.String())
 }

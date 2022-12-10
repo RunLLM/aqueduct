@@ -49,7 +49,7 @@ func (r *noopReaderImpl) GetExecutionEnvironments(
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
-func (r *noopReaderImpl) GetExecutionEnvironmentByHash(
+func (r *noopReaderImpl) GetActiveExecutionEnvironmentByHash(
 	ctx context.Context,
 	hash uuid.UUID,
 	db database.Database,
@@ -57,7 +57,7 @@ func (r *noopReaderImpl) GetExecutionEnvironmentByHash(
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
-func (r *noopReaderImpl) GetExecutionEnvironmentsMapByOperatorID(
+func (r *noopReaderImpl) GetActiveExecutionEnvironmentsByOperatorID(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	db database.Database,

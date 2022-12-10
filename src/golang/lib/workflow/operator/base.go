@@ -8,11 +8,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -23,11 +24,11 @@ import (
 )
 
 type baseOperator struct {
-	dbOperator *operator.DBOperator
+	dbOperator *models.Operator
 
 	// These fields are set to nil in the preview case.
-	resultWriter operator_result.Writer
-	resultID     uuid.UUID
+	resultRepo repos.OperatorResult
+	resultID   uuid.UUID
 
 	metadataPath string
 	jobName      string
@@ -64,7 +65,7 @@ func (bo *baseOperator) Name() string {
 }
 
 func (bo *baseOperator) ID() uuid.UUID {
-	return bo.dbOperator.Id
+	return bo.dbOperator.ID
 }
 
 // A catch-all for execution states that are the system's fault.
@@ -179,16 +180,16 @@ func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
 func updateOperatorResultAfterComputation(
 	ctx context.Context,
 	execState *shared.ExecutionState,
-	opResultWriter operator_result.Writer,
+	opResultRepo repos.OperatorResult,
 	opResultID uuid.UUID,
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		operator_result.StatusColumn:    execState.Status,
-		operator_result.ExecStateColumn: execState,
+		models.OperatorResultStatus:    execState.Status,
+		models.OperatorResultExecState: execState,
 	}
 
-	_, err := opResultWriter.UpdateOperatorResult(
+	_, err := opResultRepo.Update(
 		ctx,
 		opResultID,
 		changes,
@@ -204,11 +205,11 @@ func updateOperatorResultAfterComputation(
 }
 
 func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
-	if bo.resultWriter == nil {
+	if bo.resultRepo == nil {
 		return errors.New("Operator's result writer cannot be nil.")
 	}
 
-	operatorResult, err := bo.resultWriter.CreateOperatorResult(
+	operatorResult, err := bo.resultRepo.Create(
 		ctx,
 		dagResultID,
 		bo.ID(),
@@ -304,7 +305,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	updateOperatorResultAfterComputation(
 		ctx,
 		execState,
-		bo.resultWriter,
+		bo.resultRepo,
 		bo.resultID,
 		bo.db,
 	)

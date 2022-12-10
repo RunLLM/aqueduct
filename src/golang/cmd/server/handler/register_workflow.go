@@ -5,21 +5,15 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	db_type "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -51,19 +45,17 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	ArtifactReader             artifact.Reader
-	IntegrationReader          integration.Reader
-	OperatorReader             operator.Reader
-	WorkflowReader             workflow.Reader
 	ExecutionEnvironmentReader db_exec_env.Reader
 
-	ArtifactWriter             artifact.Writer
-	OperatorWriter             operator.Writer
-	WorkflowWriter             workflow.Writer
-	WorkflowDagWriter          workflow_dag.Writer
-	WorkflowDagEdgeWriter      workflow_dag_edge.Writer
-	WorkflowWatcherWriter      workflow_watcher.Writer
 	ExecutionEnvironmentWriter db_exec_env.Writer
+
+	ArtifactRepo    repos.Artifact
+	DAGRepo         repos.DAG
+	DAGEdgeRepo     repos.DAGEdge
+	IntegrationRepo repos.Integration
+	OperatorRepo    repos.Operator
+	WatcherRepo     repos.Watcher
+	WorkflowRepo    repos.Workflow
 }
 
 type registerWorkflowArgs struct {
@@ -91,7 +83,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
 		r,
-		aqContext.Id,
+		aqContext.ID,
 		h.GithubManager,
 		aqContext.StorageConfig,
 	)
@@ -102,9 +94,9 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
-		aqContext.OrganizationId,
-		aqContext.Id,
-		h.IntegrationReader,
+		aqContext.OrgID,
+		aqContext.ID,
+		h.IntegrationRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -114,21 +106,26 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the integrations defined in the Dag.")
 	}
 
+	isUpdate := true
 	// If a workflow with the same name already exists for the user, we will treat this as an
 	// update to the workflow instead of creation.
-	collidingWorkflow, err := h.WorkflowReader.GetWorkflowByName(
+	collidingWorkflow, err := h.WorkflowRepo.GetByOwnerAndName(
 		r.Context(),
-		dagSummary.Dag.Metadata.UserId,
+		dagSummary.Dag.Metadata.UserID,
 		dagSummary.Dag.Metadata.Name,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		if err != database.ErrNoRows {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
+		}
+		// A colliding workflow does not exist, so this is not an update
+		isUpdate = false
 	}
-	isUpdate := collidingWorkflow != nil
+
 	if isUpdate {
 		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
-		dagSummary.Dag.WorkflowId = collidingWorkflow.Id
+		dagSummary.Dag.WorkflowID = collidingWorkflow.ID
 	}
 
 	if err := dag_utils.Validate(
@@ -165,9 +162,9 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	execEnvByOpId, status, err := setupExecEnv(
 		ctx,
-		args.Id,
+		args.ID,
 		args.dagSummary,
-		h.IntegrationReader,
+		h.IntegrationRepo,
 		h.ExecutionEnvironmentReader,
 		h.ExecutionEnvironmentWriter,
 		h.Database,
@@ -180,7 +177,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		if env, ok := execEnvByOpId[opId]; ok {
 			// Note: this is the canotical way to assign a struct field of a map
 			// https://stackoverflow.com/questions/42605337/cannot-assign-to-struct-field-in-a-map
-			op.ExecutionEnvironmentID = db_type.NullUUID{UUID: env.Id, IsNull: false}
+			op.ExecutionEnvironmentID = mdl_utils.NullUUID{UUID: env.Id, IsNull: false}
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
@@ -191,24 +188,21 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	workflowId, err := utils.WriteWorkflowDagToDatabase(
+	workflowId, err := utils.WriteDAGToDatabase(
 		ctx,
 		dbWorkflowDag,
-		h.WorkflowReader,
-		h.WorkflowWriter,
-		h.WorkflowDagWriter,
-		h.OperatorReader,
-		h.OperatorWriter,
-		h.WorkflowDagEdgeWriter,
-		h.ArtifactReader,
-		h.ArtifactWriter,
+		h.WorkflowRepo,
+		h.DAGRepo,
+		h.OperatorRepo,
+		h.DAGEdgeRepo,
+		h.ArtifactRepo,
 		txn,
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	args.dagSummary.Dag.Metadata.Id = workflowId
+	args.dagSummary.Dag.Metadata.ID = workflowId
 
 	if args.isUpdate {
 		// If we're updating an existing workflow, first update the metadata.
@@ -232,7 +226,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			err = h.Engine.ScheduleWorkflow(
 				ctx,
 				workflowId,
-				shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
+				shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
 				string(dbWorkflowDag.Metadata.Schedule.CronSchedule),
 			)
 
@@ -255,7 +249,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	_, err = h.Engine.TriggerWorkflow(
 		ctx,
 		workflowId,
-		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.Id.String()),
+		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
 		timeConfig,
 		nil, /* parameters */
 	)
@@ -272,16 +266,17 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 
 		_, _, err = (&WatchWorkflowHandler{
-			Database:              h.Database,
-			WorkflowReader:        h.WorkflowReader,
-			WorkflowWatcherWriter: h.WorkflowWatcherWriter,
+			Database: h.Database,
+
+			WatcherRepo:  h.WatcherRepo,
+			WorkflowRepo: h.WorkflowRepo,
 		}).Perform(ctx, watchWorkflowArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to add user who created the workflow to watch.")
 		}
 	}
 
-	// Check unused Conda environments and garbage collect them.
+	// Check unused conda environments and garbage collect them.
 	go func() {
 		db, err := database.NewDatabase(h.Database.Config())
 		if err != nil {

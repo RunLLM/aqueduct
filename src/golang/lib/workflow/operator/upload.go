@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 // It updates the relevant operator spec with the storage path. It returns an error, if any.
 func UploadOperatorFiles(
 	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	operatorIdToFileContents map[uuid.UUID][]byte,
 ) ([]string, error) {
 	paths := make([]string, 0, len(operatorIdToFileContents))

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -127,6 +128,24 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	return operators, err
 }
 
+func (*operatorReader) GetExtractAndLoadOPsByIntegration(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	DB database.Database,
+) ([]models.Operator, error) {
+	query := fmt.Sprintf(
+		`SELECT %s 
+		FROM operator
+		WHERE 
+			json_extract(spec, '$.load.integration_id') = $1
+			OR json_extract(spec, '$.extract.integration_id') = $2`,
+		models.OperatorCols(),
+	)
+	args := []interface{}{integrationID, integrationID}
+
+	return getOperators(ctx, DB, query, args...)
+}
+
 func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -142,8 +161,8 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	FROM operator
 	WHERE
 		json_extract(spec, '$.type') = '%s' AND 
-		json_extract(spec, '$.load.parameters.table')=$1 AND
-		json_extract(spec, '$.load.integration_id')=$2 AND
+		json_extract(spec, '$.load.parameters.table') = $1 AND
+		json_extract(spec, '$.load.integration_id') = $2 AND
 		EXISTS 
 		(
 			SELECT 1 
@@ -183,15 +202,107 @@ func (*operatorReader) GetLoadOPsByIntegration(
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) ValidateOrg(ctx context.Context, operatorId uuid.UUID, orgID string, DB database.Database) (bool, error) {
-	return utils.ValidateNodeOwnership(ctx, orgID, operatorId, DB)
+func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error) {
+	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
+	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
+	// that operator (`from_id`s; these artifacts are the objects that will be saved
+	// by the operator to the integration) in the workflows owned by the specified
+	// organization.
+	query := fmt.Sprintf(
+		`SELECT DISTINCT 
+			workflow_dag_edge.from_id AS artifact_id, 
+			artifact.name AS artifact_name, 
+		 	operator.id AS load_operator_id, 
+			workflow.name AS workflow_name, 
+			workflow.id AS workflow_id, operator.spec 
+		 FROM 
+		 	app_user, workflow, workflow_dag, 
+			workflow_dag_edge, operator, artifact
+		 WHERE 
+		 	app_user.id = workflow.user_id 
+			AND workflow.id = workflow_dag.workflow_id 
+			AND workflow_dag.id = workflow_dag_edge.workflow_dag_id 
+			AND workflow_dag_edge.to_id = operator.id 
+			AND artifact.id = workflow_dag_edge.from_id 
+			AND json_extract(operator.spec, '$.type') = '%s' 
+			AND app_user.organization_id = $1;`,
+		operator.LoadType,
+	)
+	args := []interface{}{orgID}
+
+	var specs []views.LoadOperatorSpec
+	err := DB.Query(ctx, &specs, query, args...)
+	return specs, err
+}
+
+func (*operatorReader) GetRelationBatch(
+	ctx context.Context,
+	IDs []uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorRelation, error) {
+	// Given a list of `operatorIds`, find all workflow DAGs that has the id in the
+	// `from_id` or `to_id` field.
+	query := fmt.Sprintf(
+		`
+		SELECT
+			workflow.id as workflow_id,
+			workflow_dag.id as workflow_dag_id,
+			workflow_dag_edge.from_id as operator_id
+		FROM
+			workflow,
+			workflow_dag,
+			workflow_dag_edge 
+		WHERE 
+			workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.from_id IN (%s)
+		UNION
+		SELECT
+			workflow.id as workflow_id,
+			workflow_dag.id as workflow_dag_id,
+			workflow_dag_edge.to_id as operator_id
+		FROM
+			workflow,
+			workflow_dag,
+			workflow_dag_edge 
+		WHERE 
+			workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow.id = workflow_dag.workflow_id
+			AND workflow_dag_edge.type = '%s'
+			AND workflow_dag_edge.to_id IN (%s)
+		`,
+		shared.OperatorToArtifactDAGEdge,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+		shared.ArtifactToOperatorDAGEdge,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+
+	var relations []views.OperatorRelation
+	err := DB.Query(ctx, &relations, query, args...)
+	return relations, err
+}
+
+func (*operatorReader) GetWithExecEnv(ctx context.Context, DB database.Database) ([]models.Operator, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL;",
+		models.OperatorCols(),
+	)
+
+	return getOperators(ctx, DB, query)
+}
+
+func (*operatorReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
+	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
 }
 
 func (*operatorWriter) Create(
 	ctx context.Context,
 	name string,
 	description string,
-	spec *shared.Spec,
+	spec *operator.Spec,
+	executionEnvironmentID *uuid.UUID,
 	DB database.Database,
 ) (*models.Operator, error) {
 	cols := []string{
@@ -199,6 +310,7 @@ func (*operatorWriter) Create(
 		models.OperatorName,
 		models.OperatorDescription,
 		models.OperatorSpec,
+		models.OperatorExecutionEnvironmentID,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.OperatorTable, cols, models.OperatorCols())
 
@@ -212,6 +324,7 @@ func (*operatorWriter) Create(
 		name,
 		description,
 		spec,
+		executionEnvironmentID,
 	}
 
 	return getOperator(ctx, DB, query, args...)

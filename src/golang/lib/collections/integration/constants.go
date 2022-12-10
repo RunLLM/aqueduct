@@ -1,41 +1,8 @@
 package integration
 
 import (
-	"strings"
-
 	"github.com/dropbox/godropbox/errors"
 )
-
-const (
-	tableName = "integration"
-
-	// Integration table column names
-	IdColumn             = "id"
-	OrganizationIdColumn = "organization_id"
-	UserIdColumn         = "user_id"
-	ServiceColumn        = "service"
-	NameColumn           = "name"
-	ConfigColumn         = "config"
-	CreatedAtColumn      = "created_at"
-	ValidatedColumn      = "validated"
-)
-
-// Returns a joined string of all Integration columns.
-func allColumns() string {
-	return strings.Join(
-		[]string{
-			IdColumn,
-			OrganizationIdColumn,
-			UserIdColumn,
-			ServiceColumn,
-			NameColumn,
-			ConfigColumn,
-			CreatedAtColumn,
-			ValidatedColumn,
-		},
-		",",
-	)
-}
 
 // Service specifies the name of the integration.
 type Service string

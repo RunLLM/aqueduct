@@ -3,9 +3,10 @@ package repos
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -22,11 +23,30 @@ type operatorResultReader interface {
 	// GetBatch returns the OperatorResults with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 
-	// GetByDAGResultAndOperator returns the OperatorResult given the operatorID and dagResultIDs.
-	GetByDAGResultAndOperator(ctx context.Context, dagResultIDs, operatorID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
+	// GetByDAGResultAndOperator returns the OperatorResult for the DAGResult and Operator specified.
+	GetByDAGResultAndOperator(ctx context.Context, dagResultID, operatorID uuid.UUID, DB database.Database) (*models.OperatorResult, error)
 
-	// GetByDAGResults returns the OperatorResult given dagResultIDs.
-	GetByDAGResults(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
+	// GetByDAGResultBatch returns all OperatorResults for the DAGResults specified.
+	GetByDAGResultBatch(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
+
+	// GetCheckStatusByArtifactBatch returns an OperatorResultStatus for all OperatorResults
+	// associated with a Check Operator where the Operator has incoming DAGEdge
+	// from an Artifact in artifactIDs.
+	GetCheckStatusByArtifactBatch(
+		ctx context.Context,
+		artifactIDs []uuid.UUID,
+		DB database.Database,
+	) ([]views.OperatorResultStatus, error)
+
+	// GetStatusByDAGResultAndArtifactBatch returns an OperatorResultStatus for each
+	// OperatorResult belonging to a DAGResult in dagResultIDs where the OperatorResult
+	// corresponds to an Operator that has an outgoing DAGEdge to an Artifact in artifactIDs.
+	GetStatusByDAGResultAndArtifactBatch(
+		ctx context.Context,
+		dagResultIDs []uuid.UUID,
+		artifactIDs []uuid.UUID,
+		DB database.Database,
+	) ([]views.OperatorResultStatus, error)
 }
 
 type operatorResultWriter interface {

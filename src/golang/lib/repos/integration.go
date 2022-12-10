@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
@@ -26,11 +26,11 @@ type integrationReader interface {
 	// GetByConfigField returns the Integrations with config fieldName=fieldValue.
 	GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Integration, error)
 
-	// GetByNameAndUser returns the Integrations with name integrationName by the user with the ID userID in the organization with the ID orgID.
-	GetByNameAndUser(ctx context.Context, integrationName string, userID uuid.UUID, orgID string, DB database.Database) ([]models.Integration, error)
+	// GetByNameAndUser returns the Integration named integrationName created by the user with the ID userID in the organization with the ID orgID.
+	GetByNameAndUser(ctx context.Context, integrationName string, userID uuid.UUID, orgID string, DB database.Database) (*models.Integration, error)
 
 	// GetByOrg returns the Integrations by the organization with the ID orgID.
-	GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Integration, error)
+	GetByOrg(ctx context.Context, orgID string, DB database.Database) ([]models.Integration, error)
 
 	// GetByServiceAndUser returns the Integrations with the specified service created by the user with the ID userID.
 	GetByServiceAndUser(ctx context.Context, service integration.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
@@ -49,7 +49,7 @@ type integrationWriter interface {
 		orgID string,
 		service integration.Service,
 		name string,
-		config *shared.IntegrationConfig,
+		config *utils.Config,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)
@@ -61,7 +61,7 @@ type integrationWriter interface {
 		userID uuid.UUID,
 		service integration.Service,
 		name string,
-		config *shared.IntegrationConfig,
+		config *utils.Config,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)

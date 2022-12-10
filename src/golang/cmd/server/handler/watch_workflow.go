@@ -6,10 +6,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -32,9 +31,10 @@ type watchWorkflowArgs struct {
 type WatchWorkflowHandler struct {
 	PostHandler
 
-	Database              database.Database
-	WorkflowReader        workflow.Reader
-	WorkflowWatcherWriter workflow_watcher.Writer
+	Database database.Database
+
+	WatcherRepo  repos.Watcher
+	WorkflowRepo repos.Workflow
 }
 
 func (*WatchWorkflowHandler) Name() string {
@@ -47,16 +47,16 @@ func (h *WatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
-		aqContext.OrganizationId,
+		workflowID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -68,7 +68,7 @@ func (h *WatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error
 
 	return &watchWorkflowArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		workflowId: workflowID,
 	}, http.StatusOK, nil
 }
 
@@ -77,7 +77,7 @@ func (h *WatchWorkflowHandler) Perform(ctx context.Context, interfaceArgs interf
 
 	response := response.EmptyResponse{}
 
-	_, err := h.WorkflowWatcherWriter.CreateWorkflowWatcher(ctx, args.workflowId, args.Id, h.Database)
+	_, err := h.WatcherRepo.Create(ctx, args.workflowId, args.ID, h.Database)
 	if err != nil {
 		return response, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while updating the database.")
 	}

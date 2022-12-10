@@ -1,8 +1,8 @@
 package tests
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )

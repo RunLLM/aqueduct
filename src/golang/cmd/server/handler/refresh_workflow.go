@@ -7,17 +7,13 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -49,11 +45,11 @@ type RefreshWorkflowHandler struct {
 	Engine   engine.Engine
 	Vault    vault.Vault
 
-	WorkflowReader        workflow.Reader
-	WorkflowDagReader     workflow_dag.Reader
-	OperatorReader        operator.Reader
-	ArtifactReader        artifact.Reader
-	WorkflowDagEdgeReader workflow_dag_edge.Reader
+	ArtifactRepo repos.Artifact
+	DAGRepo      repos.DAG
+	DAGEdgeRepo  repos.DAGEdge
+	OperatorRepo repos.Operator
+	WorkflowRepo repos.Workflow
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -66,20 +62,20 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	if workflowIdStr == "" {
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	if workflowIDStr == "" {
 		return nil, http.StatusBadRequest, errors.New("no workflow id was specified")
 	}
 
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
-		aqContext.OrganizationId,
+		workflowID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -95,7 +91,7 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	return &RefreshWorkflowArgs{
-		WorkflowId: workflowId,
+		WorkflowId: workflowID,
 		Parameters: parameters,
 	}, http.StatusOK, nil
 }
@@ -105,14 +101,14 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	emptyResp := struct{}{}
 
-	dag, err := utils.ReadLatestWorkflowDagFromDatabase(
+	dag, err := utils.ReadLatestDAGFromDatabase(
 		ctx,
 		args.WorkflowId,
-		h.WorkflowReader,
-		h.WorkflowDagReader,
-		h.OperatorReader,
-		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		h.WorkflowRepo,
+		h.DAGRepo,
+		h.OperatorRepo,
+		h.ArtifactRepo,
+		h.DAGEdgeRepo,
 		h.Database,
 	)
 	if err != nil {

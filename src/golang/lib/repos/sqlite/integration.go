@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -69,13 +68,19 @@ func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string
 	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByNameAndUser(ctx context.Context, integrationName string, userID uuid.UUID, orgID string, DB database.Database) ([]models.Integration, error) {
+func (*integrationReader) GetByNameAndUser(
+	ctx context.Context,
+	integrationName string,
+	userID uuid.UUID,
+	orgID string,
+	DB database.Database,
+) (*models.Integration, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM integration WHERE name = $1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);`,
 		models.IntegrationCols(),
 	)
 	args := []interface{}{integrationName, orgID, userID}
-	return getIntegrations(ctx, DB, query, args...)
+	return getIntegration(ctx, DB, query, args...)
 }
 
 func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Integration, error) {
@@ -142,7 +147,7 @@ func (*integrationWriter) Create(
 	orgID string,
 	service integration.Service,
 	name string,
-	config *shared.IntegrationConfig,
+	config *utils.Config,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
@@ -180,7 +185,7 @@ func (*integrationWriter) CreateForUser(
 	userID uuid.UUID,
 	service integration.Service,
 	name string,
-	config *shared.IntegrationConfig,
+	config *utils.Config,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {

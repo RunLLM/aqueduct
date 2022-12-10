@@ -2,8 +2,8 @@ package operator
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/google/uuid"
 )
 
@@ -29,13 +29,13 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	dbOperator *operator.DBOperator,
-	dbOperatorResult *operator_result.OperatorResult,
+	dbOperator *models.Operator,
+	dbOperatorResult *models.OperatorResult,
 ) *ResultResponse {
 	// make a value copy of `Spec` field
 	spec := dbOperator.Spec
 	metadata := Response{
-		Id:          dbOperator.Id,
+		Id:          dbOperator.ID,
 		Name:        dbOperator.Name,
 		Description: dbOperator.Description,
 		Spec:        &spec,

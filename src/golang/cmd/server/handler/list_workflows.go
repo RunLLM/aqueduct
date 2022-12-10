@@ -4,22 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/logging"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -51,24 +41,14 @@ type ListWorkflowsHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	UserReader              user.Reader
-	ArtifactReader          artifact.Reader
-	OperatorReader          operator.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	CustomReader            queries.Reader
-
-	ArtifactWriter          artifact.Writer
-	OperatorWriter          operator.Writer
-	WorkflowWriter          workflow.Writer
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	OperatorResultWriter    operator_result.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	NotificationWriter      notification.Writer
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
+	OperatorResultRepo repos.OperatorResult
+	WorkflowRepo       repos.Workflow
 }
 
 func (*ListWorkflowsHandler) Name() string {
@@ -89,58 +69,58 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 	// Asynchronously sync self-orchestrated workflow runs
 	go func() {
-		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrganizationId); err != nil {
+		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrgID); err != nil {
 			logging.LogAsyncEvent(ctx, logging.ServerComponent, "Sync Workflows", err)
 		}
 	}()
 
-	dbWorkflows, err := h.WorkflowReader.GetWorkflowsWithLatestRunResult(ctx, args.OrganizationId, h.Database)
+	latestStatuses, err := h.WorkflowRepo.GetLatestStatusesByOrg(ctx, args.OrgID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
 
-	workflowIds := make([]uuid.UUID, 0, len(dbWorkflows))
-	for _, dbWorkflow := range dbWorkflows {
-		workflowIds = append(workflowIds, dbWorkflow.Id)
+	workflowIDs := make([]uuid.UUID, 0, len(latestStatuses))
+	for _, latestStatus := range latestStatuses {
+		workflowIDs = append(workflowIDs, latestStatus.ID)
 	}
 
-	workflows := make([]workflowResponse, 0, len(dbWorkflows))
-	if len(workflowIds) > 0 {
-		for _, dbWorkflow := range dbWorkflows {
+	workflowResponses := make([]workflowResponse, 0, len(latestStatuses))
+	if len(workflowIDs) > 0 {
+		for _, latestStatus := range latestStatuses {
 			response := workflowResponse{
-				Id:          dbWorkflow.Id,
-				Name:        dbWorkflow.Name,
-				Description: dbWorkflow.Description,
-				CreatedAt:   dbWorkflow.CreatedAt.Unix(),
-				Engine:      dbWorkflow.Engine,
+				Id:          latestStatus.ID,
+				Name:        latestStatus.Name,
+				Description: latestStatus.Description,
+				CreatedAt:   latestStatus.CreatedAt.Unix(),
+				Engine:      latestStatus.Engine,
 			}
 
-			if !dbWorkflow.LastRunAt.IsNull {
-				response.LastRunAt = dbWorkflow.LastRunAt.Time.Unix()
+			if !latestStatus.LastRunAt.IsNull {
+				response.LastRunAt = latestStatus.LastRunAt.Time.Unix()
 			}
 
-			if !dbWorkflow.Status.IsNull {
-				response.Status = dbWorkflow.Status.ExecutionStatus
+			if !latestStatus.Status.IsNull {
+				response.Status = latestStatus.Status.ExecutionStatus
 			} else {
 				// There are no workflow runs yet for this workflow, so we simply return
 				// that the workflow has been registered
 				response.Status = shared.RegisteredExecutionStatus
 			}
 
-			workflows = append(workflows, response)
+			workflowResponses = append(workflowResponses, response)
 		}
 	}
 
-	return workflows, http.StatusOK, nil
+	return workflowResponses, http.StatusOK, nil
 }
 
 // syncSelfOrchestratedWorkflows syncs any workflow DAG results for any workflows running on a
 // self-orchestrated engine for the user's organization.
-func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, organizationID string) error {
+func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, orgID string) error {
 	// Sync workflows running on self-orchestrated engines
-	airflowWorkflowDagIds, err := h.CustomReader.GetLatestWorkflowDagIdsByOrganizationIdAndEngine(
+	airflowDagIDs, err := h.DAGRepo.GetLatestIDsByOrgAndEngine(
 		ctx,
-		organizationID,
+		orgID,
 		shared.AirflowEngineType,
 		h.Database,
 	)
@@ -148,24 +128,17 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		return err
 	}
 
-	airflowWorkflowDagUUIDs := make([]uuid.UUID, 0, len(airflowWorkflowDagIds))
-	for _, workflowDagId := range airflowWorkflowDagIds {
-		airflowWorkflowDagUUIDs = append(airflowWorkflowDagUUIDs, workflowDagId.Id)
-	}
-
-	if err := airflow.SyncWorkflowDags(
+	if err := airflow.SyncDAGs(
 		ctx,
-		airflowWorkflowDagUUIDs,
-		h.WorkflowReader,
-		h.WorkflowDagReader,
-		h.OperatorReader,
-		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
-		h.WorkflowDagResultReader,
-		h.WorkflowDagWriter,
-		h.WorkflowDagResultWriter,
-		h.OperatorResultWriter,
-		h.ArtifactResultWriter,
+		airflowDagIDs,
+		h.WorkflowRepo,
+		h.DAGRepo,
+		h.OperatorRepo,
+		h.ArtifactRepo,
+		h.DAGEdgeRepo,
+		h.DAGResultRepo,
+		h.OperatorResultRepo,
+		h.ArtifactResultRepo,
 		h.Vault,
 		h.Database,
 	); err != nil {

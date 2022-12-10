@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -75,7 +75,7 @@ type AqEngine interface {
 
 	PreviewWorkflow(
 		ctx context.Context,
-		dbWorkflowDag *workflow_dag.DBWorkflowDag,
+		dbDAG *models.DAG,
 		execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 		timeConfig *AqueductTimeConfig,
 	) (*WorkflowPreviewResult, error)
@@ -88,6 +88,6 @@ type SelfOrchestratedEngine interface {
 
 	SyncWorkflow(
 		ctx context.Context,
-		dbWorkflowDag *workflow_dag.DBWorkflowDag,
+		dag *models.DAG,
 	)
 }

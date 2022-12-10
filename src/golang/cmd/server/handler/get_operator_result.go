@@ -5,12 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -35,17 +33,18 @@ import (
 //		metadata and content of the result of `operatorId` on the given workflow_dag_result object.
 type getOperatorResultArgs struct {
 	*aq_context.AqContext
-	workflowDagResultId uuid.UUID
-	operatorId          uuid.UUID
+	dagResultID uuid.UUID
+	operatorID  uuid.UUID
 }
 
 type GetOperatorResultHandler struct {
 	GetHandler
 
-	Database                database.Database
-	OperatorReader          operator.Reader
-	OperatorResultReader    operator_result.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	Database database.Database
+
+	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
+	OperatorResultRepo repos.OperatorResult
 }
 
 type GetOperatorResultResponse struct {
@@ -65,22 +64,22 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
-	operatorId, err := uuid.Parse(operatorIdStr)
+	operatorIDStr := chi.URLParam(r, routes.OperatorIdUrlParam)
+	operatorID, err := uuid.Parse(operatorIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed operator ID.")
 	}
 
-	ok, err := h.OperatorReader.ValidateOperatorOwnership(
+	ok, err := h.OperatorRepo.ValidateOrg(
 		r.Context(),
-		aqContext.OrganizationId,
-		operatorId,
+		operatorID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -91,9 +90,9 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &getOperatorResultArgs{
-		AqContext:           aqContext,
-		workflowDagResultId: workflowDagResultId,
-		operatorId:          operatorId,
+		AqContext:   aqContext,
+		dagResultID: dagResultID,
+		operatorID:  operatorID,
 	}, http.StatusOK, nil
 }
 
@@ -101,24 +100,20 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*getOperatorResultArgs)
 
 	emptyResp := GetOperatorResultResponse{}
-	dbOperator, err := h.OperatorReader.GetOperator(ctx, args.operatorId, h.Database)
+	dbOperator, err := h.OperatorRepo.Get(ctx, args.operatorID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator.")
 	}
 
-	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
-		ctx,
-		args.workflowDagResultId,
-		h.Database,
-	)
+	dagResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
-	dbOperatorResult, err := h.OperatorResultReader.GetOperatorResultByWorkflowDagResultIdAndOperatorId(
+	dbOperatorResult, err := h.OperatorResultRepo.GetByDAGResultAndOperator(
 		ctx,
-		args.workflowDagResultId,
-		args.operatorId,
+		args.dagResultID,
+		args.operatorID,
 		h.Database,
 	)
 
@@ -131,7 +126,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
 		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status
-		executionState.Status = dbWorkflowDagResult.Status
+		executionState.Status = shared.ExecutionStatus(dagResult.Status)
 	}
 
 	if dbOperatorResult != nil && !dbOperatorResult.ExecState.IsNull {

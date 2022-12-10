@@ -56,10 +56,32 @@ func requireDeepEqualIntegrations(t *testing.T, expected, actual []models.Integr
 			if expectedIntegration.ID == actualIntegration.ID {
 				found = true
 				foundIntegration = actualIntegration
+				break
 			}
 		}
 		require.True(t, found, "Unable to find integration: %v", expectedIntegration)
 		requireDeepEqual(t, expectedIntegration, foundIntegration)
+	}
+}
+
+// requireDeepEqualArtifactResults asserts that the expected and actual lists of ArtifactResults
+// containt the same elements.
+func requireDeepEqualArtifactResults(t *testing.T, expected, actual []models.ArtifactResult) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedArtifactResult := range expected {
+		found := false
+		var foundArtifactResult models.ArtifactResult
+
+		for _, actualArtifactResult := range actual {
+			if expectedArtifactResult.ID == actualArtifactResult.ID {
+				found = true
+				foundArtifactResult = actualArtifactResult
+				break
+			}
+		}
+		require.True(t, found, "Unable to find ArtifactResult: %v", expectedArtifactResult)
+		requireDeepEqual(t, expectedArtifactResult, foundArtifactResult)
 	}
 }
 

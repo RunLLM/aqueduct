@@ -9,9 +9,10 @@ const (
 	tableName = "execution_environment"
 
 	// ExecutionEnvironment table column names
-	IdColumn   = "id"
-	SpecColumn = "spec"
-	HashColumn = "hash"
+	IdColumn               = "id"
+	SpecColumn             = "spec"
+	HashColumn             = "hash"
+	GarbageCollectedColumn = "garbage_collected"
 )
 
 // Returns a joined string of all ExecutionEnvironment columns.
@@ -21,6 +22,7 @@ func allColumns() string {
 			IdColumn,
 			SpecColumn,
 			HashColumn,
+			GarbageCollectedColumn,
 		},
 		",",
 	)
@@ -34,6 +36,7 @@ func allColumnsWithPrefix() string {
 			fmt.Sprintf("%s.%s", tableName, IdColumn),
 			fmt.Sprintf("%s.%s", tableName, SpecColumn),
 			fmt.Sprintf("%s.%s", tableName, HashColumn),
+			fmt.Sprintf("%s.%s", tableName, GarbageCollectedColumn),
 		},
 		",",
 	)

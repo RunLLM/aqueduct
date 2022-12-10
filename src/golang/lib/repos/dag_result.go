@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -29,6 +30,9 @@ type dagResultReader interface {
 	// GetKOffsetByWorkflow returns the DAGResults of all DAGs associated with the Workflow with workflowID
 	// except for the last k DAGResults ordered by DAGResult.CreatedAt.
 	GetKOffsetByWorkflow(ctx context.Context, workflowID uuid.UUID, k int, DB database.Database) ([]models.DAGResult, error)
+
+	// GetWorkflowMetadataBatch returns a map of each DAGResult's ID in IDs to its DAGResultWorkflowMetadata.
+	GetWorkflowMetadataBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) (map[uuid.UUID]views.DAGResultWorkflowMetadata, error)
 }
 
 type dagResultWriter interface {

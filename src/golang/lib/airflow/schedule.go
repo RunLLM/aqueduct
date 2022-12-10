@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -33,11 +33,11 @@ const (
 //   - All of the in-memory fields of each Operator in `dag.Operators` are set.
 func ScheduleWorkflow(
 	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
+	dagRepo repos.DAG,
 	jobManager job.JobManager,
 	vault vault.Vault,
-	db database.Database,
-	workflowDagWriter workflow_dag.Writer,
+	DB database.Database,
 ) ([]byte, error) {
 	// Generate an Airflow DAG ID
 	dagId, err := generateDagId(dag.Metadata.Name)
@@ -78,7 +78,7 @@ func ScheduleWorkflow(
 			artifactIDToExecPaths[outputArtifactID] = &utils.ExecPaths{
 				ArtifactContentPath:  artifactToContentPathPrefix[outputArtifactID],
 				ArtifactMetadataPath: artifactToMetadataPathPrefix[outputArtifactID],
-				OpMetadataPath:       operatorToMetadataPathPrefix[dbOperator.Id],
+				OpMetadataPath:       operatorToMetadataPathPrefix[dbOperator.ID],
 			}
 		}
 	}
@@ -168,7 +168,7 @@ func ScheduleWorkflow(
 			nil,              /* previewCacheManager */
 			operator.Publish, // airflow operator will never run in preview mode
 			nil,              /* ExecEnv */
-			db,
+			DB,
 		)
 		if err != nil {
 			return nil, err
@@ -203,7 +203,7 @@ func ScheduleWorkflow(
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())
 	jobSpec, err := job.NewCompileAirflowSpec(
 		jobName,
-		dag.Id,
+		dag.ID,
 		&dag.StorageConfig,
 		operatorMetadataPath,
 		operatorOutputPath,
@@ -258,13 +258,13 @@ func ScheduleWorkflow(
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix = artifactToMetadataPathPrefix
 
-	_, err = workflowDagWriter.UpdateWorkflowDag(
+	_, err = dagRepo.Update(
 		ctx,
-		dag.Id,
+		dag.ID,
 		map[string]interface{}{
-			workflow_dag.EngineConfigColumn: &newRuntimeConfig,
+			models.DagEngineConfig: &newRuntimeConfig,
 		},
-		db,
+		DB,
 	)
 	if err != nil {
 		return nil, err
@@ -277,7 +277,7 @@ func ScheduleWorkflow(
 // Airflow engine.
 func prepareStorageConfig(
 	ctx context.Context,
-	dag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	storageConfig *shared.StorageConfig,
 	vault vault.Vault,
 ) (shared.StorageConfig, error) {
@@ -317,14 +317,14 @@ func generateStoragePathPrefixes(ids []uuid.UUID) map[uuid.UUID]string {
 	return paths
 }
 
-func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
+func computeEdges(operators map[uuid.UUID]models.Operator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
 	artifactToSrc := map[uuid.UUID]string{}
 	artifactToDests := map[uuid.UUID][]string{}
 
 	for _, op := range operators {
-		taskId, ok := operatorToTask[op.Id]
+		taskId, ok := operatorToTask[op.ID]
 		if !ok {
-			return nil, errors.Newf("Unable to find task ID for operator %v", op.Id)
+			return nil, errors.Newf("Unable to find task ID for operator %v", op.ID)
 		}
 
 		for _, outputArtifact := range op.Outputs {

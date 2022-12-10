@@ -5,8 +5,12 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
+	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -15,7 +19,7 @@ import (
 
 const (
 	// Defaults used for seeding database records
-	testOrgID = "aqueduct-test"
+	testOrgID              = "aqueduct-test"
 	testIntegrationService = integration.AqueductDemo
 )
 
@@ -25,10 +29,19 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := make(shared.IntegrationConfig)
+		config := make(utils.Config)
 		config[randString(10)] = randString(10)
 		validated := true
-		integration, err := ts.integration.CreateForUser(ts.ctx, testOrgID, userID, testIntegrationService, name, &config, validated, ts.DB)
+		integration, err := ts.integration.CreateForUser(
+			ts.ctx,
+			testOrgID,
+			userID,
+			testIntegrationService,
+			name,
+			&config,
+			validated,
+			ts.DB,
+		)
 		require.Nil(ts.T(), err)
 
 		integrations = append(integrations, *integration)
@@ -41,6 +54,28 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 func (ts *TestSuite) seedIntegration(count int) []models.Integration {
 	users := ts.seedUser(1)
 	return ts.seedIntegrationWithUser(count, users[0].ID)
+}
+
+// seedNotification creates count notification records for a generated user.
+func (ts *TestSuite) seedNotification(count int) []models.Notification {
+	notifications := make([]models.Notification, 0, count)
+	users := ts.seedUser(1)
+	receiverID := users[0].ID
+
+	for i := 0; i < count; i++ {
+		content := randString(10)
+		level := shared.SuccessNotificationLevel
+		association := &shared.NotificationAssociation{
+			Object: shared.OrgNotificationObject,
+			ID:     uuid.New(),
+		}
+		notification, err := ts.notification.Create(ts.ctx, receiverID, content, level, association, ts.DB)
+		require.Nil(ts.T(), err)
+
+		notifications = append(notifications, *notification)
+	}
+
+	return notifications
 }
 
 // seedArtifact creates count artifact records.
@@ -131,13 +166,13 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 		userID := userIDs[i]
 		name := randString(10)
 		description := randString(15)
-		schedule := &shared.Schedule{
-			Trigger:              shared.PeriodicUpdateTrigger,
+		schedule := &workflow.Schedule{
+			Trigger:              workflow.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		}
-		retentionPolicy := &shared.RetentionPolicy{
+		retentionPolicy := &workflow.RetentionPolicy{
 			KLatestRuns: 10,
 		}
 
@@ -184,16 +219,16 @@ func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []m
 
 	for i := 0; i < count; i++ {
 		workflowID := workflowIDs[i]
-		storageConfig := &shared.StorageConfig{
-			Type: shared.S3StorageType,
-			S3Config: &shared.S3Config{
+		storageConfig := &col_shared.StorageConfig{
+			Type: col_shared.S3StorageType,
+			S3Config: &col_shared.S3Config{
 				Region: "us-east-2",
 				Bucket: "test",
 			},
 		}
-		engineConfig := &shared.EngineConfig{
-			Type:           shared.AqueductEngineType,
-			AqueductConfig: &shared.AqueductConfig{},
+		engineConfig := &col_shared.EngineConfig{
+			Type:           col_shared.AqueductEngineType,
+			AqueductConfig: &col_shared.AqueductConfig{},
 		}
 
 		dag, err := ts.dag.Create(
@@ -293,7 +328,7 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	for i := 0; i < count; i++ {
-		spec := shared.NewSpecFromFunction(
+		spec := operator.NewSpecFromFunction(
 			function.Function{},
 		)
 
@@ -302,6 +337,7 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 			randString(10),
 			randString(15),
 			spec,
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -316,32 +352,31 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for each Operator to associate it with the specified DAG.
 // The DAGEdge type is randomly chosen and does not connect to an actual Artifact.
-// If a Load function is created, a new integration to load from is created for each operator.
-func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid.UUID, opType shared.OperatorType) []models.Operator {
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid.UUID, opType operator.Type) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	// A fake Artifact is used for all of the DAGEdges
 	artifactID := uuid.New()
 
 	for i := 0; i < count; i++ {
-		var spec *shared.Spec
+		var spec *operator.Spec
 		switch opType {
-		case shared.FunctionType:
-			spec = shared.NewSpecFromFunction(
+		case operator.FunctionType:
+			spec = operator.NewSpecFromFunction(
 				function.Function{},
 			)
-		case shared.ExtractType:
-			spec = shared.NewSpecFromExtract(
+		case operator.ExtractType:
+			spec = operator.NewSpecFromExtract(
 				connector.Extract{
 					Service:       integration.Postgres,
 					IntegrationId: uuid.New(),
 					Parameters:    &connector.PostgresExtractParams{},
 				},
 			)
-		case shared.LoadType:
+		case operator.LoadType:
 			loadIntegrations := ts.seedIntegrationWithUser(1, userID)
 			loadIntegration := loadIntegrations[0]
-			spec = shared.NewSpecFromLoad(
+			spec = operator.NewSpecFromLoad(
 				connector.Load{
 					Service:       loadIntegration.Service,
 					IntegrationId: loadIntegration.ID,
@@ -362,6 +397,7 @@ func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid
 			randString(10),
 			randString(15),
 			spec,
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -408,3 +444,20 @@ func (ts *TestSuite) seedWatcher() *models.Watcher {
 	return watcher
 }
 
+// seedArtifactResult creates a workflow with 1 DAG and count artifact_result records
+// belonging to the same workflow DAG.
+func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, models.Artifact, models.DAG, models.Workflow) {
+	artifactResults := make([]models.ArtifactResult, 0, count)
+
+	artifact, dag, workflow, _ := ts.seedArtifactInWorkflow()
+
+	for i := 0; i < count; i++ {
+		contentPath := randString(10)
+		artifactResult, err := ts.artifactResult.Create(ts.ctx, dag.ID, artifact.ID, contentPath, ts.DB)
+		require.Nil(ts.T(), err)
+
+		artifactResults = append(artifactResults, *artifactResult)
+	}
+
+	return artifactResults, artifact, dag, workflow
+}
