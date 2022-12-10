@@ -57,7 +57,7 @@ func NewResultResponseFromDbObjects(
 	return &ResultResponse{
 		Response: metadata,
 		Result: &RawResultResponse{
-			Id:        dbOperatorResult.Id,
+			Id:        dbOperatorResult.ID,
 			ExecState: execState,
 		},
 	}
