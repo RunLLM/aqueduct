@@ -238,7 +238,7 @@ func requireDeepEqualOperatorResultStatuses(t *testing.T, expected, actual []vie
 				break
 			}
 		}
-		require.True(t, found, "Unable to find OperatorResultStatus: %v", expectedOperatorResultStatus)
+		require.True(t, found, "Unable to find OperatorResultStatus: %v\nExpected: %v\n Actual: %v", expectedOperatorResultStatus, expected, actual)
 		requireDeepEqual(t, expectedOperatorResultStatus, foundOperatorResultStatus)
 	}
 }

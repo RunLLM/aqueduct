@@ -467,6 +467,78 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, o
 	return newOperator
 }
 
+// seedOperatorAndDAG creates an Operator records of Type opType.
+// The supported options are Function, Extract, and Load.
+// It creates a DAGEdge for the Operator to associate it with the specified DAG.
+// The DAGEdge type is OperatorToArtifactDAGEdge and does not connect to an actual Artifact.
+func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, dagID uuid.UUID, opType operator.Type) *models.Operator {
+	var spec *operator.Spec
+	switch opType {
+	case operator.FunctionType:
+		spec = operator.NewSpecFromFunction(
+			function.Function{},
+		)
+	case operator.ExtractType:
+		spec = operator.NewSpecFromExtract(
+			connector.Extract{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters:    &connector.PostgresExtractParams{},
+			},
+		)
+	case operator.LoadType:
+		spec = operator.NewSpecFromLoad(
+			connector.Load{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters: &connector.PostgresLoadParams{
+					RelationalDBLoadParams: connector.RelationalDBLoadParams{
+						Table:      randString(10),
+						UpdateMode: "replace",
+					},
+				},
+			},
+		)
+	case operator.CheckType:
+		spec = operator.NewSpecFromCheck(
+			check.Check{
+				Level: check.ErrorLevel,
+				Function: function.Function{},
+			},
+		)
+	default:
+		ts.Fail("Seeding an Operator of type %v is not supported", opType)
+	}
+
+	newOperator, err := ts.operator.Create(
+		ts.ctx,
+		randString(10),
+		randString(15),
+		spec,
+		nil,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	edgeType := shared.ArtifactToOperatorDAGEdge
+	fromID, toID := artifactID, newOperator.ID
+	edgeType = shared.OperatorToArtifactDAGEdge
+	fromID, toID = newOperator.ID, artifactID
+
+	_, err = ts.dagEdge.Create(
+		ts.ctx,
+		dagID,
+		edgeType,
+		fromID,
+		toID,
+		int16(0),
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	return newOperator
+}
+
 // seedWatcher creates a Watcher record. It creates a new Workflow
 // and User to use for the Watcher.
 func (ts *TestSuite) seedWatcher() *models.Watcher {
