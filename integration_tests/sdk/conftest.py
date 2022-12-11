@@ -1,8 +1,10 @@
 import os
 
 import pytest
+import utils
 from aqueduct.dag import DAG, Metadata
 from utils import delete_flow, flow_name_to_id, generate_new_flow_name
+from validator import Validator
 
 import aqueduct
 
@@ -12,6 +14,9 @@ def pytest_addoption(parser):
     parser.addoption(f"--data", action="store", default="aqueduct_demo")
     parser.addoption(f"--engine", action="store", default=None)
     parser.addoption(f"--keep-flows", action="store_true", default=False)
+
+    # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
+    parser.addoption(f"--deprecated", action="store_true", default=False)
 
 
 def pytest_configure(config):
@@ -33,6 +38,11 @@ def data_integration(pytestconfig):
 @pytest.fixture(scope="session")
 def engine(pytestconfig):
     return pytestconfig.getoption("engine")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def use_deprecated(pytestconfig):
+    utils.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
 
 
 @pytest.fixture(scope="function")
@@ -106,3 +116,9 @@ def flow_name(client, request, pytestconfig):
 
     request.addfinalizer(cleanup_flows)
     return get_new_flow_name
+
+
+@pytest.fixture(scope="function")
+def validator(client, data_integration):
+    integration = client.integration(data_integration)
+    return Validator(client, integration)
