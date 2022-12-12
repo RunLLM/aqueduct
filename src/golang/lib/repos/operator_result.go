@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -47,6 +48,16 @@ type operatorResultReader interface {
 		artifactIDs []uuid.UUID,
 		DB database.Database,
 	) ([]views.OperatorResultStatus, error)
+
+	// GetWithOperatorByDAGResultBatch returns an OperatorWithResult list
+	// where each item correspond to an operator given by dagResultIDs, and
+	// the type is among the given `types` argument
+	GetWithOperatorByDAGResultBatch(
+		ctx context.Context,
+		dagResultIDs []uuid.UUID,
+		types []mdl_shared.OperatorType,
+		DB database.Database,
+	) ([]views.OperatorWithResult, error)
 }
 
 type operatorResultWriter interface {
