@@ -13,11 +13,11 @@ const (
 	DagTable = "workflow_dag"
 
 	// DAG column names
-	DagID            = "id"
-	DagWorkflowID    = "workflow_id"
-	DagCreatedAt     = "created_at"
-	DagStorageConfig = "storage_config"
-	DagEngineConfig  = "engine_config"
+	DagID                     = "id"
+	DagWorkflowID             = "workflow_id"
+	DagCreatedAt              = "created_at"
+	DagStorageConfig          = "storage_config"
+	DeprecatedDagEngineConfig = "engine_config"
 )
 
 // A DAG maps to the workflow_dag table.
@@ -56,6 +56,6 @@ func allDAGCols() []string {
 		DagWorkflowID,
 		DagCreatedAt,
 		DagStorageConfig,
-		DagEngineConfig,
+		DeprecatedDagEngineConfig,
 	}
 }

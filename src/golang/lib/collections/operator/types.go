@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/metric"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -54,7 +55,8 @@ type specUnion struct {
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
 	// This can currently only be set for function operators.
-	Resources *ResourceConfig `json:"resources,omitempty"`
+	Resources    *ResourceConfig     `json:"resources,omitempty"`
+	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config,omitempty"`
 }
 
 type Spec struct {
@@ -110,6 +112,10 @@ func (s Spec) HasFunction() bool {
 
 func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
+}
+
+func (s Spec) EngineConfig() shared.EngineConfig {
+	return s.spec.EngineConfig
 }
 
 func (s Spec) Function() *function.Function {

@@ -51,36 +51,80 @@ class DAG(BaseModel):
 
     # The field must be set when publishing the workflow.
     metadata: Metadata
-    # Must be set through `set_engine_config()`.
-    # A `None` value means default Aqueduct EngineConfig.
-    engine_config: Optional[EngineConfig] = None
+
+    # TODO: REMOVE. Need to keep around until Airflow gets sorted out. Also needed for the UI to keep
+    #  functioning for now.
+    engine_config: EngineConfig = EngineConfig()
 
     class Config:
         fields = {
-            "operators_by_name": {"exclude": ...},
+            "operator_by_name": {"exclude": ...},
         }
 
-    def set_engine_config(self, engine_config: EngineConfig) -> None:
-        """Sets the engine config.
-
-        Before setting the config, we make sure that the specified compute engine can handle the specified resource requests.
+    def set_engine_configs(
+        self,
+        global_engine_config: Optional[EngineConfig],
+        publish_flow_engine_config: Optional[EngineConfig] = None,
+    ) -> None:
+        """Sets the engine config on each operator in the dag. If any error is thrown in the process,
+        nothing the DAG will not be updated!
+        The hierarchy of engine selection is:
+        1) @op(engine=...)
+        2) client.publish_flow(.., engine=...)
+        3) aq.global_config(engine=...)
+        Before setting the config, we also make sure that the specified compute engine can handle the specified resource requests.
         """
-        allowed_customizable_resources: Dict[str, bool] = {
-            "num_cpus": False,
-            "memory": False,
-            "gpu_resource_name": False,
-        }
-        if engine_config.type == RuntimeType.K8S:
-            allowed_customizable_resources = {
-                "num_cpus": True,
-                "memory": True,
-                "gpu_resource_name": True,
-            }
-        elif engine_config.type == RuntimeType.LAMBDA:
-            allowed_customizable_resources["memory"] = True
-
+        # We have to do this in two passes over all the operators. The first pass validates that the
+        # engine_config is valid. The second pass actually sets the value. This allows us to enforce
+        # "all or nothing" semantics over spec updates.
+        op_id_to_engine_config: Dict[str, EngineConfig] = {}
         for op in self.operators.values():
+            engine_config = op.spec.engine_config
+            custom_engine_set = op.spec.engine_config != EngineConfig()
+
+            # Denotes the precedence when checking for other possible user-defined custom engines
+            # relevant to this operator. Ordered by decreasing precedence.
+            engine_hierarchy: List[Optional[EngineConfig]] = [
+                publish_flow_engine_config,
+                global_engine_config,
+            ]
+
+            should_log_engine_overwrite_warning = False
+            for candidate_engine_config in engine_hierarchy:
+                if candidate_engine_config is not None:
+                    # If a custom engine request was overwritten by a different custom engine with higher
+                    # precedence, we should help out the user by logging exactly what engine this operator
+                    # will be using.
+                    if custom_engine_set:
+                        should_log_engine_overwrite_warning = True
+                    else:
+                        engine_config = candidate_engine_config
+                        custom_engine_set = True
+
+            if should_log_engine_overwrite_warning:
+                logger().warning(
+                    "Multiple different custom engines were set for operator `%s` in different ways. It will be running on %s.",
+                    op.name,
+                    engine_config.name,
+                )
+
+            # We now know the engine the operator will run with, so we can now check whether
+            # any custom resource constraints are valid.
             if op.spec.resources is not None:
+                allowed_customizable_resources: Dict[str, bool] = {
+                    "num_cpus": False,
+                    "memory": False,
+                    "gpu_resource_name": False,
+                }
+                if engine_config.type == RuntimeType.K8S:
+                    allowed_customizable_resources = {
+                        "num_cpus": True,
+                        "memory": True,
+                        "gpu_resource_name": True,
+                    }
+                elif engine_config.type == RuntimeType.LAMBDA:
+                    allowed_customizable_resources["memory"] = True
+
                 if not allowed_customizable_resources["num_cpus"] and op.spec.resources.num_cpus:
                     raise InvalidUserArgumentException(
                         "Operator `%s` cannot configure the number of cpus, since it is not supported when running on %s."
@@ -117,7 +161,11 @@ class DAG(BaseModel):
                         % (op.name, engine_config.type)
                     )
 
-        self.engine_config = engine_config
+            op_id_to_engine_config[str(op.id)] = engine_config
+
+        # Finally, we set the engine config for each operator in the dag.
+        for op_id, op in self.operators.items():
+            self.operators[op_id].spec.engine_config = op_id_to_engine_config[str(op.id)]
 
     def must_get_operator(
         self,

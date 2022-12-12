@@ -273,7 +273,7 @@ func checkForDAGMatch(
 				ctx,
 				dag.ID,
 				map[string]interface{}{
-					models.DagEngineConfig: &dag.EngineConfig,
+					models.DeprecatedDagEngineConfig: &dag.EngineConfig,
 				},
 				DB,
 			)

@@ -1,7 +1,7 @@
-from aqueduct.constants.enums import OperatorType, RuntimeType
+from aqueduct.config import EngineConfig
+from aqueduct.enums import OperatorType, RuntimeType
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.models.config import EngineConfig
-from aqueduct.models.operators import ResourceConfig
+from aqueduct.operators import ResourceConfig
 from aqueduct.tests.utils import (
     _construct_dag,
     _construct_operator,
@@ -106,17 +106,17 @@ def test_set_engine_config():
     )
 
     # Can only set to K8s runtime.
-    dag.set_engine_config(EngineConfig(type=RuntimeType.K8S))
+    dag.set_engine_configs(EngineConfig(type=RuntimeType.K8S))
 
     try:
-        dag.set_engine_config(EngineConfig())
+        dag.set_engine_configs(EngineConfig())
     except InvalidUserArgumentException as e:
         assert "not supported" in str(e)
     else:
         assert False, "Expected failure"
 
     try:
-        dag.set_engine_config(EngineConfig(type=RuntimeType.AIRFLOW))
+        dag.set_engine_configs(EngineConfig(type=RuntimeType.AIRFLOW))
     except InvalidUserArgumentException as e:
         assert "not supported" in str(e)
     else:

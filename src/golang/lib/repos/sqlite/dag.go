@@ -282,6 +282,7 @@ func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG,
 	return getDAGs(ctx, DB, query)
 }
 
+// TODO: remove engine_config
 func (*dagWriter) Create(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -294,7 +295,7 @@ func (*dagWriter) Create(
 		models.DagWorkflowID,
 		models.DagCreatedAt,
 		models.DagStorageConfig,
-		models.DagEngineConfig,
+		models.DeprecatedDagEngineConfig,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.DagTable, cols, models.DAGCols())
 

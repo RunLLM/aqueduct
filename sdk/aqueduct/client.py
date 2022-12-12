@@ -386,6 +386,16 @@ class Client:
                 "A non-empty string must be supplied for the flow's name."
             )
 
+        if engine is not None and not isinstance(engine, str):
+            raise InvalidUserArgumentException(
+                "`engine` parameter must be a string, got %s." % type(engine)
+            )
+
+        if config and config.engine:
+            raise InvalidUserArgumentException(
+                "The `config` parameter is deprecated. Please use `engine` instead."
+            )
+
         if config is not None:
             logger().warning(
                 "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
@@ -441,44 +451,6 @@ class Client:
                 )
             retention_policy = RetentionPolicy(k_latest_runs=k_latest_runs)
 
-        # Set's the execution `engine` if one was provided.
-        engine_defined_on_config = config and config.engine
-        if engine or engine_defined_on_config:
-            if engine and engine_defined_on_config:
-                raise InvalidUserArgumentException(
-                    "Cannot set compute engine in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
-                )
-
-            self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
-            if engine_defined_on_config:
-                assert config and config.engine
-                for integration in self._connected_integrations.values():
-                    if integration.id == config.engine._metadata.id:
-                        engine = integration.name
-                        break
-
-                if engine is None:
-                    raise InvalidIntegrationException(
-                        "Not connected to the given compute integration!"
-                    )
-        # Fallback to the globally configured engine, if it was indeed configured.
-        elif globals.__GLOBAL_CONFIG__.engine is not None:
-            engine = globals.__GLOBAL_CONFIG__.engine
-
-        if engine is None:
-            engine_config = EngineConfig()
-        else:
-            if not isinstance(engine, str):
-                raise InvalidUserArgumentException(
-                    "`engine` parameter must be a string, got %s." % type(engine)
-                )
-
-            if engine not in self._connected_integrations.keys():
-                raise InvalidIntegrationException(
-                    "Not connected to compute integration `%s`!" % engine
-                )
-            engine_config = generate_engine_config(self._connected_integrations[engine])
-
         dag = apply_deltas_to_dag(
             self._dag,
             deltas=[
@@ -497,36 +469,43 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
-        dag.set_engine_config(engine_config)
-        assert dag.engine_config is not None
 
-        if dag.engine_config.type == RuntimeType.AIRFLOW:
-            # This is an Airflow workflow
-            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
-            flow_id, airflow_file = resp.id, resp.file
+        dag.set_engine_configs(
+            global_engine_config=generate_engine_config(
+                self._connected_integrations,
+                globals.__GLOBAL_CONFIG__.engine,
+            ),
+            publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
+        )
 
-            file = "{}_airflow.py".format(name)
-            with open(file, "w") as f:
-                f.write(airflow_file)
-
-            if resp.is_update:
-                print(
-                    """The updated Airflow DAG file has been downloaded to: {}. 
-                    Please copy it to your Airflow server to begin execution.
-                    New Airflow DAG runs will not be synced properly with Aqueduct
-                    until you have copied the file.""".format(
-                        file
-                    )
-                )
-            else:
-                print(
-                    """The Airflow DAG file has been downloaded to: {}. 
-                    Please copy it to your Airflow server to begin execution.""".format(
-                        file
-                    )
-                )
-        else:
-            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+        # TODO: we need to fix the backend's interpretation of airflow.
+        # if dag.engine_config.type == RuntimeType.AIRFLOW:
+        #     # This is an Airflow workflow
+        #     resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+        #     flow_id, airflow_file = resp.id, resp.file
+        #
+        #     file = "{}_airflow.py".format(name)
+        #     with open(file, "w") as f:
+        #         f.write(airflow_file)
+        #
+        #     if resp.is_update:
+        #         print(
+        #             """The updated Airflow DAG file has been downloaded to: {}.
+        #             Please copy it to your Airflow server to begin execution.
+        #             New Airflow DAG runs will not be synced properly with Aqueduct
+        #             until you have copied the file.""".format(
+        #                 file
+        #             )
+        #         )
+        #     else:
+        #         print(
+        #             """The Airflow DAG file has been downloaded to: {}.
+        #             Please copy it to your Airflow server to begin execution.""".format(
+        #                 file
+        #             )
+        #         )
+        # else:
+        flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),

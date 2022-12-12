@@ -1,7 +1,8 @@
 import uuid
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
-from aqueduct.constants.enums import (
+from aqueduct.config import EngineConfig
+from aqueduct.enums import (
     ArtifactType,
     CheckSeverity,
     FunctionGranularity,
@@ -10,13 +11,15 @@ from aqueduct.constants.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
+    RuntimeType,
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,
     ServiceType,
 )
-from aqueduct.error import AqueductError
-from aqueduct.models.integration import IntegrationInfo
+from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.logger import logger
 from pydantic import BaseModel, Extra
 
 
@@ -121,8 +124,7 @@ UnionLoadParams = Union[
 ]
 
 
-# TODO(ENG-2035) This deprecated and will be removed.
-# A user-facing class used by SDK to represent the config for loading to an integration.
+# Internal class used by SDK to represent the config for loading to an integration.
 class SaveConfig(BaseModel):
     integration_info: IntegrationInfo
     parameters: UnionLoadParams
@@ -196,7 +198,9 @@ class OperatorSpec(BaseModel):
     check: Optional[CheckSpec]
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
+
     resources: Optional[ResourceConfig]
+    engine_config: EngineConfig = EngineConfig()
 
 
 class Operator(BaseModel):

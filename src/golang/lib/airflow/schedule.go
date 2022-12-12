@@ -162,12 +162,12 @@ func ScheduleWorkflow(
 			inputExecPaths,
 			outputExecPaths,
 			nil,
-			jobManager,
 			vault,
 			&airflowStorageConfig,
 			nil,              /* previewCacheManager */
 			operator.Publish, // airflow operator will never run in preview mode
 			nil,              /* ExecEnv */
+			"",               /* aqPath */
 			DB,
 		)
 		if err != nil {
@@ -262,7 +262,7 @@ func ScheduleWorkflow(
 		ctx,
 		dag.ID,
 		map[string]interface{}{
-			models.DagEngineConfig: &newRuntimeConfig,
+			models.DeprecatedDagEngineConfig: &newRuntimeConfig,
 		},
 		DB,
 	)

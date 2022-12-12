@@ -85,12 +85,12 @@ func NewOperator(
 	inputExecPaths []*utils.ExecPaths,
 	outputExecPaths []*utils.ExecPaths,
 	opResultRepo repos.OperatorResult, // A nil value means the operator is run in preview mode.
-	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	execMode ExecutionMode,
 	execEnv *exec_env.ExecutionEnvironment,
+	aqPath string,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
@@ -106,6 +106,22 @@ func NewOperator(
 	metadataPath := uuid.New().String()
 	if len(outputExecPaths) > 0 {
 		metadataPath = outputExecPaths[0].OpMetadataPath
+	}
+
+	engineConfig, err := generateJobManagerConfig(
+		ctx,
+		dbOperator.Spec.EngineConfig(),
+		storageConfig,
+		aqPath,
+		vaultObject,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
+	}
+
+	jobManager, err := job.NewJobManager(engineConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
 	now := time.Now()

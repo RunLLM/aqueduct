@@ -6,7 +6,6 @@ import (
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -153,11 +152,11 @@ func NewWorkflowDag(
 	opResultRepo repos.OperatorResult,
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
-	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
 	execEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
 	opExecMode operator.ExecutionMode,
+	aqPath string,
 	DB database.Database,
 ) (WorkflowDag, error) {
 	dbArtifacts := dag.Artifacts
@@ -267,12 +266,12 @@ func NewWorkflowDag(
 			inputExecPaths,
 			outputExecPaths,
 			opResultRepo,
-			jobManager,
 			vaultObject,
 			&dag.StorageConfig,
 			artifactCacheManager,
 			opExecMode,
 			execEnvPtr,
+			aqPath,
 			DB,
 		)
 		if err != nil {

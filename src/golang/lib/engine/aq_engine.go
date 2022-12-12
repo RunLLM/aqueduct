@@ -253,15 +253,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dbDAG.Operators[op.ID].Spec.Param().Val = param.Val
 		dbDAG.Operators[op.ID].Spec.Param().SerializationType = param.SerializationType
 	}
-	engineConfig, err := generateJobManagerConfig(ctx, dbDAG, eng.AqPath, eng.Vault)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate JobManagerConfig.")
-	}
-
-	engineJobManager, err := job.NewJobManager(engineConfig)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
-	}
 
 	opIds := make([]uuid.UUID, 0, len(dbDAG.Operators))
 	for _, op := range dbDAG.Operators {
@@ -285,11 +276,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
 		execEnvsByOpId,
 		operator.Publish,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {
@@ -346,23 +337,6 @@ func (eng *aqEngine) PreviewWorkflow(
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
-	jobManagerConfig, err := generateJobManagerConfig(
-		ctx,
-		dbDAG,
-		eng.AqPath,
-		eng.Vault,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig from WorkflowDag.")
-	}
-
-	jobManager, err := job.NewJobManager(
-		jobManagerConfig,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to create JobManager.")
-	}
-
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -370,11 +344,11 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {

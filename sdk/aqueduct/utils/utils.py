@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
@@ -116,8 +116,19 @@ def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     )
 
 
-def generate_engine_config(integration: IntegrationInfo) -> EngineConfig:
+def generate_engine_config(
+    integrations: Dict[str, IntegrationInfo], integration_name: Optional[str]
+) -> Optional[EngineConfig]:
     """Generates an EngineConfig from an integration info object."""
+    if integration_name is None:
+        return None
+
+    if integration_name not in integrations.keys():
+        raise InvalidIntegrationException(
+            "Not connected to compute integration `%s`!" % integration_name
+        )
+
+    integration = integrations[integration_name]
     if integration.service == ServiceType.AIRFLOW:
         return EngineConfig(
             type=RuntimeType.AIRFLOW,
