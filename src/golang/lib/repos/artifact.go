@@ -37,7 +37,7 @@ type artifactReader interface {
 		DB database.Database,
 	) ([]uuid.UUID, error)
 
-	// GetMetricsBatchByUpstreamArtifactBatch returns a map of metrics Artifacts if they
+	// GetMetricsByUpstreamArtifactBatch returns a map of metrics Artifacts if they
 	// are direct downstream of any artifact whose ID belongs to the given artifactIDs.
 	// The returned map is keyed by the upstream artifact ID in the artifactIDs list.
 	GetMetricsByUpstreamArtifactBatch(

@@ -183,7 +183,7 @@ func (h *GetArtifactVersionsHandler) initializeLatestAndHistoricalVersions(
 	return latestVersions, historicalVersions, allArtifactIDs, nil
 }
 
-func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatues(
+func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatuses(
 	ctx context.Context,
 	latestVersions map[uuid.UUID]artifactVersions,
 	historicalVersions map[uuid.UUID]artifactVersions,
@@ -407,7 +407,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	// We track failed artifact versions and later on issue another query to fetch the
 	// corresponding operator's error message.
-	failedArtifactIDs, failedDAGResultIDs, err := h.updateVersionsWithArtifactResultStatues(
+	failedArtifactIDs, failedDAGResultIDs, err := h.updateVersionsWithArtifactResultStatuses(
 		ctx, latestVersions, historicalVersions, allArtifactIDs,
 	)
 	if err != nil {
