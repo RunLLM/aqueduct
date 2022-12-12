@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -88,7 +89,7 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 	// from workflow DAGs specified by `workflowDagIds`.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT from_id AS id 
-		FROM workflow_dag_edge 
+		FROM workflow_dag_edge
 		WHERE 
 			workflow_dag_id IN (%s) 
 		 	AND to_id IN (%s);`,
@@ -115,6 +116,61 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 
 func (*artifactReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
 	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
+}
+
+func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
+	ctx context.Context,
+	artifactIDs []uuid.UUID,
+	DB database.Database,
+) (map[uuid.UUID][]models.Artifact, error) {
+	query := fmt.Sprintf(
+		`SELECT DISTINCT
+			%s,
+			edge_artf_to_metrics_op.from_id as upstream_id
+		FROM
+			workflow_dag_edge edge_artf_to_metrics_op,
+			workflow_dag_edge edge_metrics_op_to_artf,
+			operator,
+			artifact 
+		WHERE 
+			artifact.id = edge_metrics_op_to_artf.to_id
+			AND edge_artf_to_metrics_op.to_id = operator.id 
+			AND edge_metrics_op_to_artf.from_id = operator.id
+			AND json_extract(operator.spec, '$.type') = '%s'
+			AND edge_artf_to_metrics_op.from_id IN (%s);`,
+		models.ArtifactColsWithPrefix(),
+		operator.MetricType,
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
+
+	type artifactWithUpstreamID struct {
+		// copy of artifact
+		ID          uuid.UUID           `db:"id"`
+		Name        string              `db:"name"`
+		Description string              `db:"description"`
+		Type        shared.ArtifactType `db:"type"`
+		UpstreamID  uuid.UUID           `db:"upstream_id"`
+	}
+
+	var queryRows []artifactWithUpstreamID
+	err := DB.Query(ctx, &queryRows, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[uuid.UUID][]models.Artifact, len(queryRows))
+	for _, queryRow := range queryRows {
+		results[queryRow.UpstreamID] = append(results[queryRow.UpstreamID], models.Artifact{
+			ID:          queryRow.ID,
+			Name:        queryRow.Name,
+			Description: queryRow.Description,
+			Type:        queryRow.Type,
+		})
+	}
+
+	return results, nil
 }
 
 func (*artifactWriter) Create(
