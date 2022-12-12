@@ -151,8 +151,8 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 			for _, metricResult := range metricResultsByDAGResultID[latestStatus.ResultID] {
 				var contentPtr *string = nil
-				storageObj := storage.NewStorage(&metricResult.StorageConfig)
 				if metricResult.Type.IsCompact() {
+					storageObj := storage.NewStorage(&metricResult.StorageConfig)
 					path := metricResult.ContentPath
 					contentBytes, err := storageObj.Get(ctx, path)
 					if err == nil {
