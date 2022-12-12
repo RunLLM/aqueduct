@@ -1,8 +1,7 @@
 import time
-import uuid
 from typing import Optional
 
-from aqueduct.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus
 
 import aqueduct
 

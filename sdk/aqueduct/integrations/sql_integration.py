@@ -3,18 +3,17 @@ from datetime import date
 from typing import List, Optional, Union
 
 import pandas as pd
-from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.preview import preview_artifact
+from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
+from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.integrations.save import save_artifact
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
     OperatorSpec,
@@ -22,7 +21,8 @@ from aqueduct.operators import (
     RelationalDBLoadParams,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
 
@@ -260,7 +260,7 @@ class RelationalDBIntegration(Integration):
 
         if execution_mode == ExecutionMode.EAGER:
             # Issue preview request since this is an eager execution.
-            artifact = artifact_utils.preview_artifact(self._dag, sql_output_artifact_id)
+            artifact = preview_artifact(self._dag, sql_output_artifact_id)
             assert isinstance(artifact, TableArtifact)
             return artifact
         else:

@@ -1,17 +1,16 @@
 import json
 from typing import List, Optional, Union
 
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.integrations.save import save_artifact
+from aqueduct.artifacts.save import save_artifact
+from aqueduct.artifacts.transform import to_artifact_class
+from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
     OperatorSpec,
@@ -19,9 +18,12 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
+
+from .naming import _generate_extract_op_name
 
 
 class S3Integration(Integration):
@@ -99,7 +101,7 @@ class S3Integration(Integration):
 
         integration_info = self._metadata
 
-        op_name = generate_extract_op_name(self._dag, integration_info.name, name)
+        op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()

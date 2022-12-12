@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
+from aqueduct.constants.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
 
 import aqueduct
 from aqueduct import Flow

@@ -3,11 +3,11 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, OperatorType
-from aqueduct.integrations.save import save_artifact
+from aqueduct.artifacts.save import save_artifact
+from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.logger import logger
-from aqueduct.operators import SaveConfig
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import SaveConfig
 
 
 class BaseArtifact(ABC):

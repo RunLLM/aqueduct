@@ -4,12 +4,12 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import ArtifactNeverComputedException
-from aqueduct.utils import format_header_for_print
+from aqueduct.models.dag import DAG
+from aqueduct.utils.utils import format_header_for_print
 
 
 class GenericArtifact(BaseArtifact):

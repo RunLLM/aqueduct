@@ -1,16 +1,18 @@
 import uuid
 from typing import Dict, List, Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.config import EngineConfig
-from aqueduct.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
-from aqueduct.operators import (
+from pydantic import BaseModel
+
+from .artifact import ArtifactMetadata
+from .config import EngineConfig
+from .operators import (
     LAMBDA_MAX_MEMORY_MB,
     LAMBDA_MIN_MEMORY_MB,
     Operator,
@@ -18,7 +20,6 @@ from aqueduct.operators import (
     get_operator_type,
     get_operator_type_from_spec,
 )
-from pydantic import BaseModel
 
 
 class Schedule(BaseModel):
@@ -287,6 +288,30 @@ class DAG(BaseModel):
         assert op_name is not None
         return op_name
 
+    def list_metrics_for_operator(self, op: Operator) -> List[Operator]:
+        """Returns all the metric operators on the given operator's outputs."""
+        metric_operators = []
+        for artf in op.outputs:
+            metric_operators.extend(
+                self.list_operators(
+                    filter_to=[OperatorType.METRIC],
+                    on_artifact_id=artf,
+                )
+            )
+        return metric_operators
+
+    def list_checks_for_operator(self, op: Operator) -> List[Operator]:
+        """Returns all the check operators on the given operator's outputs."""
+        check_operators = []
+        for artf in op.outputs:
+            check_operators.extend(
+                self.list_operators(
+                    filter_to=[OperatorType.CHECK],
+                    on_artifact_id=artf,
+                )
+            )
+        return check_operators
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:
@@ -356,7 +381,3 @@ class DAG(BaseModel):
                 del self.artifacts[str(artifact_id)]
             del self.operators[str(op_to_remove.id)]
             del self.operator_by_name[op_to_remove.name]
-
-
-# Initialize a module-level dag object, to be accessed and modified when the user construct the flow.
-__GLOBAL_DAG__ = DAG(metadata=Metadata())

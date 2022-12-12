@@ -3,7 +3,7 @@ import uuid
 from abc import ABC
 from typing import Any
 
-from aqueduct.enums import ServiceType
+from aqueduct.constants.enums import ServiceType
 from pydantic import BaseModel
 
 

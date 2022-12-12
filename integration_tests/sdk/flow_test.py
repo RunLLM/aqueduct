@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
-from aqueduct.enums import ExecutionStatus, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.models.config import FlowConfig
+from aqueduct.models.integration import IntegrationInfo
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.sentiment.model import sentiment_model
 from test_functions.simple.model import (
@@ -25,7 +26,7 @@ from utils import (
 )
 
 import aqueduct
-from aqueduct import FlowConfig, check, metric, op
+from aqueduct import check, metric, op
 
 
 def test_basic_flow(client, flow_name, data_integration, engine, validator):

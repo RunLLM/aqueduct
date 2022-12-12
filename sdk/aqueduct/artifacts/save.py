@@ -1,17 +1,23 @@
 import uuid
 
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, OperatorType
+from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.error import (
     InvalidIntegrationException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
-from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.operators import LoadSpec, Operator, OperatorSpec, S3LoadParams, UnionLoadParams
-from aqueduct.utils import generate_uuid
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import IntegrationInfo
+from aqueduct.models.operators import (
+    LoadSpec,
+    Operator,
+    OperatorSpec,
+    S3LoadParams,
+    UnionLoadParams,
+)
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.utils import generate_uuid
 
 
 def save_artifact(

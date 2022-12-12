@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional, Union
 
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     FunctionGranularity,
@@ -16,7 +16,7 @@ from aqueduct.enums import (
     ServiceType,
 )
 from aqueduct.error import AqueductError
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
 

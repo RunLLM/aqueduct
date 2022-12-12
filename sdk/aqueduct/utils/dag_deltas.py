@@ -3,17 +3,19 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import DAG
-from aqueduct.enums import OperatorType
+from aqueduct.constants.enums import OperatorType
 from aqueduct.error import (
     InternalAqueductError,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
-from aqueduct.operators import Operator, OperatorSpec, get_operator_type
-from aqueduct.utils import construct_param_spec, infer_artifact_type
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
+
+from .type_inference import infer_artifact_type
+from .utils import construct_param_spec
 
 
 class DAGDelta(ABC):
