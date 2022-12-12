@@ -67,7 +67,7 @@ class TableArtifact(BaseArtifact):
 
         >>> df = output_artifact.get()
         >>> print(df.head())
-        >>> output_artifact.save(warehouse.config(table_name="output_table"))
+        >>> warehouse.save(output_artifact, table_name="output_table", update_mode="replace")
     """
 
     def __init__(

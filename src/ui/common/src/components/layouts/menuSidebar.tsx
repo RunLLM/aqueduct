@@ -10,11 +10,10 @@ import { Link, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
-import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
@@ -121,13 +120,9 @@ const MenuSidebar: React.FC<{
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
 
-  useCallback(() => {
+  useEffect(() => {
     setCurrentPage(location.pathname);
-
-    if (user) {
-      dispatch(handleFetchNotifications({ user }));
-    }
-  }, [dispatch, location.pathname, user]);
+  }, [dispatch, location.pathname]);
 
   const pathPrefix = getPathPrefix();
   return (

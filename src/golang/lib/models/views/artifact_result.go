@@ -12,12 +12,13 @@ import (
 // ArtifactResultStatus contains the status of an ArtifactResult as well
 // as additional metadata
 type ArtifactResultStatus struct {
-	ArtifactID       uuid.UUID                  `db:"artifact_id" json:"artifact_id"`
-	ArtifactResultID uuid.UUID                  `db:"artifact_result_id" json:"artifact_result_id"`
-	DAGResultID      uuid.UUID                  `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	Status           mdl_shared.ExecutionStatus `db:"status" json:"status"`
-	Timestamp        time.Time                  `db:"timestamp" json:"timestamp"`
-	ContentPath      string                     `db:"content_path" json:"content_path"`
+	ArtifactID       uuid.UUID                    `db:"artifact_id" json:"artifact_id"`
+	ArtifactResultID uuid.UUID                    `db:"artifact_result_id" json:"artifact_result_id"`
+	DAGResultID      uuid.UUID                    `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	Status           mdl_shared.ExecutionStatus   `db:"status" json:"status"`
+	Timestamp        time.Time                    `db:"timestamp" json:"timestamp"`
+	Metadata         artifact_result.NullMetadata `db:"metadata" json:"metadata"`
+	ContentPath      string                       `db:"content_path" json:"content_path"`
 }
 
 // ArtifactWithResult is a concated view of artifact and artifact_result

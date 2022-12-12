@@ -19,57 +19,54 @@ from utils import (
     generate_new_flow_name,
     generate_table_name,
     publish_flow_test,
+    save,
     trigger_flow_test,
     wait_for_flow_runs,
 )
 
 import aqueduct
-from aqueduct import FlowConfig, LoadUpdateMode, check, metric, op
+from aqueduct import FlowConfig, check, metric, op
 
 
-def test_basic_flow(client, flow_name, data_integration, engine):
+def test_basic_flow(client, flow_name, data_integration, engine, validator):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
-    publish_flow_test(
+    flow = publish_flow_test(
         client,
         output_artifact,
         name=flow_name(),
         engine=engine,
     )
+    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
 
 
-def test_sentiment_flow(client, flow_name, data_integration, engine):
+def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
     """Actually run the full sentiment model (with nltk dependency)."""
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
-    publish_flow_test(
+    flow = publish_flow_test(
         client,
         output_artifact,
         name=flow_name(),
         engine=engine,
     )
+    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
 
 
-def test_complex_flow(client, flow_name, data_integration, engine):
+def test_complex_flow(client, flow_name, data_integration, engine, validator):
     db = client.integration(data_integration)
     sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
     sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
     fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact1, sql_artifact2)
     output_artifact = dummy_model(fn_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
     @check()
     def successful_check(df):
@@ -95,6 +92,7 @@ def test_complex_flow(client, flow_name, data_integration, engine):
         name=flow_name(),
         engine=engine,
     )
+    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
 
     # Metrics and checks should have been computed.
     flow_run = flow.latest()
@@ -109,6 +107,7 @@ def test_complex_flow(client, flow_name, data_integration, engine):
         engine=engine,
         checks=[success_check],  # failing_check will no longer be included.
     )
+    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
 
     # Only the explicitly defined metrics and checks should have been included in this second run.
     flow_run = flow.latest()
@@ -124,12 +123,8 @@ def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
 
     fn_artifact1 = dummy_sentiment_model(sql_artifact1)
     fn_artifact2 = dummy_model(sql_artifact2)
-    fn_artifact1.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
-    fn_artifact2.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, fn_artifact1)
+    save(db, fn_artifact2)
 
     publish_flow_test(
         client,
@@ -145,9 +140,7 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
     )
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
     # Execute the flow 1 minute from now.
     execute_at = datetime.now() + timedelta(minutes=1)
@@ -208,9 +201,7 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -231,9 +222,7 @@ def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -251,9 +240,8 @@ def test_get_artifact_reuse_for_computation(client, flow_name, data_integration,
     db = client.integration(data_integration)
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    output_artifact.save(
-        config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-    )
+    save(db, output_artifact)
+
     flow = publish_flow_test(
         client,
         output_artifact,
@@ -313,7 +301,8 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return initial_table
 
     table = generate_initial_table()
-    table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
+    table_name = generate_table_name()
+    save(db, table, name=table_name)
 
     setup_flow = publish_flow_test(
         client,
@@ -327,7 +316,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return df
 
     # Create a new flow that extracts this data.
-    output = db.sql("Select * from test_table", name="Test Table Query")
+    output = db.sql("SELECT * FROM %s" % table_name, name="Test Table Query")
     assert output.get().equals(initial_table)
 
     flow = publish_flow_test(
@@ -343,7 +332,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
 
     table = generate_new_table()
-    table.save(db.config(table="test_table", update_mode=LoadUpdateMode.REPLACE))
+    save(db, table, name=table_name)
     publish_flow_test(
         client,
         artifacts=table,

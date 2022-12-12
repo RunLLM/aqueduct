@@ -136,7 +136,6 @@ func (*operatorResultReader) GetCheckStatusByArtifactBatch(
 		`SELECT DISTINCT
 			workflow_dag_edge.from_id AS artifact_id,
 			operator.name AS operator_name,
-			operator_result.status, 
 		 	operator_result.execution_state as metadata,
 			operator_result.workflow_dag_result_id 
 		FROM workflow_dag_edge, operator, operator_result 

@@ -64,13 +64,19 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     ),
   };
 
+  const dataSortedByLatest = historicalData.data.sort(
+    (x, y) =>
+      Date.parse(y['timestamp'] as string) -
+      Date.parse(x['timestamp'] as string)
+  );
+
   return (
     <Box mt="32px">
       <Typography variant="h6" fontWeight="normal">
         History
       </Typography>
 
-      {historicalData.data.map((entry, index) => {
+      {dataSortedByLatest.map((entry, index) => {
         let backgroundColor, hoverColor, icon;
         if (entry.status === ExecutionStatus.Succeeded) {
           backgroundColor = theme.palette.green[100];

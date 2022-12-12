@@ -26,6 +26,7 @@ type Metadata struct {
 	SerializationType SerializationType `json:"serialization_type,omitempty"`
 	// TODO: Change this to shared.ArtifactType when ArtifactResult refactor occurs
 	ArtifactType artifact.Type `json:"artifact_type,omitempty"`
+	PythonType   string        `json:"python_type,omitempty"`
 }
 
 type NullMetadata struct {

@@ -9,6 +9,8 @@ from aqueduct.dag import DAG
 from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     Operator,
@@ -142,7 +144,7 @@ class S3Integration(Integration):
             return to_artifact_class(self._dag, output_artifact_id, artifact_type)
 
     def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
-        """
+        """TODO(ENG-2035): Deprecated and will be removed.
         Configuration for saving to S3 Integration.
 
         Arguments:
@@ -153,9 +155,34 @@ class S3Integration(Integration):
         Returns:
             SaveConfig object to use in Artifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=S3LoadParams(filepath=filepath, format=format),
+        )
+
+    def save(
+        self, artifact: BaseArtifact, filepath: str, format: Optional[S3TableFormat] = None
+    ) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into S3.
+            filepath:
+                The S3 path to save to. Will overwrite any existing object at that path.
+            format:
+                Defines the format that the artifact will be saved as.
+                Options are "CSV", "JSON", "Parquet".
+        """
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=S3LoadParams(filepath=filepath, format=format),
         )
 
     def describe(self) -> None:

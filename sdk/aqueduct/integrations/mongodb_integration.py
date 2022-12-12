@@ -10,7 +10,9 @@ from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.integration import Integration, IntegrationInfo
+from aqueduct.integrations.save import save_artifact
 from aqueduct.integrations.sql_integration import find_parameter_artifacts, find_parameter_names
+from aqueduct.logger import logger
 from aqueduct.operators import (
     ExtractSpec,
     MongoExtractParams,
@@ -129,9 +131,33 @@ class MongoDBCollectionIntegration(Integration):
             return TableArtifact(self._dag, output_artf_id)
 
     def config(self, update_mode: LoadUpdateMode) -> SaveConfig:
+        """TODO(ENG-2035): Deprecated and will be removed."""
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=self._collection_name, update_mode=update_mode),
+        )
+
+    def save(self, artifact: BaseArtifact, update_mode: LoadUpdateMode) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into this collection.
+            update_mode:
+                Defines the semantics of the save if a table already exists.
+                Options are "replace", "append" (row-wise), or "fail" (if table already exists).
+        """
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=RelationalDBLoadParams(
+                table=self._collection_name, update_mode=update_mode
+            ),
         )
 
 
@@ -163,7 +189,31 @@ class MongoDBIntegration(Integration):
         self._metadata.describe()
 
     def config(self, collection: str, update_mode: LoadUpdateMode) -> SaveConfig:
+        """TODO(ENG-2035): Deprecated and will be removed."""
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=RelationalDBLoadParams(table=collection, update_mode=update_mode),
+        )
+
+    def save(self, artifact: BaseArtifact, collection: str, update_mode: LoadUpdateMode) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into the given collection.
+            collection:
+                The name of the collection to save to.
+            update_mode:
+                Defines the semantics of the save if a collection already exists.
+                Options are "replace", "append" (row-wise), or "fail" (if table already exists).
+        """
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=RelationalDBLoadParams(table=collection, update_mode=update_mode),
         )

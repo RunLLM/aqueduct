@@ -88,5 +88,5 @@ class GenericArtifact(BaseArtifact):
         readable_dict["Inputs"] = [
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]
-        print(format_header_for_print(f"'{input_operator.name}' {self._get_type()} Artifact"))
+        print(format_header_for_print(f"'{input_operator.name}' {self.type()} Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))

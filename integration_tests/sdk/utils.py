@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.enums import ExecutionStatus
+from aqueduct.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
 
 import aqueduct
 from aqueduct import Flow
@@ -13,6 +13,18 @@ from aqueduct import Flow
 #  since that is generated in the test by `publish_flow()`. Therefore, we must register every
 #  flow we publish in `publish_flow_test` in this dictionary.
 flow_name_to_id: Dict[str, uuid.UUID] = {}
+
+# Toggles whether we should test deprecated code paths. The is useful for ensuring both the new and
+# old code paths continue to work when the API changes, but we want to continue to ensure backwards
+# compatibility for a while.
+use_deprecated_code_paths = False
+
+# Global map tracking all the artifacts we've saved in the test suite and the path that they were saved to.
+artifact_id_to_saved_identifier: Dict[str, str] = {}
+
+
+def use_deprecated_code_path() -> bool:
+    return use_deprecated_code_paths
 
 
 def generate_new_flow_name() -> str:
@@ -185,6 +197,31 @@ def wait_for_flow_runs(
         poll_threshold=1,
         timeout_comment="Timed out waiting for workflow run to complete.",
     )
+
+
+def save(
+    integration,
+    artifact: BaseArtifact,
+    name: Optional[str] = None,
+    update_mode: Optional[LoadUpdateMode] = None,
+):
+    """NOTE: if `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently."""
+    assert (
+        integration._metadata.service in RelationalDBServices
+    ), "Currently, only relational data integrations are supported."
+
+    if name is None:
+        name = generate_table_name()
+    if update_mode is None:
+        update_mode = LoadUpdateMode.REPLACE
+
+    if use_deprecated_code_path():
+        artifact.save(integration.config(name, update_mode))
+    else:
+        integration.save(artifact, name, update_mode)
+
+    # Record exactly where the artifact was saved, so we can validate the data later, after the flow is published.
+    artifact_id_to_saved_identifier[str(artifact.id())] = name
 
 
 def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:

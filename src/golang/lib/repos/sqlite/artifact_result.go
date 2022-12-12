@@ -125,6 +125,7 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 			artifact_result.workflow_dag_result_id, 
 			artifact_result.status,
 			artifact_result.content_path,
+			artifact_result.metadata,
 			workflow_dag_result.created_at AS timestamp 
 		FROM artifact_result, workflow_dag_result 
 		WHERE 
