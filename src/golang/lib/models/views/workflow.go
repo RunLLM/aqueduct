@@ -13,6 +13,8 @@ import (
 // and additional Workflow metadata.
 type LatestWorkflowStatus struct {
 	ID          uuid.UUID                  `db:"id" json:"id"`
+	DagID       uuid.UUID                  `db:"dag_id" json:"dag_id"`
+	ResultID    uuid.UUID                  `db:"result_id" json:"result_id"`
 	Name        string                     `db:"name" json:"name"`
 	Description string                     `db:"description" json:"description"`
 	CreatedAt   time.Time                  `db:"created_at" json:"created_at"`
