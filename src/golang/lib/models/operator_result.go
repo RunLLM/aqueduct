@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/google/uuid"
 )
 
@@ -24,10 +24,13 @@ const (
 
 // A OperatorResult maps to the operator_result table.
 type OperatorResult struct {
-	Id          uuid.UUID                 `db:"id" json:"id"`
-	DAGResultID uuid.UUID                 `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	OperatorID  uuid.UUID                 `db:"operator_id" json:"operator_id"`
-	ExecState   shared.NullExecutionState `db:"execution_state" json:"execution_state"`
+	ID          uuid.UUID `db:"id" json:"id"`
+	DAGResultID uuid.UUID `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	OperatorID  uuid.UUID `db:"operator_id" json:"operator_id"`
+	// TODO(ENG-1453): Remove status. This field is redundant now that ExecState exists.
+	//  Avoid using status in new code.
+	Status    shared.ExecutionStatus    `db:"status" json:"status"`
+	ExecState shared.NullExecutionState `db:"execution_state" json:"execution_state"`
 }
 
 // OperatorResultCols returns a comma-separated string of all OperatorResult columns.

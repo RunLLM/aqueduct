@@ -4,14 +4,13 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
-from aqueduct.artifacts import utils as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import (
+from aqueduct.artifacts.preview import preview_artifacts
+from aqueduct.artifacts.transform import to_artifact_class
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionMode,
@@ -20,7 +19,8 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.operators import (
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
     MetricSpec,
@@ -28,18 +28,11 @@ from aqueduct.operators import (
     OperatorSpec,
     ResourceConfig,
 )
-from aqueduct.parameter_utils import create_param
-from aqueduct.utils import (
-    CheckFunction,
-    MetricFunction,
-    Number,
-    UserFunction,
-    artifact_name_from_op_name,
-    generate_uuid,
-    serialize_function,
-)
+from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
-from aqueduct import dag as dag_module
 from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
@@ -105,7 +98,7 @@ def wrap_spec(
                 % artifact.name
             )
 
-    dag = dag_module.__GLOBAL_DAG__
+    dag = globals.__GLOBAL_DAG__
 
     # Check that all the artifact ids exist in the dag.
     for artifact in input_artifacts:
@@ -150,7 +143,7 @@ def wrap_spec(
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
-        output_artifacts = artifact_utils.preview_artifacts(dag, output_artifact_ids)
+        output_artifacts = preview_artifacts(dag, output_artifact_ids)
     else:
         # We are in lazy mode.
         output_artifacts = [
@@ -235,7 +228,7 @@ def _convert_input_arguments_to_parameters(
         param.kind in disallowed_kinds for param in func_params.values()
     )
 
-    dag = dag_module.__GLOBAL_DAG__
+    dag = globals.__GLOBAL_DAG__
     param_names = list(func_params.keys())
 
     artifacts = list(input_artifacts)
@@ -257,7 +250,7 @@ creating a parameter named "%s", but an existing operator or parameter with the 
                     % (arg_name, arg_name)
                 )
 
-            new_artifact = create_param(dag=dag, name=arg_name, default=artifact)
+            new_artifact = create_param_artifact(dag=dag, name=arg_name, default=artifact)
             warnings.warn(
                 """Input to function argument "%s" is not an artifact type. We have implicitly \
 created a parameter named "%s" and your input will be used as its default value. This parameter \
@@ -570,6 +563,11 @@ def metric(
             assert isinstance(name, str)
             assert isinstance(description, str)
 
+            if len(input_artifacts) == 0:
+                raise InvalidUserArgumentException(
+                    "Metrics must have an input. Did you forget to call this metric on an artifact?"
+                )
+
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
                 func_params=inspect.signature(func).parameters,
@@ -712,6 +710,11 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if len(input_artifacts) == 0:
+                raise InvalidUserArgumentException(
+                    "Check must have an input. Did you forget to call this check on an artifact?"
+                )
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,

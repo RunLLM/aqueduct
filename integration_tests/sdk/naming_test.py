@@ -40,6 +40,7 @@ def test_extract_with_explicit_name_collision(client, data_integration):
     fn_artifact = dummy_sentiment_model(sql_artifact_1)
 
     sql_artifact_2 = db.sql(query=SENTIMENT_SQL_QUERY, name="sql query")
+    assert sql_artifact_2.name() == "sql query artifact"
 
     # Cannot preview an artifact with a dependency that has been deleted,
     # since it itself would have been removed from the dag.

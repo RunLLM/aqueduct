@@ -10,10 +10,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -44,8 +43,8 @@ const (
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
 type getArtifactResultArgs struct {
 	*aq_context.AqContext
-	workflowDagResultId uuid.UUID
-	artifactId          uuid.UUID
+	dagResultID uuid.UUID
+	artifactID  uuid.UUID
 }
 
 type artifactResultMetadata struct {
@@ -59,6 +58,7 @@ type artifactResultMetadata struct {
 	Schema            []map[string]string               `json:"schema"`
 	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	ArtifactType      artifact.Type                     `json:"artifact_type"`
+	PythonType        string                            `json:"python_type"`
 }
 
 type getArtifactResultResponse struct {
@@ -71,11 +71,12 @@ type getArtifactResultResponse struct {
 type GetArtifactResultHandler struct {
 	GetHandler
 
-	Database                database.Database
-	ArtifactReader          artifact.Reader
-	ArtifactResultReader    artifact_result.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
+	Database database.Database
+
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGResultRepo      repos.DAGResult
 }
 
 func (*GetArtifactResultHandler) Name() string {
@@ -133,22 +134,22 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, statusCode, err
 	}
 
-	workflowDagResultIdStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
-	workflowDagResultId, err := uuid.Parse(workflowDagResultIdStr)
+	dagResultIDStr := chi.URLParam(r, routes.WorkflowDagResultIdUrlParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow dag result ID.")
 	}
 
-	artifactIdStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
-	artifactId, err := uuid.Parse(artifactIdStr)
+	artifactIDStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
+	artifactID, err := uuid.Parse(artifactIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed artifact ID.")
 	}
 
-	ok, err := h.ArtifactReader.ValidateArtifactOwnership(
+	ok, err := h.ArtifactRepo.ValidateOrg(
 		r.Context(),
-		aqContext.OrganizationId,
-		artifactId,
+		artifactID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -159,9 +160,9 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &getArtifactResultArgs{
-		AqContext:           aqContext,
-		workflowDagResultId: workflowDagResultId,
-		artifactId:          artifactId,
+		AqContext:   aqContext,
+		dagResultID: dagResultID,
+		artifactID:  artifactID,
 	}, http.StatusOK, nil
 }
 
@@ -170,34 +171,30 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	emptyResp := getArtifactResultResponse{}
 
-	workflowDag, err := h.WorkflowDagReader.GetWorkflowDagByWorkflowDagResultId(
+	dag, err := h.DAGRepo.GetByDAGResult(
 		ctx,
-		args.workflowDagResultId,
+		args.dagResultID,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
-	dbWorkflowDagResult, err := h.WorkflowDagResultReader.GetWorkflowDagResult(
-		ctx,
-		args.workflowDagResultId,
-		h.Database,
-	)
+	dagResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
-	dbArtifact, err := h.ArtifactReader.GetArtifact(ctx, args.artifactId, h.Database)
+	artifact, err := h.ArtifactRepo.Get(ctx, args.artifactID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
 	execState := shared.ExecutionState{}
-	dbArtifactResult, err := h.ArtifactResultReader.GetArtifactResultByWorkflowDagResultIdAndArtifactId(
+	dbArtifactResult, err := h.ArtifactResultRepo.GetByArtifactAndDAGResult(
 		ctx,
-		args.workflowDagResultId,
-		args.artifactId,
+		args.artifactID,
+		args.dagResultID,
 		h.Database,
 	)
 	if err != nil {
@@ -205,7 +202,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 		}
 		// ArtifactResult was never created, so we use the WorkflowDagResult's status as this ArtifactResult's status
-		execState.Status = dbWorkflowDagResult.Status
+		execState.Status = shared.ExecutionStatus(dagResult.Status)
 	} else {
 		execState.Status = dbArtifactResult.Status
 	}
@@ -217,22 +214,23 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	metadata := artifactResultMetadata{
-		Status:            execState.Status,
-		ExecState:         execState,
-		Name:              dbArtifact.Name,
-		ArtifactType:      dbArtifactResult.Metadata.ArtifactType,
-		SerializationType: dbArtifactResult.Metadata.SerializationType,
+		Status:    execState.Status,
+		ExecState: execState,
+		Name:      artifact.Name,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {
 		metadata.Schema = dbArtifactResult.Metadata.Schema
+		metadata.ArtifactType = dbArtifactResult.Metadata.ArtifactType
+		metadata.SerializationType = dbArtifactResult.Metadata.SerializationType
+		metadata.PythonType = dbArtifactResult.Metadata.PythonType
 	}
 
 	response := &getArtifactResultResponse{
 		Metadata: &metadata,
 	}
 
-	data, err := storage.NewStorage(&workflowDag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
+	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
 	if err == nil {
 		response.Data = data
 	} else if err != storage.ErrObjectDoesNotExist {

@@ -1,10 +1,11 @@
-import aqueduct
-
 ###
 # Workflow that extracts a table, and simply apply a row-count metric
 # with a check to enforce the row-count is larger than 0.
 # This workflow is published twice.
 ###
+from aqueduct.constants.enums import CheckSeverity
+
+import aqueduct
 
 
 def setup_flow_with_metrics_and_checks(
@@ -20,7 +21,7 @@ def setup_flow_with_metrics_and_checks(
     def size(df):
         return len(df)
 
-    @aqueduct.check(severity=aqueduct.CheckSeverity.ERROR)
+    @aqueduct.check(severity=CheckSeverity.ERROR)
     def check(size):
         return size > 0
 

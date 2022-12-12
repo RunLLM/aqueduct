@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/dropbox/godropbox/errors"
@@ -42,10 +41,11 @@ type listArtifactResultsArgs struct {
 type ListArtifactResultsHandler struct {
 	GetHandler
 
-	Database             database.Database
-	ArtifactReader       db_artifact.Reader
-	ArtifactResultReader artifact_result.Reader
-	WorkflowDagReader    workflow_dag.Reader
+	Database database.Database
+
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
 }
 
 func (*ListArtifactResultsHandler) Name() string {
@@ -79,17 +79,17 @@ func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, e
 
 func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listArtifactResultsArgs)
-	artfId := args.ArtifactId
-	wfId := args.WorkflowId
+	artfID := args.ArtifactId
+	wfID := args.WorkflowId
 
 	emptyResponse := listArtifactResultsResponse{}
 
-	artf, err := h.ArtifactReader.GetArtifact(ctx, artfId, h.Database)
+	artf, err := h.ArtifactRepo.Get(ctx, artfID, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact.")
 	}
 
-	results, err := h.ArtifactResultReader.GetArtifactResultsByArtifactNameAndWorkflowId(ctx, wfId, artf.Name, h.Database)
+	results, err := h.ArtifactResultRepo.GetByArtifactNameAndWorkflow(ctx, artf.Name, wfID, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact results.")
 	}
@@ -100,26 +100,26 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	resultIds := make([]uuid.UUID, 0, len(results))
 	for _, result := range results {
-		resultIds = append(resultIds, result.Id)
+		resultIds = append(resultIds, result.ID)
 	}
 
-	dbDagByResultId, err := h.WorkflowDagReader.GetWorkflowDagsMapByArtifactResultIds(ctx, resultIds, h.Database)
+	artfResultToDAG, err := h.DAGRepo.GetByArtifactResultBatch(ctx, resultIds, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve workflow dags.")
 	}
 
 	// maps from db dag Ids
-	dbDagByDagId := make(map[uuid.UUID]workflow_dag.DBWorkflowDag, len(dbDagByResultId))
-	artfResultByDagId := make(map[uuid.UUID][]artifact_result.ArtifactResult, len(dbDagByResultId))
+	dbDagByDagId := make(map[uuid.UUID]models.DAG, len(artfResultToDAG))
+	artfResultByDagId := make(map[uuid.UUID][]models.ArtifactResult, len(artfResultToDAG))
 	for _, artfResult := range results {
-		if dbDag, ok := dbDagByResultId[artfResult.Id]; ok {
-			if _, okDagsMap := dbDagByDagId[dbDag.Id]; !okDagsMap {
-				dbDagByDagId[dbDag.Id] = dbDag
+		if dbDag, ok := artfResultToDAG[artfResult.ID]; ok {
+			if _, okDagsMap := dbDagByDagId[dbDag.ID]; !okDagsMap {
+				dbDagByDagId[dbDag.ID] = dbDag
 			}
 
-			artfResultByDagId[dbDag.Id] = append(artfResultByDagId[dbDag.Id], artfResult)
+			artfResultByDagId[dbDag.ID] = append(artfResultByDagId[dbDag.ID], artfResult)
 		} else {
-			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.Id)
+			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.ID)
 		}
 	}
 
@@ -136,7 +136,7 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 				if artf.Type.IsCompact() && !artfResult.ExecState.IsNull && artfResult.ExecState.ExecutionState.Terminated() {
 					contentBytes, err := storageObj.Get(ctx, artfResult.ContentPath)
 					if err != nil {
-						return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.Id))
+						return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.ID))
 					}
 
 					contentStr := string(contentBytes)

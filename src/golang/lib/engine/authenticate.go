@@ -11,10 +11,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	TestFilePath = "src/"
-)
-
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	conf, err := ParseK8sConfig(authConf)

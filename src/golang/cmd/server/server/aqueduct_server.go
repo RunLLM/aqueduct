@@ -47,6 +47,7 @@ type AqServer struct {
 	Database database.Database
 	*Readers
 	*Writers
+	*Repos
 
 	// Only the following group of fields will be reinitialized when the server is restarted
 	GithubManager github.Manager
@@ -103,6 +104,7 @@ func NewAqServer() *AqServer {
 		Database:         db,
 		Readers:          readers,
 		Writers:          writers,
+		Repos:            CreateRepos(),
 		UnderMaintenance: atomic.Value{},
 		RequestMutex:     sync.RWMutex{},
 	}
@@ -130,9 +132,6 @@ func NewAqServer() *AqServer {
 	testUser, err := CreateTestAccount(
 		ctx,
 		s,
-		"",
-		"",
-		"",
 		config.APIKey(),
 		accountOrganizationId,
 	)
@@ -148,7 +147,7 @@ func NewAqServer() *AqServer {
 	}
 
 	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationWriter, s.Database, s.Vault)
+		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database, s.Vault)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)
@@ -199,7 +198,7 @@ func (s *AqServer) Init() error {
 
 	if err := syncVaultWithStorage(
 		vault,
-		s.IntegrationReader,
+		s.IntegrationRepo,
 		s.Database,
 	); err != nil {
 		return err
@@ -212,7 +211,7 @@ func (s *AqServer) Init() error {
 		vault,
 		aqPath,
 		GetEngineReaders(s.Readers),
-		GetEngineWriters(s.Writers),
+		GetEngineRepos(s.Repos),
 	)
 	if err != nil {
 		return err
@@ -260,7 +259,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 		middleware = alice.New(
 			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
-			authentication.RequireApiKey(s.UserReader, s.Database),
+			authentication.RequireApiKey(s.UserRepo, s.Database),
 		)
 	} else {
 		panic(handler.ErrUnsupportedAuthMethod)

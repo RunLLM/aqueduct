@@ -11,8 +11,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -67,24 +67,24 @@ func shouldStopExecution(execState *shared.ExecutionState) bool {
 
 func generateJobManagerConfig(
 	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	aqPath string,
 	vault vault.Vault,
 ) (job.Config, error) {
-	switch dbWorkflowDag.EngineConfig.Type {
+	switch dag.EngineConfig.Type {
 	case shared.AqueductEngineType:
 		return &job.ProcessConfig{
 			BinaryDir:          path.Join(aqPath, job.BinaryDir),
 			OperatorStorageDir: path.Join(aqPath, job.OperatorStorageDir),
 		}, nil
 	case shared.K8sEngineType:
-		if dbWorkflowDag.StorageConfig.Type != shared.S3StorageType && dbWorkflowDag.StorageConfig.Type != shared.GCSStorageType {
+		if dag.StorageConfig.Type != shared.S3StorageType && dag.StorageConfig.Type != shared.GCSStorageType {
 			return nil, errors.New("Must use S3 or GCS storage config for K8s engine.")
 		}
 
 		var awsAccessKeyId, awsSecretAccessKey string
-		if dbWorkflowDag.StorageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(dbWorkflowDag.StorageConfig.S3Config)
+		if dag.StorageConfig.Type == shared.S3StorageType {
+			keyId, secretKey, err := extractAwsCredentials(dag.StorageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -93,7 +93,7 @@ func generateJobManagerConfig(
 			awsSecretAccessKey = secretKey
 		}
 
-		k8sIntegrationId := dbWorkflowDag.EngineConfig.K8sConfig.IntegrationId
+		k8sIntegrationId := dag.EngineConfig.K8sConfig.IntegrationId
 		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
@@ -111,10 +111,10 @@ func generateJobManagerConfig(
 			AwsRegion:          DefaultAwsRegion,
 		}, nil
 	case shared.LambdaEngineType:
-		if dbWorkflowDag.StorageConfig.Type != shared.S3StorageType {
+		if dag.StorageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 for Lambda engine.")
 		}
-		lambdaIntegrationId := dbWorkflowDag.EngineConfig.LambdaConfig.IntegrationId
+		lambdaIntegrationId := dag.EngineConfig.LambdaConfig.IntegrationId
 		config, err := auth.ReadConfigFromSecret(ctx, lambdaIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
@@ -125,8 +125,8 @@ func generateJobManagerConfig(
 		}
 
 		var awsAccessKeyId, awsSecretAccessKey string
-		if dbWorkflowDag.StorageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(dbWorkflowDag.StorageConfig.S3Config)
+		if dag.StorageConfig.Type == shared.S3StorageType {
+			keyId, secretKey, err := extractAwsCredentials(dag.StorageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}

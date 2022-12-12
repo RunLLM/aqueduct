@@ -2,20 +2,13 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 from aqueduct.artifacts import bool_artifact
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionMode,
@@ -24,15 +17,24 @@ from aqueduct.enums import (
     OperatorType,
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.operators import CheckSpec, FunctionSpec, Operator, OperatorSpec, get_operator_type
-from aqueduct.utils import (
-    Number,
-    artifact_name_from_op_name,
-    format_header_for_print,
-    generate_uuid,
-    get_description_for_metric,
-    serialize_function,
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import (
+    CheckSpec,
+    FunctionSpec,
+    Operator,
+    OperatorSpec,
+    get_operator_type,
 )
+from aqueduct.type_annotations import Number
+from aqueduct.utils.dag_deltas import (
+    AddOrReplaceOperatorDelta,
+    RemoveCheckOperatorDelta,
+    apply_deltas_to_dag,
+)
+from aqueduct.utils.describe import get_readable_description_for_metric
+from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.utils import artifact_name_from_op_name, format_header_for_print, generate_uuid
 
 from aqueduct import globals
 
@@ -304,7 +306,7 @@ class NumericArtifact(BaseArtifact):
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         readable_dict = super()._describe()
         if get_operator_type(input_operator) is OperatorType.METRIC:
-            general_dict = get_description_for_metric(input_operator, self._dag)
+            general_dict = get_readable_description_for_metric(input_operator, self._dag)
             # Remove because values already in `readable_dict`
             general_dict.pop("Label")
             general_dict.pop("Granularity")

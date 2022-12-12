@@ -41,3 +41,155 @@ func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow)
 		requireDeepEqual(t, expectedWorkflow, foundWorkflow)
 	}
 }
+
+// requireDeepEqualIntegration asserts that the expected and actual lists of Integrations
+// contain the same elements.
+func requireDeepEqualIntegrations(t *testing.T, expected, actual []models.Integration) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedIntegration := range expected {
+		found := false
+		var foundIntegration models.Integration
+
+		for _, actualIntegration := range actual {
+			if expectedIntegration.ID == actualIntegration.ID {
+				found = true
+				foundIntegration = actualIntegration
+				break
+			}
+		}
+		require.True(t, found, "Unable to find integration: %v", expectedIntegration)
+		requireDeepEqual(t, expectedIntegration, foundIntegration)
+	}
+}
+
+// requireDeepEqualArtifactResults asserts that the expected and actual lists of ArtifactResults
+// containt the same elements.
+func requireDeepEqualArtifactResults(t *testing.T, expected, actual []models.ArtifactResult) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedArtifactResult := range expected {
+		found := false
+		var foundArtifactResult models.ArtifactResult
+
+		for _, actualArtifactResult := range actual {
+			if expectedArtifactResult.ID == actualArtifactResult.ID {
+				found = true
+				foundArtifactResult = actualArtifactResult
+				break
+			}
+		}
+		require.True(t, found, "Unable to find ArtifactResult: %v", expectedArtifactResult)
+		requireDeepEqual(t, expectedArtifactResult, foundArtifactResult)
+	}
+}
+
+// requireDeepEqualDAGs asserts that the expected and actual lists of DAGs
+// contain the same elements.
+func requireDeepEqualDAGs(t *testing.T, expected, actual []models.DAG) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedDAG := range expected {
+		found := false
+		var foundDAG models.DAG
+
+		for _, actualDAG := range actual {
+			if expectedDAG.ID == actualDAG.ID {
+				found = true
+				foundDAG = actualDAG
+				break
+			}
+		}
+		require.True(t, found, "Unable to find DAG: %v", expectedDAG)
+		requireDeepEqual(t, expectedDAG, foundDAG)
+	}
+}
+
+// requireDeepEqualArtifact asserts that the expected and actual lists of Artifacts
+// contain the same elements.
+func requireDeepEqualArtifacts(t *testing.T, expected, actual []models.Artifact) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedArtifact := range expected {
+		found := false
+		var foundArtifact models.Artifact
+
+		for _, actualArtifact := range actual {
+			if expectedArtifact.ID == actualArtifact.ID {
+				found = true
+				foundArtifact = actualArtifact
+				break
+			}
+		}
+		require.True(t, found, "Unable to find Artifact: %v", expectedArtifact)
+		requireDeepEqual(t, expectedArtifact, foundArtifact)
+	}
+}
+
+// requireDeepEqualDAGResults asserts that the expected and actual lists
+// of DAGResults contain the same elements.
+func requireDeepEqualDAGResults(t *testing.T, expected, actual []models.DAGResult) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedDAGResult := range expected {
+		found := false
+		var foundDAGResult models.DAGResult
+
+		for _, actualDAGResult := range actual {
+			if expectedDAGResult.ID == actualDAGResult.ID {
+				found = true
+				foundDAGResult = actualDAGResult
+				break
+			}
+		}
+
+		require.True(t, found, "Unable to find DAGResult: %v", expectedDAGResult)
+		requireDeepEqual(t, expectedDAGResult, foundDAGResult)
+	}
+}
+
+// requireDeepEqualDAGEdges asserts that the expected and actual lists
+// of DAGEdges contain the same elements.
+func requireDeepEqualDAGEdges(t *testing.T, expected, actual []models.DAGEdge) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedDAGEdge := range expected {
+		found := false
+		var foundDAGEdge models.DAGEdge
+
+		for _, actualDAGEdge := range actual {
+			if expectedDAGEdge.DagID == actualDAGEdge.DagID &&
+				expectedDAGEdge.FromID == actualDAGEdge.FromID &&
+				expectedDAGEdge.ToID == actualDAGEdge.ToID &&
+				expectedDAGEdge.Idx == actualDAGEdge.Idx {
+				found = true
+				foundDAGEdge = actualDAGEdge
+				break
+			}
+		}
+
+		require.True(t, found, "Unable to find DAGEdge: %v", expectedDAGEdge)
+		requireDeepEqual(t, expectedDAGEdge, foundDAGEdge)
+	}
+}
+
+// requireDeepEqualOperators asserts that the expected and actual lists of
+// Operators contain the same elements.
+func requireDeepEqualOperators(t *testing.T, expected, actual []models.Operator) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperator := range expected {
+		found := false
+		var foundOperator models.Operator
+
+		for _, actualOperator := range actual {
+			if expectedOperator.ID == actualOperator.ID {
+				found = true
+				foundOperator = actualOperator
+				break
+			}
+		}
+		require.True(t, found, "Unable to find Operator: %v", expectedOperator)
+		requireDeepEqual(t, expectedOperator, foundOperator)
+	}
+}

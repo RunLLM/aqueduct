@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	log "github.com/sirupsen/logrus"
@@ -28,13 +25,12 @@ func MigrateStorageAndVault(
 	oldConf *shared.StorageConfig,
 	newConf *shared.StorageConfig,
 	orgID string,
-	dagReader workflow_dag.Reader,
-	dagWriter workflow_dag.Writer,
-	artifactReader artifact.Reader,
-	artifactResultReader artifact_result.Reader,
-	operatorReader operator.Reader,
-	integrationReader integration.Reader,
-	db database.Database,
+	dagRepo repos.DAG,
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
+	operatorRepo repos.Operator,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) error {
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
@@ -49,13 +45,13 @@ func MigrateStorageAndVault(
 		return err
 	}
 
-	txn, err := db.BeginTx(ctx)
+	txn, err := DB.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	dags, err := dagReader.ListWorkflowDags(ctx, txn)
+	dags, err := dagRepo.List(ctx, txn)
 	if err != nil {
 		return err
 	}
@@ -69,13 +65,13 @@ func MigrateStorageAndVault(
 		}
 
 		// Migrate all of the artifact result content for this DAG
-		artifacts, err := artifactReader.GetArtifactsByWorkflowDagId(ctx, dag.Id, txn)
+		artifacts, err := artifactRepo.GetByDAG(ctx, dag.ID, txn)
 		if err != nil {
 			return err
 		}
 
 		for _, artifact := range artifacts {
-			artifactResults, err := artifactResultReader.GetArtifactResultsByArtifactId(ctx, artifact.Id, txn)
+			artifactResults, err := artifactResultRepo.GetByArtifact(ctx, artifact.ID, txn)
 			if err != nil {
 				return err
 			}
@@ -96,7 +92,7 @@ func MigrateStorageAndVault(
 		}
 
 		// Migrate all operator code for this DAG
-		operators, err := operatorReader.GetOperatorsByWorkflowDagId(ctx, dag.Id, txn)
+		operators, err := operatorRepo.GetByDAG(ctx, dag.ID, txn)
 		if err != nil {
 			return err
 		}
@@ -128,11 +124,11 @@ func MigrateStorageAndVault(
 		}
 
 		// Update the storage config for the DAG
-		if _, err := dagWriter.UpdateWorkflowDag(
+		if _, err := dagRepo.Update(
 			ctx,
-			dag.Id,
+			dag.ID,
 			map[string]interface{}{
-				workflow_dag.StorageConfigColumn: newConf,
+				models.DagStorageConfig: newConf,
 			},
 			txn,
 		); err != nil {
@@ -146,7 +142,7 @@ func MigrateStorageAndVault(
 		oldVault,
 		newVault,
 		orgID,
-		integrationReader,
+		integrationRepo,
 		txn,
 	)
 	if err != nil {
@@ -185,10 +181,10 @@ func MigrateVault(
 	oldVault vault.Vault,
 	newVault vault.Vault,
 	orgID string,
-	integrationReader integration.Reader,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) ([]string, error) {
-	integrations, err := integrationReader.GetIntegrationsByOrganization(ctx, orgID, db)
+	integrations, err := integrationRepo.GetByOrg(ctx, orgID, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +194,7 @@ func MigrateVault(
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
 		// The vault key for the credentials is the integration record's ID
-		key := integrationDB.Id.String()
+		key := integrationDB.ID.String()
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {

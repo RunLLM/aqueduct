@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -31,15 +31,16 @@ type ListWorkflowObjectsArgs struct {
 }
 
 type ListWorkflowObjectsResponse struct {
-	LoadDetails []operator.GetDistinctLoadOperatorsByWorkflowIdResponse `json:"object_details"`
+	LoadDetails []views.LoadOperator `json:"object_details"`
 }
 
 type ListWorkflowObjectsHandler struct {
 	GetHandler
 
-	Database       database.Database
-	OperatorReader operator.Reader
-	WorkflowReader workflow.Reader
+	Database database.Database
+
+	OperatorRepo repos.Operator
+	WorkflowRepo repos.Workflow
 }
 
 func (*ListWorkflowObjectsHandler) Name() string {
@@ -52,16 +53,16 @@ func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
-		aqContext.OrganizationId,
+		workflowID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -73,7 +74,7 @@ func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 
 	return &ListWorkflowObjectsArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		workflowId: workflowID,
 	}, http.StatusOK, nil
 }
 
@@ -83,7 +84,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	emptyResp := ListWorkflowObjectsResponse{}
 
 	// Get all specs for the workflow.
-	operatorList, err := h.OperatorReader.GetDistinctLoadOperatorsByWorkflowId(ctx, args.workflowId, h.Database)
+	operatorList, err := h.OperatorRepo.GetDistinctLoadOPsByWorkflow(ctx, args.workflowId, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}

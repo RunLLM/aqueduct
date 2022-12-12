@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.5
+Released on November 29, 2022.
+
+### Key Features
+* Enables operators running on Kubernetes to access GPUs and set RAM and CPU
+    requirements. Note that using a GPU requires your Kubernetes cluster to
+    already have GPU machines attached. See [our
+    documentation](https://docs.aqueducthq.com/operators/configuring-resource-constraints) for more details.
+```python
+@op(resources={'num_cpus': 2, 'memory': '5Gb', 'gpu_resource_name': 'nvidia.com/gpu'})
+def my_operator_with_many_resources():
+  return 1
+```
+* Similarly, functions running on AWS Lambda can have memory requirement
+    set using the syntax above; AWS Lambda does not support setting CPU requirement
+    and it does not support GPUs.
+
+### Enhancements
+* Enables operator previews to execute using different integrations, including
+    using the resource constraints described above.
+* Allows for the execution engine to be set globally for a client instance. See
+    more details
+    [here](https://docs.aqueducthq.com/integrations/using-integrations/compute-integrations#setting-the-global-configuration):
+```python
+aq.global_config({'engine': 'my_k8s_integration'})
+```
+
+### Bugfixes
+* Fixes bug where a Kubernetes pod that ran out of memory would fail silently.
+
 ## 0.1.4
 Released on November 14, 2022.
 

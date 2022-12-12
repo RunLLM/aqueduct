@@ -6,18 +6,11 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -39,16 +32,14 @@ import (
 
 type getWorkflowArgs struct {
 	*aq_context.AqContext
-	workflowId uuid.UUID
+	workflowID uuid.UUID
 }
 
 type getWorkflowResponse struct {
 	// a map of workflow dags keyed by their IDs
-	WorkflowDags map[uuid.UUID]*workflow_dag.DBWorkflowDag `json:"workflow_dags"`
+	DAGs map[uuid.UUID]*models.DAG `json:"workflow_dags"`
 	// a list of dag results. Each result's `workflow_dag_id` field correspond to the
 	WorkflowDagResults []workflowDagResult `json:"workflow_dag_results"`
-	// a list of auth0Ids associated with workflow watchers
-	WatcherAuthIds []string `json:"watcherAuthIds"`
 }
 
 type workflowDagResult struct {
@@ -64,18 +55,14 @@ type GetWorkflowHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ArtifactReader          artifact.Reader
-	OperatorReader          operator.Reader
-	UserReader              user.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	OperatorResultWriter    operator_result.Writer
-	ArtifactResultWriter    artifact_result.Writer
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	DAGEdgeRepo        repos.DAGEdge
+	DAGResultRepo      repos.DAGResult
+	OperatorRepo       repos.Operator
+	OperatorResultRepo repos.OperatorResult
+	WorkflowRepo       repos.Workflow
 }
 
 func (*GetWorkflowHandler) Name() string {
@@ -88,16 +75,16 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
-		aqContext.OrganizationId,
+		workflowID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -109,7 +96,7 @@ func (h *GetWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) 
 
 	return &getWorkflowArgs{
 		AqContext:  aqContext,
-		workflowId: workflowId,
+		workflowID: workflowID,
 	}, http.StatusOK, nil
 }
 
@@ -118,35 +105,33 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	emptyResp := getWorkflowResponse{}
 
-	latestWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
+	latestDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
-		args.workflowId,
-		h.WorkflowReader,
-		h.WorkflowDagReader,
-		h.OperatorReader,
-		h.ArtifactReader,
-		h.WorkflowDagEdgeReader,
+		args.workflowID,
+		h.WorkflowRepo,
+		h.DAGRepo,
+		h.OperatorRepo,
+		h.ArtifactRepo,
+		h.DAGEdgeRepo,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	if latestWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+	if latestDAG.EngineConfig.Type == shared.AirflowEngineType {
 		// Airflow workflows need to be synced
-		if err := airflow.SyncWorkflowDags(
+		if err := airflow.SyncDAGs(
 			ctx,
-			[]uuid.UUID{latestWorkflowDag.Id},
-			h.WorkflowReader,
-			h.WorkflowDagReader,
-			h.OperatorReader,
-			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
-			h.WorkflowDagResultReader,
-			h.WorkflowDagWriter,
-			h.WorkflowDagResultWriter,
-			h.OperatorResultWriter,
-			h.ArtifactResultWriter,
+			[]uuid.UUID{latestDAG.ID},
+			h.WorkflowRepo,
+			h.DAGRepo,
+			h.OperatorRepo,
+			h.ArtifactRepo,
+			h.DAGEdgeRepo,
+			h.DAGResultRepo,
+			h.OperatorResultRepo,
+			h.ArtifactResultRepo,
 			h.Vault,
 			h.Database,
 		); err != nil {
@@ -154,73 +139,58 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		}
 	}
 
-	dbWorkflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByWorkflowId(
+	dbDAGs, err := h.DAGRepo.GetByWorkflow(
 		ctx,
-		args.workflowId,
+		args.workflowID,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	workflowDags := make(map[uuid.UUID]*workflow_dag.DBWorkflowDag, len(dbWorkflowDags))
-	for _, dbWorkflowDag := range dbWorkflowDags {
-		constructedDag, err := workflow_utils.ReadWorkflowDagFromDatabase(
+	dags := make(map[uuid.UUID]*models.DAG, len(dbDAGs))
+	for _, dbDAG := range dbDAGs {
+		constructedDAG, err := workflow_utils.ReadDAGFromDatabase(
 			ctx,
-			dbWorkflowDag.Id,
-			h.WorkflowReader,
-			h.WorkflowDagReader,
-			h.OperatorReader,
-			h.ArtifactReader,
-			h.WorkflowDagEdgeReader,
+			dbDAG.ID,
+			h.WorkflowRepo,
+			h.DAGRepo,
+			h.OperatorRepo,
+			h.ArtifactRepo,
+			h.DAGEdgeRepo,
 			h.Database,
 		)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 		}
 
-		if dbWorkflowDag.EngineConfig.Type == shared.AirflowEngineType {
+		if dbDAG.EngineConfig.Type == shared.AirflowEngineType {
 			// TODO: ENG-1714
 			// This is a hack for the UI where the `matches_airflow` field
 			// for Airflow workflows is set to the value of the latest DAG
-			constructedDag.EngineConfig.AirflowConfig.MatchesAirflow = latestWorkflowDag.EngineConfig.AirflowConfig.MatchesAirflow
+			constructedDAG.EngineConfig.AirflowConfig.MatchesAirflow = latestDAG.EngineConfig.AirflowConfig.MatchesAirflow
 		}
 
-		workflowDags[dbWorkflowDag.Id] = constructedDag
+		dags[dbDAG.ID] = constructedDAG
 	}
 
-	dbWorkflowDagResults, err := h.WorkflowDagResultReader.GetWorkflowDagResultsByWorkflowId(
-		ctx,
-		args.workflowId,
-		h.Database,
-	)
+	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
-	workflowDagResults := make([]workflowDagResult, 0, len(dbWorkflowDagResults))
-	for _, dbWorkflowDagResult := range dbWorkflowDagResults {
+	workflowDagResults := make([]workflowDagResult, 0, len(dagResults))
+	for _, dagResult := range dagResults {
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
-			Id:            dbWorkflowDagResult.Id,
-			CreatedAt:     dbWorkflowDagResult.CreatedAt.Unix(),
-			Status:        dbWorkflowDagResult.Status,
-			WorkflowDagId: dbWorkflowDagResult.WorkflowDagId,
+			Id:            dagResult.ID,
+			CreatedAt:     dagResult.CreatedAt.Unix(),
+			Status:        shared.ExecutionStatus(dagResult.Status),
+			WorkflowDagId: dagResult.DagID,
 		})
 	}
 
-	workflowWatcherUsers, err := h.UserReader.GetWatchersByWorkflowId(ctx, args.workflowId, h.Database)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving users watching current workflow.")
-	}
-
-	WatcherAuthIds := []string{}
-	for _, user := range workflowWatcherUsers {
-		WatcherAuthIds = append(WatcherAuthIds, user.Auth0Id)
-	}
-
 	return getWorkflowResponse{
-		WorkflowDags:       workflowDags,
+		DAGs:               dags,
 		WorkflowDagResults: workflowDagResults,
-		WatcherAuthIds:     WatcherAuthIds,
 	}, http.StatusOK, nil
 }

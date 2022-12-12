@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -29,8 +29,8 @@ type resetApiKeyResponse struct {
 type ResetApiKeyHandler struct {
 	PostHandler
 
-	Database   database.Database
-	UserWriter user.Writer
+	Database database.Database
+	UserRepo repos.User
 }
 
 func (*ResetApiKeyHandler) Name() string {
@@ -52,12 +52,12 @@ func (h *ResetApiKeyHandler) Perform(ctx context.Context, interfaceArgs interfac
 	args := interfaceArgs.(*resetApiKeyArgs)
 	emptyResp := resetApiKeyResponse{}
 
-	userObject, err := h.UserWriter.ResetApiKey(ctx, args.Id, h.Database)
+	user, err := h.UserRepo.ResetAPIKey(ctx, args.ID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to reset API key.")
 	}
 
 	return resetApiKeyResponse{
-		ApiKey: userObject.ApiKey,
+		ApiKey: user.APIKey,
 	}, http.StatusOK, nil
 }

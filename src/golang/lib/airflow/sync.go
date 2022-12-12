@@ -5,15 +5,9 @@ import (
 	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -22,57 +16,54 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// SyncWorkflowDags syncs all dags in `workflowDagIds` with any new
+// SyncDAGs syncs all DAGs in dagIDs with any new
 // Airflow dag runs since the last sync. It returns an error, if any.
-func SyncWorkflowDags(
+func SyncDAGs(
 	ctx context.Context,
-	workflowDagIds []uuid.UUID,
-	workflowReader workflow.Reader,
-	workflowDagReader workflow_dag.Reader,
-	operatorReader operator.Reader,
-	artifactReader artifact.Reader,
-	workflowDagEdgeReader workflow_dag_edge.Reader,
-	workflowDagResultReader workflow_dag_result.Reader,
-	workflowDagWriter workflow_dag.Writer,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	dagIDs []uuid.UUID,
+	workflowRepo repos.Workflow,
+	dagRepo repos.DAG,
+	operatorRepo repos.Operator,
+	artifactRepo repos.Artifact,
+	dagEdgeRepo repos.DAGEdge,
+	dagResultRepo repos.DAGResult,
+	operatorResultRepo repos.OperatorResult,
+	artifactResultRepo repos.ArtifactResult,
 	vault vault.Vault,
-	db database.Database,
+	DB database.Database,
 ) error {
 	// Read each workflow dag from the database that needs to be synced
-	dbDags := make([]workflow_dag.DBWorkflowDag, 0, len(workflowDagIds))
-	for _, workflowDagId := range workflowDagIds {
-		dbDag, err := utils.ReadWorkflowDagFromDatabase(
+	dags := make([]models.DAG, 0, len(dagIDs))
+	for _, dagID := range dagIDs {
+		dbDag, err := utils.ReadDAGFromDatabase(
 			ctx,
-			workflowDagId,
-			workflowReader,
-			workflowDagReader,
-			operatorReader,
-			artifactReader,
-			workflowDagEdgeReader,
-			db,
+			dagID,
+			workflowRepo,
+			dagRepo,
+			operatorRepo,
+			artifactRepo,
+			dagEdgeRepo,
+			DB,
 		)
 		if err != nil {
 			return err
 		}
 
-		dbDags = append(dbDags, *dbDag)
+		dags = append(dags, *dbDag)
 	}
 
-	for _, dbDag := range dbDags {
+	for _, dag := range dags {
 		if err := syncWorkflowDag(
 			ctx,
-			&dbDag,
-			workflowDagResultReader,
-			workflowDagWriter,
-			workflowDagResultWriter,
-			operatorResultWriter,
-			artifactResultWriter,
+			&dag,
+			dagRepo,
+			dagResultRepo,
+			operatorResultRepo,
+			artifactResultRepo,
 			vault,
-			db,
+			DB,
 		); err != nil {
-			log.Errorf("Unable to sync with Airflow for WorkflowDag %v: %v", dbDag.Id, err)
+			log.Errorf("Unable to sync with Airflow for WorkflowDag %v: %v", dag.ID, err)
 		}
 	}
 
@@ -84,19 +75,18 @@ func SyncWorkflowDags(
 // It returns an error, if any.
 func syncWorkflowDag(
 	ctx context.Context,
-	dbDag *workflow_dag.DBWorkflowDag,
-	workflowDagResultReader workflow_dag_result.Reader,
-	workflowDagWriter workflow_dag.Writer,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
+	dag *models.DAG,
+	dagRepo repos.DAG,
+	dagResultRepo repos.DAGResult,
+	operatorResultRepo repos.OperatorResult,
+	artifactResultRepo repos.ArtifactResult,
 	vault vault.Vault,
-	db database.Database,
+	DB database.Database,
 ) error {
 	// Read Airflow credentials from vault
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dbDag.EngineConfig.AirflowConfig.IntegrationId,
+		dag.EngineConfig.AirflowConfig.IntegrationId,
 		vault,
 	)
 	if err != nil {
@@ -112,9 +102,9 @@ func syncWorkflowDag(
 	dagsMatch, err := checkForDAGMatch(
 		ctx,
 		cli,
-		dbDag,
-		workflowDagWriter,
-		db,
+		dag,
+		dagRepo,
+		DB,
 	)
 	if err != nil {
 		return err
@@ -126,19 +116,19 @@ func syncWorkflowDag(
 	}
 
 	// Get all Airflow DAG runs for `dag`
-	dagRuns, err := cli.getDagRuns(dbDag.EngineConfig.AirflowConfig.DagId)
+	dagRuns, err := cli.getDagRuns(dag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return err
 	}
 
-	workflowDagResults, err := workflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, dbDag.WorkflowId, db)
+	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, DB)
 	if err != nil {
 		return err
 	}
 
-	dagCreatedAtTimes := make([]time.Time, 0, len(workflowDagResults))
-	for _, workflowDagResult := range workflowDagResults {
-		dagCreatedAtTimes = append(dagCreatedAtTimes, workflowDagResult.CreatedAt)
+	dagCreatedAtTimes := make([]time.Time, 0, len(dagResults))
+	for _, dagResult := range dagResults {
+		dagCreatedAtTimes = append(dagCreatedAtTimes, dagResult.CreatedAt)
 	}
 
 	for _, dagRun := range dagRuns {
@@ -163,12 +153,12 @@ func syncWorkflowDag(
 		if err := syncWorkflowDagResult(
 			ctx,
 			cli,
-			dbDag,
+			dag,
 			&dagRun,
-			workflowDagResultWriter,
-			operatorResultWriter,
-			artifactResultWriter,
-			db,
+			dagResultRepo,
+			operatorResultRepo,
+			artifactResultRepo,
+			DB,
 		); err != nil {
 			return err
 		}
@@ -177,30 +167,30 @@ func syncWorkflowDag(
 	return nil
 }
 
-// syncWorkflowDagResult populates the database with a WorkflowDagResult and related
-// OperatorResult(s) and ArtifactResult(s) for the Airflow DagRun `run` of the DBWorkflowDag `dbDag`.
-// It returns an error, if any.
+// syncWorkflowDagResult populates the database with a DAGResult and related
+// OperatorResult(s) and ArtifactResult(s) for the Airflow DagRun `run` of the
+// DAG dag. It returns an error, if any.
 func syncWorkflowDagResult(
 	ctx context.Context,
 	cli *client,
-	dbDag *workflow_dag.DBWorkflowDag,
+	dag *models.DAG,
 	run *airflow.DAGRun,
-	workflowDagResultWriter workflow_dag_result.Writer,
-	operatorResultWriter operator_result.Writer,
-	artifactResultWriter artifact_result.Writer,
-	db database.Database,
+	dagResultRepo repos.DAGResult,
+	operatorResultRepo repos.OperatorResult,
+	artifactResultRepo repos.ArtifactResult,
+	DB database.Database,
 ) error {
-	txn, err := db.BeginTx(ctx)
+	txn, err := DB.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	workflowDagResult, err := createWorkflowDagResult(
+	dagResult, err := createDAGResult(
 		ctx,
-		dbDag,
+		dag,
 		run,
-		workflowDagResultWriter,
+		dagResultRepo,
 		txn,
 	)
 	if err != nil {
@@ -213,11 +203,11 @@ func syncWorkflowDagResult(
 		return err
 	}
 
-	for _, op := range dbDag.Operators {
+	for _, op := range dag.Operators {
 		// Map Airflow task state to operator execution status
-		taskID, ok := dbDag.EngineConfig.AirflowConfig.OperatorToTask[op.Id]
+		taskID, ok := dag.EngineConfig.AirflowConfig.OperatorToTask[op.ID]
 		if !ok {
-			return errors.Newf("Unable to determine Airflow task ID for operator %v", op.Id)
+			return errors.Newf("Unable to determine Airflow task ID for operator %v", op.ID)
 		}
 
 		taskState, ok := taskToState[taskID]
@@ -230,12 +220,12 @@ func syncWorkflowDagResult(
 		if err := createOperatorResult(
 			ctx,
 			run.GetDagRunId(),
-			dbDag,
+			dag,
 			&op,
 			execStatus,
-			workflowDagResult.Id,
-			operatorResultWriter,
-			artifactResultWriter,
+			dagResult.ID,
+			operatorResultRepo,
+			artifactResultRepo,
 			txn,
 		); err != nil {
 			return err
@@ -249,43 +239,43 @@ func syncWorkflowDagResult(
 	return nil
 }
 
-// checkForDAGMatch checks if the Aqueduct workflow DAG `dbDag`
+// checkForDAGMatch checks if the Aqueduct workflow DAG dag
 // matches the DAG currently registered with Airflow. They may not match if the user
 // updated the workflow and has not yet copied over the updated Airflow DAG file to
-// their Airflow server. If the DAGs match, it also updates `dbDag`'s engine config
+// their Airflow server. If the DAGs match, it also updates dag's engine config
 // in the database.
 // It returns a bool whether the DAGs match and an error, if any.
 func checkForDAGMatch(
 	ctx context.Context,
 	cli *client,
-	dbDag *workflow_dag.DBWorkflowDag,
-	workflowDagWriter workflow_dag.Writer,
-	db database.Database,
+	dag *models.DAG,
+	dagRepo repos.DAG,
+	DB database.Database,
 ) (bool, error) {
-	if dbDag.EngineConfig.AirflowConfig.MatchesAirflow {
+	if dag.EngineConfig.AirflowConfig.MatchesAirflow {
 		// We previously confirmed that the DAGs match
 		return true, nil
 	}
 
-	airflowDag, err := cli.getDag(dbDag.EngineConfig.AirflowConfig.DagId)
+	airflowDag, err := cli.getDag(dag.EngineConfig.AirflowConfig.DagId)
 	if err != nil {
 		return false, err
 	}
 
-	// The way we check if the DAGs match is if `dbDag.Id` is one of tags
+	// The way we check if the DAGs match is if dag.ID is one of tags
 	// for `airflowDag`, since the workflow dag ID is set as a tag each time
 	// the Airflow DAG file is generated.
 	for _, tag := range airflowDag.Tags {
-		if tag.GetName() == dbDag.Id.String() {
+		if tag.GetName() == dag.ID.String() {
 			// The DAGs match so the engine config needs to be updated
-			dbDag.EngineConfig.AirflowConfig.MatchesAirflow = true
-			_, err = workflowDagWriter.UpdateWorkflowDag(
+			dag.EngineConfig.AirflowConfig.MatchesAirflow = true
+			_, err = dagRepo.Update(
 				ctx,
-				dbDag.Id,
+				dag.ID,
 				map[string]interface{}{
-					workflow_dag.EngineConfigColumn: &dbDag.EngineConfig,
+					models.DagEngineConfig: &dag.EngineConfig,
 				},
-				db,
+				DB,
 			)
 			if err != nil {
 				return true, err

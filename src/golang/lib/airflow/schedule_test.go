@@ -3,7 +3,7 @@ package airflow
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -31,34 +31,34 @@ func TestComputeEdges(t *testing.T) {
 		artifactsToId[artifact] = uuid.New()
 	}
 
-	testOperators := map[uuid.UUID]operator.DBOperator{
+	testOperators := map[uuid.UUID]models.Operator{
 		operatorsToId["A"]: {
-			Id:      operatorsToId["A"],
+			ID:      operatorsToId["A"],
 			Inputs:  nil,
 			Outputs: []uuid.UUID{artifactsToId["1"]},
 		},
 		operatorsToId["B"]: {
-			Id:      operatorsToId["B"],
+			ID:      operatorsToId["B"],
 			Inputs:  nil,
 			Outputs: []uuid.UUID{artifactsToId["2"]},
 		},
 		operatorsToId["C"]: {
-			Id:      operatorsToId["C"],
+			ID:      operatorsToId["C"],
 			Inputs:  nil,
 			Outputs: []uuid.UUID{artifactsToId["3"]},
 		},
 		operatorsToId["D"]: {
-			Id:      operatorsToId["D"],
+			ID:      operatorsToId["D"],
 			Inputs:  []uuid.UUID{artifactsToId["1"], artifactsToId["2"], artifactsToId["3"]},
 			Outputs: []uuid.UUID{artifactsToId["4"]},
 		},
 		operatorsToId["E"]: {
-			Id:      operatorsToId["E"],
+			ID:      operatorsToId["E"],
 			Inputs:  []uuid.UUID{artifactsToId["4"]},
 			Outputs: []uuid.UUID{artifactsToId["5"]},
 		},
 		operatorsToId["F"]: {
-			Id:      operatorsToId["F"],
+			ID:      operatorsToId["F"],
 			Inputs:  []uuid.UUID{artifactsToId["4"]},
 			Outputs: []uuid.UUID{artifactsToId["6"]},
 		},

@@ -3,9 +3,7 @@ package dag
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -18,51 +16,51 @@ import (
 //						    ^
 //						    |
 // extract_1 -> artifact_1 --
-func generateBasicDag(t *testing.T) *workflow_dag.DBWorkflowDag {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+func generateBasicDag(t *testing.T) *models.DAG {
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactTwo := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactTwo := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	extractZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactZero.Id},
+	extractZero := models.Operator{
+		ID:      uuid.New(),
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
-	extractOne := operator.DBOperator{
-		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactOne.Id},
+	extractOne := models.Operator{
+		ID:      uuid.New(),
+		Outputs: []uuid.UUID{artifactOne.ID},
 	}
 
-	functionZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
-		Outputs: []uuid.UUID{artifactTwo.Id},
+	functionZero := models.Operator{
+		ID:      uuid.New(),
+		Inputs:  []uuid.UUID{artifactZero.ID, artifactOne.ID},
+		Outputs: []uuid.UUID{artifactTwo.ID},
 	}
 
-	loadZero := operator.DBOperator{
-		Id:     uuid.New(),
-		Inputs: []uuid.UUID{artifactTwo.Id},
+	loadZero := models.Operator{
+		ID:     uuid.New(),
+		Inputs: []uuid.UUID{artifactTwo.ID},
 	}
 
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{
-			extractZero.Id:  extractZero,
-			extractOne.Id:   extractOne,
-			functionZero.Id: functionZero,
-			loadZero.Id:     loadZero,
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{
+			extractZero.ID:  extractZero,
+			extractOne.ID:   extractOne,
+			functionZero.ID: functionZero,
+			loadZero.ID:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{
-			artifactZero.Id: artifactZero,
-			artifactOne.Id:  artifactOne,
-			artifactTwo.Id:  artifactTwo,
+		Artifacts: map[uuid.UUID]models.Artifact{
+			artifactZero.ID: artifactZero,
+			artifactOne.ID:  artifactOne,
+			artifactTwo.ID:  artifactTwo,
 		},
 	}
 }
@@ -76,120 +74,120 @@ func generateBasicDag(t *testing.T) *workflow_dag.DBWorkflowDag {
 //							|				|-> extract_0 // cyclic
 //							|
 // extract_1 -> artifact_1 --
-func generateCyclicDag(t *testing.T) *workflow_dag.DBWorkflowDag {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+func generateCyclicDag(t *testing.T) *models.DAG {
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactTwo := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactTwo := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	extractZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactTwo.Id},
-		Outputs: []uuid.UUID{artifactZero.Id},
+	extractZero := models.Operator{
+		ID:      uuid.New(),
+		Inputs:  []uuid.UUID{artifactTwo.ID},
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
-	extractOne := operator.DBOperator{
-		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactOne.Id},
+	extractOne := models.Operator{
+		ID:      uuid.New(),
+		Outputs: []uuid.UUID{artifactOne.ID},
 	}
 
-	functionZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Inputs:  []uuid.UUID{artifactZero.Id, artifactOne.Id},
-		Outputs: []uuid.UUID{artifactTwo.Id},
+	functionZero := models.Operator{
+		ID:      uuid.New(),
+		Inputs:  []uuid.UUID{artifactZero.ID, artifactOne.ID},
+		Outputs: []uuid.UUID{artifactTwo.ID},
 	}
 
-	loadZero := operator.DBOperator{
-		Id:     uuid.New(),
-		Inputs: []uuid.UUID{artifactTwo.Id},
+	loadZero := models.Operator{
+		ID:     uuid.New(),
+		Inputs: []uuid.UUID{artifactTwo.ID},
 	}
 
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{
-			extractZero.Id:  extractZero,
-			extractOne.Id:   extractOne,
-			functionZero.Id: functionZero,
-			loadZero.Id:     loadZero,
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{
+			extractZero.ID:  extractZero,
+			extractOne.ID:   extractOne,
+			functionZero.ID: functionZero,
+			loadZero.ID:     loadZero,
 		},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{
-			artifactZero.Id: artifactZero,
-			artifactOne.Id:  artifactOne,
-			artifactTwo.Id:  artifactTwo,
+		Artifacts: map[uuid.UUID]models.Artifact{
+			artifactZero.ID: artifactZero,
+			artifactOne.ID:  artifactOne,
+			artifactTwo.ID:  artifactTwo,
 		},
 	}
 }
 
 // This manually creates a DAG with an operator whose dependency is never going to be met:
 // artifact_0 -> validation_0
-func generateUnexecutableOperatorDag(t *testing.T) *workflow_dag.DBWorkflowDag {
+func generateUnexecutableOperatorDag(t *testing.T) *models.DAG {
 	validationOpId := uuid.New()
-	artifactId := uuid.New()
+	artifactID := uuid.New()
 
-	artifactObject := artifact.DBArtifact{
-		Id: artifactId,
+	artifactObject := models.Artifact{
+		ID: artifactID,
 	}
 
-	validationOperator := operator.DBOperator{
-		Id:     validationOpId,
-		Inputs: []uuid.UUID{artifactObject.Id},
+	validationOperator := models.Operator{
+		ID:     validationOpId,
+		Inputs: []uuid.UUID{artifactObject.ID},
 	}
 
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{validationOpId: validationOperator},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactId: artifactObject},
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{validationOpId: validationOperator},
+		Artifacts: map[uuid.UUID]models.Artifact{artifactID: artifactObject},
 	}
 }
 
 // This manually creates a DAG with no operator.
-func generateEmptyDag(t *testing.T) *workflow_dag.DBWorkflowDag {
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
+func generateEmptyDag(t *testing.T) *models.DAG {
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{},
+		Artifacts: map[uuid.UUID]models.Artifact{},
 	}
 }
 
 // This manually creates a DAG with an unreachable artifract:
 // operator_0 -> artifact_0, artifact_1
-func generateUnreachableArtifactDag(t *testing.T) *workflow_dag.DBWorkflowDag {
-	artifactZero := artifact.DBArtifact{
-		Id: uuid.New(),
+func generateUnreachableArtifactDag(t *testing.T) *models.DAG {
+	artifactZero := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	artifactOne := artifact.DBArtifact{
-		Id: uuid.New(),
+	artifactOne := models.Artifact{
+		ID: uuid.New(),
 	}
 
-	operatorZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactZero.Id},
+	operatorZero := models.Operator{
+		ID:      uuid.New(),
+		Outputs: []uuid.UUID{artifactZero.ID},
 	}
 
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{artifactZero.Id: artifactZero, artifactOne.Id: artifactOne},
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{operatorZero.ID: operatorZero},
+		Artifacts: map[uuid.UUID]models.Artifact{artifactZero.ID: artifactZero, artifactOne.ID: artifactOne},
 	}
 }
 
 // This manually creates a DAG with an edge that contains an undefined artifact:
 // operator_0 -> artifact_0, artifact_0 not included in `dags.Artifacts`
-func generateUndefinedArtifactDag(t *testing.T) *workflow_dag.DBWorkflowDag {
-	artifactId := uuid.New()
+func generateUndefinedArtifactDag(t *testing.T) *models.DAG {
+	artifactID := uuid.New()
 
-	operatorZero := operator.DBOperator{
-		Id:      uuid.New(),
-		Outputs: []uuid.UUID{artifactId},
+	operatorZero := models.Operator{
+		ID:      uuid.New(),
+		Outputs: []uuid.UUID{artifactID},
 	}
 
-	return &workflow_dag.DBWorkflowDag{
-		Operators: map[uuid.UUID]operator.DBOperator{operatorZero.Id: operatorZero},
-		Artifacts: map[uuid.UUID]artifact.DBArtifact{},
+	return &models.DAG{
+		Operators: map[uuid.UUID]models.Operator{operatorZero.ID: operatorZero},
+		Artifacts: map[uuid.UUID]models.Artifact{},
 	}
 }
 

@@ -2,8 +2,9 @@ package operator
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -29,13 +30,13 @@ type ResultResponse struct {
 }
 
 func NewResultResponseFromDbObjects(
-	dbOperator *operator.DBOperator,
-	dbOperatorResult *operator_result.OperatorResult,
+	dbOperator *models.Operator,
+	dbOperatorResult *models.OperatorResult,
 ) *ResultResponse {
 	// make a value copy of `Spec` field
 	spec := dbOperator.Spec
 	metadata := Response{
-		Id:          dbOperator.Id,
+		Id:          dbOperator.ID,
 		Name:        dbOperator.Name,
 		Description: dbOperator.Description,
 		Spec:        &spec,
@@ -57,8 +58,29 @@ func NewResultResponseFromDbObjects(
 	return &ResultResponse{
 		Response: metadata,
 		Result: &RawResultResponse{
-			Id:        dbOperatorResult.Id,
+			Id:        dbOperatorResult.ID,
 			ExecState: execState,
 		},
 	}
+}
+
+func NewResultResponseFromDBView(
+	dbViewOpWithResult *views.OperatorWithResult,
+) *ResultResponse {
+	return NewResultResponseFromDbObjects(
+		&models.Operator{
+			ID:                     dbViewOpWithResult.ID,
+			Name:                   dbViewOpWithResult.Name,
+			Description:            dbViewOpWithResult.Description,
+			Spec:                   dbViewOpWithResult.Spec,
+			ExecutionEnvironmentID: dbViewOpWithResult.ExecutionEnvironmentID,
+		},
+		&models.OperatorResult{
+			ID:          dbViewOpWithResult.ResultID,
+			DAGResultID: dbViewOpWithResult.DAGResultID,
+			OperatorID:  dbViewOpWithResult.ID,
+			Status:      dbViewOpWithResult.Status,
+			ExecState:   dbViewOpWithResult.ExecState,
+		},
+	)
 }

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -37,4 +38,15 @@ func allArtifactCols() []string {
 		ArtifactDescription,
 		ArtifactType,
 	}
+}
+
+// ArtifactColsWithPrefix returns a comma-separated string of all
+// Artifact columns prefixed by the table name.
+func ArtifactColsWithPrefix() string {
+	cols := allArtifactCols()
+	for i, col := range cols {
+		cols[i] = fmt.Sprintf("%s.%s", ArtifactTable, col)
+	}
+
+	return strings.Join(cols, ",")
 }

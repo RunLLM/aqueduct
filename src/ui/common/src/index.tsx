@@ -1,6 +1,7 @@
 import GettingStartedTutorial from './components/cards/GettingStartedTutorial';
 import { CodeBlock } from './components/CodeBlock';
 import { DataPreviewer } from './components/DataPreviewer';
+import ExecutionChip from './components/execution/chip';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
@@ -87,7 +88,6 @@ import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { Status } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -240,6 +240,7 @@ export {
   DeleteIntegrationDialog,
   EdgeTypes,
   ErrorPage,
+  ExecutionChip,
   ExecutionStatus,
   exportCsv,
   exportFunction,
@@ -359,7 +360,6 @@ export {
   sideSheetSwitcher,
   SnowflakeCard,
   SnowflakeDialog,
-  Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
   store,

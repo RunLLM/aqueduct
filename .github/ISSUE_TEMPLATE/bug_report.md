@@ -7,26 +7,25 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+**Description**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+**Steps to reproduce the behavior**
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+A clear and concise description of what you expected to happen or see.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Screenshots/Logs**
+If applicable, add screenshots or logs to help describe your problem.
 
-**Desktop (please complete the following information):**
+**Configuration Details**
  - OS: [e.g. iOS]
  - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+ - Aqueduct Version [e.g. 0.1.5]
 
 **Additional context**
 Add any other context about the problem here.

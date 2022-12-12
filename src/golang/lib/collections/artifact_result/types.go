@@ -24,7 +24,9 @@ type Metadata struct {
 	// A key/value pair of [metricname]metricvalue e.g. SystemMetric["runtime"] -> "3.65"
 	SystemMetrics     map[string]string `json:"system_metadata,omitempty"`
 	SerializationType SerializationType `json:"serialization_type,omitempty"`
-	ArtifactType      artifact.Type     `json:"artifact_type,omitempty"`
+	// TODO: Change this to shared.ArtifactType when ArtifactResult refactor occurs
+	ArtifactType artifact.Type `json:"artifact_type,omitempty"`
+	PythonType   string        `json:"python_type,omitempty"`
 }
 
 type NullMetadata struct {

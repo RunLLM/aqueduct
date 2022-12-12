@@ -2,9 +2,9 @@ import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_sentiment_model
-from utils import generate_table_name, run_flow_test
+from utils import publish_flow_test, save
 
-from aqueduct import LoadUpdateMode, metric
+from aqueduct import metric
 
 
 def test_sql_integration_load_table(client, data_integration):
@@ -31,9 +31,7 @@ def test_invalid_destination_integration(client, data_integration):
 
     with pytest.raises(InvalidIntegrationException):
         db._metadata.name = "bad name"
-        output_artifact.save(
-            config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-        )
+        save(db, output_artifact)
 
 
 def test_sql_today_tag(client, data_integration):
@@ -75,7 +73,7 @@ def test_sql_query_with_parameter(client, data_integration):
         _ = sql_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_sql_query_with_multiple_parameters(client, data_integration, engine):
+def test_sql_query_with_multiple_parameters(client, flow_name, data_integration, engine):
     db = client.integration(data_integration)
 
     _ = client.create_param("table_name", default="hotel_reviews")
@@ -105,7 +103,7 @@ def test_sql_query_with_multiple_parameters(client, data_integration, engine):
     assert result.get() == len(nationality.get())
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
-    run_flow_test(client, artifacts=[result], engine=engine)
+    publish_flow_test(client, name=flow_name(), artifacts=[result], engine=engine)
 
 
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
