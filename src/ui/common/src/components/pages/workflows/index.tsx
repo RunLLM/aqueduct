@@ -144,6 +144,30 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       value.engine[0].toUpperCase() + value.engine.substring(1);
     const engineIconUrl =
       ServiceLogos[value.engine[0].toUpperCase() + value.engine.substring(1)];
+
+    const metrics = value.metrics.map((metric) => {
+      return {
+        metricId: metric.id,
+        name: metric.name,
+        value: metric.result.content_serialized,
+        status: metric.result.exec_state.status,
+      };
+    });
+
+    const checks = value.checks.map((check) => {
+      const value =
+        check.result.exec_state.status === 'succeeded' ? 'True' : 'False';
+
+      return {
+        checkId: check.id,
+        name: check.name,
+        level: check.spec.check.level,
+        timestamp: check.result.exec_state.timestamps.finished_at,
+        value,
+        status: check.result.exec_state.status,
+      };
+    });
+
     const workflowTableRow: PaginatedSearchTableRow = {
       name: {
         name: value.name,
@@ -156,8 +180,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         engineIconUrl: engineIconUrl,
       },
       // TODO: add metrics and checks to response item when getting workflows list.
-      metrics: metricsShort,
-      checks: checkPreviews,
+      metrics,
+      checks,
     };
 
     return workflowTableRow;
@@ -190,8 +214,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         break;
       case 'engine': {
         const { engineName, engineIconUrl } = value;
-        console.log('engineName: ', engineName);
-        console.log('engineIconURL: ', engineIconUrl);
         value = (
           <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
         );

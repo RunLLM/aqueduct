@@ -81,6 +81,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
 
     for (let i = 0; i < checksToShow; i++) {
       let statusIcon = successIcon;
+      console.log('checks[i]: ', checks[i]);
       if (checks[i].status === ExecutionStatus.Failed) {
         statusIcon = errorIcon;
       } else if (checks[i].status === ExecutionStatus.Succeeded) {
@@ -95,6 +96,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
       } else if (checks[i].status === ExecutionStatus.Canceled) {
         statusIcon = canceledIcon;
       } else if (checks[i].status !== ExecutionStatus.Succeeded) {
+        console.log('checks[i].status: ', checks[i].status);
         statusIcon = unknownIcon;
       }
 
