@@ -454,7 +454,7 @@ func (h *GetArtifactVersionsHandler) Perform(ctx context.Context, interfaceArgs 
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, err
 		}
-	}xxx
+	}
 
 	return getArtifactVersionsResponse{
 		LatestVersions:     latestVersions,
