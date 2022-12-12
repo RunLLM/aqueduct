@@ -83,6 +83,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
+			DAGResultRepo:      s.DAGResultRepo,
 			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
