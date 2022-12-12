@@ -87,7 +87,7 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 	// Get all the unique `artifact_id`s with an outgoing edge to an operator specified by `operatorIds`
 	// from workflow DAGs specified by `workflowDagIds`.
 	query := fmt.Sprintf(
-		`SELECT DISTINCT from_id AS artifact_id 
+		`SELECT DISTINCT from_id AS id 
 		FROM workflow_dag_edge 
 		WHERE 
 			workflow_dag_id IN (%s) 
