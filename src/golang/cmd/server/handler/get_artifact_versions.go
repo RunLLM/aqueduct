@@ -341,8 +341,8 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 				var contentPtr *string = nil
 				dag, ok := dagsByMetricResultID[metricResult.ID]
 				if ok {
-					storageObj := storage.NewStorage(&dag.StorageConfig)
 					if metric.Type.IsCompact() {
+						storageObj := storage.NewStorage(&dag.StorageConfig)
 						path := metricResult.ContentPath
 						contentBytes, err := storageObj.Get(ctx, path)
 						if err == nil {
