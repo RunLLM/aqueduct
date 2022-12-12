@@ -14,13 +14,15 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/gofrs/uuid"
-	log "github.com/sirupsen/logrus"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 const (
 	pythonExecutorPackage = "aqueduct_executor"
 	migrationPythonPath   = "migrators.backfill_python_type_000022.main"
+	metadataColumn        = "metadata"
+	artifactResultTable   = "artifact_result"
 )
 
 type SerializationType string
@@ -98,18 +100,19 @@ func getAllArtifactResults(
 
 func backfillPythonType(
 	ctx context.Context,
-	serializationType SerializationType,
+	id uuid.UUID,
+	metadata *Metadata,
 	contentPath string,
 	storageConfig *shared.StorageConfig,
 	db database.Database,
 ) error {
 	migrationSpec := MigrationSpec{
-		SerializationType: serializationType,
+		SerializationType: metadata.SerializationType,
 		StorageConfig:     *storageConfig,
 		ContentPath:       contentPath,
 	}
 
-	_, err := json.Marshal(migrationSpec)
+	specData, err := json.Marshal(migrationSpec)
 	if err != nil {
 		return err
 	}
@@ -130,27 +133,19 @@ func backfillPythonType(
 
 	err = cmd.Run()
 	if err != nil {
-		log.Errorf("Error running Python migration job. Stdout: %s, Stderr: %s.", outb.String(), errb.String())
-		return err
+		return errors.Newf("Error running Python migration job. Stdout: %s, Stderr: %s.", outb.String(), errb.String())
 	}
 
 	outputs := strings.Split(outb.String(), "\n")
-	param_type := outputs[0]
-	param_val = outputs[1]
-	operator.OpSpec.Param[serialization_type_key] = param_type
-
-	// We also change the param value to be a base64 encoding
-	operator.OpSpec.Param[value_key] = param_val
-
-	newParamSpec := &Spec{
-		Type:  operator.OpSpec.Type,
-		Param: operator.OpSpec.Param,
+	if len(outputs) < 2 {
+		return errors.Newf("Unexpected Python migration script output: %v", outputs)
 	}
+	// The python type info appears in the second token.
+	metadata.PythonType = outputs[1]
 
 	changes := map[string]interface{}{
-		spec_field: newParamSpec,
+		metadataColumn: metadata,
 	}
 
-	return utils.UpdateRecord(ctx, changes, "operator", "id", operator.Id, db)
-	return nil
+	return utils.UpdateRecord(ctx, changes, artifactResultTable, "id", id, db)
 }

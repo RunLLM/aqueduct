@@ -29,7 +29,8 @@ func Up(ctx context.Context, db database.Database) error {
 		if !artifactResult.Metadata.IsNull {
 			err = backfillPythonType(
 				ctx,
-				artifactResult.Metadata.SerializationType,
+				artifactResult.Id,
+				&(artifactResult.Metadata.Metadata),
 				artifactResult.ContentPath,
 				storageConfig,
 				db,
@@ -44,5 +45,6 @@ func Up(ctx context.Context, db database.Database) error {
 }
 
 func Down(ctx context.Context, db database.Database) error {
+	// We do not support down migration for our OSS version, so this implementation is left empty.
 	return nil
 }
