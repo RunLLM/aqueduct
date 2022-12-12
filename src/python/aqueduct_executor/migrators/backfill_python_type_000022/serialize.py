@@ -1,6 +1,10 @@
 import base64
 import io
 import json
+import os
+import shutil
+import tempfile
+import uuid
 from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
@@ -9,6 +13,10 @@ from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationT
 from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"
+
+# The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
+# This will be cleaned up within the serialization logic.
+_TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
@@ -33,6 +41,25 @@ def _read_string_content(content: bytes) -> str:
 
 def _read_bytes_content(content: bytes) -> bytes:
     return content
+
+
+def make_temp_dir() -> str:
+    """
+    Create a unique, temporary directory in the local filesystem and returns the path.
+    """
+    dir_path = None
+    created = False
+    # Try to create the directory. If it already exists, try again with a new name.
+    while not created:
+        dir_path = Path(tempfile.gettempdir()) / str(uuid.uuid4())
+        try:
+            os.mkdir(dir_path)
+            created = True
+        except FileExistsError:
+            pass
+
+    assert dir_path is not None
+    return str(dir_path)
 
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
