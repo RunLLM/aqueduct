@@ -11,7 +11,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.backend.responses import SavedObjectUpdate
+from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
 from aqueduct.error import (
     InvalidIntegrationException,

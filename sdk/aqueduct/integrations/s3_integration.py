@@ -23,7 +23,7 @@ from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
 
-from .utils import _generate_extract_op_name
+from .naming import _generate_extract_op_name
 
 
 class S3Integration(Integration):

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.transform import to_artifact_class
-from aqueduct.backend.responses import ArtifactResult
+from aqueduct.backend.response_models import ArtifactResult
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
 from aqueduct.models.config import EngineConfig

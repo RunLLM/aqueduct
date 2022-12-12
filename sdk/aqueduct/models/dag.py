@@ -288,6 +288,30 @@ class DAG(BaseModel):
         assert op_name is not None
         return op_name
 
+    def list_metrics_for_operator(self, op: Operator) -> List[Operator]:
+        """Returns all the metric operators on the given operator's outputs."""
+        metric_operators = []
+        for artf in op.outputs:
+            metric_operators.extend(
+                self.list_operators(
+                    filter_to=[OperatorType.METRIC],
+                    on_artifact_id=artf,
+                )
+            )
+        return metric_operators
+
+    def list_checks_for_operator(self, op: Operator) -> List[Operator]:
+        """Returns all the check operators on the given operator's outputs."""
+        check_operators = []
+        for artf in op.outputs:
+            check_operators.extend(
+                self.list_operators(
+                    filter_to=[OperatorType.CHECK],
+                    on_artifact_id=artf,
+                )
+            )
+        return check_operators
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:

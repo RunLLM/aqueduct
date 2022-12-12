@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from aqueduct.backend.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from aqueduct.backend.response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,

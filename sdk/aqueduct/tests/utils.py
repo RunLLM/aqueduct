@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import pandas as pd
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.backend.responses import ArtifactResult, PreviewResponse
+from aqueduct.backend.response_models import ArtifactResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,

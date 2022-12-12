@@ -17,7 +17,6 @@ from aqueduct.constants.enums import (
     OperatorType,
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.integrations.utils import _get_description_for_metric
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import (
@@ -33,6 +32,7 @@ from aqueduct.utils.dag_deltas import (
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,
 )
+from aqueduct.utils.describe import get_readable_description_for_metric
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.utils import artifact_name_from_op_name, format_header_for_print, generate_uuid
 
@@ -306,7 +306,7 @@ class NumericArtifact(BaseArtifact):
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         readable_dict = super()._describe()
         if get_operator_type(input_operator) is OperatorType.METRIC:
-            general_dict = _get_description_for_metric(input_operator, self._dag)
+            general_dict = get_readable_description_for_metric(input_operator, self._dag)
             # Remove because values already in `readable_dict`
             general_dict.pop("Label")
             general_dict.pop("Granularity")

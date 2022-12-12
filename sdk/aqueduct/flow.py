@@ -4,7 +4,7 @@ import uuid
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Union
 
-from aqueduct.backend.responses import (
+from aqueduct.backend.response_models import (
     GetWorkflowResponse,
     SavedObjectUpdate,
     WorkflowDagResponse,
