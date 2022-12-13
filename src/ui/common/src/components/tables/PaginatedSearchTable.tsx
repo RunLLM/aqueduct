@@ -106,10 +106,6 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     If a callback is passed in, uses the onGetColumnValue to support things like rendering arbitrary react components.
   */
   const getColumnValue = (row, column) => {
-    // use callback if passed in
-    console.log('getColumnValue row: ', row);
-    console.log('getColumnValue: column: ', column);
-
     if (onGetColumnValue) {
       return onGetColumnValue(row, column);
     }

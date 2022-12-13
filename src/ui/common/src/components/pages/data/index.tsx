@@ -136,8 +136,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           }
         });
 
-        console.log('latestVersion: ', latestVersion);
-
         let checks = [];
         if (latestVersion.checks?.length > 0) {
           checks = latestVersion.checks.map((check, index) => {
