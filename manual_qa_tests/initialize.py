@@ -15,13 +15,12 @@ WORKFLOW_PKGS = [
 ]
 
 EXAMPLE_NOTEBOOKS_PATHS = [
-    "examples/churn_prediction/Customer Churn Prediction.ipynb",
-    "examples/diabetes-classifier/Classifying Diabetes Risk.ipynb",
-    # TODO (ENG-2098) This notebook is failing.
-    # "examples/house-price-prediction/House Price Prediction.ipynb",
-    "examples/mpg-regressor/Predicting MPG.ipynb",
-    "examples/sentiment-analysis/Sentiment Model.ipynb",
-    "examples/wine-ratings-prediction/Predict Missing Wine Ratings.ipynb",
+    ["examples/churn_prediction/", "Customer Churn Prediction.ipynb"],
+    ["examples/diabetes-classifier/", "Classifying Diabetes Risk.ipynb"],
+    ["examples/house-price-prediction/", "House Price Prediction.ipynb"],
+    ["examples/mpg-regressor/", "Predicting MPG.ipynb"],
+    ["examples/sentiment-analysis/", "Sentiment Model.ipynb"],
+    ["examples/wine-ratings-prediction/", "Predict Missing Wine Ratings.ipynb"],
 ]
 
 TEMP_NOTEBOOK_PATH = "temp.py"
@@ -41,8 +40,14 @@ if __name__ == "__main__":
 
     if args.example_notebooks:
         for example_path in EXAMPLE_NOTEBOOKS_PATHS:
-            print(f"Deploying example notebooks {example_path}...")
-            deploy_example.deploy(example_path, TEMP_NOTEBOOK_PATH, args.addr, api_key)
+            print(f"Deploying example notebooks {example_path[1]}...")
+            deploy_example.deploy(
+                example_path[0],
+                example_path[1],
+                TEMP_NOTEBOOK_PATH,
+                args.addr,
+                api_key,
+            )
 
     for pkg in WORKFLOW_PKGS:
         print(f"Deploying {pkg.NAME}...")

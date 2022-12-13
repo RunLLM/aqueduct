@@ -31,8 +31,10 @@ def replace_api_key(code: str, api_key: str) -> str:
     return code
 
 
-def deploy(path: str, temp_path: str, addr: str, api_key: str) -> None:
-    with open(path, "r") as f:
+def deploy(dir: str, name: str, tmp_name: str, addr: str, api_key: str) -> None:
+    current_dir = os.getcwd()
+    os.chdir(dir)
+    with open(name, "r") as f:
         notebook = json.load(f)
 
     # Pull out the notebook code.
@@ -43,11 +45,12 @@ def deploy(path: str, temp_path: str, addr: str, api_key: str) -> None:
     code = "\n\n\n".join(code_block_list)
     code = replace_server_addr(code, addr)
     code = replace_api_key(code, api_key)
-    with open(temp_path, "w") as f:
+    with open(tmp_name, "w") as f:
         f.write(code)
 
-    process = subprocess.run([sys.executable, temp_path])
+    process = subprocess.run([sys.executable, tmp_name])
 
-    os.remove(temp_path)
+    os.remove(tmp_name)
+    os.chdir(current_dir)
     if process.returncode:
-        raise Exception(f"Error executing notebook {path}")
+        raise Exception(f"Error executing notebook {name}")
