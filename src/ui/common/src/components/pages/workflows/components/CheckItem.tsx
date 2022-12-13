@@ -89,6 +89,9 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
         }
         case ExecutionStatus.Failed: {
           statusIcon = errorIcon;
+          if (checks[i].level === CheckLevel.Warning) {
+            statusIcon = warningIcon;
+          }
           break;
         }
         case ExecutionStatus.Succeeded: {

@@ -73,28 +73,34 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     const engineIconUrl =
       ServiceLogos[value.engine[0].toUpperCase() + value.engine.substring(1)];
 
-    const metrics = value.metrics.map((metric) => {
-      return {
-        metricId: metric.id,
-        name: metric.name,
-        value: metric.result?.content_serialized ?? '',
-        status: metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-      };
-    });
+    let metrics = [];
+    if (value?.metrics) {
+      metrics = value.metrics.map((metric) => {
+        return {
+          metricId: metric.id,
+          name: metric.name,
+          value: metric.result?.content_serialized ?? '',
+          status: metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+        };
+      });
+    }
 
-    const checks = value.checks.map((check) => {
-      const value =
-        check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
+    let checks = [];
+    if (value.checks) {
+      checks = value.checks.map((check) => {
+        const value =
+          check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
 
-      return {
-        checkId: check.id,
-        name: check.name,
-        level: check.spec?.check?.level ?? CheckLevel.Warning,
-        timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
-        value,
-        status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-      };
-    });
+        return {
+          checkId: check.id,
+          name: check.name,
+          level: check.spec?.check?.level ?? CheckLevel.Warning,
+          timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
+          value,
+          status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+        };
+      });
+    }
 
     const workflowTableRow: PaginatedSearchTableRow = {
       name: {
