@@ -10,10 +10,10 @@ import (
 // OperatorResultStatus is a wrapper around the ExecutionState of an
 // OperatorResult and additional metadata.
 type OperatorResultStatus struct {
-	ArtifactID   uuid.UUID                  `db:"artifact_id"`
+	ArtifactID   uuid.UUID              `db:"artifact_id"`
 	Metadata     *shared.ExecutionState `db:"metadata"`
-	DAGResultID  uuid.UUID                  `db:"workflow_dag_result_id"`
-	OperatorName utils.NullString           `db:"operator_name"`
+	DAGResultID  uuid.UUID              `db:"workflow_dag_result_id"`
+	OperatorName utils.NullString       `db:"operator_name"`
 }
 
 // OperatorWithResult is a concated view of operator and operator_result
