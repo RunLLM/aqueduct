@@ -154,7 +154,7 @@ func ScheduleWorkflow(
 			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactId])
 		}
 
-		// The operator's custom engine wins over the dag's engine.
+		// The operator's custom engine takes precedence over dag's engine.
 		opEngineConfig := dag.EngineConfig
 		if op.Spec.EngineConfig() != nil {
 			opEngineConfig = *op.Spec.EngineConfig()

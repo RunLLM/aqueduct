@@ -282,7 +282,6 @@ func (*dagReader) List(ctx context.Context, DB database.Database) ([]models.DAG,
 	return getDAGs(ctx, DB, query)
 }
 
-// TODO: remove engine_config
 func (*dagWriter) Create(
 	ctx context.Context,
 	workflowID uuid.UUID,

@@ -469,7 +469,6 @@ class Client:
             schedule=cron_schedule,
             retention_policy=retention_policy,
         )
-
         dag.set_engine_config(
             global_engine_config=generate_engine_config(
                 self._connected_integrations,
@@ -478,34 +477,33 @@ class Client:
             publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
         )
 
-        # TODO: we need to fix the backend's interpretation of airflow.
-        # if dag.engine_config.type == RuntimeType.AIRFLOW:
-        #     # This is an Airflow workflow
-        #     resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
-        #     flow_id, airflow_file = resp.id, resp.file
-        #
-        #     file = "{}_airflow.py".format(name)
-        #     with open(file, "w") as f:
-        #         f.write(airflow_file)
-        #
-        #     if resp.is_update:
-        #         print(
-        #             """The updated Airflow DAG file has been downloaded to: {}.
-        #             Please copy it to your Airflow server to begin execution.
-        #             New Airflow DAG runs will not be synced properly with Aqueduct
-        #             until you have copied the file.""".format(
-        #                 file
-        #             )
-        #         )
-        #     else:
-        #         print(
-        #             """The Airflow DAG file has been downloaded to: {}.
-        #             Please copy it to your Airflow server to begin execution.""".format(
-        #                 file
-        #             )
-        #         )
-        # else:
-        flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+        if dag.engine_config.type == RuntimeType.AIRFLOW:
+            # This is an Airflow workflow
+            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            flow_id, airflow_file = resp.id, resp.file
+
+            file = "{}_airflow.py".format(name)
+            with open(file, "w") as f:
+                f.write(airflow_file)
+
+            if resp.is_update:
+                print(
+                    """The updated Airflow DAG file has been downloaded to: {}.
+                    Please copy it to your Airflow server to begin execution.
+                    New Airflow DAG runs will not be synced properly with Aqueduct
+                    until you have copied the file.""".format(
+                        file
+                    )
+                )
+            else:
+                print(
+                    """The Airflow DAG file has been downloaded to: {}.
+                    Please copy it to your Airflow server to begin execution.""".format(
+                        file
+                    )
+                )
+        else:
+            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),

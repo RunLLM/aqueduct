@@ -258,6 +258,7 @@ func NewWorkflowDag(
 			execEnvPtr = &execEnv
 		}
 
+		// Operator's engine takes precedence over dag's engine.
 		opEngineConfig := dag.EngineConfig
 		if dbOperator.Spec.EngineConfig() != nil {
 			opEngineConfig = *dbOperator.Spec.EngineConfig()
