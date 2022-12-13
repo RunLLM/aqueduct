@@ -26,7 +26,11 @@ type DAG struct {
 	WorkflowID    uuid.UUID            `db:"workflow_id" json:"workflow_id"`
 	CreatedAt     time.Time            `db:"created_at" json:"created_at"`
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
-	EngineConfig  shared.EngineConfig  `db:"engine_config" json:"engine_config"`
+
+	// TODO: make sure to update this on the UI too.
+	//  Should we turn this into an Airflow boolean?
+	//  Should we have an engine config here or in each operator?
+	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
 	Metadata  *Workflow              `json:"metadata"`
