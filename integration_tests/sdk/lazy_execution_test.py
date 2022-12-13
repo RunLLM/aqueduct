@@ -4,10 +4,11 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
 
-from aqueduct import ArtifactType, check, global_config, metric, op
+from aqueduct import check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client, data_integration):
@@ -148,7 +149,7 @@ def test_lazy_global_config(client, data_integration):
         check_result = dummy_check(op_result)
 
         assert op_result._get_content() is None
-        assert op_result._get_type() == ArtifactType.UNTYPED
+        assert op_result.type() == ArtifactType.UNTYPED
         assert metric_result._get_content() is None
         assert check_result._get_content() is None
 
@@ -158,7 +159,7 @@ def test_lazy_global_config(client, data_integration):
 
         # After get(), everything should be materialized on the artifacts.
         assert op_result._get_content() is not None
-        assert op_result._get_type() == ArtifactType.STRING
+        assert op_result.type() == ArtifactType.STRING
         assert metric_result._get_content() is not None
         assert check_result._get_content() is not None
 
@@ -177,25 +178,25 @@ def test_lazy_artifacts_backfilled_by_downstream(client):
 
     # Eager execution will type the upstream operator, but will not backfill the contents!
     num = generate_number.lazy()
-    assert num._get_type() == ArtifactType.UNTYPED
+    assert num.type() == ArtifactType.UNTYPED
     assert num._get_content() is None
     output = double_number(num)
 
-    assert num._get_type() == ArtifactType.NUMERIC
+    assert num.type() == ArtifactType.NUMERIC
     assert num._get_content() is None
-    assert output._get_type() == ArtifactType.NUMERIC
+    assert output.type() == ArtifactType.NUMERIC
     assert output._get_content() == 4.0
 
     # .get() will also type the upstream operator, same as above.
     num = generate_number.lazy()
     output = double_number.lazy(num)
-    assert output._get_type() == ArtifactType.UNTYPED
+    assert output.type() == ArtifactType.UNTYPED
     assert output._get_content() is None
     assert output.get() == 4.0
 
-    assert num._get_type() == ArtifactType.NUMERIC
+    assert num.type() == ArtifactType.NUMERIC
     assert num._get_content() is None
-    assert output._get_type() == ArtifactType.NUMERIC
+    assert output.type() == ArtifactType.NUMERIC
     assert output._get_content() == 4.0
 
 
@@ -208,9 +209,9 @@ def test_lazy_artifacts_with_custom_parameters(client):
         return 2 * num
 
     doubled = double_number.lazy(num)
-    assert doubled._get_type() == ArtifactType.UNTYPED
+    assert doubled.type() == ArtifactType.UNTYPED
     assert doubled._get_content() is None
 
     assert doubled.get(parameters={"number": 20}) == 40
-    assert doubled._get_type() == ArtifactType.NUMERIC
+    assert doubled.type() == ArtifactType.NUMERIC
     assert doubled._get_content() is None  # do not manifest the contents!

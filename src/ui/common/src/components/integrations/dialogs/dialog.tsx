@@ -88,6 +88,9 @@ const IntegrationDialog: React.FC<Props> = ({
     editMode ? integrationToEdit.name : ''
   );
 
+  const [shouldShowNameError, setShouldShowNameError] =
+    useState<boolean>(false);
+
   const connectNewStatus = useSelector(
     (state: RootState) => state.integrationReducer.connectNewStatus
   );
@@ -98,6 +101,10 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const operators = useSelector(
     (state: RootState) => state.integrationReducer.operators.operators
+  );
+
+  const integrations = useSelector((state: RootState) =>
+    Object.values(state.integrationsReducer.integrations)
   );
 
   const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
@@ -298,7 +305,15 @@ const IntegrationDialog: React.FC<Props> = ({
   }
 
   const onConfirmDialog = () => {
-    editMode
+    //check that name is unique before connecting.
+    for (let i = 0; i < integrations.length; i++) {
+      if (name === integrations[i].name) {
+        setShouldShowNameError(true);
+        return;
+      }
+    }
+
+    return editMode
       ? dispatch(
           handleEditIntegration({
             apiKey: user.apiKey,
@@ -326,6 +341,7 @@ const IntegrationDialog: React.FC<Props> = ({
       placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
         setName(event.target.value);
+        setShouldShowNameError(false);
       }}
       value={name}
       disabled={service === 'Aqueduct Demo'}
@@ -345,6 +361,14 @@ const IntegrationDialog: React.FC<Props> = ({
         )}
         {nameInput}
         {serviceDialog}
+
+        {shouldShowNameError && (
+          <Alert sx={{ mt: 2 }} severity="error">
+            <AlertTitle>Naming Error</AlertTitle>A connected integration already
+            exists with this name. Please provide a unique name for your
+            integration.
+          </Alert>
+        )}
 
         {isFailed(connectStatus) && (
           <Alert sx={{ mt: 2 }} severity="error">

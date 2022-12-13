@@ -3,25 +3,11 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, OperatorType
-from aqueduct.error import (
-    InvalidIntegrationException,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
-from aqueduct.operators import (
-    LoadSpec,
-    Operator,
-    OperatorSpec,
-    S3LoadParams,
-    SaveConfig,
-    get_operator_type,
-)
-from aqueduct.utils import generate_uuid
-
-from aqueduct import globals
+from aqueduct.artifacts.save import save_artifact
+from aqueduct.constants.enums import ArtifactType, OperatorType
+from aqueduct.logger import logger
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import SaveConfig
 
 
 class BaseArtifact(ABC):
@@ -42,7 +28,7 @@ class BaseArtifact(ABC):
         """Fetch the name of this artifact."""
         return self._dag.must_get_artifact(artifact_id=self._artifact_id).name
 
-    def _get_type(self) -> ArtifactType:
+    def type(self) -> ArtifactType:
         return self._dag.must_get_artifact(artifact_id=self._artifact_id).type
 
     def _get_content(self) -> Any:
@@ -71,7 +57,9 @@ class BaseArtifact(ABC):
         pass
 
     def save(self, config: SaveConfig) -> None:
-        """Configure this artifact to be written to a specific integration after it's computed in a published flow.
+        """DEPRECATED: use integration.save() directly instead!
+        Configure this artifact to be written to a specific integration after it's computed in a published flow.
+
 
         Args:
             config:
@@ -86,75 +74,10 @@ class BaseArtifact(ABC):
             InvalidUserArgumentException:
                 An error occurred because some necessary fields are missing in the SaveConfig.
         """
-        integration_info = config.integration_info
-        integration_load_params = config.parameters
-        integrations_map = globals.__GLOBAL_API_CLIENT__.list_integrations()
-
-        if integration_info.name not in integrations_map:
-            raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
-
-        # Non-tabular data cannot be saved into relational data stores.
-        if (
-            self._get_type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]
-            and integration_info.is_relational()
-        ):
-            raise InvalidUserActionException(
-                "Unable to load non-relational data into relational data store `%s`."
-                % integration_info.name
-            )
-
-        # Tabular data written into S3 must include a S3FileFormat hint.
-        if self._get_type() == ArtifactType.TABLE and isinstance(config.parameters, S3LoadParams):
-            if config.parameters.format is None:
-                raise InvalidUserArgumentException(
-                    "You must supply a file format when saving tabular data into S3 integration `%s`."
-                    % integration_info.name
-                )
-
-        # We currently do not allow multiple load operators on the same artifact to the same integration.
-        # We do allow multiple artifacts to write to the same integration, as well as a single artifact
-        # to write to multiple integrations.
-        # Multiple load operations to the same integration, of different artifacts, are guaranteed to
-        # have unique names.
-        load_op_name = None
-
-        # Replace any existing save operator on this artifact that goes to the same integration.
-        existing_load_ops = self._dag.list_operators(
-            filter_to=[OperatorType.LOAD],
-            on_artifact_id=self._artifact_id,
+        logger().warning(
+            "`artifact.save()` is deprecated. Please use `integration.save()` instead!"
         )
-        for op in existing_load_ops:
-            assert op.spec.load is not None
-            if op.spec.load.integration_id == integration_info.id:
-                load_op_name = op.name
 
-        # If the name is not set yet, we know we have to make a new load operator, so bump the
-        # suffix until a unique name is found.
-        if load_op_name is None:
-            load_op_name = self._dag.get_unclaimed_op_name(
-                prefix="save to %s" % integration_info.name
-            )
-
-        # Add the load operator as a terminal node.
-        assert load_op_name is not None
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=generate_uuid(),
-                        name=load_op_name,
-                        description="",
-                        spec=OperatorSpec(
-                            load=LoadSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
-                                parameters=integration_load_params,
-                            )
-                        ),
-                        inputs=[self._artifact_id],
-                    ),
-                    output_artifacts=[],
-                ),
-            ],
+        save_artifact(
+            self._artifact_id, self.type(), self._dag, config.integration_info, config.parameters
         )

@@ -1,12 +1,14 @@
 from typing import Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, GoogleSheetsSaveMode
-from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.operators import (
+from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
+from aqueduct.logger import logger
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
     GoogleSheetsLoadParams,
@@ -14,7 +16,10 @@ from aqueduct.operators import (
     OperatorSpec,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+
+from .naming import _generate_extract_op_name
 
 
 class GoogleSheetsIntegration(Integration):
@@ -46,7 +51,7 @@ class GoogleSheetsIntegration(Integration):
         """
         integration_info = self._metadata
 
-        op_name = generate_extract_op_name(self._dag, integration_info.name, name)
+        op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -90,7 +95,7 @@ class GoogleSheetsIntegration(Integration):
         filepath: str,
         save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
     ) -> SaveConfig:
-        """
+        """TODO(ENG-2035): Deprecated and will be removed.
         Configuration for saving to Google Sheets Integration.
 
         Arguments:
@@ -109,9 +114,41 @@ class GoogleSheetsIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),
+        )
+
+    def save(
+        self,
+        artifact: BaseArtifact,
+        filepath: str,
+        save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
+    ) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into Google Sheets.
+            filepath:
+                The absolute file path to the Google Sheet to save to.
+            save_mode:
+                Defines the semantics of the save. Options are
+                - "overwrite"
+                - "create": Creates a new spreadsheet.
+                            If the spreadsheet doesn't exist, has `overwrite` behavior.
+                - "newsheet": Creates a new sheet in an existing spreadsheet.
+                              If the spreadsheet doesn't exist, has `create` behavior.
+        """
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),
         )
 
     def describe(self) -> None:

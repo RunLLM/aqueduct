@@ -38,56 +38,52 @@ export const NotificationListItem: React.FC<Props> = ({
     <Box
       sx={{
         display: 'flex',
-        flexDirection: 'column',
         width: '100%',
+        alignItems: 'start',
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          width: '100%',
-        }}
-      >
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{
-            fontFamily: 'Monospace',
-            '&:hover': { textDecoration: 'underline' },
-          }}
+      <Box sx={{ flex: 1 }}>
+        <Link
+          underline="none"
+          color="inherit"
+          href={`${getPathPrefix()}/workflow/${
+            notification.workflowMetadata.id
+          }?workflowDagResultId=${encodeURI(
+            notification.workflowMetadata.dag_result_id
+          )}`}
         >
-          {notification.content}
-        </Typography>
-        <FontAwesomeIcon
-          icon={faXmark}
-          style={{
-            cursor: 'pointer',
-            color: 'gray.600',
-          }}
-          onClick={() =>
-            dispatch(handleArchiveNotification({ user, id: notification.id }))
-          }
-        />
+          <Typography
+            variant="body1"
+            gutterBottom
+            sx={{
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
+            {notification.content}
+          </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 'light',
+              color: 'gray.600',
+            }}
+          >
+            {`${dateString(notification.createdAt)}`}
+          </Typography>
+        </Link>
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
+      <FontAwesomeIcon
+        icon={faXmark}
+        style={{
+          cursor: 'pointer',
+          color: 'gray.600',
         }}
-      >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 'light',
-            color: 'gray.600',
-          }}
-        >
-          {`${dateString(notification.createdAt)}`}
-        </Typography>
-      </Box>
+        onClick={() =>
+          dispatch(handleArchiveNotification({ user, id: notification.id }))
+        }
+      />
     </Box>
   );
   let notifBackground = theme.palette.TableSuccessBackground;
@@ -97,29 +93,19 @@ export const NotificationListItem: React.FC<Props> = ({
     notifBackground = theme.palette.TableErrorBackground;
   }
   return (
-    <Link
-      underline="none"
-      color="inherit"
-      href={`${getPathPrefix()}/workflow/${
-        notification.workflowMetadata.id
-      }?workflowDagResultId=${encodeURI(
-        notification.workflowMetadata.dag_result_id
-      )}`}
+    <ListItem
+      sx={{
+        borderLeft: `8px solid`,
+        borderColor: borderColor,
+        minWidth: '450px',
+        maxWidth: '450px',
+        '&:hover': {
+          backgroundColor: notifBackground,
+        },
+      }}
     >
-      <ListItem
-        sx={{
-          borderLeft: `8px solid`,
-          borderColor: borderColor,
-          minWidth: '450px',
-          maxWidth: '450px',
-          '&:hover': {
-            backgroundColor: notifBackground,
-          },
-        }}
-      >
-        {content}
-      </ListItem>
-    </Link>
+      {content}
+    </ListItem>
   );
 };
 

@@ -4,6 +4,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -61,4 +62,25 @@ func NewResultResponseFromDbObjects(
 			ExecState: execState,
 		},
 	}
+}
+
+func NewResultResponseFromDBView(
+	dbViewOpWithResult *views.OperatorWithResult,
+) *ResultResponse {
+	return NewResultResponseFromDbObjects(
+		&models.Operator{
+			ID:                     dbViewOpWithResult.ID,
+			Name:                   dbViewOpWithResult.Name,
+			Description:            dbViewOpWithResult.Description,
+			Spec:                   dbViewOpWithResult.Spec,
+			ExecutionEnvironmentID: dbViewOpWithResult.ExecutionEnvironmentID,
+		},
+		&models.OperatorResult{
+			ID:          dbViewOpWithResult.ResultID,
+			DAGResultID: dbViewOpWithResult.DAGResultID,
+			OperatorID:  dbViewOpWithResult.ID,
+			Status:      dbViewOpWithResult.Status,
+			ExecState:   dbViewOpWithResult.ExecState,
+		},
+	)
 }

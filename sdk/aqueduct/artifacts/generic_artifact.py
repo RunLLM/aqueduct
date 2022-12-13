@@ -4,12 +4,12 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.dag import DAG
-from aqueduct.enums import ArtifactType, ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import ArtifactNeverComputedException
-from aqueduct.utils import format_header_for_print
+from aqueduct.models.dag import DAG
+from aqueduct.utils.utils import format_header_for_print
 
 
 class GenericArtifact(BaseArtifact):
@@ -88,5 +88,5 @@ class GenericArtifact(BaseArtifact):
         readable_dict["Inputs"] = [
             self._dag.must_get_artifact(artf).name for artf in input_operator.inputs
         ]
-        print(format_header_for_print(f"'{input_operator.name}' {self._get_type()} Artifact"))
+        print(format_header_for_print(f"'{input_operator.name}' {self.type()} Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))

@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.artifacts.utils import to_artifact_class
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.operators import Operator, OperatorSpec
-from aqueduct.utils import construct_param_spec, generate_uuid, infer_artifact_type
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import Operator, OperatorSpec
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct.utils.utils import construct_param_spec, generate_uuid
 
 
-def create_param(
+def create_param_artifact(
     dag: DAG,
     name: str,
     default: Any,

@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, Union
 
-from aqueduct.enums import RuntimeType
+from aqueduct.constants.enums import RuntimeType
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration

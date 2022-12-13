@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional, Union
 
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     FunctionGranularity,
@@ -16,7 +16,7 @@ from aqueduct.enums import (
     ServiceType,
 )
 from aqueduct.error import AqueductError
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
 
@@ -121,7 +121,8 @@ UnionLoadParams = Union[
 ]
 
 
-# Internal class used by SDK to represent the config for loading to an integration.
+# TODO(ENG-2035) This deprecated and will be removed.
+# A user-facing class used by SDK to represent the config for loading to an integration.
 class SaveConfig(BaseModel):
     integration_info: IntegrationInfo
     parameters: UnionLoadParams
