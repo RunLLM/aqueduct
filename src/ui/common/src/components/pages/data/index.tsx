@@ -10,7 +10,6 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
 import { CheckLevel } from '../../../utils/operators';
-import ExecutionStatus from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
@@ -18,7 +17,7 @@ import PaginatedSearchTable, {
 import { LayoutProps } from '../types';
 import CheckItem from '../workflows/components/CheckItem';
 import ExecutionStatusLink from '../workflows/components/ExecutionStatusLink';
-import MetricItem, { MetricPreview } from '../workflows/components/MetricItem';
+import MetricItem from '../workflows/components/MetricItem';
 
 type Props = {
   user: UserProfile;
@@ -41,39 +40,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   useEffect(() => {
     document.title = 'Data | Aqueduct';
   }, []);
-
-  const metricsShort: MetricPreview[] = [
-    {
-      metricId: '1',
-      name: 'avg_churn',
-      value: '10',
-      status: ExecutionStatus.Succeeded,
-    },
-    {
-      metricId: '2',
-      name: 'sentiment',
-      value: '100.5',
-      status: ExecutionStatus.Failed,
-    },
-    {
-      metricId: '3',
-      name: 'revenue_lost',
-      value: '$20M',
-      status: ExecutionStatus.Succeeded,
-    },
-    {
-      metricId: '4',
-      name: 'more_metrics',
-      value: '$500',
-      status: ExecutionStatus.Succeeded,
-    },
-    {
-      metricId: '5',
-      name: 'more_metrics',
-      value: '$500',
-      status: ExecutionStatus.Succeeded,
-    },
-  ];
 
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];

@@ -81,21 +81,35 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
 
     for (let i = 0; i < checksToShow; i++) {
       let statusIcon = successIcon;
-      if (checks[i].status === ExecutionStatus.Failed) {
-        statusIcon = errorIcon;
-      } else if (checks[i].status === ExecutionStatus.Succeeded) {
-        // now we check the value to see if we should show warning or error icon
-        if (checks[i].value === 'False') {
-          if (checks[i].level === CheckLevel.Error) {
-            statusIcon = errorIcon;
-          } else {
-            statusIcon = warningIcon;
-          }
+
+      switch (checks[i].status) {
+        case ExecutionStatus.Canceled: {
+          statusIcon = canceledIcon;
+          break;
         }
-      } else if (checks[i].status === ExecutionStatus.Canceled) {
-        statusIcon = canceledIcon;
-      } else if (checks[i].status !== ExecutionStatus.Succeeded) {
-        statusIcon = unknownIcon;
+        case ExecutionStatus.Failed: {
+          statusIcon = errorIcon;
+          break;
+        }
+        case ExecutionStatus.Succeeded: {
+          // now we check the value to see if we should show warning or error icon
+          if (checks[i].value === 'False') {
+            if (checks[i].level === CheckLevel.Error) {
+              statusIcon = errorIcon;
+            } else {
+              statusIcon = warningIcon;
+            }
+          }
+          break;
+        }
+        case ExecutionStatus.Running:
+        case ExecutionStatus.Registered:
+        case ExecutionStatus.Pending:
+        case ExecutionStatus.Unknown:
+        default: {
+          statusIcon = unknownIcon;
+          break;
+        }
       }
 
       checksList.push(
