@@ -1,6 +1,7 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { ExecState, ExecutionStatus } from './shared';
+import {EngineConfig} from "./engine";
 
 export const PREV_TABLE_TAG = '$';
 export const LEFT_PARAMS_TAG = '{{';
@@ -138,6 +139,9 @@ export type OperatorSpec = {
   load?: Load;
   check?: Check;
   param?: Param;
+
+  // If set, the operator definitely executed on this engine.
+  engine_config?: EngineConfig;
 };
 
 export type Operator = {
