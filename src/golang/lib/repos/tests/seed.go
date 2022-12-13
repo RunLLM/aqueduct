@@ -505,23 +505,12 @@ func (ts *TestSuite) seedUsedExecutionEnvironment(count int) ([]models.Execution
 		_, _ = ts.dagEdge.Create(
 			ts.ctx,
 			dagID,
-			shared.ArtifactToOperatorDAGEdge,
-			artifactID,
+			shared.OperatorToArtifactDAGEdge,
 			operator.ID,
+			artifactID,
 			int16(i),
 			ts.DB,
 		)
-		if rand.Intn(2) > 0 {
-			_, _ = ts.dagEdge.Create(
-				ts.ctx,
-				dagID,
-				shared.OperatorToArtifactDAGEdge,
-				operator.ID,
-				artifactID,
-				int16(i),
-				ts.DB,
-			)
-		}
 	}
 
 	return executionEnvironments, operators

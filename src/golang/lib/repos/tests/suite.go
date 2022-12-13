@@ -99,6 +99,7 @@ func (ts *TestSuite) TearDownTest() {
 	// Clear all of the tables
 	query := `
 	DELETE FROM app_user;
+	DELETE FROM execution_environment;
 	DELETE FROM integration;
 	DELETE FROM workflow;
 	DELETE FROM workflow_dag;

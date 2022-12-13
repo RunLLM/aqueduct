@@ -63,21 +63,18 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOpIDBatch() {
 }
 
 func (ts *TestSuite) TestExecutionEnvironment_GetUnused() {
-	initialUnused, err := ts.executionEnvironment.GetUnused(ts.ctx, ts.DB)
-	require.Nil(ts.T(), err)
-
 	ts.seedUsedExecutionEnvironment(3)
 
 	noNewExecutionEnvironments, err := ts.executionEnvironment.GetUnused(ts.ctx, ts.DB)
 	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), len(initialUnused), len(noNewExecutionEnvironments))
+	require.Equal(ts.T(), 0, len(noNewExecutionEnvironments))
 
 	expectedExecutionEnvironments := ts.seedUnusedExecutionEnvironment(3)
 
 	actualExecutionEnvironments, err := ts.executionEnvironment.GetUnused(ts.ctx, ts.DB)
 	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), len(initialUnused)+3, len(actualExecutionEnvironments))
-	requireDeepEqualExecutionEnvironment(ts.T(), append(initialUnused, expectedExecutionEnvironments...), actualExecutionEnvironments)
+	require.Equal(ts.T(), 3, len(actualExecutionEnvironments))
+	requireDeepEqualExecutionEnvironment(ts.T(), expectedExecutionEnvironments, actualExecutionEnvironments)
 }
 
 func (ts *TestSuite) TestExecutionEnvironment_Create() {
