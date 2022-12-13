@@ -54,7 +54,8 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOpIDBatch() {
 			expectedExecutionEnvironments[0], 
 			expectedExecutionEnvironments[2], 
 			expectedExecutionEnvironments[4],
-		}, []models.ExecutionEnvironment{
+		}, 
+		[]models.ExecutionEnvironment{
 			actualExecutionEnvironments[operators[0].ID], 
 			actualExecutionEnvironments[operators[2].ID], 
 			actualExecutionEnvironments[operators[4].ID],

@@ -145,7 +145,7 @@ func (*executionEnvironmentReader) GetUnused(ctx context.Context, DB database.Da
 		execution_environment.garbage_collected = FALSE 
 		AND 
 		active_execution_environment.id IS NULL;`, 
-	workflow_dag_edge.OperatorToArtifactType,  // Is this a bug? Shouldn't we also look at ArtifactToOperatorType?
+	workflow_dag_edge.OperatorToArtifactType,
 	models.ExecutionEnvironmentColsWithPrefix())
 	
 	return getExecutionEnvironments(ctx, DB, query)
