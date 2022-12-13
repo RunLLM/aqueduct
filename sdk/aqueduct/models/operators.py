@@ -1,9 +1,8 @@
 import uuid
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
-from aqueduct.config import EngineConfig
-from aqueduct.enums import (
-    ArtifactType,
+from aqueduct.models.config import EngineConfig
+from aqueduct.constants.enums import (
     CheckSeverity,
     FunctionGranularity,
     FunctionType,
@@ -11,15 +10,13 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    RuntimeType,
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,
-    ServiceType,
+    ServiceType, ArtifactType,
 )
-from aqueduct.error import AqueductError, InvalidUserArgumentException
-from aqueduct.integrations.integration import IntegrationInfo
-from aqueduct.logger import logger
+from aqueduct.error import AqueductError
+from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
 
