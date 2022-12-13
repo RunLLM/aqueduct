@@ -78,83 +78,82 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   };
 
   let tableData = [];
+  if (dataCardsInfo?.data?.latest_versions) {
+    const latestVersions =
+      Object.keys(dataCardsInfo.data.latest_versions).length > 0
+        ? Object.keys(dataCardsInfo.data.latest_versions)
+        : [];
+    tableData = latestVersions.map((version) => {
+      const currentVersion =
+        dataCardsInfo.data.latest_versions[version.toString()];
 
-  if (Object.keys(dataCardsInfo.data.latest_versions).length > 0) {
-    tableData = Object.keys(dataCardsInfo.data.latest_versions).map(
-      (version) => {
-        const currentVersion =
-          dataCardsInfo.data.latest_versions[version.toString()];
+      const artifactId = currentVersion.artifact_id;
+      const artifactName = currentVersion.artifact_name;
 
-        const artifactId = currentVersion.artifact_id;
-        const artifactName = currentVersion.artifact_name;
+      const dataPreviewInfoVersions = Object.entries(currentVersion.versions);
+      let [latestDagResultId, latestVersion] =
+        dataPreviewInfoVersions.length > 0 ? dataPreviewInfoVersions[0] : null;
 
-        const dataPreviewInfoVersions = Object.entries(currentVersion.versions);
-        let [latestDagResultId, latestVersion] =
-          dataPreviewInfoVersions.length > 0
-            ? dataPreviewInfoVersions[0]
-            : null;
+      // Find the latest version
+      // note: could also sort the array and get things that way.
+      dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
+        if (version.timestamp > latestVersion.timestamp) {
+          latestDagResultId = dagResultId;
+          latestVersion = version;
+        }
+      });
 
-        // Find the latest version
-        // note: could also sort the array and get things that way.
-        dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-          if (version.timestamp > latestVersion.timestamp) {
-            latestDagResultId = dagResultId;
-            latestVersion = version;
-          }
+      let checks = [];
+      if (latestVersion.checks?.length > 0) {
+        checks = latestVersion.checks.map((check, index) => {
+          const level = check.metadata.failure_type
+            ? CheckLevel.Warning
+            : CheckLevel.Error;
+          const value =
+            check.metadata.status === 'succeeded' && !check.metadata.error;
+          return {
+            checkId: index,
+            name: check.name,
+            status: check.status,
+            level,
+            value: value ? 'True' : 'False',
+            timestamp: check.metadata.timestamps.finished_at,
+          };
         });
-
-        let checks = [];
-        if (latestVersion.checks?.length > 0) {
-          checks = latestVersion.checks.map((check, index) => {
-            const level = check.metadata.failure_type
-              ? CheckLevel.Warning
-              : CheckLevel.Error;
-            const value =
-              check.metadata.status === 'succeeded' && !check.metadata.error;
-            return {
-              checkId: index,
-              name: check.name,
-              status: check.status,
-              level,
-              value: value ? 'True' : 'False',
-              timestamp: check.metadata.timestamps.finished_at,
-            };
-          });
-        }
-
-        let metrics = [];
-        if (latestVersion.metrics?.length > 0) {
-          metrics = latestVersion.metrics.map((metric, index) => {
-            return {
-              metricId: metric.id,
-              name: metric.name,
-              value: metric.result.content_serialized,
-              status: metric.status,
-            };
-          });
-        }
-
-        const workflowId = currentVersion.workflow_id;
-        const workflowName = currentVersion.workflow_name;
-
-        return {
-          name: {
-            name: artifactName,
-            url: `${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${artifactId}`,
-            status: latestVersion.status,
-          },
-          created_at: new Date(latestVersion.timestamp * 1000).toLocaleString(),
-          workflow: {
-            name: workflowName,
-            url: `${getPathPrefix()}/workflow/${workflowId}`,
-            status: latestVersion?.dag_status ?? ExecutionStatus.Unknown,
-          },
-          type: latestVersion?.metadata?.python_type ?? '-',
-          metrics,
-          checks,
-        };
       }
-    );
+
+      let metrics = [];
+      if (latestVersion?.metrics?.length > 0) {
+        metrics = latestVersion.metrics.map((metric, index) => {
+          return {
+            metricId: metric.id,
+            name: metric.name,
+            value: metric.result.content_serialized,
+            status: metric.status,
+          };
+        });
+      }
+
+      const workflowId = currentVersion.workflow_id;
+      const workflowName = currentVersion.workflow_name;
+
+      return {
+        name: {
+          name: artifactName,
+          url: `${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${artifactId}`,
+          status: latestVersion.status,
+        },
+        created_at: new Date(latestVersion.timestamp * 1000).toLocaleString(),
+        workflow: {
+          name: workflowName,
+          url: `${getPathPrefix()}/workflow/${workflowId}`,
+          status: latestVersion?.dag_status ?? ExecutionStatus.Unknown,
+        },
+        type: latestVersion?.metadata?.python_type ?? '-',
+        metrics,
+        checks,
+      };
+    });
   }
 
   const artifactList: PaginatedSearchTableData = {
