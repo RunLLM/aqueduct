@@ -43,7 +43,7 @@ type executionEnvironmentWriter interface {
 
 	// Delete deletes the ExecutionEnvironment with ID.
 	Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error
-	
+
 	// DeleteBatch deletes the ExecutionEnvironment with ID.
 	DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
 

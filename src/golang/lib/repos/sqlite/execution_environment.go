@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -64,13 +64,13 @@ func (*executionEnvironmentReader) GetActiveByHash(ctx context.Context, hash uui
 
 func (*executionEnvironmentReader) GetActiveByOpIDBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error) {
 	type resultRow struct {
-		ID               uuid.UUID `db:"id"`
-		OpID       uuid.UUID `db:"operator_id"`
-		Hash             uuid.UUID `db:"hash"`
-		Spec             shared.ExecutionEnvironmentSpec      `db:"spec"`
-		GarbageCollected bool      `db:"garbage_collected"`
+		ID               uuid.UUID                       `db:"id"`
+		OpID             uuid.UUID                       `db:"operator_id"`
+		Hash             uuid.UUID                       `db:"hash"`
+		Spec             shared.ExecutionEnvironmentSpec `db:"spec"`
+		GarbageCollected bool                            `db:"garbage_collected"`
 	}
-	
+
 	query := fmt.Sprintf(
 		`SELECT operator.id AS operator_id, %s
 		FROM execution_environment, operator
@@ -144,10 +144,10 @@ func (*executionEnvironmentReader) GetUnused(ctx context.Context, DB database.Da
 	WHERE 
 		execution_environment.garbage_collected = FALSE 
 		AND 
-		active_execution_environment.id IS NULL;`, 
-	workflow_dag_edge.OperatorToArtifactType,
-	models.ExecutionEnvironmentColsWithPrefix())
-	
+		active_execution_environment.id IS NULL;`,
+		workflow_dag_edge.OperatorToArtifactType,
+		models.ExecutionEnvironmentColsWithPrefix())
+
 	return getExecutionEnvironments(ctx, DB, query)
 }
 
