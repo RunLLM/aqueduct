@@ -12,7 +12,21 @@ export const DataColumnTypeNames = [
 
 export type DataColumnType = typeof DataColumnTypeNames[number];
 
-export type DataColumn = { name: string; type: DataColumnType };
+export type DataColumn = {
+  /**
+   * Name of column (key of object)
+   */
+  name: string;
+  /**
+   * Used to show an alternate text in column header.
+   * e.g. colum named created_at but we wish to render as Created At
+   */
+  displayName?: string;
+  /**
+   * Type of data to be rendered in column.
+   */
+  type: DataColumnType;
+};
 
 export type DataSchema = {
   fields: DataColumn[];

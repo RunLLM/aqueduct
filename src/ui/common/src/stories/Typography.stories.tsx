@@ -4,7 +4,7 @@ import React from 'react';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-  title: 'Typography',
+  title: 'Primitives/Typography',
   component: Typography,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
