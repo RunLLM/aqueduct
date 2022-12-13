@@ -17,6 +17,7 @@ WORKFLOW_PKGS = [
 EXAMPLE_NOTEBOOKS_PATHS = [
     "examples/churn_prediction/Customer Churn Prediction.ipynb",
     "examples/diabetes-classifier/Classifying Diabetes Risk.ipynb",
+    # TODO (ENG-2098) This notebook is failing.
     # "examples/house-price-prediction/House Price Prediction.ipynb",
     "examples/mpg-regressor/Predicting MPG.ipynb",
     "examples/sentiment-analysis/Sentiment Model.ipynb",
