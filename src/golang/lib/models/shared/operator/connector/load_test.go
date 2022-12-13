@@ -14,7 +14,7 @@ func TestMarshalAndUnmarshallLoad(t *testing.T) {
 	postgresParams := generateLoadPostgresParams()
 	originalLoad := Load{
 		Service:       integration.Postgres,
-		IntegrationId: uuid.New(),
+		IntegrationID: uuid.New(),
 		Parameters:    postgresParams,
 	}
 
