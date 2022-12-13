@@ -147,12 +147,9 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           workflow: {
             name: workflowName,
             url: `${getPathPrefix()}/workflow/${workflowId}`,
-            // TODO: Get latest workflow version and show status.
             status: latestVersion?.dag_status ?? ExecutionStatus.Unknown,
           },
-          // TODO: Get python data type from API route
           type: latestVersion?.metadata?.python_type ?? '-',
-          // TODO: Get API route to return metrics in addition to checks array.
           metrics,
           checks,
         };
