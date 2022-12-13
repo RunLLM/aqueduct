@@ -30,6 +30,7 @@ type DAG struct {
 	// TODO: make sure to update this on the UI too.
 	//  Should we turn this into an Airflow boolean?
 	//  Should we have an engine config here or in each operator?
+	//  Follow-up: can make this NULL if necessary.
 	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
