@@ -1,8 +1,8 @@
 import uuid
 from typing import List, Optional, Union
 
-from aqueduct.models.config import EngineConfig
 from aqueduct.constants.enums import (
+    ArtifactType,
     CheckSeverity,
     FunctionGranularity,
     FunctionType,
@@ -13,9 +13,10 @@ from aqueduct.constants.enums import (
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,
-    ServiceType, ArtifactType,
+    ServiceType,
 )
 from aqueduct.error import AqueductError
+from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
@@ -195,9 +196,10 @@ class OperatorSpec(BaseModel):
     check: Optional[CheckSpec]
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
-
     resources: Optional[ResourceConfig]
-    engine_config: EngineConfig = EngineConfig()
+
+    # If set, overwrites any default engine on the DAG.
+    engine_config: Optional[EngineConfig]
 
 
 class Operator(BaseModel):

@@ -57,7 +57,7 @@ def preview_artifacts(
             globals.__GLOBAL_API_CLIENT__.list_integrations(),
             globals.__GLOBAL_CONFIG__.engine,
         )
-    subgraph.set_engine_configs(global_engine_config=global_engine_config)
+    subgraph.set_engine_config(global_engine_config=global_engine_config)
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 

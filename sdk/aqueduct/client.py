@@ -470,7 +470,7 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        dag.set_engine_configs(
+        dag.set_engine_config(
             global_engine_config=generate_engine_config(
                 self._connected_integrations,
                 globals.__GLOBAL_CONFIG__.engine,
