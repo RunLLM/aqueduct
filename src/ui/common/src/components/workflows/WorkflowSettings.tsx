@@ -662,7 +662,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     <Dialog
       open={showSavedObjectDeletionResultsDialog}
       onClose={() => navigate('/workflows')}
-      maxWidth={false}
+      maxWidth="sm"
       fullWidth
     >
       <DialogTitle>
