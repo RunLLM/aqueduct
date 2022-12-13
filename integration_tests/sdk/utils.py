@@ -38,7 +38,7 @@ def generate_table_name() -> str:
 def publish_flow_test(
     client: aqueduct.Client,
     artifacts: Union[BaseArtifact, List[BaseArtifact]],
-    engine: str,
+    engine: Optional[str],
     expected_statuses: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
     name: Optional[str] = None,
     existing_flow: Optional[Flow] = None,

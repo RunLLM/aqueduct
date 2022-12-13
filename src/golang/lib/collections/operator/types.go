@@ -56,7 +56,7 @@ type specUnion struct {
 
 	// This can currently only be set for function operators.
 	Resources    *ResourceConfig      `json:"resources,omitempty"`
-	EngineConfig *shared.EngineConfig `db:"engine_config" json:"engine_config"`
+	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
 
 type Spec struct {
