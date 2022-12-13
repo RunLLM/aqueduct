@@ -16,6 +16,7 @@ To run with more flexibility, configure the following commandline flags:
 
 ## Checklist
 * **Workflows** Page: There should be **4** workflows. **3** Succeeded and **1** Failed.
+* **Notifications**: There should be **1** notification for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay extra attention to **Workflow Status Bar** and any noted **sidesheets** in the description.
 * **Integration** Page:
     * There should be **11** *Data* integrations and **4** *Compute* integrations.
@@ -34,4 +35,4 @@ To run with more flexibility, configure the following commandline flags:
         * `DESCRIPTION` constant.
         * `deploy(client, integration)` function.
     * Update `initalize.py` by importing the new file and update `WORKFLOW_PKGS` constant.
-    * Update **Workflows** and maybe **Data** section in **Checklist**.
+    * Update **Workflows**, **Notification** and maybe **Data** section in **Checklist**.
