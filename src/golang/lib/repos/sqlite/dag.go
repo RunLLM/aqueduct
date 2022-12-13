@@ -295,7 +295,7 @@ func (*dagWriter) Create(
 		models.DagWorkflowID,
 		models.DagCreatedAt,
 		models.DagStorageConfig,
-		models.DeprecatedDagEngineConfig,
+		models.DagEngineConfig,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.DagTable, cols, models.DAGCols())
 

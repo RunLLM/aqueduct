@@ -258,6 +258,11 @@ func NewWorkflowDag(
 			execEnvPtr = &execEnv
 		}
 
+		opEngineConfig := dag.EngineConfig
+		if dbOperator.Spec.EngineConfig() != nil {
+			opEngineConfig = *dbOperator.Spec.EngineConfig()
+		}
+
 		newOp, err := operator.NewOperator(
 			ctx,
 			dbOperator,
@@ -266,6 +271,7 @@ func NewWorkflowDag(
 			inputExecPaths,
 			outputExecPaths,
 			opResultRepo,
+			opEngineConfig,
 			vaultObject,
 			&dag.StorageConfig,
 			artifactCacheManager,

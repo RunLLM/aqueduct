@@ -13,11 +13,11 @@ const (
 	DagTable = "workflow_dag"
 
 	// DAG column names
-	DagID                     = "id"
-	DagWorkflowID             = "workflow_id"
-	DagCreatedAt              = "created_at"
-	DagStorageConfig          = "storage_config"
-	DeprecatedDagEngineConfig = "engine_config"
+	DagID            = "id"
+	DagWorkflowID    = "workflow_id"
+	DagCreatedAt     = "created_at"
+	DagStorageConfig = "storage_config"
+	DagEngineConfig  = "engine_config"
 )
 
 // A DAG maps to the workflow_dag table.
@@ -28,9 +28,6 @@ type DAG struct {
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
 
 	// TODO: make sure to update this on the UI too.
-	//  Should we turn this into an Airflow boolean?
-	//  Should we have an engine config here or in each operator?
-	//  Follow-up: can make this NULL if necessary.
 	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
@@ -61,6 +58,6 @@ func allDAGCols() []string {
 		DagWorkflowID,
 		DagCreatedAt,
 		DagStorageConfig,
-		DeprecatedDagEngineConfig,
+		DagEngineConfig,
 	}
 }

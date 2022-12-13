@@ -154,6 +154,12 @@ func ScheduleWorkflow(
 			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactId])
 		}
 
+		// The operator's custom engine wins over the dag's engine.
+		opEngineConfig := dag.EngineConfig
+		if op.Spec.EngineConfig() != nil {
+			opEngineConfig = *op.Spec.EngineConfig()
+		}
+
 		airflowOperator, err := operator.NewOperator(
 			ctx,
 			op,
@@ -162,6 +168,7 @@ func ScheduleWorkflow(
 			inputExecPaths,
 			outputExecPaths,
 			nil,
+			opEngineConfig,
 			vault,
 			&airflowStorageConfig,
 			nil,              /* previewCacheManager */
@@ -262,7 +269,7 @@ func ScheduleWorkflow(
 		ctx,
 		dag.ID,
 		map[string]interface{}{
-			models.DeprecatedDagEngineConfig: &newRuntimeConfig,
+			models.DagEngineConfig: &newRuntimeConfig,
 		},
 		DB,
 	)

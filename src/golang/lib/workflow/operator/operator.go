@@ -85,6 +85,7 @@ func NewOperator(
 	inputExecPaths []*utils.ExecPaths,
 	outputExecPaths []*utils.ExecPaths,
 	opResultRepo repos.OperatorResult, // A nil value means the operator is run in preview mode.
+	opEngineConfig shared.EngineConfig,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
@@ -108,9 +109,9 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
-	engineConfig, err := generateJobManagerConfig(
+	jobConfig, err := generateJobManagerConfig(
 		ctx,
-		dbOperator.Spec.EngineConfig(),
+		opEngineConfig,
 		storageConfig,
 		aqPath,
 		vaultObject,
@@ -119,7 +120,7 @@ func NewOperator(
 		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
 	}
 
-	jobManager, err := job.NewJobManager(engineConfig)
+	jobManager, err := job.NewJobManager(jobConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create JobManager.")
 	}

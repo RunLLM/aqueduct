@@ -55,8 +55,8 @@ type specUnion struct {
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
 	// This can currently only be set for function operators.
-	Resources    *ResourceConfig     `json:"resources,omitempty"`
-	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config"`
+	Resources    *ResourceConfig      `json:"resources,omitempty"`
+	EngineConfig *shared.EngineConfig `db:"engine_config" json:"engine_config"`
 }
 
 type Spec struct {
@@ -114,7 +114,7 @@ func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
 }
 
-func (s Spec) EngineConfig() shared.EngineConfig {
+func (s Spec) EngineConfig() *shared.EngineConfig {
 	return s.spec.EngineConfig
 }
 
