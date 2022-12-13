@@ -136,6 +136,8 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           }
         });
 
+        console.log('latestVersion: ', latestVersion);
+
         let checks = [];
         if (latestVersion.checks?.length > 0) {
           checks = latestVersion.checks.map((check, index) => {
@@ -155,6 +157,18 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           });
         }
 
+        let metrics = [];
+        if (latestVersion.metrics?.length > 0) {
+          metrics = latestVersion.metrics.map((metric, index) => {
+            return {
+              metricId: metric.id,
+              name: metric.name,
+              value: metric.result.content_serialized,
+              status: metric.status,
+            };
+          });
+        }
+
         const workflowId = currentVersion.workflow_id;
         const workflowName = currentVersion.workflow_name;
 
@@ -169,13 +183,13 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             name: workflowName,
             url: `${getPathPrefix()}/workflow/${workflowId}`,
             // TODO: Get latest workflow version and show status.
-            status: ExecutionStatus.Succeeded,
+            status: latestVersion.dag_status,
           },
           // TODO: Get python data type from API route
-          type: 'pandas.DataFrame',
+          type: latestVersion.metadata.python_type,
           // TODO: Get API route to return metrics in addition to checks array.
-          metrics: metricsShort,
-          checks: checks,
+          metrics,
+          checks,
         };
       }
     );

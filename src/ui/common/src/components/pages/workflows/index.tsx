@@ -7,8 +7,7 @@ import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowS
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { ServiceLogos } from '../../../utils/integrations';
-import { CheckLevel } from '../../../utils/operators';
-import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
+import { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import {
@@ -17,10 +16,10 @@ import {
   PaginatedSearchTableRow,
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
-import CheckItem, { CheckPreview } from './components/CheckItem';
+import CheckItem from './components/CheckItem';
 import EngineItem from './components/EngineItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
-import MetricItem, { MetricPreview } from './components/MetricItem';
+import MetricItem from './components/MetricItem';
 
 type Props = {
   user: UserProfile;
@@ -63,78 +62,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   );
 
   const workflows = allWorkflows.workflows;
-
-  // TODO: Remove these once we fetch actual metrics data from the API.
-  const metricsShort: MetricPreview[] = [
-    {
-      metricId: '1',
-      name: 'avg_churn',
-      value: '10',
-      status: ExecutionStatus.Failed,
-    },
-    {
-      metricId: '2',
-      name: 'sentiment',
-      value: '100.5',
-      status: ExecutionStatus.Succeeded,
-    },
-    {
-      metricId: '3',
-      name: 'revenue_lost',
-      value: '$20M',
-      status: ExecutionStatus.Succeeded,
-    },
-    {
-      metricId: '4',
-      name: 'more_metrics',
-      value: '$500',
-      status: ExecutionStatus.Succeeded,
-    },
-  ];
-
-  // TODO: Remove these once we fetch actual checks data from the API
-  const checkPreviews: CheckPreview[] = [
-    {
-      checkId: '1',
-      name: 'min_churn',
-      status: ExecutionStatus.Succeeded,
-      level: CheckLevel.Error,
-      value: 'True',
-      timestamp: new Date().toLocaleString(),
-    },
-    {
-      checkId: '2',
-      name: 'max_churn',
-      status: ExecutionStatus.Failed,
-      level: CheckLevel.Error,
-      value: 'True',
-      timestamp: new Date().toLocaleString(),
-    },
-    {
-      checkId: '3',
-      name: 'avg_churn_check',
-      status: ExecutionStatus.Pending,
-      level: CheckLevel.Warning,
-      value: null,
-      timestamp: new Date().toLocaleString(),
-    },
-    {
-      checkId: '4',
-      name: 'warning_test',
-      status: ExecutionStatus.Succeeded,
-      level: CheckLevel.Warning,
-      value: 'False',
-      timestamp: new Date().toLocaleString(),
-    },
-    {
-      checkId: '5',
-      name: 'canceled_test',
-      status: ExecutionStatus.Canceled,
-      level: CheckLevel.Warning,
-      value: 'False',
-      timestamp: new Date().toLocaleString(),
-    },
-  ];
 
   /**
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
