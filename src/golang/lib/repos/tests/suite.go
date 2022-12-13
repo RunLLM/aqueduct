@@ -25,6 +25,7 @@ type TestSuite struct {
 	dag            repos.DAG
 	dagEdge        repos.DAGEdge
 	dagResult      repos.DAGResult
+	executionEnvironment       repos.ExecutionEnvironment
 	integration    repos.Integration
 	notification   repos.Notification
 	operator       repos.Operator
@@ -53,6 +54,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dag = sqlite.NewDAGRepo()
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
+	ts.executionEnvironment = sqlite.NewExecutionEnvironmentRepo()
 	ts.integration = sqlite.NewIntegrationRepo()
 	ts.notification = sqlite.NewNotificationRepo()
 	ts.operator = sqlite.NewOperatorRepo()

@@ -450,6 +450,83 @@ func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, mod
 	return artifactResults, artifact, dag, workflow
 }
 
+// seedUnusedExecutionEnvironment creates `count` unused execution environments in execution_environment.
+func (ts *TestSuite) seedUnusedExecutionEnvironment(count int) []models.ExecutionEnvironment {
+	executionEnvironments := make([]models.ExecutionEnvironment, 0, count)
+
+	for i := 0; i < count; i++ {
+		spec := shared.ExecutionEnvironmentSpec{
+			PythonVersion: randString(10),
+			Dependencies: []string{randString(10), randString(10), randString(10)},
+		}
+		hash := uuid.New()
+		executionEnvironment, err := ts.executionEnvironment.Create(ts.ctx, &spec, hash, ts.DB)
+		require.Nil(ts.T(), err)
+
+		executionEnvironments = append(executionEnvironments, *executionEnvironment)
+	}
+
+	return executionEnvironments
+}
+
+// seedUsedExecutionEnvironment creates `count` used execution environments in execution_environment
+// and the workflow and operators that use them.
+func (ts *TestSuite) seedUsedExecutionEnvironment(count int) ([]models.ExecutionEnvironment, []models.Operator) {
+	operators := make([]models.Operator, 0, count)
+	
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+
+	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
+	dagID := dags[0].ID
+
+	executionEnvironments := ts.seedUnusedExecutionEnvironment(count)
+	for i := 0; i < count; i++ {
+		artifactID := uuid.New()
+
+		spec := operator.NewSpecFromFunction(
+			function.Function{},
+		)
+
+		operator, err := ts.operator.Create(
+			ts.ctx,
+			randString(10),
+			randString(15),
+			spec,
+			&executionEnvironments[i].ID,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+		operators = append(operators, *operator)
+
+		_, _ = ts.dagEdge.Create(
+			ts.ctx,
+			dagID,
+			shared.ArtifactToOperatorDAGEdge,
+			artifactID,
+			operator.ID,
+			int16(i),
+			ts.DB,
+		)
+		if rand.Intn(2) > 0 {
+			_, _ = ts.dagEdge.Create(
+				ts.ctx,
+				dagID,
+				shared.OperatorToArtifactDAGEdge,
+				operator.ID,
+				artifactID,
+				int16(i),
+				ts.DB,
+			)
+		}
+	}
+
+	return executionEnvironments, operators
+}
+
 // seedComplexWorkflow creates a workflow with multiple operator and artifacts.
 // To make expected results easy to find, the map of artifacts and operators are keyed by names.
 // The workflow reflects the following DAG:
