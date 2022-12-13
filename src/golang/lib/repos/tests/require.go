@@ -159,10 +159,7 @@ func requireDeepEqualDAGEdges(t *testing.T, expected, actual []models.DAGEdge) {
 		var foundDAGEdge models.DAGEdge
 
 		for _, actualDAGEdge := range actual {
-			if expectedDAGEdge.DagID == actualDAGEdge.DagID &&
-				expectedDAGEdge.FromID == actualDAGEdge.FromID &&
-				expectedDAGEdge.ToID == actualDAGEdge.ToID &&
-				expectedDAGEdge.Idx == actualDAGEdge.Idx {
+			if reflect.DeepEqual(expectedDAGEdge, actualDAGEdge) {
 				found = true
 				foundDAGEdge = actualDAGEdge
 				break
@@ -202,22 +199,13 @@ func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOp
 
 	for _, expectedOperator := range expected {
 		found := false
-		var foundOperator views.LoadOperator
 
 		for _, actualOperator := range actual {
-			if (expectedOperator.OperatorName == actualOperator.OperatorName &&
-				expectedOperator.ModifiedAt.Unix() == actualOperator.ModifiedAt.Unix() &&
-				expectedOperator.IntegrationName == actualOperator.IntegrationName &&
-				expectedOperator.IntegrationID == actualOperator.IntegrationID &&
-				expectedOperator.Service == actualOperator.Service &&
-				expectedOperator.TableName == actualOperator.TableName &&
-				expectedOperator.UpdateMode == actualOperator.UpdateMode) {
+			if reflect.DeepEqual(expectedOperator, actualOperator) {
 				found = true
-				foundOperator = actualOperator
 				break
 			}
 		}
 		require.True(t, found, "Unable to find LoadOperator: %v", expectedOperator)
-		requireDeepEqual(t, expectedOperator, foundOperator)
 	}
 }
