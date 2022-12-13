@@ -40,22 +40,7 @@ export type WorkflowMetrics = {
     serialization_type: string;
   };
 };
-/*
-{
-    error?: string;
-    failure_type?: string;
-    status: string;
-    timestamps: {
-      finished_at?: string;
-      pending_at?: string;
-      resgistered_at?: string;
-      running_at?: string;
-      user_logs: {
-        stderr: string;
-        stdout: string;
-      }
-    }
-  }*/
+
 export type ExecutionResult = {
   id: string;
   exec_state: ExecState;

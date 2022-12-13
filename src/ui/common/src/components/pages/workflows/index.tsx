@@ -7,7 +7,8 @@ import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowS
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { ServiceLogos } from '../../../utils/integrations';
-import { LoadingStatusEnum } from '../../../utils/shared';
+import { CheckLevel } from '../../../utils/operators';
+import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import {
@@ -76,22 +77,22 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       return {
         metricId: metric.id,
         name: metric.name,
-        value: metric.result.content_serialized,
-        status: metric.result.exec_state.status,
+        value: metric.result?.content_serialized ?? '',
+        status: metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
       };
     });
 
     const checks = value.checks.map((check) => {
       const value =
-        check.result.exec_state.status === 'succeeded' ? 'True' : 'False';
+        check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
 
       return {
         checkId: check.id,
         name: check.name,
-        level: check.spec.check.level,
-        timestamp: check.result.exec_state.timestamps.finished_at,
+        level: check.spec?.check?.level ?? CheckLevel.Warning,
+        timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
         value,
-        status: check.result.exec_state.status,
+        status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
       };
     });
 
@@ -106,7 +107,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         engineName,
         engineIconUrl: engineIconUrl,
       },
-      // TODO: add metrics and checks to response item when getting workflows list.
       metrics,
       checks,
     };

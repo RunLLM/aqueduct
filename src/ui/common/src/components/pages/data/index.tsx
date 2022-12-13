@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,7 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
 import { CheckLevel } from '../../../utils/operators';
+import ExecutionStatus from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
@@ -147,10 +148,10 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             name: workflowName,
             url: `${getPathPrefix()}/workflow/${workflowId}`,
             // TODO: Get latest workflow version and show status.
-            status: latestVersion.dag_status,
+            status: latestVersion?.dag_status ?? ExecutionStatus.Unknown,
           },
           // TODO: Get python data type from API route
-          type: latestVersion.metadata.python_type,
+          type: latestVersion?.metadata?.python_type ?? '-',
           // TODO: Get API route to return metrics in addition to checks array.
           metrics,
           checks,
@@ -174,18 +175,31 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     data: tableData,
   };
 
+  const noItemsMessage = (
+    <Typography variant="h5">
+      There are no data artifacts created yet. Create one right by running a
+      workflow with our{' '}
+      <Link href="https://github.com/aqueducthq/aqueduct/blob/main/sdk">
+        Python SDK
+      </Link>
+      <span>!</span>
+    </Typography>
+  );
+
   return (
     <Layout
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
       user={user}
     >
-      <Box>
+      {artifactList.data.length > 0 ? (
         <PaginatedSearchTable
           data={artifactList}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
         />
-      </Box>
+      ) : (
+        <Box>{noItemsMessage}</Box>
+      )}
     </Layout>
   );
 };
