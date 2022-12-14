@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+
+	"github.com/dropbox/godropbox/errors"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 )
 
@@ -32,7 +35,7 @@ func PollJob(
 				return status, nil
 			}
 		case <-timeout.C:
-			return shared.UnknownExecutionStatus, ErrPollJobTimeout
+			return shared.UnknownExecutionStatus, errors.Newf("Reached timeout waiting for the job %s to finish.", name)
 		}
 	}
 }

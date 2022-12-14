@@ -84,7 +84,7 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 	}
 }
 
-func jobManagerUserFailureExecState(err *job.JobError, logMsg string) *shared.ExecutionState {
+func jobManagerUserFailureExecState(err job.JobError, logMsg string) *shared.ExecutionState {
 	log.Errorf("Job execution had a user-facing issue: %s %v", logMsg, err)
 
 	failureType := shared.UserFatalFailure
@@ -242,7 +242,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 		// 2) it has run already at sometime in the past, but has been garbage collected
 		// 3) it has run already at sometime in the past, but did not go through the job manager.
 		//    (this can happen when the output artifacts have already been cached).
-		if err == job.ErrJobNotExist || err == job.ErrAsyncExecution {
+		if err.Code() == job.JobMissing || err.Code() == job.Noop {
 			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
 				execState := bo.fetchExecState(ctx)
@@ -252,18 +252,21 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
-		} else {
-			var execState *shared.ExecutionState
 
 			// Catch any errors here that originate from within the JobManager, outside of the
 			// python execution context, and that need a better user-facing message (eg. OOM issues).
-			if jobErr := err.(*job.JobError); jobErr != nil && jobErr.Code == job.User {
-				execState = jobManagerUserFailureExecState(jobErr, "Job manager failed due to user error.")
-			} else {
-				execState = unknownSystemFailureExecState(err, "Unable to poll job manager.")
-			}
-			bo.updateExecState(execState)
+		} else if err.Code() == job.User {
+			bo.updateExecState(
+				jobManagerUserFailureExecState(err, "Job manager failed due to user error."),
+			)
 			return bo.ExecState(), nil
+		} else if err.Code() == job.System {
+			bo.updateExecState(
+				unknownSystemFailureExecState(err, "Unable to poll job manager."),
+			)
+			return bo.ExecState(), nil
+		} else {
+			return nil, errors.Newf("Unsupposed Job Error code %v", err.Code())
 		}
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
