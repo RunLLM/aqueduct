@@ -13,7 +13,7 @@ export type EngineConfig = {
   lambda_config?: LambdaConfig;
 };
 
-export type AqueductConfig = {};
+export type AqueductConfig = Record<string, never>;
 
 export type AirflowConfig = {
   integration_id: string;
