@@ -30,10 +30,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			DAGRepo:         		  s.DAGRepo,
+			DAGRepo:                  s.DAGRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
-			IntegrationRepo: 		  s.IntegrationRepo,
-			OperatorRepo:    		  s.OperatorRepo,
+			IntegrationRepo:          s.IntegrationRepo,
+			OperatorRepo:             s.OperatorRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,
@@ -41,10 +41,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			IntegrationRepo: 		  s.IntegrationRepo,
+			IntegrationRepo:          s.IntegrationRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
-			OperatorRepo:    		  s.OperatorRepo,
-			WorkflowRepo:    		  s.WorkflowRepo,
+			OperatorRepo:             s.OperatorRepo,
+			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
@@ -174,7 +174,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			AqEngine:      s.AqEngine,
 
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
-			IntegrationRepo: 		  s.IntegrationRepo,
+			IntegrationRepo:          s.IntegrationRepo,
 		},
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:   s.Database,
@@ -216,14 +216,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:         s.Vault,
 			Engine:        s.AqEngine,
 
-			ArtifactRepo:    		  s.ArtifactRepo,
-			DAGRepo:         		  s.DAGRepo,
-			DAGEdgeRepo:     		  s.DAGEdgeRepo,
+			ArtifactRepo:             s.ArtifactRepo,
+			DAGRepo:                  s.DAGRepo,
+			DAGEdgeRepo:              s.DAGEdgeRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
-			IntegrationRepo: 		  s.IntegrationRepo,
-			OperatorRepo:    		  s.OperatorRepo,
-			WatcherRepo:     		  s.WatcherRepo,
-			WorkflowRepo:    		  s.WorkflowRepo,
+			IntegrationRepo:          s.IntegrationRepo,
+			OperatorRepo:             s.OperatorRepo,
+			WatcherRepo:              s.WatcherRepo,
+			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
 			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{

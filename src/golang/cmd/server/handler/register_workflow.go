@@ -44,14 +44,14 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	ArtifactRepo    repos.Artifact
-	DAGRepo         repos.DAG
-	DAGEdgeRepo     repos.DAGEdge
+	ArtifactRepo             repos.Artifact
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
-	WatcherRepo     repos.Watcher
-	WorkflowRepo    repos.Workflow
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
 type registerWorkflowArgs struct {

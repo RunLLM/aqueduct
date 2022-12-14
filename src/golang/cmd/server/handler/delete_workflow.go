@@ -81,9 +81,9 @@ type DeleteWorkflowHandler struct {
 	Vault      vault.Vault
 
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
-	WorkflowRepo    repos.Workflow
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
+	WorkflowRepo             repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {

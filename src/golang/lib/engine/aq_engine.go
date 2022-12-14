@@ -45,17 +45,17 @@ type AqueductTimeConfig struct {
 
 // Repos contains the repos needed by the Engine
 type Repos struct {
-	ArtifactRepo       			  repos.Artifact
-	ArtifactResultRepo 			  repos.ArtifactResult
-	DAGRepo            			  repos.DAG
-	DAGEdgeRepo        			  repos.DAGEdge
-	DAGResultRepo      			  repos.DAGResult
-	ExecutionEnvironmentRepo      repos.ExecutionEnvironment
-	NotificationRepo   			  repos.Notification
-	OperatorRepo       			  repos.Operator
-	OperatorResultRepo 			  repos.OperatorResult
-	WatcherRepo        			  repos.Watcher
-	WorkflowRepo       			  repos.Workflow
+	ArtifactRepo             repos.Artifact
+	ArtifactResultRepo       repos.ArtifactResult
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
+	DAGResultRepo            repos.DAGResult
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	NotificationRepo         repos.Notification
+	OperatorRepo             repos.Operator
+	OperatorResultRepo       repos.OperatorResult
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
 type aqEngine struct {

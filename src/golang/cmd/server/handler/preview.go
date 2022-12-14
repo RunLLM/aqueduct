@@ -69,7 +69,7 @@ type PreviewHandler struct {
 	AqEngine      engine.AqEngine
 
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo repos.Integration
+	IntegrationRepo          repos.Integration
 }
 
 func (*PreviewHandler) Name() string {

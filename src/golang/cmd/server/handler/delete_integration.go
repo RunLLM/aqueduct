@@ -39,10 +39,10 @@ type DeleteIntegrationHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	DAGRepo         		 repos.DAG
+	DAGRepo                  repos.DAG
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo 	 	 repos.Integration
-	OperatorRepo    	  	 repos.Operator
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
 }
 
 func (*DeleteIntegrationHandler) Name() string {
