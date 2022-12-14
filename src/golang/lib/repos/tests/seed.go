@@ -384,9 +384,13 @@ func (ts *TestSuite) seedOperatorResultForDAGAndOperator(count int, dagResultID 
 // It creates DAGEdges, Operators, OperatorResults.
 func (ts *TestSuite) seedOperatorResult(count int, opType operator.Type) ([]models.OperatorResult, *models.Operator, uuid.UUID) {
 	artifactID := uuid.New()
-	dags := ts.seedDAG(1)
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+	workflows :=  ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
 	dag := dags[0]
-	operator := ts.seedOperatorAndDAG(artifactID, dag.ID, opType)
+	operator := ts.seedOperatorAndDAG(artifactID, dag.ID, users[0].ID, opType)
 
 	return ts.seedOperatorResultForDAGAndOperator(count, dag.ID, operator.ID), operator, artifactID
 }
@@ -395,14 +399,14 @@ func (ts *TestSuite) seedOperatorResult(count int, opType operator.Type) ([]mode
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for each Operator to associate it with the specified DAG.
 // The DAGEdge type is randomly chosen (unless it is a check type) and does not connect to an actual Artifact.
-func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType operator.Type) []models.Operator {
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid.UUID, opType operator.Type) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	// A fake Artifact is used for all of the DAGEdges
 	artifactID := uuid.New()
 
 	for i := 0; i < count; i++ {
-		operator := ts.seedOperatorAndDAG(artifactID, dagID, opType)
+		operator := ts.seedOperatorAndDAG(artifactID, dagID, userID, opType)
 		operators = append(operators, *operator)
 	}
 
@@ -413,7 +417,7 @@ func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType oper
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for the Operator to associate it with the specified DAG.
 // The DAGEdge type is randomly chosen (unless it is a check type) and does not connect to an actual Artifact.
-func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, opType operator.Type) *models.Operator {
+func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, userID uuid.UUID, opType operator.Type) *models.Operator {
 	var spec *operator.Spec
 	switch opType {
 	case operator.FunctionType:
@@ -429,10 +433,12 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, o
 			},
 		)
 	case operator.LoadType:
+		loadIntegrations := ts.seedIntegrationWithUser(1, userID)
+		loadIntegration := loadIntegrations[0]
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:       integration.Postgres,
-				IntegrationId: uuid.New(),
+				Service:       loadIntegration.Service,
+				IntegrationId: loadIntegration.ID,
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
 						Table:      randString(10),
@@ -440,7 +446,7 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, o
 					},
 				},
 			},
-		)
+			)
 	case operator.CheckType:
 		spec = operator.NewSpecFromCheck(
 			check.Check{
