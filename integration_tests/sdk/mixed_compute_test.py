@@ -1,6 +1,6 @@
 import pytest
-
 from aqueduct.constants.enums import ServiceType
+
 from aqueduct import op
 from sdk.constants import SENTIMENT_SQL_QUERY
 from sdk.utils import publish_flow_test

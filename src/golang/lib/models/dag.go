@@ -27,7 +27,7 @@ type DAG struct {
 	CreatedAt     time.Time            `db:"created_at" json:"created_at"`
 	StorageConfig shared.StorageConfig `db:"storage_config" json:"storage_config"`
 
-	// Sets the default engine for DAG execution. Can we overridden by the operator spec.
+	// Sets the default engine for DAG execution. Can be overridden by the operator spec.
 	EngineConfig shared.EngineConfig `db:"engine_config" json:"engine_config"`
 
 	/* Field not stored in DB */
