@@ -1,9 +1,9 @@
 import pytest
 from aqueduct.constants.enums import ServiceType
+from constants import SENTIMENT_SQL_QUERY
+from utils import publish_flow_test
 
 from aqueduct import op
-from sdk.constants import SENTIMENT_SQL_QUERY
-from sdk.utils import publish_flow_test
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
