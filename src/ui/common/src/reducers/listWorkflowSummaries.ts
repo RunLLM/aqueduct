@@ -36,7 +36,6 @@ export const handleFetchAllWorkflowSummaries = createAsyncThunk<
     });
 
     const body = await response.json();
-
     if (!response.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
