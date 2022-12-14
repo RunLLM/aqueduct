@@ -33,6 +33,15 @@ class EngineConfig(BaseModel):
     k8s_config: Optional[K8sEngineConfig]
     lambda_config: Optional[LambdaEngineConfig]
 
+    # The name of the compute integration. This not consumed by the backend,
+    # but is instead only used for logging purposes in the SDK.
+    name: str = "Aqueduct"
+
+    class Config:
+        fields = {
+            "name": {"exclude": ...},
+        }
+
 
 # TODO(...): this is deprecated.
 class FlowConfig(BaseModel):
