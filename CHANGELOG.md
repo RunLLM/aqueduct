@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+Released on December 14, 2022.
+
+### Bugfixes
+* Fixes a bug where the Aqueduct installation script fails if the user doesn't have conda installed.
+
 ## 0.1.6
 Released on December 13, 2022.
 
