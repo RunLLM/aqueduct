@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -90,7 +89,7 @@ func NewOperator(
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	execMode ExecutionMode,
-	execEnv *exec_env.ExecutionEnvironment,
+	execEnv *models.ExecutionEnvironment,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {

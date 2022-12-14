@@ -26,11 +26,6 @@ type Repos struct {
 
 type Readers struct {
 	SchemaVersionReader        schema_version.Reader
-	ExecutionEnvironmentReader exec_env.Reader
-}
-
-type Writers struct {
-	ExecutionEnvironmentWriter exec_env.Writer
 }
 
 func CreateRepos() *Repos {
@@ -56,45 +51,23 @@ func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
 		return nil, err
 	}
 
-	execEnvReader, err := exec_env.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Readers{
 		SchemaVersionReader:        schemaVersionReader,
-		ExecutionEnvironmentReader: execEnvReader,
 	}, nil
-}
-
-func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
-	execEnvWriter, err := exec_env.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Writers{
-		ExecutionEnvironmentWriter: execEnvWriter,
-	}, nil
-}
-
-func GetEngineReaders(readers *Readers) *engine.EngineReaders {
-	return &engine.EngineReaders{
-		ExecutionEnvironmentReader: readers.ExecutionEnvironmentReader,
-	}
 }
 
 func GetEngineRepos(repos *Repos) *engine.Repos {
 	return &engine.Repos{
-		ArtifactRepo:       repos.ArtifactRepo,
-		ArtifactResultRepo: repos.ArtifactResultRepo,
-		DAGRepo:            repos.DAGRepo,
-		DAGEdgeRepo:        repos.DAGEdgeRepo,
-		DAGResultRepo:      repos.DAGResultRepo,
-		NotificationRepo:   repos.NotificationRepo,
-		OperatorRepo:       repos.OperatorRepo,
-		OperatorResultRepo: repos.OperatorResultRepo,
-		WatcherRepo:        repos.WatcherRepo,
-		WorkflowRepo:       repos.WorkflowRepo,
+		ArtifactRepo:       	  repos.ArtifactRepo,
+		ArtifactResultRepo: 	  repos.ArtifactResultRepo,
+		DAGRepo:            	  repos.DAGRepo,
+		DAGEdgeRepo:        	  repos.DAGEdgeRepo,
+		DAGResultRepo:      	  repos.DAGResultRepo,
+		ExecutionEnvironmentRepo: repos.ExecutionEnvironmentRepo,
+		NotificationRepo:   	  repos.NotificationRepo,
+		OperatorRepo:       	  repos.OperatorRepo,
+		OperatorResultRepo: 	  repos.OperatorResultRepo,
+		WatcherRepo:        	  repos.WatcherRepo,
+		WorkflowRepo:       	  repos.WorkflowRepo,
 	}
 }

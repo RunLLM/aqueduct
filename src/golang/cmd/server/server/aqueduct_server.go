@@ -45,8 +45,6 @@ type AqServer struct {
 	Router   *chi.Mux
 	Name     string
 	Database database.Database
-	*Readers
-	*Writers
 	*Repos
 
 	// Only the following group of fields will be reinitialized when the server is restarted
@@ -77,18 +75,6 @@ func NewAqServer() *AqServer {
 		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		db.Close()
-		log.Fatalf("Unable to create database readers: %v", err)
-	}
-
-	writers, err := CreateWriters(db.Config())
-	if err != nil {
-		db.Close()
-		log.Fatalf("Unable to create database writers: %v", err)
-	}
-
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
 		models.SchemaVersion,
@@ -102,8 +88,6 @@ func NewAqServer() *AqServer {
 	s := &AqServer{
 		Router:           chi.NewRouter(),
 		Database:         db,
-		Readers:          readers,
-		Writers:          writers,
 		Repos:            CreateRepos(),
 		UnderMaintenance: atomic.Value{},
 		RequestMutex:     sync.RWMutex{},
@@ -210,7 +194,6 @@ func (s *AqServer) Init() error {
 		previewCacheManager,
 		vault,
 		aqPath,
-		GetEngineReaders(s.Readers),
 		GetEngineRepos(s.Repos),
 	)
 	if err != nil {

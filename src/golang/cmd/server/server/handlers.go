@@ -30,12 +30,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
-			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
-
-			DAGRepo:         s.DAGRepo,
-			IntegrationRepo: s.IntegrationRepo,
-			OperatorRepo:    s.OperatorRepo,
+			DAGRepo:         		 s.DAGRepo,
+			ExecutionEnvironmentRepo s.ExecutionEnvironmentRepo,
+			IntegrationRepo: 		 s.IntegrationRepo,
+			OperatorRepo:    		 s.OperatorRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,
@@ -43,12 +41,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			JobManager: s.JobManager,
 			Vault:      s.Vault,
 
-			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
-			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
-
-			IntegrationRepo: s.IntegrationRepo,
-			OperatorRepo:    s.OperatorRepo,
-			WorkflowRepo:    s.WorkflowRepo,
+			IntegrationRepo: 		  s.IntegrationRepo,
+			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
+			OperatorRepo:    		  s.OperatorRepo,
+			WorkflowRepo:    		  s.WorkflowRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
@@ -177,10 +173,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			GithubManager: s.GithubManager,
 			AqEngine:      s.AqEngine,
 
-			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
-			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
-
-			IntegrationRepo: s.IntegrationRepo,
+			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
+			IntegrationRepo: 		  s.IntegrationRepo,
 		},
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:   s.Database,
@@ -222,17 +216,14 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Vault:         s.Vault,
 			Engine:        s.AqEngine,
 
-			ExecutionEnvironmentReader: s.ExecutionEnvironmentReader,
-
-			ExecutionEnvironmentWriter: s.ExecutionEnvironmentWriter,
-
-			ArtifactRepo:    s.ArtifactRepo,
-			DAGRepo:         s.DAGRepo,
-			DAGEdgeRepo:     s.DAGEdgeRepo,
-			IntegrationRepo: s.IntegrationRepo,
-			OperatorRepo:    s.OperatorRepo,
-			WatcherRepo:     s.WatcherRepo,
-			WorkflowRepo:    s.WorkflowRepo,
+			ArtifactRepo:    		  s.ArtifactRepo,
+			DAGRepo:         		  s.DAGRepo,
+			DAGEdgeRepo:     		  s.DAGEdgeRepo,
+			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
+			IntegrationRepo: 		  s.IntegrationRepo,
+			OperatorRepo:    		  s.OperatorRepo,
+			WatcherRepo:     		  s.WatcherRepo,
+			WorkflowRepo:    		  s.WorkflowRepo,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
 			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{

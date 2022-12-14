@@ -40,12 +40,10 @@ type DeleteIntegrationHandler struct {
 	Database database.Database
 	Vault    vault.Vault
 
-	ExecutionEnvironmentReader db_exec_env.Reader
-	ExecutionEnvironmentWriter db_exec_env.Writer
-
-	DAGRepo         repos.DAG
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
+	DAGRepo         		 repos.DAG
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo 	 	 repos.Integration
+	OperatorRepo    	  	 repos.Operator
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -120,8 +118,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	if err := cleanUpIntegration(
 		ctx,
 		integrationObject,
-		h.ExecutionEnvironmentReader,
-		h.ExecutionEnvironmentWriter,
+		h.ExecutionEnvironmentRepo,
 		h.Vault,
 		txn,
 	); err != nil {
@@ -180,15 +177,14 @@ func validateNoActiveWorkflowOnIntegration(
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *models.Integration,
-	execEnvReader db_exec_env.Reader,
-	execEnvWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironmentRepo,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
 	if integrationObject.Service == integration.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
-			ctx, execEnvReader, execEnvWriter, db,
+			ctx, execEnvRepo, db,
 		)
 		if err != nil {
 			return err

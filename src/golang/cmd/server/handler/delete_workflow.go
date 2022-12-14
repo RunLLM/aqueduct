@@ -81,10 +81,7 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	ExecutionEnvironmentReader db_exec_env.Reader
-
-	ExecutionEnvironmentWriter db_exec_env.Writer
-
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo repos.Integration
 	OperatorRepo    repos.Operator
 	WorkflowRepo    repos.Workflow
@@ -231,8 +228,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentReader,
-			h.ExecutionEnvironmentWriter,
+			h.ExecutionEnvironmentRepo,
 			db,
 		)
 		if err != nil {
