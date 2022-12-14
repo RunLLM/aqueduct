@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"

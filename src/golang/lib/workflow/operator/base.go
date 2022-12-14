@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -52,7 +53,7 @@ type baseOperator struct {
 	// If set to nil, the job manager will run this operator in the server's default Python environment.
 	// Otherwise, it will switch to the approppriate Conda environment before running the operator.
 	// This only applies to operators running with the Aqueduct engine.
-	execEnv *models.ExecutionEnvironment
+	execEnv *exec_env.ExecutionEnvironment
 }
 
 func (bo *baseOperator) Type() operator.Type {

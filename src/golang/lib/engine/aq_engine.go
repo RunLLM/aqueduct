@@ -260,9 +260,10 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opIds = append(opIds, op.ID)
 	}
 
-	execEnvsByOpId, err := eng.ExecutionEnvironmentRepo.GetActiveByOpIDBatch(
+	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
 		ctx,
 		opIds,
+		eng.ExecutionEnvironmentRepo,
 		eng.Database,
 	)
 	if err != nil {

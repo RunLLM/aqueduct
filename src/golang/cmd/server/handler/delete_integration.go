@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -177,7 +176,7 @@ func validateNoActiveWorkflowOnIntegration(
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *models.Integration,
-	execEnvRepo repos.ExecutionEnvironmentRepo,
+	execEnvRepo repos.ExecutionEnvironment,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {

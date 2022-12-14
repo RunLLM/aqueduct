@@ -156,7 +156,7 @@ func NewWorkflowDag(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
-	execEnvs map[uuid.UUID]models.ExecutionEnvironment,
+	execEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
 	opExecMode operator.ExecutionMode,
 	DB database.Database,
 ) (WorkflowDag, error) {
@@ -254,7 +254,7 @@ func NewWorkflowDag(
 		}
 
 		execEnv, ok := execEnvs[opID]
-		var execEnvPtr *models.ExecutionEnvironment = nil
+		var execEnvPtr *exec_env.ExecutionEnvironment = nil
 		if ok {
 			execEnvPtr = &execEnv
 		}

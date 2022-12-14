@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"

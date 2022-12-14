@@ -30,10 +30,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Vault:    s.Vault,
 
-			DAGRepo:         		 s.DAGRepo,
-			ExecutionEnvironmentRepo s.ExecutionEnvironmentRepo,
-			IntegrationRepo: 		 s.IntegrationRepo,
-			OperatorRepo:    		 s.OperatorRepo,
+			DAGRepo:         		  s.DAGRepo,
+			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
+			IntegrationRepo: 		  s.IntegrationRepo,
+			OperatorRepo:    		  s.OperatorRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,
