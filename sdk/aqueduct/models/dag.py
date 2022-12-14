@@ -5,6 +5,7 @@ from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, Tr
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
+    InvalidUserActionException,
     InvalidUserArgumentException,
 )
 from aqueduct.logger import logger
@@ -86,6 +87,13 @@ class DAG(BaseModel):
         for op in self.operators.values():
             op_engine_config = dag_engine_config
             if op.spec.engine_config is not None:
+                # DAG's that are expected to execute on Airflow cannot have any custom Operator specs.
+                if dag_engine_config.type != RuntimeType.AIRFLOW:
+                    raise InvalidUserActionException(
+                        "All operators must run on Airflow. Operator %s is designated to run on custom engine `%s`."
+                        % (op.name, op.spec.engine_config.name),
+                    )
+
                 op_engine_config = op.spec.engine_config
 
             # Since we know exactly what engine the operator will run with, check whether
