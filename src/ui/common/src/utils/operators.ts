@@ -142,6 +142,7 @@ export type OperatorSpec = {
 
   // If set, the operator definitely executed on this engine.
   engine_config?: EngineConfig;
+
 };
 
 export type Operator = {
