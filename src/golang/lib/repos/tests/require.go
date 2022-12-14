@@ -159,10 +159,7 @@ func requireDeepEqualDAGEdges(t *testing.T, expected, actual []models.DAGEdge) {
 		var foundDAGEdge models.DAGEdge
 
 		for _, actualDAGEdge := range actual {
-			if expectedDAGEdge.DagID == actualDAGEdge.DagID &&
-				expectedDAGEdge.FromID == actualDAGEdge.FromID &&
-				expectedDAGEdge.ToID == actualDAGEdge.ToID &&
-				expectedDAGEdge.Idx == actualDAGEdge.Idx {
+			if reflect.DeepEqual(expectedDAGEdge, actualDAGEdge) {
 				found = true
 				foundDAGEdge = actualDAGEdge
 				break
@@ -192,6 +189,24 @@ func requireDeepEqualOperators(t *testing.T, expected, actual []models.Operator)
 		}
 		require.True(t, found, "Unable to find Operator: %v", expectedOperator)
 		requireDeepEqual(t, expectedOperator, foundOperator)
+	}
+}
+
+// requireDeepEqualLoadOperators asserts that the expected and actual lists of
+// LoadOperators contain the same elements.
+func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOperator) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperator := range expected {
+		found := false
+
+		for _, actualOperator := range actual {
+			if reflect.DeepEqual(expectedOperator, actualOperator) {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "Unable to find LoadOperator: %v", expectedOperator)
 	}
 }
 
