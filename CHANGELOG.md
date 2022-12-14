@@ -7,6 +7,9 @@ Released on December 13, 2022.
 * Introduces new table views on the workflows and data pages that show rich
     metadata at a glance, including workflow and artifact status, data types,
     and associated metrics and checks!
+* Adds support for integrating with conda. Once the user registers conda integration through the UI, 
+    Aqueduct will create conda environments to run any newly created workflows to provide better 
+    Python version and dependency management.
 
 ### Enhancements
 * Introduces a new `save` API; now, to save an artifact, users can write the
