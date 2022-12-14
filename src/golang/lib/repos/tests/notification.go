@@ -27,7 +27,6 @@ func (ts *TestSuite) TestNotification_ValidateUser() {
 	validateFalse, validateFalseErr := ts.notification.ValidateUser(ts.ctx, notification.ID, uuid.New(), ts.DB)
 	require.Nil(ts.T(), validateFalseErr)
 	require.False(ts.T(), validateFalse)
-
 }
 
 func (ts *TestSuite) TestNotification_Create() {
@@ -37,13 +36,13 @@ func (ts *TestSuite) TestNotification_Create() {
 	level := shared.SuccessNotificationLevel
 	association := &shared.NotificationAssociation{
 		Object: shared.OrgNotificationObject,
-		ID: uuid.New(),
+		ID:     uuid.New(),
 	}
 	expectedNotification := &models.Notification{
-		ReceiverID: receiverID,
-		Content: content,
-		Status: shared.UnreadNotificationStatus,
-		Level: level,
+		ReceiverID:  receiverID,
+		Content:     content,
+		Status:      shared.UnreadNotificationStatus,
+		Level:       level,
 		Association: *association,
 	}
 

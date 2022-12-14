@@ -126,7 +126,8 @@ func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string,
 			SELECT 
 				wf.id AS id, wf.name AS name,
 		 		wf.description AS description, wf.created_at AS created_at,
-		 		wfdr.created_at AS run_at, wfdr.status as status, 
+		 		wfdr.created_at AS run_at, wfdr.status as status,
+				wfdr.id as result_id, wfd.id AS dag_id,
 				json_extract(wfd.engine_config, '$.type') as engine
 			FROM 
 				workflow AS wf
@@ -146,8 +147,15 @@ func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string,
 				id
 		)
 		SELECT 
-			wfr.id, wfr.name, wfr.description, wfr.created_at, 
-			wfr.run_at AS last_run_at, wfr.status, wfr.engine
+			wfr.id,
+			wfr.name,
+			wfr.description,
+			wfr.created_at,
+			wfr.result_id,
+			wfr.dag_id, 
+			wfr.run_at AS last_run_at,
+			wfr.status,
+			wfr.engine
 		FROM 
 			workflow_results AS wfr, latest_result AS lr
 		WHERE 

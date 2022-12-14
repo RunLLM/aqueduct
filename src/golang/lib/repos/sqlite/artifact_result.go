@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -120,8 +121,11 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 	query := fmt.Sprintf(
 		`SELECT 
 			artifact_result.artifact_id, 
+			artifact_result.id as artifact_result_id,
 			artifact_result.workflow_dag_result_id, 
-			artifact_result.status, 
+			artifact_result.status,
+			artifact_result.content_path,
+			artifact_result.metadata,
 			workflow_dag_result.created_at AS timestamp 
 		FROM artifact_result, workflow_dag_result 
 		WHERE 
@@ -135,6 +139,66 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 	var statuses []views.ArtifactResultStatus
 	err := DB.Query(ctx, &statuses, query, args...)
 	return statuses, err
+}
+
+func (*artifactResultReader) GetByArtifactBatch(
+	ctx context.Context,
+	artifactIDs []uuid.UUID,
+	DB database.Database,
+) ([]models.ArtifactResult, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM artifact_result
+		WHERE artifact_result.artifact_id IN (%s);`,
+		models.ArtifactResultCols(),
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
+
+	var results []models.ArtifactResult
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
+}
+
+func (*artifactResultReader) GetWithArtifactOfMetricsByDAGResultBatch(
+	ctx context.Context,
+	dagResultIDs []uuid.UUID,
+	DB database.Database,
+) ([]views.ArtifactWithResult, error) {
+	query := fmt.Sprintf(
+		`SELECT DISTINCT
+			artifact.id as id,
+			artifact.name as name,
+			artifact.description as description,
+			artifact.type as type,
+			artifact_result.id as result_id,
+			artifact_result.workflow_dag_result_id as dag_result_id,
+			artifact_result.content_path as content_path,
+			artifact_result.execution_state as execution_state,
+			artifact_result.metadata as metadata,
+			workflow_dag.storage_config as storage_config
+		FROM
+			workflow_dag,
+			workflow_dag_edge,
+			operator,
+			artifact,
+			artifact_result
+		WHERE 
+			workflow_dag_edge.to_id = artifact.id
+			AND workflow_dag_edge.from_id = operator.id
+			AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND json_extract(operator.spec, '$.type') = '%s'
+			AND artifact_result.artifact_id = artifact.id
+			AND artifact_result.workflow_dag_result_id IN (%s);`,
+		mdl_shared.MetricType,
+		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
+	var results []views.ArtifactWithResult
+
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
 }
 
 func (*artifactResultWriter) Create(

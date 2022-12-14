@@ -6,17 +6,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
-from aqueduct.artifacts import utils as artifact_utils
+from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
-from aqueduct.enums import (
+from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
     ExecutionMode,
@@ -24,8 +16,11 @@ from aqueduct.enums import (
     FunctionType,
     OperatorType,
 )
+from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.operators import (
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
     MetricSpec,
@@ -33,15 +28,17 @@ from aqueduct.operators import (
     OperatorSpec,
     SystemMetricSpec,
 )
-from aqueduct.utils import (
-    artifact_name_from_op_name,
-    format_header_for_print,
-    generate_uuid,
-    get_checks_for_op,
-    get_description_for_check,
-    get_description_for_metric,
-    serialize_function,
+from aqueduct.utils.dag_deltas import (
+    AddOrReplaceOperatorDelta,
+    RemoveCheckOperatorDelta,
+    apply_deltas_to_dag,
 )
+from aqueduct.utils.describe import (
+    get_readable_description_for_check,
+    get_readable_description_for_metric,
+)
+from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.utils import artifact_name_from_op_name, format_header_for_print, generate_uuid
 from ruamel import yaml
 
 from aqueduct import globals
@@ -67,7 +64,7 @@ class TableArtifact(BaseArtifact):
 
         >>> df = output_artifact.get()
         >>> print(df.head())
-        >>> output_artifact.save(warehouse.config(table_name="output_table"))
+        >>> warehouse.save(output_artifact, table_name="output_table", update_mode="replace")
     """
 
     def __init__(
@@ -695,13 +692,18 @@ class TableArtifact(BaseArtifact):
             on_artifact_id=self._artifact_id,
         )
 
-        check_operators = get_checks_for_op(input_operator, self._dag)
+        check_operators = self._dag.list_operators(
+            filter_to=[OperatorType.CHECK],
+            on_artifact_id=self._artifact_id,
+        )
 
         readable_dict = super()._describe()
         readable_dict.update(
             {
-                "Metrics": [get_description_for_metric(op, self._dag) for op in metric_operators],
-                "Checks": [get_description_for_check(op) for op in check_operators],
+                "Metrics": [
+                    get_readable_description_for_metric(op, self._dag) for op in metric_operators
+                ],
+                "Checks": [get_readable_description_for_check(op) for op in check_operators],
                 "Destinations": [
                     {
                         "Name": op.name,

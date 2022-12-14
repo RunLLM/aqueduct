@@ -534,7 +534,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 	operatorResultIDs := make([]uuid.UUID, 0, len(operatorResultsToDelete))
 	for _, operatorResult := range operatorResultsToDelete {
-		operatorResultIDs = append(operatorResultIDs, operatorResult.Id)
+		operatorResultIDs = append(operatorResultIDs, operatorResult.ID)
 	}
 
 	artifactResultsToDelete, err := eng.ArtifactResultRepo.GetByDAGResults(

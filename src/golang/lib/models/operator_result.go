@@ -24,7 +24,7 @@ const (
 
 // A OperatorResult maps to the operator_result table.
 type OperatorResult struct {
-	Id          uuid.UUID `db:"id" json:"id"`
+	ID          uuid.UUID `db:"id" json:"id"`
 	DAGResultID uuid.UUID `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
 	OperatorID  uuid.UUID `db:"operator_id" json:"operator_id"`
 	// TODO(ENG-1453): Remove status. This field is redundant now that ExecState exists.

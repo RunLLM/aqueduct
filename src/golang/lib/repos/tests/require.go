@@ -209,3 +209,51 @@ func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOp
 		require.True(t, found, "Unable to find LoadOperator: %v", expectedOperator)
 	}
 }
+
+// requireDeepEqualOperatorResults asserts that the expected and actual lists of
+// OperatorResults contain the same elements.
+func requireDeepEqualOperatorResults(t *testing.T, expected, actual []models.OperatorResult) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperatorResult := range expected {
+		found := false
+		var foundOperatorResult models.OperatorResult
+
+		for _, actualOperatorResult := range actual {
+			if expectedOperatorResult.ID == actualOperatorResult.ID {
+				found = true
+				foundOperatorResult = actualOperatorResult
+				break
+			}
+		}
+		require.True(t, found, "Unable to find OperatorResult: %v", expectedOperatorResult)
+		requireDeepEqual(t, expectedOperatorResult, foundOperatorResult)
+	}
+}
+
+// requireDeepEqualOperatorResultStatuses asserts that the expected and actual lists of
+// OperatorResultStatuses contain the same elements.
+func requireDeepEqualOperatorResultStatuses(t *testing.T, expected, actual []views.OperatorResultStatus) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedOperatorResultStatus := range expected {
+		found := false
+		var foundOperatorResultStatus views.OperatorResultStatus
+
+		for _, actualOperatorResultStatus := range actual {
+			if expectedOperatorResultStatus.ArtifactID == actualOperatorResultStatus.ArtifactID &&
+				expectedOperatorResultStatus.DAGResultID == actualOperatorResultStatus.DAGResultID &&
+				expectedOperatorResultStatus.OperatorName == actualOperatorResultStatus.OperatorName {
+
+				found = true
+				foundOperatorResultStatus = actualOperatorResultStatus
+				// Metadata's timestamps is set equal since the timestamps will not match due to the fact
+				// that they are pointers.
+				expectedOperatorResultStatus.Metadata.Timestamps.PendingAt = actualOperatorResultStatus.Metadata.Timestamps.PendingAt
+				break
+			}
+		}
+		require.True(t, found, "Unable to find OperatorResultStatus: %v\nExpected: %v\n Actual: %v", expectedOperatorResultStatus, expected, actual)
+		requireDeepEqual(t, expectedOperatorResultStatus, foundOperatorResultStatus)
+	}
+}

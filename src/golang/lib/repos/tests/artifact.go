@@ -49,6 +49,23 @@ func (ts *TestSuite) TestArtifact_GetByDAG() {
 	requireDeepEqual(ts.T(), []models.Artifact{expectedArtifact}, actualArtifact)
 }
 
+func (ts *TestSuite) TestArtifact_GetMetricsByUpstreamArtifactBatch() {
+	_, _, artifacts := ts.seedComplexWorkflow()
+
+	expectedResults := map[uuid.UUID][]models.Artifact{
+		artifacts["function_1_artf"].ID: {artifacts["metric_1_artf"]},
+		artifacts["function_2_artf"].ID: {artifacts["metric_2_artf"]},
+	}
+
+	actualResults, err := ts.artifact.GetMetricsByUpstreamArtifactBatch(
+		ts.ctx,
+		[]uuid.UUID{artifacts["function_1_artf"].ID, artifacts["function_2_artf"].ID},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	requireDeepEqual(ts.T(), expectedResults, actualResults)
+}
+
 func (ts *TestSuite) TestArtifact_ValidateOrg() {
 	expectedArtifact, _, _, user := ts.seedArtifactInWorkflow()
 

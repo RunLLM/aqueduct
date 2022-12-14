@@ -16,7 +16,7 @@ interface PaginatedTableProps {
   data: Data;
 }
 
-const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
+export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 

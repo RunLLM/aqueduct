@@ -58,6 +58,7 @@ type artifactResultMetadata struct {
 	Schema            []map[string]string               `json:"schema"`
 	SerializationType artifact_result.SerializationType `json:"serialization_type"`
 	ArtifactType      artifact.Type                     `json:"artifact_type"`
+	PythonType        string                            `json:"python_type"`
 }
 
 type getArtifactResultResponse struct {
@@ -213,15 +214,16 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	metadata := artifactResultMetadata{
-		Status:            execState.Status,
-		ExecState:         execState,
-		Name:              artifact.Name,
-		ArtifactType:      dbArtifactResult.Metadata.ArtifactType,
-		SerializationType: dbArtifactResult.Metadata.SerializationType,
+		Status:    execState.Status,
+		ExecState: execState,
+		Name:      artifact.Name,
 	}
 
 	if !dbArtifactResult.Metadata.IsNull {
 		metadata.Schema = dbArtifactResult.Metadata.Schema
+		metadata.ArtifactType = dbArtifactResult.Metadata.ArtifactType
+		metadata.SerializationType = dbArtifactResult.Metadata.SerializationType
+		metadata.PythonType = dbArtifactResult.Metadata.PythonType
 	}
 
 	response := &getArtifactResultResponse{

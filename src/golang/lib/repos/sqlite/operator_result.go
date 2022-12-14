@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -70,6 +71,41 @@ func (*operatorResultReader) GetByDAGResultAndOperator(
 	return getOperatorResult(ctx, DB, query, args...)
 }
 
+func (*operatorResultReader) GetWithOperatorByDAGResultBatch(
+	ctx context.Context,
+	dagResultIDs []uuid.UUID,
+	types []mdl_shared.OperatorType,
+	DB database.Database,
+) ([]views.OperatorWithResult, error) {
+	query := fmt.Sprintf(
+		`SELECT
+			operator.id as id,
+			operator.name as name,
+			operator.description as description,
+			operator.spec as spec,
+			operator.execution_environment_id as execution_environment_id,
+			operator_result.id as result_id,
+			operator_result.workflow_dag_result_id as dag_result_id,
+			operator_result.status as status,
+			operator_result.execution_state as execution_state
+		FROM operator, operator_result 
+		WHERE operator_result.workflow_dag_result_id IN (%s)
+		AND json_extract(operator.spec, '$.type') IN (%s)
+		AND operator.id = operator_result.operator_id`,
+		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
+		stmt_preparers.GenerateArgsList(len(types), 1+len(dagResultIDs)),
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(dagResultIDs)
+	for _, tp := range types {
+		args = append(args, tp)
+	}
+
+	var results []views.OperatorWithResult
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
+}
+
 func (*operatorResultReader) GetByDAGResultBatch(
 	ctx context.Context,
 	dagResultIDs []uuid.UUID,
@@ -100,7 +136,6 @@ func (*operatorResultReader) GetCheckStatusByArtifactBatch(
 		`SELECT DISTINCT
 			workflow_dag_edge.from_id AS artifact_id,
 			operator.name AS operator_name,
-			operator_result.status, 
 		 	operator_result.execution_state as metadata,
 			operator_result.workflow_dag_result_id 
 		FROM workflow_dag_edge, operator, operator_result 

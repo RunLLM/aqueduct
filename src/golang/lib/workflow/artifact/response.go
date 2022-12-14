@@ -5,6 +5,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -88,4 +89,29 @@ func NewResultResponseFromDbObjects(
 		Response: metadata,
 		Result:   NewRawResultResponseFromDbObject(dbArtifactResult, content),
 	}
+}
+
+func NewResultResponseFromDBView(
+	dbViewArtfWithResult *views.ArtifactWithResult,
+	content *string,
+) *ResultResponse {
+	return NewResultResponseFromDbObjects(
+		&models.Artifact{
+			ID:          dbViewArtfWithResult.ID,
+			Name:        dbViewArtfWithResult.Name,
+			Description: dbViewArtfWithResult.Description,
+			Type:        dbViewArtfWithResult.Type,
+		},
+		&models.ArtifactResult{
+			ID:          dbViewArtfWithResult.ResultID,
+			DAGResultID: dbViewArtfWithResult.DAGResultID,
+			ArtifactID:  dbViewArtfWithResult.ID,
+			ContentPath: dbViewArtfWithResult.ContentPath,
+			ExecState:   dbViewArtfWithResult.ExecState,
+			Metadata:    dbViewArtfWithResult.Metadata,
+		},
+		content,
+		uuid.UUID{}, // from, we ignore this field for now
+		nil,         // to, we ignore this field for now
+	)
 }

@@ -83,7 +83,7 @@ func (ex *WorkflowRetentionExecutor) cleanupOldWorkflows(
 
 	operatorResultIDs := make([]uuid.UUID, 0, len(operatorResultsToDelete))
 	for _, operatorResult := range operatorResultsToDelete {
-		operatorResultIDs = append(operatorResultIDs, operatorResult.Id)
+		operatorResultIDs = append(operatorResultIDs, operatorResult.ID)
 	}
 
 	artifactResultsToDelete, err := ex.ArtifactResultRepo.GetByDAGResults(

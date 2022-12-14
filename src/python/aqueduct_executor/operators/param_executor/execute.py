@@ -1,7 +1,7 @@
 import sys
 
-from aqueduct.serialization import deserialize
-from aqueduct.utils import infer_artifact_type
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.execution import (

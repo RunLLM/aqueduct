@@ -478,7 +478,11 @@ export const workflowSlice = createSlice({
       state.operatorResults = {};
 
       state.selectedResult = state.dagResults[payload];
-      state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+      // check if we have a currently selectedResult. If not, then set to a value like 0 so that we don't cause an error due to state.selectedResult being undefined.
+      const workflowDagId = state.selectedResult?.workflow_dag_id
+        ? state.selectedResult.workflow_dag_id
+        : 0;
+      state.selectedDag = state.dags[workflowDagId];
     },
   },
   extraReducers: (builder) => {

@@ -220,7 +220,7 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 		return errors.Wrap(err, "Failed to create operator result record.")
 	}
 
-	bo.resultID = operatorResult.Id
+	bo.resultID = operatorResult.ID
 
 	return nil
 }

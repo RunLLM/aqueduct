@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,

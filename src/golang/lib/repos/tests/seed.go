@@ -1,13 +1,17 @@
 package tests
 
 import (
+	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/metric"
 	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -348,83 +352,208 @@ func (ts *TestSuite) seedOperator(count int) []models.Operator {
 	return operators
 }
 
+// seedOperatorResultForDAGAndOperator creates count OperatorResult records.
+// It does not create any other records and only creates OperatorResults for the specified DAG and operator.
+func (ts *TestSuite) seedOperatorResultForDAGAndOperator(count int, dagResultID uuid.UUID, operatorID uuid.UUID) []models.OperatorResult {
+	operatorResults := make([]models.OperatorResult, 0, count)
+
+	for i := 0; i < count; i++ {
+		now := time.Now()
+		execState := &col_shared.ExecutionState{
+			Status: col_shared.PendingExecutionStatus,
+			Timestamps: &col_shared.ExecutionTimestamps{
+				PendingAt: &now,
+			},
+		}
+		operatorResult, err := ts.operatorResult.Create(
+			ts.ctx,
+			dagResultID,
+			operatorID,
+			execState,
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		operatorResults = append(operatorResults, *operatorResult)
+	}
+
+	return operatorResults
+}
+
+// seedOperatorResult creates count OperatorResult records.
+// It creates DAGEdges, Operators, OperatorResults.
+func (ts *TestSuite) seedOperatorResult(count int, opType operator.Type) ([]models.OperatorResult, *models.Operator, uuid.UUID) {
+	artifactID := uuid.New()
+	dags := ts.seedDAG(1)
+	dag := dags[0]
+	operator := ts.seedOperatorAndDAG(artifactID, dag.ID, opType)
+
+	return ts.seedOperatorResultForDAGAndOperator(count, dag.ID, operator.ID), operator, artifactID
+}
+
 // seedOperatorWithDAG creates count Operator records of Type opType.
 // The supported options are Function, Extract, and Load.
 // It creates a DAGEdge for each Operator to associate it with the specified DAG.
-// The DAGEdge type is randomly chosen and does not connect to an actual Artifact.
-func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, userID uuid.UUID, opType operator.Type) []models.Operator {
+// The DAGEdge type is randomly chosen (unless it is a check type) and does not connect to an actual Artifact.
+func (ts *TestSuite) seedOperatorWithDAG(count int, dagID uuid.UUID, opType operator.Type) []models.Operator {
 	operators := make([]models.Operator, 0, count)
 
 	// A fake Artifact is used for all of the DAGEdges
 	artifactID := uuid.New()
 
 	for i := 0; i < count; i++ {
-		var spec *operator.Spec
-		switch opType {
-		case operator.FunctionType:
-			spec = operator.NewSpecFromFunction(
-				function.Function{},
-			)
-		case operator.ExtractType:
-			spec = operator.NewSpecFromExtract(
-				connector.Extract{
-					Service:       integration.Postgres,
-					IntegrationId: uuid.New(),
-					Parameters:    &connector.PostgresExtractParams{},
-				},
-			)
-		case operator.LoadType:
-			loadIntegrations := ts.seedIntegrationWithUser(1, userID)
-			loadIntegration := loadIntegrations[0]
-			spec = operator.NewSpecFromLoad(
-				connector.Load{
-					Service:       loadIntegration.Service,
-					IntegrationId: loadIntegration.ID,
-					Parameters: &connector.PostgresLoadParams{
-						RelationalDBLoadParams: connector.RelationalDBLoadParams{
-							Table:      randString(10),
-							UpdateMode: "replace",
-						},
-					},
-				},
-			)
-		default:
-			ts.Fail("Seeding an Operator of type %v is not supported", opType)
-		}
-
-		operator, err := ts.operator.Create(
-			ts.ctx,
-			randString(10),
-			randString(15),
-			spec,
-			nil,
-			ts.DB,
-		)
-		require.Nil(ts.T(), err)
-
+		operator := ts.seedOperatorAndDAG(artifactID, dagID, opType)
 		operators = append(operators, *operator)
-
-		edgeType := shared.ArtifactToOperatorDAGEdge
-		fromID, toID := artifactID, operator.ID
-		if rand.Intn(2) > 0 {
-			// Randomly change the direction of the DAGEdge
-			edgeType = shared.OperatorToArtifactDAGEdge
-			fromID, toID = toID, fromID
-		}
-
-		_, err = ts.dagEdge.Create(
-			ts.ctx,
-			dagID,
-			edgeType,
-			fromID,
-			toID,
-			int16(i),
-			ts.DB,
-		)
-		require.Nil(ts.T(), err)
 	}
 
 	return operators
+}
+
+// seedOperatorAndDAG creates an Operator records of Type opType.
+// The supported options are Function, Extract, and Load.
+// It creates a DAGEdge for the Operator to associate it with the specified DAG.
+// The DAGEdge type is randomly chosen (unless it is a check type) and does not connect to an actual Artifact.
+func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, opType operator.Type) *models.Operator {
+	var spec *operator.Spec
+	switch opType {
+	case operator.FunctionType:
+		spec = operator.NewSpecFromFunction(
+			function.Function{},
+		)
+	case operator.ExtractType:
+		spec = operator.NewSpecFromExtract(
+			connector.Extract{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters:    &connector.PostgresExtractParams{},
+			},
+		)
+	case operator.LoadType:
+		spec = operator.NewSpecFromLoad(
+			connector.Load{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters: &connector.PostgresLoadParams{
+					RelationalDBLoadParams: connector.RelationalDBLoadParams{
+						Table:      randString(10),
+						UpdateMode: "replace",
+					},
+				},
+			},
+		)
+	case operator.CheckType:
+		spec = operator.NewSpecFromCheck(
+			check.Check{
+				Level: check.ErrorLevel,
+				Function: function.Function{},
+			},
+		)
+	default:
+		ts.Fail("Seeding an Operator of type %v is not supported", opType)
+	}
+
+	newOperator, err := ts.operator.Create(
+		ts.ctx,
+		randString(10),
+		randString(15),
+		spec,
+		nil,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	edgeType := shared.ArtifactToOperatorDAGEdge
+	fromID, toID := artifactID, newOperator.ID
+	if rand.Intn(2) > 0 && opType != operator.CheckType {
+		// Randomly change the direction of the DAGEdge
+		edgeType = shared.OperatorToArtifactDAGEdge
+		fromID, toID = toID, fromID
+	}
+
+	_, err = ts.dagEdge.Create(
+		ts.ctx,
+		dagID,
+		edgeType,
+		fromID,
+		toID,
+		int16(0),
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	return newOperator
+}
+
+// seedOperatorAndDAG creates an Operator records of Type opType.
+// The supported options are Function, Extract, and Load.
+// It creates a DAGEdge for the Operator to associate it with the specified DAG.
+// The DAGEdge type is OperatorToArtifactDAGEdge and does not connect to an actual Artifact.
+func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, dagID uuid.UUID, opType operator.Type) *models.Operator {
+	var spec *operator.Spec
+	switch opType {
+	case operator.FunctionType:
+		spec = operator.NewSpecFromFunction(
+			function.Function{},
+		)
+	case operator.ExtractType:
+		spec = operator.NewSpecFromExtract(
+			connector.Extract{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters:    &connector.PostgresExtractParams{},
+			},
+		)
+	case operator.LoadType:
+		spec = operator.NewSpecFromLoad(
+			connector.Load{
+				Service:       integration.Postgres,
+				IntegrationId: uuid.New(),
+				Parameters: &connector.PostgresLoadParams{
+					RelationalDBLoadParams: connector.RelationalDBLoadParams{
+						Table:      randString(10),
+						UpdateMode: "replace",
+					},
+				},
+			},
+		)
+	case operator.CheckType:
+		spec = operator.NewSpecFromCheck(
+			check.Check{
+				Level: check.ErrorLevel,
+				Function: function.Function{},
+			},
+		)
+	default:
+		ts.Fail("Seeding an Operator of type %v is not supported", opType)
+	}
+
+	newOperator, err := ts.operator.Create(
+		ts.ctx,
+		randString(10),
+		randString(15),
+		spec,
+		nil,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	edgeType := shared.ArtifactToOperatorDAGEdge
+	fromID, toID := artifactID, newOperator.ID
+	edgeType = shared.OperatorToArtifactDAGEdge
+	fromID, toID = newOperator.ID, artifactID
+
+	_, err = ts.dagEdge.Create(
+		ts.ctx,
+		dagID,
+		edgeType,
+		fromID,
+		toID,
+		int16(0),
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	return newOperator
 }
 
 // seedWatcher creates a Watcher record. It creates a new Workflow
@@ -460,4 +589,147 @@ func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, mod
 	}
 
 	return artifactResults, artifact, dag, workflow
+}
+
+// seedComplexWorkflow creates a workflow with multiple operator and artifacts.
+// To make expected results easy to find, the map of artifacts and operators are keyed by names.
+// The workflow reflects the following DAG:
+// extract --> extract_artf --> function_1 --> function_1_artf --> metric_1 --> metric_1_artf --> check --> check_artf
+//                          |                      |=> function_3 --> function_3_artf // function_3 takes artf of function_1 and function_2 as inputs
+//                          |-> function_2 --> function_2_artf --> metric_2 --> metric_2_artf
+func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operator, map[string]models.Artifact) {
+	// this gives all op -> op edges by names. We assume each operator is named by `<type>_<index>` format
+	// to deduce the type used to create the operator.
+	type simpleDependency struct {
+		From string
+		To   string
+		Idx  int
+	}
+
+	dependencies := []simpleDependency{
+		{
+			From: "extract",
+			To:   "function_1",
+			Idx:  0,
+		},
+		{
+			From: "extract",
+			To:   "function_2",
+			Idx:  0,
+		},
+		{
+			From: "function_1",
+			To:   "function_3",
+			Idx:  0,
+		},
+		{
+			From: "function_2",
+			To:   "function_3",
+			Idx:  1,
+		},
+		{
+			From: "function_1",
+			To:   "metric_1",
+			Idx:  0,
+		},
+		{
+			From: "function_2",
+			To:   "metric_2",
+			Idx:  0,
+		},
+		{
+			From: "metric_1",
+			To:   "check",
+			Idx:  0,
+		},
+	}
+
+	dag := ts.seedDAG(1)[0]
+
+	fn_spec := operator.NewSpecFromFunction(
+		function.Function{},
+	)
+
+	extract_spec := operator.NewSpecFromExtract(
+		connector.Extract{
+			Service:       integration.Postgres,
+			IntegrationId: uuid.New(),
+			Parameters:    &connector.PostgresExtractParams{},
+		},
+	)
+
+	metric_spec := operator.NewSpecFromMetric(metric.Metric{})
+	check_spec := operator.NewSpecFromCheck(check.Check{})
+
+	operators := make(map[string]models.Operator, len(dependencies))
+	artifacts := make(map[string]models.Artifact, len(dependencies))
+	createdOperatorNames := make(map[string]bool, len(dependencies))
+
+	for _, dep := range dependencies {
+		for _, opName := range []string{dep.From, dep.To} {
+			if _, ok := createdOperatorNames[opName]; !ok {
+				// create op, artf, and op -> artf edge
+				opType := strings.Split(opName, "_")[0]
+				spec := extract_spec
+				if opType == string(operator.FunctionType) {
+					spec = fn_spec
+				} else if opType == string(operator.MetricType) {
+					spec = metric_spec
+				} else if opType == string(operator.CheckType) {
+					spec = check_spec
+				} else if opType != string(operator.ExtractType) {
+					require.True(ts.T(), false, "Unsupported operator type.")
+				}
+
+				op, err := ts.operator.Create(
+					ts.ctx,
+					opName,
+					randString(15),
+					spec,
+					nil,
+					ts.DB,
+				)
+				require.Nil(ts.T(), err)
+				operators[opName] = *op
+
+				artfName := fmt.Sprintf("%s_artf", opName)
+				artf, err := ts.artifact.Create(
+					ts.ctx,
+					artfName,
+					randString(15),
+					shared.UntypedArtifact, // for now it's fine to have all artifacts untyped.
+					ts.DB,
+				)
+				require.Nil(ts.T(), err)
+				artifacts[artfName] = *artf
+
+				_, err = ts.dagEdge.Create(
+					ts.ctx,
+					dag.ID,
+					shared.OperatorToArtifactDAGEdge,
+					op.ID,
+					artf.ID,
+					int16(0),
+					ts.DB,
+				)
+				require.Nil(ts.T(), err)
+
+				createdOperatorNames[opName] = true
+			}
+		}
+
+		// create artf -> op edge based on dependency
+		_, err := ts.dagEdge.Create(
+			ts.ctx,
+			dag.ID,
+			shared.ArtifactToOperatorDAGEdge,
+			artifacts[fmt.Sprintf("%s_artf", dep.From)].ID,
+			operators[dep.To].ID,
+			int16(dep.Idx),
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+	}
+
+	return dag, operators, artifacts
 }
