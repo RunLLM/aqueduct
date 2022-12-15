@@ -20,12 +20,11 @@ const (
 	JobMissing = 2
 
 	// Noop indicates that the job manager does not have the context to make a definitive claim
-	// as to whether the job has succeeded or not. In such cases, the caller is expected
-	// to make a decision using other factors. This is equivalent to saying "Do not ask me, I don't know.".
+	// as to whether the job has succeeded or not. This is equivalent to saying "Do not ask me, I don't know.".
 	//
 	// For example, polling a Lambda JobManager will return this error because there is no concept of
-	// fetching job information from a Lambda service. The caller will have to figure out the status
-	// of the job by other means.
+	// fetching a specific job's information from Lambda. The caller must figure out the job status
+	// through other means.
 	Noop = 2
 )
 
@@ -35,24 +34,24 @@ type JobError interface {
 	Code() JobErrorCode
 }
 
-type jobError struct {
+type jobErrorImpl struct {
 	errors.DropboxError
 	code JobErrorCode
 }
 
-func (je *jobError) Code() JobErrorCode {
+func (je *jobErrorImpl) Code() JobErrorCode {
 	return je.code
 }
 
 func wrapInJobError(code JobErrorCode, err error) JobError {
 	if dropboxErr, ok := err.(errors.DropboxError); ok {
-		return &jobError{
+		return &jobErrorImpl{
 			DropboxError: dropboxErr,
 			code:         code,
 		}
 	}
 
-	return &jobError{
+	return &jobErrorImpl{
 		DropboxError: errors.New(err.Error()),
 		code:         code,
 	}
