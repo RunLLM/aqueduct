@@ -246,7 +246,7 @@ func GetActiveExecutionEnvironmentsByOperatorIDs(
 	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	dbEnvMap, err := execEnvRepo.GetActiveByOpIDBatch(
+	dbEnvMap, err := execEnvRepo.GetActiveByOperatorBatch(
 		ctx, opIDs, db,
 	)
 	if err != nil {
