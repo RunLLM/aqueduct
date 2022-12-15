@@ -4,10 +4,8 @@ import (
 	"context"
 	"time"
 
-
-	"github.com/dropbox/godropbox/errors"
-
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/dropbox/godropbox/errors"
 )
 
 // PollJob waits for the specified job to finish and returns its status.

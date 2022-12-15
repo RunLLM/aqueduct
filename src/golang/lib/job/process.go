@@ -106,7 +106,7 @@ func (j *ProcessJobManager) deleteCronMap(key string) {
 	j.cronMutex.Unlock()
 }
 
-func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, JobError) {
+func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 	if conf.PythonExecutorPackage == "" {
 		conf.PythonExecutorPackage = defaultPythonExecutorPackage
 	}
