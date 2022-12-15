@@ -62,7 +62,7 @@ func (*executionEnvironmentReader) GetActiveByHash(ctx context.Context, hash uui
 	return getExecutionEnvironment(ctx, DB, query, args...)
 }
 
-func (*executionEnvironmentReader) GetActiveByOpIDBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error) {
+func (*executionEnvironmentReader) GetActiveByOperatorBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error) {
 	type resultRow struct {
 		ID               uuid.UUID                       `db:"id"`
 		OpID             uuid.UUID                       `db:"operator_id"`

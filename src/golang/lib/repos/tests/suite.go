@@ -29,6 +29,7 @@ type TestSuite struct {
 	integration    			   repos.Integration
 	notification   			   repos.Notification
 	operator       			   repos.Operator
+	operatorResult 			   repos.OperatorResult
 	user           			   repos.User
 	watcher        			   repos.Watcher
 	workflow       			   repos.Workflow
@@ -58,6 +59,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.integration = sqlite.NewIntegrationRepo()
 	ts.notification = sqlite.NewNotificationRepo()
 	ts.operator = sqlite.NewOperatorRepo()
+	ts.operatorResult = sqlite.NewOperatorResultRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()

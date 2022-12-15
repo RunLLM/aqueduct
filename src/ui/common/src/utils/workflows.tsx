@@ -102,6 +102,8 @@ export type WorkflowDag = {
   workflow_id: string;
   created_at: number;
   s3_config: S3Config;
+
+  // The default engine that this workflow was run with. Can be overriden by individual operator specs.
   engine_config: EngineConfig;
   storage_config: StorageConfig;
 

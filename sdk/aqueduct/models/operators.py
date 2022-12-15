@@ -16,6 +16,7 @@ from aqueduct.constants.enums import (
     ServiceType,
 )
 from aqueduct.error import AqueductError
+from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
 
@@ -121,8 +122,7 @@ UnionLoadParams = Union[
 ]
 
 
-# TODO(ENG-2035) This deprecated and will be removed.
-# A user-facing class used by SDK to represent the config for loading to an integration.
+# Internal class used by SDK to represent the config for loading to an integration.
 class SaveConfig(BaseModel):
     integration_info: IntegrationInfo
     parameters: UnionLoadParams
@@ -197,6 +197,9 @@ class OperatorSpec(BaseModel):
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
     resources: Optional[ResourceConfig]
+
+    # If set, overwrites any default engine on the DAG.
+    engine_config: Optional[EngineConfig]
 
 
 class Operator(BaseModel):
