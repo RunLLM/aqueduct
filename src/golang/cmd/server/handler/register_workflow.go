@@ -172,7 +172,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		if env, ok := execEnvByOpId[opId]; ok {
 			// Note: this is the canotical way to assign a struct field of a map
 			// https://stackoverflow.com/questions/42605337/cannot-assign-to-struct-field-in-a-map
-			op.ExecutionEnvironmentID = mdl_utils.NullUUID{UUID: env.Id, IsNull: false}
+			op.ExecutionEnvironmentID = mdl_utils.NullUUID{UUID: env.ID, IsNull: false}
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
