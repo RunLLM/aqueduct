@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/ui",
   "author": "Aqueduct, Inc. <hello@aqueducthq.com>",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "scripts": {
     "start": "parcel --no-cache index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
@@ -10,7 +10,7 @@
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },
   "dependencies": {
-    "@aqueducthq/common": "0.1.6",
+    "@aqueducthq/common": "0.1.7",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",

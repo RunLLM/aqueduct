@@ -38,10 +38,10 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByHash() {
 	requireDeepEqual(ts.T(), expectedExecutionEnvironment, actualExecutionEnvironment)
 }
 
-func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOpIDBatch() {
+func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOperatorBatch() {
 	expectedExecutionEnvironments, operators := ts.seedUsedExecutionEnvironment(6)
 
-	actualExecutionEnvironments, err := ts.executionEnvironment.GetActiveByOpIDBatch(
+	actualExecutionEnvironments, err := ts.executionEnvironment.GetActiveByOperatorBatch(
 		ts.ctx,
 		[]uuid.UUID{operators[0].ID, operators[2].ID, operators[4].ID},
 		ts.DB,

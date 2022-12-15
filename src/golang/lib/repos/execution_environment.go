@@ -25,10 +25,11 @@ type executionEnvironmentReader interface {
 	// GetActiveByHash returns the environments which aren't garbage-collected by the hash.
 	GetActiveByHash(ctx context.Context, hash uuid.UUID, DB database.Database) (*models.ExecutionEnvironment, error)
 
-	// GetActiveByOpIDBatch returns the environments which aren't garbage-collected that is being used by the operators specified by the opIDs.
-	GetActiveByOpIDBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error)
+	// GetActiveByOperatorBatch returns the environments which aren't garbage-collected that is being used by the operators specified by the opIDs.
+	// This is done in key-value format where the key is the operator ID and the value is the environment.
+	GetActiveByOperatorBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error)
 
-	// GetUnused returns the environments which aren't used by operators in a the latest DAG of a workflow.
+	// GetUnused returns the environments which aren't used by operators in the latest DAG of a workflow.
 	GetUnused(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error)
 }
 
